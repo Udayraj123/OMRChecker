@@ -1,0 +1,79 @@
+### ROUGH FUTUREDOS ####
+> can refactor the py code, but proper code would be in cpp. Python is just for quick and dirty.
+>> First write everything on paper. Then you'd make much lesser mistakes
+RefactorDos:
+Simpler folder structure.
+then consider the psychology to change the structure further for tallying.
+
+>> Into C++ code:
+Only do the core part in cpp. Template setting,etc preprocessing types can be done in py.
+
+
+## COLLECT vv
+
+Things to find
+interesting Research papers on Optical Mark Recognition
+	Find the use of those side strips
+papers on QR code scanning (anything to pickup from there?)
+
+Is MCQ the only application?
+	Surveys/Feedbacks
+	Lotteries and voting
+	Postal codes
+	All usecases here: https://remarksoftware.com/products/office-omr/sample-forms/
+existing standard products
+what jee uses
+stackoverflow discussions
+github repos
+
+
+
+So, the need of black ink is IR sensors!
+
+
+
+Ideas
+Web portal to do it all- generating and modifying template, making marking scheme, designing omr sheet using variants
+^This be in da premium features. The normal version shall be comfy for devs but normal users would need some time
+
+Furthers
+support for tick mark detection?  well, it cant be used everywhere as its likely to fail without fault of the scanner.<< Nope
+
+Maybes:
+> Gaussian like box than a 17x17 rectangle?
+
+
+
+QuoteOuts
+"An OMR system detects the presence or absence of marks and spaces on a document and uses reflected infrared  light to decode the pattern into a conventional alphanumeric data record. "
+
+"OMR software is a computer software application that makes OMR possible on a desktop computer by using an Image scanner to process surveys, tests, attendance sheets, checklists, and other plain-paper forms printed on a laser printer. "
+
+"Users can use squares, circles, ellipses and hexagons for the mark zone. The software can then be set to recognize filled in bubbles, crosses or check marks."
+
+"There are also some disadvantages and limitations to OMR. If the user wants to gather large amounts of text, then OMR complicates the data collection.[23] There is also the possibility of missing data in the scanning process, and incorrectly or unnumbered pages can lead to their being scanned in the wrong order. Also, unless safeguards are in place, a page could be rescanned, providing duplicate data and skewing the data.[21]
+
+As a result of the widespread adoption and ease of use of OMR, standardized examinations can consist primarily of multiple-choice questions, changing the nature of what is being tested. "
+
+"OMR systems approach one hundred percent accuracy and only take 5 milliseconds on average to recognize marks.[21]"
+
+"I've used Remark's OMR software for about 7 years at Mass General Hospital, Boston. Coupled with a modest HP scanner with sheet feeder, a secretary can use the system to process several dozen forms in the course of 10 minutes. Furthermore, very little hand-holding is required. Once the software is loaded, a stack of papers is fed into the scanner and the software takes over from there. The only minor disruption is not being able to use the PC while forms are being processed."
+
+
+
+
+
+ProcessDos
+results
+technalysis
+city wise tie breakers
+attributes for tie breaking
+
+
+TallyDos
+1. While scanning: 
+    a. Do in chunks of 10. Check that scan count at each time matches 10. If not scan again.
+    b. After scanning completed for a city, tally counts written on envelope with that in the folder properties. If a. Duplicate rollthere's a mismatch, verify by counting by hand. If still mismatched, contact the cityrep.
+
+2. While running code:
+    a. 
