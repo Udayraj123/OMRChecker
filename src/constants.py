@@ -11,24 +11,49 @@ Evaluate Hindi Files acc to diff template & anskey - Korba, Gwalior, Gonda _/ , 
 # ('rewari', '<<<<<<<', 'OMR_Files_2018/rewari_1012/HH/Normal/Thrissur_HE_0001.tif')
 
 """
-showimg= 1
+### Qtypes constants
+QTYPE_INT,QTYPE_ROLL,QTYPE_MCQ,QTYPE_MED= range(4)
+typeName={QTYPE_INT:"Integer",QTYPE_MCQ:"MCQ",QTYPE_MED:"MED",QTYPE_ROLL:"ROLL"}
+
+showimglvl= 1
+resetpos=[770,10]
 verbose = 1 # Warning, the code may occasionally stop and showimg if verbose = 0
-explain= 1
+explain= 0
 autorotate=1
 saveMarked=1
 
+
 #Intermediate - 
 ext='.jpg'
-# debug THR config - 
-mw,mb=1,0
-minWhiteTHR,maxBlackTHR=1,0
-multimarkedTHR = 0.55
-thresholdRead=  0.642 if kv else 0.65
-thresholdReadXRX = 0.7
-thresholdCircle= 0.55
+minWhiteTHR,maxBlackTHR=255,0
+
+stitched = 0;
+
+# For normal images
+thresholdRead_L =  60#116
+# For already normalized(contrasted) images
+thresholdRead_R =  60
+
+thresholdCircle= 0.55 #matchTemplate returns 0 to 1
 scaleRange=(0.75,0.95)
 
-boxDimX,boxDimY=(17,17) # dims of the single square
+#Expert :p
+display_height = 1000//1.3
+display_width  = 1231//1.3
+
+uniform_height = 1000 
+uniform_width  = 1231
+# original dims are (3527, 2494)
+## Any input images should be resized to this--
+uniform_height_hd = int(uniform_height*1.5)
+uniform_width_hd = int(uniform_width*1.5)
+circle_templ_scaledown=27
+
+template_height,template_width = 1000, 1231 # If you change this, need to change startCoords too
+omr_templ_scale = (uniform_width_hd/template_width, uniform_height_hd/template_height )
+CV2_FONTSIZE=1.5
+
+boxDimX,boxDimY=(30,30) # dims of the single square
 
 directory ='images/OMR_Files/' if kv else 'images/OMR_Files/'
 'feedsheets/errorSheet.csv'
@@ -61,22 +86,7 @@ windowHeight = 700
 
 
 
-#Expert :p
-windowX,windowY = 0,0 
-uniform_height = 1000 
-uniform_width=1231
-
-# In[3]:
-
-# In[9]:
-
-
-# In[10]:
-
-
-
 Directories = [multiMarkedpath,errorpath,verifypath,badRollspath]
-print('Checking Directories...')
 
 
 Answers={

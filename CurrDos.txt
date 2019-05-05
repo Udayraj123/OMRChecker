@@ -54,7 +54,7 @@ Gap between gray and black as HEALTH/CONFIDENCE MEASURE?
 	[X]	lets Plot the hist!
 		[:28]> First make Q Class
 		[:30]> Modify template code
-		[:42]	> As we're likely to use outer rect boxes, keep support for a qNoList for multi qs in the rect at gaps[1]
+		[:42]> As we're likely to use outer rect boxes, keep support for a qNoList for multi qs in the rect at gaps[1]
 			### DESIGN CHOICE
 			C1) Current template making 
 				+Faster to make in ideal situations
@@ -85,6 +85,32 @@ Gap between gray and black as HEALTH/CONFIDENCE MEASURE?
 			"""
 		[+24 2:12]> Subplot Hist for each Q <- or maybe that candlestick one
 			>> Finds that first bar of the histogram indicates correctly marked vals
+
+	(12 Sept 2018)
+		2.4 [X] JSONify the template
+		2.5 [X] Fit the template for mcq and rolls
+
+	(12 Sept 2018)
+	### 3) Plot for each question
+		3.1 [X] Change readResponse to adapt to Q class
+		3.2 [X] Make hist subplots
+		3.3 [X] Make boxplot subplots _/_/
+		3.4 [X] Record/Report the progress
+			>> Durgapur_HE_03 is edgy case for Q10 - cant handle despite normalization, need more parameters! -> 'tone' of the image means more!!
+			>> Got much better visualizations of the parameters now!
+		... If there's any 3D data, think if using contours would help somewhere
+
+	### 4) Refactor readResponse completely
+		> Make up your mind. Dont run away from this :P :D
+		4.1 [ ] Simplify resp array generation
+		4.2 [ ] Simplify detection process
+		4.3 [ ] Minimize logging 
+
+	### 5) Make use of rectangular strips
+		5.1 Think how would it be beneficial
+		5.2 Find what methods are used to do this
+		5.3 Think of adding it in code 
+
 
 [X]	Work on full scale, write bigger font, then scale down at the end.
 
