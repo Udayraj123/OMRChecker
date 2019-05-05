@@ -1,0 +1,22 @@
+### Limits of current algorithm:
+## Translation limits
+Expected:  As long as circles are visible and in their respective quadrants
+Actual1: Inconsistent detections
+--> Quadrants optimization was not configured at midpoint. Now resolved.
+Actual2: Still a few unexpected ones - Circles in quadrants but still wrong detections('lon' problem)
+Durgapur_JE_07_mov(-150,282).jpg
+Durgapur_JE_07_mov(50,282).jpg
+Durgapur_JE_02_mov(-200,70).jpg
+Durgapur_JE_02_mov(-200,283).jpg
+
+## Rotation limits
+> Note: Quadrant division can't be used for extreme cases! But then 'lon' prob will come again. We shall have this as input requirement in the specification
+Expected: (-17,17) degrees as it uses quadrants approach
+Actual1: (-30, 20)?!
+--> The generated cases do not have OMR at exact centre. Now resolved (bug in rotateImg).
+Actual2: (-17, 17) _/_/
+
+## Warping limits
+> Note: Yet to be implemented
+Expected: 
+Actual:

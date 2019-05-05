@@ -123,14 +123,11 @@ def genQBlock(boxDims, QBlockDims, key, orig, qNos, gaps, vals, qType, orient):
     Qs=[]
     cols = []
     H, V = (0,1) if(orient=='H') else (1,0)
-    orig = np.array(orig)
-
-    orig[1] -= 3 # correct shift
-    orig[0] -= 6 # test shift
+    # orig[0] += np.random.randint(-5,6) # test random shift
+    orig[0] -= 10
     
     o = orig.copy()
     for qNo in qNos:
-        # pt = o[:] #copy pt <-- only on list, not on np or multiD list!
         pt = o.copy()
         pts=[]
         for v in vals:
@@ -224,6 +221,7 @@ def genGrid(boxDims, key, qType, orig, bigGaps, gaps, qNos, vals, orient='V'):
     q8          q16
     """
 
+    orig = np.array(orig)
     gridRows, gridCols = gridData.shape[:2]
     numQsMax = max([max([len(qb) for qb in row]) for row in gridData])
     numVals = len(vals)
@@ -241,7 +239,8 @@ def genGrid(boxDims, key, qType, orig, bigGaps, gaps, qNos, vals, orient='V'):
         bigGaps[1] + (numDims[H]-1)*gaps[V]
     ]
     # print(key, numDims, orig, gaps, bigGaps, origGap )
-    qStart = orig[:] #copy list
+    qStart = orig.copy()
+
     for row in gridData:        
         qStart[V] = orig[V]
         for qTuple in row:
@@ -251,7 +250,7 @@ def genGrid(boxDims, key, qType, orig, bigGaps, gaps, qNos, vals, orient='V'):
                 gaps[1] * (numDims[H]-1) + boxDims[V]
             ]
             # TONIGHT'S BLUNDER - qStart was getting passed by reference! (others args read-only)
-            QBlocks.append(genQBlock(boxDims, QBlockDims, key, qStart[:],qTuple,gaps,vals,qType,orient))
+            QBlocks.append(genQBlock(boxDims, QBlockDims, key, qStart.copy(),qTuple,gaps,vals,qType,orient))
             qStart[V] += origGap[V]
         qStart[H] += origGap[H]
     return QBlocks

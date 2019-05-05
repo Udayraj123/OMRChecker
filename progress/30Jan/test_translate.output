@@ -1,0 +1,3657 @@
+python3 unit_testing.py 
+Checking Directories...
+Already present : markedOMRs/
+Already present : feedsheets
+Already present : results
+Already present : images/OMR_Files/multiMarkedFiles/
+Already present : images/OMR_Files/ErrorFiles/
+Already present : images/OMR_Files/verifyFiles/
+Already present : images/OMR_Files/badRollsFiles/
+testTranslate (unit_testing.testImageWarps) ... 
+Total OMRs:  10
+File:  Durgapur_HE_04_mov(-200,-285).jpg
+Scale: 0.55 Circle Match: 68.98635625839233%
+Circle Coordinates :  [array([106.5, 208. ]), array([629.5, 205. ]), array([170.5, 763. ]), array([ 779.5, 1050. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-200,-214).jpg
+Scale: 0.55 Circle Match: 64.48180079460144%
+Circle Coordinates :  [array([110.5, 679. ]), array([634.5, 676. ]), array([365.5, 900. ]), array([ 779.5, 1050. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-200,-143).jpg
+Scale: 0.55 Circle Match: 70.14962434768677%
+Circle Coordinates :  [array([106.5, 297. ]), array([629.5, 294. ]), array([321.5, 811. ]), array([ 779.5, 1050. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-200,-72).jpg
+Scale: 0.55 Circle Match: 65.35200476646423%
+Circle Coordinates :  [array([106.5, 341. ]), array([629.5, 338. ]), array([110.5, 767. ]), array([634.5, 765. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-200,-1).jpg
+Scale: 0.55 Circle Match: 66.83628559112549%
+Circle Coordinates :  [array([106.5, 386. ]), array([629.5, 382. ]), array([110.5, 812. ]), array([634.5, 809. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-200,70).jpg
+Scale: 0.55 Circle Match: 70.55556178092957%
+Circle Coordinates :  [array([106.5, 430. ]), array([629.5, 427. ]), array([110.5, 856. ]), array([634.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-200,141).jpg
+Scale: 0.55 Circle Match: 61.53378486633301%
+Circle Coordinates :  [array([106.5, 474. ]), array([629.5, 471. ]), array([110.5, 901. ]), array([634.5, 898. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-200,212).jpg
+Scale: 0.55 Circle Match: 67.79298782348633%
+Circle Coordinates :  [array([106.5, 519. ]), array([629.5, 516. ]), array([110.5, 945. ]), array([634.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-200,283).jpg
+Scale: 0.55 Circle Match: 68.98634433746338%
+Circle Coordinates :  [array([106.5, 563. ]), array([629.5, 560. ]), array([110.5, 989. ]), array([634.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-150,-285).jpg
+Scale: 0.55 Circle Match: 73.10054302215576%
+Circle Coordinates :  [array([138.5, 208. ]), array([661.5, 205. ]), array([201.5, 763. ]), array([531.5, 901. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-150,-214).jpg
+Scale: 0.55 Circle Match: 63.402193784713745%
+Circle Coordinates :  [array([141.5, 679. ]), array([661.5, 249. ]), array([460.5, 767. ]), array([531.5, 945. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-150,-143).jpg
+Scale: 0.55 Circle Match: 74.10334348678589%
+Circle Coordinates :  [array([138.5, 297. ]), array([661.5, 294. ]), array([377.5, 811. ]), array([531.5, 990. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-150,-72).jpg
+Scale: 0.55 Circle Match: 69.6424663066864%
+Circle Coordinates :  [array([138.5, 341. ]), array([661.5, 338. ]), array([141.5, 768. ]), array([665.5, 765. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-150,-1).jpg
+Scale: 0.55 Circle Match: 67.09059476852417%
+Circle Coordinates :  [array([138.5, 386. ]), array([661.5, 382. ]), array([141.5, 812. ]), array([665.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-150,70).jpg
+Scale: 0.55 Circle Match: 74.6073842048645%
+Circle Coordinates :  [array([138.5, 430. ]), array([661.5, 427. ]), array([141.5, 856. ]), array([665.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-150,141).jpg
+Scale: 0.55 Circle Match: 64.43864703178406%
+Circle Coordinates :  [array([138.5, 474. ]), array([661.5, 471. ]), array([141.5, 901. ]), array([665.5, 898. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-150,212).jpg
+Scale: 0.55 Circle Match: 71.4673399925232%
+Circle Coordinates :  [array([138.5, 519. ]), array([661.5, 516. ]), array([141.5, 945. ]), array([665.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-150,283).jpg
+Scale: 0.55 Circle Match: 73.10054302215576%
+Circle Coordinates :  [array([138.5, 563. ]), array([661.5, 560. ]), array([141.5, 989. ]), array([665.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-100,-285).jpg
+Scale: 0.55 Circle Match: 79.00808453559875%
+Circle Coordinates :  [array([169.5, 208. ]), array([692.5, 205. ]), array([375.5, 857. ]), array([562.5, 901. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-100,-214).jpg
+Scale: 0.55 Circle Match: 65.93894362449646%
+Circle Coordinates :  [array([169.5, 253. ]), array([692.5, 249. ]), array([408.5, 767. ]), array([545.5, 766. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-100,-143).jpg
+Scale: 0.55 Circle Match: 80.29871582984924%
+Circle Coordinates :  [array([169.5, 297. ]), array([692.5, 294. ]), array([408.5, 811. ]), array([545.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-100,-72).jpg
+Scale: 0.55 Circle Match: 75.16544461250305%
+Circle Coordinates :  [array([169.5, 341. ]), array([692.5, 338. ]), array([172.5, 768. ]), array([697.5, 765. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-100,-1).jpg
+Scale: 0.55 Circle Match: 72.41516709327698%
+Circle Coordinates :  [array([169.5, 386. ]), array([692.5, 382. ]), array([172.5, 812. ]), array([697.5, 809. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-100,70).jpg
+Scale: 0.55 Circle Match: 80.85031509399414%
+Circle Coordinates :  [array([169.5, 430. ]), array([692.5, 427. ]), array([172.5, 856. ]), array([697.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-100,141).jpg
+Scale: 0.55 Circle Match: 69.50222253799438%
+Circle Coordinates :  [array([169.5, 474. ]), array([692.5, 471. ]), array([172.5, 901. ]), array([697.5, 898. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-100,212).jpg
+Scale: 0.55 Circle Match: 77.36883163452148%
+Circle Coordinates :  [array([169.5, 519. ]), array([692.5, 516. ]), array([172.5, 945. ]), array([696.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-100,283).jpg
+Scale: 0.55 Circle Match: 79.00808453559875%
+Circle Coordinates :  [array([169.5, 563. ]), array([692.5, 560. ]), array([172.5, 989. ]), array([697.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-50,-285).jpg
+Scale: 0.55 Circle Match: 77.87526845932007%
+Circle Coordinates :  [array([200.5, 208. ]), array([723.5, 205. ]), array([264.5, 763. ]), array([ 779.5, 1050. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-50,-214).jpg
+Scale: 0.55 Circle Match: 65.2695894241333%
+Circle Coordinates :  [array([200.5, 253. ]), array([723.5, 249. ]), array([415.5, 766. ]), array([522.5, 767. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-50,-143).jpg
+Scale: 0.55 Circle Match: 79.1377067565918%
+Circle Coordinates :  [array([200.5, 297. ]), array([723.5, 294. ]), array([439.5, 811. ]), array([522.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-50,-72).jpg
+Scale: 0.55 Circle Match: 73.92888069152832%
+Circle Coordinates :  [array([200.5, 341. ]), array([723.5, 338. ]), array([204.5, 767. ]), array([728.5, 765. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-50,-1).jpg
+Scale: 0.55 Circle Match: 71.53985500335693%
+Circle Coordinates :  [array([200.5, 386. ]), array([723.5, 382. ]), array([204.5, 812. ]), array([728.5, 809. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-50,70).jpg
+Scale: 0.55 Circle Match: 79.68523502349854%
+Circle Coordinates :  [array([200.5, 430. ]), array([723.5, 427. ]), array([204.5, 856. ]), array([728.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-50,141).jpg
+Scale: 0.55 Circle Match: 68.08854341506958%
+Circle Coordinates :  [array([200.5, 474. ]), array([723.5, 471. ]), array([204.5, 901. ]), array([728.5, 898. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-50,212).jpg
+Scale: 0.55 Circle Match: 76.29850506782532%
+Circle Coordinates :  [array([200.5, 519. ]), array([723.5, 516. ]), array([204.5, 945. ]), array([728.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(-50,283).jpg
+Scale: 0.55 Circle Match: 77.87526845932007%
+Circle Coordinates :  [array([200.5, 563. ]), array([723.5, 560. ]), array([204.5, 989. ]), array([728.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(50,-285).jpg
+Scale: 0.55 Circle Match: 73.10054302215576%
+Circle Coordinates :  [array([263.5, 208. ]), array([786.5, 205. ]), array([326.5, 763. ]), array([521.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(50,-214).jpg
+Scale: 0.55 Circle Match: 63.402193784713745%
+Circle Coordinates :  [array([266.5, 679. ]), array([786.5, 249. ]), array([472.5, 766. ]), array([585.5, 767. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(50,-143).jpg
+Scale: 0.55 Circle Match: 74.10334348678589%
+Circle Coordinates :  [array([263.5, 297. ]), array([786.5, 294. ]), array([472.5, 810. ]), array([521.5, 944. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(50,-72).jpg
+Scale: 0.55 Circle Match: 69.6424663066864%
+Circle Coordinates :  [array([263.5, 341. ]), array([786.5, 338. ]), array([266.5, 768. ]), array([790.5, 765. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(50,-1).jpg
+Scale: 0.55 Circle Match: 67.09059476852417%
+Circle Coordinates :  [array([263.5, 386. ]), array([786.5, 382. ]), array([266.5, 812. ]), array([790.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(50,70).jpg
+Scale: 0.55 Circle Match: 74.6073842048645%
+Circle Coordinates :  [array([263.5, 430. ]), array([786.5, 427. ]), array([266.5, 856. ]), array([790.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(50,141).jpg
+Scale: 0.55 Circle Match: 64.43866491317749%
+Circle Coordinates :  [array([263.5, 474. ]), array([786.5, 471. ]), array([266.5, 901. ]), array([790.5, 898. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(50,212).jpg
+Scale: 0.55 Circle Match: 71.4673399925232%
+Circle Coordinates :  [array([263.5, 519. ]), array([786.5, 516. ]), array([266.5, 945. ]), array([790.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(50,283).jpg
+Scale: 0.55 Circle Match: 73.10054302215576%
+Circle Coordinates :  [array([263.5, 563. ]), array([786.5, 560. ]), array([266.5, 989. ]), array([790.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(100,-285).jpg
+Scale: 0.55 Circle Match: 79.00808453559875%
+Circle Coordinates :  [array([294.5, 208. ]), array([817.5, 205. ]), array([434.5, 764. ]), array([518.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(100,-214).jpg
+Scale: 0.55 Circle Match: 65.9389317035675%
+Circle Coordinates :  [array([294.5, 253. ]), array([817.5, 249. ]), array([369.5, 951. ]), array([616.5, 767. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(100,-143).jpg
+Scale: 0.55 Circle Match: 80.29871582984924%
+Circle Coordinates :  [array([294.5, 297. ]), array([817.5, 294. ]), array([434.5, 853. ]), array([533.5, 811. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(100,-72).jpg
+Scale: 0.55 Circle Match: 75.1654326915741%
+Circle Coordinates :  [array([294.5, 341. ]), array([817.5, 338. ]), array([297.5, 768. ]), array([822.5, 765. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(100,-1).jpg
+Scale: 0.55 Circle Match: 72.41516709327698%
+Circle Coordinates :  [array([294.5, 386. ]), array([817.5, 382. ]), array([297.5, 812. ]), array([822.5, 809. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(100,70).jpg
+Scale: 0.55 Circle Match: 80.85031509399414%
+Circle Coordinates :  [array([294.5, 430. ]), array([817.5, 427. ]), array([297.5, 856. ]), array([822.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(100,141).jpg
+Scale: 0.55 Circle Match: 69.50223445892334%
+Circle Coordinates :  [array([294.5, 474. ]), array([817.5, 471. ]), array([297.5, 901. ]), array([822.5, 898. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(100,212).jpg
+Scale: 0.55 Circle Match: 77.36883163452148%
+Circle Coordinates :  [array([294.5, 519. ]), array([817.5, 516. ]), array([297.5, 945. ]), array([821.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(100,283).jpg
+Scale: 0.55 Circle Match: 79.00808453559875%
+Circle Coordinates :  [array([294.5, 563. ]), array([817.5, 560. ]), array([297.5, 989. ]), array([822.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(150,-285).jpg
+Scale: 0.55 Circle Match: 77.87526845932007%
+Circle Coordinates :  [array([325.5, 208. ]), array([848.5, 205. ]), array([389.5, 763. ]), array([584.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(150,-214).jpg
+Scale: 0.55 Circle Match: 65.2695894241333%
+Circle Coordinates :  [array([325.5, 253. ]), array([848.5, 249. ]), array([400.5, 951. ]), array([540.5, 766. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(150,-143).jpg
+Scale: 0.55 Circle Match: 79.1377305984497%
+Circle Coordinates :  [array([325.5, 297. ]), array([848.5, 294. ]), array([389.5, 852. ]), array([564.5, 811. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(150,-72).jpg
+Scale: 0.55 Circle Match: 73.92885088920593%
+Circle Coordinates :  [array([325.5, 341. ]), array([848.5, 338. ]), array([329.5, 767. ]), array([853.5, 765. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(150,-1).jpg
+Scale: 0.55 Circle Match: 71.53985500335693%
+Circle Coordinates :  [array([325.5, 386. ]), array([848.5, 382. ]), array([329.5, 812. ]), array([853.5, 809. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(150,70).jpg
+Scale: 0.55 Circle Match: 79.68523502349854%
+Circle Coordinates :  [array([325.5, 430. ]), array([848.5, 427. ]), array([329.5, 856. ]), array([853.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(150,141).jpg
+Scale: 0.55 Circle Match: 68.08854341506958%
+Circle Coordinates :  [array([325.5, 474. ]), array([848.5, 471. ]), array([329.5, 901. ]), array([853.5, 898. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(150,212).jpg
+Scale: 0.55 Circle Match: 76.29851698875427%
+Circle Coordinates :  [array([325.5, 519. ]), array([848.5, 516. ]), array([329.5, 945. ]), array([853.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(150,283).jpg
+Scale: 0.55 Circle Match: 77.8752863407135%
+Circle Coordinates :  [array([325.5, 563. ]), array([848.5, 560. ]), array([329.5, 989. ]), array([853.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(200,-285).jpg
+Scale: 0.55 Circle Match: 68.98636817932129%
+Circle Coordinates :  [array([356.5, 208. ]), array([879.5, 205. ]), array([420.5, 763. ]), array([615.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(200,-214).jpg
+Scale: 0.55 Circle Match: 64.48180079460144%
+Circle Coordinates :  [array([360.5, 679. ]), array([884.5, 676. ]), array([431.5, 951. ]), array([615.5, 900. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(200,-143).jpg
+Scale: 0.55 Circle Match: 70.14962434768677%
+Circle Coordinates :  [array([356.5, 297. ]), array([879.5, 294. ]), array([420.5, 852. ]), array([571.5, 811. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(200,-72).jpg
+Scale: 0.55 Circle Match: 65.35200476646423%
+Circle Coordinates :  [array([356.5, 341. ]), array([879.5, 338. ]), array([360.5, 767. ]), array([884.5, 765. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(200,-1).jpg
+Scale: 0.55 Circle Match: 66.83628559112549%
+Circle Coordinates :  [array([356.5, 386. ]), array([879.5, 382. ]), array([360.5, 812. ]), array([884.5, 809. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(200,70).jpg
+Scale: 0.55 Circle Match: 70.55558562278748%
+Circle Coordinates :  [array([356.5, 430. ]), array([879.5, 427. ]), array([360.5, 856. ]), array([884.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(200,141).jpg
+Scale: 0.55 Circle Match: 61.53378486633301%
+Circle Coordinates :  [array([356.5, 474. ]), array([879.5, 471. ]), array([360.5, 901. ]), array([884.5, 898. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(200,212).jpg
+Scale: 0.55 Circle Match: 67.79300570487976%
+Circle Coordinates :  [array([356.5, 519. ]), array([879.5, 516. ]), array([360.5, 945. ]), array([884.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_04_mov(200,283).jpg
+Scale: 0.55 Circle Match: 68.98634433746338%
+Circle Coordinates :  [array([356.5, 563. ]), array([879.5, 560. ]), array([360.5, 989. ]), array([884.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-200,-286).jpg
+Scale: 0.55 Circle Match: 68.39036345481873%
+Circle Coordinates :  [array([105.5, 210. ]), array([629.5, 206. ]), array([436.5, 858. ]), array([533.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-200,-215).jpg
+Scale: 0.55 Circle Match: 72.00191020965576%
+Circle Coordinates :  [array([105.5, 254. ]), array([634.5, 679. ]), array([436.5, 903. ]), array([533.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-200,-144).jpg
+Scale: 0.55 Circle Match: 62.365543842315674%
+Circle Coordinates :  [array([105.5, 298. ]), array([629.5, 295. ]), array([436.5, 947. ]), array([533.5, 901. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-200,-73).jpg
+Scale: 0.55 Circle Match: 69.87735033035278%
+Circle Coordinates :  [array([105.5, 343. ]), array([629.5, 339. ]), array([110.5, 770. ]), array([634.5, 767. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-200,-2).jpg
+Scale: 0.55 Circle Match: 70.93571424484253%
+Circle Coordinates :  [array([105.5, 387. ]), array([629.5, 384. ]), array([110.5, 815. ]), array([634.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-200,69).jpg
+Scale: 0.55 Circle Match: 62.721848487854004%
+Updated Threshold:  0.6272185
+Circle Coordinates :  [array([105.5, 432. ]), array([629.5, 428. ]), array([110.5, 859. ]), array([634.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-200,140).jpg
+Scale: 0.55 Circle Match: 71.20925784111023%
+Circle Coordinates :  [array([105.5, 476. ]), array([629.5, 472. ]), array([110.5, 903. ]), array([634.5, 901. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-200,211).jpg
+Scale: 0.55 Circle Match: 69.53760981559753%
+Circle Coordinates :  [array([105.5, 520. ]), array([629.5, 517. ]), array([110.5, 948. ]), array([634.5, 945. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-200,282).jpg
+Scale: 0.55 Circle Match: 62.75126934051514%
+Circle Coordinates :  [array([105.5, 565. ]), array([629.5, 561. ]), array([110.5, 992. ]), array([634.5, 989. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-150,-286).jpg
+Scale: 0.55 Circle Match: 71.759432554245%
+Circle Coordinates :  [array([137.5, 210. ]), array([660.5, 206. ]), array([467.5, 858. ]), array([565.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-150,-215).jpg
+Scale: 0.55 Circle Match: 76.35700106620789%
+Circle Coordinates :  [array([137.5, 254. ]), array([665.5, 679. ]), array([467.5, 903. ]), array([565.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-150,-144).jpg
+Scale: 0.55 Circle Match: 63.95336985588074%
+Circle Coordinates :  [array([137.5, 298. ]), array([660.5, 295. ]), array([467.5, 947. ]), array([565.5, 900. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-150,-73).jpg
+Scale: 0.55 Circle Match: 73.46992492675781%
+Circle Coordinates :  [array([137.5, 343. ]), array([660.5, 339. ]), array([141.5, 770. ]), array([665.5, 768. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-150,-2).jpg
+Scale: 0.55 Circle Match: 75.35694241523743%
+Circle Coordinates :  [array([137.5, 387. ]), array([660.5, 384. ]), array([141.5, 815. ]), array([665.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-150,69).jpg
+Scale: 0.55 Circle Match: 63.44215273857117%
+Circle Coordinates :  [array([137.5, 432. ]), array([660.5, 428. ]), array([141.5, 859. ]), array([665.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-150,140).jpg
+Scale: 0.55 Circle Match: 74.95830655097961%
+Circle Coordinates :  [array([137.5, 476. ]), array([660.5, 472. ]), array([141.5, 903. ]), array([665.5, 901. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-150,211).jpg
+Scale: 0.55 Circle Match: 74.03377890586853%
+Circle Coordinates :  [array([137.5, 520. ]), array([660.5, 517. ]), array([141.5, 948. ]), array([665.5, 945. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-150,282).jpg
+Scale: 0.55 Circle Match: 63.94205689430237%
+Circle Coordinates :  [array([137.5, 565. ]), array([660.5, 561. ]), array([141.5, 992. ]), array([665.5, 989. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-100,-286).jpg
+Scale: 0.55 Circle Match: 77.87094712257385%
+Circle Coordinates :  [array([168.5, 210. ]), array([691.5, 206. ]), array([427.5, 910. ]), array([596.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-100,-215).jpg
+Scale: 0.55 Circle Match: 83.31931233406067%
+Circle Coordinates :  [array([168.5, 254. ]), array([696.5, 679. ]), array([427.5, 954. ]), array([596.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-100,-144).jpg
+Scale: 0.55 Circle Match: 69.87646222114563%
+Circle Coordinates :  [array([168.5, 298. ]), array([691.5, 295. ]), array([427.5, 999. ]), array([596.5, 900. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-100,-73).jpg
+Scale: 0.55 Circle Match: 79.807049036026%
+Circle Coordinates :  [array([168.5, 343. ]), array([691.5, 339. ]), array([172.5, 770. ]), array([696.5, 768. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-100,-2).jpg
+Scale: 0.55 Circle Match: 82.33466148376465%
+Circle Coordinates :  [array([168.5, 387. ]), array([691.5, 384. ]), array([172.5, 815. ]), array([696.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-100,69).jpg
+Scale: 0.55 Circle Match: 66.65391325950623%
+Circle Coordinates :  [array([168.5, 431. ]), array([691.5, 428. ]), array([172.5, 859. ]), array([696.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-100,140).jpg
+Scale: 0.55 Circle Match: 81.52850866317749%
+Circle Coordinates :  [array([168.5, 476. ]), array([691.5, 472. ]), array([172.5, 903. ]), array([696.5, 901. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-100,211).jpg
+Scale: 0.55 Circle Match: 80.84455132484436%
+Circle Coordinates :  [array([168.5, 520. ]), array([691.5, 517. ]), array([172.5, 948. ]), array([696.5, 945. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-100,282).jpg
+Scale: 0.55 Circle Match: 69.17428374290466%
+Circle Coordinates :  [array([168.5, 565. ]), array([691.5, 561. ]), array([172.5, 992. ]), array([696.5, 989. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-50,-286).jpg
+Scale: 0.55 Circle Match: 76.85983180999756%
+Circle Coordinates :  [array([199.5, 210. ]), array([723.5, 206. ]), array([458.5, 910. ]), array([627.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-50,-215).jpg
+Scale: 0.55 Circle Match: 81.83104991912842%
+Circle Coordinates :  [array([199.5, 254. ]), array([728.5, 679. ]), array([458.5, 954. ]), array([627.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-50,-144).jpg
+Scale: 0.55 Circle Match: 68.37174892425537%
+Circle Coordinates :  [array([199.5, 298. ]), array([723.5, 295. ]), array([458.5, 999. ]), array([627.5, 900. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-50,-73).jpg
+Scale: 0.55 Circle Match: 78.74969840049744%
+Circle Coordinates :  [array([199.5, 343. ]), array([723.5, 339. ]), array([203.5, 770. ]), array([728.5, 767. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-50,-2).jpg
+Scale: 0.55 Circle Match: 80.7685375213623%
+Circle Coordinates :  [array([199.5, 387. ]), array([723.5, 384. ]), array([203.5, 815. ]), array([728.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-50,69).jpg
+Scale: 0.55 Circle Match: 65.54958820343018%
+Circle Coordinates :  [array([199.5, 432. ]), array([723.5, 428. ]), array([203.5, 859. ]), array([728.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-50,140).jpg
+Scale: 0.55 Circle Match: 80.348801612854%
+Circle Coordinates :  [array([199.5, 476. ]), array([723.5, 472. ]), array([203.5, 903. ]), array([728.5, 901. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-50,211).jpg
+Scale: 0.55 Circle Match: 79.2668104171753%
+Circle Coordinates :  [array([199.5, 520. ]), array([723.5, 517. ]), array([203.5, 948. ]), array([728.5, 945. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(-50,282).jpg
+Scale: 0.55 Circle Match: 68.40998530387878%
+Circle Coordinates :  [array([199.5, 565. ]), array([723.5, 561. ]), array([203.5, 992. ]), array([728.5, 989. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(50,-286).jpg
+Scale: 0.55 Circle Match: 71.75942063331604%
+Circle Coordinates :  [array([262.5, 210. ]), array([785.5, 206. ]), array([169.5, 852. ]), array([592.5, 858. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(50,-215).jpg
+Scale: 0.55 Circle Match: 76.35698318481445%
+Circle Coordinates :  [array([262.5, 254. ]), array([790.5, 679. ]), array([169.5, 852. ]), array([690.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(50,-144).jpg
+Scale: 0.55 Circle Match: 63.95336985588074%
+Circle Coordinates :  [array([262.5, 298. ]), array([785.5, 295. ]), array([169.5, 852. ]), array([592.5, 947. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(50,-73).jpg
+Scale: 0.55 Circle Match: 73.46991300582886%
+Circle Coordinates :  [array([262.5, 343. ]), array([785.5, 339. ]), array([266.5, 770. ]), array([790.5, 768. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(50,-2).jpg
+Scale: 0.55 Circle Match: 75.35694241523743%
+Circle Coordinates :  [array([262.5, 387. ]), array([785.5, 384. ]), array([266.5, 815. ]), array([790.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(50,69).jpg
+Scale: 0.55 Circle Match: 63.4421706199646%
+Circle Coordinates :  [array([262.5, 432. ]), array([785.5, 428. ]), array([266.5, 859. ]), array([790.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(50,140).jpg
+Scale: 0.55 Circle Match: 74.95830655097961%
+Circle Coordinates :  [array([262.5, 476. ]), array([785.5, 472. ]), array([266.5, 903. ]), array([790.5, 901. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(50,211).jpg
+Scale: 0.55 Circle Match: 74.03376698493958%
+Circle Coordinates :  [array([262.5, 520. ]), array([785.5, 517. ]), array([266.5, 948. ]), array([790.5, 945. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(50,282).jpg
+Scale: 0.55 Circle Match: 63.942039012908936%
+Circle Coordinates :  [array([262.5, 565. ]), array([785.5, 561. ]), array([266.5, 992. ]), array([790.5, 989. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(100,-286).jpg
+Scale: 0.55 Circle Match: 77.87094712257385%
+Circle Coordinates :  [array([293.5, 210. ]), array([816.5, 206. ]), array([233.5, 851. ]), array([721.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(100,-215).jpg
+Scale: 0.55 Circle Match: 83.31931233406067%
+Circle Coordinates :  [array([293.5, 254. ]), array([821.5, 679. ]), array([233.5, 851. ]), array([721.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(100,-144).jpg
+Scale: 0.55 Circle Match: 69.87646222114563%
+Circle Coordinates :  [array([293.5, 298. ]), array([816.5, 295. ]), array([233.5, 851. ]), array([721.5, 900. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(100,-73).jpg
+Scale: 0.55 Circle Match: 79.807049036026%
+Circle Coordinates :  [array([293.5, 343. ]), array([816.5, 339. ]), array([297.5, 770. ]), array([821.5, 768. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(100,-2).jpg
+Scale: 0.55 Circle Match: 82.33466148376465%
+Circle Coordinates :  [array([293.5, 387. ]), array([816.5, 384. ]), array([297.5, 815. ]), array([821.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(100,69).jpg
+Scale: 0.55 Circle Match: 66.65391325950623%
+Circle Coordinates :  [array([293.5, 431. ]), array([816.5, 428. ]), array([297.5, 859. ]), array([821.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(100,140).jpg
+Scale: 0.55 Circle Match: 81.52850866317749%
+Circle Coordinates :  [array([293.5, 476. ]), array([816.5, 472. ]), array([297.5, 903. ]), array([821.5, 901. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(100,211).jpg
+Scale: 0.55 Circle Match: 80.8445394039154%
+Circle Coordinates :  [array([293.5, 520. ]), array([816.5, 517. ]), array([297.5, 948. ]), array([821.5, 945. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(100,282).jpg
+Scale: 0.55 Circle Match: 69.17428374290466%
+Circle Coordinates :  [array([293.5, 565. ]), array([816.5, 561. ]), array([297.5, 992. ]), array([821.5, 989. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(150,-286).jpg
+Scale: 0.55 Circle Match: 76.85983180999756%
+Circle Coordinates :  [array([324.5, 210. ]), array([848.5, 206. ]), array([233.5, 851. ]), array([752.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(150,-215).jpg
+Scale: 0.55 Circle Match: 81.83106780052185%
+Circle Coordinates :  [array([324.5, 254. ]), array([853.5, 679. ]), array([233.5, 851. ]), array([752.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(150,-144).jpg
+Scale: 0.55 Circle Match: 68.37174892425537%
+Circle Coordinates :  [array([324.5, 298. ]), array([848.5, 295. ]), array([233.5, 851. ]), array([752.5, 900. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(150,-73).jpg
+Scale: 0.55 Circle Match: 78.74969840049744%
+Circle Coordinates :  [array([324.5, 343. ]), array([848.5, 339. ]), array([328.5, 770. ]), array([853.5, 767. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(150,-2).jpg
+Scale: 0.55 Circle Match: 80.76854944229126%
+Circle Coordinates :  [array([324.5, 387. ]), array([848.5, 384. ]), array([328.5, 815. ]), array([853.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(150,69).jpg
+Scale: 0.55 Circle Match: 65.54958820343018%
+Circle Coordinates :  [array([324.5, 432. ]), array([848.5, 428. ]), array([328.5, 859. ]), array([853.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(150,140).jpg
+Scale: 0.55 Circle Match: 80.34878969192505%
+Circle Coordinates :  [array([324.5, 476. ]), array([848.5, 472. ]), array([328.5, 903. ]), array([853.5, 901. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(150,211).jpg
+Scale: 0.55 Circle Match: 79.26682829856873%
+Circle Coordinates :  [array([324.5, 520. ]), array([848.5, 517. ]), array([328.5, 948. ]), array([853.5, 945. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(150,282).jpg
+Scale: 0.55 Circle Match: 68.40998530387878%
+Circle Coordinates :  [array([324.5, 565. ]), array([848.5, 561. ]), array([328.5, 992. ]), array([853.5, 989. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(200,-286).jpg
+Scale: 0.55 Circle Match: 68.39036345481873%
+Circle Coordinates :  [array([355.5, 210. ]), array([879.5, 206. ]), array([233.5, 851. ]), array([686.5, 858. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(200,-215).jpg
+Scale: 0.55 Circle Match: 72.00192213058472%
+Circle Coordinates :  [array([355.5, 254. ]), array([884.5, 679. ]), array([233.5, 851. ]), array([686.5, 903. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(200,-144).jpg
+Scale: 0.55 Circle Match: 62.365514039993286%
+Updated Threshold:  0.62365514
+Circle Coordinates :  [array([355.5, 298. ]), array([879.5, 295. ]), array([233.5, 851. ]), array([686.5, 947. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(200,-73).jpg
+Scale: 0.55 Circle Match: 69.87733840942383%
+Circle Coordinates :  [array([355.5, 343. ]), array([879.5, 339. ]), array([360.5, 770. ]), array([884.5, 767. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(200,-2).jpg
+Scale: 0.55 Circle Match: 70.93571424484253%
+Circle Coordinates :  [array([355.5, 387. ]), array([879.5, 384. ]), array([360.5, 815. ]), array([884.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(200,69).jpg
+Scale: 0.55 Circle Match: 62.721848487854004%
+Circle Coordinates :  [array([355.5, 432. ]), array([879.5, 428. ]), array([360.5, 859. ]), array([884.5, 856. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(200,140).jpg
+Scale: 0.55 Circle Match: 71.20925784111023%
+Circle Coordinates :  [array([355.5, 476. ]), array([879.5, 472. ]), array([360.5, 903. ]), array([884.5, 901. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(200,211).jpg
+Scale: 0.55 Circle Match: 69.53760981559753%
+Circle Coordinates :  [array([355.5, 520. ]), array([879.5, 517. ]), array([360.5, 948. ]), array([884.5, 945. ])]
+Test:  0
+
+File:  Durgapur_HE_05_mov(200,282).jpg
+Scale: 0.55 Circle Match: 62.75128126144409%
+Circle Coordinates :  [array([355.5, 565. ]), array([879.5, 561. ]), array([360.5, 992. ]), array([884.5, 989. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-200,-285).jpg
+Scale: 0.55 Circle Match: 62.85761594772339%
+Circle Coordinates :  [array([106.5, 207. ]), array([634.5, 630. ]), array([464.5, 851. ]), array([558.5, 805. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-200,-214).jpg
+Scale: 0.55 Circle Match: 72.3695695400238%
+Circle Coordinates :  [array([106.5, 252. ]), array([634.5, 674. ]), array([464.5, 896. ]), array([577.5, 851. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-200,-143).jpg
+Scale: 0.55 Circle Match: 74.60498213768005%
+Circle Coordinates :  [array([106.5, 296. ]), array([628.5, 292. ]), array([464.5, 940. ]), array([577.5, 895. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-200,-72).jpg
+Scale: 0.55 Circle Match: 59.6211314201355%
+Circle Coordinates :  [array([106.5, 340. ]), array([628.5, 336. ]), array([110.5, 766. ]), array([634.5, 763. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-200,-1).jpg
+Scale: 0.55 Circle Match: 73.89979958534241%
+Circle Coordinates :  [array([106.5, 385. ]), array([629.5, 381. ]), array([110.5, 810. ]), array([634.5, 807. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-200,70).jpg
+Scale: 0.55 Circle Match: 73.29019904136658%
+Circle Coordinates :  [array([106.5, 429. ]), array([628.5, 425. ]), array([110.5, 855. ]), array([634.5, 851. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-200,141).jpg
+Scale: 0.55 Circle Match: 61.935997009277344%
+Circle Coordinates :  [array([106.5, 474. ]), array([628.5, 469. ]), array([110.5, 899. ]), array([634.5, 896. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-200,212).jpg
+Scale: 0.55 Circle Match: 75.03367066383362%
+Circle Coordinates :  [array([106.5, 518. ]), array([629.5, 514. ]), array([110.5, 943. ]), array([634.5, 940. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-200,283).jpg
+Scale: 0.55 Circle Match: 71.57174348831177%
+Circle Coordinates :  [array([106.5, 562. ]), array([628.5, 558. ]), array([110.5, 988. ]), array([634.5, 985. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-150,-285).jpg
+Scale: 0.55 Circle Match: 69.0161645412445%
+Circle Coordinates :  [array([137.5, 207. ]), array([660.5, 203. ]), array([322.5, 786. ]), array([608.5, 805. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-150,-214).jpg
+Scale: 0.55 Circle Match: 79.07089591026306%
+Circle Coordinates :  [array([137.5, 252. ]), array([665.5, 674. ]), array([336.5, 763. ]), array([589.5, 850. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-150,-143).jpg
+Scale: 0.55 Circle Match: 81.5010666847229%
+Circle Coordinates :  [array([137.5, 296. ]), array([660.5, 292. ]), array([322.5, 875. ]), array([608.5, 895. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-150,-72).jpg
+Scale: 0.55 Circle Match: 65.59478640556335%
+Circle Coordinates :  [array([137.5, 340. ]), array([660.5, 336. ]), array([141.5, 766. ]), array([665.5, 763. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-150,-1).jpg
+Scale: 0.55 Circle Match: 80.76951503753662%
+Circle Coordinates :  [array([137.5, 385. ]), array([660.5, 381. ]), array([141.5, 810. ]), array([665.5, 807. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-150,70).jpg
+Scale: 0.55 Circle Match: 80.07504940032959%
+Circle Coordinates :  [array([137.5, 429. ]), array([660.5, 425. ]), array([141.5, 855. ]), array([665.5, 851. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-150,141).jpg
+Scale: 0.55 Circle Match: 67.76934862136841%
+Circle Coordinates :  [array([137.5, 474. ]), array([660.5, 469. ]), array([141.5, 899. ]), array([665.5, 896. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-150,212).jpg
+Scale: 0.55 Circle Match: 82.04207420349121%
+Circle Coordinates :  [array([137.5, 518. ]), array([660.5, 514. ]), array([141.5, 943. ]), array([665.5, 940. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-150,283).jpg
+Scale: 0.55 Circle Match: 78.21294069290161%
+Circle Coordinates :  [array([137.5, 562. ]), array([660.5, 558. ]), array([141.5, 988. ]), array([665.5, 985. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-100,-285).jpg
+Scale: 0.55 Circle Match: 68.47397685050964%
+Circle Coordinates :  [array([168.5, 207. ]), array([691.5, 203. ]), array([353.5, 786. ]), array([527.5, 851. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-100,-214).jpg
+Scale: 0.55 Circle Match: 78.22444438934326%
+Circle Coordinates :  [array([168.5, 252. ]), array([691.5, 248. ]), array([406.5, 807. ]), array([527.5, 896. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-100,-143).jpg
+Scale: 0.55 Circle Match: 80.54919838905334%
+Circle Coordinates :  [array([168.5, 296. ]), array([691.5, 292. ]), array([479.5, 851. ]), array([527.5, 940. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-100,-72).jpg
+Scale: 0.55 Circle Match: 65.10754823684692%
+Circle Coordinates :  [array([168.5, 340. ]), array([691.5, 336. ]), array([172.5, 766. ]), array([696.5, 763. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-100,-1).jpg
+Scale: 0.55 Circle Match: 79.85011339187622%
+Circle Coordinates :  [array([168.5, 385. ]), array([691.5, 381. ]), array([172.5, 810. ]), array([696.5, 807. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-100,70).jpg
+Scale: 0.55 Circle Match: 79.1729986667633%
+Circle Coordinates :  [array([168.5, 429. ]), array([691.5, 425. ]), array([172.5, 855. ]), array([696.5, 851. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-100,141).jpg
+Scale: 0.55 Circle Match: 67.12529063224792%
+Circle Coordinates :  [array([168.5, 474. ]), array([691.5, 469. ]), array([172.5, 899. ]), array([696.5, 896. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-100,212).jpg
+Scale: 0.55 Circle Match: 81.11300468444824%
+Circle Coordinates :  [array([168.5, 518. ]), array([691.5, 514. ]), array([172.5, 943. ]), array([696.5, 940. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-100,283).jpg
+Scale: 0.55 Circle Match: 77.33814716339111%
+Circle Coordinates :  [array([168.5, 562. ]), array([691.5, 558. ]), array([172.5, 988. ]), array([696.5, 985. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-50,-285).jpg
+Scale: 0.55 Circle Match: 61.148905754089355%
+Circle Coordinates :  [array([199.5, 207. ]), array([722.5, 203. ]), array([437.5, 763. ]), array([558.5, 851. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-50,-214).jpg
+Scale: 0.55 Circle Match: 70.22100687026978%
+Circle Coordinates :  [array([199.5, 252. ]), array([722.5, 248. ]), array([437.5, 807. ]), array([558.5, 896. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-50,-143).jpg
+Scale: 0.55 Circle Match: 72.06840515136719%
+Circle Coordinates :  [array([199.5, 296. ]), array([722.5, 292. ]), array([437.5, 852. ]), array([558.5, 940. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-50,-72).jpg
+Scale: 0.55 Circle Match: 58.06879997253418%
+Circle Coordinates :  [array([199.5, 340. ]), array([722.5, 336. ]), array([204.5, 766. ]), array([728.5, 763. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-50,-1).jpg
+Scale: 0.55 Circle Match: 71.49126529693604%
+Circle Coordinates :  [array([199.5, 385. ]), array([722.5, 381. ]), array([204.5, 810. ]), array([728.5, 807. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-50,70).jpg
+Scale: 0.55 Circle Match: 70.84621787071228%
+Circle Coordinates :  [array([199.5, 429. ]), array([722.5, 425. ]), array([204.5, 854. ]), array([728.5, 852. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-50,141).jpg
+Scale: 0.55 Circle Match: 60.849761962890625%
+Circle Coordinates :  [array([199.5, 474. ]), array([722.5, 469. ]), array([204.5, 899. ]), array([728.5, 896. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-50,212).jpg
+Scale: 0.55 Circle Match: 72.44089245796204%
+Circle Coordinates :  [array([199.5, 518. ]), array([722.5, 514. ]), array([204.5, 943. ]), array([728.5, 940. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(-50,283).jpg
+Scale: 0.55 Circle Match: 69.25045251846313%
+Circle Coordinates :  [array([199.5, 562. ]), array([722.5, 558. ]), array([204.5, 988. ]), array([728.5, 985. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(50,-285).jpg
+Scale: 0.55 Circle Match: 69.01617646217346%
+Circle Coordinates :  [array([262.5, 207. ]), array([785.5, 203. ]), array([447.5, 786. ]), array([620.5, 851. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(50,-214).jpg
+Scale: 0.55 Circle Match: 79.07089591026306%
+Circle Coordinates :  [array([262.5, 252. ]), array([790.5, 674. ]), array([461.5, 763. ]), array([620.5, 896. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(50,-143).jpg
+Scale: 0.55 Circle Match: 81.5010666847229%
+Circle Coordinates :  [array([262.5, 296. ]), array([785.5, 292. ]), array([447.5, 875. ]), array([620.5, 940. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(50,-72).jpg
+Scale: 0.55 Circle Match: 65.59478640556335%
+Circle Coordinates :  [array([262.5, 340. ]), array([785.5, 336. ]), array([266.5, 766. ]), array([790.5, 763. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(50,-1).jpg
+Scale: 0.55 Circle Match: 80.76951503753662%
+Circle Coordinates :  [array([262.5, 385. ]), array([785.5, 381. ]), array([266.5, 810. ]), array([790.5, 807. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(50,70).jpg
+Scale: 0.55 Circle Match: 80.07503151893616%
+Circle Coordinates :  [array([262.5, 429. ]), array([785.5, 425. ]), array([266.5, 855. ]), array([790.5, 851. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(50,141).jpg
+Scale: 0.55 Circle Match: 67.76933670043945%
+Circle Coordinates :  [array([262.5, 474. ]), array([785.5, 469. ]), array([266.5, 899. ]), array([790.5, 896. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(50,212).jpg
+Scale: 0.55 Circle Match: 82.04207420349121%
+Circle Coordinates :  [array([262.5, 518. ]), array([785.5, 514. ]), array([266.5, 943. ]), array([790.5, 940. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(50,283).jpg
+Scale: 0.55 Circle Match: 78.21292281150818%
+Circle Coordinates :  [array([262.5, 562. ]), array([785.5, 558. ]), array([266.5, 988. ]), array([790.5, 985. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(100,-285).jpg
+Scale: 0.55 Circle Match: 68.47399473190308%
+Circle Coordinates :  [array([293.5, 207. ]), array([816.5, 203. ]), array([478.5, 786. ]), array([652.5, 851. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(100,-214).jpg
+Scale: 0.55 Circle Match: 78.22444438934326%
+Circle Coordinates :  [array([293.5, 252. ]), array([816.5, 248. ]), array([478.5, 830. ]), array([652.5, 896. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(100,-143).jpg
+Scale: 0.55 Circle Match: 80.54919838905334%
+Circle Coordinates :  [array([293.5, 296. ]), array([816.5, 292. ]), array([478.5, 875. ]), array([652.5, 940. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(100,-72).jpg
+Scale: 0.55 Circle Match: 65.10754823684692%
+Circle Coordinates :  [array([293.5, 340. ]), array([816.5, 336. ]), array([297.5, 766. ]), array([821.5, 763. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(100,-1).jpg
+Scale: 0.55 Circle Match: 79.85011339187622%
+Circle Coordinates :  [array([293.5, 385. ]), array([816.5, 381. ]), array([297.5, 810. ]), array([821.5, 807. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(100,70).jpg
+Scale: 0.55 Circle Match: 79.1729986667633%
+Circle Coordinates :  [array([293.5, 429. ]), array([816.5, 425. ]), array([297.5, 855. ]), array([821.5, 851. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(100,141).jpg
+Scale: 0.55 Circle Match: 67.12530255317688%
+Circle Coordinates :  [array([293.5, 474. ]), array([816.5, 469. ]), array([297.5, 899. ]), array([821.5, 896. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(100,212).jpg
+Scale: 0.55 Circle Match: 81.11298680305481%
+Circle Coordinates :  [array([293.5, 518. ]), array([816.5, 514. ]), array([297.5, 943. ]), array([821.5, 940. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(100,283).jpg
+Scale: 0.55 Circle Match: 77.3381769657135%
+Circle Coordinates :  [array([293.5, 562. ]), array([816.5, 558. ]), array([297.5, 988. ]), array([821.5, 985. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(150,-285).jpg
+Scale: 0.55 Circle Match: 61.14892363548279%
+Circle Coordinates :  [array([324.5, 207. ]), array([847.5, 203. ]), array([389.5, 761. ]), array([683.5, 851. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(150,-214).jpg
+Scale: 0.55 Circle Match: 70.22100687026978%
+Circle Coordinates :  [array([324.5, 252. ]), array([847.5, 248. ]), array([389.5, 805. ]), array([683.5, 896. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(150,-143).jpg
+Scale: 0.55 Circle Match: 72.06840515136719%
+Circle Coordinates :  [array([324.5, 296. ]), array([847.5, 292. ]), array([389.5, 850. ]), array([683.5, 940. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(150,-72).jpg
+Scale: 0.55 Circle Match: 58.06879997253418%
+Circle Coordinates :  [array([324.5, 340. ]), array([847.5, 336. ]), array([329.5, 766. ]), array([853.5, 763. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(150,-1).jpg
+Scale: 0.55 Circle Match: 71.4912474155426%
+Circle Coordinates :  [array([324.5, 385. ]), array([847.5, 381. ]), array([329.5, 810. ]), array([853.5, 807. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(150,70).jpg
+Scale: 0.55 Circle Match: 70.84619998931885%
+Circle Coordinates :  [array([324.5, 429. ]), array([847.5, 425. ]), array([329.5, 854. ]), array([853.5, 852. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(150,141).jpg
+Scale: 0.55 Circle Match: 60.84977984428406%
+Circle Coordinates :  [array([324.5, 474. ]), array([847.5, 469. ]), array([329.5, 899. ]), array([853.5, 896. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(150,212).jpg
+Scale: 0.55 Circle Match: 72.44092226028442%
+Circle Coordinates :  [array([324.5, 518. ]), array([847.5, 514. ]), array([329.5, 943. ]), array([853.5, 940. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(150,283).jpg
+Scale: 0.55 Circle Match: 69.25047039985657%
+Circle Coordinates :  [array([324.5, 562. ]), array([847.5, 558. ]), array([329.5, 988. ]), array([853.5, 985. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(200,-285).jpg
+Scale: 0.55 Circle Match: 62.85763382911682%
+Circle Coordinates :  [array([356.5, 207. ]), array([884.5, 630. ]), array([420.5, 761. ]), array([714.5, 851. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(200,-214).jpg
+Scale: 0.55 Circle Match: 72.36959934234619%
+Circle Coordinates :  [array([356.5, 252. ]), array([884.5, 674. ]), array([420.5, 806. ]), array([714.5, 896. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(200,-143).jpg
+Scale: 0.55 Circle Match: 74.60498213768005%
+Circle Coordinates :  [array([356.5, 296. ]), array([878.5, 292. ]), array([420.5, 850. ]), array([714.5, 940. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(200,-72).jpg
+Scale: 0.55 Circle Match: 59.62110161781311%
+Circle Coordinates :  [array([356.5, 340. ]), array([878.5, 336. ]), array([360.5, 766. ]), array([884.5, 763. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(200,-1).jpg
+Scale: 0.55 Circle Match: 73.89979958534241%
+Circle Coordinates :  [array([356.5, 385. ]), array([879.5, 381. ]), array([360.5, 810. ]), array([884.5, 807. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(200,70).jpg
+Scale: 0.55 Circle Match: 73.29021692276001%
+Circle Coordinates :  [array([356.5, 429. ]), array([878.5, 425. ]), array([360.5, 855. ]), array([884.5, 851. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(200,141).jpg
+Scale: 0.55 Circle Match: 61.935997009277344%
+Circle Coordinates :  [array([356.5, 474. ]), array([878.5, 469. ]), array([360.5, 899. ]), array([884.5, 896. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(200,212).jpg
+Scale: 0.55 Circle Match: 75.03368258476257%
+Circle Coordinates :  [array([356.5, 518. ]), array([879.5, 514. ]), array([360.5, 943. ]), array([884.5, 940. ])]
+Test:  0
+
+File:  Durgapur_HE_03_mov(200,283).jpg
+Scale: 0.55 Circle Match: 71.57174348831177%
+Circle Coordinates :  [array([356.5, 562. ]), array([878.5, 558. ]), array([360.5, 988. ]), array([884.5, 985. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-200,-286).jpg
+Scale: 0.55 Circle Match: 58.071935176849365%
+Circle Coordinates :  [array([105.5, 207. ]), array([629.5, 205. ]), array([ 449.5, 1180. ]), array([ 673.5, 1230. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-200,-215).jpg
+Scale: 0.55 Circle Match: 68.852299451828%
+Circle Coordinates :  [array([105.5, 252. ]), array([629.5, 249. ]), array([320.5, 767. ]), array([ 673.5, 1230. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-200,-144).jpg
+Scale: 0.55 Circle Match: 67.43993759155273%
+Circle Coordinates :  [array([105.5, 296. ]), array([629.5, 293. ]), array([320.5, 811. ]), array([ 673.5, 1230. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-200,-73).jpg
+Scale: 0.55 Circle Match: 60.136449337005615%
+Circle Coordinates :  [array([105.5, 340. ]), array([629.5, 338. ]), array([109.5, 768. ]), array([633.5, 766. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-200,-2).jpg
+Scale: 0.55 Circle Match: 69.02449131011963%
+Circle Coordinates :  [array([105.5, 385. ]), array([629.5, 382. ]), array([109.5, 812. ]), array([633.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-200,69).jpg
+Scale: 0.55 Circle Match: 66.58514738082886%
+Circle Coordinates :  [array([105.5, 429. ]), array([629.5, 426. ]), array([109.5, 856. ]), array([633.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-200,140).jpg
+Scale: 0.55 Circle Match: 62.64305114746094%
+Updated Threshold:  0.6264305
+Circle Coordinates :  [array([105.5, 474. ]), array([629.5, 471. ]), array([109.5, 901. ]), array([633.5, 899. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-200,211).jpg
+Scale: 0.55 Circle Match: 68.81049871444702%
+Circle Coordinates :  [array([105.5, 518. ]), array([629.5, 515. ]), array([109.5, 945. ]), array([633.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-200,282).jpg
+Scale: 0.55 Circle Match: 65.30564427375793%
+Circle Coordinates :  [array([105.5, 562. ]), array([629.5, 559. ]), array([109.5, 989. ]), array([633.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-150,-286).jpg
+Scale: 0.55 Circle Match: 67.25176572799683%
+Circle Coordinates :  [array([137.5, 207. ]), array([660.5, 205. ]), array([ 449.5, 1180. ]), array([ 673.5, 1230. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-150,-215).jpg
+Scale: 0.55 Circle Match: 72.73356914520264%
+Circle Coordinates :  [array([137.5, 252. ]), array([660.5, 249. ]), array([ 449.5, 1180. ]), array([ 673.5, 1230. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-150,-144).jpg
+Scale: 0.55 Circle Match: 77.11217403411865%
+Circle Coordinates :  [array([137.5, 296. ]), array([660.5, 293. ]), array([335.5, 810. ]), array([ 673.5, 1230. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-150,-73).jpg
+Scale: 0.55 Circle Match: 64.17179703712463%
+Circle Coordinates :  [array([137.5, 340. ]), array([660.5, 338. ]), array([140.5, 768. ]), array([665.5, 766. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-150,-2).jpg
+Scale: 0.55 Circle Match: 74.52645897865295%
+Circle Coordinates :  [array([137.5, 385. ]), array([660.5, 382. ]), array([140.5, 812. ]), array([665.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-150,69).jpg
+Scale: 0.55 Circle Match: 76.2182891368866%
+Circle Coordinates :  [array([137.5, 429. ]), array([660.5, 426. ]), array([140.5, 856. ]), array([665.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-150,140).jpg
+Scale: 0.55 Circle Match: 65.02472758293152%
+Circle Coordinates :  [array([137.5, 474. ]), array([660.5, 471. ]), array([140.5, 901. ]), array([665.5, 899. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-150,211).jpg
+Scale: 0.55 Circle Match: 75.98055601119995%
+Circle Coordinates :  [array([137.5, 518. ]), array([660.5, 515. ]), array([140.5, 945. ]), array([665.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-150,282).jpg
+Scale: 0.55 Circle Match: 74.86932277679443%
+Circle Coordinates :  [array([137.5, 562. ]), array([660.5, 559. ]), array([140.5, 989. ]), array([665.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-100,-286).jpg
+Scale: 0.55 Circle Match: 71.14693522453308%
+Circle Coordinates :  [array([168.5, 207. ]), array([692.5, 205. ]), array([ 449.5, 1180. ]), array([ 673.5, 1230. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-100,-215).jpg
+Scale: 0.55 Circle Match: 76.59914493560791%
+Circle Coordinates :  [array([168.5, 252. ]), array([692.5, 249. ]), array([ 449.5, 1180. ]), array([ 673.5, 1230. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-100,-144).jpg
+Scale: 0.55 Circle Match: 81.27196431159973%
+Circle Coordinates :  [array([168.5, 296. ]), array([692.5, 293. ]), array([ 449.5, 1180. ]), array([ 673.5, 1230. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-100,-73).jpg
+Scale: 0.55 Circle Match: 67.963308095932%
+Circle Coordinates :  [array([168.5, 340. ]), array([692.5, 338. ]), array([171.5, 768. ]), array([696.5, 766. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-100,-2).jpg
+Scale: 0.55 Circle Match: 78.4260094165802%
+Circle Coordinates :  [array([168.5, 385. ]), array([692.5, 382. ]), array([171.5, 812. ]), array([696.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-100,69).jpg
+Scale: 0.55 Circle Match: 80.37112355232239%
+Circle Coordinates :  [array([168.5, 429. ]), array([692.5, 426. ]), array([171.5, 856. ]), array([696.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-100,140).jpg
+Scale: 0.55 Circle Match: 65.2338445186615%
+Circle Coordinates :  [array([168.5, 474. ]), array([692.5, 471. ]), array([171.5, 901. ]), array([696.5, 899. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-100,211).jpg
+Scale: 0.55 Circle Match: 79.91833686828613%
+Circle Coordinates :  [array([168.5, 518. ]), array([692.5, 515. ]), array([171.5, 945. ]), array([696.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-100,282).jpg
+Scale: 0.55 Circle Match: 78.9583146572113%
+Circle Coordinates :  [array([168.5, 562. ]), array([692.5, 559. ]), array([171.5, 989. ]), array([696.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-50,-286).jpg
+Scale: 0.55 Circle Match: 67.93519258499146%
+Circle Coordinates :  [array([199.5, 207. ]), array([723.5, 205. ]), array([ 449.5, 1180. ]), array([ 673.5, 1230. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-50,-215).jpg
+Scale: 0.55 Circle Match: 74.03072118759155%
+Circle Coordinates :  [array([199.5, 252. ]), array([723.5, 249. ]), array([438.5, 767. ]), array([ 673.5, 1230. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-50,-144).jpg
+Scale: 0.55 Circle Match: 78.1839668750763%
+Circle Coordinates :  [array([199.5, 296. ]), array([723.5, 293. ]), array([438.5, 812. ]), array([ 673.5, 1230. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-50,-73).jpg
+Scale: 0.55 Circle Match: 64.76616859436035%
+Circle Coordinates :  [array([199.5, 340. ]), array([723.5, 338. ]), array([202.5, 768. ]), array([727.5, 766. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-50,-2).jpg
+Scale: 0.55 Circle Match: 75.60167908668518%
+Circle Coordinates :  [array([199.5, 385. ]), array([723.5, 382. ]), array([202.5, 812. ]), array([727.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-50,69).jpg
+Scale: 0.55 Circle Match: 77.22282409667969%
+Circle Coordinates :  [array([199.5, 429. ]), array([723.5, 426. ]), array([202.5, 856. ]), array([727.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-50,140).jpg
+Scale: 0.55 Circle Match: 63.7743353843689%
+Circle Coordinates :  [array([199.5, 474. ]), array([723.5, 471. ]), array([202.5, 901. ]), array([727.5, 899. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-50,211).jpg
+Scale: 0.55 Circle Match: 76.93373560905457%
+Circle Coordinates :  [array([199.5, 518. ]), array([723.5, 515. ]), array([202.5, 945. ]), array([727.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(-50,282).jpg
+Scale: 0.55 Circle Match: 75.78254342079163%
+Circle Coordinates :  [array([199.5, 562. ]), array([723.5, 559. ]), array([202.5, 989. ]), array([727.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(50,-286).jpg
+Scale: 0.55 Circle Match: 67.25175380706787%
+Circle Coordinates :  [array([262.5, 207. ]), array([785.5, 205. ]), array([169.5, 852. ]), array([ 673.5, 1230. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(50,-215).jpg
+Scale: 0.55 Circle Match: 72.73355722427368%
+Circle Coordinates :  [array([262.5, 252. ]), array([785.5, 249. ]), array([169.5, 852. ]), array([ 673.5, 1230. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(50,-144).jpg
+Scale: 0.55 Circle Match: 77.11218595504761%
+Circle Coordinates :  [array([262.5, 296. ]), array([785.5, 293. ]), array([169.5, 852. ]), array([ 673.5, 1230. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(50,-73).jpg
+Scale: 0.55 Circle Match: 64.17180895805359%
+Circle Coordinates :  [array([262.5, 340. ]), array([785.5, 338. ]), array([265.5, 768. ]), array([790.5, 766. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(50,-2).jpg
+Scale: 0.55 Circle Match: 74.52647089958191%
+Circle Coordinates :  [array([262.5, 385. ]), array([785.5, 382. ]), array([265.5, 812. ]), array([790.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(50,69).jpg
+Scale: 0.55 Circle Match: 76.2183129787445%
+Circle Coordinates :  [array([262.5, 429. ]), array([785.5, 426. ]), array([265.5, 856. ]), array([790.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(50,140).jpg
+Scale: 0.55 Circle Match: 65.02472758293152%
+Circle Coordinates :  [array([262.5, 474. ]), array([785.5, 471. ]), array([265.5, 901. ]), array([790.5, 899. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(50,211).jpg
+Scale: 0.55 Circle Match: 75.98055601119995%
+Circle Coordinates :  [array([262.5, 518. ]), array([785.5, 515. ]), array([265.5, 945. ]), array([790.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(50,282).jpg
+Scale: 0.55 Circle Match: 74.86932277679443%
+Circle Coordinates :  [array([262.5, 562. ]), array([785.5, 559. ]), array([265.5, 989. ]), array([790.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(100,-286).jpg
+Scale: 0.55 Circle Match: 71.14691734313965%
+Circle Coordinates :  [array([293.5, 207. ]), array([817.5, 205. ]), array([233.5, 851. ]), array([ 673.5, 1230. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(100,-215).jpg
+Scale: 0.55 Circle Match: 76.59914493560791%
+Circle Coordinates :  [array([293.5, 252. ]), array([817.5, 249. ]), array([233.5, 851. ]), array([615.5, 768. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(100,-144).jpg
+Scale: 0.55 Circle Match: 81.27196431159973%
+Circle Coordinates :  [array([293.5, 296. ]), array([817.5, 293. ]), array([233.5, 851. ]), array([615.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(100,-73).jpg
+Scale: 0.55 Circle Match: 67.963308095932%
+Circle Coordinates :  [array([293.5, 340. ]), array([817.5, 338. ]), array([296.5, 768. ]), array([821.5, 766. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(100,-2).jpg
+Scale: 0.55 Circle Match: 78.4260094165802%
+Circle Coordinates :  [array([293.5, 385. ]), array([817.5, 382. ]), array([296.5, 812. ]), array([821.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(100,69).jpg
+Scale: 0.55 Circle Match: 80.37112355232239%
+Circle Coordinates :  [array([293.5, 429. ]), array([817.5, 426. ]), array([296.5, 856. ]), array([821.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(100,140).jpg
+Scale: 0.55 Circle Match: 65.23385643959045%
+Circle Coordinates :  [array([293.5, 474. ]), array([817.5, 471. ]), array([296.5, 901. ]), array([821.5, 899. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(100,211).jpg
+Scale: 0.55 Circle Match: 79.91833686828613%
+Circle Coordinates :  [array([293.5, 518. ]), array([817.5, 515. ]), array([296.5, 945. ]), array([821.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(100,282).jpg
+Scale: 0.55 Circle Match: 78.9583146572113%
+Circle Coordinates :  [array([293.5, 562. ]), array([817.5, 559. ]), array([296.5, 989. ]), array([821.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(150,-286).jpg
+Scale: 0.55 Circle Match: 67.93519258499146%
+Circle Coordinates :  [array([324.5, 207. ]), array([848.5, 205. ]), array([233.5, 851. ]), array([611.5, 855. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(150,-215).jpg
+Scale: 0.55 Circle Match: 74.03069734573364%
+Circle Coordinates :  [array([324.5, 252. ]), array([848.5, 249. ]), array([233.5, 851. ]), array([563.5, 767. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(150,-144).jpg
+Scale: 0.55 Circle Match: 78.18397879600525%
+Circle Coordinates :  [array([324.5, 296. ]), array([848.5, 293. ]), array([233.5, 851. ]), array([563.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(150,-73).jpg
+Scale: 0.55 Circle Match: 64.76616859436035%
+Circle Coordinates :  [array([324.5, 340. ]), array([848.5, 338. ]), array([327.5, 768. ]), array([852.5, 766. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(150,-2).jpg
+Scale: 0.55 Circle Match: 75.60167908668518%
+Circle Coordinates :  [array([324.5, 385. ]), array([848.5, 382. ]), array([327.5, 812. ]), array([852.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(150,69).jpg
+Scale: 0.55 Circle Match: 77.22283601760864%
+Circle Coordinates :  [array([324.5, 429. ]), array([848.5, 426. ]), array([327.5, 856. ]), array([852.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(150,140).jpg
+Scale: 0.55 Circle Match: 63.77434730529785%
+Circle Coordinates :  [array([324.5, 474. ]), array([848.5, 471. ]), array([327.5, 901. ]), array([852.5, 899. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(150,211).jpg
+Scale: 0.55 Circle Match: 76.93373560905457%
+Circle Coordinates :  [array([324.5, 518. ]), array([848.5, 515. ]), array([327.5, 945. ]), array([852.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(150,282).jpg
+Scale: 0.55 Circle Match: 75.78255534172058%
+Circle Coordinates :  [array([324.5, 562. ]), array([848.5, 559. ]), array([327.5, 989. ]), array([852.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(200,-286).jpg
+Scale: 0.55 Circle Match: 58.071935176849365%
+Circle Coordinates :  [array([355.5, 207. ]), array([879.5, 205. ]), array([233.5, 851. ]), array([642.5, 855. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(200,-215).jpg
+Scale: 0.55 Circle Match: 68.85227560997009%
+Circle Coordinates :  [array([355.5, 252. ]), array([879.5, 249. ]), array([233.5, 851. ]), array([570.5, 767. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(200,-144).jpg
+Scale: 0.55 Circle Match: 67.43991374969482%
+Circle Coordinates :  [array([355.5, 296. ]), array([879.5, 293. ]), array([233.5, 851. ]), array([570.5, 811. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(200,-73).jpg
+Scale: 0.55 Circle Match: 60.136449337005615%
+Circle Coordinates :  [array([355.5, 340. ]), array([879.5, 338. ]), array([359.5, 768. ]), array([883.5, 766. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(200,-2).jpg
+Scale: 0.55 Circle Match: 69.02449131011963%
+Circle Coordinates :  [array([355.5, 385. ]), array([879.5, 382. ]), array([359.5, 812. ]), array([883.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(200,69).jpg
+Scale: 0.55 Circle Match: 66.58512353897095%
+Circle Coordinates :  [array([355.5, 429. ]), array([879.5, 426. ]), array([359.5, 856. ]), array([883.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(200,140).jpg
+Scale: 0.55 Circle Match: 62.64305114746094%
+Circle Coordinates :  [array([355.5, 474. ]), array([879.5, 471. ]), array([359.5, 901. ]), array([883.5, 899. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(200,211).jpg
+Scale: 0.55 Circle Match: 68.81049871444702%
+Circle Coordinates :  [array([355.5, 518. ]), array([879.5, 515. ]), array([359.5, 945. ]), array([883.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_01_mov(200,282).jpg
+Scale: 0.55 Circle Match: 65.30564427375793%
+Circle Coordinates :  [array([355.5, 562. ]), array([879.5, 559. ]), array([359.5, 989. ]), array([883.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-200,-286).jpg
+Scale: 0.55 Circle Match: 73.615562915802%
+Circle Coordinates :  [array([104.5, 209. ]), array([628.5, 205. ]), array([388.5, 857. ]), array([525.5, 905. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-200,-215).jpg
+Scale: 0.55 Circle Match: 66.91950559616089%
+Circle Coordinates :  [array([104.5, 254. ]), array([634.5, 677. ]), array([388.5, 901. ]), array([601.5, 950. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-200,-144).jpg
+Scale: 0.55 Circle Match: 77.47318744659424%
+Circle Coordinates :  [array([104.5, 298. ]), array([628.5, 294. ]), array([321.5, 812. ]), array([525.5, 994. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-200,-73).jpg
+Scale: 0.55 Circle Match: 71.43766283988953%
+Circle Coordinates :  [array([104.5, 342. ]), array([628.5, 338. ]), array([109.5, 769. ]), array([634.5, 765. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-200,-2).jpg
+Scale: 0.55 Circle Match: 69.44116353988647%
+Circle Coordinates :  [array([104.5, 387. ]), array([628.5, 382. ]), array([109.5, 814. ]), array([634.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-200,69).jpg
+Scale: 0.55 Circle Match: 77.75167226791382%
+Circle Coordinates :  [array([104.5, 431. ]), array([628.5, 427. ]), array([109.5, 858. ]), array([634.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-200,140).jpg
+Scale: 0.55 Circle Match: 68.94105672836304%
+Circle Coordinates :  [array([104.5, 475. ]), array([628.5, 471. ]), array([109.5, 902. ]), array([634.5, 899. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-200,211).jpg
+Scale: 0.55 Circle Match: 71.67924046516418%
+Circle Coordinates :  [array([104.5, 520. ]), array([628.5, 515. ]), array([109.5, 947. ]), array([634.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-200,282).jpg
+Scale: 0.55 Circle Match: 77.60958075523376%
+Circle Coordinates :  [array([104.5, 564. ]), array([628.5, 560. ]), array([109.5, 991. ]), array([634.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-150,-286).jpg
+Scale: 0.55 Circle Match: 62.732380628585815%
+Circle Coordinates :  [array([135.5, 209. ]), array([665.5, 632. ]), array([419.5, 857. ]), array([537.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-150,-215).jpg
+Scale: 0.55 Circle Match: 58.696144819259644%
+Circle Coordinates :  [array([135.5, 254. ]), array([665.5, 677. ]), array([419.5, 901. ]), array([537.5, 898. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-150,-144).jpg
+Scale: 0.55 Circle Match: 66.86975359916687%
+Circle Coordinates :  [array([135.5, 298. ]), array([660.5, 294. ]), array([419.5, 945. ]), array([537.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-150,-73).jpg
+Scale: 0.55 Circle Match: 60.673874616622925%
+Circle Coordinates :  [array([135.5, 342. ]), array([659.5, 338. ]), array([141.5, 769. ]), array([665.5, 765. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-150,-2).jpg
+Scale: 0.55 Circle Match: 60.77719330787659%
+Circle Coordinates :  [array([135.5, 387. ]), array([659.5, 382. ]), array([141.5, 814. ]), array([665.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-150,69).jpg
+Scale: 0.55 Circle Match: 66.9283390045166%
+Circle Coordinates :  [array([135.5, 431. ]), array([660.5, 427. ]), array([141.5, 858. ]), array([665.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-150,140).jpg
+Scale: 0.55 Circle Match: 58.437734842300415%
+Circle Coordinates :  [array([135.5, 475. ]), array([659.5, 471. ]), array([141.5, 902. ]), array([665.5, 899. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-150,211).jpg
+Scale: 0.55 Circle Match: 62.55593299865723%
+Circle Coordinates :  [array([135.5, 520. ]), array([659.5, 515. ]), array([141.5, 947. ]), array([665.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-150,282).jpg
+Scale: 0.55 Circle Match: 66.66455864906311%
+Circle Coordinates :  [array([135.5, 564. ]), array([660.5, 560. ]), array([141.5, 991. ]), array([665.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-100,-286).jpg
+Scale: 0.55 Circle Match: 72.62728214263916%
+Circle Coordinates :  [array([167.5, 209. ]), array([691.5, 205. ]), array([450.5, 857. ]), array([568.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-100,-215).jpg
+Scale: 0.55 Circle Match: 65.85991382598877%
+Circle Coordinates :  [array([167.5, 254. ]), array([691.5, 249. ]), array([450.5, 901. ]), array([568.5, 898. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-100,-144).jpg
+Scale: 0.55 Circle Match: 76.20119452476501%
+Circle Coordinates :  [array([167.5, 298. ]), array([691.5, 294. ]), array([450.5, 945. ]), array([568.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-100,-73).jpg
+Scale: 0.55 Circle Match: 70.57186365127563%
+Circle Coordinates :  [array([167.5, 342. ]), array([691.5, 338. ]), array([172.5, 769. ]), array([697.5, 765. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-100,-2).jpg
+Scale: 0.55 Circle Match: 68.43329071998596%
+Circle Coordinates :  [array([167.5, 387. ]), array([691.5, 382. ]), array([172.5, 814. ]), array([696.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-100,69).jpg
+Scale: 0.55 Circle Match: 76.43527388572693%
+Circle Coordinates :  [array([167.5, 431. ]), array([691.5, 427. ]), array([172.5, 858. ]), array([697.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-100,140).jpg
+Scale: 0.55 Circle Match: 68.37437748908997%
+Circle Coordinates :  [array([167.5, 475. ]), array([691.5, 471. ]), array([172.5, 902. ]), array([696.5, 899. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-100,211).jpg
+Scale: 0.55 Circle Match: 70.66811919212341%
+Circle Coordinates :  [array([167.5, 520. ]), array([691.5, 515. ]), array([172.5, 947. ]), array([696.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-100,282).jpg
+Scale: 0.55 Circle Match: 76.24778151512146%
+Circle Coordinates :  [array([167.5, 564. ]), array([691.5, 560. ]), array([172.5, 991. ]), array([697.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-50,-286).jpg
+Scale: 0.55 Circle Match: 76.78202986717224%
+Circle Coordinates :  [array([198.5, 209. ]), array([722.5, 205. ]), array([481.5, 857. ]), array([599.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-50,-215).jpg
+Scale: 0.55 Circle Match: 69.10306215286255%
+Circle Coordinates :  [array([198.5, 254. ]), array([728.5, 677. ]), array([481.5, 901. ]), array([522.5, 767. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-50,-144).jpg
+Scale: 0.55 Circle Match: 80.36224842071533%
+Circle Coordinates :  [array([198.5, 298. ]), array([722.5, 294. ]), array([415.5, 812. ]), array([599.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-50,-73).jpg
+Scale: 0.55 Circle Match: 74.63122010231018%
+Circle Coordinates :  [array([198.5, 342. ]), array([722.5, 338. ]), array([203.5, 769. ]), array([728.5, 765. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-50,-2).jpg
+Scale: 0.55 Circle Match: 71.77728414535522%
+Circle Coordinates :  [array([198.5, 387. ]), array([722.5, 382. ]), array([203.5, 814. ]), array([728.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-50,69).jpg
+Scale: 0.55 Circle Match: 80.68219423294067%
+Circle Coordinates :  [array([198.5, 431. ]), array([722.5, 427. ]), array([203.5, 858. ]), array([728.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-50,140).jpg
+Scale: 0.55 Circle Match: 72.2360908985138%
+Circle Coordinates :  [array([198.5, 475. ]), array([722.5, 471. ]), array([203.5, 902. ]), array([728.5, 899. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-50,211).jpg
+Scale: 0.55 Circle Match: 74.19527173042297%
+Circle Coordinates :  [array([198.5, 520. ]), array([722.5, 515. ]), array([203.5, 947. ]), array([728.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(-50,282).jpg
+Scale: 0.55 Circle Match: 80.55323362350464%
+Circle Coordinates :  [array([198.5, 564. ]), array([722.5, 560. ]), array([203.5, 991. ]), array([728.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(50,-286).jpg
+Scale: 0.55 Circle Match: 62.732380628585815%
+Circle Coordinates :  [array([260.5, 209. ]), array([790.5, 632. ]), array([326.5, 765. ]), array([662.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(50,-215).jpg
+Scale: 0.55 Circle Match: 58.696162700653076%
+Circle Coordinates :  [array([260.5, 254. ]), array([790.5, 677. ]), array([477.5, 767. ]), array([544.5, 901. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(50,-144).jpg
+Scale: 0.55 Circle Match: 66.86978340148926%
+Circle Coordinates :  [array([260.5, 298. ]), array([785.5, 294. ]), array([477.5, 812. ]), array([544.5, 945. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(50,-73).jpg
+Scale: 0.55 Circle Match: 60.67388653755188%
+Circle Coordinates :  [array([260.5, 342. ]), array([784.5, 338. ]), array([266.5, 769. ]), array([790.5, 765. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(50,-2).jpg
+Scale: 0.55 Circle Match: 60.77719330787659%
+Circle Coordinates :  [array([260.5, 387. ]), array([784.5, 382. ]), array([266.5, 814. ]), array([790.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(50,69).jpg
+Scale: 0.55 Circle Match: 66.92835688591003%
+Circle Coordinates :  [array([260.5, 431. ]), array([785.5, 427. ]), array([266.5, 858. ]), array([790.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(50,140).jpg
+Scale: 0.55 Circle Match: 58.43774676322937%
+Circle Coordinates :  [array([260.5, 475. ]), array([784.5, 471. ]), array([266.5, 902. ]), array([790.5, 899. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(50,211).jpg
+Scale: 0.55 Circle Match: 62.55593299865723%
+Circle Coordinates :  [array([260.5, 520. ]), array([784.5, 515. ]), array([266.5, 947. ]), array([790.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(50,282).jpg
+Scale: 0.55 Circle Match: 66.66457056999207%
+Circle Coordinates :  [array([260.5, 564. ]), array([785.5, 560. ]), array([266.5, 991. ]), array([790.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(100,-286).jpg
+Scale: 0.55 Circle Match: 72.6272702217102%
+Circle Coordinates :  [array([292.5, 209. ]), array([816.5, 205. ]), array([423.5, 855. ]), array([693.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(100,-215).jpg
+Scale: 0.55 Circle Match: 65.85991382598877%
+Circle Coordinates :  [array([292.5, 254. ]), array([816.5, 249. ]), array([460.5, 778. ]), array([575.5, 901. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(100,-144).jpg
+Scale: 0.55 Circle Match: 76.20119452476501%
+Circle Coordinates :  [array([292.5, 298. ]), array([816.5, 294. ]), array([357.5, 853. ]), array([693.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(100,-73).jpg
+Scale: 0.55 Circle Match: 70.57188153266907%
+Circle Coordinates :  [array([292.5, 342. ]), array([816.5, 338. ]), array([297.5, 769. ]), array([822.5, 765. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(100,-2).jpg
+Scale: 0.55 Circle Match: 68.43329071998596%
+Circle Coordinates :  [array([292.5, 387. ]), array([816.5, 382. ]), array([297.5, 814. ]), array([821.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(100,69).jpg
+Scale: 0.55 Circle Match: 76.43527388572693%
+Circle Coordinates :  [array([292.5, 431. ]), array([816.5, 427. ]), array([297.5, 858. ]), array([822.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(100,140).jpg
+Scale: 0.55 Circle Match: 68.37436556816101%
+Circle Coordinates :  [array([292.5, 475. ]), array([816.5, 471. ]), array([297.5, 902. ]), array([821.5, 899. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(100,211).jpg
+Scale: 0.55 Circle Match: 70.66811919212341%
+Circle Coordinates :  [array([292.5, 520. ]), array([816.5, 515. ]), array([297.5, 947. ]), array([821.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(100,282).jpg
+Scale: 0.55 Circle Match: 76.24778151512146%
+Circle Coordinates :  [array([292.5, 564. ]), array([816.5, 560. ]), array([297.5, 991. ]), array([822.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(150,-286).jpg
+Scale: 0.55 Circle Match: 76.78202986717224%
+Circle Coordinates :  [array([323.5, 209. ]), array([847.5, 205. ]), array([460.5, 855. ]), array([724.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(150,-215).jpg
+Scale: 0.55 Circle Match: 69.10306215286255%
+Circle Coordinates :  [array([323.5, 254. ]), array([853.5, 677. ]), array([389.5, 809. ]), array([606.5, 901. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(150,-144).jpg
+Scale: 0.55 Circle Match: 80.36224842071533%
+Circle Coordinates :  [array([323.5, 298. ]), array([847.5, 294. ]), array([460.5, 944. ]), array([540.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(150,-73).jpg
+Scale: 0.55 Circle Match: 74.63122010231018%
+Circle Coordinates :  [array([323.5, 342. ]), array([847.5, 338. ]), array([328.5, 769. ]), array([853.5, 765. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(150,-2).jpg
+Scale: 0.55 Circle Match: 71.77728414535522%
+Circle Coordinates :  [array([323.5, 387. ]), array([847.5, 382. ]), array([328.5, 814. ]), array([853.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(150,69).jpg
+Scale: 0.55 Circle Match: 80.68219423294067%
+Circle Coordinates :  [array([323.5, 431. ]), array([847.5, 427. ]), array([328.5, 858. ]), array([853.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(150,140).jpg
+Scale: 0.55 Circle Match: 72.2360908985138%
+Circle Coordinates :  [array([323.5, 475. ]), array([847.5, 471. ]), array([328.5, 902. ]), array([853.5, 899. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(150,211).jpg
+Scale: 0.55 Circle Match: 74.19527173042297%
+Circle Coordinates :  [array([323.5, 520. ]), array([847.5, 515. ]), array([328.5, 947. ]), array([853.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(150,282).jpg
+Scale: 0.55 Circle Match: 80.55323362350464%
+Circle Coordinates :  [array([323.5, 564. ]), array([847.5, 560. ]), array([328.5, 991. ]), array([853.5, 987. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(200,-286).jpg
+Scale: 0.55 Circle Match: 73.61554503440857%
+Circle Coordinates :  [array([354.5, 209. ]), array([878.5, 205. ]), array([420.5, 765. ]), array([638.5, 857. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(200,-215).jpg
+Scale: 0.55 Circle Match: 66.91950559616089%
+Circle Coordinates :  [array([354.5, 254. ]), array([884.5, 677. ]), array([420.5, 809. ]), array([638.5, 901. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(200,-144).jpg
+Scale: 0.55 Circle Match: 77.4731695652008%
+Circle Coordinates :  [array([354.5, 298. ]), array([878.5, 294. ]), array([420.5, 853. ]), array([571.5, 812. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(200,-73).jpg
+Scale: 0.55 Circle Match: 71.43767476081848%
+Circle Coordinates :  [array([354.5, 342. ]), array([878.5, 338. ]), array([359.5, 769. ]), array([884.5, 765. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(200,-2).jpg
+Scale: 0.55 Circle Match: 69.44116353988647%
+Circle Coordinates :  [array([354.5, 387. ]), array([878.5, 382. ]), array([359.5, 814. ]), array([884.5, 810. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(200,69).jpg
+Scale: 0.55 Circle Match: 77.75166034698486%
+Circle Coordinates :  [array([354.5, 431. ]), array([878.5, 427. ]), array([359.5, 858. ]), array([884.5, 854. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(200,140).jpg
+Scale: 0.55 Circle Match: 68.94104480743408%
+Circle Coordinates :  [array([354.5, 475. ]), array([878.5, 471. ]), array([359.5, 902. ]), array([884.5, 899. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(200,211).jpg
+Scale: 0.55 Circle Match: 71.67924046516418%
+Circle Coordinates :  [array([354.5, 520. ]), array([878.5, 515. ]), array([359.5, 947. ]), array([884.5, 943. ])]
+Test:  0
+
+File:  Durgapur_HE_02_mov(200,282).jpg
+Scale: 0.55 Circle Match: 77.60958075523376%
+Circle Coordinates :  [array([354.5, 564. ]), array([878.5, 560. ]), array([359.5, 991. ]), array([884.5, 987. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-200,-286).jpg
+Scale: 0.55 Circle Match: 70.93521356582642%
+Circle Coordinates :  [array([115.5, 205. ]), array([637.5, 209. ]), array([ 449.5, 1178. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-200,-215).jpg
+Scale: 0.55 Circle Match: 77.63548493385315%
+Circle Coordinates :  [array([115.5, 249. ]), array([637.5, 253. ]), array([ 449.5, 1178. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-200,-144).jpg
+Scale: 0.55 Circle Match: 66.84032678604126%
+Circle Coordinates :  [array([115.5, 293. ]), array([637.5, 297. ]), array([ 449.5, 1178. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-200,-73).jpg
+Scale: 0.55 Circle Match: 72.39049673080444%
+Circle Coordinates :  [array([115.5, 338. ]), array([637.5, 342. ]), array([113.5, 762. ]), array([635.5, 767. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-200,-2).jpg
+Scale: 0.55 Circle Match: 77.19652652740479%
+Circle Coordinates :  [array([115.5, 382. ]), array([637.5, 386. ]), array([113.5, 807. ]), array([635.5, 811. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-200,69).jpg
+Scale: 0.55 Circle Match: 64.73116278648376%
+Circle Coordinates :  [array([115.5, 426. ]), array([637.5, 430. ]), array([113.5, 851. ]), array([635.5, 855. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-200,140).jpg
+Scale: 0.55 Circle Match: 73.83551597595215%
+Circle Coordinates :  [array([115.5, 471. ]), array([637.5, 475. ]), array([113.5, 895. ]), array([635.5, 900. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-200,211).jpg
+Scale: 0.55 Circle Match: 76.43546462059021%
+Circle Coordinates :  [array([115.5, 515. ]), array([637.5, 519. ]), array([113.5, 940. ]), array([635.5, 944. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-200,282).jpg
+Scale: 0.55 Circle Match: 62.32647895812988%
+Circle Coordinates :  [array([115.5, 559. ]), array([637.5, 563. ]), array([113.5, 984. ]), array([635.5, 988. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-150,-286).jpg
+Scale: 0.55 Circle Match: 63.374173641204834%
+Circle Coordinates :  [array([146.5, 205. ]), array([668.5, 209. ]), array([ 449.5, 1178. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-150,-215).jpg
+Scale: 0.55 Circle Match: 69.39663887023926%
+Circle Coordinates :  [array([146.5, 249. ]), array([668.5, 253. ]), array([ 449.5, 1178. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-150,-144).jpg
+Scale: 0.55 Circle Match: 58.82827639579773%
+Circle Coordinates :  [array([146.5, 293. ]), array([668.5, 297. ]), array([ 449.5, 1178. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-150,-73).jpg
+Scale: 0.55 Circle Match: 64.68186378479004%
+Circle Coordinates :  [array([146.5, 338. ]), array([668.5, 342. ]), array([145.5, 762. ]), array([666.5, 767. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-150,-2).jpg
+Scale: 0.55 Circle Match: 68.97424459457397%
+Circle Coordinates :  [array([146.5, 382. ]), array([668.5, 386. ]), array([145.5, 807. ]), array([666.5, 811. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-150,69).jpg
+Scale: 0.55 Circle Match: 56.80205225944519%
+Circle Coordinates :  [array([146.5, 426. ]), array([668.5, 430. ]), array([145.5, 851. ]), array([666.5, 855. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-150,140).jpg
+Scale: 0.55 Circle Match: 65.9877359867096%
+Circle Coordinates :  [array([146.5, 471. ]), array([668.5, 475. ]), array([145.5, 895. ]), array([666.5, 900. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-150,211).jpg
+Scale: 0.55 Circle Match: 68.16156506538391%
+Circle Coordinates :  [array([146.5, 515. ]), array([668.5, 519. ]), array([145.5, 940. ]), array([666.5, 944. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-150,282).jpg
+No matchings for given scaleRange & thresholdCircle (0.35, 0.95) 0.55 non lon
+No matchingsERRRRR
+File already moved
+Circle Coordinates :  []
+Durgapur_JE_07_mov(-150,282).jpg Unable to find enough points!
+Test:  -1
+
+File:  Durgapur_JE_07_mov(-100,-286).jpg
+Scale: 0.55 Circle Match: 65.84070324897766%
+Circle Coordinates :  [array([178.5, 205. ]), array([699.5, 209. ]), array([ 449.5, 1178. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-100,-215).jpg
+Scale: 0.55 Circle Match: 71.8478798866272%
+Circle Coordinates :  [array([178.5, 249. ]), array([699.5, 253. ]), array([ 449.5, 1178. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-100,-144).jpg
+Scale: 0.55 Circle Match: 62.22854256629944%
+Circle Coordinates :  [array([178.5, 293. ]), array([699.5, 297. ]), array([409.5, 803. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-100,-73).jpg
+Scale: 0.55 Circle Match: 67.10371375083923%
+Circle Coordinates :  [array([178.5, 338. ]), array([699.5, 342. ]), array([176.5, 762. ]), array([698.5, 767. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-100,-2).jpg
+Scale: 0.55 Circle Match: 71.4739739894867%
+Circle Coordinates :  [array([178.5, 382. ]), array([699.5, 386. ]), array([176.5, 807. ]), array([698.5, 811. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-100,69).jpg
+Scale: 0.55 Circle Match: 60.31946539878845%
+Circle Coordinates :  [array([178.5, 426. ]), array([699.5, 430. ]), array([176.5, 851. ]), array([698.5, 855. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-100,140).jpg
+Scale: 0.55 Circle Match: 68.4375524520874%
+Circle Coordinates :  [array([178.5, 471. ]), array([699.5, 475. ]), array([176.5, 895. ]), array([698.5, 900. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-100,211).jpg
+Scale: 0.55 Circle Match: 70.7888126373291%
+Circle Coordinates :  [array([178.5, 515. ]), array([699.5, 519. ]), array([176.5, 940. ]), array([698.5, 944. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-100,282).jpg
+Scale: 0.55 Circle Match: 58.21064114570618%
+Circle Coordinates :  [array([178.5, 559. ]), array([699.5, 563. ]), array([176.5, 984. ]), array([698.5, 989. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-50,-286).jpg
+Scale: 0.55 Circle Match: 71.62445187568665%
+Circle Coordinates :  [array([209.5, 205. ]), array([729.5, 634. ]), array([ 449.5, 1178. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-50,-215).jpg
+Scale: 0.55 Circle Match: 77.95541286468506%
+Circle Coordinates :  [array([209.5, 249. ]), array([729.5, 678. ]), array([ 449.5, 1178. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-50,-144).jpg
+Scale: 0.55 Circle Match: 67.7182137966156%
+Circle Coordinates :  [array([209.5, 293. ]), array([730.5, 297. ]), array([ 449.5, 1178. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-50,-73).jpg
+Scale: 0.55 Circle Match: 73.00307750701904%
+Circle Coordinates :  [array([209.5, 338. ]), array([731.5, 342. ]), array([207.5, 762. ]), array([729.5, 767. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-50,-2).jpg
+Scale: 0.55 Circle Match: 77.53475904464722%
+Circle Coordinates :  [array([209.5, 382. ]), array([731.5, 386. ]), array([207.5, 807. ]), array([729.5, 811. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-50,69).jpg
+Scale: 0.55 Circle Match: 65.62438011169434%
+Circle Coordinates :  [array([209.5, 426. ]), array([730.5, 430. ]), array([207.5, 851. ]), array([729.5, 855. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-50,140).jpg
+Scale: 0.55 Circle Match: 74.40743446350098%
+Circle Coordinates :  [array([209.5, 471. ]), array([731.5, 475. ]), array([207.5, 895. ]), array([729.5, 900. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-50,211).jpg
+Scale: 0.55 Circle Match: 76.77818536758423%
+        print('Circle coordinates : ',list(four_pts))
+Circle Coordinates :  [array([209.5, 515. ]), array([731.5, 519. ]), array([207.5, 940. ]), array([729.5, 944. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(-50,282).jpg
+Scale: 0.55 Circle Match: 63.33549618721008%
+Circle Coordinates :  [array([209.5, 559. ]), array([730.5, 563. ]), array([207.5, 984. ]), array([729.5, 988. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(50,-286).jpg
+Scale: 0.55 Circle Match: 63.374173641204834%
+Circle Coordinates :  [array([271.5, 205. ]), array([793.5, 209. ]), array([169.5, 851. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(50,-215).jpg
+Scale: 0.55 Circle Match: 69.39665675163269%
+Circle Coordinates :  [array([271.5, 249. ]), array([793.5, 253. ]), array([169.5, 851. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(50,-144).jpg
+Scale: 0.55 Circle Match: 58.82827639579773%
+Circle Coordinates :  [array([271.5, 293. ]), array([793.5, 297. ]), array([169.5, 851. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(50,-73).jpg
+Scale: 0.55 Circle Match: 64.6818459033966%
+Circle Coordinates :  [array([271.5, 338. ]), array([793.5, 342. ]), array([270.5, 762. ]), array([791.5, 767. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(50,-2).jpg
+Scale: 0.55 Circle Match: 68.97424459457397%
+Circle Coordinates :  [array([271.5, 382. ]), array([793.5, 386. ]), array([270.5, 807. ]), array([791.5, 811. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(50,69).jpg
+Scale: 0.55 Circle Match: 56.80205225944519%
+Circle Coordinates :  [array([271.5, 426. ]), array([793.5, 430. ]), array([270.5, 851. ]), array([791.5, 855. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(50,140).jpg
+Scale: 0.55 Circle Match: 65.9877359867096%
+Circle Coordinates :  [array([271.5, 471. ]), array([793.5, 475. ]), array([270.5, 895. ]), array([791.5, 900. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(50,211).jpg
+Scale: 0.55 Circle Match: 68.16156506538391%
+Circle Coordinates :  [array([271.5, 515. ]), array([793.5, 519. ]), array([270.5, 940. ]), array([791.5, 944. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(50,282).jpg
+No matchings for given scaleRange & thresholdCircle (0.35, 0.95) 0.55 non lon
+No matchingsERRRRR
+File already moved
+Circle Coordinates :  []
+Durgapur_JE_07_mov(50,282).jpg Unable to find enough points!
+Test:  -1
+
+File:  Durgapur_JE_07_mov(100,-286).jpg
+Scale: 0.55 Circle Match: 65.84070324897766%
+Circle Coordinates :  [array([303.5, 205. ]), array([824.5, 209. ]), array([233.5, 850. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(100,-215).jpg
+Scale: 0.55 Circle Match: 71.8478798866272%
+Circle Coordinates :  [array([303.5, 249. ]), array([824.5, 253. ]), array([233.5, 850. ]), array([617.5, 760. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(100,-144).jpg
+Scale: 0.55 Circle Match: 62.22854256629944%
+Circle Coordinates :  [array([303.5, 293. ]), array([824.5, 297. ]), array([233.5, 850. ]), array([617.5, 804. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(100,-73).jpg
+Scale: 0.55 Circle Match: 67.10371375083923%
+Circle Coordinates :  [array([303.5, 338. ]), array([824.5, 342. ]), array([301.5, 762. ]), array([823.5, 767. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(100,-2).jpg
+Scale: 0.55 Circle Match: 71.47396206855774%
+Circle Coordinates :  [array([303.5, 382. ]), array([824.5, 386. ]), array([301.5, 807. ]), array([823.5, 811. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(100,69).jpg
+Scale: 0.55 Circle Match: 60.319483280181885%
+Circle Coordinates :  [array([303.5, 426. ]), array([824.5, 430. ]), array([301.5, 851. ]), array([823.5, 855. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(100,140).jpg
+Scale: 0.55 Circle Match: 68.4375524520874%
+Circle Coordinates :  [array([303.5, 471. ]), array([824.5, 475. ]), array([301.5, 895. ]), array([823.5, 900. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(100,211).jpg
+Scale: 0.55 Circle Match: 70.7888126373291%
+Circle Coordinates :  [array([303.5, 515. ]), array([824.5, 519. ]), array([301.5, 940. ]), array([823.5, 944. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(100,282).jpg
+Scale: 0.55 Circle Match: 58.21064114570618%
+Circle Coordinates :  [array([303.5, 559. ]), array([824.5, 563. ]), array([301.5, 984. ]), array([823.5, 989. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(150,-286).jpg
+Scale: 0.55 Circle Match: 71.62445187568665%
+Circle Coordinates :  [array([334.5, 205. ]), array([854.5, 634. ]), array([233.5, 850. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(150,-215).jpg
+ Scale: 0.55 Circle Match: 77.95541286468506%
+Circle Coordinates :  [array([334.5, 249. ]), array([854.5, 678. ]), array([233.5, 850. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(150,-144).jpg
+Scale: 0.55 Circle Match: 67.71822571754456%
+Circle Coordinates :  [array([334.5, 293. ]), array([855.5, 297. ]), array([233.5, 850. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(150,-73).jpg
+Scale: 0.55 Circle Match: 73.00310134887695%
+Circle Coordinates :  [array([334.5, 338. ]), array([856.5, 342. ]), array([332.5, 762. ]), array([854.5, 767. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(150,-2).jpg
+Scale: 0.55 Circle Match: 77.53474712371826%
+Circle Coordinates :  [array([334.5, 382. ]), array([856.5, 386. ]), array([332.5, 807. ]), array([854.5, 811. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(150,69).jpg
+Scale: 0.55 Circle Match: 65.62438011169434%
+Circle Coordinates :  [array([334.5, 426. ]), array([855.5, 430. ]), array([332.5, 851. ]), array([854.5, 855. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(150,140).jpg
+Scale: 0.55 Circle Match: 74.40743446350098%
+Circle Coordinates :  [array([334.5, 471. ]), array([856.5, 475. ]), array([332.5, 895. ]), array([854.5, 900. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(150,211).jpg
+Scale: 0.55 Circle Match: 76.77818536758423%
+Circle Coordinates :  [array([334.5, 515. ]), array([856.5, 519. ]), array([332.5, 940. ]), array([854.5, 944. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(150,282).jpg
+Scale: 0.55 Circle Match: 63.33548426628113%
+Circle Coordinates :  [array([334.5, 559. ]), array([855.5, 563. ]), array([332.5, 984. ]), array([854.5, 988. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(200,-286).jpg
+Scale: 0.55 Circle Match: 70.93521356582642%
+Circle Coordinates :  [array([365.5, 205. ]), array([887.5, 209. ]), array([233.5, 850. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(200,-215).jpg
+Scale: 0.55 Circle Match: 77.63548493385315%
+Circle Coordinates :  [array([365.5, 249. ]), array([887.5, 253. ]), array([233.5, 850. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(200,-144).jpg
+Scale: 0.55 Circle Match: 66.84032678604126%
+Circle Coordinates :  [array([365.5, 293. ]), array([887.5, 297. ]), array([233.5, 850. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(200,-73).jpg
+Scale: 0.55 Circle Match: 72.39049673080444%
+Circle Coordinates :  [array([365.5, 338. ]), array([887.5, 342. ]), array([363.5, 762. ]), array([885.5, 767. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(200,-2).jpg
+Scale: 0.55 Circle Match: 77.19652652740479%
+Circle Coordinates :  [array([365.5, 382. ]), array([887.5, 386. ]), array([363.5, 807. ]), array([885.5, 811. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(200,69).jpg
+Scale: 0.55 Circle Match: 64.73116278648376%
+Circle Coordinates :  [array([365.5, 426. ]), array([887.5, 430. ]), array([363.5, 851. ]), array([885.5, 855. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(200,140).jpg
+Scale: 0.55 Circle Match: 73.83551597595215%
+Circle Coordinates :  [array([365.5, 471. ]), array([887.5, 475. ]), array([363.5, 895. ]), array([885.5, 900. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(200,211).jpg
+Scale: 0.55 Circle Match: 76.43548250198364%
+Circle Coordinates :  [array([365.5, 515. ]), array([887.5, 519. ]), array([363.5, 940. ]), array([885.5, 944. ])]
+Test:  0
+
+File:  Durgapur_JE_07_mov(200,282).jpg
+Scale: 0.55 Circle Match: 62.32647895812988%
+Circle Coordinates :  [array([365.5, 559. ]), array([887.5, 563. ]), array([363.5, 984. ]), array([885.5, 988. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-200,-286).jpg
+Scale: 0.55 Circle Match: 65.96719026565552%
+Circle Coordinates :  [array([115.5, 205. ]), array([636.5, 208. ]), array([178.5, 750. ]), array([ 761.5, 1095. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-200,-215).jpg
+Scale: 0.55 Circle Match: 74.33493733406067%
+Circle Coordinates :  [array([115.5, 249. ]), array([636.5, 677. ]), array([307.5, 755. ]), array([ 761.5, 1095. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-200,-144).jpg
+Scale: 0.55 Circle Match: 67.24950671195984%
+Circle Coordinates :  [array([115.5, 293. ]), array([636.5, 297. ]), array([347.5, 801. ]), array([ 761.5, 1095. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-200,-73).jpg
+Scale: 0.55 Circle Match: 66.75822138786316%
+Circle Coordinates :  [array([115.5, 338. ]), array([636.5, 341. ]), array([114.5, 761. ]), array([636.5, 766. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-200,-2).jpg
+Scale: 0.55 Circle Match: 74.25878643989563%
+Circle Coordinates :  [array([115.5, 382. ]), array([636.5, 385. ]), array([114.5, 806. ]), array([636.5, 810. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-200,69).jpg
+Scale: 0.55 Circle Match: 64.17524218559265%
+Circle Coordinates :  [array([115.5, 426. ]), array([636.5, 430. ]), array([114.5, 850. ]), array([636.5, 855. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-200,140).jpg
+Scale: 0.55 Circle Match: 69.54641938209534%
+Circle Coordinates :  [array([115.5, 471. ]), array([636.5, 474. ]), array([114.5, 894. ]), array([636.5, 899. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-200,211).jpg
+Scale: 0.55 Circle Match: 73.6376404762268%
+Circle Coordinates :  [array([115.5, 515. ]), array([636.5, 518. ]), array([114.5, 939. ]), array([636.5, 943. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-200,282).jpg
+Scale: 0.55 Circle Match: 64.32320475578308%
+Circle Coordinates :  [array([115.5, 559. ]), array([636.5, 563. ]), array([114.5, 983. ]), array([636.5, 988. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-150,-286).jpg
+Scale: 0.55 Circle Match: 62.962448596954346%
+Circle Coordinates :  [array([145.5, 628. ]), array([667.5, 633. ]), array([435.5, 897. ]), array([ 761.5, 1095. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-150,-215).jpg
+Scale: 0.55 Circle Match: 65.03422856330872%
+Circle Coordinates :  [array([146.5, 249. ]), array([667.5, 677. ]), array([338.5, 755. ]), array([ 761.5, 1095. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-150,-144).jpg
+Scale: 0.55 Circle Match: 61.579811573028564%
+Circle Coordinates :  [array([146.5, 293. ]), array([667.5, 297. ]), array([338.5, 799. ]), array([ 761.5, 1095. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-150,-73).jpg
+Scale: 0.55 Circle Match: 63.74792456626892%
+Updated Threshold:  0.63747925
+Circle Coordinates :  [array([146.5, 338. ]), array([667.5, 341. ]), array([145.5, 761. ]), array([667.5, 766. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-150,-2).jpg
+Scale: 0.55 Circle Match: 64.91879224777222%
+Circle Coordinates :  [array([146.5, 382. ]), array([667.5, 385. ]), array([145.5, 806. ]), array([667.5, 810. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-150,69).jpg
+Scale: 0.55 Circle Match: 62.340790033340454%
+Circle Coordinates :  [array([146.5, 426. ]), array([667.5, 430. ]), array([145.5, 850. ]), array([667.5, 855. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-150,140).jpg
+Scale: 0.55 Circle Match: 64.06275629997253%
+Updated Threshold:  0.64062756
+Circle Coordinates :  [array([146.5, 471. ]), array([667.5, 474. ]), array([145.5, 894. ]), array([667.5, 899. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-150,211).jpg
+Scale: 0.55 Circle Match: 64.37320113182068%
+Circle Coordinates :  [array([146.5, 515. ]), array([667.5, 518. ]), array([145.5, 939. ]), array([667.5, 943. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-150,282).jpg
+Scale: 0.55 Circle Match: 62.506186962127686%
+Circle Coordinates :  [array([146.5, 559. ]), array([667.5, 563. ]), array([145.5, 983. ]), array([667.5, 988. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-100,-286).jpg
+Scale: 0.55 Circle Match: 64.23015594482422%
+Circle Coordinates :  [array([178.5, 205. ]), array([699.5, 208. ]), array([466.5, 897. ]), array([ 761.5, 1095. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-100,-215).jpg
+Scale: 0.55 Circle Match: 72.90483117103577%
+Circle Coordinates :  [array([178.5, 249. ]), array([698.5, 677. ]), array([466.5, 942. ]), array([ 761.5, 1095. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-100,-144).jpg
+Scale: 0.55 Circle Match: 65.74891805648804%
+Circle Coordinates :  [array([178.5, 293. ]), array([699.5, 297. ]), array([466.5, 986. ]), array([546.5, 804. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-100,-73).jpg
+Scale: 0.55 Circle Match: 65.92391729354858%
+Circle Coordinates :  [array([178.5, 338. ]), array([699.5, 341. ]), array([176.5, 761. ]), array([698.5, 766. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-100,-2).jpg
+Scale: 0.55 Circle Match: 72.85453081130981%
+Circle Coordinates :  [array([178.5, 382. ]), array([699.5, 385. ]), array([176.5, 806. ]), array([698.5, 810. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-100,69).jpg
+Scale: 0.55 Circle Match: 62.746262550354004%
+Circle Coordinates :  [array([178.5, 426. ]), array([699.5, 430. ]), array([176.5, 850. ]), array([698.5, 855. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-100,140).jpg
+Scale: 0.55 Circle Match: 68.47184896469116%
+Circle Coordinates :  [array([178.5, 471. ]), array([699.5, 474. ]), array([176.5, 894. ]), array([698.5, 899. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-100,211).jpg
+Scale: 0.55 Circle Match: 72.2464919090271%
+Circle Coordinates :  [array([178.5, 515. ]), array([699.5, 519. ]), array([176.5, 939. ]), array([698.5, 943. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-100,282).jpg
+Scale: 0.55 Circle Match: 63.56235146522522%
+Circle Coordinates :  [array([178.5, 559. ]), array([699.5, 563. ]), array([176.5, 983. ]), array([698.5, 988. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-50,-286).jpg
+Scale: 0.55 Circle Match: 67.85078644752502%
+Updated Threshold:  0.67850786
+Circle Coordinates :  [array([209.5, 205. ]), array([730.5, 208. ]), array([272.5, 749. ]), array([ 761.5, 1095. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-50,-215).jpg
+Scale: 0.55 Circle Match: 76.800537109375%
+Circle Coordinates :  [array([209.5, 249. ]), array([730.5, 252. ]), array([401.5, 756. ]), array([524.5, 759. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-50,-144).jpg
+Scale: 0.55 Circle Match: 69.7266161441803%
+Circle Coordinates :  [array([209.5, 293. ]), array([730.5, 297. ]), array([441.5, 801. ]), array([524.5, 802. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-50,-73).jpg
+Scale: 0.55 Circle Match: 69.31316256523132%
+Circle Coordinates :  [array([209.5, 338. ]), array([730.5, 341. ]), array([208.5, 761. ]), array([730.5, 766. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-50,-2).jpg
+Scale: 0.55 Circle Match: 76.78253650665283%
+Circle Coordinates :  [array([209.5, 382. ]), array([730.5, 385. ]), array([208.5, 806. ]), array([730.5, 810. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-50,69).jpg
+Scale: 0.55 Circle Match: 66.60081744194031%
+Circle Coordinates :  [array([209.5, 426. ]), array([730.5, 430. ]), array([208.5, 850. ]), array([730.5, 855. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-50,140).jpg
+Scale: 0.55 Circle Match: 72.09805846214294%
+Circle Coordinates :  [array([209.5, 471. ]), array([730.5, 474. ]), array([208.5, 894. ]), array([730.5, 899. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-50,211).jpg
+Scale: 0.55 Circle Match: 76.24281644821167%
+Circle Coordinates :  [array([209.5, 515. ]), array([730.5, 518. ]), array([208.5, 939. ]), array([730.5, 943. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(-50,282).jpg
+Scale: 0.55 Circle Match: 66.63311719894409%
+Circle Coordinates :  [array([209.5, 559. ]), array([730.5, 563. ]), array([208.5, 983. ]), array([730.5, 988. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(50,-286).jpg
+Scale: 0.55 Circle Match: 62.962448596954346%
+Circle Coordinates :  [array([270.5, 628. ]), array([792.5, 633. ]), array([328.5, 750. ]), array([560.5, 897. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(50,-215).jpg
+Scale: 0.55 Circle Match: 65.03424048423767%
+Circle Coordinates :  [array([271.5, 249. ]), array([792.5, 677. ]), array([463.5, 755. ]), array([560.5, 942. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(50,-144).jpg
+Scale: 0.55 Circle Match: 61.579811573028564%
+Circle Coordinates :  [array([271.5, 293. ]), array([792.5, 297. ]), array([463.5, 799. ]), array([560.5, 986. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(50,-73).jpg
+Scale: 0.55 Circle Match: 63.74792456626892%
+Circle Coordinates :  [array([271.5, 338. ]), array([792.5, 341. ]), array([270.5, 761. ]), array([792.5, 766. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(50,-2).jpg
+Scale: 0.55 Circle Match: 64.91879224777222%
+Circle Coordinates :  [array([271.5, 382. ]), array([792.5, 385. ]), array([270.5, 806. ]), array([792.5, 810. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(50,69).jpg
+Scale: 0.55 Circle Match: 62.340790033340454%
+Circle Coordinates :  [array([271.5, 426. ]), array([792.5, 430. ]), array([270.5, 850. ]), array([792.5, 855. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(50,140).jpg
+Scale: 0.55 Circle Match: 64.06275629997253%
+Circle Coordinates :  [array([271.5, 471. ]), array([792.5, 474. ]), array([270.5, 894. ]), array([792.5, 899. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(50,211).jpg
+Scale: 0.55 Circle Match: 64.37320113182068%
+Circle Coordinates :  [array([271.5, 515. ]), array([792.5, 518. ]), array([270.5, 939. ]), array([792.5, 943. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(50,282).jpg
+Scale: 0.55 Circle Match: 62.506186962127686%
+Circle Coordinates :  [array([271.5, 559. ]), array([792.5, 563. ]), array([270.5, 983. ]), array([792.5, 988. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(100,-286).jpg
+Scale: 0.55 Circle Match: 64.23014402389526%
+Circle Coordinates :  [array([303.5, 205. ]), array([824.5, 208. ]), array([415.5, 843. ]), array([591.5, 897. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(100,-215).jpg
+Scale: 0.55 Circle Match: 72.90483117103577%
+Circle Coordinates :  [array([303.5, 249. ]), array([823.5, 677. ]), array([415.5, 887. ]), array([591.5, 942. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(100,-144).jpg
+Scale: 0.55 Circle Match: 65.74891805648804%
+Circle Coordinates :  [array([303.5, 293. ]), array([824.5, 297. ]), array([415.5, 931. ]), array([591.5, 986. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(100,-73).jpg
+Scale: 0.55 Circle Match: 65.92391729354858%
+Circle Coordinates :  [array([303.5, 338. ]), array([824.5, 341. ]), array([301.5, 761. ]), array([823.5, 766. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(100,-2).jpg
+Scale: 0.55 Circle Match: 72.85453081130981%
+Circle Coordinates :  [array([303.5, 382. ]), array([824.5, 385. ]), array([301.5, 806. ]), array([823.5, 810. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(100,69).jpg
+Scale: 0.55 Circle Match: 62.74627447128296%
+Circle Coordinates :  [array([303.5, 426. ]), array([824.5, 430. ]), array([301.5, 850. ]), array([823.5, 855. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(100,140).jpg
+Scale: 0.55 Circle Match: 68.47184896469116%
+Circle Coordinates :  [array([303.5, 471. ]), array([824.5, 474. ]), array([301.5, 894. ]), array([823.5, 899. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(100,211).jpg
+Scale: 0.55 Circle Match: 72.2464919090271%
+Circle Coordinates :  [array([303.5, 515. ]), array([824.5, 519. ]), array([301.5, 939. ]), array([823.5, 943. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(100,282).jpg
+Scale: 0.55 Circle Match: 63.56232762336731%
+Circle Coordinates :  [array([303.5, 559. ]), array([824.5, 563. ]), array([301.5, 983. ]), array([823.5, 988. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(150,-286).jpg
+Scale: 0.55 Circle Match: 67.85078644752502%
+Circle Coordinates :  [array([334.5, 205. ]), array([855.5, 208. ]), array([397.5, 749. ]), array([622.5, 898. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(150,-215).jpg
+Scale: 0.55 Circle Match: 76.800537109375%
+Circle Coordinates :  [array([334.5, 249. ]), array([855.5, 252. ]), array([397.5, 794. ]), array([526.5, 756. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(150,-144).jpg
+Scale: 0.55 Circle Match: 69.72660422325134%
+Circle Coordinates :  [array([334.5, 293. ]), array([855.5, 297. ]), array([397.5, 838. ]), array([566.5, 801. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(150,-73).jpg
+Scale: 0.55 Circle Match: 69.31317448616028%
+Circle Coordinates :  [array([334.5, 338. ]), array([855.5, 341. ]), array([333.5, 761. ]), array([855.5, 766. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(150,-2).jpg
+Scale: 0.55 Circle Match: 76.78253650665283%
+Circle Coordinates :  [array([334.5, 382. ]), array([855.5, 385. ]), array([333.5, 806. ]), array([855.5, 810. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(150,69).jpg
+Scale: 0.55 Circle Match: 66.60081744194031%
+Circle Coordinates :  [array([334.5, 426. ]), array([855.5, 430. ]), array([333.5, 850. ]), array([855.5, 855. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(150,140).jpg
+Scale: 0.55 Circle Match: 72.09805846214294%
+Circle Coordinates :  [array([334.5, 471. ]), array([855.5, 474. ]), array([333.5, 894. ]), array([855.5, 899. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(150,211).jpg
+Scale: 0.55 Circle Match: 76.24281644821167%
+Circle Coordinates :  [array([334.5, 515. ]), array([855.5, 518. ]), array([333.5, 939. ]), array([855.5, 943. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(150,282).jpg
+Scale: 0.55 Circle Match: 66.63310527801514%
+Circle Coordinates :  [array([334.5, 559. ]), array([855.5, 563. ]), array([333.5, 983. ]), array([855.5, 988. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(200,-286).jpg
+Scale: 0.55 Circle Match: 65.96719026565552%
+Circle Coordinates :  [array([365.5, 205. ]), array([886.5, 208. ]), array([428.5, 750. ]), array([ 761.5, 1095. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(200,-215).jpg
+Scale: 0.55 Circle Match: 74.33496713638306%
+Circle Coordinates :  [array([365.5, 249. ]), array([886.5, 677. ]), array([428.5, 794. ]), array([557.5, 755. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(200,-144).jpg
+Scale: 0.55 Circle Match: 67.2495186328888%
+Circle Coordinates :  [array([365.5, 293. ]), array([886.5, 297. ]), array([428.5, 838. ]), array([597.5, 801. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(200,-73).jpg
+Scale: 0.55 Circle Match: 66.75822138786316%
+Circle Coordinates :  [array([365.5, 338. ]), array([886.5, 341. ]), array([364.5, 761. ]), array([886.5, 766. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(200,-2).jpg
+Scale: 0.55 Circle Match: 74.25878643989563%
+Circle Coordinates :  [array([365.5, 382. ]), array([886.5, 385. ]), array([364.5, 806. ]), array([886.5, 810. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(200,69).jpg
+Scale: 0.55 Circle Match: 64.17524218559265%
+Circle Coordinates :  [array([365.5, 426. ]), array([886.5, 430. ]), array([364.5, 850. ]), array([886.5, 855. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(200,140).jpg
+Scale: 0.55 Circle Match: 69.54640746116638%
+Circle Coordinates :  [array([365.5, 471. ]), array([886.5, 474. ]), array([364.5, 894. ]), array([886.5, 899. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(200,211).jpg
+Scale: 0.55 Circle Match: 73.6376404762268%
+Circle Coordinates :  [array([365.5, 515. ]), array([886.5, 518. ]), array([364.5, 939. ]), array([886.5, 943. ])]
+Test:  0
+
+File:  Durgapur_JE_04_mov(200,282).jpg
+Scale: 0.55 Circle Match: 64.32319283485413%
+Circle Coordinates :  [array([365.5, 559. ]), array([886.5, 563. ]), array([364.5, 983. ]), array([886.5, 988. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-200,-285).jpg
+Scale: 0.55 Circle Match: 77.97256708145142%
+Circle Coordinates :  [array([109.5, 206. ]), array([631.5, 210. ]), array([367.5, 777. ]), array([523.5, 805. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-200,-214).jpg
+Scale: 0.55 Circle Match: 63.026368618011475%
+Circle Coordinates :  [array([109.5, 250. ]), array([631.5, 254. ]), array([367.5, 822. ]), array([523.5, 849. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-200,-143).jpg
+Scale: 0.55 Circle Match: 77.08358764648438%
+Circle Coordinates :  [array([109.5, 295. ]), array([631.5, 299. ]), array([367.5, 866. ]), array([523.5, 894. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-200,-72).jpg
+Scale: 0.55 Circle Match: 74.69019293785095%
+Circle Coordinates :  [array([109.5, 339. ]), array([631.5, 343. ]), array([109.5, 764. ]), array([630.5, 768. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-200,-1).jpg
+Scale: 0.55 Circle Match: 68.3278501033783%
+Circle Coordinates :  [array([109.5, 384. ]), array([631.5, 387. ]), array([109.5, 808. ]), array([630.5, 812. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-200,70).jpg
+Scale: 0.55 Circle Match: 78.8305401802063%
+Circle Coordinates :  [array([109.5, 428. ]), array([631.5, 432. ]), array([109.5, 853. ]), array([630.5, 857. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-200,141).jpg
+Scale: 0.55 Circle Match: 69.46266889572144%
+Circle Coordinates :  [array([109.5, 472. ]), array([631.5, 476. ]), array([109.5, 897. ]), array([630.5, 901. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-200,212).jpg
+Scale: 0.55 Circle Match: 73.35568070411682%
+Circle Coordinates :  [array([109.5, 517. ]), array([631.5, 521. ]), array([109.5, 941. ]), array([630.5, 945. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-200,283).jpg
+Scale: 0.55 Circle Match: 77.97257900238037%
+Circle Coordinates :  [array([109.5, 561. ]), array([631.5, 565. ]), array([109.5, 986. ]), array([630.5, 990. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-150,-285).jpg
+Scale: 0.55 Circle Match: 73.82678985595703%
+Circle Coordinates :  [array([140.5, 206. ]), array([662.5, 210. ]), array([398.5, 777. ]), array([554.5, 805. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-150,-214).jpg
+Scale: 0.55 Circle Match: 59.15963649749756%
+Circle Coordinates :  [array([140.5, 251. ]), array([662.5, 254. ]), array([398.5, 822. ]), array([ 563.5, 1188. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-150,-143).jpg
+Scale: 0.55 Circle Match: 73.37655425071716%
+Circle Coordinates :  [array([140.5, 295. ]), array([662.5, 299. ]), array([398.5, 866. ]), array([ 563.5, 1188. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-150,-72).jpg
+Scale: 0.55 Circle Match: 70.38366198539734%
+Circle Coordinates :  [array([140.5, 339. ]), array([662.5, 343. ]), array([140.5, 764. ]), array([662.5, 768. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-150,-1).jpg
+Scale: 0.55 Circle Match: 65.01554250717163%
+Circle Coordinates :  [array([140.5, 384. ]), array([662.5, 387. ]), array([140.5, 808. ]), array([662.5, 812. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-150,70).jpg
+Scale: 0.55 Circle Match: 74.92737770080566%
+Circle Coordinates :  [array([140.5, 428. ]), array([662.5, 432. ]), array([140.5, 853. ]), array([662.5, 857. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-150,141).jpg
+Scale: 0.55 Circle Match: 65.2992308139801%
+Circle Coordinates :  [array([140.5, 472. ]), array([662.5, 476. ]), array([140.5, 897. ]), array([662.5, 901. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-150,212).jpg
+Scale: 0.55 Circle Match: 69.8382318019867%
+Circle Coordinates :  [array([140.5, 517. ]), array([662.5, 521. ]), array([140.5, 941. ]), array([662.5, 946. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-150,283).jpg
+Scale: 0.55 Circle Match: 73.82677793502808%
+Circle Coordinates :  [array([140.5, 561. ]), array([662.5, 565. ]), array([140.5, 986. ]), array([662.5, 990. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-100,-285).jpg
+Scale: 0.55 Circle Match: 65.74603915214539%
+Circle Coordinates :  [array([172.5, 206. ]), array([693.5, 210. ]), array([442.5, 777. ]), array([ 563.5, 1188. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-100,-214).jpg
+Scale: 0.55 Circle Match: 55.75746297836304%
+Circle Coordinates :  [array([171.5, 675. ]), array([693.5, 254. ]), array([429.5, 822. ]), array([ 563.5, 1188. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-100,-143).jpg
+Scale: 0.55 Circle Match: 64.81175422668457%
+Circle Coordinates :  [array([172.5, 295. ]), array([693.5, 299. ]), array([429.5, 866. ]), array([ 563.5, 1188. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-100,-72).jpg
+Scale: 0.55 Circle Match: 62.90503144264221%
+Circle Coordinates :  [array([172.5, 339. ]), array([693.5, 343. ]), array([171.5, 764. ]), array([693.5, 768. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-100,-1).jpg
+Scale: 0.55 Circle Match: 57.375407218933105%
+Circle Coordinates :  [array([172.5, 384. ]), array([693.5, 387. ]), array([171.5, 808. ]), array([693.5, 812. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-100,70).jpg
+Scale: 0.55 Circle Match: 66.38843417167664%
+Circle Coordinates :  [array([172.5, 428. ]), array([693.5, 432. ]), array([171.5, 853. ]), array([693.5, 857. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-100,141).jpg
+Scale: 0.55 Circle Match: 58.43132138252258%
+Circle Coordinates :  [array([172.5, 472. ]), array([693.5, 476. ]), array([171.5, 897. ]), array([693.5, 901. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-100,212).jpg
+Scale: 0.55 Circle Match: 61.69509291648865%
+Circle Coordinates :  [array([172.5, 517. ]), array([693.5, 521. ]), array([171.5, 941. ]), array([693.5, 945. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-100,283).jpg
+Scale: 0.55 Circle Match: 65.74605107307434%
+Circle Coordinates :  [array([172.5, 561. ]), array([693.5, 565. ]), array([171.5, 986. ]), array([693.5, 990. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-50,-285).jpg
+Scale: 0.55 Circle Match: 75.56909322738647%
+Circle Coordinates :  [array([203.5, 206. ]), array([724.5, 210. ]), array([467.5, 778. ]), array([ 563.5, 1188. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-50,-214).jpg
+Scale: 0.55 Circle Match: 61.00530028343201%
+Circle Coordinates :  [array([203.5, 250. ]), array([724.5, 679. ]), array([467.5, 823. ]), array([617.5, 849. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-50,-143).jpg
+Scale: 0.55 Circle Match: 74.36128258705139%
+Circle Coordinates :  [array([203.5, 295. ]), array([724.5, 299. ]), array([467.5, 867. ]), array([ 563.5, 1188. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-50,-72).jpg
+Scale: 0.55 Circle Match: 72.39360213279724%
+Circle Coordinates :  [array([203.5, 339. ]), array([724.5, 343. ]), array([202.5, 764. ]), array([724.5, 768. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-50,-1).jpg
+Scale: 0.55 Circle Match: 65.48773050308228%
+Circle Coordinates :  [array([203.5, 384. ]), array([724.5, 387. ]), array([202.5, 808. ]), array([724.5, 812. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-50,70).jpg
+Scale: 0.55 Circle Match: 76.19147896766663%
+Circle Coordinates :  [array([203.5, 428. ]), array([724.5, 432. ]), array([202.5, 853. ]), array([724.5, 857. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-50,141).jpg
+Scale: 0.55 Circle Match: 67.27437376976013%
+Circle Coordinates :  [array([203.5, 472. ]), array([724.5, 476. ]), array([202.5, 897. ]), array([724.5, 901. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-50,212).jpg
+Scale: 0.55 Circle Match: 70.5904483795166%
+Circle Coordinates :  [array([203.5, 517. ]), array([724.5, 521. ]), array([202.5, 942. ]), array([724.5, 945. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(-50,283).jpg
+Scale: 0.55 Circle Match: 75.56909322738647%
+Circle Coordinates :  [array([203.5, 561. ]), array([724.5, 565. ]), array([202.5, 986. ]), array([724.5, 990. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(50,-285).jpg
+Scale: 0.55 Circle Match: 73.82677793502808%
+Circle Coordinates :  [array([265.5, 206. ]), array([787.5, 210. ]), array([169.5, 850. ]), array([523.5, 777. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(50,-214).jpg
+Scale: 0.55 Circle Match: 59.15963649749756%
+Circle Coordinates :  [array([265.5, 251. ]), array([787.5, 254. ]), array([169.5, 850. ]), array([523.5, 822. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(50,-143).jpg
+Scale: 0.55 Circle Match: 73.37653636932373%
+Circle Coordinates :  [array([265.5, 295. ]), array([787.5, 299. ]), array([169.5, 850. ]), array([523.5, 866. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(50,-72).jpg
+Scale: 0.55 Circle Match: 70.38366198539734%
+Circle Coordinates :  [array([265.5, 339. ]), array([787.5, 343. ]), array([265.5, 764. ]), array([787.5, 768. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(50,-1).jpg
+Scale: 0.55 Circle Match: 65.01554250717163%
+Circle Coordinates :  [array([265.5, 384. ]), array([787.5, 387. ]), array([265.5, 808. ]), array([787.5, 812. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(50,70).jpg
+Scale: 0.55 Circle Match: 74.92737770080566%
+Circle Coordinates :  [array([265.5, 428. ]), array([787.5, 432. ]), array([265.5, 853. ]), array([787.5, 857. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(50,141).jpg
+Scale: 0.55 Circle Match: 65.2992308139801%
+Circle Coordinates :  [array([265.5, 472. ]), array([787.5, 476. ]), array([265.5, 897. ]), array([787.5, 901. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(50,212).jpg
+Scale: 0.55 Circle Match: 69.8382318019867%
+Circle Coordinates :  [array([265.5, 517. ]), array([787.5, 521. ]), array([265.5, 941. ]), array([787.5, 946. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(50,283).jpg
+Scale: 0.55 Circle Match: 73.82677793502808%
+Circle Coordinates :  [array([265.5, 561. ]), array([787.5, 565. ]), array([265.5, 986. ]), array([787.5, 990. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(100,-285).jpg
+Scale: 0.55 Circle Match: 65.74603915214539%
+Circle Coordinates :  [array([297.5, 206. ]), array([818.5, 210. ]), array([233.5, 849. ]), array([567.5, 777. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(100,-214).jpg
+Scale: 0.55 Circle Match: 55.75746297836304%
+Circle Coordinates :  [array([296.5, 675. ]), array([818.5, 254. ]), array([233.5, 849. ]), array([554.5, 822. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(100,-143).jpg
+Scale: 0.55 Circle Match: 64.81175422668457%
+Circle Coordinates :  [array([297.5, 295. ]), array([818.5, 299. ]), array([233.5, 849. ]), array([554.5, 866. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(100,-72).jpg
+Scale: 0.55 Circle Match: 62.90503144264221%
+Circle Coordinates :  [array([297.5, 339. ]), array([818.5, 343. ]), array([296.5, 764. ]), array([818.5, 768. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(100,-1).jpg
+Scale: 0.55 Circle Match: 57.37541913986206%
+Circle Coordinates :  [array([297.5, 384. ]), array([818.5, 387. ]), array([296.5, 808. ]), array([818.5, 812. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(100,70).jpg
+Scale: 0.55 Circle Match: 66.38843417167664%
+Circle Coordinates :  [array([297.5, 428. ]), array([818.5, 432. ]), array([296.5, 853. ]), array([818.5, 857. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(100,141).jpg
+Scale: 0.55 Circle Match: 58.43132138252258%
+Circle Coordinates :  [array([297.5, 472. ]), array([818.5, 476. ]), array([296.5, 897. ]), array([818.5, 901. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(100,212).jpg
+Scale: 0.55 Circle Match: 61.6951048374176%
+Circle Coordinates :  [array([297.5, 517. ]), array([818.5, 521. ]), array([296.5, 941. ]), array([818.5, 945. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(100,283).jpg
+Scale: 0.55 Circle Match: 65.74603915214539%
+Circle Coordinates :  [array([297.5, 561. ]), array([818.5, 565. ]), array([296.5, 986. ]), array([818.5, 990. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(150,-285).jpg
+Scale: 0.55 Circle Match: 75.56909322738647%
+Circle Coordinates :  [array([328.5, 206. ]), array([849.5, 210. ]), array([233.5, 849. ]), array([592.5, 778. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(150,-214).jpg
+Scale: 0.55 Circle Match: 61.00530028343201%
+Circle Coordinates :  [array([328.5, 250. ]), array([849.5, 679. ]), array([233.5, 849. ]), array([592.5, 823. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(150,-143).jpg
+Scale: 0.55 Circle Match: 74.36128258705139%
+Circle Coordinates :  [array([328.5, 295. ]), array([849.5, 299. ]), array([233.5, 849. ]), array([592.5, 867. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(150,-72).jpg
+Scale: 0.55 Circle Match: 72.39360213279724%
+Circle Coordinates :  [array([328.5, 339. ]), array([849.5, 343. ]), array([327.5, 764. ]), array([849.5, 768. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(150,-1).jpg
+Scale: 0.55 Circle Match: 65.48773050308228%
+Circle Coordinates :  [array([328.5, 384. ]), array([849.5, 387. ]), array([327.5, 808. ]), array([849.5, 812. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(150,70).jpg
+Scale: 0.55 Circle Match: 76.1914610862732%
+Circle Coordinates :  [array([328.5, 428. ]), array([849.5, 432. ]), array([327.5, 853. ]), array([849.5, 857. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(150,141).jpg
+Scale: 0.55 Circle Match: 67.27437376976013%
+Circle Coordinates :  [array([328.5, 472. ]), array([849.5, 476. ]), array([327.5, 897. ]), array([849.5, 901. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(150,212).jpg
+Scale: 0.55 Circle Match: 70.59046626091003%
+Circle Coordinates :  [array([328.5, 517. ]), array([849.5, 521. ]), array([327.5, 942. ]), array([849.5, 945. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(150,283).jpg
+Scale: 0.55 Circle Match: 75.56909322738647%
+Circle Coordinates :  [array([328.5, 561. ]), array([849.5, 565. ]), array([327.5, 986. ]), array([849.5, 990. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(200,-285).jpg
+Scale: 0.55 Circle Match: 77.97256708145142%
+Circle Coordinates :  [array([359.5, 206. ]), array([881.5, 210. ]), array([233.5, 849. ]), array([617.5, 777. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(200,-214).jpg
+Scale: 0.55 Circle Match: 63.026368618011475%
+Circle Coordinates :  [array([359.5, 250. ]), array([881.5, 254. ]), array([233.5, 849. ]), array([617.5, 822. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(200,-143).jpg
+Scale: 0.55 Circle Match: 77.08356380462646%
+Circle Coordinates :  [array([359.5, 295. ]), array([881.5, 299. ]), array([233.5, 849. ]), array([617.5, 866. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(200,-72).jpg
+Scale: 0.55 Circle Match: 74.69022274017334%
+Circle Coordinates :  [array([359.5, 339. ]), array([881.5, 343. ]), array([359.5, 764. ]), array([880.5, 768. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(200,-1).jpg
+Scale: 0.55 Circle Match: 68.32786202430725%
+Circle Coordinates :  [array([359.5, 384. ]), array([881.5, 387. ]), array([359.5, 808. ]), array([880.5, 812. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(200,70).jpg
+Scale: 0.55 Circle Match: 78.83052825927734%
+Circle Coordinates :  [array([359.5, 428. ]), array([881.5, 432. ]), array([359.5, 853. ]), array([880.5, 857. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(200,141).jpg
+Scale: 0.55 Circle Match: 69.46266889572144%
+Circle Coordinates :  [array([359.5, 472. ]), array([881.5, 476. ]), array([359.5, 897. ]), array([880.5, 901. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(200,212).jpg
+Scale: 0.55 Circle Match: 73.35568070411682%
+Circle Coordinates :  [array([359.5, 517. ]), array([881.5, 521. ]), array([359.5, 941. ]), array([880.5, 945. ])]
+Test:  0
+
+File:  Durgapur_JE_09_mov(200,283).jpg
+Scale: 0.55 Circle Match: 77.97256708145142%
+Circle Coordinates :  [array([359.5, 561. ]), array([881.5, 565. ]), array([359.5, 986. ]), array([880.5, 990. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-200,-285).jpg
+No matchings for given scaleRange & thresholdCircle (0.35, 0.95) 0.55 non lon
+No matchingsERRRRR
+File already moved
+Circle Coordinates :  []
+Durgapur_JE_02_mov(-200,-285).jpg Unable to find enough points!
+Test:  -1
+
+File:  Durgapur_JE_02_mov(-200,-214).jpg
+Scale: 0.55 Circle Match: 57.94956684112549%
+Circle Coordinates :  [array([105.5, 248. ]), array([625.5, 250. ]), array([479.5, 889. ]), array([558.5, 843. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-200,-143).jpg
+No matchings for given scaleRange & thresholdCircle (0.35, 0.95) 0.55 non lon
+No matchingsERRRRR
+File already moved
+Circle Coordinates :  []
+Durgapur_JE_02_mov(-200,-143).jpg Unable to find enough points!
+Test:  -1
+
+File:  Durgapur_JE_02_mov(-200,-72).jpg
+Scale: 0.55 Circle Match: 56.695556640625%
+Circle Coordinates :  [array([105.5, 337. ]), array([625.5, 339. ]), array([104.5, 763. ]), array([623.5, 765. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-200,-1).jpg
+Scale: 0.55 Circle Match: 57.46340751647949%
+Circle Coordinates :  [array([105.5, 381. ]), array([625.5, 383. ]), array([104.5, 807. ]), array([623.5, 810. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-200,70).jpg
+No matchings for given scaleRange & thresholdCircle (0.35, 0.95) 0.55 non lon
+No matchingsERRRRR
+File already moved
+Circle Coordinates :  []
+Durgapur_JE_02_mov(-200,70).jpg Unable to find enough points!
+Test:  -1
+
+File:  Durgapur_JE_02_mov(-200,141).jpg
+Scale: 0.55 Circle Match: 57.31804966926575%
+Circle Coordinates :  [array([105.5, 470. ]), array([625.5, 472. ]), array([104.5, 896. ]), array([623.5, 898. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-200,212).jpg
+Scale: 0.55 Circle Match: 55.834704637527466%
+Circle Coordinates :  [array([106.5, 514. ]), array([625.5, 516. ]), array([104.5, 940. ]), array([623.5, 943. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-200,283).jpg
+No matchings for given scaleRange & thresholdCircle (0.35, 0.95) 0.55 non lon
+No matchingsERRRRR
+File already moved
+Circle Coordinates :  []
+Durgapur_JE_02_mov(-200,283).jpg Unable to find enough points!
+Test:  -1
+
+File:  Durgapur_JE_02_mov(-150,-285).jpg
+Scale: 0.55 Circle Match: 58.25005769729614%
+Circle Coordinates :  [array([137.5, 204. ]), array([656.5, 206. ]), array([193.5, 752. ]), array([589.5, 799. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-150,-214).jpg
+Scale: 0.55 Circle Match: 66.93229079246521%
+Circle Coordinates :  [array([137.5, 248. ]), array([656.5, 250. ]), array([355.5, 847. ]), array([589.5, 843. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-150,-143).jpg
+Scale: 0.55 Circle Match: 62.73805499076843%
+Circle Coordinates :  [array([137.5, 292. ]), array([656.5, 295. ]), array([355.5, 891. ]), array([589.5, 887. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-150,-72).jpg
+Scale: 0.55 Circle Match: 62.13228106498718%
+Circle Coordinates :  [array([137.5, 337. ]), array([656.5, 339. ]), array([135.5, 763. ]), array([655.5, 765. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-150,-1).jpg
+Scale: 0.55 Circle Match: 67.03644394874573%
+Circle Coordinates :  [array([137.5, 381. ]), array([656.5, 383. ]), array([135.5, 807. ]), array([655.5, 810. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-150,70).jpg
+Scale: 0.55 Circle Match: 58.66919159889221%
+Circle Coordinates :  [array([137.5, 425. ]), array([656.5, 428. ]), array([135.5, 852. ]), array([655.5, 854. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-150,141).jpg
+Scale: 0.55 Circle Match: 65.13287425041199%
+Circle Coordinates :  [array([137.5, 470. ]), array([656.5, 472. ]), array([135.5, 896. ]), array([655.5, 898. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-150,212).jpg
+Scale: 0.55 Circle Match: 65.4771089553833%
+Circle Coordinates :  [array([137.5, 514. ]), array([656.5, 516. ]), array([135.5, 940. ]), array([655.5, 943. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-150,283).jpg
+Scale: 0.55 Circle Match: 58.25004577636719%
+Circle Coordinates :  [array([137.5, 559. ]), array([656.5, 561. ]), array([135.5, 985. ]), array([655.5, 987. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-100,-285).jpg
+Scale: 0.55 Circle Match: 61.24306321144104%
+Circle Coordinates :  [array([168.5, 204. ]), array([686.5, 632. ]), array([386.5, 803. ]), array([620.5, 799. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-100,-214).jpg
+Scale: 0.55 Circle Match: 70.13238072395325%
+Circle Coordinates :  [array([168.5, 248. ]), array([687.5, 250. ]), array([386.5, 847. ]), array([620.5, 843. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-100,-143).jpg
+Scale: 0.55 Circle Match: 65.59720039367676%
+Circle Coordinates :  [array([168.5, 292. ]), array([688.5, 295. ]), array([386.5, 891. ]), array([620.5, 887. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-100,-72).jpg
+Scale: 0.55 Circle Match: 65.43540954589844%
+Circle Coordinates :  [array([168.5, 337. ]), array([687.5, 339. ]), array([166.5, 763. ]), array([686.5, 765. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-100,-1).jpg
+Scale: 0.55 Circle Match: 70.10658383369446%
+Circle Coordinates :  [array([168.5, 381. ]), array([687.5, 383. ]), array([166.5, 807. ]), array([686.5, 810. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-100,70).jpg
+Scale: 0.55 Circle Match: 61.113041639328%
+Circle Coordinates :  [array([168.5, 425. ]), array([687.5, 428. ]), array([166.5, 852. ]), array([686.5, 854. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-100,141).jpg
+Scale: 0.55 Circle Match: 68.32309365272522%
+Circle Coordinates :  [array([168.5, 470. ]), array([687.5, 472. ]), array([166.5, 896. ]), array([686.5, 898. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-100,212).jpg
+Scale: 0.55 Circle Match: 68.51659417152405%
+Circle Coordinates :  [array([168.5, 514. ]), array([687.5, 516. ]), array([166.5, 940. ]), array([686.5, 943. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-100,283).jpg
+Scale: 0.55 Circle Match: 61.24306321144104%
+Circle Coordinates :  [array([168.5, 559. ]), array([687.5, 561. ]), array([166.5, 985. ]), array([686.5, 987. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-50,-285).jpg
+Scale: 0.55 Circle Match: 59.37798619270325%
+Circle Coordinates :  [array([199.5, 204. ]), array([719.5, 206. ]), array([416.5, 751. ]), array([579.5, 846. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-50,-214).jpg
+Scale: 0.55 Circle Match: 67.14212894439697%
+Circle Coordinates :  [array([199.5, 248. ]), array([719.5, 250. ]), array([416.5, 796. ]), array([579.5, 889. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-50,-143).jpg
+Scale: 0.55 Circle Match: 62.23519444465637%
+Circle Coordinates :  [array([199.5, 292. ]), array([719.5, 295. ]), array([416.5, 841. ]), array([579.5, 934. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-50,-72).jpg
+Scale: 0.55 Circle Match: 63.00320029258728%
+Circle Coordinates :  [array([199.5, 337. ]), array([719.5, 339. ]), array([198.5, 763. ]), array([717.5, 765. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-50,-1).jpg
+Scale: 0.55 Circle Match: 66.9539213180542%
+Circle Coordinates :  [array([199.5, 381. ]), array([719.5, 383. ]), array([198.5, 807. ]), array([717.5, 810. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-50,70).jpg
+Scale: 0.55 Circle Match: 57.86012411117554%
+Circle Coordinates :  [array([199.5, 425. ]), array([719.5, 428. ]), array([198.5, 852. ]), array([717.5, 854. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-50,141).jpg
+Scale: 0.55 Circle Match: 65.70074558258057%
+Circle Coordinates :  [array([199.5, 470. ]), array([719.5, 472. ]), array([198.5, 896. ]), array([717.5, 898. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-50,212).jpg
+Scale: 0.55 Circle Match: 65.24167060852051%
+Circle Coordinates :  [array([199.5, 514. ]), array([719.5, 516. ]), array([198.5, 940. ]), array([717.5, 943. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(-50,283).jpg
+Scale: 0.55 Circle Match: 59.37798619270325%
+Circle Coordinates :  [array([199.5, 559. ]), array([719.5, 561. ]), array([198.5, 985. ]), array([717.5, 987. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(50,-285).jpg
+Scale: 0.55 Circle Match: 58.25005769729614%
+Circle Coordinates :  [array([262.5, 204. ]), array([781.5, 206. ]), array([318.5, 752. ]), array([714.5, 799. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(50,-214).jpg
+Scale: 0.55 Circle Match: 66.93230867385864%
+Circle Coordinates :  [array([262.5, 248. ]), array([781.5, 250. ]), array([480.5, 847. ]), array([714.5, 843. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(50,-143).jpg
+Scale: 0.55 Circle Match: 62.73806691169739%
+Circle Coordinates :  [array([262.5, 292. ]), array([781.5, 295. ]), array([480.5, 891. ]), array([714.5, 887. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(50,-72).jpg
+Scale: 0.55 Circle Match: 62.132251262664795%
+Circle Coordinates :  [array([262.5, 337. ]), array([781.5, 339. ]), array([260.5, 763. ]), array([780.5, 765. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(50,-1).jpg
+Scale: 0.55 Circle Match: 67.03644394874573%
+Circle Coordinates :  [array([262.5, 381. ]), array([781.5, 383. ]), array([260.5, 807. ]), array([780.5, 810. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(50,70).jpg
+Scale: 0.55 Circle Match: 58.66919159889221%
+Circle Coordinates :  [array([262.5, 425. ]), array([781.5, 428. ]), array([260.5, 852. ]), array([780.5, 854. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(50,141).jpg
+Scale: 0.55 Circle Match: 65.13288617134094%
+Circle Coordinates :  [array([262.5, 470. ]), array([781.5, 472. ]), array([260.5, 896. ]), array([780.5, 898. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(50,212).jpg
+Scale: 0.55 Circle Match: 65.47709703445435%
+Circle Coordinates :  [array([262.5, 514. ]), array([781.5, 516. ]), array([260.5, 940. ]), array([780.5, 943. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(50,283).jpg
+Scale: 0.55 Circle Match: 58.25004577636719%
+Circle Coordinates :  [array([262.5, 559. ]), array([781.5, 561. ]), array([260.5, 985. ]), array([780.5, 987. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(100,-285).jpg
+Scale: 0.55 Circle Match: 61.243075132369995%
+Circle Coordinates :  [array([293.5, 204. ]), array([811.5, 632. ]), array([403.5, 801. ]), array([745.5, 799. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(100,-214).jpg
+Scale: 0.55 Circle Match: 70.13238072395325%
+Circle Coordinates :  [array([293.5, 248. ]), array([812.5, 250. ]), array([349.5, 796. ]), array([745.5, 843. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(100,-143).jpg
+Scale: 0.55 Circle Match: 65.59720039367676%
+Circle Coordinates :  [array([293.5, 292. ]), array([813.5, 295. ]), array([403.5, 889. ]), array([745.5, 887. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(100,-72).jpg
+Scale: 0.55 Circle Match: 65.43542146682739%
+Circle Coordinates :  [array([293.5, 337. ]), array([812.5, 339. ]), array([291.5, 763. ]), array([811.5, 765. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(100,-1).jpg
+Scale: 0.55 Circle Match: 70.10658383369446%
+Circle Coordinates :  [array([293.5, 381. ]), array([812.5, 383. ]), array([291.5, 807. ]), array([811.5, 810. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(100,70).jpg
+Scale: 0.55 Circle Match: 61.11302971839905%
+Circle Coordinates :  [array([293.5, 425. ]), array([812.5, 428. ]), array([291.5, 852. ]), array([811.5, 854. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(100,141).jpg
+Scale: 0.55 Circle Match: 68.32310557365417%
+Circle Coordinates :  [array([293.5, 470. ]), array([812.5, 472. ]), array([291.5, 896. ]), array([811.5, 898. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(100,212).jpg
+Scale: 0.55 Circle Match: 68.516606092453%
+Circle Coordinates :  [array([293.5, 514. ]), array([812.5, 516. ]), array([291.5, 940. ]), array([811.5, 943. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(100,283).jpg
+Scale: 0.55 Circle Match: 61.24306321144104%
+Circle Coordinates :  [array([293.5, 559. ]), array([812.5, 561. ]), array([291.5, 985. ]), array([811.5, 987. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(150,-285).jpg
+Scale: 0.55 Circle Match: 59.37798619270325%
+Circle Coordinates :  [array([324.5, 204. ]), array([844.5, 206. ]), array([434.5, 800. ]), array([704.5, 846. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(150,-214).jpg
+Scale: 0.55 Circle Match: 67.14212894439697%
+Circle Coordinates :  [array([324.5, 248. ]), array([844.5, 250. ]), array([434.5, 845. ]), array([541.5, 796. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(150,-143).jpg
+Scale: 0.55 Circle Match: 62.23520636558533%
+Circle Coordinates :  [array([324.5, 292. ]), array([844.5, 295. ]), array([434.5, 889. ]), array([704.5, 934. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(150,-72).jpg
+Scale: 0.55 Circle Match: 63.00323009490967%
+Circle Coordinates :  [array([324.5, 337. ]), array([844.5, 339. ]), array([323.5, 763. ]), array([842.5, 765. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(150,-1).jpg
+Scale: 0.55 Circle Match: 66.95394515991211%
+Circle Coordinates :  [array([324.5, 381. ]), array([844.5, 383. ]), array([323.5, 807. ]), array([842.5, 810. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(150,70).jpg
+Scale: 0.55 Circle Match: 57.86012411117554%
+Circle Coordinates :  [array([324.5, 425. ]), array([844.5, 428. ]), array([323.5, 852. ]), array([842.5, 854. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(150,141).jpg
+Scale: 0.55 Circle Match: 65.70076942443848%
+Circle Coordinates :  [array([324.5, 470. ]), array([844.5, 472. ]), array([323.5, 896. ]), array([842.5, 898. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(150,212).jpg
+Scale: 0.55 Circle Match: 65.24167060852051%
+Circle Coordinates :  [array([324.5, 514. ]), array([844.5, 516. ]), array([323.5, 940. ]), array([842.5, 943. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(150,283).jpg
+Scale: 0.55 Circle Match: 59.37800407409668%
+Circle Coordinates :  [array([324.5, 559. ]), array([844.5, 561. ]), array([323.5, 985. ]), array([842.5, 987. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(200,-285).jpg
+No matchings for given scaleRange & thresholdCircle (0.35, 0.95) 0.55 non lon
+No matchingsERRRRR
+File already moved
+Circle Coordinates :  []
+Durgapur_JE_02_mov(200,-285).jpg Unable to find enough points!
+Test:  -1
+
+File:  Durgapur_JE_02_mov(200,-214).jpg
+Scale: 0.55 Circle Match: 57.9495370388031%
+Circle Coordinates :  [array([355.5, 248. ]), array([875.5, 250. ]), array([418.5, 796. ]), array([729.5, 889. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(200,-143).jpg
+No matchings for given scaleRange & thresholdCircle (0.35, 0.95) 0.55 non lon
+No matchingsERRRRR
+File already moved
+Circle Coordinates :  []
+Durgapur_JE_02_mov(200,-143).jpg Unable to find enough points!
+Test:  -1
+
+File:  Durgapur_JE_02_mov(200,-72).jpg
+Scale: 0.55 Circle Match: 56.695568561553955%
+Circle Coordinates :  [array([355.5, 337. ]), array([875.5, 339. ]), array([354.5, 763. ]), array([873.5, 765. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(200,-1).jpg
+Scale: 0.55 Circle Match: 57.46340751647949%
+Circle Coordinates :  [array([355.5, 381. ]), array([875.5, 383. ]), array([354.5, 807. ]), array([873.5, 810. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(200,70).jpg
+No matchings for given scaleRange & thresholdCircle (0.35, 0.95) 0.55 non lon
+No matchingsERRRRR
+File already moved
+Circle Coordinates :  []
+Durgapur_JE_02_mov(200,70).jpg Unable to find enough points!
+Test:  -1
+
+File:  Durgapur_JE_02_mov(200,141).jpg
+Scale: 0.55 Circle Match: 57.31804966926575%
+Circle Coordinates :  [array([355.5, 470. ]), array([875.5, 472. ]), array([354.5, 896. ]), array([873.5, 898. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(200,212).jpg
+Scale: 0.55 Circle Match: 55.83468675613403%
+Circle Coordinates :  [array([356.5, 514. ]), array([875.5, 516. ]), array([354.5, 940. ]), array([873.5, 943. ])]
+Test:  0
+
+File:  Durgapur_JE_02_mov(200,283).jpg
+No matchings for given scaleRange & thresholdCircle (0.35, 0.95) 0.55 non lon
+No matchingsERRRRR
+File already moved
+Circle Coordinates :  []
+Durgapur_JE_02_mov(200,283).jpg Unable to find enough points!
+Test:  -1
+
+File:  Durgapur_JE_10_mov(-200,-286).jpg
+Scale: 0.55 Circle Match: 60.795289278030396%
+Circle Coordinates :  [array([113.5, 632. ]), array([636.5, 209. ]), array([449.5, 758. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-200,-215).jpg
+Scale: 0.55 Circle Match: 62.81599998474121%
+Circle Coordinates :  [array([114.5, 251. ]), array([637.5, 254. ]), array([449.5, 802. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-200,-144).jpg
+Scale: 0.55 Circle Match: 67.34864711761475%
+Circle Coordinates :  [array([114.5, 295. ]), array([637.5, 298. ]), array([449.5, 846. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-200,-73).jpg
+Scale: 0.55 Circle Match: 61.02333664894104%
+Updated Threshold:  0.61023337
+Circle Coordinates :  [array([114.5, 339. ]), array([636.5, 342. ]), array([113.5, 765. ]), array([636.5, 769. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-200,-2).jpg
+Scale: 0.55 Circle Match: 64.06062841415405%
+Circle Coordinates :  [array([114.5, 384. ]), array([637.5, 387. ]), array([113.5, 809. ]), array([636.5, 813. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-200,69).jpg
+Scale: 0.55 Circle Match: 66.88981056213379%
+Circle Coordinates :  [array([114.5, 428. ]), array([637.5, 431. ]), array([113.5, 854. ]), array([636.5, 857. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-200,140).jpg
+Scale: 0.55 Circle Match: 61.06913685798645%
+Updated Threshold:  0.61069137
+Circle Coordinates :  [array([114.5, 472. ]), array([636.5, 475. ]), array([113.5, 898. ]), array([636.5, 902. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-200,211).jpg
+Scale: 0.55 Circle Match: 65.13333320617676%
+Circle Coordinates :  [array([114.5, 517. ]), array([637.5, 520. ]), array([113.5, 942. ]), array([636.5, 946. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-200,282).jpg
+Scale: 0.55 Circle Match: 66.07887148857117%
+Circle Coordinates :  [array([114.5, 561. ]), array([637.5, 564. ]), array([113.5, 987. ]), array([636.5, 990. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-150,-286).jpg
+Scale: 0.55 Circle Match: 66.29095673561096%
+Circle Coordinates :  [array([145.5, 206. ]), array([668.5, 209. ]), array([480.5, 758. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-150,-215).jpg
+Scale: 0.55 Circle Match: 70.72240710258484%
+Circle Coordinates :  [array([145.5, 251. ]), array([668.5, 254. ]), array([480.5, 802. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-150,-144).jpg
+Scale: 0.55 Circle Match: 75.41541457176208%
+Circle Coordinates :  [array([145.5, 295. ]), array([668.5, 298. ]), array([480.5, 846. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-150,-73).jpg
+Scale: 0.55 Circle Match: 64.5374059677124%
+Circle Coordinates :  [array([145.5, 339. ]), array([668.5, 342. ]), array([144.5, 765. ]), array([668.5, 769. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-150,-2).jpg
+Scale: 0.55 Circle Match: 72.19757437705994%
+Circle Coordinates :  [array([145.5, 384. ]), array([668.5, 387. ]), array([144.5, 809. ]), array([668.5, 813. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-150,69).jpg
+Scale: 0.55 Circle Match: 74.8135507106781%
+Circle Coordinates :  [array([145.5, 428. ]), array([668.5, 431. ]), array([144.5, 854. ]), array([668.5, 857. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-150,140).jpg
+Scale: 0.55 Circle Match: 62.73047924041748%
+Circle Coordinates :  [array([145.5, 472. ]), array([668.5, 475. ]), array([144.5, 898. ]), array([668.5, 902. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-150,211).jpg
+Scale: 0.55 Circle Match: 73.37040901184082%
+Circle Coordinates :  [array([145.5, 517. ]), array([668.5, 520. ]), array([144.5, 942. ]), array([668.5, 946. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-150,282).jpg
+Scale: 0.55 Circle Match: 73.89293313026428%
+Circle Coordinates :  [array([145.5, 561. ]), array([668.5, 564. ]), array([144.5, 987. ]), array([668.5, 990. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-100,-286).jpg
+Scale: 0.55 Circle Match: 67.31681227684021%
+Circle Coordinates :  [array([176.5, 206. ]), array([699.5, 209. ]), array([ 449.5, 1178. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-100,-215).jpg
+Scale: 0.55 Circle Match: 72.33587503433228%
+Circle Coordinates :  [array([176.5, 251. ]), array([699.5, 254. ]), array([369.5, 759. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-100,-144).jpg
+Scale: 0.55 Circle Match: 76.80841088294983%
+Circle Coordinates :  [array([176.5, 295. ]), array([699.5, 298. ]), array([369.5, 803. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-100,-73).jpg
+Scale: 0.55 Circle Match: 65.46297073364258%
+Circle Coordinates :  [array([176.5, 339. ]), array([699.5, 342. ]), array([176.5, 765. ]), array([699.5, 769. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-100,-2).jpg
+Scale: 0.55 Circle Match: 73.79979491233826%
+Circle Coordinates :  [array([176.5, 384. ]), array([699.5, 387. ]), array([176.5, 809. ]), array([699.5, 813. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-100,69).jpg
+Scale: 0.55 Circle Match: 76.1483907699585%
+Circle Coordinates :  [array([176.5, 428. ]), array([699.5, 431. ]), array([176.5, 854. ]), array([699.5, 857. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-100,140).jpg
+Scale: 0.55 Circle Match: 63.58976364135742%
+Circle Coordinates :  [array([176.5, 472. ]), array([699.5, 475. ]), array([176.5, 898. ]), array([699.5, 902. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-100,211).jpg
+Scale: 0.55 Circle Match: 74.96326565742493%
+Circle Coordinates :  [array([176.5, 517. ]), array([699.5, 520. ]), array([176.5, 942. ]), array([699.5, 946. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-100,282).jpg
+Scale: 0.55 Circle Match: 75.187748670578%
+Circle Coordinates :  [array([176.5, 561. ]), array([699.5, 564. ]), array([176.5, 987. ]), array([699.5, 990. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-50,-286).jpg
+Scale: 0.55 Circle Match: 62.08557486534119%
+Circle Coordinates :  [array([207.5, 206. ]), array([730.5, 209. ]), array([471.5, 805. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-50,-215).jpg
+Scale: 0.55 Circle Match: 67.03023314476013%
+Circle Coordinates :  [array([207.5, 251. ]), array([730.5, 254. ]), array([374.5, 800. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-50,-144).jpg
+Scale: 0.55 Circle Match: 71.00208401679993%
+Circle Coordinates :  [array([207.5, 295. ]), array([730.5, 298. ]), array([374.5, 844. ]), array([ 673.5, 1228. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-50,-73).jpg
+Scale: 0.55 Circle Match: 61.04623079299927%
+Circle Coordinates :  [array([207.5, 339. ]), array([730.5, 342. ]), array([207.5, 765. ]), array([730.5, 769. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-50,-2).jpg
+Scale: 0.55 Circle Match: 68.41259598731995%
+Circle Coordinates :  [array([207.5, 384. ]), array([730.5, 387. ]), array([207.5, 809. ]), array([730.5, 813. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-50,69).jpg
+Scale: 0.55 Circle Match: 70.41581869125366%
+Circle Coordinates :  [array([207.5, 428. ]), array([730.5, 431. ]), array([207.5, 854. ]), array([730.5, 857. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-50,140).jpg
+Scale: 0.55 Circle Match: 61.14401817321777%
+Updated Threshold:  0.6114402
+Circle Coordinates :  [array([207.5, 472. ]), array([730.5, 475. ]), array([207.5, 898. ]), array([730.5, 902. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-50,211).jpg
+Scale: 0.55 Circle Match: 69.42372918128967%
+Circle Coordinates :  [array([207.5, 517. ]), array([730.5, 520. ]), array([207.5, 942. ]), array([730.5, 946. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(-50,282).jpg
+Scale: 0.55 Circle Match: 69.47629451751709%
+Circle Coordinates :  [array([207.5, 561. ]), array([730.5, 564. ]), array([207.5, 987. ]), array([730.5, 990. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(50,-286).jpg
+Scale: 0.55 Circle Match: 66.29095673561096%
+Circle Coordinates :  [array([270.5, 206. ]), array([793.5, 209. ]), array([169.5, 851. ]), array([605.5, 758. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(50,-215).jpg
+Scale: 0.55 Circle Match: 70.72239518165588%
+Circle Coordinates :  [array([270.5, 251. ]), array([793.5, 254. ]), array([169.5, 851. ]), array([605.5, 802. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(50,-144).jpg
+Scale: 0.55 Circle Match: 75.41543245315552%
+Circle Coordinates :  [array([270.5, 295. ]), array([793.5, 298. ]), array([169.5, 851. ]), array([605.5, 846. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(50,-73).jpg
+Scale: 0.55 Circle Match: 64.5374059677124%
+Circle Coordinates :  [array([270.5, 339. ]), array([793.5, 342. ]), array([269.5, 765. ]), array([793.5, 769. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(50,-2).jpg
+Scale: 0.55 Circle Match: 72.19757437705994%
+Circle Coordinates :  [array([270.5, 384. ]), array([793.5, 387. ]), array([269.5, 809. ]), array([793.5, 813. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(50,69).jpg
+Scale: 0.55 Circle Match: 74.81353282928467%
+Circle Coordinates :  [array([270.5, 428. ]), array([793.5, 431. ]), array([269.5, 854. ]), array([793.5, 857. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(50,140).jpg
+Scale: 0.55 Circle Match: 62.73047924041748%
+Circle Coordinates :  [array([270.5, 472. ]), array([793.5, 475. ]), array([269.5, 898. ]), array([793.5, 902. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(50,211).jpg
+Scale: 0.55 Circle Match: 73.37040901184082%
+Circle Coordinates :  [array([270.5, 517. ]), array([793.5, 520. ]), array([269.5, 942. ]), array([793.5, 946. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(50,282).jpg
+Scale: 0.55 Circle Match: 73.89292120933533%
+Circle Coordinates :  [array([270.5, 561. ]), array([793.5, 564. ]), array([269.5, 987. ]), array([793.5, 990. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(100,-286).jpg
+Scale: 0.55 Circle Match: 67.31683015823364%
+Circle Coordinates :  [array([301.5, 206. ]), array([824.5, 209. ]), array([233.5, 850. ]), array([630.5, 757. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(100,-215).jpg
+Scale: 0.55 Circle Match: 72.33587503433228%
+Circle Coordinates :  [array([301.5, 251. ]), array([824.5, 254. ]), array([233.5, 850. ]), array([636.5, 802. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(100,-144).jpg
+Scale: 0.55 Circle Match: 76.80841088294983%
+Circle Coordinates :  [array([301.5, 295. ]), array([824.5, 298. ]), array([233.5, 850. ]), array([630.5, 846. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(100,-73).jpg
+Scale: 0.55 Circle Match: 65.46298265457153%
+Circle Coordinates :  [array([301.5, 339. ]), array([824.5, 342. ]), array([301.5, 765. ]), array([824.5, 769. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(100,-2).jpg
+Scale: 0.55 Circle Match: 73.79979491233826%
+Circle Coordinates :  [array([301.5, 384. ]), array([824.5, 387. ]), array([301.5, 809. ]), array([824.5, 813. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(100,69).jpg
+Scale: 0.55 Circle Match: 76.14836096763611%
+Circle Coordinates :  [array([301.5, 428. ]), array([824.5, 431. ]), array([301.5, 854. ]), array([824.5, 857. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(100,140).jpg
+Scale: 0.55 Circle Match: 63.58977556228638%
+Circle Coordinates :  [array([301.5, 472. ]), array([824.5, 475. ]), array([301.5, 898. ]), array([824.5, 902. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(100,211).jpg
+Scale: 0.55 Circle Match: 74.96326565742493%
+Circle Coordinates :  [array([301.5, 517. ]), array([824.5, 520. ]), array([301.5, 942. ]), array([824.5, 946. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(100,282).jpg
+Scale: 0.55 Circle Match: 75.18773674964905%
+Circle Coordinates :  [array([301.5, 561. ]), array([824.5, 564. ]), array([301.5, 987. ]), array([824.5, 990. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(150,-286).jpg
+Scale: 0.55 Circle Match: 62.08557486534119%
+Circle Coordinates :  [array([332.5, 206. ]), array([855.5, 209. ]), array([233.5, 850. ]), array([596.5, 805. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(150,-215).jpg
+Scale: 0.55 Circle Match: 67.03023314476013%
+Circle Coordinates :  [array([332.5, 251. ]), array([855.5, 254. ]), array([233.5, 850. ]), array([596.5, 849. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(150,-144).jpg
+Scale: 0.55 Circle Match: 71.0020661354065%
+Circle Coordinates :  [array([332.5, 295. ]), array([855.5, 298. ]), array([233.5, 850. ]), array([549.5, 870. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(150,-73).jpg
+Scale: 0.55 Circle Match: 61.04623079299927%
+Circle Coordinates :  [array([332.5, 339. ]), array([855.5, 342. ]), array([332.5, 765. ]), array([855.5, 769. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(150,-2).jpg
+Scale: 0.55 Circle Match: 68.41259598731995%
+Circle Coordinates :  [array([332.5, 384. ]), array([855.5, 387. ]), array([332.5, 809. ]), array([855.5, 813. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(150,69).jpg
+Scale: 0.55 Circle Match: 70.41578888893127%
+Circle Coordinates :  [array([332.5, 428. ]), array([855.5, 431. ]), array([332.5, 854. ]), array([855.5, 857. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(150,140).jpg
+Scale: 0.55 Circle Match: 61.14401817321777%
+Circle Coordinates :  [array([332.5, 472. ]), array([855.5, 475. ]), array([332.5, 898. ]), array([855.5, 902. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(150,211).jpg
+Scale: 0.55 Circle Match: 69.42372918128967%
+Circle Coordinates :  [array([332.5, 517. ]), array([855.5, 520. ]), array([332.5, 942. ]), array([855.5, 946. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(150,282).jpg
+Scale: 0.55 Circle Match: 69.47628259658813%
+Circle Coordinates :  [array([332.5, 561. ]), array([855.5, 564. ]), array([332.5, 987. ]), array([855.5, 990. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(200,-286).jpg
+Scale: 0.55 Circle Match: 60.795289278030396%
+Circle Coordinates :  [array([363.5, 632. ]), array([886.5, 209. ]), array([233.5, 850. ]), array([699.5, 758. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(200,-215).jpg
+Scale: 0.55 Circle Match: 62.8160297870636%
+Circle Coordinates :  [array([364.5, 251. ]), array([887.5, 254. ]), array([233.5, 850. ]), array([699.5, 802. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(200,-144).jpg
+Scale: 0.55 Circle Match: 67.34864711761475%
+Circle Coordinates :  [array([364.5, 295. ]), array([887.5, 298. ]), array([233.5, 850. ]), array([699.5, 846. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(200,-73).jpg
+Scale: 0.55 Circle Match: 61.02333664894104%
+Updated Threshold:  0.61023337
+Circle Coordinates :  [array([364.5, 339. ]), array([886.5, 342. ]), array([363.5, 765. ]), array([886.5, 769. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(200,-2).jpg
+Scale: 0.55 Circle Match: 64.06062841415405%
+Circle Coordinates :  [array([364.5, 384. ]), array([887.5, 387. ]), array([363.5, 809. ]), array([886.5, 813. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(200,69).jpg
+Scale: 0.55 Circle Match: 66.8897807598114%
+Circle Coordinates :  [array([364.5, 428. ]), array([887.5, 431. ]), array([363.5, 854. ]), array([886.5, 857. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(200,140).jpg
+Scale: 0.55 Circle Match: 61.06913685798645%
+Updated Threshold:  0.61069137
+Circle Coordinates :  [array([364.5, 472. ]), array([886.5, 475. ]), array([363.5, 898. ]), array([886.5, 902. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(200,211).jpg
+Scale: 0.55 Circle Match: 65.13333320617676%
+Circle Coordinates :  [array([364.5, 517. ]), array([887.5, 520. ]), array([363.5, 942. ]), array([886.5, 946. ])]
+Test:  0
+
+File:  Durgapur_JE_10_mov(200,282).jpg
+Scale: 0.55 Circle Match: 66.07887148857117%
+Circle Coordinates :  [array([364.5, 561. ]), array([887.5, 564. ]), array([363.5, 987. ]), array([886.5, 990. ])]
+Test:  0
+
+ok
+
+----------------------------------------------------------------------
+Ran 1 test in 742.613s

@@ -168,11 +168,35 @@ Sobel :
 	Nope, there's more accurate approach - Qval correlation instead of QBlock be most accurate
 	- Area between Qboxes be checked : use a mask! 
 	>> also useful for future changes : if decided to align vertically as well
+--> Further accurate: approach4 - move towards the blob - use MOMENTS!
+	- move towards centroid until direction changes.
 
 Minor:
 	Nope- Q object now has endpts and a mask for aligning 
 		QBlock has cols attribute for vertical cols (even for orient='H') and No mask needed practically
 
 - Test all on dark xerox now.
-- Apply DFT and IFT on cropped one just to see.
-Design the demo scenario now.
+	- even white xeroxes making probs now, need to change aligning method to more robust
+
+
+23 Mar 19
+: Shifting to its best! Scan match Centroid wins by a nice margin!
+ - On xerox : Bangalore_JE series
+ >> Its working decently on positive shifts, 
+ - still many times it shifts wrongly, but detected correctly
+
+: How about, finding the first 0-255 jump? There ain't noise there!
+	<- there could be in some cases
+	<- first match wont solve alignment, total avg alignment be max
+	-> There may not be many cases, even if they are- avg alignment method would also fail
+	<- For negative shifts?
+	<- Rather store initial centroids with QBlocks.
+
+(after discn with Mk)
+_//	->> Move to make white on both edges of the window.
+Works really well! Thanks mk, now I can truly - truly move on from shifting. _// (23 mar 11:28PM)
+
+Now:
+	Apply DFT and IFT on cropped one just to see.
+	Design the demo scenario now.
+	Refactor readResponse

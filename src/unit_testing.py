@@ -274,7 +274,7 @@ class testImageWarps(unittest.TestCase):
 						# img2[ : , w2//3:w2//3+2] = 0
 						# img2[ h2//2:h2//2+2, : ] = 0
 
-						cv2.putText(img2,"Translate Pos: ("+str(i)+","+str(j)+")",(100,50),cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE,(255,255,255),5)
+						cv2.putText(img2,"Translate Pos: ("+str(i)+","+str(j)+")",(100,50),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE,(255,255,255),5)
 						# showOrSave(filepath[:-4]+"_mov"+str(i)+str(j)+ext,img2)
 						# 
 						testImg(filepath[:-4]+"_mov("+str(i)+","+str(j)+")"+ext,img2)
