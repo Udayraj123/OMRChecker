@@ -289,9 +289,9 @@ class testImageWarps(unittest.TestCase):
 			img_orig = applyBG(img_orig,self.bgs[bgindex],pts)
 			for thetaBase,thetaDist,thetaWide in [
 				(20*random(),5,random()*20),
-				(-20*random(),10,random()*20),
-				(20*random(),15,random()*20),
-				(-20*random(),25,random()*20),
+				# (-20*random(),10,random()*20),
+				# (20*random(),15,random()*20),
+				# (-20*random(),25,random()*20),
 				]:
 				
 				# rotate image about midpoint

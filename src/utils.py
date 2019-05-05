@@ -435,8 +435,7 @@ def getROI(filepath,filename,image_norm, closeup=False):
     # iterations : Tuned to 2.
     # warped_image_eroded_sub = warped_image_norm - cv2.erode(warped_image_norm, kernel=np.ones((5,5)),iterations=2)
 
-    OMRresponse,retimg,multimarked,multiroll,mw,mb = readResponse(squad,warped_image_norm, name = newfilename)
-    show("Corrected Image",retimg,1,1)
+    OMRresponse,retimg,multimarked,multiroll = readResponse(squad,warped_image_norm, name = newfilename)
     
     return warped_image_norm
 
@@ -464,8 +463,54 @@ def getCentroid(window):
     centroid = [np.average(ax,weights = window), np.average(ay,weights = window)]
     return centroid
 
-def readResponse(squad,image,name,save=None,thresholdRead=127.5,explain=True,bord=-1,
-    white=(200,150,150),black=(25,120,20),badscan=0,multimarkedTHR=153,isint=True):
+def getThreshold(QVals):
+    gap = (np.max(QVals) - np.min(QVals))
+    if((np.std(QVals) < MIN_STD) and gap < MIN_GAP):
+        # no marked
+        return np.min(QVals)
+    if(len(QVals) < 3): # for medium
+        return np.min(QVals) if gap < MIN_GAP else np.mean(QVals)
+    # Sort the Q vals
+    QVals= sorted(QVals)
+
+    # Find the first 'big' jump and set it as threshold:
+    l=len(QVals)-1
+    max1,thr1=0,255
+    for i in range(1,l):
+        jump = QVals[i+1] - QVals[i-1]
+        if(jump > max1):
+            max1=jump
+            thr1=QVals[i-1] + jump/2
+    
+    # Make use of the fact that the JUMP_DELTA between values at detected jumps would be atleast 20
+    max2,thr2=0,255
+    # Requires atleast 1 gray box to be present (Roll field will ensure this)
+    for i in range(1,l):
+        jump = QVals[i+1] - QVals[i-1]
+        d2 = QVals[i-1] + jump/2          
+        if(jump > max2 and JUMP_DELTA < abs(thr1-d2)):
+            max2=jump
+            thr2=d2
+
+    # Updated threshold: The 'first' jump 
+    # TODO: Make this more robust
+    thresholdRead = min(thr1,thr2)
+    if(showimglvl>=3):
+        f, ax = plt.subplots() 
+        ax.bar(range(len(QVals)),QVals);
+        thrline=ax.axhline(thresholdRead,color='red',ls='--')
+        thrline.set_label("THR")
+
+        ax.set_title("Intensity distribution")
+        ax.set_ylabel("Intensity")
+        ax.set_xlabel("Q Boxes sorted by Intensity")
+        plt.show()
+    return thresholdRead
+
+def saveImg(path, retimg):
+    print('Saving Image to '+path)
+    cv2.imwrite(path,retimg)
+def readResponse(squad,image,name,save=None,explain=True):
     TEMPLATE = TEMPLATES[squad]
     try: 
         img = image.copy()
@@ -475,34 +520,23 @@ def readResponse(squad,image,name,save=None,thresholdRead=127.5,explain=True,bor
         print("Resized dim", img.shape[:2])
 
         img = normalize_util(img)
-        # print("m1",img.min())
-        # print("m2",img[100:-100,100:-100].min())
-
-        # Our reading is not exactly thresholding
-        # _, t = cv2.threshold(img,100,255,cv2.THRESH_BINARY)
 
         boxW,boxH = TEMPLATE.boxDims
         lang = ['E','H']
         OMRresponse={}
-        black,grey = (0,0,0),(200,150,150)
-        clrs=[grey,black]
+        CLR_GRAY = (200,150,150)
 
         multimarked,multiroll=0,0
         alpha=0.95
         output=img.copy()
 
-        blackTHRs=[0]
-        whiteTHRs=[255]
+        blackVals=[0]
+        whiteVals=[255]
 
-        if(showimglvl>=1):
-            allQboxvals={"QTYPE_INT":[],"QTYPE_MCQ":[]}#"QTYPE_ROLL":[]}#,"QTYPE_MED":[]}
-            qNums={"QTYPE_INT":[],"QTYPE_MCQ":[]}#,"QTYPE_ROLL":[]}#,"QTYPE_MED":[]}
-            # f, axes = plt.subplots(len(TEMPLATE.Qs)//2,sharey=True, sharex=True)
-            # f.canvas.set_window_title(name)
-            # f.suptitle("Questionwise Histogram")
+        if( showimglvl>=3):
+            allCBoxvals={"Int":[],"Mcq":[]}#"QTYPE_ROLL":[]}#,"QTYPE_MED":[]}
+            qNums={"Int":[],"Mcq":[]}#,"QTYPE_ROLL":[]}#,"QTYPE_MED":[]}
         
-        # For threshold finding
-        QVals=[]
 
         ### Find Shifts for the QBlocks --> Before calculating threshold!
         morph = img.copy() # 
@@ -524,9 +558,9 @@ def readResponse(squad,image,name,save=None,thresholdRead=127.5,explain=True,bor
         initial=img.copy()
         dims = TEMPLATE.boxDims
         for QBlock in TEMPLATE.QBlocks:
-            for Que in QBlock.Qs:
-                for pt in Que.pts:
-                    cv2.rectangle(initial,(pt.x,pt.y),(pt.x+dims[0],pt.y+dims[1]),grey,-1)
+            for col, pts in QBlock.colpts:
+                for pt in pts:
+                    cv2.rectangle(initial,(pt.x,pt.y),(pt.x+dims[0],pt.y+dims[1]),CLR_GRAY,-1)
 
         # sq = np.uint16(morph)
         # sq = sq*sq / 255
@@ -538,16 +572,15 @@ def readResponse(squad,image,name,save=None,thresholdRead=127.5,explain=True,bor
 
 # templ adjust code
         THK = 0 # acc to morph kernel
-        gray2=overlay.copy()
+        ini_templ=overlay.copy()
         for QBlock in TEMPLATE.QBlocks:
             n, s,d = QBlock.key, QBlock.orig, QBlock.dims
             shift = 0
-            cv2.rectangle(gray2,(s[0]+shift-THK,s[1]-THK),(s[0]+shift+d[0]+THK,s[1]+d[1]+THK),(10,10,10),3)
-            # cv2.rectangle(gray2,(s[0]+shift,s[1]),(s[0]+shift+d[0],s[1]+d[1]),(0,0,1),3)
-        show("Initial Template Overlay", 255 -  gray2, 0, 1, [0,0])
+            cv2.rectangle(ini_templ,(s[0]+shift-THK,s[1]-THK),(s[0]+shift+d[0]+THK,s[1]+d[1]+THK),(10,10,10),3)
+            # cv2.rectangle(ini_templ,(s[0]+shift,s[1]),(s[0]+shift+d[0],s[1]+d[1]),(0,0,1),3)
 
         for QBlock in TEMPLATE.QBlocks:
-            s,d = QBlock.orig, QBlock.dims
+            n, s,d = QBlock.key, QBlock.orig, QBlock.dims
             ALIGN_STRIDE, MATCH_COL, ALIGN_STEPS = 1, 5, int(boxW * 2 / 3)
             shiftM, shift, steps = 0, 0, 0
             THK = 3
@@ -574,165 +607,85 @@ def readResponse(squad,image,name,save=None,thresholdRead=127.5,explain=True,bor
             # sums = sorted(sums, reverse=True)
             # print("Aligned QBlock: ",QBlock.key,"Corrected Shift:", QBlock.shift,", Dimensions:", QBlock.dims, "orig:", QBlock.orig,'\n')
 
-            for Que in QBlock.Qs:
-                for pt in Que.pts:
-                    # shifted
-                    QVals.append( cv2.mean( img[  pt.y:pt.y+boxH, pt.x+shiftM:pt.x+shiftM+boxW ] )[0])
-        
-
-        gray2=overlay.copy()
+        corr_templ=overlay.copy()
         for QBlock in TEMPLATE.QBlocks:
             n, s,d = QBlock.key, QBlock.orig, QBlock.dims
             shift = QBlock.shift
-            cv2.rectangle(gray2,(s[0]+shift-THK,s[1]-THK),(s[0]+shift+d[0]+THK,s[1]+d[1]+THK),(10,10,10),3)
-            # cv2.rectangle(gray2,(s[0]+shift,s[1]),(s[0]+shift+d[0],s[1]+d[1]),(0,0,1),3)
-        show("Corrected Template Overlay", 255 -  gray2, 1, 1)# [gray2.shape[1],0])
-        
-        show("Initial template", initial,0,1, [0,0])
+            cv2.rectangle(corr_templ,(s[0]+shift-THK,s[1]-THK),(s[0]+shift+d[0]+THK,s[1]+d[1]+THK),(10,10,10),3)
+            # cv2.rectangle(corr_templ,(s[0]+shift,s[1]),(s[0]+shift+d[0],s[1]+d[1]),(0,0,1),3)
+        # show("Initial Template Overlay", 255 -  ini_templ, 0, 1, [0,0])
+        # show("Corrected Template Overlay", 255 -  corr_templ, 1, 1)# [corr_templ.shape[1],0])
 
-        # Sort the Q vals
-        QVals= sorted(QVals)
+        thresholdReadAvg, ncols = 0, 0
 
-        # Find the first 'big' jump and set it as threshold:
-        l=len(QVals)-1
-        max1,thr1=0,255
-        for i in range(1,l):
-            jump = QVals[i+1] - QVals[i-1]
-            if(jump > max1):
-                max1=jump
-                thr1=QVals[i-1] + jump/2
-        
-        # Make use of the fact that the JUMP_DELTA between values at detected jumps would be atleast 20
-        max2,thr2=0,255
-        # Requires atleast 1 gray box to be present (Roll field will ensure this)
-        for i in range(1,l):
-            jump = QVals[i+1] - QVals[i-1]
-            d2 = QVals[i-1] + jump/2          
-            if(jump > max2 and JUMP_DELTA < abs(thr1-d2)):
-                max2=jump
-                thr2=d2
-
-        # Updated threshold: The 'first' jump 
-        # TODO: Make this more robust
-        thresholdRead = min(thr1,thr2)
-        if(showimglvl>=4):
-            f, ax = plt.subplots() 
-            ax.bar(range(len(QVals)),QVals);
-            thrline=ax.axhline(thresholdRead,color='red',ls='--')
-            ax.set_title("Intensity distribution")
-            ax.set_ylabel("Intensity")
-            ax.set_xlabel("Q Boxes sorted by Intensity")
-            plt.show()
-
-        ctr = 0 
         for QBlock in TEMPLATE.QBlocks:
-            cv2.putText(retimg,'s%s'% (QBlock.shift), tuple(QBlock.orig - [45,10]),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE,(50,20,10),3)
-
-            for Que in QBlock.Qs:
-                Qboxvals=[]
-
-                for pt in Que.pts:
+            colNo = 0
+            key = QBlock.key[:3]
+            cv2.putText(retimg,'s%s'% (QBlock.shift), tuple(QBlock.orig - [75,-QBlock.dims[1]//2]),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE,(50,20,10),4)
+            for col, pts in QBlock.colpts:
+                colNo += 1
+                o,e = col
+                CBoxvals=[]
+                for pt in pts:
+                    x,y =(pt.x + QBlock.shift,pt.y)
+                    rect = [y,y+boxH,x,x+boxW]
+                    CBoxvals.append(cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0])                
+                thresholdRead = getThreshold(CBoxvals)
+                thresholdReadAvg += thresholdRead
+                CBoxvals=[]
+                for pt in pts:
                     # shifted
-                    ptXY=(pt.x + QBlock.shift,pt.y)
-                    x,y=ptXY
-
-                    # Supplimentary points
-                    # xminus,xplus= x-int(boxW/2),x+boxW-int(boxW/2) 
-                    # xminus2,xplus2= x+int(boxW/2),x+boxW+int(boxW/2) 
-                    # yminus,yplus= y-int(boxH/2.7),y+boxH-int(boxH/2.7) 
-                    # yminus2,yplus2= y+int(boxH/2.7),y+boxH+int(boxH/2.7) 
-
-                    #  This Plus method is better than having bigger box as gray would also get marked otherwise. Bigger box is rather an invalid alternative.
-                    check_rects = [ 
-                        [y,y+boxH,x,x+boxW], 
-                        # [yminus,yplus,x,x+boxW], 
-                        # [yminus2,yplus2,x,x+boxW], 
-                        # [y,y+boxH,xminus,xplus], 
-                        # [y,y+boxH,xminus2,xplus2], 
-                    ]
-                    
-                    # This is NOT usual thresholding, rather call it boxed mean-thresholding
+                    x,y = (pt.x + QBlock.shift,pt.y)
+                    check_rects = [[y,y+boxH,x,x+boxW]]
                     detected=False
+                    boxval0 = 0
                     for rect in check_rects:
+                        # This is NOT the usual thresholding, It is boxed mean-thresholding
                         boxval = cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0]
+                        if(boxval0 == 0):
+                            boxval0 = boxval
                         if(thresholdRead > boxval):
+                            # for critical analysis
+                            boxval0 = max(boxval,boxval0)
                             detected=True
-                        if(detected):break;
+                            break;
+                    cv2.rectangle(retimg,(x,y),(x+boxW,y+boxH),(150,150,150) if detected else CLR_GRAY,-1)
 
-                    if(not detected): 
-                        #reset boxval to first rect 
-                        rect = check_rects[0]
-                        boxval = cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0]
-                    
                     #for hist
-                    Qboxvals.append(boxval)
-
-                    # cv2.rectangle(retimg,(x,y),(x+boxW,y+boxH),clrs[int(detected)],bord)
-                    cv2.rectangle(retimg,(x,y),(x+boxW,y+boxH),grey,bord)
-
+                    CBoxvals.append(boxval0)
                     if (detected):
-                        blackTHRs.append(boxval)
-            #             try:
-                        q = Que.qNo
-                        val = pt.val
-                        if(Que.qType=="QTYPE_ROLL"):
-                            key1,key2 = 'Roll',q[1:] #'r1'
-                        elif(Que.qType=="QTYPE_MED"):
-                            key1,key2 = q,q
-                        elif(Que.qType=="QTYPE_INT"):
-                            key1,key2= 'INT'+ q[:-2],q[-2:]
-                        else:
-                            key1,key2= 'MCQ'+str(q),'val'
-
-            #             reject qs with duplicate marking here
-                        multiple = checkKey(OMRresponse,key1,key2)
-                        if(multiple):
-                            if('Roll' in str(q)):
-                                multiroll=1
-                                multimarked=1 # Only send rolls multi-marked in the directory
-                                printbuf("Multimarked In Roll")
-
-                            if(thresholdRead>multimarkedTHR): #observation
-                                #This is just for those Dark OMRs
-                                multimarked=1 # that its not marked by user, but code is detecting it.
-                        
-                        addInnerKey(OMRresponse,key1,key2,val)
-                        
-                        cv2.putText(retimg,str(OMRresponse[key1][key2]),ptXY,cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE,(50,20,10),5)
-                        
-                        # if(np.random.randint(0,10)==0):
-                        #     cv2.putText(retimg,"["+str(int(boxval))+"]",(x-2*boxW,y+boxH),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE/2,(10,10,10),3)
-                                     
-            #             except:
-            #                 #No dict key for that point
-            #                 print(pt,'This shouldnt print after debugs')
-                    
-                    # // if(detected)
+                        q = pt.qNo
+                        val = str(pt.val)
+                        cv2.putText(retimg,val,(x,y),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE,(50,20,10),5)
+                        # Only send rolls multi-marked in the directory
+                        multimarked = q in OMRresponse
+                        OMRresponse[q] = (OMRresponse[q] + val) if multimarked else val
+                        multiroll = multimarked and 'roll' in str(q)
+                        blackVals.append(boxval0)
                     else:
-                        whiteTHRs.append(boxval)                    
-                        # if(np.random.randint(0,20)==0):
-                        #     cv2.putText(retimg,"["+str(int(boxval))+"]",(x-boxW//2,y+boxH//2),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE/2,(10,10,10),3)
-                
-                if(showimglvl>=1):
-                    # For int types:
-                    # axes[ctr//2].hist(Qboxvals, bins=range(0,256,16))
-                    # axes[ctr//2].set_ylabel(Que.qNo[:-2])
-                    # axes[ctr//2].legend(["D1","D2"],prop={"size":6})
-                    if(Que.qType == "QTYPE_INT" or Que.qType == "QTYPE_MCQ"):
-                        qNums[Que.qType].append(Que.qNo)
-                        allQboxvals[Que.qType].append(Qboxvals)
-                ctr += 1
+                        whiteVals.append(boxval0)     
+                    # /for col
+                if( showimglvl>=3):
+                    if(key in allCBoxvals):
+                        qNums[key].append(key[:2]+'_c'+str(colNo))
+                        allCBoxvals[key].append(CBoxvals)
+            ncols += colNo
+            # /for QBlock        
+        thresholdReadAvg /= ncols
+        # Translucent
+        retimg = cv2.addWeighted(retimg,alpha,output,1-alpha,0,output)    
             
-        if(showimglvl>=2):
+        if( showimglvl>=3):
             # plt.draw()
-            f, axes = plt.subplots(len(allQboxvals),sharey=True)
+            f, axes = plt.subplots(len(allCBoxvals),sharey=True)
             f.canvas.set_window_title(name)
             ctr=0
-            for k,boxvals in allQboxvals.items():
+            typeName={"Int":"Integer","Mcq":"MCQ","Med":"MED","Rol":"ROLL"}
+            for k,boxvals in allCBoxvals.items():
                 axes[ctr].title.set_text(typeName[k]+" Type")
                 axes[ctr].boxplot(boxvals)
-                thrline=axes[ctr].axhline(thresholdRead,color='red',ls='--')
-                thrline.set_label("THR")
+                # thrline=axes[ctr].axhline(thresholdReadAvg,color='red',ls='--')
+                # thrline.set_label("Average THR")
                 axes[ctr].set_ylabel("Intensity")
                 axes[ctr].set_xticklabels(qNums[k])
                 # axes[ctr].legend()
@@ -740,54 +693,24 @@ def readResponse(squad,image,name,save=None,thresholdRead=127.5,explain=True,bor
             # imshow will do the waiting
             plt.tight_layout(pad=0.5)
             
-            if(showimglvl>=4):
+            if(showimglvl>=2):
                 plt.show() 
-            # if(showimglvl>=2):
-            #     plt.show() 
-            # else:
-            #     plt.draw() 
-            #     plt.pause(0.01)
 
-        # Translucent
-        retimg = cv2.addWeighted(retimg,alpha,output,1-alpha,0,output)    
-        # retimg = cv2.addWeighted(retimg,alpha,morph,1-alpha,0,morph)    
-
-        # print('Keep THR between : ',,np.mean(whiteTHRs))
-        global maxBlackTHR,minWhiteTHR
-        maxBlackTHR = max(maxBlackTHR,np.max(blackTHRs))
-        minWhiteTHR = min(minWhiteTHR,np.min(whiteTHRs))
+        if ( type(save) != type(None) ):
+            saveImg(save+('_Multi_/' if multiroll else '')+name+'_marked.jpg', retimg)
         
-        ## Real helping stats:
+        show("Initial Template", initial,0,1, [0,0])
+        show("Corrected",retimg,1,1)
 
-        # cv2.putText(retimg,"avg: "+str(["avgBlack: "+str(round(np.mean(blackTHRs),2)),"avgWhite: "+str(round(np.mean(whiteTHRs),2))]),(20,50),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE,(50,20,10),4)
-        # cv2.putText(retimg,"ext: "+str(["maxBlack: "+str(round(np.max(blackTHRs),2)),"minW(gray): "+str(round(np.min(whiteTHRs),2))]),(20,90),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE,(50,20,10),4)
-        
-        if(retimg.shape[1] > 4 + uniform_width_hd): #observation
-            cv2.putText(retimg,str(retimg.shape[1]),(50,80),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE,(50,20,10),3)
-            # badwidth = 1
-
-        tosave = ( type(save) != type(None))
-        if(tosave):
-            #ALL SHOULD GET SAVED IN MARKED FOLDER
-            if(badscan != 0):
-                print('BadScan Saving Image to '+save+'_BadScan_/'+name+'_marked'+'.jpg')
-                cv2.imwrite(save+'_BadScan_/'+name+'_marked'+'.jpg',retimg)
-            elif(multimarked):
-                print('Saving Image to '+save+'_MULTI_/'+name+'_marked'+'.jpg')
-                cv2.imwrite(save+'_MULTI_/'+name+'_marked'+'.jpg',retimg)
-            else:
-                cv2.imwrite(save+name+'_marked'+'.jpg',retimg)
-
-        return OMRresponse,retimg,multimarked,multiroll,minWhiteTHR,maxBlackTHR
+        return OMRresponse,retimg,multimarked,multiroll
 
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         print(exc_type, fname, exc_tb.tb_lineno)
-# In[9]:
+                
 
-
-# Alignment Code dump
+########### Alignment Code dump ########### 
 
 # if(QBlock.shift != 0):
 # maxS, shiftM = 0, 0
@@ -829,3 +752,49 @@ def readResponse(squad,image,name,save=None,thresholdRead=127.5,explain=True,bor
 #         closest = shift
 
 # shiftM = equals[(len(equals)-1)//2] if (closestGap==0) else closest            
+
+
+# Supplimentary points
+# xminus,xplus= x-int(boxW/2),x+boxW-int(boxW/2) 
+# xminus2,xplus2= x+int(boxW/2),x+boxW+int(boxW/2) 
+# yminus,yplus= y-int(boxH/2.7),y+boxH-int(boxH/2.7) 
+# yminus2,yplus2= y+int(boxH/2.7),y+boxH+int(boxH/2.7) 
+
+#  This Plus method is better than having bigger box as gray would also get marked otherwise. Bigger box is rather an invalid alternative.
+# check_rects = [ 
+#     [y,y+boxH,x,x+boxW], 
+#     # [yminus,yplus,x,x+boxW], 
+#     # [yminus2,yplus2,x,x+boxW], 
+#     # [y,y+boxH,xminus,xplus], 
+#     # [y,y+boxH,xminus2,xplus2], 
+# ]
+
+
+# print('Keep THR between : ',,np.mean(whiteVals))
+# global maxBlackTHR,minWhiteTHR
+# maxBlackTHR = max(maxBlackTHR,np.max(blackVals))
+# minWhiteTHR = min(minWhiteTHR,np.min(whiteVals))
+
+## Real helping stats:
+# cv2.putText(retimg,"avg: "+str(["avgBlack: "+str(round(np.mean(blackVals),2)),"avgWhite: "+str(round(np.mean(whiteVals),2))]),(20,50),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE,(50,20,10),4)
+# cv2.putText(retimg,"ext: "+str(["maxBlack: "+str(round(np.max(blackVals),2)),"minW(gray): "+str(round(np.min(whiteVals),2))]),(20,90),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE,(50,20,10),4)
+
+#     plt.draw() 
+#     plt.pause(0.01)
+
+# svals = []
+# gaps = []
+# gap = round(np.max(CBoxvals) - np.min(CBoxvals))
+# # print(QBlock.key, colNo, 'gap', gap, '\tmean', round(np.mean(CBoxvals)), '\tstd', round(np.std(CBoxvals)))
+# svals.append(round(np.std(CBoxvals)))                
+# gaps.append(gap)
+# f, ax = plt.subplots() 
+# x = np.array(range(len(svals)))
+# ax.bar(x-0.4,svals, width=0.4, color='b');
+# ax.bar(x,gaps, width=0.4, color='g');
+# ax.set_title("Column-wise stddev/gap distribution")
+# ax.set_ylabel("stddev/gap")
+# ax.set_xlabel("col")
+# thrline=ax.axhline(MIN_STD,color='red',ls='--')
+# thrline.set_label("MIN_STD")
+# plt.show()

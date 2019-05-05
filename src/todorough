@@ -117,9 +117,7 @@ Qbox level soln
 16 Mar 19
 Major Changes:
 	// Implemented shifting in align file
-	Threshold from gap needs to be columnwise- Xerox grays are pretty bad
-		- e.g. on HE_Bangalore_01 Xeroxed sheet it works miserably.
-	--> Qblock class shall help here.
+	
 
 Minor Changes:
 	Resize page(>>BOTH W & H) to fixed size after Warp layer 1 
@@ -180,23 +178,38 @@ Minor:
 
 
 23 Mar 19
-: Shifting to its best! Scan match Centroid wins by a nice margin!
- - On xerox : Bangalore_JE series
- >> Its working decently on positive shifts, 
- - still many times it shifts wrongly, but detected correctly
+	: Shifting to its best! Scan match Centroid wins by a nice margin!
+	 - On xerox : Bangalore_JE series
+	 >> Its working decently on positive shifts, 
+	 - still many times it shifts wrongly, but detected correctly
 
-: How about, finding the first 0-255 jump? There ain't noise there!
-	<- there could be in some cases
-	<- first match wont solve alignment, total avg alignment be max
-	-> There may not be many cases, even if they are- avg alignment method would also fail
-	<- For negative shifts?
-	<- Rather store initial centroids with QBlocks.
+	: How about, finding the first 0-255 jump? There ain't noise there!
+		<- there could be in some cases
+		<- first match wont solve alignment, total avg alignment be max
+		-> There may not be many cases, even if they are- avg alignment method would also fail
+		<- For negative shifts?
+		<- Rather store initial centroids with QBlocks.
 
-(after discn with Mk)
-_//	->> Move to make white on both edges of the window.
-Works really well! Thanks mk, now I can truly - truly move on from shifting. _// (23 mar 11:28PM)
+	(after discn with Mk)
+	_//	->> Move to make white on both edges of the window.
+	Works really well! Thanks mk, now I can truly - truly move on from shifting. _// (23 mar 11:28PM)
 
-Now:
-	Apply DFT and IFT on cropped one just to see.
-	Design the demo scenario now.
-	Refactor readResponse
+	Now:
+		Apply DFT and IFT on cropped one just to see.
+		Design the demo scenario now.
+		// Refactor readResponse
+
+	Major Changes:
+		// Improve threshold selection : separate by QBlock.cols --> still needs a complicated DS
+				**Note: Orient='H' still has to have vertical alternate lines (logically)
+				Threshold from gap needs to be columnwise- Xerox grays are pretty bad
+					- e.g. on HE_Bangalore_01 Xeroxed sheet it works miserably.
+					--> Qblock class shall help here. Need colwise Pt list for qblock
+					<-- What about no bubbles marked in column: then variance would be very low (add this condition).
+
+			OMRresponse was 2-key dict only for combining the integer types. It should be done during evaluation rather.
+			-> concatenation be done there itself
+
+			No need for Q() class, moved attr to Pt class. 
+		// Gone column wise finally, Going Q wise no more required as multimarked wont depend on it
+			- except for qwise plots --> Now it'd be more logical colwise plots, no MCQ/INT distinguishing too.

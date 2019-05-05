@@ -22,37 +22,28 @@ lontemplateinv = cv2.imread('images/lon-inv-resized.png',cv2.IMREAD_GRAYSCALE)
 
 ### Coordinates Part ###
 class Pt():
-    """Container for a Point Box on the OMR"""
-    def __init__(self, x, y,val):
-        self.x=x
-        self.y=y
-        self.val=val
-    # overloaded
-    def __init__(self, pt,val):
-        self.x=pt[0]
-        self.y=pt[1]
-        self.val=val
-
-class Q():
     """
-    Container for a Question on the OMR
+    Container for a Point Box on the OMR
+    """
+    """
+    qNo is the question's property-
     It can be used as a roll number column as well. (eg roll1)
     It can also correspond to a single digit of integer type Q (eg q5d1)
     """
-    def __init__(self, qNo,qType, pts,ans=None):
-        self.qNo = qNo
-        self.qType = qType
-        self.pts = pts
-        self.ans = ans
+    def __init__(self, pt, qNo, qType, val):
+        self.x=pt[0]
+        self.y=pt[1]
+        self.qNo=qNo
+        self.qType=qType
+        self.val=val
 
 class QBlock():
-    def __init__(self, dims, key, orig, Qs, cols):
+    def __init__(self, dims, key, orig, colpts):
         # dims = (width, height)
         self.dims = dims
         self.key = key
         self.orig = orig
-        self.Qs = Qs
-        self.cols = cols
+        self.colpts = colpts
         # will be set when using
         self.shift = 0
 
@@ -121,36 +112,27 @@ def genQBlock(boxDims, QBlockDims, key, orig, qNos, gaps, vals, qType, orient):
 
     """
     Qs=[]
-    cols = []
     H, V = (0,1) if(orient=='H') else (1,0)
     # orig[0] += np.random.randint(-5,6) # test random shift
     orig[0] -= 10
     
+    colpts = []
+    colW, colH = (len(vals), len(qNos)) if(orient == 'H') else (len(qNos), len(vals))
     o = orig.copy()
-    for qNo in qNos:
+    for i in range(colW):
         pt = o.copy()
-        pts=[]
-        for v in vals:
-            pts.append(Pt(pt,v))
-            pt[H] += gaps[H]            
-        pt[H] = pt[H] + boxDims[H] - gaps[H]
-        pt[V] = pt[V] + boxDims[V]
-        # print(qNo, orig, o, pt)            
-        if(orient == 'V'):
-            cols.append([o.copy(), pt.copy()])
-        Qs.append( Q(qNo,qType, pts))
-        o[V] += gaps[V]
+        pts = []
+        for j in range(colH):
+            idx = [j, i]
+            p = Pt(pt.copy(),qNos[idx[H]], qType, vals[idx[V]])
+            pts.append(p)
+            pt[1] += gaps[1] 
+        pt[0] += boxDims[0]
+        pt[1] += boxDims[1] - gaps[1]
+        colpts.append(([o.copy(), pt.copy()], pts))
+        o[0] += gaps[0]
     
-    if(orient == 'H'):
-        o = orig.copy()
-        for v in vals:
-            pt = o.copy()
-            pt[H] += boxDims[H]
-            pt[V] += boxDims[V] + (len(qNos)-1) * gaps[V]
-            cols.append([o.copy(), pt.copy()])
-            o[H] += gaps[H]
-
-    return QBlock(QBlockDims, key, orig, Qs, cols)
+    return QBlock(QBlockDims, key, orig, colpts)
 
 def genGrid(boxDims, key, qType, orig, bigGaps, gaps, qNos, vals, orient='V'):
     """
