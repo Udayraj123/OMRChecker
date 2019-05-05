@@ -238,9 +238,6 @@ templJSON={
 'H' : read_template("H_template.json")
 }
 TEMPLATES={'J': Template(),'H': Template()}
-# for k,v in templJSON[squad]:
-#     if('Int' in k):
-#         TYPEWISE_QS += # v['qNos']
 
 for squad in ['J','H']:
     TEMPLATES[squad].setDims(templJSON[squad]["Dimensions"])
@@ -259,7 +256,28 @@ for squad in ['J','H']:
         exit(0)
 
 
+# For processOMR
 
+readFormat = {
+    # Class/Squad
+    'J' : {    
+        # CSV column : Resp Keys to concatenate
+        'Roll' :  ['Squad','Medium',"roll0", "roll1", "roll2", "roll3", "roll4", "roll5", "roll6", "roll7", "roll8"],
+        'q1' : ['q1'], 'q2' : ['q2'], 'q3' : ['q3'], 'q4' : ['q4'], 'q5' : ['q5.1','q5.2'],
+        'q6' : ['q6.1','q6.2'], 'q7' : ['q7.1','q7.2'], 'q8' : ['q8.1','q8.2'], 'q9' : ['q9.1','q9.2'],
+        'q10' : ['q10'], 'q11' : ['q11'], 'q12' : ['q12'], 'q13' : ['q13'], 'q14' : ['q14'], 
+        'q15' : ['q15'], 'q16' : ['q16'], 'q17' : ['q17'], 'q18' : ['q18'] ,'q19' : ['q19'], 
+        'q20' : ['q20']
+        },
+    'H' : {    
+        # CSV column : Resp Keys to concatenate
+        'Roll' :  ['Squad','Medium',"roll0", "roll1", "roll2", "roll3", "roll4", "roll5", "roll6", "roll7", "roll8"],
+        'q1' : ['q1'], 'q2' : ['q2'], 'q3' : ['q3'], 'q4' : ['q4'],
+        'q5' : ['q5'], 'q6' : ['q6'], 'q7' : ['q7'], 'q8' : ['q8'],
+        'q9' : ['q9.1','q9.2'], 'q10' : ['q10.1','q10.2'], 'q11' : ['q11.1','q11.2'], 'q12' : ['q12.1','q12.2'], 'q13' : ['q13.1','q13.2'],
+        'q14' : ['q14'], 'q15' : ['q15'], 'q16' : ['q16']
+    }
+}
 
 
 """

@@ -23,40 +23,18 @@ from template import *
 window=gtk.Window()
 screen = window.get_screen()
 
-# In[14]:
-
-def getRoll(squad,omr):
-    roll=squad
-    try:
-        roll += omr['Medium']
-        # length of roll number
-        for i in range(9):
-            roll+= str(omr['roll'+str(i)])
-    except:
-        print('WARNING : Incomplete Roll ',roll)
-        return 'X'
-
-    return roll
-
-def getInt(Q):
-    d1 = str(Q.get('.1','0'))
-    d2 = str(Q.get('.2','x'))
-    if(d2=='x'):
-        return 'X'
-    else:
-        return d1+d2
-
-def processOMR(squad,omr):
-    resp={}
-    roll='X'
-    roll = getRoll(squad, omr)
+def processOMR(squad, omrResp):
     # TODO : write concatenation etc in generalized way from template here.
-    # for qNo, qType in TYPEWISE_QS:
-    #     resp[qNo]
-    if(roll=='X'):
-        # print('Warning : Error in Roll number! Moving File')
-        return {'roll': None,'resp':resp}
-    return {'roll': roll,'resp':resp}
+    # Note: This is actually a dummy/reference function. It is not part of the OMR checker so its implementation is completely subjective to user's requirements.
+    global readFormat
+    # for readFormat key
+    omrResp['Squad'] = squad 
+    resp={}
+    # symbol for absent response
+    UNMARKED = '' # 'X'
+    for col, respKeys in readFormat[squad].items():
+        resp[col] = ''.join([omrResp.get(k,UNMARKED) for k in respKeys])
+    return resp
 
 # In[76]:
 
@@ -253,9 +231,8 @@ with open(resultFile,'a') as f:
             OMRs = [origOMR]
             thresholdReads = [thresholdRead_L]
 
-        local_id=0
         for thresholdRead,inOMR in zip(thresholdReads,OMRs):
-            local_id+=1
+            counter+=1
             # OMRcrop = getROI(filepath,filename+ext,inOMR, closeup=True)
             OMRcrop = getROI(filepath,filename+ext,inOMR, closeup=False)
             #uniquify
@@ -265,67 +242,61 @@ with open(resultFile,'a') as f:
                 if(err):
                     appendArr(err,errorsArray,errorFile)
                 continue
-
             respArray=[]
-            OMRresponseDict,retimg,multimarked,multiroll = readResponse(squad,OMRcrop,name =newfilename)
+            OMRresponseDict,final_marked,multimarked,multiroll = readResponse(squad,OMRcrop,name = newfilename, save = saveMarkedDir+squadlang)
+
             # print(OMRresponseDict)
             #convert to ABCD, getRoll,etc
-            resp=processOMR(squad,OMRresponseDict)
-            respArray.append(resp['roll']) #May append None
-            for q in qNos[squad]:#for align
+            resp = processOMR(squad,OMRresponseDict)
+            print("\n\tRead Response: ", resp)
+            #for aligning cols
+            for q in readFormat[squad].keys():
                 try:
-                    respArray.append(resp['resp'][q])
+                    respArray.append(resp[q])
                 except:
                     respArray.append('')
             # err contains the rest = [results_2018batch,error,filename,filepath2]
             #This evaluates and returns the score attribute
-            score = evaluate(resp['resp'],Answers[squad+('K' if kv else '')],Sections[squad+('K' if kv else '')],explain=explain)
-            # if((multiroll or not (resp['roll'] is not None and len(resp['roll'])==11))):
+            score = evaluate(resp, Answers[squad+('K' if kv else '')],Sections[squad+('K' if kv else '')],explain=explain)
+            # if((multiroll or not (resp['Roll'] is not None and len(resp['Roll'])==11))):
             if(multimarked == 0):
                 # Enter into Results sheet-
-                
                 # err contains the rest = [results_2018batch,error,filename,filepath2]
                 results = [0,0,newfilename+'.jpg',filepath]+respArray+[score] #.append
                 filesNotMoved+=1;
                 # Write to results file (f is opened in append mode)
                 pd.DataFrame(results).T.to_csv(f,header=False,index=False)
-                print((counter,resp['roll'],score))
-                # print((counter,newfilename+'.jpg',resp['roll'],','.join(respArray[1:]),'score : ',score))
+                print((counter,resp['Roll'],score))
+                # print((counter,newfilename+'.jpg',resp['Roll'],','.join(respArray[1:]),'score : ',score))
             else:
                 #multimarked file
                 print('multiMarked, moving File: '+newfilename)
                 err = move(multiMarkedError,filepath,multiMarkedPath+squadlang,newfilename+'.jpg')
                 if(err):
                     appendArr(err+respArray,multiMarkedArray,multiMarkedFile)
-            counter+=1
 
-            if(respArray==[]):
-                respArray.append('') #Roll num
-                for q in qNos[squad]:
-                    respArray.append('')
+            # if(errorsArray!=[] and len(errorsArray[-1])!=30 and len(errorsArray[-1])!=25):
+            #     errorsArray[-1]=errorsArray[-1]+respArray
 
-            if(errorsArray!=[] and len(errorsArray[-1])!=30 and len(errorsArray[-1])!=25):
-                errorsArray[-1]=errorsArray[-1]+respArray
+            # if(verifyArray!=[] and len(verifyArray[-1])!=30 and len(verifyArray[-1])!=25):
+            #     verifyArray[-1]=verifyArray[-1]+respArray
 
-            if(verifyArray!=[] and len(verifyArray[-1])!=30 and len(verifyArray[-1])!=25):
-                verifyArray[-1]=verifyArray[-1]+respArray
-
-            if(badRollsArray!=[] and len(badRollsArray[-1])!=30 and len(badRollsArray[-1])!=25):
-                badRollsArray[-1]=badRollsArray[-1]+respArray
-            if(multiMarkedArray!=[] and len(multiMarkedArray[-1])!=30 and len(multiMarkedArray[-1])!=25):
-                multiMarkedArray[-1]=multiMarkedArray[-1]+respArray
+            # if(badRollsArray!=[] and len(badRollsArray[-1])!=30 and len(badRollsArray[-1])!=25):
+            #     badRollsArray[-1]=badRollsArray[-1]+respArray
+            # if(multiMarkedArray!=[] and len(multiMarkedArray[-1])!=30 and len(multiMarkedArray[-1])!=25):
+            #     multiMarkedArray[-1]=multiMarkedArray[-1]+respArray
 
 
-pd.DataFrame(errorsArray,columns=sheetCols).to_csv('feedsheets/errorSheet.csv',index=False,header=False)
-pd.DataFrame(verifyArray,columns=sheetCols).to_csv('feedsheets/verifySheet.csv',index=False,header=False)
-pd.DataFrame(badRollsArray,columns=sheetCols).to_csv('feedsheets/badRollSheet.csv',index=False,header=False)
-pd.DataFrame(multiMarkedArray,columns=sheetCols).to_csv('feedsheets/multiMarkedSheet.csv',index=False,header=False)
+# pd.DataFrame(errorsArray,columns=sheetCols).to_csv('feedsheets/errorSheet.csv',index=False,header=False)
+# pd.DataFrame(verifyArray,columns=sheetCols).to_csv('feedsheets/verifySheet.csv',index=False,header=False)
+# pd.DataFrame(badRollsArray,columns=sheetCols).to_csv('feedsheets/badRollSheet.csv',index=False,header=False)
+# pd.DataFrame(multiMarkedArray,columns=sheetCols).to_csv('feedsheets/multiMarkedSheet.csv',index=False,header=False)
 # print(errorsArray,verifyArray,badRollsArray)
 
 
 counterChecking=counter
-takentimechecking=(int(time()-p)+1)
-print('Finished Checking %d files in %d seconds =>  %f sec/OMR:)' % (counterChecking,takentimechecking,float(takentimechecking)/float(counterChecking)))
+takentimechecking=(int(time()-p))
+print('Finished Checking %d files in %d seconds =>  ~%2f sec/OMR:)' % (counterChecking-1,takentimechecking,round(takentimechecking/float(counterChecking),2)))
 # print('Total files moved : %d ' % (filesMoved))
 # print('Total files not moved (shud match) : %d ' % (filesNotMoved))
 

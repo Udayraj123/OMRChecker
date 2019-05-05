@@ -11,7 +11,7 @@
     "qType": "QTYPE_MED",
     "orig": [
       165,
-      276
+      285
     ],
     "bigGaps": [
       115,
@@ -33,7 +33,7 @@
     "qType": "QTYPE_ROLL",
     "orig": [
       218,
-      276
+      285
     ],
     "bigGaps": [
       115,
@@ -63,7 +63,7 @@
     "qType": "QTYPE_INT",
     "orig": [
       903,
-      278
+      285
     ],
     "bigGaps": [
       144,
@@ -98,7 +98,7 @@
     "qType": "QTYPE_INT",
     "orig": [
       1655,
-      275
+      285
     ],
     "bigGaps": [
       144,

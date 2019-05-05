@@ -85,7 +85,7 @@ TODO After MS:
 Excess:
 	(done 17 Apr - getMaxCosine from app) Mechanisms to check if circles found form a rectangle-like shape
 	Defeat the bossbg.jpg
-	3D viz (online) of this templateMatch output(, Sobel eroded blobs) to see the peaks
+	3D viz (online) of this templateMatch output(, Sobel eroded blobs) to see the peaks - of morph output
 
 Shifting -
 Problem: [Nonlinear Distortion] There's an uneven shift(mainly horizontal) of order of 2-3 pixels in the Qbox columns
@@ -218,8 +218,8 @@ Next:
 		- fftshift rotates the image
 
 	Increase test data
-		5.9  [ ] Images with more than 4 circles, Less than 4 ?!
-		5.10 [ ] Brightness and contrast variations
+		Nope, unnecessary - 5.9  [ ] Images with more than 4 circles, Less than 4 ?!
+		(23 Apr) 5.10 [X] Brightness and contrast variations
 
 	Update DetailedDos.md
 	Design the demo scenario now.
@@ -294,7 +294,7 @@ Some excessDos that won't happen after BTP (do them b4 poster!)
 	> those brandDos on wikipedia, SO, etc
 
 Note: looking back at this app dev, I was right about thinking so much before starting to code - just that I should have thought in a prioritized way on the features when it came to the low fps issue. That would have saved much time, anyway learning about how canvas works was quite helpful and it will get used later once core feats are working well.
-
+Also, had I got some real mobile camera images in test set instead of the unit_tests, I would have discovered few bugs quite earlier
 
 From drive data: 
 	// Nope, its a limitation - # TODO: (remove closeup bool) Automate the case of close up scan(incorrect page)-
@@ -371,10 +371,98 @@ From drive data:
 				# TODO: Plot and see performance of scaleRange
 ExcessDos:
 	//flash functionality
-	//put signature inside code
-	put signature inside app
+	//put signature inside app
+	put signature inside code
 	a good logo!
 
 
 21 Apr:
-Final Testbench - 
+Final Testbench - do only feasible samples!
+All marked revealed case of - even slightly vertically shifted will give large jump_gap here, thus giving 0 as marked!
+
+22 Apr:
+6:20 AM : 
+7:21 AM ->
+7:56 AM ->
+	// > create the hstack files! and generate output for all the images.
+		- hstack should contain:
+			raw input, morphCannyContours, preprocessed, DetectedCircles, initial_align, final_align, final_marked overlay without align boxes
+			initial, morph1, morph, morph_eroded
+	//8:47 AM
+
+9:01 AM -> More stacks
+
+14:34 PM -> Divide it into two stacks
+
+ExcessDos :
+	Make and release that '3D viz'
+
+
+24 Apr;
+Finish Yellow marks first.
+	// > put getThreshold algo
+	// > align template images
+	// > results section!
+
+// Bring examples of warped perspectives
+
+abstract: <refine here> <put xerox align etc here>
+<introduction: first para
+intro: <reduce here; move to related works>
+<(after results) 4 Concise points>
+Related: <add checkIt here>
+
+App 
+	> Find places to put : input Images, ...?
+	> Put only 3 screenshots of guidelines & save
+	> Don't mention tunablity
+
+Into latex:
+	> Blur the names in all images used.
+
+	Report speed of checking : 
+	Accuracy in bubble detection : 
+	Failing cases : 
+25 Apr
+//(1 hr without momentum) Write that processOMR
+// Keep flag for saveimglevel too. (to check speed)
+	> No change of speed! Still at .68s/OMR
+// Speed test:
+	only getROI: 0.21s/OMR
+	getROI + readResp : 0.68s/OMR
+
+Note: just saw how much difference without vert-align it is! Roll at 276 was perfect for scanned OMRs, for mobile OMRs it became 285
+_// This ought to mess up if not done calmly. Not now:
+	Major change: Add vertical alignment too-
+		> One-go try for vertical alignment!!
+
+// Presentable code running.
+
+App :
+Increase accept rate!!
+	>
+
+Focus on Demo video
+	> Save app's edited output on which markers detected without
+	> Make code runnable on Backup PC
+	> Install on others' phone
+	> Take less intense folding dataset
+	> Make separate bending set 
+After report: 
+	Try canvas on the new app
+
+
+Take app screenshots
+Start studying for queueing b4 dinner
+
+26 Apr
+	Poster latex start
+	Review report once, then Print
+
+	Giveback time is after poster
+		> Readme update new TODOs 
+			- identify if its a closeup : check no contours & make use of whites!
+			- from code comments
+			- Point at juniors from coding club: Write as a guide to dive into this code easily
+
+		> Brand techno's marking scheme here. Show the how marking scheme json can handle it.

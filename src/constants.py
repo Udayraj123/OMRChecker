@@ -12,7 +12,9 @@ Evaluate Hindi Files acc to diff template & anskey - Korba, Gwalior, Gonda _/ , 
 
 """
 
-showimglvl = 4
+showimglvl = -1
+saveimglvl = 4
+saveImgList = {}
 resetpos = [0,0]
 explain= 0
 # autorotate=1
@@ -34,7 +36,7 @@ thresholdRead_R =  60
 GAMMA_LOW = 0.7
 GAMMA_HIGH = 1.25
 
-
+ERODE_SUB_OFF = 1
 
 # For new ways of determining threshold
 MIN_GAP, MIN_STD = 30, 25
@@ -75,16 +77,16 @@ TEXT_SIZE=1.5
 
 
 directory ='images/OMR_Files/' if kv else 'images/OMR_Files/'
-errorPath='manual/errorFiles/'
+errorPath='images/Manual/errorFiles/'
 errorFile='feedsheets/errorFiles.csv'
 WarningFile='feedsheets/warningFiles.csv'
 verifyFile='feedsheets/verifyFiles.csv'
 badRollsFile='feedsheets/badRollsFiles.csv'
-verifyPath='manual/verifyFiles/'
-badRollsPath='manual/badRollsFiles/'
-multiMarkedPath='manual/multiMarkedFiles/'
+verifyPath='images/Manual/verifyFiles/'
+badRollsPath='images/Manual/badRollsFiles/'
+multiMarkedPath='images/Manual/multiMarkedFiles/'
 multiMarkedFile='feedsheets/multiMarkedFiles.csv'
-saveMarkedDir='markedOMRs/' 
+saveMarkedDir='images/markedOMRs/' 
 sheetCols=['batch','error','filename','path','roll']+['q'+str(i) for i in range(1,21)]#+['t'+str(i) for i in range(1,6)]
 resultSheetCols=sheetCols+['score'] 
 
