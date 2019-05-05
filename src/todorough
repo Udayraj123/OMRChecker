@@ -494,5 +494,29 @@ LATER:
 
 5 May:
 	Restructuring code-
+		//Remove high space taking commits
+			>> Make new repo, take important commits from old repo, checkout and commit into new repo.
+			//>> Insert gitignore right from start.
+			Commits to keep:
+			//98e93e9 BTP done
+			//a1984cc stacks showing functions improved
+			// b578a12 some alignment morphing tweaks
+			//cea0d6c (finally) fixed colwise thresholding, pretty robust now
+			//3c7357d CLAHE+Norm for real images
+			//4994ab7 Full test passed for align + colwise threshold
+			// 06ab128 Mk's trick for aligning
+			//f1ea959 Proper Alignment Method implemented
+			// 15e5b5e test bench v2 - perfection ocd
+			//7f2b562 testbench foundation complete
+			// e154bbe Per-image thresholding done
+			// 3e5a199 public limits commited
+			//ce36323 Local variance done
+			// f9312d7 Template code, Subplots done
+			// fa10dce rebased for advanced
+			//9ae6a28 Normalized and Tested
+			//d66b365 init
+		
 		Lesser directories
-		Remove high space taking commits
+		Lesser functions
+		Sample images at central place
+
