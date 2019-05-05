@@ -1,4 +1,4 @@
-# OMR-Scanner
+# OMR-Checker
 A full-fledged OMR checking software that can read and evaluate OMR sheets scanned at any angle and having any color. With support for a customizable marking scheme with section-wise marking, bonus questions, etc. 
 
 Hits Since **8 Apr '19**: [![HitCount](http://hits.dwyl.io/udayraj123/OMRScanner.svg)](http://hits.dwyl.io/udayraj123/OMRScanner)
@@ -28,26 +28,6 @@ sudo python3 -m pip install -r requirements.txt
 
 #### Xerox scans
 <img src="./progress/in_action/dark_action.gif">
-
-# How it works
-1. All scanned OMR images are loaded, (or) taken one by one.
-2. The scanned image is preprocessed
-
-<img src="./progress/in_action/light_xerox_input.png">
-
-3. Four corner circles are detected
-
-<img src="./progress/in_action/light_xerox_detect.png">
-
-4. Image is then cropped and transformed using those four points and the distribution of intensity values at the question bubbles is used to identify a threshold.
-<img src="./progress/in_action/light_xerox_dist.png">
-
-<img src="./progress/in_action/light_xerox_boxplot.png">
-
-5. Marked bubbles are detected and forwarded to the evaluator.
-<img src="./progress/in_action/light_xerox_output.png">
-
-This work is actively in progress and many improvements are being done.
 
 ## TODOs
 [X] Normalize the brightness: Run on 10-15 scans of empty OMRs for threshold tuning

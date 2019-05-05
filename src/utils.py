@@ -36,7 +36,7 @@ for _dir in [saveMarkedDir]:
     else:
         print('Already present : '+_dir)
 
-for _dir in ['images/Manual','results']:#,'feedsheets'
+for _dir in ['images/Manual','results', 'feedsheets']:
     if(not os.path.exists(_dir)):
             print('Created : '+ _dir)
             os.mkdir(_dir)
@@ -237,10 +237,10 @@ def check_min_dist(pt,pts,min_dist):
 filesMoved=0
 filesNotMoved=0
 def move(error,filepath,filepath2,filename):
+    print("Error-Code: "+str(error))
+    print("Source:  "+filepath)
+    print("Destination: " + filepath2 + filename)
     return None
-    # print("Error-Code: "+str(error))
-    # print("Source:  "+filepath)
-    # print("Destination: " + filepath2 + filename)
     global filesMoved
     # print(filepath,filepath2,filename,array)
     if(os.path.exists(filepath)):
@@ -550,11 +550,10 @@ def getROI(filepath,filename,image, closeup=False):
     # appendSaveImg(0,image_norm)
 
     appendSaveImg(1,image_eroded_sub)
+    res = cv2.matchTemplate(image_eroded_sub,templ,cv2.TM_CCOEFF_NORMED)
+    res[ : , midw:midw+2] = 255
+    res[ midh:midh+2, : ] = 255
     if(showimglvl>=2):# and showimglvl < 4):
-        # res = cv2.matchTemplate(image_eroded_sub,templ,cv2.TM_CCOEFF_NORMED)
-        # res[ : , midw:midw+2] = 255
-        # res[ midh:midh+2, : ] = 255
-        # show('Template output',res,pause=0)
         image_eroded_sub = resize_util_h(image_eroded_sub, image_norm.shape[0])
         image_eroded_sub[:,-5:] = 0
         show('Warped',np.hstack((image_eroded_sub, image_norm)),0)

@@ -5,6 +5,7 @@ import os
 import sys
 import cv2
 import glob
+import argparse
 from time import localtime,strftime,time
 from random import randint
 import numpy as np
@@ -204,6 +205,12 @@ def stitch(img1,img2):
     #     return None
     # return np.concatenate((img1,img2),axis=1)
 
+# construct the argument parse and parse the arguments
+ap = argparse.ArgumentParser()
+ap.add_argument("-c", "--closeup", required=False, default=0,
+    help="Whether or not input images have page contour visible.")
+args = vars(ap.parse_args())
+
 squadlang="XX"
 mws, mbs = [],[]
 # start=35
@@ -233,8 +240,7 @@ with open(resultFile,'a') as f:
 
         for thresholdRead,inOMR in zip(thresholdReads,OMRs):
             counter+=1
-            # OMRcrop = getROI(filepath,filename+ext,inOMR, closeup=True)
-            OMRcrop = getROI(filepath,filename+ext,inOMR, closeup=False)
+            OMRcrop = getROI(filepath,filename+ext,inOMR, closeup=int(args["closeup"]))
             #uniquify
             newfilename = filepath.split('/')[-3] + '_' + filename
             if(OMRcrop is None):

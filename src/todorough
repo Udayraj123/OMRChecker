@@ -305,6 +305,7 @@ From drive data:
 		-> Image is almost like that in hist_eq example on opencv
 		-> low exposure is there too? - apply gamma correction
 		-> checkout CLAHE again _// Solved by combining it with norm & truncated threshold
+			(25 apr) ^It was trunc threshold only that was found useful.
 
 	// findPage finding hard to remove bg coz of stringy edges touching paper
 		-> bg substractions : some are motion based - works only on still cameras
@@ -406,23 +407,6 @@ Finish Yellow marks first.
 
 // Bring examples of warped perspectives
 
-abstract: <refine here> <put xerox align etc here>
-<introduction: first para
-intro: <reduce here; move to related works>
-<(after results) 4 Concise points>
-Related: <add checkIt here>
-
-App 
-	> Find places to put : input Images, ...?
-	> Put only 3 screenshots of guidelines & save
-	> Don't mention tunablity
-
-Into latex:
-	> Blur the names in all images used.
-
-	Report speed of checking : 
-	Accuracy in bubble detection : 
-	Failing cases : 
 25 Apr
 //(1 hr without momentum) Write that processOMR
 // Keep flag for saveimglevel too. (to check speed)
@@ -434,35 +418,81 @@ Into latex:
 Note: just saw how much difference without vert-align it is! Roll at 276 was perfect for scanned OMRs, for mobile OMRs it became 285
 _// This ought to mess up if not done calmly. Not now:
 	Major change: Add vertical alignment too-
-		> One-go try for vertical alignment!!
+		Not nw; > One-go try for vertical alignment!!
 
 // Presentable code running.
 
 App :
-Increase accept rate!!
-	>
+// Increase accept rate!!
+	// > recheck flow of filters: All fine. 
+	// > recheck template matching: its time to add basic scaled matching!
+	/.. > CLAHE isn't giving useful output! Do some tuning there.
+		-> Guess its not useful for canny. It increases the noise
 
 Focus on Demo video
-	> Save app's edited output on which markers detected without
-	> Make code runnable on Backup PC
-	> Install on others' phone
+	// Nope, no need, can handle.> Save app's edited output on which markers detected without
+	// > Make code runnable on Backup PC
+	// > Install on others' phone
 	> Take less intense folding dataset
 	> Make separate bending set 
-After report: 
-	Try canvas on the new app
 
+// Do some corrections in report
+UPDATE FINAL REPORT!!
+-->	App screenshots into report.
+		// > Find places to put : input Images, ...?
+		// > Put only 3 screenshots of guidelines & save
+		// > Don't mention tunablity
+	Final result image numbers.
+	Related: <add checkIt here>
+	abstract: <refine here> <put xerox align etc here>
+	intro: <reduce here; move to related works>
+	<(after results) 4 Concise points>
 
-Take app screenshots
-Start studying for queueing b4 dinner
+	Into latex:
+		> Blur the names in all images used.
+		Report speed of checking : 
+		Accuracy in bubble detection : 
+		Failing cases : 
+
+Good news!: 16 out of 20 real images worked well. wrong thresh in omr_8(legit); no circle in omr_11(partial skew - wrong page boundary),omr_19(partial skew),omr_21(blurry and skewed - legit),
+
+YKWYD - Start studying for queueing b4 dinner
 
 26 Apr
-	Poster latex start
-	Review report once, then Print
+	//Poster latex start
+	//Review report once, then Print
+	
+	//Poster contents:
+		//Reduce sections : Introduction, Motivation
+		// remove sections :  Literature review
+		// Block Diagram
+		//Methodology Overview
+		//> Adaptive Threshold
+		//> Align Template
 
-	Giveback time is after poster
+		//> Attracting n Defining image of the project: 
+			//1. Bad looking OMR(Bad print, persp, *folded OMR) working
+			//2. Good looking OMR with shadow
+
+
+
+
+
+
+
+LATER:
+	App:
+		Try canvas on the new app
+		> Try again for higher fps without drawing on canvas
+	
+	Giveback time is AFTER POSTER
 		> Readme update new TODOs 
 			- identify if its a closeup : check no contours & make use of whites!
 			- from code comments
 			- Point at juniors from coding club: Write as a guide to dive into this code easily
-
 		> Brand techno's marking scheme here. Show the how marking scheme json can handle it.
+
+5 May:
+	Restructuring code-
+		Lesser directories
+		Remove high space taking commits
