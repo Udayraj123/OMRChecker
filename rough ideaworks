@@ -1,3 +1,48 @@
+### VISION | GOALS
+> Its 2018! Scanners be a thing of past now. Mobile(s) on a stand would totally replace the scanner.
+> Make it like one of the google products - simple, slick, design+tech
+> Not to mention, it will be highly usable!
+
+#Self terms: 
+> Follow the big "templates" of brandDos, they will get filled with time!!
+
+### Code improvements ###
+done-
+# Major
+> Bug resolved in resize:
+	OMRcrop = cv2.resize(OMRcrop,(uniform_width,uniform_height))
+	# OMRcrop = imutils.resize(OMRcrop,height=uniform_height,width=uniform_width) 
+> Quadrant dividing for 4 points
+> Brightness Normalizing
+
+# Minor
+> Doubled the resolution of template and input
+
+
+### ROUGH FUTUREDOS ####
+> can refactor the py code, but proper code would be in cpp. Python is just for quick and dirty.
+>> First write everything on paper. Then you'd make much lesser mistakes
+RefactorDos:
+Simpler folder structure.
+then consider the psychology to change the structure further for tallying.
+
+Furthers | Futures
+> make Independent of photo effects?! <- already normalized shud not make diff
+>
+
+support for tick mark detection?  
+	>well, it cant be used everywhere as its likely to fail without fault of the scanner.<< Nope
+	>Yeah its there in many too
+
+Maybes:
+> Gaussian like box than a 17x17 rectangle?
+
+>> Into C++ code:
+Only do the core part in cpp. Template setting,etc preprocessing types can be done in py.
+
+
+## COLLECT vv
+
 Things to find
 interesting Research papers on Optical Mark Recognition
 	Find the use of those side strips
@@ -15,21 +60,23 @@ github repos
 
 
 
-So, the need of black ink is IR sensors!
-
-
-
 Ideas
 Web portal to do it all- generating and modifying template, making marking scheme, designing omr sheet using variants
 ^This be in da premium features. The normal version shall be comfy for devs but normal users would need some time
 
-Furthers
-support for tick mark detection? - well, it cant be used everywhere as its likely to fail without fault of the scanner.
-
-
-
 
 QuoteOuts
+
+HISTORIC>
+So, the need of black ink is IR sensors!
+The strips on the side of OMR are called "timeline" (https://www.addmengroup.com/Downloads/Addmen-OMR-Sheet-Design-Guide.pdf)
+"In the old pattern, machine read sheets, were additional black marks placed at equal increments running throughout the length of the sheet on either side or on both sides. This strip of black marks is called a timeline which helps the OMR machine to identify the next row of bubbles.
+	But Addmen software does not need a timeline to read. It has a radically different algorithm, which needs only 4 index points placed in a perfect rectangle. "
+https://www.addmengroup.com/omr-software-india.htm
+^^ So IITKGP used it and rated it 3 Stars
+https://www.youtube.com/watch?v=B5tR8ucqXeA
+>> It is quite slow!
+
 "An OMR system detects the presence or absence of marks and spaces on a document and uses reflected infrared  light to decode the pattern into a conventional alphanumeric data record. "
 
 "OMR software is a computer software application that makes OMR possible on a desktop computer by using an Image scanner to process surveys, tests, attendance sheets, checklists, and other plain-paper forms printed on a laser printer. "
