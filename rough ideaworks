@@ -17,13 +17,13 @@ done-
 
 # Minor
 > Doubled the resolution of template and input
-
 > Better Checking around the box: Lowering of threshold no more required as per-img threshold would be decided.
 
 
 ### ROUGH FUTUREDOS ####
 > can refactor the py code, but proper code would be in cpp. Python is just for quick and dirty.
 >> First write everything on paper. Then you'd make much lesser mistakes
+
 RefactorDos:
 Simpler folder structure.
 then consider the psychology to change the structure further for tallying.
@@ -47,7 +47,7 @@ Only do the core part in cpp. Template setting,etc preprocessing types can be do
 
 Things to find
 interesting Research papers on Optical Mark Recognition
-	Find the use of those side strips
+	Find the use of those side strips (see below in Quoteouts)
 papers on QR code scanning (anything to pickup from there?)
 
 Is MCQ the only application?
@@ -70,10 +70,10 @@ Web portal to do it all- generating and modifying template, making marking schem
 QuoteOuts
 
 HISTORIC>
-So, the need of black ink is IR sensors!
+
+Black lines of side - used for aligning rows when IR sensors were used in OMR scanning and processing. 
 The strips on the side of OMR are called "timeline" (https://www.addmengroup.com/Downloads/Addmen-OMR-Sheet-Design-Guide.pdf)
-"In the old pattern, machine read sheets, were additional black marks placed at equal increments running throughout the length of the sheet on either side or on both sides. This strip of black marks is called a timeline which helps the OMR machine to identify the next row of bubbles.
-	But Addmen software does not need a timeline to read. It has a radically different algorithm, which needs only 4 index points placed in a perfect rectangle. "
+"In the old pattern, machine read sheets, were additional black marks placed at equal increments running throughout the length of the sheet on either side or on both sides. This strip of black marks is called a timeline which helps the OMR machine to identify the next row of bubbles. But Addmen software does not need a timeline to read. It has a radically different algorithm, which needs only 4 index points placed in a perfect rectangle. "
 https://www.addmengroup.com/omr-software-india.htm
 ^^ So IITKGP used it and rated it 3 Stars
 https://www.youtube.com/watch?v=B5tR8ucqXeA

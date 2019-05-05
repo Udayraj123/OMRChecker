@@ -23,15 +23,6 @@ from template import *
 window=gtk.Window()
 screen = window.get_screen()
 
-
-
-# cv2.createTrackbar('boxDimY', 'imageWindow', 6, 10, someFunctionCallBack)
-# waitQ()
-"""
-Note : You'll get this error if the code is accessing pixels out of bounds of the image
-error: (-215) A.size == arrays[i0]->size in function init
-"""
-
 # In[14]:
 
 def getRoll(squad,rolldict):
@@ -187,16 +178,6 @@ _// pass array of questions to readResp: it just reads the coords and updates wh
 Sort Bad Verifies = Raebareli, Dhirangarh, Ambarnath, Korba
 """
 
-
-template = cv2.imread('images/FinalCircle_hd.png',cv2.IMREAD_GRAYSCALE) #,cv2.CV_8UC1/IMREAD_COLOR/UNCHANGED 
-w,h = template.shape[:2]
-template_scale=uniform_height_hd/(h*circle_templ_scaledown)
-w,h = int(w*template_scale),int(h*template_scale)
-template = cv2.resize(template,(w,h))
-lontemplateinv = cv2.imread('images/lon-inv-resized.png',cv2.IMREAD_GRAYSCALE)
-# lontemplateinv = imutils.rotate_bound(lontemplateinv,angle=180) 
-# lontemplateinv = imutils.resize(lontemplateinv,height=int(lontemplateinv.shape[1]*0.75))
-# cv2.imwrite('images/lontemplate-inv-resized.jpg',lontemplateinv)
 once = 0
 
 allOMRs= glob.iglob(directory+'*/*/*/*'+ext)
@@ -236,6 +217,14 @@ badRollsArray=[sheetCols]
 verifyArray=[sheetCols]
 multiMarkedArray=[sheetCols]
 
+def stitch(img1,img2):
+    if(img1.shape!=img2.shape):
+        print("Can't stitch different sized images")
+        return None
+    # np.hstack((img1,img2)) does this!
+    return np.concatenate((img1,img2),axis=1)
+
+squadlang="XX"
 mws, mbs = [],[]
 # start=35
 with open(resultFile,'a') as f:
@@ -257,58 +246,50 @@ with open(resultFile,'a') as f:
         if("HE_" in filename):squad="H";
 
         origOMR = cv2.imread(filepath,cv2.IMREAD_GRAYSCALE) 
+
         h,w = origOMR.shape[:2]
-        if(w>uniform_width*1.25 and stitched):
+        if(w > uniform_width*1.25 and stitched):
             print("Assuming Stitched input.")
             w=int(w/2)
             OMRs=[origOMR[:,:w],origOMR[:,w:2*w]]
             thresholdReads=[thresholdRead_L,thresholdRead_R]
-
         else:
-            OMRs=[origOMR]
-            thresholdReads=[thresholdRead_L]
+            OMRs = [origOMR]
+            thresholdReads = [thresholdRead_L]
 
         local_id=0
-        for thresholdRead,OMR in zip(thresholdReads,OMRs):
+        for thresholdRead,inOMR in zip(thresholdReads,OMRs):
             local_id+=1
-            OMR = imutils.resize(OMR,height=uniform_height_hd) 
-            print("Template",template.shape[:2],"Image", OMR.shape[:2])
-            OMR = cv2.GaussianBlur(OMR,(3,3),0) 
-            #>> temp
-            if(showimglvl>=3):
-                show('OMR',OMR,0)
-            # OMR = imutils.rotate_bound(OMR,angle=90) 
+            # inOMR = imutils.resize(inOMR,height=uniform_height_hd)
+            inOMR = resize_util(inOMR, uniform_width_hd)
+            print("Template",template.shape[:2],"Image", inOMR.shape[:2])
             
-            OMRcrop,badscan = getROI(errorsArray,squadlang,filepath,filename+ext,filename,OMR,template,pause=0,
-                lontemplinv= (lontemplateinv if autorotate else None),showimglvl=showimglvl,verbose=verbose, scaleRange=scaleRange,thresholdCircle=thresholdCircle)
+            # Preprocessing the image
+            OMR = cv2.GaussianBlur(inOMR,(3,3),0) 
+            # OMR = cv2.normalize(OMR, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)#, dtype=cv2.CV_32F)
+            OMR = normalize_util(OMR)
+            
+            if(showimglvl>=6):
+                show('Preprocessing',stitch(inOMR,OMR),1,1)
 
-            #uniquify 
-            newfilename = filename + '_' + filepath.split('/')[-2] 
-            # if(badwidth == 1):
-            #     # Shifting the template! Resizing might work!!
-            #     # Put detection images into the verify folder
-
+            OMRcrop = getROI(filepath,filename+ext,OMR, closeup=True)
+            #uniquify
+            newfilename = filename + '_' + filepath.split('/')[-2]
             if(OMRcrop is None):
-                # Here badscan == -1 will come
-
                 err = move(results_2018error,filepath,errorpath+squadlang,newfilename+'.jpg')
                 if(err):
                     appendArr(err,errorsArray,ErrorFile)
-                continue
+                continue                
             else:
-                
                 OMRcrop = cv2.resize(OMRcrop,(uniform_width_hd,uniform_height_hd))
-                # OMRcrop = imutils.resize(OMRcrop,height=uniform_height,width=uniform_width) 
-
+                # OMRcrop = imutils.resize(OMRcrop,height=uniform_height,width=uniform_width)
             
             respArray=[]
             try: #TODO - resolve this try catch later 
-                counter+=1
-                
-                OMRresponse,retimg,multimarked,multiroll,mw,mb = readResponse(squad,TEMPLATES[squad],(boxDimX,boxDimY),OMRcrop,
-                                                  badscan=badscan,multimarkedTHR= thresholdRead-12.75 ,name =newfilename,save=(saveMarkedDir+squadlang if saveMarked else None),thresholdRead=thresholdRead,explain=explain,bord=-1)
-                mws.append(mw)                
-                mbs.append(mb)                
+                counter+=1                
+                OMRresponse,retimg,multimarked,multiroll,mw,mb = readResponse(squad,OMRcrop, badscan=badscan,multimarkedTHR= thresholdRead-12.75 ,name =newfilename,save=(saveMarkedDir+squadlang if saveMarked else None),thresholdRead=thresholdRead,explain=explain,bord=-1)
+                mws.append(mw)
+                mbs.append(mb)
                 # print("XYZ1")
                 resp=processOMR(squad,OMRresponse) #convert to ABCD, getRoll,etc
                 # print("XYZ2")
@@ -357,7 +338,7 @@ with open(resultFile,'a') as f:
                 #>> temp
                 if(showimglvl>=1):
                     # >> temp
-                    show('processed_'+newfilename+'_'+str(local_id)+'.jpg',imutils.resize(retimg,height=int(display_height)),1, resetpos=resetpos)#0 if i<end else 1)
+                    show('processed_'+newfilename+'_'+str(local_id)+'.jpg',retimg,1, resetpos=resetpos)#0 if i<end else 1)
                     plt.close()
                     
             except Exception as inst:
@@ -401,12 +382,13 @@ print('Finished Checking %d files in %d seconds =>  %f sec/OMR:)' % (counterChec
 
 # Use this data to train as +ve feedback
 # print(thresholdCircles)
-for x in [badThresholds,veryBadPoints,thresholdCircles, mws, mbs]:
-    if(x!=[]):
-        x=pd.DataFrame(x)
-        print( x.describe() )
-        plt.plot(range(len(x)),x)
-        plt.show()
-    # else:
-        # print(x)
+if(showimglvl>=0):
+    for x in [badThresholds,veryBadPoints,thresholdCircles, mws, mbs]:
+        if(x!=[]):
+            x=pd.DataFrame(x)
+            print( x.describe() )
+            plt.plot(range(len(x)),x)
+            plt.show()
+        # else:
+            # print(x)
 

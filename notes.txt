@@ -1,0 +1,26 @@
+warpAffine vs warpPerspective
+
+warpAffine
+> Input M is 2x3
+> Affine means all parallel lines in original image will still be parallel in output image
+> M is generated from getAffineTransform, which needs two sets of 3 points
+>> It can effectively scale, rotate and skew(in a particular direction) the image
+
+
+warpPerspective
+> Input M is 3x3
+> Lines no longer may remain parallel, but atleast remain straight lines
+> M is generated from getPerspectiveTransform, which needs two sets of 4 points
+>> It can skew non uniformly.
+
+
+Find Contour vs Template Matching
+
+Find Contour
+> Wont work for scanner images as no bounding contour exists - has to detect that somehow.
+> Slower
+
+Template Matching
+> (currently) wont work for images with larger tilts in angle
+
+>> Using contour for inner boxes will help

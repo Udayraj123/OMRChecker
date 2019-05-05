@@ -14,14 +14,14 @@ def waitQ():
     cv2.destroyAllWindows()
 
 show_count=0
-def show(img,title="",wait=True):     
+def show(img,title="",pause=True):     
     global show_count
     if(title==""):
         show_count+=1
         title="Image "+str(show_count)
         
     cv2.imshow(title,img)
-    if(wait):
+    if(pause):
     	waitQ()
 
 def plot_hist(img):
@@ -46,7 +46,7 @@ def plot_hist(img):
 	plt.show()
 
 def normalize(img):	
-	img = cv2.normalize(img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)#, dtype=cv2.CV_32F)
+	return cv2.normalize(img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)#, dtype=cv2.CV_32F)
 	
 	# Somehow producing different result, has more noise 
 	# from sklearn.preprocessing import minmax_scale
@@ -78,9 +78,9 @@ for filepath in allOMRs:
 	img = cv2.resize(img,(u_width,int(h*u_width/w)))
 	orig=img.copy()
 	if(review):
-		show(img,wait=False)
+		show(img,pause=False)
 		img2 = clahe.apply(img)	
-		normalize(img);
+		img = normalize(img);
 		show(img)
 		plot_hist(img);
 		show(img2)

@@ -6,13 +6,17 @@ import os
 import sys
 import cv2
 import glob
-from time import localtime,strftime,time
-from random import randint
+import imutils 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import imutils #thru the pip package.
+plt.rcParams['figure.figsize'] = (10.0, 8.0)
+
+from template import *
+from random import randint
+from time import localtime,strftime,time
 # from skimage.filters import threshold_adaptive
+
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk
@@ -52,6 +56,7 @@ def pad(val,array):
         for i in range(len(array)-len(val)):
             val.append('V')
 
+
 def appendArr(val,array,filename):
     array.append(val)
     if(not os.path.exists(filename)):
@@ -62,22 +67,40 @@ def appendArr(val,array,filename):
         pd.DataFrame([val],columns=sheetCols).to_csv(f,index=False,header=False)
         # pd.DataFrame(val).T.to_csv(f,header=False)
 
+def appendErr(val):
+    global errorsArray
+    appendArr(val,errorsArray,ErrorFile)
 
 def waitQ():
     while(cv2.waitKey(1)& 0xFF != ord('q')):pass
     cv2.destroyAllWindows()
 
-def show(name,img,pause=1,resetpos=None):
-    global windowX
-    global windowY
-    if(type(img)== type(None)):
+def normalize_util(img, alpha=0, beta=255):
+    return cv2.normalize(img, alpha, beta, norm_type=cv2.NORM_MINMAX)#, dtype=cv2.CV_32F)
+
+def square_util(gray):
+    gray = np.uint16(gray)
+    gray **= 2
+    gray = gray / 255
+    return gray
+
+def resize_util(img, u_width, u_height=None):
+    if u_height == None:
+        h,w=img.shape[:2]
+        u_height = int(h*u_width/w)        
+    return cv2.resize(img,(u_width,u_height))
+
+def show(name,orig,pause=1,resize=False,resetpos=None):
+    global windowX, windowY, display_width
+    if(type(orig) == type(None)):
         print(name," NoneType image to show!")
         if(pause):
             cv2.destroyAllWindows()
         return
+    img = resize_util(orig,display_width) if resize else orig
+    h,w = img.shape[:2]
     cv2.imshow(name,img)
-    
-    w,h = img.shape[:2]
+
     if(resetpos):
         windowX=resetpos[0]
         windowY=resetpos[1]
@@ -91,6 +114,11 @@ def show(name,img,pause=1,resetpos=None):
     if(pause):
         waitQ()
     
+def putLabel(img,label,pos=(100,50),clr=(255,255,255),size=5):
+    # TODO extend image using np
+    img[:(pos[1]+size*2), :]= 0
+    cv2.putText(img,label,pos,cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE,clr,size)
+
 def myColor1():
     return (randint(100,250),randint(100,250),randint(100,250))
     
@@ -203,119 +231,6 @@ def printbuf(x):
 
 # In[ ]:
 
-thresholdCircles=[]
-badThresholds=[]
-veryBadPoints=[]
-def match_template_scaled(errorsArray,squadlang,filepath,filename,img1, template,showimglvl=0,pts=4,
-                          scaleRange=(0.5,1.5),fac=50,min_dist=None,thresholdCircle=0.6,append=1,
-                          CLR=(255,155,255),iterLim=30,excludepts=None):
-    global errorpath
-    lon='lon' if append==0 else 'non lon'
-    orig=template.copy()
-    w1,h1=img1.shape[:2]
-    w,h=template.shape[:2]
-    if( not min_dist):
-        min_dist = h1/10
-    scale=float(h1)/h
-    # print('image to template ratio (should be 38)',scale)
-
-    x=list(map(int,np.multiply(scaleRange,fac)))
-    if((x[1]-x[0])> iterLim*fac/10):
-        print("Too many iterations : %d, reduce scaleRange" % ((x[1]-x[0])*10/fac) )
-        return []
-        
-###### vvv Scope for improvement
-    r_max=None
-    for r0 in range(x[1],x[0], -1*fac//10): #reverse order
-        r=float(r0)/fac
-        # printbuf(r)
-        if(r==0.0):
-            continue
-        templ = imutils.resize(orig, height = int(h*r))
-        res = cv2.matchTemplate(img1,templ,cv2.TM_CCOEFF_NORMED)
-        # res is the black image with white dots
-        maxT = res.max()
-        if(thresholdCircle < maxT):
-            print(r,' %d )Better match %d%%' % (r0,100*maxT))
-            r_max=r
-            thresholdCircle = maxT
-###### ^^^ Scope for improvement
-
-    if(r_max==None):
-        if(append):
-            print("No matchings for given scaleRange & thresholdCircle",scaleRange,thresholdCircle,lon)
-        
-        print("No matchingsERRRRR")
-        # this goes as resp=None in the main.
-        err = move(results_2018error,filepath,errorpath+squadlang,filename)
-        if(append and err):
-            appendArr(err,errorsArray,ErrorFile)
-
-        return [],0
-    print('')
-    if(r_max not in (0.85,0.9,0.95)):
-        print('WARNING : Changed final scale',r_max,lon)
-    
-    templ = imutils.resize(orig, height = int(h*r_max))
-    
-    #make quadrants of image
-    quads={}
-    origins=[[0,0],[w1//3,0],[0,h1//2],[w1//3,h1//2]]
-    quads[1-1]=img1[0:h1//2,0:w1//3];
-    quads[2-1]=img1[0:h1//2,w1//3:w1];
-    quads[3-1]=img1[h1//2:h1,0:w1//3];
-    quads[4-1]=img1[h1//2:h1,w1//3:w1];
-    locd = []
-    for k in range(0,4):
-        img=quads[k]
-        res = cv2.matchTemplate(img,templ,cv2.TM_CCOEFF_NORMED)
-        maxT = res.max()
-        if(maxT > thresholdCircle):
-            print("Updated Threshold: ",thresholdCircle)
-            thresholdCircle=maxT
-        #max(locs,key=lambda pt: res[pt[1]][pt[0]]) 
-        pt=np.argwhere(res==maxT)[0];
-        pt = [pt[1],pt[0]]
-        if(k==0):thresholdCircles.append(maxT)
-        pt[0]+=origins[k][0]        
-        pt[1]+=origins[k][1]
-        # print(">>",pt)
-        locd.append(pt)
-    
-    w,h=templ.shape[:2] 
-    centres=[]
-    for pt in locd:
-        img1 = cv2.rectangle(img1,tuple(pt),(pt[0]+w,pt[1]+h),CLR,2)            
-        centres.append([pt[0]+w/2,pt[1]+h/2])
-        
-##############################################################################
-    # exclude = type(excludepts)!=type(None) and excludepts!=[]
-    badscan = 0
-    # for pt in locs: #zipped because it gives Xs and Ys seperated & probab ordered by Xs
-    #     if(i==pts):
-    #         break
-    #     if(check_min_dist(pt,centres,min_dist) and ( not exclude or (exclude and check_min_dist(pt,excludepts,min_dist)))):
-    #         # print('adding pt ',pt,check_min_dist(pt,centres,min_dist),exclude,check_min_dist(pt,excludepts,min_dist))
-    #         img1 = cv2.rectangle(img1,pt,(pt[0]+w,pt[1]+h),CLR,2)            
-    #         centres.append([pt[0]+w/2,pt[1]+h/2])
-    #         thresholdCircles.append(res[pt[1]][pt[0]])            
-    #         i+=1
-    #     else:
-    #         badThresholds.append(res[pt[1]][pt[0]])
-    #         print(locs,'WARNING Bad Scan : skipped nearby point', pt,res[pt[1]][pt[0]],'min_dist:',min_dist,centres,exclude,excludepts)
-    #         badscan=1
-    # ### ^^^        
-        
-    if(showimglvl>=2):
-        show('detected',img1,0)    
-
-    # if(len(centres)<3):
-    #     for pt in centres:
-
-    #         veryBadPoints.append(res[int(pt[1])][int(pt[0])]);
-
-    return np.array(centres),badscan
-
 def get_fourth_pt(three_pts):
     m=[]
     for i in range(3):
@@ -333,89 +248,194 @@ def get_fourth_pt(three_pts):
 # In[7]:
 
 
-# The Wrapper
-def getROI(errorsArray,squadlang,filepath,filename,name,orig,templ,pause=0,lontemplinv=None,showimglvl=0,verbose=False,pts=4,scaleRange=(0.25,1.5),fac=100,
-           thresholdCircle=0.55,thresholdLon=0.55,iterLim=50):
-    template=templ.copy()
-    image=orig.copy()
-    #Add rotation here
-    w,h=image.shape[:2]
-    image=image-cv2.erode(image,None)
-    template=template-cv2.erode(template,None)
-    
-    excludepts=None
-    #Manually adding the lon point
-    # excludepts = [[380,60]]
-##
+def findPage(image_norm):
+    # Done: find ORIGIN for the quadrants
+    # TODO: Get canny parameters tuned
+    edge = cv2.Canny(image_norm, 135, 65)
     """
-    Done> Smoothening/Blurring for better template match!!
+    A pixel in the original image (either 1 or 0) will be considered 1 only if all the pixels
+    under the kernel is 1, otherwise it is eroded (made to zero).
+    # Closing is reverse of Opening, Dilation followed by Erosion.
+    """
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    # Close the small holes, or complete the edges in canny
+    closed = cv2.morphologyEx(edge, cv2.MORPH_CLOSE, kernel) 
+
+    # findContours returns outer boundaries in CW and inner boundaries in ACW order.
+    cnts = imutils.grab_contours(cv2.findContours(closed, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE))
+    # hullify to resolve disordered curves due to noise
+    cnts = [cv2.convexHull(c) for c in cnts]
+    cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
+    sheet = []
+    for c in cnts:
+        if cv2.contourArea(c) < MIN_PAGE_AREA: 
+            continue
+        peri = cv2.arcLength(c,True)
+        # ez algo - https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm
+        approx = cv2.approxPolyDP(c, epsilon = 0.025 * peri, closed = True)
+        print("Area",cv2.contourArea(c), "Peri", peri)
+
+        if(len(approx)==4):
+            sheet = np.reshape(approx,(4,-1))
+            cv2.drawContours(image_norm, [approx], -1, (0,255, 0), 2)
+            break
+        # box = perspective.order_points(box)
+    print("Found largest quadrilateral: ", sheet)
+
+    if sheet==[]:
+        print("Error: Paper boundary not found!")
+        show('Morphed Edges',closed,pause=1)  
+    return sheet
+
+def getBestMatch(image_eroded_sub, num_steps=10, iterLim=50):
+    global template_eroded_sub
+
+    # match_precision is how minutely to scan ?!
+    x=[int(scaleRange[0]*match_precision),int(scaleRange[1]*match_precision)]
+    if((x[1]-x[0])> iterLim*match_precision/num_steps):
+        print("Too many iterations : %d, reduce scaleRange" % ((x[1]-x[0])*num_steps/match_precision) )
+        return None
+
+    h, w = template_eroded_sub.shape[:2]
+    res, best_scale=None, None
+    t_max = 0
+    for r0 in range(x[1],x[0], -1*match_precision//num_steps): #reverse order
+        s=float(r0)/match_precision
+        if(s==0.0):
+            continue
+        templ_scaled = imutils.resize(template_eroded_sub, height = int(h*s))
+        res = cv2.matchTemplate(image_eroded_sub,templ_scaled,cv2.TM_CCOEFF_NORMED)
+        
+        # res is the black image with white dots
+        maxT = res.max()
+        if(t_max < maxT):
+            print('Scale: '+str(s)+', Circle Match: '+str(round(maxT*100,2))+'%')
+            best_scale, t_max = s, maxT
+    if(t_max < thresholdCircle):
+        print("Warnning: Template matching too low!")
+        show("res",res,1,0)
+    print('') #close buf
+    return best_scale
+
+thresholdCircles=[]
+badThresholds=[]
+veryBadPoints=[]
+def getROI(filepath,filename,image_norm, closeup=False):
+    global template_eroded_sub, squadlang
+
+    image_norm = resize_util(image_norm, uniform_width_hd, uniform_height_hd)
+    # image_eroded_sub=image_norm-cv2.erode(image_norm,None)
+    # Spread the darkness :P - Erode operation takes MIN over kernel
+
+    image_eroded_sub = image_norm - cv2.erode(image_norm, kernel=np.ones((5,5)),iterations=5)
+    """
     TODO:
-    debug this autorotate-
+    Write autorotate-
     """
 
-    # if( type(lontemplinv) != type(None)):
-    #     lontemplateinv=lontemplinv.copy()
-    #     lontemplateinv=lontemplateinv-cv2.erode(lontemplateinv,None)
-    #     # show('lontemplateinv',lontemplateinv)
-    #     p=float(w)/float(h)
-    #     if(p<1):
-    #         #90 or 180 works fine
-    #         # print('Initiate Rotate by 90 - ')
-    #         lontemplateinv = imutils.rotate_bound(lontemplateinv,angle= 270)
-            
-    #     excludepts,_ = match_template_scaled(errorsArray,squadlang,filepath,filename,image,lontemplateinv,
-    #                                     showimglvl=showimglvl,
-    #                                     pts=1,
-    #                                     append=0,
-    #                                     scaleRange=scaleRange,fac=fac,thresholdCircle=thresholdLon,iterLim=iterLim)
-        
-    #     # print("Top location : ",excludepts)
-    #     # show('lontemplateinv',lontemplateinv,0)
-
-    #     if(excludepts!=[]):
-    #         angle = 180 if excludepts[0][1] > 500 else ( 270 if excludepts[0][0] > 500 else 90)
-    #         origin = h,w if angle == 180 else (h,0 if angle== 270 else (0,w if angle==90 else 0,0))
-    #         # print(excludepts[0],origin,image.shape[:2])
-    #         #transpose of the point
-    #         excludepts[0] = ( excludepts[0][1]-origin[1],origin[0] -excludepts[0][0]    )
-    #         # pt = tuple(excludepts[0])
-    #         white=(250,250,250)
-    #         print('Warning: Rotating File by : '+str(angle))
-    #         image = imutils.rotate_bound(image,angle=angle)
-    #         # image = cv2.rectangle(image,pt,(pt[0]+10,pt[1]+10),white,-1)
-    #         orig = imutils.rotate_bound(orig,angle=angle)
-        
-    # cv2.createTrackbar('boxDim', 'ImageWindow', 2000, 5000, match_template_scaled_with_time_flag)
+    # TODO: Automate the case of close up scan(incorrect page)-
+    warped_image_eroded_sub = image_eroded_sub
+    warped_image_norm = image_norm
     
+    if(closeup == False):
+        sheet = findPage(image_norm)
 
-    four_pts,badscan =match_template_scaled(errorsArray,squadlang,filepath,filename,image,template,
-                                showimglvl=showimglvl,
-                                pts=pts,
-                                scaleRange=scaleRange,fac=fac,thresholdCircle=thresholdCircle,iterLim=iterLim,excludepts=excludepts)
-    if(pts == 3 and len(four_pts)==3):
-        three_pts=four_pts
-        four_pts = np.concatenate([four_pts,[get_fourth_pt(three_pts)]])
+        if sheet==[]:
+            return None        
 
-    if(verbose):
-        print('verbose: ',name,'4 circles : ',list(four_pts))
+        # Warp layer 1
+        warped_image_eroded_sub = four_point_transform(image_eroded_sub, sheet)        
+        if(showimglvl>=2):
+            show("page_check",image_norm, pause=False)
+        warped_image_norm = four_point_transform(image_norm, sheet)
+
+        # Resize back to uniform width
+        # print(warped_image_eroded_sub.shape)
+        # show("1",warped_image_eroded_sub,0)
+        warped_image_eroded_sub = resize_util(warped_image_eroded_sub, uniform_width_hd, uniform_height_hd)
+        warped_image_norm = resize_util(warped_image_norm, uniform_width_hd, uniform_height_hd)
+
+    # Quads on warped image
+    quads={}
+    h1, w1=warped_image_eroded_sub.shape[:2]
+    # midh,midw=h1//2, w1//3
+    midh,midw = h1//3, w1//2
+    origins=[[0,0],[midw,0],[0,midh],[midw,midh]]
+    quads[0]=warped_image_eroded_sub[0:midh,0:midw];
+    quads[1]=warped_image_eroded_sub[0:midh,midw:w1];
+    quads[2]=warped_image_eroded_sub[midh:h1,0:midw];
+    quads[3]=warped_image_eroded_sub[midh:h1,midw:w1];
         
-    if(len(four_pts)>=4):
-        warped = four_point_transform(orig, four_pts)        
-            #########################################################################################################
-        # show(name,warped,pause=pause)
-        return warped,badscan 
-    else:
-        print(name,"Unable to find enough points!")
-        if(verbose):
-            #########################################################################################################
-            show('verify_'+name,orig,pause=1) #WARNING - CODE WILL STOP IN THE MIDDLE.
-        return None,-1
+    # Draw Quadlines
+    warped_image_eroded_sub[ : , midw:midw+2] = 255
+    warped_image_eroded_sub[ midh:midh+2, : ] = 255
+    
+    # print(warped_image_eroded_sub.shape)
+    # show("2",warped_image_eroded_sub)
+    
+    best_scale = getBestMatch(warped_image_eroded_sub)    
+    if(best_scale == None):
+        # TODO: Plot and see performance of scaleRange
+        print("No matchings for given scaleRange:",scaleRange)
+        show('Quads',warped_image_eroded_sub)  
+        err = move(results_2018error, filepath, errorpath+squadlang,filename)
+        if(err):
+            appendErr(err)
 
-# Toolbox functions-
-# cv2.createTrackbar('boxDim', 'ImageWindow', 2000, 5000, someFunctionCallBack)
+        return None
+    
+    templ = imutils.resize(template_eroded_sub, height = int(template_eroded_sub.shape[0]*best_scale))
+    h,w=templ.shape[:2] 
+    centres = []
+    sumT, maxT = 0, 0
+    for k in range(0,4):
+        res = cv2.matchTemplate(quads[k],templ,cv2.TM_CCOEFF_NORMED)
+        maxT = res.max()
+        if(maxT < thresholdCircle):
+            # Warning - code will stop in the middle. Keep Threshold low to avoid.
+            print(filename,"\nError: No circle found in Quad",k+1, "maxT", maxT,"best_scale",best_scale)
+            if(verbose):
+                show('no_pts_'+filename,warped_image_eroded_sub,pause=0) 
+                show('res_Q'+str(k),res,pause=1) 
 
+            return None
 
-# In[8]:
+        pt=np.argwhere(res==maxT)[0];
+        pt = [pt[1],pt[0]]
+        pt[0]+=origins[k][0]        
+        pt[1]+=origins[k][1]
+        # print(">>",pt)
+        warped_image_norm = cv2.rectangle(warped_image_norm,tuple(pt),(pt[0]+w,pt[1]+h),(150,150,150),2)            
+        warped_image_eroded_sub = cv2.rectangle(warped_image_eroded_sub,tuple(pt),(pt[0]+w,pt[1]+h),(150,150,150),2)            
+        centres.append([pt[0]+w/2,pt[1]+h/2])
+        sumT += maxT
+
+    # analysis data
+    thresholdCircles.append(sumT/4)
+        
+    # show('Detected circles',warped_image_norm,0)    
+    warped_image_norm = four_point_transform(warped_image_norm, np.array(centres))
+    
+    if(showimglvl>=2):
+        show('warped_image_eroded_sub',warped_image_eroded_sub,pause=0)    
+        show(filename,warped_image_norm,0)    
+     
+    # images/OMR_Files/4137/HE/Xerox/Durgapur_HE_04_prsp_13.22_18.78_5.jpg
+    finder = re.search(r'.*/.*/.*/(.*)/(.*)/(.*)\.'+ext[1:],filepath,re.IGNORECASE)
+    squad,lang = 'X','X'
+    if(finder):
+        squadlang = finder.group(1)
+        squad,lang = squadlang[0],squadlang[1]
+
+    newfilename = filename + '_' + filepath.split('/')[-2]
+    
+    # iterations : Tuned to 2.
+    # warped_image_eroded_sub = warped_image_norm - cv2.erode(warped_image_norm, kernel=np.ones((5,5)),iterations=2)
+
+    OMRresponse,retimg,multimarked,multiroll,mw,mb = readResponse(squad,warped_image_norm, name = newfilename)
+    show("Corrected Image",retimg,1,1)
+    
+    return warped_image_norm
 
 
 def addInnerKey(dic,key1,key2,val):
@@ -434,16 +454,27 @@ def checkKey(OMRresponse,key1,key2):
     except:
         return False
 
-def readResponse(squad,TEMPLATE,boxDim,image,name,save=None,thresholdRead=127.5,explain=True,bord=-1,
+def readResponse(squad,image,name,save=None,thresholdRead=127.5,explain=True,bord=-1,
     white=(200,150,150),black=(25,120,20),badscan=0,multimarkedTHR=153,isint=True):
+    TEMPLATE = TEMPLATES[squad]
     try: 
         img = image.copy()
-        _, t = cv2.threshold(img,100,255,cv2.THRESH_BINARY)
-        w,h=boxDim
-        mask = 255*np.ones(boxDim, np.uint8)
+        print("Cropped dim", img.shape[:2])
+        # 1846 x 1500
+        img = resize_util(img,TEMPLATE.dims[0],TEMPLATE.dims[1])
+        print("Resized dim", img.shape[:2])
+
+        img = normalize_util(img)
+        # print("m1",img.min())
+        # print("m2",img[100:-100,100:-100].min())
+
+        # Our reading is not exactly thresholding
+        # _, t = cv2.threshold(img,100,255,cv2.THRESH_BINARY)
+
+        w,h = TEMPLATE.boxDims
         lang = ['E','H']
         OMRresponse={}
-        black,grey=(0,0,0),(200,150,150)
+        black,grey = (0,0,0),(200,150,150)
         clrs=[grey,black]
 
         multimarked,multiroll=0,0
@@ -454,144 +485,217 @@ def readResponse(squad,TEMPLATE,boxDim,image,name,save=None,thresholdRead=127.5,
         whiteTHRs=[255]
 
         if(showimglvl>=1):
-            allQboxvals={QTYPE_INT:[],QTYPE_MCQ:[]}#QTYPE_ROLL:[]}#,QTYPE_MED:[]}
-            qNums={QTYPE_INT:[],QTYPE_MCQ:[]}#,QTYPE_ROLL:[]}#,QTYPE_MED:[]}
-            # f, axes = plt.subplots(len(TEMPLATE)//2,sharey=True, sharex=True)
+            allQboxvals={"QTYPE_INT":[],"QTYPE_MCQ":[]}#"QTYPE_ROLL":[]}#,"QTYPE_MED":[]}
+            qNums={"QTYPE_INT":[],"QTYPE_MCQ":[]}#,"QTYPE_ROLL":[]}#,"QTYPE_MED":[]}
+            # f, axes = plt.subplots(len(TEMPLATE.Qs)//2,sharey=True, sharex=True)
             # f.canvas.set_window_title(name)
             # f.suptitle("Questionwise Histogram")
         
-        # (1500, 1846)
-        print("Cropped dim", img.shape[:2])
+        initial=img.copy()
+        dims = TEMPLATE.boxDims
+        for QBlock in TEMPLATE.QBlocks:
+            for Que in QBlock.Qs:
+                for pt in Que.pts:
+                    cv2.rectangle(initial,(pt.x,pt.y),(pt.x+dims[0],pt.y+dims[1]),grey,-1)
+        show("Initial template", initial,0,1)
         
-        # Find the first 'big' jump and set it as threshold:
+        # For threshold finding
         QVals=[]
-        for Que in TEMPLATE:
-            for pt in Que.pts:
-                QVals.append(cv2.mean(img[  pt.y:pt.y+h, pt.x:pt.x+w ],mask)[0])
+
+        ### Find Shifts for the QBlocks --> Before calculating threshold!
+        gray = img.copy() # 
+        # Open : erode then dilate!
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 10))
+        THK = 2 # acc to kernel
+        gray =  255 - cv2.morphologyEx(gray, cv2.MORPH_OPEN, kernel, iterations=3)
+        # Make dark pixels darker, light ones lighter >> Square the Image
+        gray = square_util(gray)
+        show("morph_open_inv_sq", gray, 0, 1)
+        # gray = abs(gray) #for Sobel
+
+
+
+# templ adjust code
+        # gray2=gray.copy()
+        # for QBlock in TEMPLATE.QBlocks:
+        #     n, s,d = QBlock.key, QBlock.orig, QBlock.dims
+        #     shift = 0
+        #     # cv2.rectangle(gray2,(s[0]+shift-THK,s[1]-THK),(s[0]+shift+d[0]+THK,s[1]+d[1]+THK),(100,100,100),3 + THK)
+        #     cv2.rectangle(gray2,(s[0]+shift,s[1]),(s[0]+shift+d[0],s[1]+d[1]),(0,0,1),3)
+        # show("Template Overlay", gray2, 1, 1, [0,0])
+
+        for QBlock in TEMPLATE.QBlocks:
+            s,d = QBlock.orig, QBlock.dims
+            print("Aligning QBlock: ",QBlock.key, ", Dimensions:", QBlock.dims, "orig:", QBlock.orig)
+            # TODO: save time for sum in original implementation
+            maxS, shiftM = 0, 0
+            # TODO: Tune factor of scan
+            for shift in ALIGN_RANGE:
+                # take QVals wise sum of means
+                sm = 0
+                # gray2=gray.copy()
+                for col in QBlock.cols:
+                    o,e = col
+                    # shifted
+                    o[0] += shift 
+                    e[0] += shift + THK
+                    window = gray[ o[1]:e[1] , o[0]:e[0] ]
+                    sm += cv2.mean(window)[0]
+                    # cv2.rectangle(gray2,(o[0],o[1]),(e[0],e[1]),(0,0,1),3)
+
+                # Logs
+                # print(shift, sm)                
+                # show("Image", gray2, 1, 1, [0,0])
+
+                if(maxS < sm):
+                    maxS = sm
+                    shiftM = shift
+            QBlock.shift = shiftM
+            # if(QBlock.shift != 0):
+            print("Note: QBlock alignment corrected","Shift:", QBlock.shift)
+
+            for Que in QBlock.Qs:
+                for pt in Que.pts:
+                    # shifted
+                    QVals.append( cv2.mean( img[  pt.y:pt.y+h, pt.x+shiftM:pt.x+shiftM+w ] )[0])
         
+        # Sort the Q vals
         QVals= sorted(QVals)
+
+        # Find the first 'big' jump and set it as threshold:
         l=len(QVals)-1
         max1,thr1=0,255
         for i in range(1,l):
             jump = QVals[i+1] - QVals[i-1]
             if(jump > max1):
                 max1=jump
-                thr1=QVals[i-1] + jump/2.7
+                thr1=QVals[i-1] + jump/2
+        
         # Make use of the fact that the JUMP_DELTA between values at detected jumps would be atleast 20
         max2,thr2=0,255
         # Requires atleast 1 gray box to be present (Roll field will ensure this)
         for i in range(1,l):
             jump = QVals[i+1] - QVals[i-1]
-            d2 = QVals[i-1] + jump/2.7          
+            d2 = QVals[i-1] + jump/2          
             if(jump > max2 and JUMP_DELTA < abs(thr1-d2)):
                 max2=jump
                 thr2=d2
-        # Updated threshold:
+
+        # Updated threshold: The 'first' jump 
+        # TODO: Make this more robust
         thresholdRead = min(thr1,thr2)
-        if(showimglvl>=1):
+        if(showimglvl>=4):
             f, ax = plt.subplots() 
             ax.bar(range(len(QVals)),QVals);
             thrline=ax.axhline(thresholdRead,color='red',ls='--')
+            ax.set_title("Intensity distribution")
+            ax.set_ylabel("Intensity")
+            ax.set_xlabel("Q Boxes sorted by Intensity")
             plt.show()
 
-        for ctr,Que in enumerate(TEMPLATE):
-            Qboxvals=[]
-            for pt in Que.pts:
-                ptXY=(pt.x,pt.y)
-                x,y=ptXY
+        ctr = 0 
+        for QBlock in TEMPLATE.QBlocks:
+            for Que in QBlock.Qs:
+                Qboxvals=[]
+                for pt in Que.pts:
+                    # shifted
+                    ptXY=(pt.x + QBlock.shift,pt.y)
+                    x,y=ptXY
 
-                # Supplimentary points
-                xminus,xplus= x-int(w/2),x+w-int(w/2) 
-                xminus2,xplus2= x+int(w/2),x+w+int(w/2) 
-                yminus,yplus= y-int(h/2.7),y+h-int(h/2.7) 
-                yminus2,yplus2= y+int(h/2.7),y+h+int(h/2.7) 
+                    # Supplimentary points
+                    # xminus,xplus= x-int(w/2),x+w-int(w/2) 
+                    # xminus2,xplus2= x+int(w/2),x+w+int(w/2) 
+                    # yminus,yplus= y-int(h/2.7),y+h-int(h/2.7) 
+                    # yminus2,yplus2= y+int(h/2.7),y+h+int(h/2.7) 
 
-                #  This Plus method is better than having bigger box as gray would also get marked otherwise. Bigger box is rather an invalid alternative.
-                check_rects = [ 
-                    [y,y+h,x,x+w], 
-                    # [yminus,yplus,x,x+w], 
-                    # [yminus2,yplus2,x,x+w], 
-                    # [y,y+h,xminus,xplus], 
-                    # [y,y+h,xminus2,xplus2], 
-                ]
-                
-                detected=False
-                for rect in check_rects:
-                    boxval = cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ],mask)[0]
-                    if(thresholdRead > boxval):
-                        detected=True
-                    # retimg = cv2.rectangle(retimg,(rect[2],rect[0]),(rect[3],rect[1]),clrs[int(detected)],bord)                    
-                    if(detected):break;
+                    #  This Plus method is better than having bigger box as gray would also get marked otherwise. Bigger box is rather an invalid alternative.
+                    check_rects = [ 
+                        [y,y+h,x,x+w], 
+                        # [yminus,yplus,x,x+w], 
+                        # [yminus2,yplus2,x,x+w], 
+                        # [y,y+h,xminus,xplus], 
+                        # [y,y+h,xminus2,xplus2], 
+                    ]
+                    
+                    # This is NOT usual thresholding, rather call it boxed mean-thresholding
+                    detected=False
+                    for rect in check_rects:
+                        boxval = cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0]
+                        if(thresholdRead > boxval):
+                            detected=True
+                        if(detected):break;
 
-                if(not detected): 
-                    #reset boxval to first rect 
-                    rect = check_rects[0]
-                    boxval = cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ],mask)[0]
-                
-                #for hist
-                Qboxvals.append(boxval)
+                    if(not detected): 
+                        #reset boxval to first rect 
+                        rect = check_rects[0]
+                        boxval = cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0]
+                    
+                    #for hist
+                    Qboxvals.append(boxval)
 
-                retimg = cv2.rectangle(retimg,(x,y),(x+w,y+h),clrs[int(detected)],bord)
+                    # cv2.rectangle(retimg,(x,y),(x+w,y+h),clrs[int(detected)],bord)
+                    cv2.rectangle(retimg,(x,y),(x+w,y+h),grey,bord)
 
-                if (detected):
-                    blackTHRs.append(boxval)
-        #             try:
-                    q = Que.qNo
-                    val = pt.val
-                    if(Que.qType==QTYPE_ROLL):
-                        key1,key2 = 'Roll',q[1:] #'r1'
-                    elif(Que.qType==QTYPE_MED):
-                        key1,key2 = q,q
-                    elif(Que.qType==QTYPE_INT):
-                        key1,key2= 'INT'+ q[:-2],q[-2:]
+                    if (detected):
+                        blackTHRs.append(boxval)
+            #             try:
+                        q = Que.qNo
+                        val = pt.val
+                        if(Que.qType=="QTYPE_ROLL"):
+                            key1,key2 = 'Roll',q[1:] #'r1'
+                        elif(Que.qType=="QTYPE_MED"):
+                            key1,key2 = q,q
+                        elif(Que.qType=="QTYPE_INT"):
+                            key1,key2= 'INT'+ q[:-2],q[-2:]
+                        else:
+                            key1,key2= 'MCQ'+str(q),'val'
+
+            #             reject qs with duplicate marking here
+                        multiple = checkKey(OMRresponse,key1,key2)
+                        if(multiple):
+                            if('Roll' in str(q)):
+                                multiroll=1
+                                multimarked=1 # Only send rolls multi-marked in the directory
+                                printbuf("Multimarked In Roll")
+
+                            if(thresholdRead>multimarkedTHR): #observation
+                                #This is just for those Dark OMRs
+                                multimarked=1 # that its not marked by user, but code is detecting it.
+                        
+                        addInnerKey(OMRresponse,key1,key2,val)
+                        
+                        cv2.putText(retimg,str(OMRresponse[key1][key2]),ptXY,cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE,(50,20,10),5)
+                        
+                        # if(np.random.randint(0,10)==0):
+                        #     cv2.putText(retimg,"["+str(int(boxval))+"]",(x-2*w,y+h),cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE/2,(10,10,10),3)
+                                     
+            #             except:
+            #                 #No dict key for that point
+            #                 print(pt,'This shouldnt print after debugs')
+                    
+                    # // if(detected)
                     else:
-                        key1,key2= 'MCQ'+str(q),'val'
-
-        #             reject qs with duplicate marking here
-                    multiple = checkKey(OMRresponse,key1,key2)
-                    if(multiple):
-                        if('Roll' in str(q)):
-                            multiroll=1
-                            multimarked=1 # Only send rolls multi-marked in the directory
-                            printbuf("Multimarked In Roll")
-
-                        if(thresholdRead>multimarkedTHR): #observation
-                            #This is just for those Dark OMRs
-                            multimarked=1 # that its not marked by user, but code is detecting it.
-                    
-                    addInnerKey(OMRresponse,key1,key2,val)
-                    
-                    cv2.putText(retimg,str(OMRresponse[key1][key2]),ptXY,cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE,(50,20,10),5)
-                    
-                    if(np.random.randint(0,10)==0):
-                        cv2.putText(retimg,"["+str(int(boxval))+"]",(x-2*w,y+h),cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE/2,(10,10,10),3)
-                                 
-        #             except:
-        #                 #No dict key for that point
-        #                 print(pt,'This shouldnt print after debugs')
+                        whiteTHRs.append(boxval)                    
+                        # if(np.random.randint(0,20)==0):
+                        #     cv2.putText(retimg,"["+str(int(boxval))+"]",(x-w//2,y+h//2),cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE/2,(10,10,10),3)
                 
-                # // if(detected)
-                else:
-                    whiteTHRs.append(boxval)                    
-                    if(np.random.randint(0,20)==0):
-                        cv2.putText(retimg,"["+str(int(boxval))+"]",(x-w//2,y+h//2),cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE/2,(10,10,10),3)
+                if(showimglvl>=1):
+                    # For int types:
+                    # axes[ctr//2].hist(Qboxvals, bins=range(0,256,16))
+                    # axes[ctr//2].set_ylabel(Que.qNo[:-2])
+                    # axes[ctr//2].legend(["D1","D2"],prop={"size":6})
+                    if(Que.qType == "QTYPE_INT" or Que.qType == "QTYPE_MCQ"):
+                        qNums[Que.qType].append(Que.qNo)
+                        allQboxvals[Que.qType].append(Qboxvals)
+                ctr += 1
             
-            if(showimglvl>=1):
-                # For int types:
-                # axes[ctr//2].hist(Qboxvals, bins=range(0,256,16))
-                # axes[ctr//2].set_ylabel(Que.qNo[:-2])
-                # axes[ctr//2].legend(["D1","D2"],prop={"size":6})
-                if(Que.qType == QTYPE_INT or Que.qType == QTYPE_MCQ):
-                    qNums[Que.qType].append(Que.qNo)
-                    allQboxvals[Que.qType].append(Qboxvals)
-        
-        if(showimglvl>=1):
+        if(showimglvl>=2):
             # plt.draw()
             f, axes = plt.subplots(len(allQboxvals),sharey=True)
             f.canvas.set_window_title(name)
             ctr=0
             for k,boxvals in allQboxvals.items():
-                axes[ctr].title.set_text(typeName[k])
+                axes[ctr].title.set_text(typeName[k]+" Type")
                 axes[ctr].boxplot(boxvals)
                 thrline=axes[ctr].axhline(thresholdRead,color='red',ls='--')
                 thrline.set_label("THR")
@@ -602,11 +706,13 @@ def readResponse(squad,TEMPLATE,boxDim,image,name,save=None,thresholdRead=127.5,
             # imshow will do the waiting
             plt.tight_layout(pad=0.5)
             
-            if(showimglvl>=2):
+            if(showimglvl>=4):
                 plt.show() 
-            else:
-                plt.draw() 
-                plt.pause(0.01)
+            # if(showimglvl>=2):
+            #     plt.show() 
+            # else:
+            #     plt.draw() 
+            #     plt.pause(0.01)
 
         # Translucent
         retimg = cv2.addWeighted(retimg,alpha,output,1-alpha,0,output)    
@@ -616,8 +722,9 @@ def readResponse(squad,TEMPLATE,boxDim,image,name,save=None,thresholdRead=127.5,
         minWhiteTHR = min(minWhiteTHR,np.min(whiteTHRs))
         
         ## Real helping stats:
-        cv2.putText(retimg,"avg: "+str(["avgBlack: "+str(round(np.mean(blackTHRs),2)),"avgWhite: "+str(round(np.mean(whiteTHRs),2))]),(20,50),cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE,(50,20,10),4)
-        cv2.putText(retimg,"ext: "+str(["maxBlack: "+str(round(np.max(blackTHRs),2)),"minW(gray): "+str(round(np.min(whiteTHRs),2))]),(20,90),cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE,(50,20,10),4)
+
+        # cv2.putText(retimg,"avg: "+str(["avgBlack: "+str(round(np.mean(blackTHRs),2)),"avgWhite: "+str(round(np.mean(whiteTHRs),2))]),(20,50),cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE,(50,20,10),4)
+        # cv2.putText(retimg,"ext: "+str(["maxBlack: "+str(round(np.max(blackTHRs),2)),"minW(gray): "+str(round(np.min(whiteTHRs),2))]),(20,90),cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE,(50,20,10),4)
         
         if(retimg.shape[1] > 4 + uniform_width_hd): #observation
             cv2.putText(retimg,str(retimg.shape[1]),(50,80),cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE,(50,20,10),3)
