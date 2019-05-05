@@ -4,7 +4,7 @@ import re
 kv=1
 directory ='KV_OMRs_2017/' if kv else 'OMR_Files_2017/'
 
-allOMRs= glob.iglob(directory+'/*/*/*/*.jpg')
+allOMRs= glob.iglob(directory+'/*/*/*.jpg')
 for filepath in allOMRs:
 	finder = re.search(r''+directory+r'/(.*)/(.*)/(.*)/(.*)\.jpg',filepath,re.IGNORECASE)
 	citycode = finder.group(1)

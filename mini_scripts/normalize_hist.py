@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 # 1: View without saving, 2: Save files without showing
 review=1;
 
-# dir_glob ='../src/images/OMR_Files'+'/*/*/*/*.jpg'
+# dir_glob ='../src/images/OMR_Files'+'/*/*/*.jpg'
 dir_glob ='inputs/hist'+'/*.jpg'
 hist_width, u_width = 400, 900
 

@@ -129,7 +129,7 @@ Gap between gray and black as HEALTH/CONFIDENCE MEASURE?
 
 	4.3 [X] Nope, slight shifted templates will have prob! -Change mean to gaussian in boxreading for finer results
 	4.4 [X] (24 Mar 19) Explore uses of lowpass, highpass filters - maybe required for mobile images
-			--> they are too simple to use. Some sophisticated DFT effect might be useful
+			--> they are too simple to be useful. Some sophisticated DFT effect might be useful
 
 (13 Oct 2018)
 ### 5) Testbench generation
@@ -154,14 +154,14 @@ Gap between gray and black as HEALTH/CONFIDENCE MEASURE?
 	7.2 Find what methods are used to do this
 	7.3 [X] nope - Using contours for inner boxes 
 	7.4 [X] Per-box averaged alignment ?!
+
+
 (23 Mar 2019)
-
-
 ### 8) Refactor readResponse completely		
 	8.1 [X] Simplify resp array generation
 	8.2 [X] Simplify detection process
 	8.3 [X] Minimize logging 
 
-[X]	Work on full scale, write bigger font, then scale down at the end.
+[X]	Work on full resolution first, then scale down at the end.
 
 

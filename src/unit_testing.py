@@ -35,8 +35,8 @@ def showOrSave(filepath,orig,title="",resize=True,pause=True,forced=False):
 
 def testImg(filepath,orig,title="",resize=True):
 	filename=filepath[filepath.rindex("/")+1:]
-	# images/OMR_Files/4137/HE/Xerox/Durgapur_HE_04_prsp_13.22_18.78_5.jpg
-	finder = re.search(r'.*/.*/.*/(.*)/(.*)/(.*)\.'+ext[1:],filepath,re.IGNORECASE)
+	# images/OMR_Files/4137/HE/Durgapur_HE_04_prsp_13.22_18.78_5.jpg
+	finder = re.search(r'.*/.*/.*/(.*)/(.*)\.'+ext[1:],filepath,re.IGNORECASE)
 	squad,lang = 'X','X'
 	if(finder):
 		squadlang = finder.group(1)

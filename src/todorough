@@ -16,11 +16,11 @@
 >> Why not use a blob instead of circles?
 	- Distance of sheet from camera variable.
 	>> What if we add it to input constraint that biggest blob should be the one on OMR.
+	- Template matching not as accurate as on concentric circles
 
 ** This Sobel operator can be used for aligning the template!!
 	And morphing too -
 	https://docs.opencv.org/trunk/d9/d61/tutorial_py_morphological_ops.html
-
 
 
 17 Feb
@@ -76,12 +76,11 @@ testImg
 	img = resize_util(img,uniform_width_hd)
 ///////////////
 
-After MS:
+TODO After MS:
 - Refactor readResponse
 //- Shifting ideation
 - Apply DFT and IFT on cropped one just to see.
 - Get more test data : On which template shifts currently
-	>
 
 Excess:
 	(done 17 Apr - getMaxCosine from app) Mechanisms to check if circles found form a rectangle-like shape
@@ -291,7 +290,7 @@ Find final tuning parameters
 After report: 
 	Try canvas on the new app
 
-Some excessDos that won't happen after BTP
+Some excessDos that won't happen after BTP (do them b4 poster!)
 	> those brandDos on wikipedia, SO, etc
 
 Note: looking back at this app dev, I was right about thinking so much before starting to code - just that I should have thought in a prioritized way on the features when it came to the low fps issue. That would have saved much time, anyway learning about how canvas works was quite helpful and it will get used later once core feats are working well.
@@ -301,51 +300,81 @@ From drive data:
 	// Nope, its a limitation - # TODO: (remove closeup bool) Automate the case of close up scan(incorrect page)-
 
 18 Apr:
-	// Nailed it in solving - Morph not working well on real data?!
+	// Nailed this one in solving process- 
+		Morph not working well on real data?!
 		-> Image is almost like that in hist_eq example on opencv
 		-> low exposure is there too? - apply gamma correction
 		-> checkout CLAHE again _// Solved by combining it with norm & truncated threshold
 
-	findPage finding hard to remove bg!
+	// findPage finding hard to remove bg coz of stringy edges touching paper
 		-> bg substractions : some are motion based - works only on still cameras
 		-> Make use of obtained WHITE blob of paper?
 		-> But anyway mobile's gonna give the cropped image _//
 
-		result data
-			> Error handling for - matching err, 
-			> Steps image strip should contain - input, ..
-			> that GIF of images being scanned fast and accurately
-			> Cornercase examples for : 
-				slight creases,
-				template shift(slight bend),
-				bad lighting(shadow),
-				readResponse testing:  
-					allMarked - normal_HE_01 from 2044,
-					noneMarked,
-					noneMarked except one,
 
-
-		tuning data
-			> plot rectangle max/min cosines graph
-			# TODO: Plot and see performance of scaleRange
-
-	 	// (5 hrs!) fix colwise thresholding now 
+	 	// (5 hrs! But worth it - epic victory!) fix colwise thresholding now 
 	 		-> Not at all, gray is still getting as low as 35! - CLAHE has distorted its working: Its good only for edge detection?!
-	 		-> Note Assumption : Colwise background color is either gray or white, but not alternating
-        	-> global QVals shall absolutely help here. Just run same funtion on total QVals instead of colwise _//
+	 		-> Note Assumption about cols: 
+	 			Colwise background color is either gray or white, but not alternating
+	 			The bubbles are relatively close to each other(less than a bubble-length away) 
+
+        	_// -> global QVals shall absolutely help here. Just run same funtion on total QVals instead of colwise _//
     		-> q5C in HE_19 from 2044 is having issue with MIN_JUMP = 20 as well, rest having prob with MIN_JUMP = 30
 	        	>> Only global needs two big jumps! "The point of colwise was to reduce it to the biggest jump!"
         	note: # DISCRETION: Pretty critical factor in reading response
 
 	 	//: remove Normal/Xerox concept
 	 	app 
-			: put Folder structure : naming ids
-			: put quad templ matchin
-			: limit contours *drawing* to top 3
+			//: put quad templ matchin
+				//> accept only on 4 present, but show "hold_still on page"
+			// : limit contours *drawing* to top 3
 			//: CLAHE into app
-	 	Prepare corner case dataset
 
+			// Higher resolutions!
+				// From an SO answer, found this line: 
+					if (!connectCamera(getWidth(), getHeight())) ...
+					maxAllowedW
+					D/custom: 1920x1080 : supported!
+					D/custom: 1440x1080 : supported!
+					D/custom: 1072x1072 : supported! _// but this is fine
+
+			//: put Folder structure : naming ids
+
+			/(*) make use of white-ness of paper: intensity threshold non-white --> gray.
+			-> could actually simplify the process easily!
+			-> Further #ad-hoc : manually enhanced images for easy thresholding [TODO: scope for ensuring quality inputs. #ad-hoc to OMR!!]
+
+	 	Prepare corner case dataset
+		 	result data
+		 		/> that GIF of images being scanned fast and accurately
+		 		> gif of image transitions with current dimensions.
+		 		// > Cornercase examples for : 
+		 		// 	SHOW FOCUS ON CORE ALGO - Xerox and Align
+		 		// 	slight creases,
+		 		// 	template shift(slight bend),
+		 		// 	Rotation
+		 		// 	Persp
+		 		// 	Effect on Whitener : 
+		 		// 	bad lighting(shadow) - LOW / HIGH
+		 		// 	readResponse testing:  
+		 		// 		allMarked - normal_HE_01 from 2044,
+		 		 		noneMarked,
+		 		 		noneMarked except one,
+		 		> Steps image strip should contain
+		 		 - input, ?!?!
+		 		> Error cases:
+		 			Bad marker
+		 			Extremes of above cases
+
+			tuning data
+				> plot rectangle max/min cosines graph
+				# TODO: Plot and see performance of scaleRange
 ExcessDos:
 	//flash functionality
 	//put signature inside code
 	put signature inside app
+	a good logo!
+
+
+21 Apr:
+Final Testbench - 

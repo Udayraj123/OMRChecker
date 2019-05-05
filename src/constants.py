@@ -12,7 +12,7 @@ Evaluate Hindi Files acc to diff template & anskey - Korba, Gwalior, Gonda _/ , 
 
 """
 
-showimglvl = 1
+showimglvl = 4
 resetpos = [0,0]
 explain= 0
 # autorotate=1
@@ -31,7 +31,7 @@ thresholdRead_L =  116
 thresholdRead_R =  60
 
 # For preProcessing
-GAMMA_LOW = 0.5
+GAMMA_LOW = 0.7
 GAMMA_HIGH = 1.25
 
 
@@ -46,8 +46,10 @@ JUMP_DELTA = 40
 ALIGN_RANGE  = range(-5,6,1) #
 # ALIGN_RANGE  = [-6,-4,-2,-1,0,1,2,4,6]
 
-# minimum threshold for template matching
-thresholdVar = 0.3
+# max threshold difference for template matching
+thresholdVar = 0.41
+
+# TODO: remove unnec variables here- 
 thresholdCircle = 0.3 #matchTemplate returns 0 to 1
 # thresholdCircle = 0.4 #matchTemplate returns 0 to 1
 scaleRange=(0.35,0.95)
@@ -73,17 +75,16 @@ TEXT_SIZE=1.5
 
 
 directory ='images/OMR_Files/' if kv else 'images/OMR_Files/'
-'feedsheets/errorSheet.csv'
-errorPath=directory+'errorFiles/'
+errorPath='manual/errorFiles/'
 errorFile='feedsheets/errorFiles.csv'
 WarningFile='feedsheets/warningFiles.csv'
 verifyFile='feedsheets/verifyFiles.csv'
 badRollsFile='feedsheets/badRollsFiles.csv'
-verifyPath=directory+'verifyFiles/'
-badRollsPath=directory+'badRollsFiles/'
-multiMarkedPath=directory+'multiMarkedFiles/'
+verifyPath='manual/verifyFiles/'
+badRollsPath='manual/badRollsFiles/'
+multiMarkedPath='manual/multiMarkedFiles/'
 multiMarkedFile='feedsheets/multiMarkedFiles.csv'
-saveMarkedDir='cropMarkedOMRs/' 
+saveMarkedDir='markedOMRs/' 
 sheetCols=['batch','error','filename','path','roll']+['q'+str(i) for i in range(1,21)]#+['t'+str(i) for i in range(1,6)]
 resultSheetCols=sheetCols+['score'] 
 

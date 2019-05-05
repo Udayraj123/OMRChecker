@@ -46,11 +46,11 @@ def getInt(Q):
     else:
         return d1+d2
 
-
 def processOMR(squad,omr):
     resp={}
     roll='X'
     roll = getRoll(squad, omr)
+    # TODO : write concatenation etc in generalized way from template here.
     # for qNo, qType in TYPEWISE_QS:
     #     resp[qNo]
     if(roll=='X'):
@@ -69,6 +69,7 @@ def report(Status,streak,scheme,qNo,marked,ans,prevmarks,currmarks,marks):
 
     print('%s \t %s \t\t %s \t %s \t %s \t %s \t %s ' % (qNo,
           Status,str(streak), '['+scheme+'] ',(str(prevmarks)+' + '+str(currmarks)+' ='+str(marks)),str(marked),str(ans)))
+
 # check sectionwise only.
 def evaluate(resp,answers,sections,explain=False):
     marks = 0
@@ -92,6 +93,7 @@ def evaluate(resp,answers,sections,explain=False):
 # ('q13(Power2) Correct(streak0) -3 + 2 = -1', 'C', ['C'])
 # ('q14(Power2) Correct(streak0) -1 + 2 = 1', 'A', ['A'])
 # ('q15(Power2) Incorrect(streak0) 1 + -1 = 0', 'C', ['B'])
+
             if(unmarked or int(q)==firstQ):
                 streak=0
             elif(prevcorrect == correct):
@@ -254,9 +256,10 @@ with open(resultFile,'a') as f:
         local_id=0
         for thresholdRead,inOMR in zip(thresholdReads,OMRs):
             local_id+=1
-            OMRcrop = getROI(filepath,filename+ext,inOMR, closeup=True)
+            # OMRcrop = getROI(filepath,filename+ext,inOMR, closeup=True)
+            OMRcrop = getROI(filepath,filename+ext,inOMR, closeup=False)
             #uniquify
-            newfilename = filename + '_' + filepath.split('/')[-2]
+            newfilename = filepath.split('/')[-3] + '_' + filename
             if(OMRcrop is None):
                 err = move(results_2018error,filepath,errorPath+squadlang,newfilename+'.jpg')
                 if(err):
@@ -264,61 +267,37 @@ with open(resultFile,'a') as f:
                 continue
 
             respArray=[]
-            try: #TODO - resolve this try catch later
-                OMRresponse,retimg,multimarked,multiroll = readResponse(squad,OMRcrop,name =newfilename)
-                #convert to ABCD, getRoll,etc
-                resp=processOMR(squad,OMRresponse)
-                respArray.append(resp['roll']) #May append None
-                for q in qNos['H']:#for align
-                    try:
-                        respArray.append(resp['resp'][q])
-                    except:
-                        respArray.append('')
+            OMRresponseDict,retimg,multimarked,multiroll = readResponse(squad,OMRcrop,name =newfilename)
+            # print(OMRresponseDict)
+            #convert to ABCD, getRoll,etc
+            resp=processOMR(squad,OMRresponseDict)
+            respArray.append(resp['roll']) #May append None
+            for q in qNos[squad]:#for align
+                try:
+                    respArray.append(resp['resp'][q])
+                except:
+                    respArray.append('')
+            # err contains the rest = [results_2018batch,error,filename,filepath2]
+            #This evaluates and returns the score attribute
+            score = evaluate(resp['resp'],Answers[squad+('K' if kv else '')],Sections[squad+('K' if kv else '')],explain=explain)
+            # if((multiroll or not (resp['roll'] is not None and len(resp['roll'])==11))):
+            if(multimarked == 0):
+                # Enter into Results sheet-
+                
                 # err contains the rest = [results_2018batch,error,filename,filepath2]
-                #This evaluates and Enters into Results sheet-
-                score = evaluate(resp['resp'],Answers[squad+('K' if kv else '')],Sections[squad+('K' if kv else '')],explain=explain)
-
-                # TEMP
-                if(0 and (multiroll or not (resp['roll'] is not None and len(resp['roll'])==11))):
-                    #>>temp
-                    print('badRollNo, moving File: '+newfilename)
-                    pass
-                    # err = move(badRollError,filepath,badRollspath+squadlang,newfilename+'.jpg')
-                    # if(err):
-                    #     appendArr(err+respArray,badRollsArray,badRollsFile)
-                else:
-                    # TEMP
-                    if(0 and badscan == 1):
-                        # print('File Skipped from verify. Must be in Multimarked or Results')
-                        err = move(verifyError,filepath,verifypath+squadlang,newfilename+'.jpg')
-                        if(err):
-                            appendArr(err+respArray,verifyArray,verifyFile)
-                    else:
-                        if(multimarked == 0):
-                            #TODO check that score stays the last column !
-                            # err contains the rest = [results_2018batch,error,filename,filepath2]
-                            results = [0,0,newfilename+'.jpg',filepath]+respArray+[score] #.append
-                            filesNotMoved+=1;
-                            # Write to results file
-                            pd.DataFrame(results).T.to_csv(f,header=False,index=False)
-                            print((counter,resp['roll'],score))
-                            # print((counter,newfilename+'.jpg',resp['roll'],','.join(respArray[1:]),'score : ',score))
-                        else:
-
-                            #multimarked file
-                            print('multiMarked, moving File: '+newfilename)
-                            err = move(multiMarkedError,filepath,multiMarkedpath+squadlang,newfilename+'.jpg')
-                            if(err):
-                                appendArr(err+respArray,multiMarkedArray,multiMarkedFile)
-                counter+=1
-            except Exception as inst:
-                exc_type, exc_obj, exc_tb = sys.exc_info()
-                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                print(exc_type, fname, exc_tb.tb_lineno)
-                print(">>>OMR",counter,newfilename+'.jpg',"BAD ERROR : Moving file to errorFiles : ",inst)
-                # err = move(results_2018error,filepath,errorPath+squadlang,'debug_'+newfilename+'.jpg')
-                # if(err):
-                #     appendArr(err+respArray,errorsArray,errorFile)
+                results = [0,0,newfilename+'.jpg',filepath]+respArray+[score] #.append
+                filesNotMoved+=1;
+                # Write to results file (f is opened in append mode)
+                pd.DataFrame(results).T.to_csv(f,header=False,index=False)
+                print((counter,resp['roll'],score))
+                # print((counter,newfilename+'.jpg',resp['roll'],','.join(respArray[1:]),'score : ',score))
+            else:
+                #multimarked file
+                print('multiMarked, moving File: '+newfilename)
+                err = move(multiMarkedError,filepath,multiMarkedPath+squadlang,newfilename+'.jpg')
+                if(err):
+                    appendArr(err+respArray,multiMarkedArray,multiMarkedFile)
+            counter+=1
 
             if(respArray==[]):
                 respArray.append('') #Roll num

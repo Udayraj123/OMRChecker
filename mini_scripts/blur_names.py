@@ -4,7 +4,7 @@ import cv2
 # 1: View without saving, 2: Save files without showing
 review=0;
 
-dir_glob ='images/OMR_Files(copy)'+'/*/*/*/*.jpg'
+dir_glob ='images/OMR_Files(copy)'+'/*/*/*.jpg'
 u_width=500
 fac1=0.65
 fac2=0.95
