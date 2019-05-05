@@ -441,9 +441,8 @@ def readResponse(squad,TEMPLATE,boxDim,image,name,save=None,thresholdRead=127.5,
         mask = 255*np.ones(boxDim, np.uint8)
         lang = ['E','H']
         OMRresponse={}
-        grey,skyblue=(0,0,0),(200,150,150)
-        clrs=[skyblue,grey]
-        clrs=[grey,skyblue]
+        black,grey=(0,0,0),(200,150,150)
+        clrs=[grey,black]
 
         multimarked,multiroll=0,0
         alpha=0.65
@@ -458,55 +457,82 @@ def readResponse(squad,TEMPLATE,boxDim,image,name,save=None,thresholdRead=127.5,
             # f, axes = plt.subplots(len(TEMPLATE)//2,sharey=True, sharex=True)
             # f.canvas.set_window_title(name)
             # f.suptitle("Questionwise Histogram")
+        
         # (1500, 1846)
         print("Cropped dim", img.shape)
+        
+        # Find the first 'big' jump and set it as threshold:
+        QVals=[]
+        for Que in TEMPLATE:
+            for pt in Que.pts:
+                QVals.append(cv2.mean(img[  pt.y:pt.y+h, pt.x:pt.x+w ],mask)[0])
+        
+        QVals= sorted(QVals)
+        l=len(QVals)-1
+        max1,thr1=0,255
+        for i in range(1,l):
+            jump = QVals[i+1] - QVals[i-1]
+            if(jump > max1):
+                max1=jump
+                thr1=QVals[i-1] + jump/2.7
+        # Make use of the fact that the JUMP_DELTA between values at detected jumps would be atleast 20
+        max2,thr2=0,255
+        # Requires atleast 1 gray box to be present (Roll field will ensure this)
+        for i in range(1,l):
+            jump = QVals[i+1] - QVals[i-1]
+            d2 = QVals[i-1] + jump/2.7          
+            if(jump > max2 and JUMP_DELTA < abs(thr1-d2)):
+                max2=jump
+                thr2=d2
+        # Updated threshold:
+        thresholdRead = min(thr1,thr2)
+        if(showimglvl>=1):
+            f, ax = plt.subplots() 
+            ax.bar(range(len(QVals)),QVals);
+            thrline=ax.axhline(thresholdRead,color='red',ls='--')
+            plt.show()
+
         for ctr,Que in enumerate(TEMPLATE):
             Qboxvals=[]
             for pt in Que.pts:
                 ptXY=(pt.x,pt.y)
                 x,y=ptXY
-                #Done - Here add the scan region for (y:y+h,x:x+w)
-                xminus,xplus= x-int(w/2),x+w-int(w/2) #supplementary point.
-                xminus2,xplus2= x+int(w/2),x+w+int(w/2) #supplementary point.
-                yminus,yplus= y-int(h/2),y+h-int(h/2) #supplementary point.
-                yminus2,yplus2= y+int(h/3),y+h+int(h/3) #supplementary point.
-                # print(img.shape, xminus,xplus,y,y+h)
-                mean_color = cv2.mean(img[  y : y+h,x : x+w   ],mask)
-                mean_color2 = cv2.mean(img[ y : y+h,xminus : xplus    ],mask)
-                mean_color3 = cv2.mean(img[ y : y+h,xminus2 : xplus2  ],mask)
-                mean_color4 = cv2.mean(img[ yminus : yplus,x : x+w     ],mask)
-                mean_color5 = cv2.mean(img[ yminus2 : yplus2,x : x+w     ],mask)
-                boxval = mean_color[0]            
+
+                # Supplimentary points
+                xminus,xplus= x-int(w/2),x+w-int(w/2) 
+                xminus2,xplus2= x+int(w/2),x+w+int(w/2) 
+                yminus,yplus= y-int(h/2.7),y+h-int(h/2.7) 
+                yminus2,yplus2= y+int(h/2.7),y+h+int(h/2.7) 
+
+                #  This Plus method is better than having bigger box as gray would also get marked otherwise. Bigger box is rather an invalid alternative.
+                check_rects = [ 
+                    [y,y+h,x,x+w], 
+                    # [yminus,yplus,x,x+w], 
+                    # [yminus2,yplus2,x,x+w], 
+                    # [y,y+h,xminus,xplus], 
+                    # [y,y+h,xminus2,xplus2], 
+                ]
+                
+                detected=False
+                for rect in check_rects:
+                    boxval = cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ],mask)[0]
+                    if(thresholdRead > boxval):
+                        detected=True
+                    # retimg = cv2.rectangle(retimg,(rect[2],rect[0]),(rect[3],rect[1]),clrs[int(detected)],bord)                    
+                    if(detected):break;
+
+                if(not detected): 
+                    #reset boxval to first rect 
+                    rect = check_rects[0]
+                    boxval = cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ],mask)[0]
+                
                 #for hist
                 Qboxvals.append(boxval)
 
-                detected1=(thresholdRead > boxval)
-                threshold2 = thresholdRead + 38.25 if detected1 else thresholdRead
-                detected2=(threshold2 > mean_color2[0])
-                threshold3 = thresholdRead + 38.25 if (detected2 or detected1) else thresholdRead
-                detected3=(threshold3 > mean_color3[0])
-                threshold4 = thresholdRead + 38.25 if (detected3 or detected2 or detected1) else thresholdRead
-                detected4=(threshold4 > mean_color4[0])
-                threshold5 = thresholdRead + 38.25 if (detected4 or detected3 or detected2 or detected1) else thresholdRead
-                detected5=(threshold5 > mean_color5[0])
+                retimg = cv2.rectangle(retimg,(x,y),(x+w,y+h),clrs[int(detected)],bord)
 
-
-                # TODO: fix this- all detecteds should be considered
-                if(detected1):
+                if (detected):
                     blackTHRs.append(boxval)
-                else:
-                    whiteTHRs.append(boxval)
-                    
-                clr= black if detected1 else white
-
-                # retimg = cv2.rectangle(retimg,(x,yminus2),(x+w,yplus2),clrs[int(detected5)],bord)#-1 is for fill
-                # retimg = cv2.rectangle(retimg,(x,yminus),(x+w,yplus),clrs[int(detected4)],bord)#-1 is for fill
-                # retimg = cv2.rectangle(retimg,(xminus2,y),(xplus2,y+h),clrs[int(detected3)],bord)#-1 is for fill
-                # retimg = cv2.rectangle(retimg,(xminus,y),(xplus,y+h),clrs[int(detected2)],bord)#-1 is for fill
-
-                retimg = cv2.rectangle(retimg,(x,y),(x+w,y+h),clr,bord)#-1 is for fill
-
-                if (detected1 or detected2 or detected3 or detected4 or detected5):
         #             try:
                     q = Que.qNo
                     val = pt.val
@@ -536,14 +562,17 @@ def readResponse(squad,TEMPLATE,boxDim,image,name,save=None,thresholdRead=127.5,
                     cv2.putText(retimg,str(OMRresponse[key1][key2]),ptXY,cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE,(50,20,10),5)
                     
                     if(np.random.randint(0,10)==0):
-                        cv2.putText(retimg,"<"+str(int(boxval))+">",(x-2*w,y+h),cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE/2,(10,10,10),3)
+                        cv2.putText(retimg,"["+str(int(boxval))+"]",(x-2*w,y+h),cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE/2,(10,10,10),3)
                                  
         #             except:
         #                 #No dict key for that point
         #                 print(pt,'This shouldnt print after debugs')
-                # endif detected
-                elif(np.random.randint(0,20)==0):
-                    cv2.putText(retimg,"<"+str(int(boxval))+">",(x-w//2,y+h//2),cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE/2,(10,10,10),3)
+                
+                # // if(detected)
+                else:
+                    whiteTHRs.append(boxval)                    
+                    if(np.random.randint(0,20)==0):
+                        cv2.putText(retimg,"["+str(int(boxval))+"]",(x-w//2,y+h//2),cv2.FONT_HERSHEY_SIMPLEX, CV2_FONTSIZE/2,(10,10,10),3)
             
             if(showimglvl>=1):
                 # For int types:
@@ -553,6 +582,7 @@ def readResponse(squad,TEMPLATE,boxDim,image,name,save=None,thresholdRead=127.5,
                 if(Que.qType == QTYPE_INT or Que.qType == QTYPE_MCQ):
                     qNums[Que.qType].append(Que.qNo)
                     allQboxvals[Que.qType].append(Qboxvals)
+        
         if(showimglvl>=1):
             # plt.draw()
             f, axes = plt.subplots(len(allQboxvals),sharey=True)

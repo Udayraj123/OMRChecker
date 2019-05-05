@@ -24,6 +24,7 @@ window=gtk.Window()
 screen = window.get_screen()
 
 
+
 # cv2.createTrackbar('boxDimY', 'imageWindow', 6, 10, someFunctionCallBack)
 # waitQ()
 """

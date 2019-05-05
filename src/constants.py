@@ -30,9 +30,12 @@ minWhiteTHR,maxBlackTHR=255,0
 stitched = 0;
 
 # For normal images
-thresholdRead_L =  60#116
+thresholdRead_L =  116
 # For already normalized(contrasted) images
 thresholdRead_R =  60
+
+# For new ways of determining threshold
+JUMP_DELTA=20
 
 thresholdCircle= 0.55 #matchTemplate returns 0 to 1
 scaleRange=(0.75,0.95)

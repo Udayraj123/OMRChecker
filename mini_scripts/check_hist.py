@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 # 1: View without saving, 2: Save files without showing
-review=0;
+review=1;
 
 # dir_glob ='../src/images/OMR_Files'+'/*/*/*/*.jpg'
 dir_glob ='hist_inputs'+'/*.jpg'
@@ -45,9 +45,10 @@ def plot_hist(img):
 	plt.legend(('cdf','histogram'),loc='upper left')
 	plt.show()
 
-from sklearn.preprocessing import minmax_scale
-def normalize(img):
+def normalize(img):	
 	img = cv2.normalize(img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+	
+	# from sklearn.preprocessing import minmax_scale
 	# img = minmax_scale(img,feature_range=(0,255),copy=False)
 
 	"""
@@ -66,6 +67,7 @@ def stitch(img1,img2):
 	return np.concatenate((img1,img2),axis=1)
 
 allOMRs= glob.iglob(dir_glob)
+clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(30,30))
 for filepath in allOMRs:
 	print (filepath)
 	img=cv2.imread(filepath, cv2.IMREAD_GRAYSCALE) # cv2.IMREAD_GRAYSCALE= 0 reads in grayscale
@@ -75,9 +77,12 @@ for filepath in allOMRs:
 	orig=img.copy()
 	if(review):
 		show(img,wait=False)
-		plot_hist(img);
+		# plot_hist(img);
+		img2 = clahe.apply(img)	
 		normalize(img);
+		show(img2, wait=False)
 		show(img)
+		plot_hist(img2);
 		plot_hist(img);
 	else:
 		normalize(img);

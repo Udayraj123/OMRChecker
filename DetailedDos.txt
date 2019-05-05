@@ -99,17 +99,51 @@ Gap between gray and black as HEALTH/CONFIDENCE MEASURE?
 			>> Durgapur_HE_03 is edgy case for Q10 - cant handle despite normalization, need more parameters! -> 'tone' of the image means more!!
 			>> Got much better visualizations of the parameters now!
 		... If there's any 3D data, think if using contours would help somewhere
+		
+		(11 Oct 2018)
+		3.5 [X] Local threshold acc to this variance & mean: 
+			Local == per-image
+			M1: Set marginal thresholds per image! 
+				--> Sorting, and taking min + 0.4*(diff) as blackTHR, min + 0.6*(diff) as whiteTHR, used in [2013](https://www.researchgate.net/publication/272729555_Cost_Effective_Optical_Mark_Reader) with scope for ambiguity detection i.e. separates partially erased marks(gray bubbles) too.
+				--> But needs one more pass and much calculation, rather tuning from 'nearest threshold' might be better: 
+				--> Margin for xerox would be really low, and Non-xerox still works fine
+				--> At this config, this basically would simply reject xerox grays
+				--> This rather does show the jump between black and gray!
 
-	### 4) Refactor readResponse completely
-		> Make up your mind. Dont run away from this :P :D
-		4.1 [ ] Simplify resp array generation
-		4.2 [ ] Simplify detection process
-		4.3 [ ] Minimize logging 
+			[X] M2: Just find the jumps instead of fixating on .4 and .6
+				--> Would definitely separate into 3 :  black, gray and white
+				--> Unless the jump isn't significant (Ambiguity), your function shall give the best jump psble still.
+				--> Rather find only first jump. No ambiguity for plain gray (maybe later find middle jump for erased ones)
+			
+			Local == per-question
+				--> This would be an overkill as image is already normalized.
 
-	### 5) Make use of rectangular strips
-		5.1 Think how would it be beneficial
-		5.2 Find what methods are used to do this
-		5.3 Think of adding it in code 
+	
+	(11 Oct 2018)
+	### 4) More preprocessing: 
+		4.1 [..] Nope- Its effect isn't significant as most image is white and even gray ones need to be closer to white. Maybe check at this after getting mobile images.  CLAHE(Contrast Limited Adaptive Histogram Equalization) looks better than Normalization [2015](https://www.researchgate.net/publication/280776405_CheckIt_-_A_low_cost_mobile_OMR_system)
+
+		4.2 [ ] Normalize only at Q-level!
+
+		4.3 [ ] Explore uses of lowpass, highpass filters - maybe required for mobile images
+				--> Include mobile's images in testbench now
+
+	(12 Oct 2018)
+	### 5) Testbench generation [ref](https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_geometric_transformations/py_geometric_transformations.html)
+		5.1 [ ] rotate in steps of 2 degrees till 360
+		5.2 [ ] warpAffine = skewing -- change 2d perspective
+		5.2 [ ] warpPerspective with modified M = change 3d perspective
+		5.3 [ ] Nope, slight shifted templates will have prob! -Change mean to gaussian in boxreading for finer results
+
+	### 6) Refactor readResponse completely		
+		6.1 [ ] Simplify resp array generation
+		6.2 [ ] Simplify detection process
+		6.3 [ ] Minimize logging 
+
+	### 7) Make use of rectangular strips
+		7.1 Think how would it be beneficial
+		7.2 Find what methods are used to do this
+		7.3 Think of adding it in code 
 
 
 [X]	Work on full scale, write bigger font, then scale down at the end.

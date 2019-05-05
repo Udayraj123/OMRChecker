@@ -11,6 +11,7 @@ A full-fledged OMR checking software that can read and evaluate OMR sheets scann
 > Can you plot the threshold distribution? _/_/
 
 [ ] For shifted templ: Find out methods to force align on rectangular strips
+	> Will need edge detection here?!
 
 > Prob- some given scans also have negligible bg strips
 
@@ -59,7 +60,7 @@ A full-fledged OMR checking software that can read and evaluate OMR sheets scann
 | Choosing ROI     | 4 Opaque squares  | [4 circles] | Sidebars          |   			|
 | Setting Template | Individual Points | Q-wise      | [QRectangle-wise] |   			|
 | Resolution       | High scaledown    | [Scaledown] | Original      	 |  Scaled Up   |
-| Thresholding     | [Type-Fixed]      | Tone-based* | Fixed             |   			|
+| Thresholding     | [per-Img marginal]| Tone-based* | Fixed             | 	 			|
 
 * to be achieved
 

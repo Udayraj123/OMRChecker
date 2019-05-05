@@ -18,6 +18,8 @@ done-
 # Minor
 > Doubled the resolution of template and input
 
+> Better Checking around the box: Lowering of threshold no more required as per-img threshold would be decided.
+
 
 ### ROUGH FUTUREDOS ####
 > can refactor the py code, but proper code would be in cpp. Python is just for quick and dirty.
