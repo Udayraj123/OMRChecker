@@ -100,10 +100,13 @@ def rotateLine(p,q,a):
 	p[1] = int(((x1 - x0) * sin(a)) + ((y1 - y0) * cos(a)) + y0);
 	return p
 
-def drawPoly(img, pts,color=(255,255,255), thickness=10):
+def drawPoly(img, pts,color=(255,255,255), thickness=5):
 	l = len(pts)
 	for i in range(0,l+1):
 		cv2.line(img,tuple(pts[(i-1)%l]),tuple(pts[i%l]),color=color, thickness=thickness)
+
+def getPts(x,y,w,h):
+	return np.array([[x,y],[x,y+h],[x+w,y+h],[x+w,y]])
 
 def zeroPad(img, padFrac = 0.1):	
 	h, w = img.shape[:2]
@@ -114,7 +117,7 @@ def zeroPad(img, padFrac = 0.1):
 	c = [x+wi,y+hi]
 	# use list than tuple to support list assignment
 	# pts=[[-wi,-hi],[-wi,hi],[wi,hi],[wi,-hi]]
-	pts=[[x,y],[x,y+h],[x+w,x+h],[x+w,y]]
+	pts=getPts(x,y,w,h)
 	# ^ pts relative to centre
 	return bg,c,pts
 
@@ -124,17 +127,29 @@ def contrast(img, gamma=0.5):
 	    lookUpTable[0,i] = np.clip(pow(i / 255.0, gamma) * 255.0, 0, 255)
 	return cv2.LUT(img, lookUpTable)
 
-def applyBG(img, bg, diag):
-	# Will Work only for rectangles!
+def applyBG(img_orig, bg_orig, pts):
+	# Done : Make it work for general poly
 	# img will have black region outside points
-	h,w = img.shape
-	bg = cv2.resize(bg,(w,h))
-	# print(bg.shape, img.shape)
-	x,y = diag[0]
-	w,h = np.subtract(diag[1],diag[0])
-	# print(x,y,w,h)
-	bg[y:(y+h) , x:(x+w)] = img[y:(y+h) , x:(x+w)];
-	return bg
+	h,w = img_orig.shape
+	bg = cv2.resize(bg_orig,(w,h))
+	mask = np.ones_like(bg)
+	mask *= 255;
+	cv2.fillConvexPoly(mask,pts,0)
+	bg = cv2.bitwise_and(bg,bg,mask = mask)
+	mask = np.zeros_like(img_orig)
+	cv2.fillConvexPoly(mask,pts,255)
+	img = cv2.bitwise_and(img_orig,img_orig,mask = mask)
+	# showOrSave("",img)
+	# showOrSave("",bg)
+	return cv2.addWeighted(bg,1,img,1,0)
+
+	#  Will Work only for rectangles!
+	# # print(bg.shape, img.shape)
+	# x,y = diag[0]
+	# w,h = np.subtract(diag[1],diag[0])
+	# # print(x,y,w,h)
+	# bg[y:(y+h) , x:(x+w)] = img[y:(y+h) , x:(x+w)];
+	# return bg
   
 def warpPts(pts,M):
 	# convert to 3d coordinates
@@ -143,18 +158,33 @@ def warpPts(pts,M):
 	pts2 = np.matmul(pts2,M2.T).astype(int)
 	pts2 = np.delete(pts2, 2, axis=1)
 	return pts2
+
+def rotateImg(img, pts, i):
+	# scale=0.5 can do the zero padding eqv
+	h,w = img.shape[:2]				
+	M = cv2.getRotationMatrix2D((h//2,w//2),i,scale=1)
+	# third arg is the output image size
+	img2 = cv2.warpAffine(img,M,(w,h))
+	wp = warpPts(pts,M)	
+	return img2,wp
 	
+def getBoundPts(pts):
+	w,h = tuple(np.max(pts,axis=0).astype(int)[:2])
+	x,y = tuple(np.min(pts,axis=0).astype(int)[:2])
+	return getPts(x,y,w-x,h-y)
+
 def warpImg(img,M,outdim=None):
 	# warpAffine is basically transformation using matrix!!
 	h,w = img.shape
-	pts = np.float32([[0,0],[h,0],[h,w],[w,0]])
+	pts = getPts(0,0,w,h) #np.float32([[0,0],[h,0],[h,w],[w,0]])
 	# Drop translation column
 	M2 = np.delete(M, 2, axis=1)
 	# Multiply the pts
 	pts = np.matmul(pts,M2.T) 
 	if(not outdim):
-		h,w = tuple(np.max(pts,axis=0).astype(int)[:2])	
-		outdim= (w,h)
+		outdim = tuple(np.max(pts,axis=0).astype(int)[:2])	
+		# h,w = tuple(np.max(pts,axis=0).astype(int)[:2])	
+		# outdim= (w,h)
 	# print(img.shape,outdim)
 	img = cv2.warpAffine(img,M,outdim)
 	return img, pts
@@ -194,11 +224,14 @@ class testImageWarps(unittest.TestCase):
 		for baseimg, bgindex, filepath in self.allIMGs:
 			# self.assertEqual(w,u_width, 'width not resized properly!')
 			img=baseimg.copy()
-			img, c, pts = zeroPad(img,padFrac=0.5)
-			img = applyBG(img,self.bgs[bgindex],[pts[0],pts[2]])
+			img, c, pts = zeroPad(img,padFrac=0.3)
+			# img = applyBG(img,self.bgs[bgindex],pts)
 			h,w = img.shape[:2]
 			for i in range(-40,41,15):
-				showOrSave(filepath[:-4]+"_rot"+str(i)+".jpg",imutils.rotate_bound(img,i))
+				# showOrSave(filepath[:-4]+"_rot"+str(i)+".jpg",imutils.rotate_bound(img,i))							
+				img2, wp = rotateImg(img,pts,i)
+				img2 = applyBG(img2,self.bgs[bgindex],wp)
+				showOrSave(filepath[:-4]+"_rot"+str(i)+".jpg",img2)
 
 	def testTranslate(self):
 		for baseimg, bgindex, filepath in self.allIMGs:
@@ -206,6 +239,8 @@ class testImageWarps(unittest.TestCase):
 			img=baseimg.copy()
 			# padding be sufficient for warped points to be within limits
 			img, c, pts = zeroPad(img,padFrac=0.3)
+			# showOrSave("",applyBG(img,self.bgs[bgindex],pts))
+
 			for i in range(-w//5,w//5+1,w//5):
 				for j in range(-w//5,h//5+1,h//5):	
 					if(i and j):
@@ -216,8 +251,8 @@ class testImageWarps(unittest.TestCase):
 						# print(pts, wp)
 						# if(wp.min()<0):
 						# 	print("Warning: warp out of image!")
-						# img2 = applyBG(img,self.bgs[bgindex],[pts[0],pts[2]])
-						img2 = applyBG(img2,self.bgs[bgindex],[wp[0],wp[2]])
+						# img2 = applyBG(img,self.bgs[bgindex],pts)
+						img2 = applyBG(img2,self.bgs[bgindex],wp)
 						showOrSave(filepath[:-4]+"_mov"+str(i)+str(j)+".jpg",img2)
 
 
@@ -225,22 +260,22 @@ class testImageWarps(unittest.TestCase):
 		#  perspective on whole image (including bg)
 		for baseimg, bgindex, filepath in self.allIMGs:
 			h,w=baseimg.shape[:2]
+			img_orig=baseimg.copy()						
+			img_orig, c, pts = zeroPad(img_orig,padFrac=0.2+random()/4)
+			img_orig = applyBG(img_orig,self.bgs[bgindex],pts)
 			for thetaBase,thetaDist,thetaWide in [
-				(60*random(),5,20),
-				(-60*random(),10,20),
-				(60*random(),15,20),
-				(-60*random(),25,20),
+				(40*random(),5,20),
+				(-40*random(),10,20),
+				(40*random(),15,20),
+				(-40*random(),25,20),
 				]:
-				img=baseimg.copy()						
-				img, c, pts = zeroPad(img,padFrac=0.2+random()/4)
-				img = applyBG(img,self.bgs[bgindex],[pts[0],pts[2]])
 				
 				# rotate image about midpoint
-				img = imutils.rotate_bound(img, thetaBase)
-				# Padding for persp
-				img, c, pts1 = zeroPad(img,padFrac=0.25)
-				h,w=img.shape[:2]
+				# img = imutils.rotate_bound(img_orig, thetaBase)
+				img, pts1 = rotateImg(img_orig,pts,thetaBase)				
+				pts1 = getBoundPts(pts1)
 				# drawPoly(img,pts1,color=(205,0,0))
+				# showOrSave(filepath,img)
 				
 				# Create inverse warp rectangle
 				pts2 = pts1.copy()
@@ -249,14 +284,12 @@ class testImageWarps(unittest.TestCase):
 				pts2[0] = rotateLine(pts2[0],pts2[1],-thetaWide)
 				pts2[3] = rotateLine(pts2[3],pts2[2],thetaWide)
 
-				# Done - draw above as dotted lines on image.
+				# Done - draw above as lines on image.
 				# cv2.polylines(img,[np.array(pts2, np.int32)],isClosed=True,color=(255,255,255), thickness=10)
 				# % is positive in python
 				drawPoly(img,pts2,color=(205,0,0))
-				# showOrSave(filepath,img)
 
-				# Apply perspective
-				# M = cv2.getPerspectiveTransform(np.float32(pts1),np.float32(pts2))
+				# Apply perspective				
 				# img = cv2.warpPerspective(img,M,(w,h))
 				img = four_point_transform(img,np.array(pts2))
 				showOrSave(filepath[:-4]+"_prsp.jpg",img)
@@ -264,12 +297,13 @@ class testImageWarps(unittest.TestCase):
 
 # suite = unittest.TestLoader().loadTestsFromName('unit_testing.testImageWarps.testTranslate')
 # suite = unittest.TestLoader().loadTestsFromName('unit_testing.testImageWarps.testRotation')
+# suite = unittest.TestLoader().loadTestsFromName('unit_testing.testImageWarps.testPerspective')
 suite = unittest.TestLoader().loadTestsFromTestCase(testImageWarps)
 # 2 is max verbosity offered
 unittest.TextTestRunner(verbosity=2).run(suite) 
 
 
-# ROUGH CODEWORKS:
+#	#	#	#	#	#	#	#	#	 ROUGH CODEWORKS:	#	#	#	#	#	#	#	#	#
 
 # if run as script and not imported as pkg
 # if __name__ == '__main__' :
@@ -279,12 +313,9 @@ unittest.TextTestRunner(verbosity=2).run(suite)
 # M2: imutils! But will loose track of pts (or will we),https://www.pyimagesearch.com/2017/01/02/rotate-images-correctly-with-opencv-and-python/ 
 # https://stackoverflow.com/questions/32266605/warp-perspective-and-stitch-overlap-images-c#_=__name__
 
-
-# first 2 are the coordinate limits.
-# M = cv2.getRotationMatrix2D((h//2,w//2),i,scale=1)
-# scale does the zero padding eqv
-# M = cv2.getRotationMatrix2D((h//2,w//2),i,scale=0.5)
-# third arg is the output image size
-# img2 = cv2.warpAffine(img,M,(w,h))
-# wp = warpPts(pts,M)				
-# showOrSave(filepath[:-4]+"_rot"+str(i)+".jpg",img2)
+# M = cv2.getPerspectiveTransform(np.float32(pts2),np.float32(pts1))
+# print("pts1")
+# print(pts1)
+# showOrSave(filepath,img)
+# print(M)
+# print(cv2.perspectiveTransform(np.float32([pts1]),M))

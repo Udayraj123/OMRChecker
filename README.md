@@ -38,15 +38,21 @@ A full-fledged OMR checking software that can read and evaluate OMR sheets scann
 	3.4 [X] Record/Report the progress
 (12 Sept 2018)
 
-### 4) Refactor readResponse completely
-	4.1 [ ] Simplify resp array generation
-	4.2 [ ] Simplify detection process
-	4.3 [ ] Minimize logging 
+### 4) Implement local variance
 
-### 5) Make use of rectangular strips
-	5.1 Think how would it be beneficial
-	5.2 Find what methods are used to do this
-	5.3 Think of adding it in code 
+### 5) Check for more improvements
+
+### 6) Testbench generation
+
+### 7) Refactor readResponse completely
+	7.1 [ ] Simplify resp array generation
+	7.2 [ ] Simplify detection process
+	7.3 [ ] Minimize logging 
+
+### 8) Make use of rectangular strips
+	8.1 Think how would it be beneficial
+	8.2 Find what methods are used to do this
+	8.3 Think of adding it in code 
 
 ## Design Choices
 	
