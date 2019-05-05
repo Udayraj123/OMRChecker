@@ -170,7 +170,7 @@ Sort Bad Verifies = Raebareli, Dhirangarh, Ambarnath, Korba
 
 once = 0
 
-allOMRs= glob.iglob(directory+'*/*/*/*'+ext)
+allOMRs= glob.iglob(directory+'*/*/*'+ext)
 # allOMRs = reversed(list(allOMRs))
 
 
@@ -218,11 +218,11 @@ def appendArr(val,array,filename):
         # pd.DataFrame(val).T.to_csv(f,header=False)
 
 def stitch(img1,img2):
-    if(img1.shape[0]!=img2.shape[0]):
-        print("Can't stitch different sized images")
-        return None
-    # np.hstack((img1,img2)) does this!
-    return np.concatenate((img1,img2),axis=1)
+    return np.hstack((img1,img2));
+    # if(img1.shape[0]!=img2.shape[0]):
+    #     print("Can't stitch different sized images")
+    #     return None
+    # return np.concatenate((img1,img2),axis=1)
 
 squadlang="XX"
 mws, mbs = [],[]
@@ -230,20 +230,14 @@ mws, mbs = [],[]
 with open(resultFile,'a') as f:
     # for i,filepath in enumerate(list(allOMRs)[start:start+5]):
     for i,filepath in enumerate(allOMRs):
-        # num = str(i).zfill(4)
-    #     filename=folder+prefix+num+ext
-        finder = re.search(r'/.*/(.*)/(.*)/(.*)\.'+ext[1:],filepath,re.IGNORECASE)
+        finder = re.search(r'/.*/(.*)/(.*)\.'+ext[1:],filepath,re.IGNORECASE)
         if(finder):
             squadlang = finder.group(1)
             squad,lang = squadlang[0],squadlang[1]
             squadlang = squadlang+'/'
-            filename = finder.group(3)
-            xeno = finder.group(2)
+            filename = finder.group(2)
         else:
             filename = 'Nop'+str(i)
-
-        # temp patch
-        if("HE_" in filename):squad="H";
 
         origOMR = cv2.imread(filepath,cv2.IMREAD_GRAYSCALE)
 
@@ -268,9 +262,6 @@ with open(resultFile,'a') as f:
                 if(err):
                     appendArr(err,errorsArray,errorFile)
                 continue
-            else:
-                OMRcrop = cv2.resize(OMRcrop,(uniform_width_hd,uniform_height_hd))
-                # OMRcrop = imutils.resize(OMRcrop,height=uniform_height,width=uniform_width)
 
             respArray=[]
             try: #TODO - resolve this try catch later

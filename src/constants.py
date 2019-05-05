@@ -12,11 +12,10 @@ Evaluate Hindi Files acc to diff template & anskey - Korba, Gwalior, Gonda _/ , 
 
 """
 
-showimglvl= 4
-resetpos=[770,10]
-verbose = 9 
+showimglvl = 1
+resetpos = [0,0]
 explain= 0
-autorotate=1
+# autorotate=1
 saveMarked=1
 
 
@@ -31,16 +30,26 @@ thresholdRead_L =  116
 # For already normalized(contrasted) images
 thresholdRead_R =  60
 
+# For preProcessing
+GAMMA_LOW = 0.5
+GAMMA_HIGH = 1.25
+
+
+
 # For new ways of determining threshold
-JUMP_DELTA=20
-MIN_GAP, MIN_STD=20, 40
+MIN_GAP, MIN_STD = 30, 25
+MIN_JUMP = 20
+JUMP_DELTA = 40
+# MIN_GAP : worst case gap of black and gray
 
 # Templ alignment parameters
 ALIGN_RANGE  = range(-5,6,1) #
 # ALIGN_RANGE  = [-6,-4,-2,-1,0,1,2,4,6]
 
 # minimum threshold for template matching
-thresholdCircle = 0.4 #matchTemplate returns 0 to 1
+thresholdVar = 0.3
+thresholdCircle = 0.3 #matchTemplate returns 0 to 1
+# thresholdCircle = 0.4 #matchTemplate returns 0 to 1
 scaleRange=(0.35,0.95)
 match_precision = 20 # > 1
 

@@ -296,20 +296,56 @@ Some excessDos that won't happen after BTP
 
 Note: looking back at this app dev, I was right about thinking so much before starting to code - just that I should have thought in a prioritized way on the features when it came to the low fps issue. That would have saved much time, anyway learning about how canvas works was quite helpful and it will get used later once core feats are working well.
 
-result data
-	> Error handling for - matching err, 
-	> Steps image strip should contain - input, ..
-	> that GIF of images being scanned fast and accurately
-
-tuning data
-	> plot rectangle max/min cosines graph
-	# TODO: Plot and see performance of scaleRange
 
 From drive data: 
-	# TODO: (remove closeup bool) Automate the case of close up scan(incorrect page)-
+	// Nope, its a limitation - # TODO: (remove closeup bool) Automate the case of close up scan(incorrect page)-
 
 18 Apr:
-	Morph not working well on real data?!
-		-> Image is almost like hist_eq example on opencv
+	// Nailed it in solving - Morph not working well on real data?!
+		-> Image is almost like that in hist_eq example on opencv
 		-> low exposure is there too? - apply gamma correction
-		-> checkout CLAHE again
+		-> checkout CLAHE again _// Solved by combining it with norm & truncated threshold
+
+	findPage finding hard to remove bg!
+		-> bg substractions : some are motion based - works only on still cameras
+		-> Make use of obtained WHITE blob of paper?
+		-> But anyway mobile's gonna give the cropped image _//
+
+		result data
+			> Error handling for - matching err, 
+			> Steps image strip should contain - input, ..
+			> that GIF of images being scanned fast and accurately
+			> Cornercase examples for : 
+				slight creases,
+				template shift(slight bend),
+				bad lighting(shadow),
+				readResponse testing:  
+					allMarked - normal_HE_01 from 2044,
+					noneMarked,
+					noneMarked except one,
+
+
+		tuning data
+			> plot rectangle max/min cosines graph
+			# TODO: Plot and see performance of scaleRange
+
+	 	// (5 hrs!) fix colwise thresholding now 
+	 		-> Not at all, gray is still getting as low as 35! - CLAHE has distorted its working: Its good only for edge detection?!
+	 		-> Note Assumption : Colwise background color is either gray or white, but not alternating
+        	-> global QVals shall absolutely help here. Just run same funtion on total QVals instead of colwise _//
+    		-> q5C in HE_19 from 2044 is having issue with MIN_JUMP = 20 as well, rest having prob with MIN_JUMP = 30
+	        	>> Only global needs two big jumps! "The point of colwise was to reduce it to the biggest jump!"
+        	note: # DISCRETION: Pretty critical factor in reading response
+
+	 	//: remove Normal/Xerox concept
+	 	app 
+			: put Folder structure : naming ids
+			: put quad templ matchin
+			: limit contours *drawing* to top 3
+			//: CLAHE into app
+	 	Prepare corner case dataset
+
+ExcessDos:
+	//flash functionality
+	//put signature inside code
+	put signature inside app

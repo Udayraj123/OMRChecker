@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 # 1: View without saving, else: Save files without showing
 review=1;
 
-dir_glob = directory+'*/*/*/*'+ext
+dir_glob = directory+'*/*/*'+ext
 bg_glob = 'images/omrbgs/omrbg*'+ext
 # Original scan dimensions: 3543 x 2478
 display_width=1000
