@@ -438,8 +438,8 @@ def checkKey(OMRresponse,key1,key2):
     except:
         return False
 
-def readResponse(squad,QTAGS,VALUES,pts,boxDim,image,name,save=None,thresholdRead=127.5,explain=True,bord=-1,
-    white=(200,150,150),black=(25,120,20),badscan=0,multimarkedTHR=153,isint=True):
+def readResponse(squad,QTAGS,VALUES,pts,boxDim,image,name,save=None,thresholdRead=0.5,explain=True,bord=-1,
+    white=(200,150,150),black=(25,120,20),badscan=0,multimarkedTHR=0.60,isint=True):
     try: 
         img = image.copy()
         _, t = cv2.threshold(img,100,255,cv2.THRESH_BINARY)
@@ -456,8 +456,8 @@ def readResponse(squad,QTAGS,VALUES,pts,boxDim,image,name,save=None,thresholdRea
         alpha=0.65
         output=img.copy()
         retimg=img.copy()
-        blackTHRs=[0]
-        whiteTHRs=[255]
+        blackTHRs=[]
+        whiteTHRs=[]
         # print(">>>1")
         for pt in pts:
             pt = tuple(map(int,pt))
@@ -473,21 +473,20 @@ def readResponse(squad,QTAGS,VALUES,pts,boxDim,image,name,save=None,thresholdRea
             mean_color3 = cv2.mean(img[ y : y+h,xminus2 : xplus2  ],mask)
             mean_color4 = cv2.mean(img[ yminus : yplus,x : x+w     ],mask)
             mean_color5 = cv2.mean(img[ yminus2 : yplus2,x : x+w     ],mask)
-            boxval = mean_color[0]            
+            boxval = mean_color[0]/float(255)
             detected1=(thresholdRead > boxval)
-            threshold2 = thresholdRead + 38.25 if detected1 else thresholdRead
-            detected2=(threshold2 > mean_color2[0])
-            threshold3 = thresholdRead + 38.25 if (detected2 or detected1) else thresholdRead
-            detected3=(threshold3 > mean_color3[0])
-            threshold4 = thresholdRead + 38.25 if (detected3 or detected2 or detected1) else thresholdRead
-            detected4=(threshold4 > mean_color4[0])
-            threshold5 = thresholdRead + 38.25 if (detected4 or detected3 or detected2 or detected1) else thresholdRead
-            detected5=(threshold5 > mean_color5[0])
+            threshold2 = thresholdRead + 0.15 if detected1 else thresholdRead
+            detected2=(threshold2 > mean_color2[0]/float(255))
+            threshold3 = thresholdRead + 0.15 if (detected2 or detected1) else thresholdRead
+            detected3=(threshold3 > mean_color3[0]/float(255))
+            threshold4 = thresholdRead + 0.15 if (detected3 or detected2 or detected1) else thresholdRead
+            detected4=(threshold4 > mean_color4[0]/float(255))
+            threshold5 = thresholdRead + 0.15 if (detected4 or detected3 or detected2 or detected1) else thresholdRead
+            detected5=(threshold5 > mean_color5[0]/float(255))
             if(detected1):
                 blackTHRs.append(boxval)
             else:
                 whiteTHRs.append(boxval)
-                
             clr= black if detected1 else white
 
             # retimg = cv2.rectangle(retimg,(x,yminus2),(x+w,yplus2),clrs[int(detected5)],bord)#-1 is for fill
@@ -529,33 +528,32 @@ def readResponse(squad,QTAGS,VALUES,pts,boxDim,image,name,save=None,thresholdRea
                         multimarked=1 # Only send rolls multi-marked in the directory
                         printbuf("Multimarked In Roll")
 
-                    if(thresholdRead>multimarkedTHR): #observation
-                        #This is just for those Dark OMRs
-                        multimarked=1 # that its not marked by user, but code is detecting it.
-                    if(np.random.randint(1,10)%2==0):
-                        cv2.putText(retimg,"<"+str(int(boxval))+">",pt,cv2.FONT_HERSHEY_SIMPLEX, 1.0,(10,10,10),3)
-
+                    if(squad=='H' and q==19):
+                        #Concatenate (For Hauts Q19)
+                        val = OMRresponse[key1][key2] + str(val)
+                        if(explain):
+                            print('HQ19 concat : ',val)
+                    else:
+                        if(thresholdRead>multimarkedTHR): #observation
+                            multimarked=1 
+                    #     #This is just for those Dark OMRs
+                # print("<< ..",q,val)
                              
                 addInnerKey(OMRresponse,key1,key2,val)
                 
-                cv2.putText(retimg,str(OMRresponse[key1][key2]),pt,cv2.FONT_HERSHEY_SIMPLEX, 1.0,(50,20,10),3)
+                cv2.putText(retimg,str(OMRresponse[key1][key2]),pt,cv2.FONT_HERSHEY_SIMPLEX,
+                        1.0,(50,20,10),3)
     #             except:
     #                 #No dict key for that point
     #                 print(pt,'This shouldnt print after debugs')
-            # endif detected
-            # elif(np.random.randint(1,10)%5==0):
-            #     cv2.putText(retimg,"<"+str(int(boxval))+">",pt,cv2.FONT_HERSHEY_SIMPLEX, 1.0,(10,10,10),3)
-
-        # Translucent
+            # Translucent
+        # print(">>>2")
         retimg = cv2.addWeighted(retimg,alpha,output,1-alpha,0,output)    
         # print('Keep THR between : ',,np.mean(whiteTHRs))
         global maxBlackTHR,minWhiteTHR
         maxBlackTHR = max(maxBlackTHR,np.max(blackTHRs))
         minWhiteTHR = min(minWhiteTHR,np.min(whiteTHRs))
-        
-        ## Real helping stats:
-        cv2.putText(retimg,"avg: "+str(["avgBlack: "+str(round(np.mean(blackTHRs),2)),"avgWhite: "+str(round(np.mean(whiteTHRs),2))]),(20,50),cv2.FONT_HERSHEY_SIMPLEX, 1.0,(50,20,10),3)
-        cv2.putText(retimg,"ext: "+str(["maxBlack: "+str(round(np.max(blackTHRs),2)),"minW(gray): "+str(round(np.min(whiteTHRs),2))]),(20,90),cv2.FONT_HERSHEY_SIMPLEX, 1.0,(50,20,10),3)
+        cv2.putText(retimg,str([round(np.min(whiteTHRs),4),thresholdRead,round(np.max(blackTHRs),4)]),(50,50),cv2.FONT_HERSHEY_SIMPLEX, 1.0,(50,20,10),3)
         
         if(retimg.shape[1] > 4 + uniform_width): #observation
             cv2.putText(retimg,str(retimg.shape[1]),(50,80),cv2.FONT_HERSHEY_SIMPLEX, 1.0,(50,20,10),3)

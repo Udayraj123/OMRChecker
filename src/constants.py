@@ -17,24 +17,17 @@ explain= 1
 autorotate=1
 saveMarked=1
 
-
 #Intermediate - 
 ext='.jpg'
 # debug THR config - 
 mw,mb=1,0
-
-minWhiteTHR,maxBlackTHR=255,0
-
-stitched = 1;
-thresholdRead_L =  110 # if kv else 120
-thresholdRead_R =  50
-
-thresholdCircle= 0.55 #matchTemplate returns 0 to 1
+minWhiteTHR,maxBlackTHR=1,0
+multimarkedTHR = 0.55
+thresholdRead=  0.642 if kv else 0.65
+thresholdReadXRX = 0.7
+thresholdCircle= 0.55
 scaleRange=(0.75,0.95)
 
-#Expert :p
-uniform_height = 1000 
-uniform_width  = 1231
 boxDimX,boxDimY=(17,17) # dims of the single square
 
 directory ='images/OMR_Files/' if kv else 'images/OMR_Files/'
@@ -67,6 +60,11 @@ windowWidth = 1200
 windowHeight = 700
 
 
+
+#Expert :p
+windowX,windowY = 0,0 
+uniform_height = 1000 
+uniform_width=1231
 
 # In[3]:
 

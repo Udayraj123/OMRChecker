@@ -1,16 +1,3 @@
-### ROUGH FUTUREDOS ####
-> can refactor the py code, but proper code would be in cpp. Python is just for quick and dirty.
->> First write everything on paper. Then you'd make much lesser mistakes
-RefactorDos:
-Simpler folder structure.
-then consider the psychology to change the structure further for tallying.
-
->> Into C++ code:
-Only do the core part in cpp. Template setting,etc preprocessing types can be done in py.
-
-
-## COLLECT vv
-
 Things to find
 interesting Research papers on Optical Mark Recognition
 	Find the use of those side strips
@@ -37,10 +24,8 @@ Web portal to do it all- generating and modifying template, making marking schem
 ^This be in da premium features. The normal version shall be comfy for devs but normal users would need some time
 
 Furthers
-support for tick mark detection?  well, it cant be used everywhere as its likely to fail without fault of the scanner.<< Nope
+support for tick mark detection? - well, it cant be used everywhere as its likely to fail without fault of the scanner.
 
-Maybes:
-> Gaussian like box than a 17x17 rectangle?
 
 
 
