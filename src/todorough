@@ -1,21 +1,20 @@
-todo
-Try out contours and see the marker
+//Try out contours and see the marker
 >> Centre of that contour will be close to that center!!
 >> There's also hough transform, but it aint as flexible (needs min max radius)
->> If we ARE using a specific marker like the circle, 
+>> If we ARE using a specific marker like the circle,
 	Why not use a barcode? (Hint: test on perspectives)
 	https://www.pyimagesearch.com/2014/11/24/detecting-barcodes-images-python-opencv/
 	^We can, but now you've DECIDED to use the circle and it's a good decision, so get on with it!
 
 ^>> So, findContours seems not reliable as is. Works a bit on binarizing the image, but same prob with xeroxed image would be here. And this approach will be subject to background changes.
-	
+
 	Rather can you find the sidelines so as to determine quadrants?
 	>> **Orientation can be determined by DFT
 		https://docs.opencv.org/2.4/doc/tutorials/core/discrete_fourier_transform/discrete_fourier_transform.html
 	>> The sidelines are not as good markers as a filled strip!
 
->> Why not use a blob instead of circles? 
-	- Distance of sheet from camera variable. 
+>> Why not use a blob instead of circles?
+	- Distance of sheet from camera variable.
 	>> What if we add it to input constraint that biggest blob should be the one on OMR.
 
 ** This Sobel operator can be used for aligning the template!!
@@ -43,7 +42,7 @@ Refactor more-
 // Debug template matching
 
 
-// Checkout this weird trick that makes marked bubbles and the template circle distinctly blobby- 
+// Checkout this weird trick that makes marked bubbles and the template circle distinctly blobby-
 	gray = gray - cv2.erode(gray, kernel=np.ones((5,5)),iterations=5)
 
 // (Fri) Mail the progress (pic dumps)
@@ -79,33 +78,33 @@ testImg
 
 After MS:
 - Refactor readResponse
-//- Shifting ideation 
+//- Shifting ideation
 - Apply DFT and IFT on cropped one just to see.
 - Get more test data : On which template shifts currently
 	>
 
 Excess:
-	Mechanisms to check if circles found form a rectangle-like shape
-	Defeat the bossbg.jpg	
+	(done 17 Apr - getMaxCosine from app) Mechanisms to check if circles found form a rectangle-like shape
+	Defeat the bossbg.jpg
 	3D viz (online) of this templateMatch output(, Sobel eroded blobs) to see the peaks
 
-Shifting - 
+Shifting -
 Problem: [Nonlinear Distortion] There's an uneven shift(mainly horizontal) of order of 2-3 pixels in the Qbox columns
 
 Nope- Rect level soln
 	> Easier to align
 	> Assumes there's a bounding rect present for alignment
-	> Still the rects are long, nonlinear distortion would still mess it up	
+	> Still the rects are long, nonlinear distortion would still mess it up
 
 Qbox level soln
 	Naive approach (inefficient here)
-		> Take each QBlock, move it around in 20% area and return the pos where an index is maximum. 
-			The index can be - 
-			1. Correlation : Error chances significant as there are smaller box lines that also correlate 
+		> Take each QBlock, move it around in 20% area and return the pos where an index is maximum.
+			The index can be -
+			1. Correlation : Error chances significant as there are smaller box lines that also correlate
 			2. Correlation on Eroded image : Gotta try
 				It is taken with white color anyway: so just take max white value.
 		_/	3. Correlation on Gradient image : More consistent
-	
+
 	Different approach 1
 		> We'd always have partially filled(gray or black) Qboxes, move them individually towards the black area
 			- wont work on noise due to xerox bg!
@@ -117,22 +116,22 @@ Qbox level soln
 16 Mar 19
 Major Changes:
 	// Implemented shifting in align file
-	
+
 
 Minor Changes:
-	Resize page(>>BOTH W & H) to fixed size after Warp layer 1 
+	Resize page(>>BOTH W & H) to fixed size after Warp layer 1
 	==> No need of scaled checking?! : Still doing precautionary
 
 19 Mar 19
 // Implemented (naive) shifting in utils
 
-Minor: 
-// Separated JSONs from template.py 
+Minor:
+// Separated JSONs from template.py
 // Rather, removed it-  scalePts was not acting since rect{} was introduced, also updated it with int() on pts to support fractional scaling
 
 Some dilemmas and decisions over them-
 > Template json contents : Should 'qblockDims' be written in the file or calculated from Gaps already present there
-	--> Minimal redundancy should be followed, so calculate. 
+	--> Minimal redundancy should be followed, so calculate.
 	--> Giving it in file also introduces interdependencies - changing qNos reqs recalculating qblockDims again.
 	<-- But won't it be fixed for the template? And more accurate than calculating using gaps?
 
@@ -142,21 +141,21 @@ Some dilemmas and decisions over them-
 
 
 # Let's Apply adaptive threshold QBlock-wise.
-# >> Nope, do column-wise or don't - 
+# >> Nope, do column-wise or don't -
 # Then need to separate the Qs array - doable, but extensible?
 # >> No need! You just need QVals, can get it cumulating via QBlocks too, get it as you find shifts
 
 Wish me clarity!!
 >> (From Speech TA) 7x1 kernel erosion is damn perfect suggestion ==> Makes use of real morphology power
 >> Not now, sometime later! - My Sobel be useful tho (feed the stumbling)
---> This is why you should work on thinking clearly first before acting.  
+--> This is why you should work on thinking clearly first before acting.
 
 Things that should have clicked(altho not useful everytime) when seen first time!
 --> Denoise first using morphology! ( Well, didn't work as expected now!)
 --> Blur then denoise - nop
 
-Sobel : 
-	is an approximation to derivative _// 
+Sobel :
+	is an approximation to derivative _//
 	sign of output doesn't matter _//
 	(1,0) means horizontal gradient _//
 
@@ -164,13 +163,13 @@ Sobel :
 21 Mar 19
 // Implemented proper shifting in utils
 	Nope, there's more accurate approach - Qval correlation instead of QBlock be most accurate
-	- Area between Qboxes be checked : use a mask! 
+	- Area between Qboxes be checked : use a mask!
 	>> also useful for future changes : if decided to align vertically as well
 --> Further accurate: approach4 - move towards the blob - use MOMENTS!
 	- move towards centroid until direction changes.
 
 Minor:
-	Nope- Q object now has endpts and a mask for aligning 
+	Nope- Q object now has endpts and a mask for aligning
 		QBlock has cols attribute for vertical cols (even for orient='H') and No mask needed practically
 
 - Test all on dark xerox now.
@@ -180,7 +179,7 @@ Minor:
 23 Mar 19
 	: Shifting to its best! Scan match Centroid wins by a nice margin!
 	 - On xerox : Bangalore_JE series
-	 >> Its working decently on positive shifts, 
+	 >> Its working decently on positive shifts,
 	 - still many times it shifts wrongly, but detected correctly
 
 	: How about, finding the first 0-255 jump? There ain't noise there!
@@ -192,11 +191,9 @@ Minor:
 
 	(after discn with Mk)
 	_//	->> Move to make white on both edges of the window.
-	Works really well! Thanks mk, now I can truly - truly move on from shifting. _// (23 mar 11:28PM)
+	Works really well! Thanks mk, now I can totally move on from shifting. _// (23 mar 11:28PM)
 
 	Now:
-		Apply DFT and IFT on cropped one just to see.
-		Design the demo scenario now.
 		// Refactor readResponse
 
 	Major Changes:
@@ -210,6 +207,109 @@ Minor:
 			OMRresponse was 2-key dict only for combining the integer types. It should be done during evaluation rather.
 			-> concatenation be done there itself
 
-			No need for Q() class, moved attr to Pt class. 
+			No need for Q() class, moved attr to Pt class.
 		// Gone column wise finally, Going Q wise no more required as multimarked wont depend on it
 			- except for qwise plots --> Now it'd be more logical colwise plots, no MCQ/INT distinguishing too.
+
+
+Next:
+	// Apply DFT and IFT on cropped one just to see.
+		- IFT recovers image really well
+		- low pass on dft produces blur!
+		- fftshift rotates the image
+
+	Increase test data
+		5.9  [ ] Images with more than 4 circles, Less than 4 ?!
+		5.10 [ ] Brightness and contrast variations
+
+	Update DetailedDos.md
+	Design the demo scenario now.
+		Live Image : https://github.com/adityaarora1/LiveEdgeDetection
+		Uploading : https://github.com/amitshekhariitbhu/Fast-Android-Networking
+
+
+"Camera API in Android is hard. Having 2 different API for new and old Camera does not make things any easier. But fret not, that is your lucky day! After several years of working with Camera, we came up with Fotoapparat."
+
+
+2 Apr:
+// Refactor processOMR
+	# better go question-wise than dictionary wise.
+	->  but now Q object is removed. qNo, qType is present with points!
+	Choices : 1. Make Q again, or
+			  2. Store one more variable having qNo to qType mapping. _/ -> its already there = templJSON[squad]
+
+// change json format to include keys for qNos and have its dims, instead of typing q9.1, q9.2, etc
+
+7 Apr : Learning more of Android -
+from LiveEdgeDetection app:
+Structure:
+	ScanConstants, ScanUtils don't have context as they are not instantiated. They contain static members, unlike the views such as ScanSurfaceView.
+		--> marker image be loaded in ScanSurfaceView and passed wherever required to ScanUtils.
+
+In the beginning, everyone used Environment.getExternalStorageDirectory(), which pointed to the root of external storage.
+This led to external storage being just a big basket of random content.
+Later, Google offered more organization:
+getExternalFilesDir() and getExternalCacheDir() on Context, pointing to an application-specific directory on external storage,
+one that would be deleted when the app is uninstalled
+
+    //    Android/data/appname  --> context.getFilesDir or getExternalFilesDir (Any files that are private to the application)
+    //    emulated/0/Downloads --> Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+    // another source:  Environment.getExternalStorageDirectory().getAbsolutePath() + "/Downloads"
+
+_/ Using inbuilt image ==> res/drawable. Thus putting default marker there.
+
+8 Apr :
+progress written in app repo's changes-summary.txt
+
+9 Apr:
+App:
+	// multiple permissions issue solved
+	// X ray resolve attempted - works well only in emulator
+	// Major Refactoring - renames, remove redundants,
+10 Apr:
+	// debug warpPerspective
+	Low FPS ==> reduce image sizes!
+		Camera issue on phone ==> Try CvCameraViewListener - gives Mat, allows, setMaxFrameSize, simplifies return preview ==> MUCH faster
+	-> Need more refactoring:  simplify workflow
+
+13 Apr:
+	// Complete the UI
+	// resolve cancel button threading issue
+	// Autocapture shall now be scheduled after confirming 4 quads
+
+	Refactoring
+		refactor evaluation code
+		rename variables to answer why they really exist
+
+17 Apr:
+Code result tabulation
+Find final tuning parameters
+	- KSIZES - blur, morph,
+    - Canny parameters
+    - 
+
+After report: 
+	Try canvas on the new app
+
+Some excessDos that won't happen after BTP
+	> those brandDos on wikipedia, SO, etc
+
+Note: looking back at this app dev, I was right about thinking so much before starting to code - just that I should have thought in a prioritized way on the features when it came to the low fps issue. That would have saved much time, anyway learning about how canvas works was quite helpful and it will get used later once core feats are working well.
+
+result data
+	> Error handling for - matching err, 
+	> Steps image strip should contain - input, ..
+	> that GIF of images being scanned fast and accurately
+
+tuning data
+	> plot rectangle max/min cosines graph
+	# TODO: Plot and see performance of scaleRange
+
+From drive data: 
+	# TODO: (remove closeup bool) Automate the case of close up scan(incorrect page)-
+
+18 Apr:
+	Morph not working well on real data?!
+		-> Image is almost like hist_eq example on opencv
+		-> low exposure is there too? - apply gamma correction
+		-> checkout CLAHE again

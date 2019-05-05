@@ -127,9 +127,9 @@ Gap between gray and black as HEALTH/CONFIDENCE MEASURE?
 
 	4.2 [X] Nope, there may not be any white there(think multi marked) - Normalize only at Q-level!
 
-	4.3 [ ] Explore uses of lowpass, highpass filters - maybe required for mobile images
-		--> Include mobile images in testbench now
-	4.4 [X] Nope, slight shifted templates will have prob! -Change mean to gaussian in boxreading for finer results
+	4.3 [X] Nope, slight shifted templates will have prob! -Change mean to gaussian in boxreading for finer results
+	4.4 [X] (24 Mar 19) Explore uses of lowpass, highpass filters - maybe required for mobile images
+			--> they are too simple to use. Some sophisticated DFT effect might be useful
 
 (13 Oct 2018)
 ### 5) Testbench generation
@@ -145,20 +145,22 @@ Gap between gray and black as HEALTH/CONFIDENCE MEASURE?
 	5.10 [ ] Brightness and contrast variations
 
 ### 6) Make note current code benchmarks 
-	6.1 [ ] Template match test: Perspective angle margins using blurred template matching
-	6.1 [ ] Full test results
+	6.1 [X] Template match test: Perspective angle margins using blurred template matching
+	6.1 [X] Full test results
 
 (5 Nov 2018)
 ### 7) Find/Ideate and try out force aligning methods
 	7.1 [X] Note Why it is needed - For 'proper scan of improper print' i.e. unevenly widened print. Also for slight template circle shifts due to inaccuracy there.
 	7.2 Find what methods are used to do this
-	7.3 [ ] Using contours for inner boxes 
-	7.4 [ ] Per-box averaged alignment ?!
+	7.3 [X] nope - Using contours for inner boxes 
+	7.4 [X] Per-box averaged alignment ?!
+(23 Mar 2019)
+
 
 ### 8) Refactor readResponse completely		
-	8.1 [ ] Simplify resp array generation
-	8.2 [ ] Simplify detection process
-	8.3 [ ] Minimize logging 
+	8.1 [X] Simplify resp array generation
+	8.2 [X] Simplify detection process
+	8.3 [X] Minimize logging 
 
 [X]	Work on full scale, write bigger font, then scale down at the end.
 

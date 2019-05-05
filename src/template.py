@@ -3,23 +3,6 @@ import json
 import numpy as np
 from constants import *
 
-def resize_util(img, u_width, u_height=None):
-    if u_height == None:
-        h,w=img.shape[:2]
-        u_height = int(h*u_width/w)        
-    return cv2.resize(img,(u_width,u_height))
-### Image Template Part ###
-template = cv2.imread('images/FinalCircle_hd.png',cv2.IMREAD_GRAYSCALE) #,cv2.CV_8UC1/IMREAD_COLOR/UNCHANGED 
-template = resize_util(template, int(uniform_width_hd/templ_scale_fac))
-template = cv2.GaussianBlur(template, (5, 5), 0)
-template = cv2.normalize(template, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
-# template_eroded_sub = template-cv2.erode(template,None)
-template_eroded_sub = template - cv2.erode(template, kernel=np.ones((5,5)),iterations=5)
-lontemplateinv = cv2.imread('images/lon-inv-resized.png',cv2.IMREAD_GRAYSCALE)
-# lontemplateinv = imutils.rotate_bound(lontemplateinv,angle=180) 
-# lontemplateinv = imutils.resize(lontemplateinv,height=int(lontemplateinv.shape[1]*0.75))
-# cv2.imwrite('images/lontemplate-inv-resized.jpg',lontemplateinv)
-
 ### Coordinates Part ###
 class Pt():
     """
@@ -96,7 +79,7 @@ def genQBlock(boxDims, QBlockDims, key, orig, qNos, gaps, vals, qType, orient):
     Output:
     // Returns set of coordinates of a rectangular grid of points
     Returns a QBlock containing array of Qs and some metadata
-    
+
         1 2 3 4
         1 2 3 4
         1 2 3 4
@@ -113,9 +96,8 @@ def genQBlock(boxDims, QBlockDims, key, orig, qNos, gaps, vals, qType, orient):
     """
     Qs=[]
     H, V = (0,1) if(orient=='H') else (1,0)
-    # orig[0] += np.random.randint(-5,6) # test random shift
-    orig[0] -= 10
-    
+    # orig[0] += np.random.randint(-6,6)*2 # test random shift
+
     colpts = []
     colW, colH = (len(vals), len(qNos)) if(orient == 'H') else (len(qNos), len(vals))
     o = orig.copy()
@@ -126,12 +108,12 @@ def genQBlock(boxDims, QBlockDims, key, orig, qNos, gaps, vals, qType, orient):
             idx = [j, i]
             p = Pt(pt.copy(),qNos[idx[H]], qType, vals[idx[V]])
             pts.append(p)
-            pt[1] += gaps[1] 
+            pt[1] += gaps[1]
         pt[0] += boxDims[0]
         pt[1] += boxDims[1] - gaps[1]
         colpts.append(([o.copy(), pt.copy()], pts))
         o[0] += gaps[0]
-    
+
     return QBlock(QBlockDims, key, orig, colpts)
 
 def genGrid(boxDims, key, qType, orig, bigGaps, gaps, qNos, vals, orient='V'):
@@ -170,7 +152,7 @@ def genGrid(boxDims, key, qType, orig, bigGaps, gaps, qNos, vals, orient='V'):
         [
             [(q1d1,q1d2),(q2d1,q2d2),(q3d1,q3d2),(q4d1,q4d2)]
         ]
-    
+
     ROLL type-
         [
             [(roll1,roll2,roll3,...,roll10)]
@@ -194,10 +176,10 @@ def genGrid(boxDims, key, qType, orig, bigGaps, gaps, qNos, vals, orient='V'):
 
     q1          q9
     q2          q10
-    q3          q11 
+    q3          q11
     q4          q12
 
-    q5          q13 
+    q5          q13
     q6          q14
     q7          q15
     q8          q16
@@ -223,7 +205,7 @@ def genGrid(boxDims, key, qType, orig, bigGaps, gaps, qNos, vals, orient='V'):
     # print(key, numDims, orig, gaps, bigGaps, origGap )
     qStart = orig.copy()
 
-    for row in gridData:        
+    for row in gridData:
         qStart[V] = orig[V]
         for qTuple in row:
             QBlockDims = [
@@ -237,13 +219,13 @@ def genGrid(boxDims, key, qType, orig, bigGaps, gaps, qNos, vals, orient='V'):
         qStart[H] += origGap[H]
     return QBlocks
 
-# The utility for GUI            
+# The utility for GUI
 def calcGaps(PointsX,PointsY,numsX,numsY):
     gapsX = ( abs(PointsX[0]-PointsX[1])/(numsX[0]-1),abs(PointsX[2]-PointsX[3]) )
     gapsY = ( abs(PointsY[0]-PointsY[1])/(numsY[0]-1),abs(PointsY[2]-PointsY[3]) )
     return (gapsX,gapsY)
 
-def read_template(filename):    
+def read_template(filename):
     with open(filename, "r") as f:
         return json.load(f)
 
@@ -256,7 +238,9 @@ templJSON={
 'H' : read_template("H_template.json")
 }
 TEMPLATES={'J': Template(),'H': Template()}
-
+# for k,v in templJSON[squad]:
+#     if('Int' in k):
+#         TYPEWISE_QS += # v['qNos']
 
 for squad in ['J','H']:
     TEMPLATES[squad].setDims(templJSON[squad]["Dimensions"])
@@ -266,7 +250,7 @@ for squad in ['J','H']:
     for k, rect in templJSON[squad].items():
         if(k=="Dimensions" or k=="boxDimensions"):
             continue
-        # rect["orig"], rect["gaps"], rect["bigGaps"] = scalePts([rect["orig"], rect["gaps"], rect["bigGaps"]], 0.54, 0.39 ) 
+        # rect["orig"], rect["gaps"], rect["bigGaps"] = scalePts([rect["orig"], rect["gaps"], rect["bigGaps"]], 0.54, 0.39 )
         # Add QBlock to array of grids
         TEMPLATES[squad].addQBlocks(k, rect)
 
@@ -284,7 +268,7 @@ for squad in ['J','H']:
 # # print(mask.shape, gaps, vals, pt, boxDims)
 # for v in vals:
 #     mask[pt[1]:pt[1]+boxDims[1], pt[0]:pt[0]+boxDims[0]] = 0
-#     pt[H] += gaps[H] 
+#     pt[H] += gaps[H]
 
 # Actually need columns
 # if(orient=='H'):

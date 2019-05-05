@@ -12,9 +12,9 @@ Evaluate Hindi Files acc to diff template & anskey - Korba, Gwalior, Gonda _/ , 
 
 """
 
-showimglvl= 1
+showimglvl= 4
 resetpos=[770,10]
-verbose = 9 # Warning, if verbose = 0, the code will pause for image reviews
+verbose = 9 
 explain= 0
 autorotate=1
 saveMarked=1
@@ -49,8 +49,8 @@ match_precision = 20 # > 1
 display_height = int(800)
 display_width  = int(800)
 
-uniform_width = 1000 // 1.5
-uniform_height = 1231 // 1.5
+uniform_width = int(1000 / 1.5)
+uniform_height = int(1231 / 1.5)
 # original dims are (3527, 2494)
 
 ## Any input images should be resized to this--
@@ -65,18 +65,18 @@ TEXT_SIZE=1.5
 
 directory ='images/OMR_Files/' if kv else 'images/OMR_Files/'
 'feedsheets/errorSheet.csv'
-errorpath=directory+'ErrorFiles/'
-ErrorFile='feedsheets/ErrorFiles.csv'
-WarningFile='feedsheets/WarningFiles.csv'
-verifypath=directory+'verifyFiles/'
+errorPath=directory+'errorFiles/'
+errorFile='feedsheets/errorFiles.csv'
+WarningFile='feedsheets/warningFiles.csv'
 verifyFile='feedsheets/verifyFiles.csv'
-badRollspath=directory+'badRollsFiles/'
 badRollsFile='feedsheets/badRollsFiles.csv'
-multiMarkedpath=directory+'multiMarkedFiles/'
+verifyPath=directory+'verifyFiles/'
+badRollsPath=directory+'badRollsFiles/'
+multiMarkedPath=directory+'multiMarkedFiles/'
 multiMarkedFile='feedsheets/multiMarkedFiles.csv'
-saveMarkedDir='markedOMRs/' #Should have Squad Langs inside
+saveMarkedDir='cropMarkedOMRs/' 
 sheetCols=['batch','error','filename','path','roll']+['q'+str(i) for i in range(1,21)]#+['t'+str(i) for i in range(1,6)]
-resultSheetCols=sheetCols+['score']
+resultSheetCols=sheetCols+['score'] 
 
 results_2018batch=1000
 results_2018error=11
@@ -92,9 +92,6 @@ windowX,windowY = 0,0
 windowWidth = 1200
 windowHeight = 700
 
-
-
-Directories = [multiMarkedpath,errorpath,verifypath,badRollspath]
 
 
 Answers={

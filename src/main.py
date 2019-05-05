@@ -25,18 +25,19 @@ screen = window.get_screen()
 
 # In[14]:
 
-def getRoll(squad,rolldict):
+def getRoll(squad,omr):
     roll=squad
     try:
-        roll += rolldict['Medium']
+        roll += omr['Medium']
+        # length of roll number
         for i in range(9):
-            roll+= str(rolldict['Roll'+str(i)])
+            roll+= str(omr['roll'+str(i)])
     except:
         print('WARNING : Incomplete Roll ',roll)
         return 'X'
-        
+
     return roll
-        
+
 def getInt(Q):
     d1 = str(Q.get('.1','0'))
     d2 = str(Q.get('.2','x'))
@@ -44,25 +45,14 @@ def getInt(Q):
         return 'X'
     else:
         return d1+d2
-    
+
+
 def processOMR(squad,omr):
     resp={}
     roll='X'
-    for q in omr.items():
-        typeq = q[0]
-        Q=q[1]
-        if(typeq == 'Roll'):
-            roll = getRoll(squad,Q)
-        elif('MCQ' in typeq):
-            qNo='q'+(typeq.replace('MCQ',''))
-            resp[qNo] = Q['val']
-        elif('INT' in typeq):
-            qNo='q'+(typeq.replace('INT',''))
-            resp[qNo] = getInt(Q)
-        else:
-            pass
-            # print("ERROR: Can't process item : ",q)
-
+    roll = getRoll(squad, omr)
+    # for qNo, qType in TYPEWISE_QS:
+    #     resp[qNo]
     if(roll=='X'):
         # print('Warning : Error in Roll number! Moving File')
         return {'roll': None,'resp':resp}
@@ -76,7 +66,7 @@ def report(Status,streak,scheme,qNo,marked,ans,prevmarks,currmarks,marks):
     if(not once):
         once = 1
         print('Question\tStatus \t Streak\tSection \tMarks_Update\tMarked:\tAnswer:')
-        
+
     print('%s \t %s \t\t %s \t %s \t %s \t %s \t %s ' % (qNo,
           Status,str(streak), '['+scheme+'] ',(str(prevmarks)+' + '+str(currmarks)+' ='+str(marks)),str(marked),str(ans)))
 # check sectionwise only.
@@ -98,7 +88,7 @@ def evaluate(resp,answers,sections,explain=False):
             bonus = 'BONUS' in ans
             correct = bonus or (marked in ans)
             inrange=0
-            
+
 # ('q13(Power2) Correct(streak0) -3 + 2 = -1', 'C', ['C'])
 # ('q14(Power2) Correct(streak0) -1 + 2 = 1', 'A', ['A'])
 # ('q15(Power2) Incorrect(streak0) 1 + -1 = 0', 'C', ['B'])
@@ -108,8 +98,8 @@ def evaluate(resp,answers,sections,explain=False):
                 streak+=1
             else:
                 streak=0
-                
-    
+
+
             if( 'allNone' in scheme):
                 #loop on all sectionques
                 allflag = allflag and correct
@@ -119,22 +109,22 @@ def evaluate(resp,answers,sections,explain=False):
                     currmarks = section['marks'] if allflag else 0
                 else:
                     currmarks = 0
-                
+
             elif('Proxy' in scheme):
                 a=int(ans[0])
                 #proximity check
                 inrange = 1 if unmarked else (float(abs(int(marked) - a))/float(a) <= 0.25)
-                currmarks = section['+marks'] if correct else (0 if inrange else -section['-marks'])                
-                
+                currmarks = section['+marks'] if correct else (0 if inrange else -section['-marks'])
+
             elif('Fibo' in scheme or 'Power' in scheme or 'Boom' in scheme):
-                currmarks = section['+seq'][streak] if correct else (0 if unmarked else -section['-seq'][streak])                
+                currmarks = section['+seq'][streak] if correct else (0 if unmarked else -section['-seq'][streak])
             elif('TechnoFin' in scheme):
                 currmarks = 0
             else:
                 print('Invalid Sections')
             prevmarks=marks
             marks += currmarks
-            
+
             if(explain):
                 if bonus:
                     report('BonusQ',streak,scheme,qNo,marked,ans,prevmarks,currmarks,marks)
@@ -148,9 +138,9 @@ def evaluate(resp,answers,sections,explain=False):
                     report('Incorrect',streak,scheme,qNo,marked,ans,prevmarks,currmarks,marks)
 
             prevcorrect = correct
-            
+
     return marks
-            
+
 
 
 # In[ ]:
@@ -165,7 +155,7 @@ def evaluate(resp,answers,sections,explain=False):
 # Also do something to take better nearby point
 """
 Now dvlpments-
-_// If multi-marked, try lower threshold, if still get multiple dark, move on, 
+_// If multi-marked, try lower threshold, if still get multiple dark, move on,
 else choose the most dark one.*** (cases of single bubble found marked even on unattempted)
     >> Instead choose the most dark ones always.
 
@@ -195,7 +185,7 @@ else:
     print('WARNING : Appending to Previous Result file!')
 counter=1
 
-"""TODO NOW
+"""
 Done >Detected Images stored for each, also make an excel sheet connecting the filepath with roll
     >>markedOMRs - has ALL OMRS EXCEPT errorFiles(WITHOUT ENOUGH CIRCLE POINTS, debug OMRs)
     >>Should be corrected from Excel sheet.
@@ -217,8 +207,18 @@ badRollsArray=[sheetCols]
 verifyArray=[sheetCols]
 multiMarkedArray=[sheetCols]
 
+def appendArr(val,array,filename):
+    array.append(val)
+    if(not os.path.exists(filename)):
+        with open(filename,'a') as f:
+            pd.DataFrame([sheetCols],columns=sheetCols).to_csv(f,index=False,header=False)
+    pad(val,sheetCols)
+    with open(filename,'a') as f:
+        pd.DataFrame([val],columns=sheetCols).to_csv(f,index=False,header=False)
+        # pd.DataFrame(val).T.to_csv(f,header=False)
+
 def stitch(img1,img2):
-    if(img1.shape!=img2.shape):
+    if(img1.shape[0]!=img2.shape[0]):
         print("Can't stitch different sized images")
         return None
     # np.hstack((img1,img2)) does this!
@@ -245,10 +245,10 @@ with open(resultFile,'a') as f:
         # temp patch
         if("HE_" in filename):squad="H";
 
-        origOMR = cv2.imread(filepath,cv2.IMREAD_GRAYSCALE) 
+        origOMR = cv2.imread(filepath,cv2.IMREAD_GRAYSCALE)
 
         h,w = origOMR.shape[:2]
-        if(w > uniform_width*1.25 and stitched):
+        if(w > uniform_width_hd and stitched):
             print("Assuming Stitched input.")
             w=int(w/2)
             OMRs=[origOMR[:,:w],origOMR[:,w:2*w]]
@@ -260,39 +260,23 @@ with open(resultFile,'a') as f:
         local_id=0
         for thresholdRead,inOMR in zip(thresholdReads,OMRs):
             local_id+=1
-            # inOMR = imutils.resize(inOMR,height=uniform_height_hd)
-            inOMR = resize_util(inOMR, uniform_width_hd)
-            print("Template",template.shape[:2],"Image", inOMR.shape[:2])
-            
-            # Preprocessing the image
-            OMR = cv2.GaussianBlur(inOMR,(3,3),0) 
-            # OMR = cv2.normalize(OMR, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)#, dtype=cv2.CV_32F)
-            OMR = normalize_util(OMR)
-            
-            if(showimglvl>=6):
-                show('Preprocessing',stitch(inOMR,OMR),1,1)
-
-            OMRcrop = getROI(filepath,filename+ext,OMR, closeup=True)
+            OMRcrop = getROI(filepath,filename+ext,inOMR, closeup=True)
             #uniquify
             newfilename = filename + '_' + filepath.split('/')[-2]
             if(OMRcrop is None):
-                err = move(results_2018error,filepath,errorpath+squadlang,newfilename+'.jpg')
+                err = move(results_2018error,filepath,errorPath+squadlang,newfilename+'.jpg')
                 if(err):
-                    appendArr(err,errorsArray,ErrorFile)
-                continue                
+                    appendArr(err,errorsArray,errorFile)
+                continue
             else:
                 OMRcrop = cv2.resize(OMRcrop,(uniform_width_hd,uniform_height_hd))
                 # OMRcrop = imutils.resize(OMRcrop,height=uniform_height,width=uniform_width)
-            
+
             respArray=[]
-            try: #TODO - resolve this try catch later 
-                counter+=1                
-                OMRresponse,retimg,multimarked,multiroll,mw,mb = readResponse(squad,OMRcrop, badscan=badscan,multimarkedTHR= thresholdRead-12.75 ,name =newfilename,save=(saveMarkedDir+squadlang if saveMarked else None),thresholdRead=thresholdRead,explain=explain,bord=-1)
-                mws.append(mw)
-                mbs.append(mb)
-                # print("XYZ1")
-                resp=processOMR(squad,OMRresponse) #convert to ABCD, getRoll,etc
-                # print("XYZ2")
+            try: #TODO - resolve this try catch later
+                OMRresponse,retimg,multimarked,multiroll = readResponse(squad,OMRcrop,name =newfilename)
+                #convert to ABCD, getRoll,etc
+                resp=processOMR(squad,OMRresponse)
                 respArray.append(resp['roll']) #May append None
                 for q in qNos['H']:#for align
                     try:
@@ -303,16 +287,17 @@ with open(resultFile,'a') as f:
                 #This evaluates and Enters into Results sheet-
                 score = evaluate(resp['resp'],Answers[squad+('K' if kv else '')],Sections[squad+('K' if kv else '')],explain=explain)
 
-                if(multiroll or not (resp['roll'] is not None and len(resp['roll'])==11)):
+                # TEMP
+                if(0 and (multiroll or not (resp['roll'] is not None and len(resp['roll'])==11))):
                     #>>temp
+                    print('badRollNo, moving File: '+newfilename)
                     pass
-                    # print('badRollNo, moving File: '+newfilename)
                     # err = move(badRollError,filepath,badRollspath+squadlang,newfilename+'.jpg')
                     # if(err):
                     #     appendArr(err+respArray,badRollsArray,badRollsFile)
                 else:
-                        
-                    if(badscan == 1):
+                    # TEMP
+                    if(0 and badscan == 1):
                         # print('File Skipped from verify. Must be in Multimarked or Results')
                         err = move(verifyError,filepath,verifypath+squadlang,newfilename+'.jpg')
                         if(err):
@@ -323,6 +308,7 @@ with open(resultFile,'a') as f:
                             # err contains the rest = [results_2018batch,error,filename,filepath2]
                             results = [0,0,newfilename+'.jpg',filepath]+respArray+[score] #.append
                             filesNotMoved+=1;
+                            # Write to results file
                             pd.DataFrame(results).T.to_csv(f,header=False,index=False)
                             print((counter,resp['roll'],score))
                             # print((counter,newfilename+'.jpg',resp['roll'],','.join(respArray[1:]),'score : ',score))
@@ -333,23 +319,16 @@ with open(resultFile,'a') as f:
                             err = move(multiMarkedError,filepath,multiMarkedpath+squadlang,newfilename+'.jpg')
                             if(err):
                                 appendArr(err+respArray,multiMarkedArray,multiMarkedFile)
-            
-
-                #>> temp
-                if(showimglvl>=1):
-                    # >> temp
-                    show('processed_'+newfilename+'_'+str(local_id)+'.jpg',retimg,1, resetpos=resetpos)#0 if i<end else 1)
-                    plt.close()
-                    
+                counter+=1
             except Exception as inst:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                 print(exc_type, fname, exc_tb.tb_lineno)
-                print(">>>OMR",counter,newfilename+'.jpg',"BAD ERROR : Moving file to errorFiles : ",inst)        
-                # err = move(results_2018error,filepath,errorpath+squadlang,'debug_'+newfilename+'.jpg')
+                print(">>>OMR",counter,newfilename+'.jpg',"BAD ERROR : Moving file to errorFiles : ",inst)
+                # err = move(results_2018error,filepath,errorPath+squadlang,'debug_'+newfilename+'.jpg')
                 # if(err):
-                #     appendArr(err+respArray,errorsArray,ErrorFile)
-            
+                #     appendArr(err+respArray,errorsArray,errorFile)
+
             if(respArray==[]):
                 respArray.append('') #Roll num
                 for q in qNos[squad]:
@@ -376,7 +355,7 @@ pd.DataFrame(multiMarkedArray,columns=sheetCols).to_csv('feedsheets/multiMarkedS
 
 counterChecking=counter
 takentimechecking=(int(time()-p)+1)
-print('Finished Checking %d files in %d seconds =>  %f sec/OMR:)' % (counterChecking,takentimechecking,float(takentimechecking)/float(counterChecking)))       
+print('Finished Checking %d files in %d seconds =>  %f sec/OMR:)' % (counterChecking,takentimechecking,float(takentimechecking)/float(counterChecking)))
 # print('Total files moved : %d ' % (filesMoved))
 # print('Total files not moved (shud match) : %d ' % (filesNotMoved))
 
@@ -389,6 +368,5 @@ if(showimglvl>=0):
             print( x.describe() )
             plt.plot(range(len(x)),x)
             plt.show()
-        # else:
-            # print(x)
-
+        else:
+            print(x)

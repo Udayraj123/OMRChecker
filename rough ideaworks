@@ -5,6 +5,8 @@
 
 #Self terms: 
 > Follow the big "templates" of brandDos, they will get filled with time!!
+	-> Some of the keywords for which there wasn't a good resource 
+		- grid alignment, barcode alignment, ..
 
 ### Code improvements ###
 done-
@@ -25,7 +27,7 @@ done-
 >> First write everything on paper. Then you'd make much lesser mistakes
 
 RefactorDos:
-Simpler folder structure.
+Well, just remove xerox/normal part - Simpler folder structure. 
 then consider the psychology to change the structure further for tallying.
 
 Furthers | Futures

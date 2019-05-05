@@ -78,7 +78,6 @@ def getCentroid(window):
     print(centroid, "==", centroid2)
     return centroid
 
-# TODO: save time for sum in original implementation
 closestGap, shiftM = 100, 0
 equals = []
 MATCH_COL=5

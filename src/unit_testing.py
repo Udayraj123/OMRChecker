@@ -35,11 +35,19 @@ def showOrSave(filepath,orig,title="",resize=True,pause=True,forced=False):
 
 def testImg(filepath,orig,title="",resize=True):
 	filename=filepath[filepath.rindex("/")+1:]
+	# images/OMR_Files/4137/HE/Xerox/Durgapur_HE_04_prsp_13.22_18.78_5.jpg
+	finder = re.search(r'.*/.*/.*/(.*)/(.*)/(.*)\.'+ext[1:],filepath,re.IGNORECASE)
+	squad,lang = 'X','X'
+	if(finder):
+		squadlang = finder.group(1)
+		squad,lang = squadlang[0],squadlang[1]
 	print("File: ",filename)
 	OMRcrop = getROI(filepath,filename,orig)
-	print('')
-			
-	  
+	newfilename = filename + '_' + filepath.split('/')[-2]
+	OMRresponse,retimg,multimarked,multiroll = readResponse(squad,OMRcrop, name = newfilename)
+	print("\n\tRead response: ", OMRresponse,'\n')
+
+
 def warpPts(pts,M_2d):
 	if(M_2d.shape[0]!=2):
 		print("Warning: warpPts input matrix has invalid shape: ", M_2d.shape)
@@ -50,7 +58,7 @@ def warpPts(pts,M_2d):
 	pts2 = np.matmul(pts2,M2.T).astype(int)
 	pts2 = np.delete(pts2, 2, axis=1)
 	return pts2
-	  
+
 def warpPts3D(pts,M_3d):
 	if(M_3d.shape[0]!=3):
 		print("Warning: warpPts3D input matrix has invalid shape: ", M_3d.shape)
@@ -73,9 +81,9 @@ def rotateImg(img, pts, i):
 	M = cv2.getRotationMatrix2D((w//2,h//2),i,scale=1)
 	# third arg is the output image size
 	img2 = cv2.warpAffine(img,M,(w,h))
-	wp = warpPts(pts,M)	
+	wp = warpPts(pts,M)
 	return img2,wp
-	
+
 def getBoundPts(pts):
 	w,h = tuple(np.max(pts,axis=0).astype(int)[:2])
 	x,y = tuple(np.min(pts,axis=0).astype(int)[:2])
@@ -87,7 +95,7 @@ def four_point_transform_bound(img, pts):
 	rect = order_points(pts)
 	(tl, tr, br, bl) = rect
 
-	# compute the width of the new image, which will be the    
+	# compute the width of the new image, which will be the
 	widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
 	widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
 	minWidth = max(int(widthA), int(widthB))
@@ -112,7 +120,7 @@ def four_point_transform_bound(img, pts):
 
 	# compute the perspective transform matrix and then apply it
 	M = cv2.getPerspectiveTransform(rect, dst)
-	
+
 	# img bound pts may lie anywhere(outside or inside) of the warped image bounds
 	h, w = img.shape[:2]
 	pts_img = getPts(0,0,w,h)
@@ -141,7 +149,7 @@ def drawPoly(img, pts,color=(255,255,255), thickness=5):
 def getPts(x,y,w,h):
 	return np.array([[x,y],[x,y+h],[x+w,y+h],[x+w,y]])
 
-def zeroPad(img, padFrac = 0.1):	
+def zeroPad(img, padFrac = 0.1):
 	h, w = img.shape[:2]
 	bg = np.zeros((int((1+2*padFrac)*h),int((1+2*padFrac)*w)), np.uint8)
 	# M2: img = cv2.copyMakeBorder(img,u_height//2,u_height//2,display_width//2,display_width//2,cv2.BORDER_CONSTANT, value=(0,0,0))
@@ -183,7 +191,7 @@ def applyBG(img_orig, bg_orig, pts):
 	# # print(x,y,w,h)
 	# bg[y:(y+h) , x:(x+w)] = img[y:(y+h) , x:(x+w)];
 	# return bg
-  
+
 def warpImg(img,M,outdim=None):
 	# warpAffine is basically transformation using matrix!!
 	h,w = img.shape[:2]
@@ -191,10 +199,10 @@ def warpImg(img,M,outdim=None):
 	# Drop translation column
 	M2 = np.delete(M, 2, axis=1)
 	# Multiply the pts
-	pts = np.matmul(pts,M2.T) 
+	pts = np.matmul(pts,M2.T)
 	if(not outdim):
-		outdim = tuple(np.max(pts,axis=0).astype(int)[:2])	
-		# h,w = tuple(np.max(pts,axis=0).astype(int)[:2])	
+		outdim = tuple(np.max(pts,axis=0).astype(int)[:2])
+		# h,w = tuple(np.max(pts,axis=0).astype(int)[:2])
 		# outdim= (w,h)
 	# print(img.shape,outdim)
 	img = cv2.warpAffine(img,M,outdim)
@@ -212,11 +220,11 @@ class testImageWarps(unittest.TestCase):
 			# bg = cv2.equalizeHist(bg)
 			# ^ Dont work well
 			# cv2.normalize(bg , bg, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
-			# ^ Dont work 
+			# ^ Dont work
 			bg = contrast(bg,gamma=0.3)
 			bgs.append(bg)
 		self.bgs=bgs
-		bglen = len(bgs)	
+		bglen = len(bgs)
 		for i,filepath in enumerate(allOMRs):
 			if(i==IMCOUNT):
 				break
@@ -226,7 +234,7 @@ class testImageWarps(unittest.TestCase):
 			img = resize_util(img,uniform_width_hd)
 			self.allIMGs.append((img, i%bglen, filepath))
 		print("\nTotal OMRs: ",len(self.allIMGs))
-				
+
 	def testRotation(self):
 		for baseimg, bgindex, filepath in self.allIMGs:
 			# self.assertEqual(w,display_width, 'width not resized properly!')
@@ -237,10 +245,10 @@ class testImageWarps(unittest.TestCase):
 
 			for i in range(-20,20,1):
 				img2, wp = rotateImg(img,pts,i)
-				# showOrSave(filepath[:-4]+"_rot"+str(i)+ext,imutils.rotate_bound(img,i))							
+				# showOrSave(filepath[:-4]+"_rot"+str(i)+ext,imutils.rotate_bound(img,i))
 				img2 = applyBG(img2,self.bgs[bgindex],wp)
 				# Apply label patch
-				putLabel(img2, "Rotation Angle: "+str(i))				
+				putLabel(img2, "Rotation Angle: "+str(i))
 
 				# showOrSave(filepath[:-4]+"_rot"+str(i)+ext,img2)
 				testImg(filepath[:-4]+"_rot"+str(i)+ext,img2)
@@ -254,9 +262,9 @@ class testImageWarps(unittest.TestCase):
 			# showOrSave("",applyBG(img,self.bgs[bgindex],pts))
 
 			for i in range(-w//5,w//5+1,w//25): # 100 variations
-				for j in range(-h//5,h//5+1,h//25):	
+				for j in range(-h//5,h//5+1,h//25):
 			# for i in range(-w//5,w//5+1,w//5):
-			# 	for j in range(h//5,h//5+1,h//5):	
+			# 	for j in range(h//5,h//5+1,h//5):
 					if(i and j):
 						M=np.float32([[1,0,i],[0,1,j]])
 						img2,_ = warpImg(img,M)
@@ -276,15 +284,15 @@ class testImageWarps(unittest.TestCase):
 
 						cv2.putText(img2,"Translate Pos: ("+str(i)+","+str(j)+")",(100,50),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE,(255,255,255),5)
 						# showOrSave(filepath[:-4]+"_mov"+str(i)+str(j)+ext,img2)
-						# 
+						#
 						testImg(filepath[:-4]+"_mov("+str(i)+","+str(j)+")"+ext,img2)
 
 
-	def testPerspective(self):		
+	def testPerspective(self):
 		#  perspective on whole image (including bg)
 		for baseimg, bgindex, filepath in self.allIMGs:
 			h,w = baseimg.shape[:2]
-			img_orig = baseimg.copy()						
+			img_orig = baseimg.copy()
 			img_orig, c, pts = zeroPad(img_orig,padFrac=0.2+random()/4)
 			img_orig = applyBG(img_orig,self.bgs[bgindex],pts)
 			for thetaBase,thetaDist,thetaWide in [
@@ -293,14 +301,14 @@ class testImageWarps(unittest.TestCase):
 				# (20*random(),15,random()*20),
 				# (-20*random(),25,random()*20),
 				]:
-				
+
 				# rotate image about midpoint
 				# img = imutils.rotate_bound(img_orig, thetaBase)
-				img, pts_img = rotateImg(img_orig,pts,thetaBase)				
-				# img, pts_img = rotateImg(img_orig,pts,0)				
+				img, pts_img = rotateImg(img_orig,pts,thetaBase)
+				# img, pts_img = rotateImg(img_orig,pts,0)
 				pts1 = getBoundPts(pts_img)
 				# drawPoly(img,pts1,color=(100,0,0))
-				
+
 				# Create inverse warp rectangle
 				pts2 = pts1.copy()
 				pts2[3] = rotateLine(pts2[3],pts2[0],-thetaDist)
@@ -315,7 +323,7 @@ class testImageWarps(unittest.TestCase):
 				# drawPoly(img,pts2,color=(100,0,0))
 				# showOrSave(filepath,img,pause=False)
 
-				# Apply perspective				
+				# Apply perspective
 				# img = cv2.warpPerspective(img,M,(w,h))
 				img, bound_pts = four_point_transform_bound(img,np.array(pts2))
 				# drawPoly(img,bound_pts,color=(50,0,0))
@@ -333,7 +341,7 @@ suite = unittest.TestLoader().loadTestsFromName('unit_testing.testImageWarps.tes
 # suite = unittest.TestLoader().loadTestsFromTestCase(testImageWarps)
 
 # 2 is max verbosity offered
-unittest.TextTestRunner(verbosity=2).run(suite) 
+unittest.TextTestRunner(verbosity=2).run(suite)
 
 
 #	#	#	#	#	#	#	#	#	 ROUGH CODEWORKS:	#	#	#	#	#	#	#	#	#
@@ -343,5 +351,5 @@ unittest.TextTestRunner(verbosity=2).run(suite)
 # 	unittest.main()
 
 # for pts- M1: Can also warp the mask, but its better to keep bg aligned with edges of sheets
-# M2: imutils! But will loose track of pts (or will we),https://www.pyimagesearch.com/2017/01/02/rotate-images-correctly-with-opencv-and-python/ 
+# M2: imutils! But will loose track of pts (or will we),https://www.pyimagesearch.com/2017/01/02/rotate-images-correctly-with-opencv-and-python/
 # https://stackoverflow.com/questions/32266605/warp-perspective-and-stitch-overlap-images-c#_=__name__
