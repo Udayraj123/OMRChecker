@@ -4,6 +4,7 @@ src/images/OMR_Files/
 src/images/OMR_Files(copy)/
 src/results/
 src/feedsheets/
+**/__pycache__
 **/ignore
 **/gitignore
 **/markedOMRs
