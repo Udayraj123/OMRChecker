@@ -25,7 +25,7 @@ allOMRs= glob.iglob(dir_glob)
 for filepath in allOMRs:
 	print (filepath)
 	img = cv2.imread(filepath);
-	h,w,_= img.shape
+	h,w = img.shape[:2]
 	img=cv2.resize(img,(u_width,int(h*u_width/w)))
 	if(review):
 		show(img)

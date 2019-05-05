@@ -77,7 +77,7 @@ def show(name,img,pause=1,resetpos=None):
         return
     cv2.imshow(name,img)
     
-    w,h = img.shape
+    w,h = img.shape[:2]
     if(resetpos):
         windowX=resetpos[0]
         windowY=resetpos[1]
@@ -115,15 +115,17 @@ def four_point_transform(image, pts):
     rect = order_points(pts)
     (tl, tr, br, bl) = rect
 
-    # compute the width of the new image, which will be the
+    # compute the width of the new image, which will be the    
     widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
     widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
     minWidth = max(int(widthA), int(widthB))
+    # minWidth = max(int(np.linalg.norm(br-bl)), int(np.linalg.norm(tr-tl)))
 
     # compute the height of the new image, which will be the
     heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
     heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
     maxHeight = max(int(heightA), int(heightB))
+    # maxHeight = max(int(np.linalg.norm(tr-br)), int(np.linalg.norm(tl-br)))
 
     # now that we have the dimensions of the new image, construct
     # the set of destination points to obtain a "birds eye view",
@@ -210,8 +212,8 @@ def match_template_scaled(errorsArray,squadlang,filepath,filename,img1, template
     global errorpath
     lon='lon' if append==0 else 'non lon'
     orig=template.copy()
-    w1,h1=img1.shape
-    w,h=template.shape
+    w1,h1=img1.shape[:2]
+    w,h=template.shape[:2]
     if( not min_dist):
         min_dist = h1/10
     scale=float(h1)/h
@@ -280,7 +282,7 @@ def match_template_scaled(errorsArray,squadlang,filepath,filename,img1, template
         # print(">>",pt)
         locd.append(pt)
     
-    w,h=templ.shape 
+    w,h=templ.shape[:2] 
     centres=[]
     for pt in locd:
         img1 = cv2.rectangle(img1,tuple(pt),(pt[0]+w,pt[1]+h),CLR,2)            
@@ -337,7 +339,7 @@ def getROI(errorsArray,squadlang,filepath,filename,name,orig,templ,pause=0,lonte
     template=templ.copy()
     image=orig.copy()
     #Add rotation here
-    w,h=image.shape
+    w,h=image.shape[:2]
     image=image-cv2.erode(image,None)
     template=template-cv2.erode(template,None)
     
@@ -373,7 +375,7 @@ def getROI(errorsArray,squadlang,filepath,filename,name,orig,templ,pause=0,lonte
     #     if(excludepts!=[]):
     #         angle = 180 if excludepts[0][1] > 500 else ( 270 if excludepts[0][0] > 500 else 90)
     #         origin = h,w if angle == 180 else (h,0 if angle== 270 else (0,w if angle==90 else 0,0))
-    #         # print(excludepts[0],origin,image.shape)
+    #         # print(excludepts[0],origin,image.shape[:2])
     #         #transpose of the point
     #         excludepts[0] = ( excludepts[0][1]-origin[1],origin[0] -excludepts[0][0]    )
     #         # pt = tuple(excludepts[0])
@@ -459,7 +461,7 @@ def readResponse(squad,TEMPLATE,boxDim,image,name,save=None,thresholdRead=127.5,
             # f.suptitle("Questionwise Histogram")
         
         # (1500, 1846)
-        print("Cropped dim", img.shape)
+        print("Cropped dim", img.shape[:2])
         
         # Find the first 'big' jump and set it as threshold:
         QVals=[]

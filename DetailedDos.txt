@@ -120,20 +120,21 @@ Gap between gray and black as HEALTH/CONFIDENCE MEASURE?
 
 	
 	(11 Oct 2018)
-	### 4) More preprocessing: 
-		4.1 [..] Nope- Its effect isn't significant as most image is white and even gray ones need to be closer to white. Maybe check at this after getting mobile images.  CLAHE(Contrast Limited Adaptive Histogram Equalization) looks better than Normalization [2015](https://www.researchgate.net/publication/280776405_CheckIt_-_A_low_cost_mobile_OMR_system)
+	### 4) Check for more improvements: 
+		4.1 [..] Nope- Its effect isn't significant as most image is white and even gray ones need to be closer to white. 
+		Maybe **check this later** on getting mobile images.  CLAHE(Contrast Limited Adaptive Histogram Equalization) looks better than Normalization [2015](https://www.researchgate.net/publication/280776405_CheckIt_-_A_low_cost_mobile_OMR_system)
 
-		4.2 [ ] Normalize only at Q-level!
+		4.2 [X] Nope, there may not be any white there(think multi marked) - Normalize only at Q-level!
 
 		4.3 [ ] Explore uses of lowpass, highpass filters - maybe required for mobile images
-				--> Include mobile's images in testbench now
+			--> Include mobile images in testbench now
+		4.4 [X] Nope, slight shifted templates will have prob! -Change mean to gaussian in boxreading for finer results
 
-	(12 Oct 2018)
+	(13 Oct 2018)
 	### 5) Testbench generation [ref](https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_geometric_transformations/py_geometric_transformations.html)
-		5.1 [ ] rotate in steps of 2 degrees till 360
-		5.2 [ ] warpAffine = skewing -- change 2d perspective
-		5.2 [ ] warpPerspective with modified M = change 3d perspective
-		5.3 [ ] Nope, slight shifted templates will have prob! -Change mean to gaussian in boxreading for finer results
+		5.1 [X] rotate in steps of 2 degrees till 360
+		5.2 [X] Nope, distortive: warpAffine = skewing -- change 2d perspective
+		5.3 [ ] warpPerspective with modified M = change 3d perspective
 
 	### 6) Refactor readResponse completely		
 		6.1 [ ] Simplify resp array generation

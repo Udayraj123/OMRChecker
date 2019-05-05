@@ -25,7 +25,7 @@ def show(img,title=""):
 
 def coverNames(img):
 	img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-	h,w = img.shape
+	h,w = img.shape[:2]
 	# dbl blur
 	img[int(h*fac1):int(h*fac2),:] = cv2.blur(img[int(h*fac1):int(h*fac2),:],(35,35))
 	return img;
@@ -35,7 +35,7 @@ for filepath in allOMRs:
 	print (filepath)
 	img = coverNames(cv2.imread(filepath));
 	if(review):
-		h,w=img.shape
+		h,w=img.shape[:2]
 		show(cv2.resize(img,(u_width,int(h*u_width/w))))
 	else:
 		cv2.imwrite(filepath,img)

@@ -189,7 +189,7 @@ Sort Bad Verifies = Raebareli, Dhirangarh, Ambarnath, Korba
 
 
 template = cv2.imread('images/FinalCircle_hd.png',cv2.IMREAD_GRAYSCALE) #,cv2.CV_8UC1/IMREAD_COLOR/UNCHANGED 
-w,h = template.shape
+w,h = template.shape[:2]
 template_scale=uniform_height_hd/(h*circle_templ_scaledown)
 w,h = int(w*template_scale),int(h*template_scale)
 template = cv2.resize(template,(w,h))
@@ -257,7 +257,7 @@ with open(resultFile,'a') as f:
         if("HE_" in filename):squad="H";
 
         origOMR = cv2.imread(filepath,cv2.IMREAD_GRAYSCALE) 
-        h,w = origOMR.shape
+        h,w = origOMR.shape[:2]
         if(w>uniform_width*1.25 and stitched):
             print("Assuming Stitched input.")
             w=int(w/2)
@@ -272,7 +272,7 @@ with open(resultFile,'a') as f:
         for thresholdRead,OMR in zip(thresholdReads,OMRs):
             local_id+=1
             OMR = imutils.resize(OMR,height=uniform_height_hd) 
-            print("Template",template.shape,"Image", OMR.shape)
+            print("Template",template.shape[:2],"Image", OMR.shape[:2])
             OMR = cv2.GaussianBlur(OMR,(3,3),0) 
             #>> temp
             if(showimglvl>=3):
