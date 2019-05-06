@@ -1,3 +1,10 @@
+"""
+Designed and Developed by-
+Udayraj Deshmukh 
+https://github.com/Udayraj123
+
+April 2019
+"""
 import glob
 import cv2
 import re

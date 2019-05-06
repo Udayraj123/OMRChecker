@@ -7,21 +7,29 @@ Hits Since **8 Apr '19**: [![HitCount](http://hits.dwyl.io/udayraj123/OMRScanner
 
 
 ## How to run
+#### Clone the repo
+Use `--depth=1` if you want only the latest version(less than half download size)
+```
+git clone --depth=1 https://github.com/udayraj123/OMRChecker
+```
+
 #### Install dependencies
 
 Install opencv
 More details here: https://www.pyimagesearch.com/2018/09/19/pip-install-opencv/ 
 ```
+sudo python3 -m pip install --upgrade pip
 sudo python3 -m pip install opencv-python
 ```
 
+Install other requirements
 ```
-sudo apt-get install python-tk
-sudo python3 -m pip install --upgrade pip
 sudo python3 -m pip install -r requirements.txt
+
+sudo apt-get install python-tk
 ```
 
-## Code in action
+## Code in action (To be updated)
 #### Normal scans
 <img src="./progress/in_action/light_action.gif">
 <br>

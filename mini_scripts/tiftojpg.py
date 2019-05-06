@@ -1,3 +1,10 @@
+"""
+Designed and Developed by-
+Udayraj Deshmukh 
+https://github.com/Udayraj123
+
+April 2019
+"""
 import os
 for x in os.listdir():
 	if not x.endswith(".txt") and not x.endswith(".py") and  not x.endswith(".tif"): 

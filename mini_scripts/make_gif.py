@@ -1,3 +1,10 @@
+"""
+Designed and Developed by-
+Udayraj Deshmukh 
+https://github.com/Udayraj123
+
+April 2019
+"""
 import glob
 from PIL import Image
 im1 = Image.open("inputs/gif/gif_start.jpg")

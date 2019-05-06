@@ -1,6 +1,0 @@
-ATTRIBUTE : CURRENT VALUE
-Input image resolution : 2478x3543 (without test bench)
-Template circle resolution : 41x41
-
-Thresholds: Canny, 
-Kernels: GaussianBlur, MorphologyEx,

@@ -1,3 +1,10 @@
+"""
+Designed and Developed by-
+Udayraj Deshmukh 
+https://github.com/Udayraj123
+
+April 2019
+"""
 from __future__ import print_function
 import cv2
 import numpy as np

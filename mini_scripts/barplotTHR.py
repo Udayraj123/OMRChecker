@@ -1,3 +1,10 @@
+"""
+Designed and Developed by-
+Udayraj Deshmukh 
+https://github.com/Udayraj123
+
+April 2019
+"""
 
 QVals= sorted(QVals)
 l=len(QVals)-1
