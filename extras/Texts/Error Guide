@@ -1,0 +1,12 @@
+TIPS FOR ADJUSTING THE THRESHOLD -
+see the checkedOMRs and readings in those images
+
+Error Guide
+
+Error:
+> OpenCV Error: Assertion failed (A.size == arrays[i0]->size) in init, file /io/opencv/modules/core/src/matrix.cpp, line 4845
+> 3 Indore_JE_0008_Normal.jpg BAD ERROR : Moving file to errorFiles :  /io/opencv/modules/core/src/matrix.cpp:4845: error: (-215) A.size == arrays[i0]->size in function init
+
+Solution:
+Check that Template is outside image range
+
