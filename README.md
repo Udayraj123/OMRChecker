@@ -10,17 +10,29 @@ git clone --depth=1 https://github.com/udayraj123/OMRChecker
 
 #### Install dependencies
 
-Install opencv
+###### Install opencv
 More details here: https://www.pyimagesearch.com/2018/09/19/pip-install-opencv/ 
 ```
 sudo python3 -m pip install --upgrade pip
 sudo python3 -m pip install opencv-python
 ```
 
-Install other requirements
+###### Install other requirements
 ```
 sudo python3 -m pip install -r requirements.txt
 ```
+
+#### Configure
+	1. Put your OMR images in `inputs/OMR_Files` (Structure should be same as in OMR_Files_sample)
+	2. Put template layout(s) in `inputs/Layouts` (Guide coming soon)
+	3. Put marker crop at `inputs/omr_marker.jpg`
+	4. (optional) Advanced configuration can be done in globals.py
+
+#### Run code
+```
+python3 main.py
+```
+
 <!-- 
 ## Code in action (To be updated)
 #### Normal scans

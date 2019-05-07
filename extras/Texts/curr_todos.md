@@ -484,13 +484,6 @@ LATER:
 	App:
 		Try canvas on the new app
 		> Try again for higher fps without drawing on canvas
-	
-	Giveback time is AFTER POSTER
-		> Readme update new TODOs 
-			- identify if its a closeup : check no contours & make use of whites!
-			- from code comments
-			- Point at juniors from coding club: Write as a guide to dive into this code easily
-		> Brand techno's marking scheme here. Show the how marking scheme json can handle it.
 
 5 May:
 	Restructuring code-
@@ -524,6 +517,16 @@ LATER:
 			Follow block diagram for functions
 			Lesser functions
 			remove unnecc globals, locals
-			make it independent of Squads?
-		Update readme, multiple case gifs, etc
+		Update readme:
+			multiple case gifs
+			link to app
+			how to contribute
+			> Readme update new TODOs 
+				- identify if its a closeup : check no contours & make use of whites!
+				- from code comments
+				- Point at juniors from coding club: Write as a guide to dive into this code easily
+			How to use for your org:
+				> Inputs description
+				> Brand techno's marking scheme here. Show the how marking scheme json can handle it.
 		
+		make code independent of Squads?

@@ -7,21 +7,23 @@ https://github.com/Udayraj123
 """
 
 """
-Variables
-"""
-filesMoved=0
-filesNotMoved=0
-
-"""
 Constants
 """
+windowWidth = 1280
+windowHeight = 720
+
+saveMarked=1
 showimglvl = -1
-saveimglvl = 4
+saveimglvl = 1
 saveImgList = {}
 resetpos = [0,0]
 explain= 0
 # autorotate=1
-saveMarked=1
+
+BATCH_NO=1000
+NO_MARKER_ERR=12
+badRollError=13
+verifyError=14 #Goes into verifyFiles, can be ignored? -Nope, especially for kvs
 
 
 #Intermediate - 
@@ -76,12 +78,6 @@ MIN_PAGE_AREA = 80000
 
 TEXT_SIZE=1.5
 
-# for positioning image windows
-windowX,windowY = 0,0 
-
-windowWidth = 1280
-windowHeight = 720
-
 OMR_INPUT_DIR ='inputs/OMR_Files/'
 manualDir='outputs/Manual/'
 resultDir='outputs/Results/'
@@ -99,10 +95,15 @@ saveMarkedDir='outputs/checkedOMRs/'
 sheetCols=['batch','error','filename','path','roll']+['q'+str(i) for i in range(1,21)]#+['t'+str(i) for i in range(1,6)]
 resultSheetCols=sheetCols+['score'] 
 
-BATCH_NO=1000
-NO_MARKER_ERR=12
-badRollError=13
-verifyError=14 #Goes into verifyFiles, can be ignored? -Nope, especially for kvs
+
+"""
+Variables
+"""
+filesMoved=0
+filesNotMoved=0
+
+# for positioning image windows
+windowX,windowY = 0,0 
 
 
 Answers={
