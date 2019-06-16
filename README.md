@@ -22,16 +22,29 @@ sudo python3 -m pip install opencv-python
 sudo python3 -m pip install -r requirements.txt
 ```
 
-#### Configure
-	1. Put your OMR images in `inputs/OMR_Files` (Structure should be same as in OMR_Files_sample)
+#### How to run
+
+	1. Rename 'OMR_Files_sample' to 'OMR_Files' (Don't make changes to the directory structure)
+	2. Run code
+		```
+		python3 main.py
+		```
+	3. :smirk: :smirk: :smirk:
+	4. Profit!!
+
+#### Configuring for your OMR Sheets (W.I.P.)
+	1. Put your OMR images in `inputs/OMR_Files/CityName/JE` (You can rename CityName)
 	2. Put template layout(s) in `inputs/Layouts` (Guide coming soon)
 	3. Put marker crop at `inputs/omr_marker.jpg`
 	4. (optional) Advanced configuration can be done in globals.py
+	5. Run code
 
-#### Run code
-```
-python3 main.py
-```
+#### Directory Structure 
+This structure has been created to suit for better organization of OMRs (Citywise, then group-wise and language-wise)
+
+Output directories are created in same structure : 
+
+![Directory Structure](https://raw.githubusercontent.com/udayraj123/OMRChecker/master/directory_structure.png)
 
 <!-- 
 ## Code in action (To be updated)
