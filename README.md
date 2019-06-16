@@ -34,7 +34,8 @@ sudo python3 -m pip install -r requirements.txt
 
 ### Directory Structure 
 ![Directory Structure](https://raw.githubusercontent.com/udayraj123/OMRChecker/master/directory_structure.png)
-This structure has been created to suit for better organization of OMRs (Citywise, then Group-wise and Language-wise)
+
+This structure has been created to suit for better organization of OMRs (Citywise, then Group-wise and Language-wise). Making changes to this would require changes in the code.
 
 #### Configuring for your OMR Sheets (W.I.P.)
 	1. Put your OMR images in `inputs/OMR_Files/CityName/JE` (You can rename CityName)
