@@ -24,7 +24,7 @@ sudo python3 -m pip install -r requirements.txt
 
 #### How to run
 
-	1. Rename 'OMR_Files_sample' to 'OMR_Files' (Don't make changes to the directory structure)
+	1. Make a copy of 'OMR_Files_sample' and rename it to 'OMR_Files' (Do not make changes to the directory structure)
 	2. Run code
 		```
 		python3 main.py
