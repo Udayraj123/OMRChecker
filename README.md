@@ -38,11 +38,11 @@ sudo python3 -m pip install -r requirements.txt
 This structure has been created to suit for better organization of OMRs (Citywise, then Group-wise and Language-wise). Making changes to this would require changes in the code.
 
 #### Configuring for your OMR Sheets (W.I.P.)
-	1. Put your OMR images in `inputs/OMR_Files/CityName/JE` (You can rename CityName)
-	2. Put template layout(s) in `inputs/Layouts` (Guide coming soon)
-	3. Put marker crop at `inputs/omr_marker.jpg`
-	4. (optional) Advanced configuration can be done in globals.py
-	5. Run code
+	1. Put your OMR images in `inputs/OMR_Files/CityName/HE` (You can rename CityName)
+	2. Put marker crop at `inputs/omr_marker.jpg`
+	3. Put template layout(s) in `inputs/Layouts` (Guide coming soon)
+	4. (optional) more advanced configuration can be done in globals.py
+	5. Run code - If your images are taken close-up using scanner, remember to run code with `--closeup` option.
 
 <!-- 
 ## Code in action (To be updated)

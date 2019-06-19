@@ -153,10 +153,12 @@ def stitch(img1,img2):
 start_time = int(time())
 
 # construct the argument parse and parse the arguments
-ap = argparse.ArgumentParser()
-ap.add_argument("-c", "--closeup", required=False, default=0,
+argparser = argparse.ArgumentParser()
+# int(args["closeup"])
+argparser.add_argument("-c", "--closeup", required=False, dest='argCloseUp', action='store_true',
     help="Whether or not input images have page contour visible.")
-args = vars(ap.parse_args())
+args = vars(argparser.parse_args())
+print("CloseUp Images(Scanned) : "+str(args["argCloseUp"]))
 
 squadlang="XX"
 mws, mbs = [],[]
@@ -173,7 +175,7 @@ with open(resultFile,'a') as f:
             filename = 'Nop'+str(counter)
 
         inOMR = cv2.imread(filepath,cv2.IMREAD_GRAYSCALE)
-        OMRcrop = getROI(filepath,filename+ext,inOMR, closeup=int(args["closeup"]))
+        OMRcrop = getROI(filepath,filename+ext,inOMR, closeup=int(args["argCloseUp"]))
         #uniquify
         newfilename = filepath.split('/')[-3] + '_' + filename
         if(OMRcrop is None):

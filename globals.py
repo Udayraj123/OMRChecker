@@ -13,7 +13,7 @@ windowWidth = 1280
 windowHeight = 720
 
 saveMarked=1
-showimglvl = 2
+showimglvl = 4
 saveimglvl = 1
 saveImgList = {}
 resetpos = [0,0]
