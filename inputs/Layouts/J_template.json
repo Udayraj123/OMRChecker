@@ -3,9 +3,19 @@
     1846,
     1500
   ],
-  "boxDimensions": [
+  "BoxDimensions": [
     30,
     30
+  ],
+  "Concatenations" : {    
+    "Roll" :  ["Squad","Medium","roll0", "roll1", "roll2", "roll3", "roll4", "roll5", "roll6", "roll7", "roll8"],
+    "q5" : ["q5.1","q5.2"], "q6" : ["q6.1","q6.2"], "q7" : ["q7.1","q7.2"],
+    "q9" : ["q9.1","q9.2"], "q11" : ["q8.1","q8.2"]
+  },
+  "Singles":[
+    "q1","q2","q3","q4",
+    "q10","q11","q12","q13", "q14","q15",
+    "q16","q17","q18","q19", "q20"
   ],
   "Medium": {
     "qType": "QTYPE_MED",

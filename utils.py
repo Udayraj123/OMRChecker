@@ -47,7 +47,7 @@ for _dir in [manualDir,resultDir]:
     else:
         print('Already present : '+_dir)
 
-for _dir in [multiMarkedPath,errorPath,verifyPath,badRollsPath]:
+for _dir in [multiMarkedPath,errorPath,badRollsPath]:
     if(not os.path.exists(_dir)):
         print('Created : '+ _dir)
         os.mkdir(_dir)
@@ -357,7 +357,7 @@ def findPage(image_norm):
     print("Found largest quadrilateral: ", sheet)
     # sobel = cv2.addWeighted(cv2.Sobel(edge, cv2.CV_64F, 1, 0, ksize=3),0.5,cv2.Sobel(edge, cv2.CV_64F, 0, 1, ksize=3),0.5,0,edge)
     if sheet==[]:
-        print("Error: Paper boundary not found! Should closeUp be = True?")
+        print("Error: Paper boundary not found! Should pass CloseUp = True?")
 
     # ExcessDo : make it work on killer images
     # edge2 = auto_canny(image_norm)
@@ -392,7 +392,7 @@ def getBestMatch(image_eroded_sub, num_steps=10, iterLim=50):
             # print('Scale: '+str(s)+', Circle Match: '+str(round(maxT*100,2))+'%')
             best_scale, allMaxT = s, maxT
     if(allMaxT < thresholdCircle):
-        print("Warnning: Template matching too low! Should pass closeUp = True?")
+        print("Warnning: Template matching too low! Should pass CloseUp = True?")
         if(showimglvl>-1):
             show("res",res,1,0)
     print('') #close buf
@@ -412,7 +412,7 @@ clahe = cv2.createCLAHE(clipLimit=5.0, tileGridSize=(8,8))
 thresholdCircles=[]
 badThresholds=[]
 veryBadPoints=[]
-def getROI(filepath,filename,image, closeup=False):
+def getROI(filepath,filename,image, closeUp=False, noMarkers=False):
     global clahe, marker_eroded_sub
     resetSaveImg(0)
     resetSaveImg(1)
@@ -429,7 +429,7 @@ def getROI(filepath,filename,image, closeup=False):
             Check roll field morphed 
     """
 
-    # TODO: (remove closeup bool) Automate the case of close up scan(incorrect page)-
+    # TODO: (remove closeUp bool) Automate the case of close up scan(incorrect page)-
     # ^Note: App rejects closeups along with others
 
     # image = resize_util(image, uniform_width, uniform_height)
@@ -440,7 +440,7 @@ def getROI(filepath,filename,image, closeup=False):
     img = cv2.GaussianBlur(img,(3,3),0)
     image_norm = normalize_util(img);
 
-    if(closeup == False):
+    if(closeUp == False):
         #Need this resize for arbitrary high res images: before passing to findPage
         if(image_norm.shape[1] > uniform_width*2):
             image_norm = resize_util(image_norm, uniform_width*2)
@@ -450,82 +450,86 @@ def getROI(filepath,filename,image, closeup=False):
         # Warp layer 1
         image_norm = four_point_transform(image_norm, sheet)
     
-    # Resize only after cropping the page for clarity
+    # Resize only after cropping the page for clarity as well as uniformity for non cropped images
     image_norm = resize_util(image_norm, uniform_width, uniform_height)
+    image = resize_util(image, uniform_width, uniform_height)
     appendSaveImg(0,image_norm)
 
-    image = resize_util(image, uniform_width, uniform_height)
     if(showimglvl>=3):
-        show('Before Template Matching',np.hstack((image,image_norm)),0,1)
+        # np.hstack((image,image_norm))
+        show('Preprocessing',image_norm,0,1)
 
-    image_eroded_sub = normalize_util(image_norm) if ERODE_SUB_OFF else normalize_util(image_norm - cv2.erode(image_norm, kernel=np.ones((5,5)),iterations=5))
-    # Quads on warped image
-    quads={}
-    h1, w1 = image_eroded_sub.shape[:2]
-    midh,midw = h1//3, w1//2
-    origins=[[0,0],[midw,0],[0,midh],[midw,midh]]
-    quads[0]=image_eroded_sub[0:midh,0:midw];
-    quads[1]=image_eroded_sub[0:midh,midw:w1];
-    quads[2]=image_eroded_sub[midh:h1,0:midw];
-    quads[3]=image_eroded_sub[midh:h1,midw:w1];
+    
+    if(noMarkers == False):
+        image_eroded_sub = normalize_util(image_norm) if ERODE_SUB_OFF else normalize_util(image_norm - cv2.erode(image_norm, kernel=np.ones((5,5)),iterations=5))
+        # Quads on warped image
+        quads={}
+        h1, w1 = image_eroded_sub.shape[:2]
+        midh,midw = h1//3, w1//2
+        origins=[[0,0],[midw,0],[0,midh],[midw,midh]]
+        quads[0]=image_eroded_sub[0:midh,0:midw];
+        quads[1]=image_eroded_sub[0:midh,midw:w1];
+        quads[2]=image_eroded_sub[midh:h1,0:midw];
+        quads[3]=image_eroded_sub[midh:h1,midw:w1];
 
-    # Draw Quadlines
-    image_eroded_sub[ : , midw:midw+2] = 255
-    image_eroded_sub[ midh:midh+2, : ] = 255
+        # Draw Quadlines
+        image_eroded_sub[ : , midw:midw+2] = 255
+        image_eroded_sub[ midh:midh+2, : ] = 255
 
-    # print(image_eroded_sub.shape)
-    # show("2",image_eroded_sub)
+        # print(image_eroded_sub.shape)
+        # show("2",image_eroded_sub)
 
-    best_scale, allMaxT = getBestMatch(image_eroded_sub)
-    if(best_scale == None):
-        # TODO: Plot and see performance of scaleRange
-        print("No matchings for given scaleRange:",scaleRange)
-        show('Quads',image_eroded_sub)
-        return None
-
-    templ = imutils.resize(marker if ERODE_SUB_OFF else marker_eroded_sub, height = int(marker_eroded_sub.shape[0]*best_scale))
-    h,w=templ.shape[:2]
-    centres = []
-    sumT, maxT = 0, 0
-    print("best_scale",best_scale)
-    for k in range(0,4):
-        res = cv2.matchTemplate(quads[k],templ,cv2.TM_CCOEFF_NORMED)
-        maxT = res.max()
-        print("Q"+str(k)+": maxT", round(maxT,3))
-        if(maxT < thresholdCircle or abs(allMaxT-maxT) >= thresholdVar):
-            # Warning - code will stop in the middle. Keep Threshold low to avoid.
-            print(filename,"\nError: No circle found in Quad",k+1, "\n\tthresholdVar", thresholdVar, "maxT", maxT,"allMaxT",allMaxT, "Should closeUp be = False?")
-            if(showimglvl>-1):
-                show('no_pts_'+filename,image_eroded_sub,0,1)
-                show('res_Q'+str(k),res,1,1)
+        best_scale, allMaxT = getBestMatch(image_eroded_sub)
+        if(best_scale == None):
+            # TODO: Plot and see performance of scaleRange
+            print("No matchings for given scaleRange:",scaleRange)
+            show('Quads',image_eroded_sub)
             return None
 
-        pt=np.argwhere(res==maxT)[0];
-        pt = [pt[1],pt[0]]
-        pt[0]+=origins[k][0]
-        pt[1]+=origins[k][1]
-        # print(">>",pt)
-        image_norm = cv2.rectangle(image_norm,tuple(pt),(pt[0]+w,pt[1]+h),(150,150,150),2)
-        # display: 
-        image_eroded_sub = cv2.rectangle(image_eroded_sub,tuple(pt),(pt[0]+w,pt[1]+h),(50,50,50) if ERODE_SUB_OFF else (155,155,155), 4)
-        centres.append([pt[0]+w/2,pt[1]+h/2])
-        sumT += maxT
+        templ = imutils.resize(marker if ERODE_SUB_OFF else marker_eroded_sub, height = int(marker_eroded_sub.shape[0]*best_scale))
+        h,w=templ.shape[:2]
+        centres = []
+        sumT, maxT = 0, 0
+        print("best_scale",best_scale)
+        for k in range(0,4):
+            res = cv2.matchTemplate(quads[k],templ,cv2.TM_CCOEFF_NORMED)
+            maxT = res.max()
+            print("Q"+str(k)+": maxT", round(maxT,3))
+            if(maxT < thresholdCircle or abs(allMaxT-maxT) >= thresholdVar):
+                # Warning - code will stop in the middle. Keep Threshold low to avoid.
+                print(filename,"\nError: No circle found in Quad",k+1, "\n\tthresholdVar", thresholdVar, "maxT", maxT,"allMaxT",allMaxT, "Should pass CloseUp = False?")
+                if(showimglvl>-1):
+                    show('no_pts_'+filename,image_eroded_sub,0,1)
+                    show('res_Q'+str(k),res,1,1)
+                return None
 
-    # analysis data
-    thresholdCircles.append(sumT/4)
+            pt=np.argwhere(res==maxT)[0];
+            pt = [pt[1],pt[0]]
+            pt[0]+=origins[k][0]
+            pt[1]+=origins[k][1]
+            # print(">>",pt)
+            image_norm = cv2.rectangle(image_norm,tuple(pt),(pt[0]+w,pt[1]+h),(150,150,150),2)
+            # display: 
+            image_eroded_sub = cv2.rectangle(image_eroded_sub,tuple(pt),(pt[0]+w,pt[1]+h),(50,50,50) if ERODE_SUB_OFF else (155,155,155), 4)
+            centres.append([pt[0]+w/2,pt[1]+h/2])
+            sumT += maxT
 
-    image_norm = four_point_transform(image_norm, np.array(centres))
-    # appendSaveImg(0,image_eroded_sub)
-    # appendSaveImg(0,image_norm)
+        # analysis data
+        thresholdCircles.append(sumT/4)
 
-    appendSaveImg(1,image_eroded_sub)
-    res = cv2.matchTemplate(image_eroded_sub,templ,cv2.TM_CCOEFF_NORMED)
-    res[ : , midw:midw+2] = 255
-    res[ midh:midh+2, : ] = 255
-    if(showimglvl>=2):# and showimglvl < 4):
-        image_eroded_sub = resize_util_h(image_eroded_sub, image_norm.shape[0])
-        image_eroded_sub[:,-5:] = 0
-        show('Warped',np.hstack((image_eroded_sub, image_norm)),0)
+        image_norm = four_point_transform(image_norm, np.array(centres))
+        # appendSaveImg(0,image_eroded_sub)
+        # appendSaveImg(0,image_norm)
+
+        appendSaveImg(1,image_eroded_sub)
+        # res = cv2.matchTemplate(image_eroded_sub,templ,cv2.TM_CCOEFF_NORMED)
+        # res[ : , midw:midw+2] = 255
+        # res[ midh:midh+2, : ] = 255
+        # show("Markers Matching",res)
+        if(showimglvl>=2):# and showimglvl < 4):
+            image_eroded_sub = resize_util_h(image_eroded_sub, image_norm.shape[0])
+            image_eroded_sub[:,-5:] = 0
+            show('Warped',np.hstack((image_eroded_sub, image_norm)),0)
 
     # iterations : Tuned to 2.
     # image_eroded_sub = image_norm - cv2.erode(image_norm, kernel=np.ones((5,5)),iterations=2)
@@ -689,7 +693,7 @@ def readResponse(squad,image,name,save=None,explain=True):
         ret, morph = cv2.threshold(morph,220,220,cv2.THRESH_TRUNC)
         morph = normalize_util(morph)
         appendSaveImg(2,morph)
-        if(showimglvl>=3):
+        if(showimglvl>=4):
             show("morph1",morph,0,1)
 
         alpha = 0.65
@@ -700,8 +704,8 @@ def readResponse(squad,image,name,save=None,explain=True):
         OMRresponse={}
         CLR_BLACK = (50,150,150)
         CLR_WHITE = (250,250,250)
-        CLR_GRAY = (220,150,150)
-        CLR_DARK_GRAY = (150,150,150)
+        CLR_GRAY = (120,120,120)
+        CLR_DARK_GRAY = (90,90,90)
 
         multimarked,multiroll=0,0
 
@@ -722,7 +726,7 @@ def readResponse(squad,image,name,save=None,explain=True):
         morph_v = 255 - normalize_util(morph_v)
         
         if(showimglvl>=3):
-            show("morph_v",morph_v,0,1)
+            show("morph_final",morph_v,0,1)
         appendSaveImg(2,morph_v)
 
         morphTHR = 60 # for Mobile images
@@ -910,7 +914,7 @@ def readResponse(squad,image,name,save=None,explain=True):
                     if (detected):
                         q = pt.qNo
                         val = str(pt.val)
-                        cv2.putText(final_marked,val,(x,y),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE,(20,20,10),5)
+                        cv2.putText(final_marked,val,(x,y),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE,(20,20,10),int(1+3.5*TEXT_SIZE))
                         # Only send rolls multi-marked in the directory
                         multimarkedL = q in OMRresponse
                         multimarked = multimarkedL or multimarked
@@ -925,6 +929,9 @@ def readResponse(squad,image,name,save=None,explain=True):
                         qNums[key].append(key[:2]+'_c'+str(blockColNo))
                         allCBoxvals[key].append(QBlockvals)
             # /for QBlock
+        if(colNos==0):
+            print("\n\t Template Incorrect Error: colNos is zero! QBlocks: ",TEMPLATE.QBlocks)
+            exit(0)
         thresholdReadAvg /= colNos
         # Translucent
         cv2.addWeighted(final_marked,alpha,transp_layer,1-alpha,0,final_marked)

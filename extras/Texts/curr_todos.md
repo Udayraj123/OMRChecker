@@ -297,7 +297,7 @@ Note: looking back at this app dev, I was right about thinking so much before st
 Also, had I got some real mobile camera images in test set instead of the unit_tests, I would have discovered few bugs quite earlier
 
 From drive data: 
-	// Nope, its a limitation - # TODO: (remove closeup bool) Automate the case of close up scan(incorrect page)-
+	// Nope, its a limitation - # TODO: (remove closeUp bool) Automate the case of close up scan(incorrect page)-
 
 18 Apr:
 	// Nailed this one in solving process- 
@@ -522,7 +522,7 @@ LATER:
 			link to app
 			how to contribute
 			> Readme update new TODOs 
-				- identify if its a closeup : check no contours & make use of whites!
+				- identify if its a closeUp : check no contours & make use of whites!
 				- from code comments
 				- Point at juniors from coding club: Write as a guide to dive into this code easily
 			How to use for your org:

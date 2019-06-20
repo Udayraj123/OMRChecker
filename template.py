@@ -54,19 +54,21 @@ qtype_data = {
         'vals' : ['A','B','C','D'],
         'orient':'H'
     },
+    'QTYPE_MCQ2':{
+        'vals' : ['A','B','C','D','E'],
+        'orient':'H'
+    },
+    # Add custom question types here-
 }
 
 class Template():
-    def __init__(self):
+    def __init__(self, jsonObj):
         self.QBlocks = []
-        self.boxDims = [-1, -1]
-        self.dims = [-1,-1]
-
-    def setDims(self,dims):
-        self.dims = dims
-
-    def setBoxDims(self,dims):
-        self.boxDims = dims
+        # throw exception on key not exist
+        self.dims = jsonObj["Dimensions"]
+        self.boxDims = jsonObj["BoxDimensions"]
+        self.concats = jsonObj["Concatenations"]
+        self.singles = jsonObj["Singles"]
 
     # Expects boxDims to be set already
     def addQBlocks(self, key, rect):
@@ -236,56 +238,20 @@ def read_template(filename):
     with open(filename, "r") as f:
         return json.load(f)
 
-def scalePts(pts,facX,facY):
-    return [[int(pt[0]*facX),int(pt[1]*facY)] for pt in pts]
-
 
 templJSON={
 'J' : read_template("inputs/Layouts/J_template.json"),
 'H' : read_template("inputs/Layouts/H_template.json")
+# 'H' : read_template("inputs/Layouts/H_template2.json")
 }
-TEMPLATES={'J': Template(),'H': Template()}
+TEMPLATES={}
 
-for squad in ['J','H']:
-    TEMPLATES[squad].setDims(templJSON[squad]["Dimensions"])
-    TEMPLATES[squad].setBoxDims(templJSON[squad]["boxDimensions"])
-    # print(TEMPLATES[squad].dims)
-    # print(TEMPLATES[squad].boxDims)
-    for k, rect in templJSON[squad].items():
-        if(k=="Dimensions" or k=="boxDimensions"):
-            continue
-        # rect["orig"], rect["gaps"], rect["bigGaps"] = scalePts([rect["orig"], rect["gaps"], rect["bigGaps"]], 0.54, 0.39 )
-        # Add QBlock to array of grids
-        TEMPLATES[squad].addQBlocks(k, rect)
-
-    if(TEMPLATES[squad].dims == [-1, -1]):
-        print(squad, "Invalid JSON! No reference dimensions given")
-        exit(0)
-
-
-# For processOMR
-
-readFormat = {
-    # Class/Squad
-    'J' : {    
-        # CSV column : Resp Keys to concatenate
-        'Roll' :  ['Squad','Medium',"roll0", "roll1", "roll2", "roll3", "roll4", "roll5", "roll6", "roll7", "roll8"],
-        'q1' : ['q1'], 'q2' : ['q2'], 'q3' : ['q3'], 'q4' : ['q4'], 'q5' : ['q5.1','q5.2'],
-        'q6' : ['q6.1','q6.2'], 'q7' : ['q7.1','q7.2'], 'q8' : ['q8.1','q8.2'], 'q9' : ['q9.1','q9.2'],
-        'q10' : ['q10'], 'q11' : ['q11'], 'q12' : ['q12'], 'q13' : ['q13'], 'q14' : ['q14'], 
-        'q15' : ['q15'], 'q16' : ['q16'], 'q17' : ['q17'], 'q18' : ['q18'] ,'q19' : ['q19'], 
-        'q20' : ['q20']
-        },
-    'H' : {    
-        # CSV column : Resp Keys to concatenate
-        'Roll' :  ['Squad','Medium',"roll0", "roll1", "roll2", "roll3", "roll4", "roll5", "roll6", "roll7", "roll8"],
-        'q1' : ['q1'], 'q2' : ['q2'], 'q3' : ['q3'], 'q4' : ['q4'],
-        'q5' : ['q5'], 'q6' : ['q6'], 'q7' : ['q7'], 'q8' : ['q8'],
-        'q9' : ['q9.1','q9.2'], 'q10' : ['q10.1','q10.2'], 'q11' : ['q11.1','q11.2'], 'q12' : ['q12.1','q12.2'], 'q13' : ['q13.1','q13.2'],
-        'q14' : ['q14'], 'q15' : ['q15'], 'q16' : ['q16']
-    }
-}
-
+for squad in templJSON.keys():
+    TEMPLATES[squad] = Template(templJSON[squad])
+    for k, QBlocks in templJSON[squad].items():
+        if(k not in ["Dimensions","BoxDimensions","Concatenations","Singles"]):
+            # Add QBlock to array of grids
+            TEMPLATES[squad].addQBlocks(k, QBlocks)
 
 """
 # mask = 255 * np.ones(pt - o,np.uint8).T
@@ -298,4 +264,7 @@ readFormat = {
 # Actually need columns
 # if(orient=='H'):
 #     mask = 255 - mask
+def scalePts(pts,facX,facY):
+    return [[int(pt[0]*facX),int(pt[1]*facY)] for pt in pts]
+# rect["orig"], rect["gaps"], rect["bigGaps"] = scalePts([rect["orig"], rect["gaps"], rect["bigGaps"]], 0.54, 0.39 )
 """

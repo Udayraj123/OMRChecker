@@ -42,7 +42,7 @@ This structure has been created to suit for better organization of OMRs (Citywis
 	2. Put marker crop at `inputs/omr_marker.jpg`
 	3. Put template layout(s) in `inputs/Layouts` (Guide coming soon)
 	4. (optional) more advanced configuration can be done in globals.py
-	5. Run code - If your images are taken close-up using scanner, remember to run code with `--closeup` option.
+	5. Run code - If your images are taken close-up using scanner, remember to run code with `--closeUp` option.
 
 <!-- 
 ## Code in action (To be updated)

@@ -25,16 +25,25 @@ from utils import *
 from template import *
 
 def processOMR(squad, omrResp):
-    # TODO : write concatenation etc in generalized way from template here.
-    # Note: This is actually a dummy/reference function. It is not part of the OMR checker so its implementation is completely subjective to user's requirements.
-    global readFormat
-    # for readFormat key
+    # Done : write concatenation etc in generalized way from template here.
+    # Note: This is a reference function. It is not part of the OMR checker 
+    #       So its implementation is completely subjective to user's requirements.
+    
+    # Additional Concatenation key
     omrResp['Squad'] = squad 
     resp={}
     # symbol for absent response
     UNMARKED = '' # 'X'
-    for col, respKeys in readFormat[squad].items():
-        resp[col] = ''.join([omrResp.get(k,UNMARKED) for k in respKeys])
+
+    # Multi-Integer Type Qs / RollNo / Name
+    for qNo, respKeys in TEMPLATES[squad].concats.items():
+        resp[qNo] = ''.join([omrResp.get(k,UNMARKED) for k in respKeys])
+    # Normal Questions
+    for qNo in TEMPLATES[squad].singles:
+        resp[qNo] = omrResp.get(qNo,UNMARKED)
+    # Note: Concatenations and Singles together should be mutually exclusive 
+    # and should cover all questions in the template(exhaustive)
+    # ^TODO add a warning if omrResp has unused keys remaining
     return resp
 
 # In[76]:
@@ -122,19 +131,6 @@ allOMRs= glob.iglob(OMR_INPUT_DIR+'*/*/*'+ext)
 
 timeNow=strftime("%I%p",localtime())
 
-resultFile = resultDir+'Results-'+timeNow+'.csv'
-if(not os.path.exists(resultFile)):
-    with open(resultFile,'a') as f:
-        results=[resultSheetCols]
-        pd.DataFrame(results).to_csv(f,header=False,index=False) #no .T for single list
-else:
-    print('WARNING : Appending to Previous Result file!')
-counter=1
-
-errorsArray=[sheetCols]
-badRollsArray=[sheetCols]
-verifyArray=[sheetCols]
-multiMarkedArray=[sheetCols]
 
 def appendArr(val,array,filename):
     array.append(val)
@@ -146,88 +142,111 @@ def appendArr(val,array,filename):
         pd.DataFrame([val],columns=sheetCols).to_csv(f,index=False,header=False)
         # pd.DataFrame(val).T.to_csv(f,header=False)
 
-def stitch(img1,img2):
-    return np.hstack((img1,img2));
+# def stitch(img1,img2):
+#     return np.hstack((img1,img2));
     # return np.concatenate((img1,img2),axis=1)
 
 start_time = int(time())
 
 # construct the argument parse and parse the arguments
 argparser = argparse.ArgumentParser()
-# int(args["closeup"])
-argparser.add_argument("-c", "--closeup", required=False, dest='argCloseUp', action='store_true',
-    help="Whether or not input images have page contour visible.")
+
+argparser.add_argument("-c", "--closeUp", required=False, dest='closeUp', action='store_true', help="Whether or not input images have page contour visible.")
+argparser.add_argument("-m", "--nomarkers", required=False, dest='noMarkers', action='store_true', help="Whether or not input images have markers visible.(Page is already cropped)")
 args = vars(argparser.parse_args())
-print("CloseUp Images(Scanned) : "+str(args["argCloseUp"]))
+print("CloseUp Images(Scanned) : "+str(args["closeUp"]))
+print("Page(s) Already Cropped : "+str(args["noMarkers"]))
+
+respCols, sheetCols, resultSheetCols = {},{},{}
+resultFiles,resultFileObj = {},{}
+errorsArray, badRollsArray, multiMarkedArray = {},{},{}
+# Loop over squads
+for k in templJSON.keys():
+    # Concats + Singles includes : all template keys including RollNo if present
+    respCols[k] = list(TEMPLATES[k].concats.keys())+TEMPLATES[k].singles
+    sheetCols[k]=['batch','error','filename','path']+respCols[k]
+    resultSheetCols[k]=sheetCols[k]+['score'] 
+    resultFiles[k] = resultDir+'Results_'+k+'_'+timeNow+'.csv'
+    # check if this line required
+    errorsArray[k] = badRollsArray[k] = multiMarkedArray[k] = [sheetCols[k]]
+    print(resultFiles[k])
+    if(not os.path.exists(resultFiles[k])):
+        resultFileObj[k] = open(resultFiles[k],'a')
+        # Create Header Columns
+        pd.DataFrame([resultSheetCols[k]]).to_csv(resultFileObj[k],header=False,index=False) 
+    else:
+        print('WARNING : Appending to Previous Result file for: '+k)
+        resultFileObj[k] = open(resultFiles[k],'a')
 
 squadlang="XX"
+filesCounter=0
 mws, mbs = [],[]
-with open(resultFile,'a') as f:
-    for filepath in allOMRs:
-        counter+=1
-        finder = re.search(r'/.*/(.*)/(.*)\.'+ext[1:],filepath,re.IGNORECASE)
-        if(finder):
-            squadlang = finder.group(1)
-            squad,lang = squadlang[0],squadlang[1]
-            squadlang = squadlang+'/'
-            filename = finder.group(2)
-        else:
-            filename = 'Nop'+str(counter)
+for filepath in allOMRs:
+    filesCounter+=1
+    finder = re.search(r'/.*/(.*)/(.*)\.'+ext[1:],filepath,re.IGNORECASE)
+    if(finder):
+        squadlang = finder.group(1)
+        squad,lang = squadlang[0],squadlang[1]
+        squadlang = squadlang+'/'
+        filename = finder.group(2)
+    else:
+        filename = 'Nop'+str(filesCounter)
+        print("Error: Filepath not matching to Regex: "+filepath)
+        continue
 
-        inOMR = cv2.imread(filepath,cv2.IMREAD_GRAYSCALE)
-        OMRcrop = getROI(filepath,filename+ext,inOMR, closeup=int(args["argCloseUp"]))
-        #uniquify
-        newfilename = filepath.split('/')[-3] + '_' + filename
-        if(OMRcrop is None):
-            err = move(NO_MARKER_ERR, filepath, errorPath+squadlang,filename)
-            if(err):
-                appendErr(err)
-            continue
-        respArray=[]
-        OMRresponseDict,final_marked,multimarked,multiroll = readResponse(squad,OMRcrop,name = newfilename, save = saveMarkedDir+squadlang)
+    inOMR = cv2.imread(filepath,cv2.IMREAD_GRAYSCALE)
+    OMRcrop = getROI(filepath,filename+ext,inOMR, closeUp=args["closeUp"], noMarkers=args["noMarkers"])
+    #uniquify
+    newfilename = filepath.split('/')[-3] + '_' + filename
+    if(OMRcrop is None):
+        err = move(NO_MARKER_ERR, filepath, errorPath+squadlang,filename)
+        if(err):
+            appendErr(err)
+        continue
+    OMRresponseDict,final_marked,multimarked,multiroll = readResponse(squad,OMRcrop,name = newfilename, save = saveMarkedDir+squadlang)
 
-        # print(OMRresponseDict)
+    # print(OMRresponseDict)
+    
+    #convert to ABCD, getRoll,etc
+    resp = processOMR(squad,OMRresponseDict)
+    print("Read Response: \n\t", resp,"\n")
+    #This evaluates and returns the score attribute
+    score = evaluate(resp, Answers[squad],Sections[squad],explain=explain)
+    respArray=[]
+    for k in respCols[squad]:
+        respArray.append(resp[k])
+    # if((multiroll or not (resp['Roll'] is not None and len(resp['Roll'])==11))):
+    if(multimarked == 0):
+        # Enter into Results sheet-
+        results = [0,0,newfilename+'.jpg',filepath]+respArray+[score] #.append
+        filesNotMoved+=1;
+        # Write to results file (resultFileObj is opened in append mode)
+        pd.DataFrame(results).T.to_csv(resultFileObj[squad],header=False,index=False)
         
-        #convert to ABCD, getRoll,etc
-        resp = processOMR(squad,OMRresponseDict)
-        print("\n\tRead Response: ", resp)
-        #for aligning cols
-        for q in readFormat[squad].keys():
-            try:
-                respArray.append(resp[q])
-            except:
-                respArray.append('')
+        print((filesCounter,newfilename+'.jpg',score))
 
-        #This evaluates and returns the score attribute
-        score = evaluate(resp, Answers[squad],Sections[squad],explain=explain)
-        # if((multiroll or not (resp['Roll'] is not None and len(resp['Roll'])==11))):
-        if(multimarked == 0):
-            # Enter into Results sheet-
-            results = [0,0,newfilename+'.jpg',filepath]+respArray+[score] #.append
-            filesNotMoved+=1;
-            # Write to results file (f is opened in append mode)
-            pd.DataFrame(results).T.to_csv(f,header=False,index=False)
-            print((counter,resp['Roll'],score))
-            # print((counter,newfilename+'.jpg',resp['Roll'],','.join(respArray[1:]),'score : ',score))
-        else:
-            #multimarked file
-            print('multiMarked, moving File: '+newfilename)
-            err = move(multiMarkedError,filepath,multiMarkedPath+squadlang,newfilename+'.jpg')
-            if(err):
-                appendArr(err+respArray,multiMarkedArray,multiMarkedFile)
+        # print(filesCounter,newfilename+'.jpg',resp['Roll'],'score : ',score)
+    else:
+        #multimarked file
+        print('multiMarked, moving File: '+newfilename)
+        err = move(MULTI_BUBBLE_ERR,filepath,multiMarkedPath+squadlang,newfilename+'.jpg')
+        if(err):
+            appendArr(err+respArray,multiMarkedArray[squad],manualDir+"multiMarkedFiles"+squad+".csv")
 
-pd.DataFrame(errorsArray,columns=sheetCols).to_csv(errorFile,index=False,header=False)
-pd.DataFrame(verifyArray,columns=sheetCols).to_csv(verifyFile,index=False,header=False)
-pd.DataFrame(badRollsArray,columns=sheetCols).to_csv(badRollNosFile,index=False,header=False)
-pd.DataFrame(multiMarkedArray,columns=sheetCols).to_csv(multiMarkedFile,index=False,header=False)
 
-counterChecking=counter
+
+for squad in templJSON.keys():
+    resultFileObj[squad].close()
+    pd.DataFrame(errorsArray[squad],columns=sheetCols[squad]).to_csv(manualDir+"errorFiles_"+squad+".csv",index=False,header=False)    
+    pd.DataFrame(badRollsArray[squad],columns=sheetCols[squad]).to_csv(manualDir+"badRollNoFiles_"+squad+".csv",index=False,header=False)
+    pd.DataFrame(multiMarkedArray[squad],columns=sheetCols[squad]).to_csv(manualDir+"multiMarkedFiles_"+squad+".csv",index=False,header=False)
+
 timeChecking=(int(time()-start_time))
-print('Total files : %d ' % (counterChecking-1))
+print('Total files : %d ' % (filesCounter))
 print('Total files moved : %d ' % (filesMoved))
-print('Total files not moved (should tally) : %d ' % (filesNotMoved))
+print('Total files not moved (Sum should tally) : %d ' % (filesNotMoved))
 
-print('Finished Checking %d files in %d seconds =>  ~%2f sec/OMR:)' % (counterChecking-1,timeChecking,round(timeChecking/float(counterChecking),2)))
+print('Finished Checking %d files in %d seconds =>  ~%2f sec/OMR:)' % (filesCounter,timeChecking,round(timeChecking/float(filesCounter+1),2)))
 
 # Use this data to train as +ve feedback
 if(showimglvl>=0):
