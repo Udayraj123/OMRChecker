@@ -128,9 +128,6 @@ def evaluate(resp,answers,sections,explain=False):
     return marks
 
 allOMRs = glob.iglob(OMR_INPUT_DIR+'*/*/*'+ext)
-if(os.sep == '\\'):
-    allOMRs = glob.iglob(OMR_INPUT_DIR+'*\\*\\*'+ext)
-
 
 timeNow=strftime("%I%p",localtime())
 
@@ -180,16 +177,18 @@ for k in templJSON.keys():
     else:
         print('WARNING : Appending to Previous Result file for: '+k)
         resultFileObj[k] = open(resultFiles[k],'a')
-
+import os
 squadlang="XX"
 filesCounter=0
 mws, mbs = [],[]
 for filepath in allOMRs:
     filesCounter+=1
+    # Including stupid windows convention
+    filepath.replace(os.sep,'/')
+
+    # Prefixing a 'r' to use raw string (escape character '\' is taken literally)
+    print(filepath,r'\.*\(.*)\(.*)\.'+ext[1:])
     finder = re.search(r'/.*/(.*)/(.*)\.'+ext[1:],filepath,re.IGNORECASE)
-    # Stupid windows convention
-    if(os.sep == '\\'):
-        finder = re.search(r'\\.*\\(.*)\\(.*)\.'+ext[1:],filepath,re.IGNORECASE)
 
     if(finder):
         squadlang = finder.group(1)

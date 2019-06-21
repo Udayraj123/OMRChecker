@@ -15,11 +15,16 @@ More details here: https://www.pyimagesearch.com/2018/09/19/pip-install-opencv/
 ```
 sudo python3 -m pip install --upgrade pip
 sudo python3 -m pip install opencv-python
+sudo python3 -m pip install opencv-contrib-python
 ```
 
 ###### Install other requirements
 ```
 sudo python3 -m pip install -r requirements.txt
+```
+If you face an distutils error, use the `--ignore-installed` flag 
+```
+sudo python3 -m pip install --ignore-installed -r requirements.txt
 ```
 
 #### 3. Run the code
