@@ -127,7 +127,10 @@ def evaluate(resp,answers,sections,explain=False):
 
     return marks
 
-allOMRs= glob.iglob(OMR_INPUT_DIR+'*/*/*'+ext)
+allOMRs = glob.iglob(OMR_INPUT_DIR+'*/*/*'+ext)
+if(os.sep == '\\'):
+    allOMRs = glob.iglob(OMR_INPUT_DIR+'*\\*\\*'+ext)
+
 
 timeNow=strftime("%I%p",localtime())
 
@@ -184,6 +187,10 @@ mws, mbs = [],[]
 for filepath in allOMRs:
     filesCounter+=1
     finder = re.search(r'/.*/(.*)/(.*)\.'+ext[1:],filepath,re.IGNORECASE)
+    # Stupid windows convention
+    if(os.sep == '\\'):
+        finder = re.search(r'\\.*\\(.*)\\(.*)\.'+ext[1:],filepath,re.IGNORECASE)
+
     if(finder):
         squadlang = finder.group(1)
         squad,lang = squadlang[0],squadlang[1]

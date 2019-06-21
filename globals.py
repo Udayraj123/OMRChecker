@@ -76,7 +76,6 @@ templ_scale_fac = 17
 MIN_PAGE_AREA = 80000
 
 TEXT_SIZE=0.95
-
 OMR_INPUT_DIR ='inputs/OMR_Files/'
 manualDir='outputs/Manual/'
 resultDir='outputs/Results/'
@@ -84,6 +83,17 @@ errorPath=manualDir+'errorFiles/'
 badRollsPath=manualDir+'badRollNosFiles/'
 multiMarkedPath=manualDir+'multiMarkedFiles/'
 saveMarkedDir='outputs/checkedOMRs/' 
+
+# Stupid windows convention
+if(os.sep == '\\'):
+	OMR_INPUT_DIR ='inputs\\OMR_Files\\'
+	manualDir='outputs\\Manual\\'
+	resultDir='outputs\\Results\\'
+	errorPath=manualDir+'errorFiles\\'
+	badRollsPath=manualDir+'badRollNosFiles\\'
+	multiMarkedPath=manualDir+'multiMarkedFiles\\'
+	saveMarkedDir='outputs\\checkedOMRs\\' 
+
 
 
 """

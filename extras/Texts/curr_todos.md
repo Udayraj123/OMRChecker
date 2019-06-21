@@ -102,7 +102,7 @@ Qbox level soln
 			1. Correlation : Error chances significant as there are smaller box lines that also correlate
 			2. Correlation on Eroded image : Gotta try
 				It is taken with white color anyway: so just take max white value.
-		_/	3. Correlation on Gradient image : More consistent
+		//	3. Correlation on Gradient image : More consistent 
 
 	Different approach 1
 		> We'd always have partially filled(gray or black) Qboxes, move them individually towards the black area
@@ -529,4 +529,6 @@ LATER:
 				> Inputs description
 				> Brand techno's marking scheme here. Show the how marking scheme json can handle it.
 		
-		make code independent of Squads?
+		Make code independent of Squads?
+
+		Request 214596366
