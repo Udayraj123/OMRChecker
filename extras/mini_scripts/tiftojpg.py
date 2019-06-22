@@ -6,14 +6,35 @@ https://github.com/Udayraj123
 
 """
 import os
-for x in os.listdir():
-	if not x.endswith(".txt") and not x.endswith(".py") and  not x.endswith(".tif"): 
-		for y in os.listdir(x):
-			for z in os.listdir(x+"/"+y):
-				for w in os.listdir(x+"/"+y+"/"+z):
-					if w.endswith(".tif"):
-						if w[:-4]+".jpg" in os.listdir(x+"/"+y+"/"+z):
-							print(">>>>>>>>>>"+x+">"+y+">"+z+">"+w)
-							continue
-						os.system("convert "+x+"/"+y+"/"+z+"/"+w+" "+x+"/"+y+"/"+z+"/"+w[:-4]+".jpg")
-						os.system("rm "+x+"/"+y+"/"+z+"/"+w)
+import glob
+import cv2
+# review = 1
+review = 0
+# backupOMRs\Agra_1057\HE\Normal>Agra_HE_0054.tif
+dir_glob ='backupOMRs\\*\\*\\*'
+counter = 0
+for x in glob.iglob(dir_glob):
+	try:
+		for filename in os.listdir(x):
+			if filename.endswith(".tif"):
+				filepath = x+"\\"+filename
+				counter += 1
+				if(review):
+					print(counter, filepath)
+				else:
+					newx = "convertedOMRs"+x[len("backupOMRs"):]
+					if(not os.path.exists(newx)):
+						print("Making dirs:",newx)
+						os.makedirs(newx)
+					else:
+						print("Already exists:",newx)
+
+					newfilepath = newx +filename[:-4]+".jpg"
+					cv2.imwrite(newfilepath,cv2.imread(filepath))
+					# print("System cmd:",os.system(R'"C:\Program Files\ImageMagick-7.0.8-Q16\convert.exe" '+filepath+' '+newfilepath))
+					print(counter, newfilepath)
+				exit(0)
+	except NotADirectoryError:
+		pass
+
+print("Total Tiff files: " + str(counter))
