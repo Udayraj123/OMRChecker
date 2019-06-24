@@ -2,6 +2,8 @@
 A full-fledged OMR checking software that can read and evaluate OMR sheets scanned at any angle and having any color. With support for a customizable marking scheme with section-wise marking, bonus questions, etc. 
 
 ## How to run
+Preferred operating system : *Linux*
+
 #### 1. Clone the repo
 Use `--depth=1` if you want only the latest version(less than half download size)
 ```
@@ -48,6 +50,12 @@ This structure has been created to suit for better organization of OMRs (Citywis
 	3. Put template layout(s) in `inputs/Layouts` (Guide coming soon)
 	4. (optional) more advanced configuration can be done in globals.py
 	5. Run code - If your images are taken close-up using scanner, remember to run code with `--closeUp` option.
+
+
+<!-- #### Testing the code
+Datasets to test on : 
+Standard Quality Dataset (200MB)
+High Quality Dataset (2 GB) -->
 
 <!-- 
 ## Code in action (To be updated)

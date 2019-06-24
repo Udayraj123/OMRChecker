@@ -24,6 +24,32 @@ from globals import *
 from utils import *
 from template import *
 
+# Sometime later-
+# from colorama import init
+# init()
+# from colorama import Fore, Back, Style
+
+def move(error,filepath,filepath2,filename):
+    print("Move:  "+filepath, " --> ",filepath2 + filename)
+    if(error!=NO_MARKER_ERR):
+        print("Error-Code: "+str(error))
+        return None
+    global filesMoved
+    # print(filepath,filepath2,filename,array)
+    if(os.path.exists(filepath)):
+        if(os.path.exists(filepath2+filename)):
+            print('ERROR : Duplicate file at '+filepath2+filename)
+            # exit(0)
+            if(1):
+                return None
+        os.rename(filepath,filepath2+filename)
+        append = [BATCH_NO,error,filename,filepath2]
+        filesMoved+=1
+        return append
+    else:
+        print('File already moved')
+        return None
+
 def processOMR(squad, omrResp):
     # Done : write concatenation etc in generalized way from template here.
     # Note: This is a reference function. It is not part of the OMR checker 
@@ -129,18 +155,23 @@ def evaluate(resp,answers,sections,explain=False):
 
 allOMRs = glob.iglob(OMR_INPUT_DIR+'*/*/*'+ext)
 
-timeNow=strftime("%I%p",localtime())
+timeNowHrs=strftime("%I%p",localtime())
+
+def pad(val,array):
+    if(len(val) < len(array)):
+        for i in range(len(array)-len(val)):
+            val.append('V')
 
 
 def appendArr(val,array,filename):
     array.append(val)
-    if(not os.path.exists(filename)):
-        with open(filename,'a') as f:
-            pd.DataFrame([sheetCols],columns=sheetCols).to_csv(f,index=False,header=False)
-    pad(val,sheetCols)
-    with open(filename,'a') as f:
-        pd.DataFrame([val],columns=sheetCols).to_csv(f,index=False,header=False)
-        # pd.DataFrame(val).T.to_csv(f,header=False)
+    # if(not os.path.exists(filename)):
+    #     with open(filename,'a') as f:
+    #         pd.DataFrame([sheetCols],columns=sheetCols).to_csv(f,index=False,header=False)
+    # pad(val,sheetCols)
+    # with open(filename,'a') as f:
+    #     pd.DataFrame([val],columns=sheetCols).to_csv(f,index=False,header=False)
+    #     # pd.DataFrame(val).T.to_csv(f,header=False)
 
 # def stitch(img1,img2):
 #     return np.hstack((img1,img2));
@@ -151,65 +182,71 @@ start_time = int(time())
 # construct the argument parse and parse the arguments
 argparser = argparse.ArgumentParser()
 
-argparser.add_argument("-c", "--closeUp", required=False, dest='closeUp', action='store_true', help="Whether or not input images have page contour visible.")
-argparser.add_argument("-m", "--nomarkers", required=False, dest='noMarkers', action='store_true', help="Whether or not input images have markers visible.(Page is already cropped)")
+argparser.add_argument("-c", "--closeUp", required=False, dest='closeUp', action='store_true', help="Disable page contour detection - the program will take image as it is.")
+argparser.add_argument("-m", "--nomarkers", required=False, dest='noMarkers', action='store_true', help="Disable marker detection - if page is already cropped at marker points.")
+argparser.add_argument("-a", "--noalignment", required=False, dest='noAlignment', action='store_true', help="Disable automatic template alignment - if columns are not varying significantly(saves computation).")
 args = vars(argparser.parse_args())
-print("CloseUp Images(Scanned) : "+str(args["closeUp"]))
-print("Page(s) Already Cropped : "+str(args["noMarkers"]))
+print("CloseUp(Scanned) Images : "+str(args["closeUp"]))
+print("Flat(Scanned) papers : "+str(args["noAlignment"]))
+print("OMR Already Cropped(No Markers) : "+str(args["noMarkers"]))
 
 respCols, sheetCols, resultSheetCols = {},{},{}
 resultFiles,resultFileObj = {},{}
 errorsArray, badRollsArray, multiMarkedArray = {},{},{}
 # Loop over squads
-for k in templJSON.keys():
+for squad in templJSON.keys():
     # Concats + Singles includes : all template keys including RollNo if present
-    respCols[k] = list(TEMPLATES[k].concats.keys())+TEMPLATES[k].singles
-    sheetCols[k]=['batch','error','filename','path']+respCols[k]
-    resultSheetCols[k]=sheetCols[k]+['score'] 
-    resultFiles[k] = resultDir+'Results_'+k+'_'+timeNow+'.csv'
-    # check if this line required
-    errorsArray[k] = badRollsArray[k] = multiMarkedArray[k] = [sheetCols[k]]
-    print(resultFiles[k])
-    if(not os.path.exists(resultFiles[k])):
-        resultFileObj[k] = open(resultFiles[k],'a')
+    respCols[squad] = list(TEMPLATES[squad].concats.keys())+TEMPLATES[squad].singles
+    sheetCols[squad]=['batch','error','filename','path']+respCols[squad]
+    resultSheetCols[squad]=sheetCols[squad]+['score'] 
+    resultFiles[squad] = resultDir+'Results_'+squad+'_'+timeNowHrs+'.csv'
+    errorsArray[squad] = [ sheetCols[squad] ]
+    badRollsArray[squad] = [ sheetCols[squad] ]
+    multiMarkedArray[squad] = [ sheetCols[squad] ]
+    print("resultFile:", resultFiles[squad])
+    if(not os.path.exists(resultFiles[squad])):
+        resultFileObj[squad] = open(resultFiles[squad],'a') # still append mode req [THINK!]
         # Create Header Columns
-        pd.DataFrame([resultSheetCols[k]]).to_csv(resultFileObj[k],header=False,index=False) 
+        pd.DataFrame([resultSheetCols[squad]]).to_csv(resultFileObj[squad],header=False,index=False) 
     else:
-        print('WARNING : Appending to Previous Result file for: '+k)
-        resultFileObj[k] = open(resultFiles[k],'a')
-import os
+        print('WARNING : Appending to Previous Result file for: '+squad)
+        resultFileObj[squad] = open(resultFiles[squad],'a')
+
 squadlang="XX"
 filesCounter=0
 mws, mbs = [],[]
 for filepath in allOMRs:
     filesCounter+=1
     # Including stupid windows convention
-    filepath.replace(os.sep,'/')
+    filepath = filepath.replace(os.sep,'/')
 
     # Prefixing a 'r' to use raw string (escape character '\' is taken literally)
-    print(filepath,r'\.*\(.*)\(.*)\.'+ext[1:])
     finder = re.search(r'/.*/(.*)/(.*)\.'+ext[1:],filepath,re.IGNORECASE)
 
     if(finder):
         squadlang = finder.group(1)
         squad,lang = squadlang[0],squadlang[1]
         squadlang = squadlang+'/'
-        filename = finder.group(2)
+        filename_noext = finder.group(2)
     else:
-        filename = 'Nop'+str(filesCounter)
+        filename_noext = 'Nop'+str(filesCounter)
         print("Error: Filepath not matching to Regex: "+filepath)
         continue
 
     inOMR = cv2.imread(filepath,cv2.IMREAD_GRAYSCALE)
-    OMRcrop = getROI(filepath,filename+ext,inOMR, closeUp=args["closeUp"], noMarkers=args["noMarkers"])
-    #uniquify
-    newfilename = filepath.split('/')[-3] + '_' + filename
+    OMRcrop = getROI(filepath,filename_noext+ext,inOMR, closeUp=args["closeUp"], noMarkers=args["noMarkers"])
     if(OMRcrop is None):
-        err = move(NO_MARKER_ERR, filepath, errorPath+squadlang,filename)
+        err = move(NO_MARKER_ERR, filepath, errorPath+squadlang,filename_noext+ext)
         if(err):
-            appendErr(err)
+            errorsArray[squad].append(err+respCols[squad])
+            # appendArr(err,errorsArray[squad],manualDir+"ErrorFiles_"+squad+".csv")
+        else:
+            print("\n\tUNEXPECTED!\n\t")
+            filesNotMoved += 1
         continue
-    OMRresponseDict,final_marked,multimarked,multiroll = readResponse(squad,OMRcrop,name = newfilename, save = saveMarkedDir+squadlang)
+    #uniquify
+    newfilename = filepath.split('/')[-3] + '_' + filename_noext
+    OMRresponseDict,final_marked,multimarked,multiroll = readResponse(squad,OMRcrop,name = newfilename, save = saveMarkedDir+squadlang, noAlignment=args["noAlignment"])
 
     # print(OMRresponseDict)
     
@@ -237,15 +274,16 @@ for filepath in allOMRs:
         print('multiMarked, moving File: '+newfilename)
         err = move(MULTI_BUBBLE_ERR,filepath,multiMarkedPath+squadlang,newfilename+'.jpg')
         if(err):
-            appendArr(err+respArray,multiMarkedArray[squad],manualDir+"multiMarkedFiles"+squad+".csv")
+            multiMarkedArray[squad].append(err+respArray)
+            # appendArr(err+respArray,multiMarkedArray[squad],manualDir+"MultiMarkedFiles_"+squad+".csv")
 
 
 
 for squad in templJSON.keys():
     resultFileObj[squad].close()
-    pd.DataFrame(errorsArray[squad],columns=sheetCols[squad]).to_csv(manualDir+"errorFiles_"+squad+".csv",index=False,header=False)    
-    pd.DataFrame(badRollsArray[squad],columns=sheetCols[squad]).to_csv(manualDir+"badRollNoFiles_"+squad+".csv",index=False,header=False)
-    pd.DataFrame(multiMarkedArray[squad],columns=sheetCols[squad]).to_csv(manualDir+"multiMarkedFiles_"+squad+".csv",index=False,header=False)
+    pd.DataFrame(errorsArray[squad],columns=sheetCols[squad]).to_csv(manualDir+"ErrorFiles_"+squad+".csv",index=False,header=False)    
+    pd.DataFrame(badRollsArray[squad],columns=sheetCols[squad]).to_csv(manualDir+"BadRollNoFiles_"+squad+".csv",index=False,header=False)
+    pd.DataFrame(multiMarkedArray[squad],columns=sheetCols[squad]).to_csv(manualDir+"MultiMarkedFiles_"+squad+".csv",index=False,header=False)
 
 timeChecking=(int(time()-start_time))
 print('Total files : %d ' % (filesCounter))

@@ -58,13 +58,6 @@ for _dir in [multiMarkedPath,errorPath,badRollsPath]:
 
 
 # In[64]:
-
-def pad(val,array):
-    if(len(val) < len(array)):
-        for i in range(len(array)-len(val)):
-            val.append('V')
-
-
 def waitQ():
     while(cv2.waitKey(1)& 0xFF != ord('q')):pass
     cv2.destroyAllWindows()
@@ -219,24 +212,6 @@ def check_min_dist(pt,pts,min_dist):
             return False
     return True
 
-def move(error,filepath,filepath2,filename):
-    print("Error-Code: "+str(error))
-    print("Source:  "+filepath)
-    print("Destination: " + filepath2 + filename)
-    return None
-    global filesMoved
-    # print(filepath,filepath2,filename,array)
-    if(os.path.exists(filepath)):
-        if(os.path.exists(filepath2+filename)):
-            print('ERROR : Duplicate file at '+filepath2+filename)
-        os.rename(filepath,filepath2+filename)
-        append = [BATCH_NO,error,filename,filepath2]
-        filesMoved+=1
-        return append
-    else:
-        print('File already moved')
-        return None
-
 def get_reflection(pt, pt1,pt2):
     pt, pt1,pt2 = tuple(map(lambda x:np.array(x,dtype=float),[pt, pt1,pt2]))
     return (pt1 + pt2) - pt
@@ -302,8 +277,8 @@ def resetSaveImg(key):
     saveImgList[key] = []
 
 def appendSaveImg(key,img):
-    global saveImgList
     if(saveimglvl >= int(key)):
+        global saveImgList
         if(key not in saveImgList):
             saveImgList[key] = []
         saveImgList[key].append(img.copy())
@@ -356,9 +331,6 @@ def findPage(image_norm):
         # box = perspective.order_points(box)
     print("Found largest quadrilateral: ", sheet)
     # sobel = cv2.addWeighted(cv2.Sobel(edge, cv2.CV_64F, 1, 0, ksize=3),0.5,cv2.Sobel(edge, cv2.CV_64F, 0, 1, ksize=3),0.5,0,edge)
-    if sheet==[]:
-        print("Error: Paper boundary not found! Should pass CloseUp = True?")
-
     # ExcessDo : make it work on killer images
     # edge2 = auto_canny(image_norm)
     # show('Morphed Edges',np.hstack((closed,edge)),1,1)
@@ -379,9 +351,9 @@ def getBestMatch(image_eroded_sub, num_steps=10, iterLim=50):
     h, w = marker_eroded_sub.shape[:2]
     res, best_scale=None, None
     allMaxT = 0
-    for r0 in range(x[1],x[0], -1*match_precision//num_steps): #reverse order
+    for r0 in range(x[1], x[0], -1*match_precision//num_steps): #reverse order
         s=float(r0)/match_precision
-        if(s==0.0):
+        if(s == 0.0):
             continue
         templ_scaled = imutils.resize(marker if ERODE_SUB_OFF else marker_eroded_sub, height = int(h*s))
         res = cv2.matchTemplate(image_eroded_sub,templ_scaled,cv2.TM_CCOEFF_NORMED)
@@ -393,7 +365,7 @@ def getBestMatch(image_eroded_sub, num_steps=10, iterLim=50):
             best_scale, allMaxT = s, maxT
     if(allMaxT < thresholdCircle):
         print("Warnning: Template matching too low! Should pass CloseUp = True?")
-        if(showimglvl>-1):
+        if(showimglvl>=1):
             show("res",res,1,0)
     print('') #close buf
     return best_scale, allMaxT
@@ -446,6 +418,7 @@ def getROI(filepath,filename,image, closeUp=False, noMarkers=False):
             image_norm = resize_util(image_norm, uniform_width*2)
         sheet = findPage(image_norm)
         if sheet==[]:
+            print("Error: Paper boundary not found! Should pass CloseUp = True?")
             return None
         # Warp layer 1
         image_norm = four_point_transform(image_norm, sheet)
@@ -483,7 +456,8 @@ def getROI(filepath,filename,image, closeUp=False, noMarkers=False):
         if(best_scale == None):
             # TODO: Plot and see performance of scaleRange
             print("No matchings for given scaleRange:",scaleRange)
-            show('Quads',image_eroded_sub)
+            if(showimglvl>=1):
+                show('Quads',image_eroded_sub)
             return None
 
         templ = imutils.resize(marker if ERODE_SUB_OFF else marker_eroded_sub, height = int(marker_eroded_sub.shape[0]*best_scale))
@@ -498,9 +472,9 @@ def getROI(filepath,filename,image, closeUp=False, noMarkers=False):
             if(maxT < thresholdCircle or abs(allMaxT-maxT) >= thresholdVar):
                 # Warning - code will stop in the middle. Keep Threshold low to avoid.
                 print(filename,"\nError: No circle found in Quad",k+1, "\n\tthresholdVar", thresholdVar, "maxT", maxT,"allMaxT",allMaxT, "Should pass CloseUp = False?")
-                if(showimglvl>-1):
-                    show('no_pts_'+filename,image_eroded_sub,0,1)
-                    show('res_Q'+str(k),res,1,1)
+                if(showimglvl>=1):
+                    show('no_pts_'+filename,image_eroded_sub,0)
+                    show('res_Q'+str(k),res,1)
                 return None
 
             pt=np.argwhere(res==maxT)[0];
@@ -538,7 +512,7 @@ def getROI(filepath,filename,image, closeUp=False, noMarkers=False):
 
 def getGlobalThreshold(QVals):
     """
-        Note: Cannot assume col has only-gray or only-white bg (in which case there is only one jump). 
+        Note: Cannot assume qStrip has only-gray or only-white bg (in which case there is only one jump). 
               So there will be either 1 or 2 jumps.
         1 Jump : 
                 ......
@@ -588,7 +562,7 @@ def getGlobalThreshold(QVals):
     return thresholdRead, j_low, j_high
 
 
-def getLocalThreshold(QVals, globalTHR):
+def getLocalThreshold(QVals, globalTHR, plotTHR=False):
     """
     Assumption : Colwise background color is uniformly gray or white, but not alternating 
     In this case there is atmost one jump.
@@ -618,64 +592,63 @@ def getLocalThreshold(QVals, globalTHR):
     gap = (qmax - qmin)
     # base case: 1 or 2 pts
     if(len(QVals) < 3): 
-        return globalTHR if gap < MIN_GAP else qmean
-
-    # All Black or All White case
-    noOutliers = qstd < MIN_STD
-    GVals = [round(abs(q-qmean),2) for q in QVals]
-    gmean, gstd = round(np.mean(GVals),2), round(np.std(GVals),2)
-    # print("qstd",qstd, "gstd", gstd,"Gaps in gvals",sorted([round(abs(g-gmean),2) for g in GVals],reverse=True))
-    
-    # TODO: Make this dependent on max jump!
-    # DISCRETION: Pretty critical factor in reading response
-    DISCRETION = 2.7 # 2.59 was closest hit, 3.0 is too far
-    for g in GVals:
-        if(abs(g-gmean) > DISCRETION*gstd):
-            noOutliers = False
-            break
-
-    if(noOutliers):
+        thr1 = globalTHR if gap < MIN_GAP else qmean
+    else:
         # All Black or All White case
-        return globalTHR
+        noOutliers = qstd < MIN_STD
+        GVals = [round(abs(q-qmean),2) for q in QVals]
+        gmean, gstd = round(np.mean(GVals),2), round(np.std(GVals),2)
+        # print("qstd",qstd, "gstd", gstd,"Gaps in gvals",sorted([round(abs(g-gmean),2) for g in GVals],reverse=True))
+        
+        # TODO: Make this dependent on max jump!
+        # DISCRETION: Pretty critical factor in reading response
+        DISCRETION = 2.7 # 2.59 was closest hit, 3.0 is too far
+        for g in GVals:
+            if(abs(g-gmean) > DISCRETION*gstd):
+                noOutliers = False
+                break
 
-    # Find the FIRST LARGE GAP i.e. LARGEST GAP and set it as threshold:
-    l=len(QVals)-1
-    max1,thr1=MIN_JUMP,255
-    for i in range(1,l):
-        jump = QVals[i+1] - QVals[i-1]
-        if(jump > max1):
-            max1 = jump
-            thr1 = QVals[i-1] + jump/2
+        if(noOutliers):
+            # All Black or All White case
+            thr1 = globalTHR
+        else:
+            # Find the FIRST LARGE GAP i.e. LARGEST GAP and set it as threshold:
+            l=len(QVals)-1
+            max1,thr1=MIN_JUMP,255
+            for i in range(1,l):
+                jump = QVals[i+1] - QVals[i-1]
+                if(jump > max1):
+                    max1 = jump
+                    thr1 = QVals[i-1] + jump/2
 
-
-    # if(thr1 != 255 and qmax < globalTHR and max1 < MIN_JUMP*2):
-    #     f, ax = plt.subplots()
-    #     ax.bar(range(len(QVals)),QVals);
-    #     thrline=ax.axhline(globalTHR,color='red',ls='--', linewidth=4)
-    #     thrline.set_label("globalTHR")
-    #     thrline=ax.axhline(thr1,color='blue',ls='--', linewidth=4)
-    #     thrline.set_label("THR")
-    #     ax.set_title("Intensity distribution")
-    #     ax.set_ylabel("Intensity")
-    #     ax.set_xlabel("Q Boxes sorted by Intensity")
-    #     plt.show()
-
+    if(plotTHR):
+        f, ax = plt.subplots()
+        ax.bar(range(len(QVals)),QVals);
+        thrline=ax.axhline(globalTHR,color='red',ls='--', linewidth=4)
+        thrline.set_label("globalTHR")
+        thrline=ax.axhline(thr1,color='blue',ls='--', linewidth=4)
+        thrline.set_label("localTHR")
+        ax.set_title("Intensity distribution")
+        ax.set_ylabel("Intensity")
+        ax.set_xlabel("Q Boxes sorted by Intensity")
+        ax.legend()
+        plt.show()
     return thr1
 
 def saveImg(path, final_marked):
     print('Saving Image to '+path)
     cv2.imwrite(path,final_marked)
 
-def readResponse(squad,image,name,save=None,explain=True):
+def readResponse(squad,image,name,save=None,noAlignment=False):
     global clahe
     TEMPLATE = TEMPLATES[squad]
     try:
         img = image.copy()
         origDim = img.shape[:2]
         # print("Cropped dim", origDim)
-        # 1846 x 1500
         img = resize_util(img,TEMPLATE.dims[0],TEMPLATE.dims[1])
-        print("Resized dim", img.shape[:2])
+        # print("Resized dim", img.shape[:2])
+
         img = normalize_util(img)
         # Processing copies
         transp_layer = img.copy()
@@ -727,6 +700,10 @@ def readResponse(squad,image,name,save=None,explain=True):
         
         if(showimglvl>=3):
             show("morph_final",morph_v,0,1)
+        
+        # show("morph1",morph,0,1)
+        # show("morph_final",morph_v,0,1)
+        
         appendSaveImg(2,morph_v)
 
         morphTHR = 60 # for Mobile images
@@ -749,37 +726,42 @@ def readResponse(squad,image,name,save=None,explain=True):
         
         appendSaveImg(6,morph_v)
 
-        # templ alignment code
-        for QBlock in TEMPLATE.QBlocks:
-            s,d = QBlock.orig, QBlock.dims
-            # internal constants - wont need change much
-            ALIGN_STRIDE, MATCH_COL, ALIGN_STEPS = 1, 5, int(boxW * 2 / 3)
-            shift, steps = 0, 0
-            THK = 3
-            while steps < ALIGN_STEPS:
-                L = np.mean(morph_v[s[1]:s[1]+d[1],s[0]+shift-THK:-THK+s[0]+shift+MATCH_COL])
-                R = np.mean(morph_v[s[1]:s[1]+d[1],s[0]+shift-MATCH_COL+d[0]+THK:THK+s[0]+shift+d[0]])
-                if(QBlock.key=="Int1"):
-                    ret = morph_v.copy()
-                    cv2.rectangle(ret,(s[0]+shift-THK,s[1]),(s[0]+shift+THK+d[0],s[1]+d[1]),CLR_WHITE,3)
-                    appendSaveImg(6,ret)
-                # print(shift, L, R)
-                LW,RW= L > 100, R > 100
-                if(LW):
-                    if(RW):
-                        break
+        if(noAlignment == False):
+            # templ alignment code
+            # OUTPUT : each QBlock.shift is updated
+            for QBlock in TEMPLATE.QBlocks:
+                s,d = QBlock.orig, QBlock.dims
+                # internal constants - wont need change much
+                #TODO - ALIGN_STRIDE would depend on template's Dimensions
+                ALIGN_STRIDE, MATCH_COL, ALIGN_STEPS = 1, 5, int(boxW * 2 / 3)
+                shift, steps = 0, 0
+                THK = 3
+                while steps < ALIGN_STEPS:
+                    L = np.mean(morph_v[s[1]:s[1]+d[1],s[0]+shift-THK:-THK+s[0]+shift+MATCH_COL])
+                    R = np.mean(morph_v[s[1]:s[1]+d[1],s[0]+shift-MATCH_COL+d[0]+THK:THK+s[0]+shift+d[0]])
+                    
+                    # For demonstration purposes-
+                    if(QBlock.key=="Int1"):
+                        ret = morph_v.copy()
+                        cv2.rectangle(ret,(s[0]+shift-THK,s[1]),(s[0]+shift+THK+d[0],s[1]+d[1]),CLR_WHITE,3)
+                        appendSaveImg(6,ret)
+                    # print(shift, L, R)
+                    LW,RW= L > 100, R > 100
+                    if(LW):
+                        if(RW):
+                            break
+                        else:
+                            shift -= ALIGN_STRIDE
                     else:
-                        shift -= ALIGN_STRIDE
-                else:
-                    if(RW):
-                        shift += ALIGN_STRIDE
-                    else:
-                        break
-                steps += 1
+                        if(RW):
+                            shift += ALIGN_STRIDE
+                        else:
+                            break
+                    steps += 1
 
-            QBlock.shift = shift
-            # sums = sorted(sums, reverse=True)
-            # print("Aligned QBlock: ",QBlock.key,"Corrected Shift:", QBlock.shift,", Dimensions:", QBlock.dims, "orig:", QBlock.orig,'\n')
+                QBlock.shift = shift
+                # sums = sorted(sums, reverse=True)
+                # print("Aligned QBlock: ",QBlock.key,"Corrected Shift:", QBlock.shift,", Dimensions:", QBlock.dims, "orig:", QBlock.orig,'\n')
 
     # if(showimglvl>=3):
         initial_align=img.copy()
@@ -790,7 +772,7 @@ def readResponse(squad,image,name,save=None,explain=True):
             cv2.rectangle(initial_align,(s[0],s[1]),(s[0]+d[0],s[1]+d[1]),CLR_BLACK,3)
             shift = QBlock.shift
             cv2.rectangle(final_align,(s[0]+shift,s[1]),(s[0]+shift+d[0],s[1]+d[1]),CLR_BLACK,3)
-            for col, pts in QBlock.colpts:
+            for qStrip, pts in QBlock.traverse_pts:
                 for pt in pts:
                     x,y = pt.x,pt.y
                     cv2.rectangle(initial_align,(int(x+boxW/10),int(y+boxH/10)),(int(x+boxW-boxW/10),int(y+boxH-boxH/10)), CLR_GRAY,-1)
@@ -805,9 +787,7 @@ def readResponse(squad,image,name,save=None,explain=True):
         # appendSaveImg(1,morph_v)
         appendSaveImg(1,final_align)
         # show("Initial Template Overlay", initial_align, 0, 1, [0,0])
-        # show("Corrected Template Overlay", final_align, 1, 1)# [final_align.shape[1],0])
-        
-        
+        show("Corrected Template Overlay", final_align, 1, 1)# [final_align.shape[1],0])
         # show("Template Overlay", mean_vals, 0, 1)
         appendSaveImg(3,mean_vals)
         appendSaveImg(4,img)
@@ -815,7 +795,7 @@ def readResponse(squad,image,name,save=None,explain=True):
         # for All Black or All White case -
         AllQBlockvals=[]
         for QBlock in TEMPLATE.QBlocks:
-            for col, pts in QBlock.colpts:
+            for qStrip, pts in QBlock.traverse_pts:
                 for pt in pts:
                     # shifted
                     x,y = (pt.x + QBlock.shift,pt.y)
@@ -841,19 +821,17 @@ def readResponse(squad,image,name,save=None,explain=True):
         appendSaveImg(4,hist)
         appendSaveImg(1,hist)
 
-        
-
         print(name,"globalTHR: ",round(globalTHR,2))
-        thresholdReadAvg, colNos = 0, 0
+        thresholdReadAvg, totalQStripNo = 0, 0
         for QBlock in TEMPLATE.QBlocks:
-            blockColNo = 0
+            blockQStripNo = 0
             shift=QBlock.shift
             s,d = QBlock.orig, QBlock.dims
             key = QBlock.key[:3]
             # cv2.rectangle(final_marked,(s[0]+shift,s[1]),(s[0]+shift+d[0],s[1]+d[1]),CLR_BLACK,3)
-            for col, pts in QBlock.colpts:
-                colNos += 1
-                blockColNo += 1
+            for qStrip, pts in QBlock.traverse_pts:
+                totalQStripNo += 1
+                blockQStripNo += 1
                 QBlockvals=[]
                 for pt in pts:
                     # shifted
@@ -862,28 +840,29 @@ def readResponse(squad,image,name,save=None,explain=True):
                     QBlockvals.append(cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0])
                 
                 QBlockvals= sorted(QBlockvals)
-                thresholdRead = getLocalThreshold(QBlockvals,globalTHR)
-                # thresholdRead = globalTHR
-                # print(pts[0].qNo,key,blockColNo, "THR: ",thresholdRead)
+                thresholdRead = getLocalThreshold(QBlockvals,globalTHR,showimglvl>=6)
+                # print(pts[0].qNo,key,blockQStripNo, "THR: ",thresholdRead)
                 thresholdReadAvg += thresholdRead
                 if(
-                    # (pts[0].qNo)=="q10" or 
-                    # (pts[0].qNo+str(blockColNo))=="q15" or 
+                    # "q7" in (pts[0].qNo) or 
+                    # (pts[0].qNo+str(blockQStripNo))=="q15" or 
                     showimglvl>=6
                  ):
-                    show("QBlock: "+key, img[s[1] : s[1] + d[1], s[0]+shift : s[0]+shift+ d[0]],0,1)
-                    f, ax = plt.subplots()
-                    ax.bar(range(len(QBlockvals)),QBlockvals);
-                    thrline=ax.axhline(thresholdRead,color='green',ls='-', linewidth=4)
-                    thrline.set_label("Local Threshold")
-                    thrline=ax.axhline(globalTHR,color='red',ls='--', linewidth=4)
-                    # thrline.set_label("Safe Threshold")
-                    thrline.set_label("Global Threshold")
-                    ax.set_title("Mean Intensity Histogram for "+ key +"."+ pts[0].qNo+"."+str(blockColNo))
-                    ax.set_ylabel("Bubble Mean Intensity")
-                    ax.set_xlabel("Bubble Number(sorted)")
-                    ax.legend()
+                    st, end = qStrip
+                    show("QStrip: "+key+"-"+str(blockQStripNo), img[st[1] : end[1], st[0]+shift : end[0]+shift],0)
+                    # f, ax = plt.subplots()
+                    # ax.bar(range(len(QBlockvals)),QBlockvals);
+                    # thrline=ax.axhline(thresholdRead,color='green',ls='-', linewidth=4)
+                    # thrline.set_label("Local Threshold")
+                    # thrline=ax.axhline(globalTHR,color='red',ls='--', linewidth=4)
+                    # # thrline.set_label("Safe Threshold")
+                    # thrline.set_label("Global Threshold")
+                    # ax.set_title("Mean Intensity Histogram for "+ key +"."+ pts[0].qNo+"."+str(blockQStripNo))
+                    # ax.set_ylabel("Bubble Mean Intensity")
+                    # ax.set_xlabel("Bubble Number(sorted)")
+                    # ax.legend()
                     # plt.show()
+                    # show("Thresholding",getPlotImg())
                     # appendSaveImg(5,getPlotImg())
                 
                 QBlockvals=[]
@@ -923,16 +902,16 @@ def readResponse(squad,image,name,save=None,explain=True):
                         blackVals.append(boxval0)
                     else:
                         whiteVals.append(boxval0)
-                    # /for col
+                    # /for qStrip
                 if( showimglvl>=5):
                     if(key in allCBoxvals):
-                        qNums[key].append(key[:2]+'_c'+str(blockColNo))
+                        qNums[key].append(key[:2]+'_c'+str(blockQStripNo))
                         allCBoxvals[key].append(QBlockvals)
             # /for QBlock
-        if(colNos==0):
-            print("\n\t Template Incorrect Error: colNos is zero! QBlocks: ",TEMPLATE.QBlocks)
+        if(totalQStripNo==0):
+            print("\n\t Template Incorrect Error: totalQStripNo is zero! QBlocks: ",TEMPLATE.QBlocks)
             exit(0)
-        thresholdReadAvg /= colNos
+        thresholdReadAvg /= totalQStripNo
         # Translucent
         cv2.addWeighted(final_marked,alpha,transp_layer,1-alpha,0,final_marked)
 
@@ -955,8 +934,9 @@ def readResponse(squad,image,name,save=None,explain=True):
             plt.tight_layout(pad=0.5)
             plt.show()
 
-        if ( type(save) != type(None) ):
-            save = save+('_MULTI_/' if multiroll else '')
+        if (saveMarked and type(save) != type(None) ):
+            if(multiroll):
+                save = save+'_MULTI_/'
             saveImg(save+name+'_marked.jpg', final_marked)
 
         if(showimglvl>=1):

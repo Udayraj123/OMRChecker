@@ -9,12 +9,14 @@ https://github.com/Udayraj123
 """
 Constants
 """
+display_height = int(480)
+display_width  = int(640)
 windowWidth = 1280
 windowHeight = 720
 
-saveMarked=1
+saveMarked = 1
 showimglvl = 2
-saveimglvl = 1
+saveimglvl = -1
 saveImgList = {}
 resetpos = [0,0]
 explain= 0
@@ -47,7 +49,8 @@ JUMP_DELTA = 40
 # MIN_GAP : worst case gap of black and gray
 
 # Templ alignment parameters
-ALIGN_RANGE  = range(-5,6,1) #
+ALIGN_RANGE  = range(-5,6,1) 
+#TODO ^THIS SHOULD BE IN LAYOUT FILE AS ITS RELATED TO DIMENSIONS
 # ALIGN_RANGE  = [-6,-4,-2,-1,0,1,2,4,6]
 
 # max threshold difference for template matching
@@ -61,8 +64,6 @@ match_precision = 20 # > 1
 
 
 # Original scan dimensions: 3543 x 2478
-display_height = int(800)
-display_width  = int(1200)
 
 uniform_height = int(1231 / 1.5)
 uniform_width = int(1000 / 1.5)
@@ -79,10 +80,10 @@ TEXT_SIZE=0.95
 OMR_INPUT_DIR ='inputs/OMR_Files/'
 manualDir='outputs/Manual/'
 resultDir='outputs/Results/'
-errorPath=manualDir+'errorFiles/'
-badRollsPath=manualDir+'badRollNosFiles/'
-multiMarkedPath=manualDir+'multiMarkedFiles/'
-saveMarkedDir='outputs/checkedOMRs/' 
+errorPath=manualDir+'ErrorFiles/'
+badRollsPath=manualDir+'BadRollNosFiles/'
+multiMarkedPath=manualDir+'MultiMarkedFiles/'
+saveMarkedDir='outputs/CheckedOMRs/' 
 
 
 """
