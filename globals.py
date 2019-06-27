@@ -9,12 +9,14 @@ https://github.com/Udayraj123
 """
 Constants
 """
+display_height = int(480)
+display_width  = int(640)
 windowWidth = 1280
 windowHeight = 720
 
-saveMarked=1
+saveMarked = 1
 showimglvl = 2
-saveimglvl = 1
+saveimglvl = -1
 saveImgList = {}
 resetpos = [0,0]
 explain= 0
@@ -22,8 +24,7 @@ explain= 0
 
 BATCH_NO=1000
 NO_MARKER_ERR=12
-badRollError=13
-verifyError=14 #Goes into verifyFiles, can be ignored? -Nope, especially for kvs
+MULTI_BUBBLE_ERR=15
 
 
 #Intermediate - 
@@ -48,7 +49,8 @@ JUMP_DELTA = 40
 # MIN_GAP : worst case gap of black and gray
 
 # Templ alignment parameters
-ALIGN_RANGE  = range(-5,6,1) #
+ALIGN_RANGE  = range(-5,6,1) 
+#TODO ^THIS SHOULD BE IN LAYOUT FILE AS ITS RELATED TO DIMENSIONS
 # ALIGN_RANGE  = [-6,-4,-2,-1,0,1,2,4,6]
 
 # max threshold difference for template matching
@@ -62,11 +64,9 @@ match_precision = 20 # > 1
 
 
 # Original scan dimensions: 3543 x 2478
-display_height = int(800)
-display_width  = int(800)
 
-uniform_width = int(1000 / 1.5)
 uniform_height = int(1231 / 1.5)
+uniform_width = int(1000 / 1.5)
 # original dims are (3527, 2494)
 
 ## Any input images should be resized to this--
@@ -76,24 +76,14 @@ uniform_height_hd = int(uniform_height*1.5)
 templ_scale_fac = 17
 MIN_PAGE_AREA = 80000
 
-TEXT_SIZE=1.5
-
+TEXT_SIZE=0.95
 OMR_INPUT_DIR ='inputs/OMR_Files/'
 manualDir='outputs/Manual/'
 resultDir='outputs/Results/'
-errorPath=manualDir+'errorFiles/'
-errorFile=manualDir+'errorFiles.csv'
-verifyPath=manualDir+'verifyFiles/'
-verifyFile=manualDir+'verifyFiles.csv'
-badRollNosFile=manualDir+'badRollNosFiles.csv'
-badRollsPath=manualDir+'badRollNosFiles/'
-multiMarkedPath=manualDir+'multiMarkedFiles/'
-multiMarkedFile=manualDir+'multiMarkedFiles.csv'
-saveMarkedDir='outputs/checkedOMRs/' 
-
-
-sheetCols=['batch','error','filename','path','roll']+['q'+str(i) for i in range(1,21)]#+['t'+str(i) for i in range(1,6)]
-resultSheetCols=sheetCols+['score'] 
+errorPath=manualDir+'ErrorFiles/'
+badRollsPath=manualDir+'BadRollNosFiles/'
+multiMarkedPath=manualDir+'MultiMarkedFiles/'
+saveMarkedDir='outputs/CheckedOMRs/' 
 
 
 """
@@ -106,6 +96,7 @@ filesNotMoved=0
 windowX,windowY = 0,0 
 
 
+# TODO: move to template or similar json
 Answers={
 'J':{
 'q1': ['B'],'q2':['B'],'q3':['B'],'q4': ['C'],'q5': ['0','00'],'q6': ['0','00'],'q7': ['4','04'],
@@ -143,7 +134,3 @@ Sections = {
 },
 }
 
-qNos={
-'J':['q'+str(i) for i in range(1,21)],
-'H':['q'+str(i) for i in range(1,21)]
-}

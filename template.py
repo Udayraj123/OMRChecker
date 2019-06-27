@@ -28,12 +28,12 @@ class Pt():
         self.val=val
 
 class QBlock():
-    def __init__(self, dims, key, orig, colpts):
+    def __init__(self, dims, key, orig, traverse_pts):
         # dims = (width, height)
         self.dims = dims
         self.key = key
         self.orig = orig
-        self.colpts = colpts
+        self.traverse_pts = traverse_pts
         # will be set when using
         self.shift = 0
 
@@ -54,19 +54,21 @@ qtype_data = {
         'vals' : ['A','B','C','D'],
         'orient':'H'
     },
+    'QTYPE_MCQ2':{
+        'vals' : ['A','B','C','D','E'],
+        'orient':'H'
+    },
+    # Add custom question types here-
 }
 
 class Template():
-    def __init__(self):
+    def __init__(self, jsonObj):
         self.QBlocks = []
-        self.boxDims = [-1, -1]
-        self.dims = [-1,-1]
-
-    def setDims(self,dims):
-        self.dims = dims
-
-    def setBoxDims(self,dims):
-        self.boxDims = dims
+        # throw exception on key not exist
+        self.dims = jsonObj["Dimensions"]
+        self.boxDims = jsonObj["BoxDimensions"]
+        self.concats = jsonObj["Concatenations"]
+        self.singles = jsonObj["Singles"]
 
     # Expects boxDims to be set already
     def addQBlocks(self, key, rect):
@@ -81,12 +83,13 @@ def genQBlock(boxDims, QBlockDims, key, orig, qNos, gaps, vals, qType, orient):
     orig - start point
     qNo  - a qNos tuple
     gaps - (gapX,gapY) are the gaps between rows and cols in a block
-    vals - values of each alternative for a question
+    vals - a 1D array of values of each alternative for a question
 
     Output:
     // Returns set of coordinates of a rectangular grid of points
-    Returns a QBlock containing array of Qs and some metadata
-
+    Returns a QBlock containing array of Qs and some metadata?!
+    
+    Ref:
         1 2 3 4
         1 2 3 4
         1 2 3 4
@@ -98,34 +101,33 @@ def genQBlock(boxDims, QBlockDims, key, orig, qNos, gaps, vals, qType, orient):
         22
         33
         44
-        (q1d1,q1d2)
+
+        (q1.1,q1.2)
 
     """
-    Qs=[]
     H, V = (0,1) if(orient=='H') else (1,0)
     # orig[0] += np.random.randint(-6,6)*2 # test random shift
-
-    colpts = []
-    colW, colH = (len(vals), len(qNos)) if(orient == 'H') else (len(qNos), len(vals))
+    Qs=[]
+    traverse_pts = []
     o = orig.copy()
-    for i in range(colW):
+    for q in range(len(qNos)):
         pt = o.copy()
         pts = []
-        for j in range(colH):
-            idx = [j, i]
-            p = Pt(pt.copy(),qNos[idx[H]], qType, vals[idx[V]])
-            pts.append(p)
-            pt[1] += gaps[1]
-        pt[0] += boxDims[0]
-        pt[1] += boxDims[1] - gaps[1]
-        colpts.append(([o.copy(), pt.copy()], pts))
-        o[0] += gaps[0]
+        for v in range(len(vals)):
+            pts.append(Pt(pt.copy(),qNos[q],qType,vals[v]))
+            pt[H] += gaps[H]
+        pt[H] += boxDims[H] - gaps[H]
+        pt[V] += boxDims[V]
+        #TODO- make a mini object for this
+        traverse_pts.append(([o.copy(), pt.copy()], pts))
+        o[V] += gaps[V]
 
-    return QBlock(QBlockDims, key, orig, colpts)
+    # Pass first three args as is. only append 'traverse_pts'
+    return QBlock(QBlockDims, key, orig, traverse_pts)
 
 def genGrid(boxDims, key, qType, orig, bigGaps, gaps, qNos, vals, orient='V'):
     """
-    Input:
+    Input(Directly passable from JSON parameters):
     boxDims - dimesions of single QBox
     orig- start point
     qNos - an array of qNos tuples(see below) that align with dimension of the big grid (gridDims extracted from here)
@@ -149,6 +151,15 @@ def genGrid(boxDims, key, qType, orig, bigGaps, gaps, qNos, vals, orient='V'):
    Q9   1 2 3 4    1 2 3 4      88    88    88    88
                                 99    99    99    99
 
+TODO: Update this part, add more examples like-
+    Q1  1 2 3 4
+
+    Q2  1 2 3 4
+    Q3  1 2 3 4
+
+    Q4  1 2 3 4
+    Q5  1 2 3 4
+
     MCQ type (orient='H')-
         [
             [(q1,q2,q3),(q4,q5,q6)]
@@ -166,12 +177,14 @@ def genGrid(boxDims, key, qType, orig, bigGaps, gaps, qNos, vals, orient='V'):
         ]
 
     """
-    gridData=np.array(qNos)
-    if(len(gridData.shape)!=3 or gridData.size==0): # product of shape is zero
-        print("genGrid: Invalid qNos array given", gridData)
+    gridData = np.array(qNos)
+    # print(gridData.shape, gridData)
+    if(0 and len(gridData.shape)!=3 or gridData.size==0): # product of shape is zero
+        print("Error(genGrid): Invalid qNos array given:", gridData.shape, gridData)
+        exit(0)
         return []
 
-    # ^ should also validate no overlap of rect points somehow?!
+    # ^4ENDUSER should also validate no overlap of rect points somehow?!
 
     """
     orient = 'H'
@@ -193,35 +206,44 @@ def genGrid(boxDims, key, qType, orig, bigGaps, gaps, qNos, vals, orient='V'):
     """
 
     orig = np.array(orig)
-    gridRows, gridCols = gridData.shape[:2]
     numQsMax = max([max([len(qb) for qb in row]) for row in gridData])
-    numVals = len(vals)
+    
+    numDims = [numQsMax, len(vals)]
 
     QBlocks=[]
+    
+    # **Simple is powerful**
     # H and V are named with respect to orient == 'H', reverse their meaning when orient = 'V'
     H, V = (0,1) if(orient=='H') else (1,0)
-    numDims = [numQsMax, numVals]
-    # print(orig, numDims, gridRows,gridCols, gridData)
+
+    # print(orig, numDims, gridData.shape, gridData)
     # orient is also the direction of making QBlocks
-    # Simple is powerful-
-    origGap = [
-        # bigGaps is indep of orientation
-        bigGaps[0] + (numDims[V]-1)*gaps[H],
-        bigGaps[1] + (numDims[H]-1)*gaps[V]
-    ]
+    
     # print(key, numDims, orig, gaps, bigGaps, origGap )
     qStart = orig.copy()
 
+    origGap = [0, 0]
+    
+    # Usually single row
     for row in gridData:
         qStart[V] = orig[V]
+        
+        # Usually multiple qTuples
         for qTuple in row:
+            # Update numDims and origGaps
+            numDims[0] = len(qTuple)
+            # bigGaps is indep of orientation
+            origGap[0] = bigGaps[0] + (numDims[V]-1)*gaps[H]
+            origGap[1] = bigGaps[1] + (numDims[H]-1)*gaps[V]
+            # each qTuple will have qNos
             QBlockDims = [
                 # width x height in pixels
                 gaps[0] * (numDims[V]-1) + boxDims[H],
                 gaps[1] * (numDims[H]-1) + boxDims[V]
             ]
-            # TONIGHT'S BLUNDER - qStart was getting passed by reference! (others args read-only)
+            # WATCH FOR BLUNDER(use .copy()) - qStart was getting passed by reference! (others args read-only)
             QBlocks.append(genQBlock(boxDims, QBlockDims, key, qStart.copy(),qTuple,gaps,vals,qType,orient))
+            # Goes vertically down first
             qStart[V] += origGap[V]
         qStart[H] += origGap[H]
     return QBlocks
@@ -236,56 +258,20 @@ def read_template(filename):
     with open(filename, "r") as f:
         return json.load(f)
 
-def scalePts(pts,facX,facY):
-    return [[int(pt[0]*facX),int(pt[1]*facY)] for pt in pts]
-
 
 templJSON={
 'J' : read_template("inputs/Layouts/J_template.json"),
 'H' : read_template("inputs/Layouts/H_template.json")
+# 'H' : read_template("inputs/Layouts/H_template2.json")
 }
-TEMPLATES={'J': Template(),'H': Template()}
+TEMPLATES={}
 
-for squad in ['J','H']:
-    TEMPLATES[squad].setDims(templJSON[squad]["Dimensions"])
-    TEMPLATES[squad].setBoxDims(templJSON[squad]["boxDimensions"])
-    # print(TEMPLATES[squad].dims)
-    # print(TEMPLATES[squad].boxDims)
-    for k, rect in templJSON[squad].items():
-        if(k=="Dimensions" or k=="boxDimensions"):
-            continue
-        # rect["orig"], rect["gaps"], rect["bigGaps"] = scalePts([rect["orig"], rect["gaps"], rect["bigGaps"]], 0.54, 0.39 )
-        # Add QBlock to array of grids
-        TEMPLATES[squad].addQBlocks(k, rect)
-
-    if(TEMPLATES[squad].dims == [-1, -1]):
-        print(squad, "Invalid JSON! No reference dimensions given")
-        exit(0)
-
-
-# For processOMR
-
-readFormat = {
-    # Class/Squad
-    'J' : {    
-        # CSV column : Resp Keys to concatenate
-        'Roll' :  ['Squad','Medium',"roll0", "roll1", "roll2", "roll3", "roll4", "roll5", "roll6", "roll7", "roll8"],
-        'q1' : ['q1'], 'q2' : ['q2'], 'q3' : ['q3'], 'q4' : ['q4'], 'q5' : ['q5.1','q5.2'],
-        'q6' : ['q6.1','q6.2'], 'q7' : ['q7.1','q7.2'], 'q8' : ['q8.1','q8.2'], 'q9' : ['q9.1','q9.2'],
-        'q10' : ['q10'], 'q11' : ['q11'], 'q12' : ['q12'], 'q13' : ['q13'], 'q14' : ['q14'], 
-        'q15' : ['q15'], 'q16' : ['q16'], 'q17' : ['q17'], 'q18' : ['q18'] ,'q19' : ['q19'], 
-        'q20' : ['q20']
-        },
-    'H' : {    
-        # CSV column : Resp Keys to concatenate
-        'Roll' :  ['Squad','Medium',"roll0", "roll1", "roll2", "roll3", "roll4", "roll5", "roll6", "roll7", "roll8"],
-        'q1' : ['q1'], 'q2' : ['q2'], 'q3' : ['q3'], 'q4' : ['q4'],
-        'q5' : ['q5'], 'q6' : ['q6'], 'q7' : ['q7'], 'q8' : ['q8'],
-        'q9' : ['q9.1','q9.2'], 'q10' : ['q10.1','q10.2'], 'q11' : ['q11.1','q11.2'], 'q12' : ['q12.1','q12.2'], 'q13' : ['q13.1','q13.2'],
-        'q14' : ['q14'], 'q15' : ['q15'], 'q16' : ['q16']
-    }
-}
-
+for squad in templJSON.keys():
+    TEMPLATES[squad] = Template(templJSON[squad])
+    for k, QBlocks in templJSON[squad].items():
+        if(k not in ["Dimensions","BoxDimensions","Concatenations","Singles"]):
+            # Add QBlock to array of grids
+            TEMPLATES[squad].addQBlocks(k, QBlocks)
 
 """
 # mask = 255 * np.ones(pt - o,np.uint8).T
@@ -298,4 +284,33 @@ readFormat = {
 # Actually need columns
 # if(orient=='H'):
 #     mask = 255 - mask
+def scalePts(pts,facX,facY):
+    return [[int(pt[0]*facX),int(pt[1]*facY)] for pt in pts]
+# rect["orig"], rect["gaps"], rect["bigGaps"] = scalePts([rect["orig"], rect["gaps"], rect["bigGaps"]], 0.54, 0.39 )
+
+
+UNCOMPRESSED-
+if(orient=='H'):
+    for q in range(len(qNos)):
+        pt = o.copy()
+        pts = []
+        for v in range(len(vals)):
+            pts.append(Pt(pt.copy(),qNos[q],qType,vals[v]))
+            pt[0] += gaps[0]
+        pt[0] += boxDims[0] - gaps[0]
+        pt[1] += boxDims[1]
+        traverse_pts.append(([o.copy(), pt.copy()], pts))
+        o[1] += gaps[1]
+else:
+    for q in range(len(qNos)):
+        pt = o.copy()
+        pts = []
+        for v in range(len(vals)):
+            pts.append(Pt(pt.copy(),qNos[q],qType,vals[v]))
+            pt[1] += gaps[1]
+        pt[1] += boxDims[1] - gaps[1]
+        pt[0] += boxDims[0]
+        traverse_pts.append(([o.copy(), pt.copy()], pts))
+        o[0] += gaps[0]
+
 """

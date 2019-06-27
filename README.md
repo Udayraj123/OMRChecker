@@ -2,6 +2,8 @@
 A full-fledged OMR checking software that can read and evaluate OMR sheets scanned at any angle and having any color. With support for a customizable marking scheme with section-wise marking, bonus questions, etc. 
 
 ## How to run
+Preferred operating system : *Linux*
+
 #### 1. Clone the repo
 Use `--depth=1` if you want only the latest version(less than half download size)
 ```
@@ -15,11 +17,16 @@ More details here: https://www.pyimagesearch.com/2018/09/19/pip-install-opencv/
 ```
 sudo python3 -m pip install --upgrade pip
 sudo python3 -m pip install opencv-python
+sudo python3 -m pip install opencv-contrib-python
 ```
 
 ###### Install other requirements
 ```
 sudo python3 -m pip install -r requirements.txt
+```
+If you face an distutils error, use the `--ignore-installed` flag 
+```
+sudo python3 -m pip install --ignore-installed -r requirements.txt
 ```
 
 #### 3. Run the code
@@ -38,11 +45,17 @@ sudo python3 -m pip install -r requirements.txt
 This structure has been created to suit for better organization of OMRs (Citywise, then Group-wise and Language-wise). Making changes to this would require changes in the code.
 
 #### Configuring for your OMR Sheets (W.I.P.)
-	1. Put your OMR images in `inputs/OMR_Files/CityName/JE` (You can rename CityName)
-	2. Put template layout(s) in `inputs/Layouts` (Guide coming soon)
-	3. Put marker crop at `inputs/omr_marker.jpg`
-	4. (optional) Advanced configuration can be done in globals.py
-	5. Run code
+	1. Put your OMR images in `inputs/OMR_Files/CityName/HE` (You can rename CityName)
+	2. Put marker crop at `inputs/omr_marker.jpg`
+	3. Put template layout(s) in `inputs/Layouts` (Guide coming soon)
+	4. (optional) more advanced configuration can be done in globals.py
+	5. Run code - If your images are taken close-up using scanner, remember to run code with `--closeUp` option.
+
+
+<!-- #### Testing the code
+Datasets to test on : 
+Standard Quality Dataset (200MB)
+High Quality Dataset (2 GB) -->
 
 <!-- 
 ## Code in action (To be updated)

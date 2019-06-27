@@ -86,7 +86,7 @@ Excess:
 	(done 17 Apr - getMaxCosine from app) Mechanisms to check if circles found form a rectangle-like shape
 	Defeat the bossbg.jpg
 	3D viz (online) of this templateMatch output(, Sobel eroded blobs) to see the peaks - of morph output
-
+		>>Make use of qStrips too
 Shifting -
 Problem: [Nonlinear Distortion] There's an uneven shift(mainly horizontal) of order of 2-3 pixels in the Qbox columns
 
@@ -102,7 +102,7 @@ Qbox level soln
 			1. Correlation : Error chances significant as there are smaller box lines that also correlate
 			2. Correlation on Eroded image : Gotta try
 				It is taken with white color anyway: so just take max white value.
-		_/	3. Correlation on Gradient image : More consistent
+		//	3. Correlation on Gradient image : More consistent 
 
 	Different approach 1
 		> We'd always have partially filled(gray or black) Qboxes, move them individually towards the black area
@@ -297,7 +297,7 @@ Note: looking back at this app dev, I was right about thinking so much before st
 Also, had I got some real mobile camera images in test set instead of the unit_tests, I would have discovered few bugs quite earlier
 
 From drive data: 
-	// Nope, its a limitation - # TODO: (remove closeup bool) Automate the case of close up scan(incorrect page)-
+	// Nope, its a limitation - # TODO: (remove closeUp bool) Automate the case of close up scan(incorrect page)-
 
 18 Apr:
 	// Nailed this one in solving process- 
@@ -522,11 +522,54 @@ LATER:
 			link to app
 			how to contribute
 			> Readme update new TODOs 
-				- identify if its a closeup : check no contours & make use of whites!
+				- identify if its a closeUp : check no contours & make use of whites!
 				- from code comments
 				- Point at juniors from coding club: Write as a guide to dive into this code easily
 			How to use for your org:
 				> Inputs description
 				> Brand techno's marking scheme here. Show the how marking scheme json can handle it.
 		
-		make code independent of Squads?
+		Make code independent of Squads?
+
+* - 23 June:
+	// Argparsing for nomarkers
+	// Run support in windows
+	Update readme for same^
+	//Support for uneven rows template 
+		- changed validation : works for 2 unevens (coincidence)
+		// Nope, bigGap IS independent of orient- NEED OrientGrid?
+		// Fixed- work for 3+ unevens- Problem is in using numQsMax
+		// Mysterious bug - Why is this misaligned
+		"Mcq3": {"qType": "QTYPE_MCQ", "orig": [1505, 830 ], "bigGaps": [115, 115 ], "gaps": [59, 53 ], "qNos":[[["q1"] , ["q2", "q3", "q4"], ["q5", "q6"] ] ] }
+		 ^ IT MUST BE DUE TO THE ALIGN TEMPLATE METHOD
+		 **^VERIFY ON H_09609^**
+
+
+	Optimize for silent speeds
+	Who's saying you can have only one go at the whole data?
+		-> Figure out ways to get suggestions for fine tuning based on your data.
+			>> Especially on column alignment
+			>> Make use of 123456789 type multimarks here
+
+	ANALYZING DOCUMENT TEST DATASET
+		> TEMPLATE ALIGNMENT ISSUE IS NILL FOR DOCUMENT SCANS -> the reason why existing software work :P
+		> SO IS SCALED TEMPLATE MATCHING
+		> The 123456789 prob on gray areas : Need more robust threshold selection methods. Also there's bad omrs and good omrs mixed. Need to separate them at fundamental level somehow first
+		//[FIXED][BUG] Nope, its limitation of colpts jugaad - uses vertical THR for single block instead of MCQ traverse > Q1 undetected issue - decreasing white THR would solve it, but is it the issue?
+			//> So, make it traverse the natural way.
+
+	REFACTORING - 
+		what does design pattern tell you about the way 'genQBlock' is used?
+
+	REDUNDANCY REDUCTIONS
+		Layout excess - Concatenations and Singles - deduce from rest of the key using a single parse
+
+	+README SHOULD
+		> Reflect the usablily : show demo on 3 different layouts you have
+		> Portray the main difficulty is correct THRESHOLDING and not Cropping 
+
+	+Report should
+		> Reflect the robustness : Advantage of adaptive - misaligned column read correctly
+
+	VERY EXCESS(idea):
+		mini hovers of adaptive threshold plots in the template overlay image
