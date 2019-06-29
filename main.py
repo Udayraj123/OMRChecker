@@ -31,9 +31,9 @@ from template import *
 
 def move(error,filepath,filepath2,filename):
     print("Move:  "+filepath, " --> ",filepath2 + filename)
-    if(error!=NO_MARKER_ERR):
-        print("Error-Code: "+str(error))
-        return None
+    # if(error!=NO_MARKER_ERR):
+    #     print("Error-Code: "+str(error))
+    return None
     global filesMoved
     # print(filepath,filepath2,filename,array)
     if(os.path.exists(filepath)):
@@ -45,6 +45,7 @@ def move(error,filepath,filepath2,filename):
         os.rename(filepath,filepath2+filename)
         append = [BATCH_NO,error,filename,filepath2]
         filesMoved+=1
+        print("Moved.")
         return append
     else:
         print('File already moved')
@@ -234,6 +235,8 @@ for filepath in allOMRs:
         continue
 
     inOMR = cv2.imread(filepath,cv2.IMREAD_GRAYSCALE)
+    print(filepath)
+    print(inOMR.shape)
     OMRcrop = getROI(filepath,filename_noext+ext,inOMR, closeUp=args["closeUp"], noMarkers=args["noMarkers"])
     if(OMRcrop is None):
         err = move(NO_MARKER_ERR, filepath, errorPath+squadlang,filename_noext+ext)
@@ -241,7 +244,7 @@ for filepath in allOMRs:
             errorsArray[squad].append(err+respCols[squad])
             # appendArr(err,errorsArray[squad],manualDir+"ErrorFiles_"+squad+".csv")
         else:
-            print("\n\tUNEXPECTED!\n\t")
+            print("\n\tUNEXPECTED (Unless debugging move())!\n\t")
             filesNotMoved += 1
         continue
     #uniquify

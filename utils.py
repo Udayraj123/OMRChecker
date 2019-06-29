@@ -352,9 +352,10 @@ def getBestMatch(image_eroded_sub, num_steps=10, iterLim=50):
     res, best_scale=None, None
     allMaxT = 0
     for r0 in range(x[1], x[0], -1*match_precision//num_steps): #reverse order
-        s=float(r0)/match_precision
+        s = float(r0)/match_precision
         if(s == 0.0):
             continue
+        
         templ_scaled = imutils.resize(marker if ERODE_SUB_OFF else marker_eroded_sub, height = int(h*s))
         res = cv2.matchTemplate(image_eroded_sub,templ_scaled,cv2.TM_CCOEFF_NORMED)
 
@@ -503,14 +504,14 @@ def getROI(filepath,filename,image, closeUp=False, noMarkers=False):
         if(showimglvl>=2):# and showimglvl < 4):
             image_eroded_sub = resize_util_h(image_eroded_sub, image_norm.shape[0])
             image_eroded_sub[:,-5:] = 0
-            show('Warped',np.hstack((image_eroded_sub, image_norm)),0)
+            show("Warped: "+filename,np.hstack((image_eroded_sub, image_norm)),0)
 
     # iterations : Tuned to 2.
     # image_eroded_sub = image_norm - cv2.erode(image_norm, kernel=np.ones((5,5)),iterations=2)
     return image_norm
 
 
-def getGlobalThreshold(QVals):
+def getGlobalThreshold(QVals_orig, plotTitle=None, plotShow=True, sortInPlot=True):
     """
         Note: Cannot assume qStrip has only-gray or only-white bg (in which case there is only one jump). 
               So there will be either 1 or 2 jumps.
@@ -535,7 +536,7 @@ def getGlobalThreshold(QVals):
     
     """    
     # Sort the Q vals
-    QVals= sorted(QVals)
+    QVals = sorted(QVals_orig)
     # Find the FIRST LARGE GAP and set it as threshold:
     l=len(QVals)-1
     max1,thr1=MIN_JUMP,255
@@ -554,26 +555,52 @@ def getGlobalThreshold(QVals):
         if(jump > max2 and abs(thr1-newThr) > JUMP_DELTA):
             max2=jump
             thr2=newThr
-    # thresholdRead = min(thr1,thr2) 
-    thresholdRead, j_low, j_high = thr1, thr1 - max1//2, thr1 + max1//2
-    if(thr1 > thr2):
-        thresholdRead, j_low, j_high = thr2, thr2 - max2//2, thr2 + max2//2
+    # globalTHR = min(thr1,thr2) 
+    globalTHR, j_low, j_high = thr1, thr1 - max1//2, thr1 + max1//2
+    
+    # # For normal images
+    # thresholdRead =  116
+    # if(thr1 > thr2 and thr2 > thresholdRead):
+    #     print("Note: taking safer thr line.")
+    #     globalTHR, j_low, j_high = thr2, thr2 - max2//2, thr2 + max2//2
 
-    return thresholdRead, j_low, j_high
+    if(globalTHR == 255):
+        print("Warning: threshold is unexpectedly 255!")
+
+    if(plotTitle is not None):    
+        f, ax = plt.subplots()
+        ax.bar(range(len(QVals_orig)),QVals if sortInPlot else QVals_orig);
+        ax.set_title(plotTitle)
+        thrline=ax.axhline(globalTHR,color='green',ls='--', linewidth=5)
+        thrline.set_label("Global Threshold")
+        thrline=ax.axhline(thr2,color='red',ls=':', linewidth=3)
+        thrline.set_label("THR2 Line")
+        # thrline=ax.axhline(j_low,color='red',ls='-.', linewidth=3)
+        # thrline=ax.axhline(j_high,color='red',ls='-.', linewidth=3)
+        # thrline.set_label("Boundary Line")
+        # ax.set_ylabel("Mean Intensity")
+        ax.set_ylabel("Values")
+        ax.set_xlabel("Position")
+        ax.legend()
+        if(plotShow):
+            plt.title(plotTitle)
+            plt.show()
+    
+    return globalTHR, j_low, j_high
 
 
-def getLocalThreshold(QVals, globalTHR, plotTHR=False):
+def getLocalThreshold(QVals, globalTHR, noOutliers, plotTitle=None, plotShow=True):
     """
-    Assumption : Colwise background color is uniformly gray or white, but not alternating 
-    In this case there is atmost one jump.
+    //No more - Assumption : Colwise background color is uniformly gray or white, but not alternating. In this case there is atmost one jump.
 
     0 Jump :
                     <-- safe THR?
            .......
         ...|||||||
         ||||||||||  <-- safe THR?
-    How to decide given range is above or below gray?
-    -> global QVals shall absolutely help here. Just run same function on total QVals instead of colwise _//
+    // How to decide given range is above or below gray?
+        -> global QVals shall absolutely help here. Just run same function on total QVals instead of colwise _//
+    How to decide it is this case of 0 jumps
 
     1 Jump : 
             ......
@@ -588,25 +615,18 @@ def getLocalThreshold(QVals, globalTHR, plotTHR=False):
     QVals= sorted(QVals)
 
     # Small no of pts cases:
-    qmin, qmax, qmean, qstd = np.min(QVals), np.max(QVals), round(np.mean(QVals),2), round(np.std(QVals),2)
-    gap = (qmax - qmin)
     # base case: 1 or 2 pts
     if(len(QVals) < 3): 
-        thr1 = globalTHR if gap < MIN_GAP else qmean
+        thr1 = globalTHR if np.max(QVals)-np.min(QVals) < MIN_GAP else np.mean(QVals)
     else:
-        # All Black or All White case
-        noOutliers = qstd < MIN_STD
-        GVals = [round(abs(q-qmean),2) for q in QVals]
-        gmean, gstd = round(np.mean(GVals),2), round(np.std(GVals),2)
-        # print("qstd",qstd, "gstd", gstd,"Gaps in gvals",sorted([round(abs(g-gmean),2) for g in GVals],reverse=True))
-        
         # TODO: Make this dependent on max jump!
         # DISCRETION: Pretty critical factor in reading response
-        DISCRETION = 2.7 # 2.59 was closest hit, 3.0 is too far
-        for g in GVals:
-            if(abs(g-gmean) > DISCRETION*gstd):
-                noOutliers = False
-                break
+        # DISCRETION = 2.7 # 2.59 was closest hit, 3.0 is too far
+        # for g in GVals:
+        #     if(abs(g-gmean) > DISCRETION*gstd):
+        #         noOutliers = False
+        #         break
+        # ^Stackoverflow method
 
         if(noOutliers):
             # All Black or All White case
@@ -620,20 +640,40 @@ def getLocalThreshold(QVals, globalTHR, plotTHR=False):
                 if(jump > max1):
                     max1 = jump
                     thr1 = QVals[i-1] + jump/2
+            if(thr1 == 255):
+                print("Warning: threshold is unexpectedly 255!")
 
-    if(plotTHR):
+    if(plotTitle is not None):    
         f, ax = plt.subplots()
         ax.bar(range(len(QVals)),QVals);
-        thrline=ax.axhline(globalTHR,color='red',ls='--', linewidth=4)
-        thrline.set_label("globalTHR")
-        thrline=ax.axhline(thr1,color='blue',ls='--', linewidth=4)
-        thrline.set_label("localTHR")
-        ax.set_title("Intensity distribution")
-        ax.set_ylabel("Intensity")
-        ax.set_xlabel("Q Boxes sorted by Intensity")
+        thrline=ax.axhline(thr1,color='green',ls=('-.'), linewidth=3)
+        thrline.set_label("Local Threshold")
+        thrline=ax.axhline(globalTHR,color='red',ls=':', linewidth=5)
+        thrline.set_label("Global Threshold")
+        ax.set_title(plotTitle)
+        ax.set_ylabel("Bubble Mean Intensity")
+        ax.set_xlabel("Bubble Number(sorted)")
         ax.legend()
-        plt.show()
+        #TODO append QStrip to this plot-
+        # appendSaveImg(5,getPlotImg())
+        if(plotShow):
+            plt.show()
     return thr1
+
+from matplotlib.ticker import MaxNLocator
+def plotArray(QVals, plotTitle, sort = False, plot=True ):
+    f, ax = plt.subplots()
+    if(sort):
+        QVals = sorted(QVals)
+    ax.bar(range(len(QVals)),QVals);
+    ax.set_title(plotTitle)
+    ax.set_ylabel("Values")
+    ax.set_xlabel("Position")
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    if(plot):
+        plt.show()
+    # else: they will call this
+    #     appendSaveImg(appendImgLvl,getPlotImg())
 
 def saveImg(path, final_marked):
     print('Saving Image to '+path)
@@ -658,6 +698,9 @@ def readResponse(squad,image,name,save=None,noAlignment=False):
         
         morph = img.copy() #
         appendSaveImg(2,morph)
+
+        # TODO: evaluate if CLAHE is really req
+
         # Note: clahe is good for morphology, bad for thresholding
         morph = clahe.apply(morph) 
         appendSaveImg(2,morph)
@@ -678,7 +721,8 @@ def readResponse(squad,image,name,save=None,noAlignment=False):
         CLR_BLACK = (50,150,150)
         CLR_WHITE = (250,250,250)
         CLR_GRAY = (120,120,120)
-        CLR_DARK_GRAY = (90,90,90)
+        CLR_DARK_GRAY = (190,190,190)
+        # CLR_DARK_GRAY = (90,90,90)
 
         multimarked,multiroll=0,0
 
@@ -760,136 +804,120 @@ def readResponse(squad,image,name,save=None,noAlignment=False):
                     steps += 1
 
                 QBlock.shift = shift
-                # sums = sorted(sums, reverse=True)
                 # print("Aligned QBlock: ",QBlock.key,"Corrected Shift:", QBlock.shift,", Dimensions:", QBlock.dims, "orig:", QBlock.orig,'\n')
 
     # if(showimglvl>=3):
         initial_align=img.copy()
         final_align=img.copy()
-        mean_vals =img.copy()
+        # mean_vals =img.copy()
         for QBlock in TEMPLATE.QBlocks:
             s,d = QBlock.orig, QBlock.dims
             cv2.rectangle(initial_align,(s[0],s[1]),(s[0]+d[0],s[1]+d[1]),CLR_BLACK,3)
             shift = QBlock.shift
             cv2.rectangle(final_align,(s[0]+shift,s[1]),(s[0]+shift+d[0],s[1]+d[1]),CLR_BLACK,3)
-            for qStrip, pts in QBlock.traverse_pts:
-                for pt in pts:
+            for qStrip, qBoxPts in QBlock.traverse_pts:
+                for pt in qBoxPts:
                     x,y = pt.x,pt.y
-                    cv2.rectangle(initial_align,(int(x+boxW/10),int(y+boxH/10)),(int(x+boxW-boxW/10),int(y+boxH-boxH/10)), CLR_GRAY,-1)
+                    cv2.rectangle(initial_align,(int(x+boxW/10),int(y+boxH/10)),(int(x+boxW-boxW/10),int(y+boxH-boxH/10)), CLR_DARK_GRAY,-1)
                     x,y = (pt.x + QBlock.shift,pt.y)
-                    cv2.rectangle(final_align,(int(x+boxW/10),int(y+boxH/10)),(int(x+boxW-boxW/10),int(y+boxH-boxH/10)), CLR_GRAY,-1)
+                    cv2.rectangle(final_align,(int(x+boxW/10),int(y+boxH/10)),(int(x+boxW-boxW/10),int(y+boxH-boxH/10)), CLR_DARK_GRAY,-1)
                     rect = [y,y+boxH,x,x+boxW]
-                    cv2.rectangle(mean_vals,(int(x+boxW/10),int(y+boxH/10)),(int(x+boxW-boxW/10),int(y+boxH-boxH/10)), CLR_GRAY,-1)
-                    cv2.putText(mean_vals,'%d'% (cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0]), (rect[2]+2, rect[0] + (boxH*2)//3),cv2.FONT_HERSHEY_SIMPLEX, 0.6,CLR_BLACK,2)
+                    # cv2.rectangle(mean_vals,(int(x+boxW/10),int(y+boxH/10)),(int(x+boxW-boxW/10),int(y+boxH-boxH/10)), CLR_GRAY,-1)
+                    # cv2.putText(mean_vals,'%d'% (cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0]), (rect[2]+2, rect[0] + (boxH*2)//3),cv2.FONT_HERSHEY_SIMPLEX, 0.6,CLR_BLACK,2)
+                    cv2.putText(final_align,'%d'% (cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0]), (rect[2]+2, rect[0] + (boxH*2)//3),cv2.FONT_HERSHEY_SIMPLEX, 0.6,CLR_BLACK,2)
             cv2.putText(final_align,'s%s'% (shift), tuple(s - [TEMPLATE.dims[0]//20,-d[1]//2]),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE,CLR_BLACK,4)
 
         appendSaveImg(1,initial_align)
         # appendSaveImg(1,morph_v)
         appendSaveImg(1,final_align)
         # show("Initial Template Overlay", initial_align, 0, 1, [0,0])
-        show("Corrected Template Overlay", final_align, 1, 1)# [final_align.shape[1],0])
+        final_align = resize_util(final_align,int(display_width*1.5)) 
+        show("Corrected Template Overlay", final_align, 0, 0)# [final_align.shape[1],0])
         # show("Template Overlay", mean_vals, 0, 1)
-        appendSaveImg(3,mean_vals)
+        # appendSaveImg(3,mean_vals)
         appendSaveImg(4,img)
         
-        # for All Black or All White case -
-        AllQBlockvals=[]
+        # Get mean vals n other stats
+        allQVals, allQStripArrs, allQStdVals =[], [], []
+        totalQStripNo = 0
         for QBlock in TEMPLATE.QBlocks:
-            for qStrip, pts in QBlock.traverse_pts:
-                for pt in pts:
+            QStdVals=[]
+            for qStrip, qBoxPts in QBlock.traverse_pts:
+                QStripvals = []
+                for pt in qBoxPts:
                     # shifted
                     x,y = (pt.x + QBlock.shift,pt.y)
                     rect = [y,y+boxH,x,x+boxW]
-                    AllQBlockvals.append(cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0])
-        AllQBlockvals = sorted(AllQBlockvals)
-        globalTHR, j_low, j_high = getGlobalThreshold(AllQBlockvals)
-        f, ax = plt.subplots()
-        ax.bar(range(len(AllQBlockvals)),AllQBlockvals);
-        ax.set_title("Mean Intensity Histogram")
-        thrline=ax.axhline(globalTHR,color='green',ls='-', linewidth=4)
-        thrline.set_label("Global Threshold")
-        # thrline=ax.axhline(j_low,color='red',ls='--', linewidth=4)
-        # thrline=ax.axhline(j_high,color='red',ls='--', linewidth=4)
-        # thrline.set_label("Boundary Line")
-        ax.set_ylabel("Bubble Mean Intensity")
-        ax.set_xlabel("Bubble Number(sorted)")
+                    QStripvals.append(cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0])
+                QStdVals.append(round(np.std(QStripvals),2))
+                allQStripArrs.append(QStripvals)
+                allQVals.extend(QStripvals)
+                # print(totalQStripNo, qBoxPts[0].qNo, QStdVals[len(QStdVals)-1])
+                totalQStripNo+=1
+            allQStdVals.extend(QStdVals)
+
+        globalStdTHR, jstd_low, jstd_high = getGlobalThreshold(allQStdVals)#, "Q-wise Std-dev Plot", plotShow=True, sortInPlot=False)
+        # stdPlot = getPlotImg()
+        globalTHR, j_low, j_high = getGlobalThreshold(allQVals, "Mean Intensity Histogram", plotShow=False, sortInPlot=True)
         # plt.show()
-        # ax.legend()
         hist = getPlotImg()
-        # show("Hist", hist, 0, 1)
+        show("Hist", hist, 0, 1)
         appendSaveImg(3,hist)
         appendSaveImg(4,hist)
         appendSaveImg(1,hist)
+        print(name,"globalTHR: ",round(globalTHR,2),"globalStdTHR: ",round(globalStdTHR,2))
 
-        print(name,"globalTHR: ",round(globalTHR,2))
-        thresholdReadAvg, totalQStripNo = 0, 0
+
+        perOMRThresholdAvg, totalQStripNo, totalQBoxNo = 0, 0, 0
         for QBlock in TEMPLATE.QBlocks:
-            blockQStripNo = 0
+            blockQStripNo = 1 # start from 1 is fine here
             shift=QBlock.shift
             s,d = QBlock.orig, QBlock.dims
             key = QBlock.key[:3]
             # cv2.rectangle(final_marked,(s[0]+shift,s[1]),(s[0]+shift+d[0],s[1]+d[1]),CLR_BLACK,3)
-            for qStrip, pts in QBlock.traverse_pts:
-                totalQStripNo += 1
-                blockQStripNo += 1
-                QBlockvals=[]
-                for pt in pts:
-                    # shifted
-                    x,y = (pt.x + QBlock.shift,pt.y)
-                    rect = [y,y+boxH,x,x+boxW]
-                    QBlockvals.append(cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0])
-                
-                QBlockvals= sorted(QBlockvals)
-                thresholdRead = getLocalThreshold(QBlockvals,globalTHR,showimglvl>=6)
-                # print(pts[0].qNo,key,blockQStripNo, "THR: ",thresholdRead)
-                thresholdReadAvg += thresholdRead
+            for qStrip, qBoxPts in QBlock.traverse_pts:
+                # All Black or All White case        
+                noOutliers = allQStdVals[totalQStripNo] < globalStdTHR
+                # print(totalQStripNo, qBoxPts[0].qNo, allQStdVals[totalQStripNo], "noOutliers:", noOutliers)
+                perQStripThreshold = getLocalThreshold(allQStripArrs[totalQStripNo], 
+                    globalTHR, noOutliers, 
+                    # "Mean Intensity Histogram for "+ key +"."+ qBoxPts[0].qNo+"."+str(blockQStripNo), 
+                    None,
+                    "q5" in (qBoxPts[0].qNo) or showimglvl>=6)
+                # print(qBoxPts[0].qNo,key,blockQStripNo, "THR: ",round(perQStripThreshold,2))
+                perOMRThresholdAvg += perQStripThreshold
                 if(
-                    # "q7" in (pts[0].qNo) or 
-                    # (pts[0].qNo+str(blockQStripNo))=="q15" or 
-                    showimglvl>=6
+                    0  
+                    # or "q17" in (qBoxPts[0].qNo) 
+                    # or (qBoxPts[0].qNo+str(blockQStripNo))=="q15" 
                  ):
                     st, end = qStrip
                     show("QStrip: "+key+"-"+str(blockQStripNo), img[st[1] : end[1], st[0]+shift : end[0]+shift],0)
-                    # f, ax = plt.subplots()
-                    # ax.bar(range(len(QBlockvals)),QBlockvals);
-                    # thrline=ax.axhline(thresholdRead,color='green',ls='-', linewidth=4)
-                    # thrline.set_label("Local Threshold")
-                    # thrline=ax.axhline(globalTHR,color='red',ls='--', linewidth=4)
-                    # # thrline.set_label("Safe Threshold")
-                    # thrline.set_label("Global Threshold")
-                    # ax.set_title("Mean Intensity Histogram for "+ key +"."+ pts[0].qNo+"."+str(blockQStripNo))
-                    # ax.set_ylabel("Bubble Mean Intensity")
-                    # ax.set_xlabel("Bubble Number(sorted)")
-                    # ax.legend()
-                    # plt.show()
-                    # show("Thresholding",getPlotImg())
-                    # appendSaveImg(5,getPlotImg())
-                
-                QBlockvals=[]
-                for pt in pts:
+
+                for pt in qBoxPts:
                     # shifted
                     x,y = (pt.x + QBlock.shift,pt.y)
-                    check_rects = [[y,y+boxH,x,x+boxW]]
-                    detected=False
-                    boxval0 = 0
-                    for rect in check_rects:
-                        # This is NOT the usual thresholding, It is boxed mean-thresholding
-                        boxval = cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0]
-                        if(boxval0 == 0):
-                            boxval0 = boxval
-                        if(thresholdRead > boxval):
-                            # for critical analysis
-                            boxval0 = max(boxval,boxval0)
-                            detected=True
-                            break;
+                    boxval0 = allQVals[totalQBoxNo]
+                    detected = perQStripThreshold > boxval0
                     
+                    #TODO: add an option to select PLUS SIGN 
+                    # extra_check_rects = []
+                    # # [y,y+boxH,x,x+boxW]
+                    # for rect in extra_check_rects:
+                    #     # Note: This is NOT pixel-based thresholding, It is boxed mean-thresholding
+                    #     boxval = cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0]
+                    #     if(perQStripThreshold > boxval):
+                    #         # for critical analysis
+                    #         boxval0 = max(boxval,boxval0)
+                    #         detected=True
+                    #         break;
+
                     if (detected):
                         cv2.rectangle(final_marked,(int(x+boxW/12),int(y+boxH/12)),(int(x+boxW-boxW/12),int(y+boxH-boxH/12)), CLR_DARK_GRAY,-1)
                     else:
                         cv2.rectangle(final_marked,(int(x+boxW/10),int(y+boxH/10)),(int(x+boxW-boxW/10),int(y+boxH-boxH/10)), CLR_GRAY,-1)
 
-                    #for hist
-                    QBlockvals.append(boxval0)
+                    # TODO Make this part useful! (Abstract visualizer to check status)
                     if (detected):
                         q = pt.qNo
                         val = str(pt.val)
@@ -902,19 +930,27 @@ def readResponse(squad,image,name,save=None,noAlignment=False):
                         blackVals.append(boxval0)
                     else:
                         whiteVals.append(boxval0)
-                    # /for qStrip
+
+                    totalQBoxNo+=1
+                    # /for qBoxPts
+                # /for qStrip
+
                 if( showimglvl>=5):
                     if(key in allCBoxvals):
                         qNums[key].append(key[:2]+'_c'+str(blockQStripNo))
-                        allCBoxvals[key].append(QBlockvals)
+                        allCBoxvals[key].append(allQStripArrs[totalQStripNo])
+                
+                blockQStripNo += 1
+                totalQStripNo += 1
             # /for QBlock
         if(totalQStripNo==0):
             print("\n\t Template Incorrect Error: totalQStripNo is zero! QBlocks: ",TEMPLATE.QBlocks)
             exit(0)
-        thresholdReadAvg /= totalQStripNo
+        perOMRThresholdAvg /= totalQStripNo
+        perOMRThresholdAvg = round(perOMRThresholdAvg,2)
         # Translucent
         cv2.addWeighted(final_marked,alpha,transp_layer,1-alpha,0,final_marked)
-
+        # Box types
         if( showimglvl>=5):
             # plt.draw()
             f, axes = plt.subplots(len(allCBoxvals),sharey=True)
@@ -924,7 +960,7 @@ def readResponse(squad,image,name,save=None,noAlignment=False):
             for k,boxvals in allCBoxvals.items():
                 axes[ctr].title.set_text(typeName[k]+" Type")
                 axes[ctr].boxplot(boxvals)
-                # thrline=axes[ctr].axhline(thresholdReadAvg,color='red',ls='--')
+                # thrline=axes[ctr].axhline(perOMRThresholdAvg,color='red',ls='--')
                 # thrline.set_label("Average THR")
                 axes[ctr].set_ylabel("Intensity")
                 axes[ctr].set_xticklabels(qNums[k])
@@ -940,7 +976,8 @@ def readResponse(squad,image,name,save=None,noAlignment=False):
             saveImg(save+name+'_marked.jpg', final_marked)
 
         if(showimglvl>=1):
-            show("Final Template: "+name,final_marked,1,1)
+            final_marked = resize_util(final_marked,int(display_width*1.5)) 
+            show("Final Template: "+name,final_marked,1,0)
 
         appendSaveImg(1,final_marked)
 
@@ -969,3 +1006,14 @@ def saveOrShowStacks(key, name, save=None,pause=1):
         else:
             show(name+'_'+str(key),result,pause,0)
             
+"""
+# qmin, qmax, qmean, qstd = round(np.min(QVals),2), round(np.max(QVals),2), round(np.mean(QVals),2), round(np.std(QVals),2)
+# gap = (qmax - qmin)
+# print("qmean",qmean, "qstd", qstd)
+# gstd = 0
+# GVals = [round(abs(q-qmean),2) for q in QVals]
+# gmean, gstd = round(np.mean(GVals),2), round(np.std(GVals),2)
+# if(plotTHR):
+#     print("qstd",qstd, "gstd", gstd,"Gaps in gvals",sorted([round(abs(g-gmean),2) for g in GVals],reverse=True))                
+
+"""

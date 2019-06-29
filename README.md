@@ -39,24 +39,36 @@ sudo python3 -m pip install --ignore-installed -r requirements.txt
 3. :smirk: :smirk: :smirk:
 4. Profit!!
 
-### Directory Structure 
+### Folder Structure 
 ![Directory Structure](https://raw.githubusercontent.com/udayraj123/OMRChecker/master/directory_structure.png)
 
 This structure has been created to suit for better organization of OMRs (Citywise, then Group-wise and Language-wise). Making changes to this would require changes in the code.
 
-#### Configuring for your OMR Sheets (W.I.P.)
+### Configuring for your OMR Sheets (W.I.P.)
 	1. Put your OMR images in `inputs/OMR_Files/CityName/HE` (You can rename CityName)
 	2. Put marker crop at `inputs/omr_marker.jpg`
 	3. Put template layout(s) in `inputs/Layouts` (Guide coming soon)
-	4. (optional) more advanced configuration can be done in globals.py
-	5. Run code - If your images are taken close-up using scanner, remember to run code with `--closeUp` option.
+	4. Adjust templ_scale_fac in globals.py
+	5. (optional) More advanced configuration can be done in globals.py
+	6. Run code - If your images are taken close-up using scanner, remember to run code with `--closeUp` option.
 
 
 <!-- #### Testing the code
 Datasets to test on : 
-Standard Quality Dataset (200MB)
-High Quality Dataset (2 GB) -->
+Low Quality Dataset(For CV Based methods)) (1.5 GB)
+Standard Quality Dataset(For ML Based methods) (3 GB)
+High Quality Dataset(For custom processing) (6 GB) 
+-->
 
+#### Note: Gitignore Content
+```
+**/ignore
+**/gitignore
+**/CheckedOMRs
+**/OMR_Files
+outputs/Results
+**/__pycache__
+```
 <!-- 
 ## Code in action (To be updated)
 #### Normal scans
