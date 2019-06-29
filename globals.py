@@ -33,8 +33,6 @@ minWhiteTHR,maxBlackTHR=255,0
 
 stitched = 0;
 
-# For normal images
-thresholdRead =  116
 
 # For preProcessing
 GAMMA_LOW = 0.7

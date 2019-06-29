@@ -554,15 +554,45 @@ LATER:
 	ANALYZING DOCUMENT TEST DATASET
 		> TEMPLATE ALIGNMENT ISSUE IS NILL FOR DOCUMENT SCANS -> the reason why existing software work :P
 		> SO IS SCALED TEMPLATE MATCHING
-		> The 123456789 prob on gray areas : Need more robust threshold selection methods. Also there's bad omrs and good omrs mixed. Need to separate them at fundamental level somehow first
-		//[FIXED][BUG] Nope, its limitation of colpts jugaad - uses vertical THR for single block instead of MCQ traverse > Q1 undetected issue - decreasing white THR would solve it, but is it the issue?
-			//> So, make it traverse the natural way.
+		//[FIXED-BUG] Nope, its limitation of colpts jugaad - uses vertical THR for single block instead of MCQ traverse > Q1 undetected issue - decreasing white THR would solve it, but is it the issue?
+			//Fixed-> So, make it traverse the natural way.
+		> [BUG] The 123456789 prob on gray areas : Need more robust threshold selection methods. Also there's bad omrs and good omrs mixed. Need to separate them at fundamental level somehow first
+			*THIS IS A CLASSIC BUG induced by fixing another bug on a not so fresh part of code!*
+				> There was an assumption on cols written in getLocalTHR. It immediately caused that bug on MCQs
+			// > 00715.jpg is a true bug in adaptive thresholding now
+				// > in getLocalThreshold : 255 CASE FOUND!! <- Discretion value not sufficient, Need better logic than this risky 2.7 discretion
+				TODO
+				// improve getLocal onto working on both tests with removing the discretion
+				// (seems no need now) - Also find solution to this shadowed image globalTHR methods <- Make use of the fact that dark bubbles are not much affected by shadow compared to white areas
+			
+			// >TODO: get noOutliers accurately
+				NOW THAT YOU'VE BROKEN COLPTS ASSUMPTION : You'll get three levels of jumps.
+
+				//BREAK THIS ASSUMPTION : Colwise background color is uniformly gray or white, but not alternating 
+						In this case there is atmost one jump.
+					_// M1) (Inception) apply getGlobalTHR per qstdvals n decide with that
+						- probs with shadow? 19-27,29-60 case
+						// No need, there's sufficient gap still - also Roll doesn't have the pink cols, others do, how about QBlock level assumption
+						^ MIN_JUMP will solve this too
+					// Nope, it fails on ALL MARKED- M2) GSTDVals has much more discretion.
+				
+				TODO - DO CHECK ON ALL WHITE N ALL BUBBLED CASE
+	Inbuilt tests : to check configuration
+ 		-Use a full black image with no markers option 
+ 		-globalTHR should not get used from getLocalThr (gives high confidence)
+
+	ANALYZING MOBILE TESTBENCH:
+		// Switching to higher globalTHR for now- 'Print Quality' folder shows globalTHR issue about a lower jump of the two. These cases do have an overlap, but that logic was fine when no localTHR was present.
+		- 'angles' folder has some shadow issues on globalTHR too, getting 255 again. Need to make it tolerant to gradual changes
 
 	REFACTORING - 
 		what does design pattern tell you about the way 'genQBlock' is used?
 
 	REDUNDANCY REDUCTIONS
 		Layout excess - Concatenations and Singles - deduce from rest of the key using a single parse
+
+	EFFICIENCY - 
+		Use Pyr down copy wherever possible, only alignment,etc intricate task be done on high res
 
 	+README SHOULD
 		> Reflect the usablily : show demo on 3 different layouts you have
@@ -573,3 +603,4 @@ LATER:
 
 	VERY EXCESS(idea):
 		mini hovers of adaptive threshold plots in the template overlay image
+
