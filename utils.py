@@ -339,23 +339,19 @@ def findPage(image_norm):
     return sheet
 
 # Nope, sometimes exact page contour is missed. - perhaps deprecated now - we have cropped page now.
-def getBestMatch(image_eroded_sub, num_steps=10, iterLim=50):
+#Shrinking the size of the image between the scale range with the help of descent_per_step to find the best match
+def getBestMatch(image_eroded_sub):
     global marker_eroded_sub
 
-    # match_precision is how minutely to scan ?!
-    x=[int(scaleRange[0]*match_precision),int(scaleRange[1]*match_precision)]
-    if((x[1]-x[0])> iterLim*match_precision/num_steps):
-        print("Too many iterations : %d, reduce scaleRange" % ((x[1]-x[0])*num_steps/match_precision) )
-        return None
-
+    descent_per_step = (markerScaleRange[1]-markerScaleRange[0])//markerScaleSteps
     h, w = marker_eroded_sub.shape[:2]
     res, best_scale=None, None
     allMaxT = 0
-    for r0 in range(x[1], x[0], -1*match_precision//num_steps): #reverse order
-        s = float(r0)/match_precision
+
+    for r0 in np.arange(markerScaleRange[1],markerScaleRange[0],-1*descent_per_step): #reverse order
+        s=float(r0*1/100)
         if(s == 0.0):
             continue
-        
         templ_scaled = imutils.resize(marker if ERODE_SUB_OFF else marker_eroded_sub, height = int(h*s))
         res = cv2.matchTemplate(image_eroded_sub,templ_scaled,cv2.TM_CCOEFF_NORMED)
 
@@ -364,10 +360,14 @@ def getBestMatch(image_eroded_sub, num_steps=10, iterLim=50):
         if(allMaxT < maxT):
             # print('Scale: '+str(s)+', Circle Match: '+str(round(maxT*100,2))+'%')
             best_scale, allMaxT = s, maxT
+
     if(allMaxT < thresholdCircle):
         print("Warnning: Template matching too low! Should pass CloseUp = True?")
         if(showimglvl>=1):
             show("res",res,1,0)
+
+    if(best_scale == None):
+            print("No matchings for given scaleRange:",markerScaleRange)
     print('') #close buf
     return best_scale, allMaxT
 
@@ -455,8 +455,7 @@ def getROI(filepath,filename,image, closeUp=False, noMarkers=False):
 
         best_scale, allMaxT = getBestMatch(image_eroded_sub)
         if(best_scale == None):
-            # TODO: Plot and see performance of scaleRange
-            print("No matchings for given scaleRange:",scaleRange)
+            # TODO: Plot and see performance of markerscaleRange
             if(showimglvl>=1):
                 show('Quads',image_eroded_sub)
             return None

@@ -57,8 +57,8 @@ thresholdVar = 0.41
 # TODO: remove unnec variables here- 
 thresholdCircle = 0.3 #matchTemplate returns 0 to 1
 # thresholdCircle = 0.4 #matchTemplate returns 0 to 1
-scaleRange=(0.35,0.95)
-match_precision = 20 # > 1
+markerScaleRange=(35,100)
+markerScaleSteps = 10 
 
 
 # Original scan dimensions: 3543 x 2478
