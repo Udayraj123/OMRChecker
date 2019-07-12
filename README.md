@@ -30,7 +30,7 @@ A full-fledged OMR checking software that can read and evaluate OMR sheets scann
 
 ✅ **Extensible** - [Easily apply](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide) to different OMR layouts, surveys, etc.
 
-📊 **[Visually Rich Outputs](https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals.md)** - get insights to configure and debug easily.
+📊 **[Visually Rich Outputs](https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals)** - get insights to configure and debug easily.
 
 🎈 **Lightweight** - Code size is less than 500 KB.
 
@@ -51,7 +51,7 @@ Images can be taken from various angles as shown below-
 These images will be processed in the following manner: 
 ![rotation_stack](https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/Progress/2019-04-26/images/rotation.PNG)
 
-See detailed visuals [in wiki](https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals.md).
+#### There is a lot more visuals [in the wiki](https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals.md). Check them out!
 
 ### 🎯 Why is this software free?
 Our Motto: 
@@ -201,7 +201,7 @@ paypal me here:  [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate
 
 🏁 Introduce git submodules 
 
-Get Full ToDo List in the [Kanban Board](https://github.com/Udayraj123/OMRChecker/projects/1).
+Get Full ToDo List in the [Kanban Board(w.i.p)](https://github.com/Udayraj123/OMRChecker/projects/1).
 
 ### ❓ Can I use this code in my work?
 OMRChecker is [![Open Source Love svg1](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badges/) and published under **GPLv3** license which is just to give a heads up to disclose usage of this software in your code. **OMRChecker can be forked and modified. You are encouraged to play with it and we would love to see your own projects in action!**
@@ -224,5 +224,6 @@ For more details see [![GitHub license](https://img.shields.io/github/license/ud
 
 ### Related Projects
 [Android OMR Helper App(WIP)](https://github.com/Udayraj123/AndroidOMRHelper)
+
 Here's a sneak peak into the app : 
 ![app_flow](https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/Progress/2019-04-26/images/app_flow.PNG)
