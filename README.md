@@ -65,11 +65,11 @@ Although windows is supported, **Linux** is recommended for bug-free experience.
 ![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4](https://img.shields.io/badge/python-3.4-blue.svg)
 
 ```
-sudo python3 -m pip install --upgrade pip
-sudo python3 -m pip install opencv-python
-sudo python3 -m pip install opencv-contrib-python
+python3 -m pip install --user --upgrade pip
+python3 -m pip install --user opencv-python
+python3 -m pip install --user opencv-contrib-python
 ```
-_Windows users replace 'sudo python3' with 'python'._ More details here: https://www.pyimagesearch.com/2018/09/19/pip-install-opencv/ 
+More details here: https://www.pyimagesearch.com/2018/09/19/pip-install-opencv/ 
 
 ### 2. Clone the repo
 ```
@@ -81,7 +81,7 @@ git clone https://github.com/Udayraj123/OMRChecker
 
 ```
 cd OMRChecker/
-sudo python3 -m pip install -r requirements.txt
+python3 -m pip install --user -r requirements.txt
 ```
 > **Note:** If you face an distutils error, use the `--ignore-installed` flag 
 >	sudo python3 -m pip install --ignore-installed -r requirements.txt
