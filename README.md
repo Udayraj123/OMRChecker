@@ -45,7 +45,11 @@ A full-fledged OMR checking software that can read and evaluate OMR sheets scann
 
 <!-- 📄 **Simple Structure** - inputs and outputs style.  -->
 
-👩🏿‍💻 **Dev Friendly** - [**Well documented**](https://github.com/Udayraj123/OMRChecker/wiki/) repository based on python and openCV. See [**TODOs**](https://github.com/Udayraj123/OMRChecker/wiki/TODOs) for live challenges.
+👩🏿‍💻 **Dev Friendly** - [**Well documented**](https://github.com/Udayraj123/OMRChecker/wiki/) repository based on python and openCV. 
+
+See [**TODOs**](https://github.com/Udayraj123/OMRChecker/wiki/TODOs) for live challenges.
+
+For any help: [![Join](https://img.shields.io/badge/Join-on_Discord-purple.svg?style=flat-square)](https://discord.gg/qFv2Vqf)
 
 <!-- 💁🏿‍♂️ **User Friendly** - WIP, Help by contributing! -->
 
