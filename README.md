@@ -73,7 +73,16 @@ python3 -m pip install --user --upgrade pip
 python3 -m pip install --user opencv-python
 python3 -m pip install --user opencv-contrib-python
 ```
-More details here: https://www.pyimagesearch.com/2018/09/19/pip-install-opencv/ 
+More details [here](https://www.pyimagesearch.com/2018/09/19/pip-install-opencv/).
+
+**Note:** On a fresh computer some of the libraries may get missing in above pip install. Install them using the [following commands](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/):
+```
+sudo apt-get install -y build-essential cmake unzip pkg-config
+sudo apt-get install -y libjpeg-dev libpng-dev libtiff-dev
+sudo apt-get install -y libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
+sudo apt-get install -y libatlas-base-dev gfortran
+```
+Windows users may skip the step above.
 
 ### 2. Clone the repo
 ```
