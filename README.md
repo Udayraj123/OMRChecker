@@ -39,7 +39,7 @@ A full-fledged OMR checking software that can read and evaluate OMR sheets scann
 
 📊 **[Visually Rich Outputs](https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals)** - get insights to configure and debug easily.
 
-🎈 **Lightweight** - Code size is less than 500 KB.
+🎈 **Lightweight** - Code size is less than 500 KB(Sample images excluded).
 
 🏫 **Large Scale** - Already used on tens of thousands of OMRs at [Technothlon](https://www.facebook.com/technothlon.techniche).
 
@@ -61,6 +61,7 @@ See more at [Project Wiki](https://github.com/Udayraj123/OMRChecker/wiki/).
 
 ## Getting started
 ![Setup Time](https://img.shields.io/badge/Setup_Time-20_min-blue.svg)
+Note: You may use CodeCopy to get a copy button for below commands([Chrome](https://chrome.google.com/webstore/detail/codecopy/fkbfebkcoelajmhanocgppanfoojcdmg) | [Firefox](https://addons.mozilla.org/en-US/firefox/addon/codecopy/)).
 
 ### Operating System
 Although windows is supported, **Linux** is recommended for bug-free experience.
@@ -100,13 +101,23 @@ python3 -m pip install --user -r requirements.txt
 >	sudo python3 -m pip install --ignore-installed -r requirements.txt
 
 <!-- Wiki should not get cloned -->
-### 3. Run the code
-1. Make a copy of 'OMR_Files_sample' and **rename to 'OMR_Files'** (Do not make changes to other folder names)
+### 3. Run the code(on sample images)
+<!-- (Do not make changes to other folder names) -->
+1. Copy sample data: 
+	```
+	cp -r inputs/samples/sample1/* inputs/
+	```
+	**Note:** If you are not running this for the first time, delete previous inputs first
+	```
+	mv inputs/OMR_Files/ ~/.trash
+	# Or you can delete permanently: rm -rf inputs/OMR_Files/
+	cp -r inputs/samples/sample1/* inputs/
+	```
 2. Run OMRChecker: **` python3 main.py `**
 3. ???
 4. [Profit](https://knowyourmeme.com/memes/profit)!!
 
-**Note:** Make sure the `outputs` folder is clean if you don't want outputs to append to previous results!
+**Note:** For subsequent runs, if you don't want the outputs to append to previous results - Make sure the `outputs` folder is clean : `rm -rf outputs/`.
 
 <!-- ### Folder Structure 
 <img align="center" src="https://raw.githubusercontent.com/Udayraj123/OMRChecker/master/directory_structure.png" alt="Directory Structure" height="350">
@@ -115,7 +126,7 @@ This structure has been created to suit for better organization of OMRs (Citywis
 -->
 ## Applying it on your own OMR Sheets
 <!-- Template alignment image here -->
-1. Follow [User Guide](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide/) to create your own Template Layout.
+1. Follow the [User Guide](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide/) to create your own Template Layout.
 2. Open `globals.py` and play with the parameters (although most of them would need no change :smile:)
 <!-- 3. Add answer key( TODO: add answer key/marking scheme guide)  -->
 3. Run the code with [appropriate arguments](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide#Run-the-code).

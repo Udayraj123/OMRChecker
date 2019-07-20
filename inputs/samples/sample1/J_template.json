@@ -4,8 +4,8 @@
     1500
   ],
   "BubbleDimensions": [
-    30,
-    30
+    40,
+    40
   ],
   "Concatenations" : {    
     "Roll" :  ["Squad","Medium","roll0", "roll1", "roll2", "roll3", "roll4", "roll5", "roll6", "roll7", "roll8"],

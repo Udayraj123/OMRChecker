@@ -160,6 +160,7 @@ def evaluate(resp,answers,sections,explain=False):
 
 # os.sep is not an issue here in iglob
 allOMRs = list(glob.iglob(OMR_INPUT_DIR+'*/*/*.jpg')) + list(glob.iglob(OMR_INPUT_DIR+'*/*/*.png'))
+print("\nTotal Images found:", len(allOMRs))
 
 timeNowHrs=strftime("%I%p",localtime())
 
@@ -183,10 +184,10 @@ argparser.add_argument("-a", "--noAlign", required=False, dest='noAlign', action
 argparser.add_argument("-l", "--setLayout", required=False, dest='setLayout', action='store_true', help="Use this option to set up OMR template layout for once.(*_template.json file)")
 
 args = vars(argparser.parse_args())
-print('\tConfig:')
-print("noCrop(Scanned) Images : "+str(args["noCrop"]))
-print("Flat(Scanned) papers : "+str(args["noAlign"]))
-print("OMR Already Cropped(No Markers) : "+str(args["noMarkers"]))
+print('Config:')
+print("\tImages Cropped : "+str(not args["noCrop"]))
+print("\tMarker Present : "+str(not args["noMarkers"]))
+print("\tAuto Alignment : "+str(not args["noAlign"]))
 print('')
 
 respCols, sheetCols, resultSheetCols = {},{},{}
@@ -202,15 +203,14 @@ for squad in templJSON.keys():
     errorsArray[squad] = [ sheetCols[squad] ]
     badRollsArray[squad] = [ sheetCols[squad] ]
     multiMarkedArray[squad] = [ sheetCols[squad] ]
-    print("resultFile:", resultFiles[squad])
     if(not os.path.exists(resultFiles[squad])):
+        print("Created Resultfile:", resultFiles[squad])
         resultFileObj[squad] = open(resultFiles[squad],'a') # still append mode req [THINK!]
         # Create Header Columns
         pd.DataFrame([resultSheetCols[squad]]).to_csv(resultFileObj[squad],header=False,index=False) 
     else:
-        print('WARNING : Appending to Previous Result file for: '+squad)
+        print('Warning : Appending to Previous Result file for squad: '+squad)
         resultFileObj[squad] = open(resultFiles[squad],'a')
-
 squadlang="XX"
 filesCounter=0
 mws, mbs = [],[]
@@ -252,7 +252,9 @@ for filepath in allOMRs:
         exit(0)
 
     inOMR = cv2.imread(filepath,cv2.IMREAD_GRAYSCALE)
-    print('\n\t',(filesCounter ,filepath), inOMR.shape)
+    # show("inOMR",inOMR,1,1)
+    print('')
+    print(str(filesCounter)+') Checking: \t',filepath, "\tResolution: ",inOMR.shape)
     OMRcrop = getROI(inOMR,filename, noCrop=args["noCrop"], noMarkers=args["noMarkers"])
     if(OMRcrop is None):
         err = move(NO_MARKER_ERR, filepath, errorPath+squadlang,filename)
@@ -273,7 +275,7 @@ for filepath in allOMRs:
 
     #convert to ABCD, getRoll,etc
     resp = processOMR(squad,OMRresponseDict)
-    print("Read Response: \t", resp)
+    print("Read Response: ", resp)
 
     #This evaluates and returns the score attribute
     score = evaluate(resp, Answers[squad],Sections[squad],explain=explain)
@@ -288,7 +290,7 @@ for filepath in allOMRs:
         # Write to results file (resultFileObj is opened in append mode)
         pd.DataFrame(results).T.to_csv(resultFileObj[squad],header=False,index=False)
         
-        print("Checked:",(filesCounter,newfilename,score))
+        print("(%d) Graded with score: %.2f" % (filesCounter, score), '\t',newfilename)
 
         # print(filesCounter,newfilename,resp['Roll'],'score : ',score)
     else:
@@ -319,10 +321,14 @@ if(showimglvl<=0):
     print('OMR Processing rate :  ~%.2f sec/OMR' % (round(timeChecking/float(filesCounter+1), 2) ))
     print('OMR Processing speed : ~%.2f OMRs/minute' % (round(float(filesCounter*60+1)/timeChecking, 2) ))
 else:
-    print("Total time taken :", timeChecking,"seconds")
+    print("\nTotal script time :", timeChecking,"seconds")
 
 if(filesCounter==0):
-    print("INFO: No Images found. Is your directory structure correct? \n\tPossibly forgot to rename 'OMR_Files_Sample' to 'OMR_Files'?")
+    print("\n\tINFO: No Images found. Check your directory structure.")
+
+if(showimglvl<=1):
+    # colorama this
+    print("\tTip: Increase 'showimglvl' from globals.py to see awesome visuals!")
 
 # Use this data to train as +ve feedback
 if(showimglvl>=0 and filesCounter>10):
@@ -331,6 +337,7 @@ if(showimglvl>=0 and filesCounter>10):
             x=pd.DataFrame(x)
             print( x.describe() )
             plt.plot(range(len(x)),x)
+            plt.title("Mystery Plot")
             plt.show()
         else:
             print(x)

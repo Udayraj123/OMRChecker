@@ -38,14 +38,14 @@ for _dir in [saveMarkedDir]:
             # os.mkdir(_dir+sl+'/_BADSCAN_')
             # os.mkdir(_dir+sl+'/_BADSCAN_'+'/stack')
     else:
-        print('Already present : '+_dir)
+        print('Present : '+_dir)
 
 for _dir in [manualDir,resultDir]:
     if(not os.path.exists(_dir)):
             print('Created : '+ _dir)
             os.makedirs(_dir)
     else:
-        print('Already present : '+_dir)
+        print('Present : '+_dir)
 
 for _dir in [multiMarkedPath,errorPath,badRollsPath]:
     if(not os.path.exists(_dir)):
@@ -54,7 +54,7 @@ for _dir in [multiMarkedPath,errorPath,badRollsPath]:
         for sl in ['HE','JE']:#,'HH','JH']:
             os.mkdir(_dir+sl)
     else:
-        print('Already present : '+_dir)
+        print('Present : '+_dir)
 
 
 # In[64]:
@@ -117,14 +117,17 @@ def show(name,orig,pause=1,resize=False,resetpos=None):
     h,w = img.shape[:2]
     
     # Set next window position
+    margin = 75
+    w += margin
+    h += margin
     if(windowX+w > windowWidth):
         windowX = 0
         if(windowY+h > windowHeight):
             windowY = 0
         else:
-            windowY+=h
+            windowY += h 
     else:
-        windowX+=w
+        windowX += w
 
     if(pause):
         waitQ()
@@ -270,7 +273,7 @@ def checkMaxCosine(approx):
         maxCosine = max(cosine, maxCosine);
         minCosine = min(cosine, minCosine);
     # TODO add to plot dict
-    print(maxCosine)
+    # print(maxCosine)
     if(maxCosine >= 0.35):
         print('Quadrilateral is not a rectangle.')
         return False
@@ -313,7 +316,7 @@ def findPage(image_norm):
     ret, image_norm = cv2.threshold(image_norm,200,255,cv2.THRESH_TRUNC)
     image_norm = normalize_util(image_norm)
     
-    appendSaveImg(0,image_norm)
+    appendSaveImg(1,image_norm)
     
     # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 10))
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 10))
@@ -325,7 +328,7 @@ def findPage(image_norm):
     # Close the small holes, i.e. Complete the edges on canny image
     closed = cv2.morphologyEx(image_norm, cv2.MORPH_CLOSE, kernel)
     
-    appendSaveImg(0,closed)
+    appendSaveImg(1,closed)
 
     edge = cv2.Canny(closed, 185, 55)
 
@@ -350,13 +353,13 @@ def findPage(image_norm):
             cv2.drawContours(edge, [approx], -1, (255,255,255), 10)
             break
         # box = perspective.order_points(box)
-    print("Found largest quadrilateral: ", sheet)
+    print("Finding page: Boundaries: ", sheet.tolist())
     # sobel = cv2.addWeighted(cv2.Sobel(edge, cv2.CV_64F, 1, 0, ksize=3),0.5,cv2.Sobel(edge, cv2.CV_64F, 0, 1, ksize=3),0.5,0,edge)
     # ExcessDo : make it work on killer images
     # edge2 = auto_canny(image_norm)
     # show('Morphed Edges',np.hstack((closed,edge)),1,1)
         
-    appendSaveImg(0,edge)
+    appendSaveImg(1,edge)
     return sheet
 
 
@@ -383,7 +386,7 @@ def getBestMatch(image_eroded_sub):
             best_scale, allMaxT = s, maxT
 
     if(allMaxT < thresholdCircle):
-        print("Warnning: Template matching too low! Should pass noCrop = True?")
+        print("Warnning: Template matching too low! Should pass --noCrop in command?")
         if(showimglvl>=1):
             show("res",res,1,0)
 
@@ -409,11 +412,10 @@ veryBadPoints=[]
 
 def getROI(image, filename, noCrop=False, noMarkers=False):
     global clahe, marker_eroded_sub
-    resetSaveImg(0)
-    resetSaveImg(1)
-    appendSaveImg(0,image)
-
-
+    for i in range(saveimglvl):
+        resetSaveImg(i+1)
+    
+    appendSaveImg(1,image)
     """
     TODO later Autorotate:
         - Rotate 90 : check page width:height, CW/ACW? - do CW, then pass to 180 check.
@@ -441,7 +443,7 @@ def getROI(image, filename, noCrop=False, noMarkers=False):
             image_norm = resize_util(image_norm, uniform_width*2)
         sheet = findPage(image_norm)
         if sheet==[]:
-            print("Error: Paper boundary not found! Should pass noCrop = True?")
+            print("Error: Paper boundary not found! Should pass --noCrop in command?")
             return None
 
         # Warp layer 1
@@ -450,7 +452,7 @@ def getROI(image, filename, noCrop=False, noMarkers=False):
     # Resize only after cropping the page for clarity as well as uniformity for non cropped images
     image_norm = resize_util(image_norm, uniform_width, uniform_height)
     image = resize_util(image, uniform_width, uniform_height)
-    appendSaveImg(0,image_norm)
+    appendSaveImg(1,image_norm)
     
     if(noMarkers == True):
         # Return preprocessed image
@@ -485,11 +487,11 @@ def getROI(image, filename, noCrop=False, noMarkers=False):
         h,w=templ.shape[:2]
         centres = []
         sumT, maxT = 0, 0
-        print("best_scale",best_scale,'\t', end = " ")
+        print("Matching Marker:", end=" ")
         for k in range(0,4):
             res = cv2.matchTemplate(quads[k],templ,cv2.TM_CCOEFF_NORMED)
             maxT = res.max()
-            print("Q"+str(k+1)+": maxT", round(maxT,3),'\t', end=" ")
+            print("Q"+str(k+1)+": maxT", round(maxT,3), end="\t")
             if(maxT < thresholdCircle or abs(allMaxT-maxT) >= thresholdVar):
                 # Warning - code will stop in the middle. Keep Threshold low to avoid.
                 print(filename,"\nError: No circle found in Quad",k+1, "\n\tthresholdVar", thresholdVar, "maxT", maxT,"allMaxT",allMaxT, "Should pass noCrop = False?")
@@ -508,15 +510,15 @@ def getROI(image, filename, noCrop=False, noMarkers=False):
             image_eroded_sub = cv2.rectangle(image_eroded_sub,tuple(pt),(pt[0]+w,pt[1]+h),(50,50,50) if ERODE_SUB_OFF else (155,155,155), 4)
             centres.append([pt[0]+w/2,pt[1]+h/2])
             sumT += maxT
-        print('')
+        print("Scale",best_scale)
         # analysis data
         thresholdCircles.append(sumT/4)
 
         image_norm = four_point_transform(image_norm, np.array(centres))
-        # appendSaveImg(0,image_eroded_sub)
-        # appendSaveImg(0,image_norm)
+        # appendSaveImg(1,image_eroded_sub)
+        # appendSaveImg(1,image_norm)
 
-        appendSaveImg(1,image_eroded_sub)
+        appendSaveImg(2,image_eroded_sub)
         # res = cv2.matchTemplate(image_eroded_sub,templ,cv2.TM_CCOEFF_NORMED)
         # res[ : , midw:midw+2] = 255
         # res[ midh:midh+2, : ] = 255
@@ -525,7 +527,8 @@ def getROI(image, filename, noCrop=False, noMarkers=False):
             image_eroded_sub = resize_util_h(image_eroded_sub, image_norm.shape[0])
             image = resize_util_h(image, image_norm.shape[0])
             image_eroded_sub[:,-5:] = 0
-            show("Warped: "+filename,np.hstack((image,image_eroded_sub, image_norm)),0,1,[0,0])
+            h_stack = np.hstack((image,image_eroded_sub, image_norm))
+            show("Warped: "+filename,resize_util(h_stack,int(display_width*1.6)),0,0,[0,0])
         # iterations : Tuned to 2.
         # image_eroded_sub = image_norm - cv2.erode(image_norm, kernel=np.ones((5,5)),iterations=2)
         return image_norm
@@ -583,9 +586,6 @@ def getGlobalThreshold(QVals_orig, plotTitle=None, plotShow=True, sortInPlot=Tru
     # if(thr1 > thr2 and thr2 > thresholdRead):
     #     print("Note: taking safer thr line.")
     #     globalTHR, j_low, j_high = thr2, thr2 - max2//2, thr2 + max2//2
-
-    if(globalTHR == 255):
-        print("Note: Global Threshold is unexpectedly 255! (Poor Config/Xeroxed OMR?)")
 
     if(plotTitle is not None):    
         f, ax = plt.subplots()
@@ -684,7 +684,7 @@ def getLocalThreshold(qNo, QVals, globalTHR, noOutliers, plotTitle=None, plotSho
         ax.set_xlabel("Bubble Number(sorted)")
         ax.legend()
         #TODO append QStrip to this plot-
-        # appendSaveImg(5,getPlotImg())
+        # appendSaveImg(6,getPlotImg())
         if(plotShow):
             plt.show()
     return thr1
@@ -726,18 +726,18 @@ def readResponse(squad,image,name,save=None,noAlign=False):
         # putLabel(final_marked,"Crop Size: " + str(origDim[0])+"x"+str(origDim[1]) + " "+name, size=1)
         
         morph = img.copy() #
-        appendSaveImg(2,morph)
+        appendSaveImg(3,morph)
 
         # TODO: evaluate if CLAHE is really req
         if(noAlign==False):
             # Note: clahe is good for morphology, bad for thresholding
             morph = clahe.apply(morph) 
-            appendSaveImg(2,morph)
+            appendSaveImg(3,morph)
             # Remove shadows further, make columns/boxes darker (less gamma)
             morph = adjust_gamma(morph,GAMMA_LOW)
             ret, morph = cv2.threshold(morph,220,220,cv2.THRESH_TRUNC)
             morph = normalize_util(morph)
-            appendSaveImg(2,morph)
+            appendSaveImg(3,morph)
             if(showimglvl>=4):
                 show("morph1",morph,0,1)
 
@@ -775,7 +775,7 @@ def readResponse(squad,image,name,save=None,noAlign=False):
             # show("morph1",morph,0,1)
             # show("morphed_vertical",morph_v,0,1)
             
-            appendSaveImg(2,morph_v)
+            appendSaveImg(3,morph_v)
 
             morphTHR = 60 # for Mobile images
             # morphTHR = 40 # for scan Images
@@ -783,7 +783,7 @@ def readResponse(squad,image,name,save=None,noAlign=False):
             _, morph_v = cv2.threshold(morph_v,morphTHR,255,cv2.THRESH_BINARY)
             morph_v = cv2.erode(morph_v,  np.ones((5,5),np.uint8), iterations = 2)
             
-            appendSaveImg(2,morph_v)
+            appendSaveImg(3,morph_v)
             # h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 2))
             # morph_h = cv2.morphologyEx(morph, cv2.MORPH_OPEN, h_kernel, iterations=3)
             # ret, morph_h = cv2.threshold(morph_h,200,200,cv2.THRESH_TRUNC)
@@ -837,10 +837,10 @@ def readResponse(squad,image,name,save=None,noAlign=False):
         if(showimglvl>=2):
             initial_align = drawTemplateLayout(img, TEMPLATE, shifted=False)
             final_align = drawTemplateLayout(img, TEMPLATE, shifted=True, draw_qvals=True)
-            # appendSaveImg(3,mean_vals)
-            appendSaveImg(1,initial_align)
-            appendSaveImg(1,final_align)
-            appendSaveImg(4,img)
+            # appendSaveImg(4,mean_vals)
+            appendSaveImg(2,initial_align)
+            appendSaveImg(2,final_align)
+            appendSaveImg(5,img)
             if(noAlign == False):
                 final_align = np.hstack((initial_align, final_align))
 
@@ -876,6 +876,8 @@ def readResponse(squad,image,name,save=None,noAlign=False):
         #Note: Plotting takes Significant times here --> Change Plotting args to support showimglvl
         globalTHR, j_low, j_high = getGlobalThreshold(allQVals)#, "Mean Intensity Histogram", plotShow=False, sortInPlot=True)
         
+        # TODO colorama
+        print("Thresholding: globalTHR: ",round(globalTHR,2),"\tglobalStdTHR: ",round(globalStdTHR,2),"\t(Looks like a Xeroxed OMR)" if(globalTHR == 255) else "")
         # plt.show()
         # hist = getPlotImg()
         # show("StdHist", hist, 0, 1)
@@ -885,11 +887,10 @@ def readResponse(squad,image,name,save=None,noAlign=False):
         # if(showimglvl>=1):
         #     hist = getPlotImg()
         #     show("Hist", hist, 0, 1)
-        #     appendSaveImg(3,hist)
         #     appendSaveImg(4,hist)
-        #     appendSaveImg(1,hist)
+        #     appendSaveImg(5,hist)
+        #     appendSaveImg(2,hist)
         # name,
-        print("globalTHR: ",round(globalTHR,2),"globalStdTHR: ",round(globalStdTHR,2))
 
 
         perOMRThresholdAvg, totalQStripNo, totalQBoxNo = 0, 0, 0
@@ -997,10 +998,11 @@ def readResponse(squad,image,name,save=None,noAlign=False):
             plt.tight_layout(pad=0.5)
             plt.show()
 
+            # TODO: refactor "type(save) != type(None) "
         if (saveMarked and type(save) != type(None) ):
             if(multiroll):
                 save = save+'_MULTI_/'
-            saveImg('Marked_'+save+name, final_marked)
+            saveImg(save+'Marked_'+name, final_marked)
 
         if(showimglvl>=3 and final_align is not None):
             show("Template Alignment Adjustment", final_align, 0, 0)# [final_align.shape[1],0])
@@ -1008,17 +1010,17 @@ def readResponse(squad,image,name,save=None,noAlign=False):
             # final_align = resize_util_h(final_align,int(display_height))
             # show("Final Alignment : "+name,final_align,0,0)
             final_marked = resize_util_h(final_marked,int(display_height*1.3))
-            show("Final Marked Bubbles : "+name,final_marked,1,1,[150,100])
+            show("Final Marked Bubbles : "+name,final_marked,1,1)
 
-        appendSaveImg(1,final_marked)
+        appendSaveImg(2,final_marked)
 
         # saveImgList[3] = [hist, final_marked]
 
         # to show img
         # save = None 
 
-        saveOrShowStacks(0, name, save,0)
-        saveOrShowStacks(1, name, save)
+        for i in range(saveimglvl):
+            saveOrShowStacks(i+1, name, save)
 
         return OMRresponse,final_marked,multimarked,multiroll
 
@@ -1030,10 +1032,10 @@ def readResponse(squad,image,name,save=None,noAlign=False):
 
 def saveOrShowStacks(key, name, save=None,pause=1):
     global saveImgList
-    if(saveimglvl >= int(key)):
+    if(saveimglvl >= int(key) and saveImgList[key]!=[]):
         result = np.hstack(tuple([resize_util_h(img,uniform_height) for img in saveImgList[key]]))
         result = resize_util(result,min(len(saveImgList[key])*uniform_width//3,int(uniform_width*2.5)))
-        if (saveimglvl>=1 or type(save) != type(None) ):
+        if (type(save) != type(None)):
             saveImg(save+'stack/'+name+'_'+str(key)+'_stack.jpg', result)
         else:
             show(name+'_'+str(key),result,pause,0)

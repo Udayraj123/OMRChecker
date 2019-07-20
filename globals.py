@@ -75,12 +75,12 @@ CLR_DARK_GRAY = (90,90,90)
 MIN_PAGE_AREA = 80000
 
 OMR_INPUT_DIR ='inputs/OMR_Files/'
-manualDir='outputs/Manual/'
+saveMarkedDir='outputs/CheckedOMRs/' 
 resultDir='outputs/Results/'
+manualDir='outputs/Manual/'
 errorPath=manualDir+'ErrorFiles/'
 badRollsPath=manualDir+'BadRollNosFiles/'
 multiMarkedPath=manualDir+'MultiMarkedFiles/'
-saveMarkedDir='outputs/CheckedOMRs/' 
 
 
 """

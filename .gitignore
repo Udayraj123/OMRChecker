@@ -1,9 +1,9 @@
+# outputs/Results
 **/__pycache__
-**/ignore
-**/gitignore
 **/CheckedOMRs
 **/convertedOMRs_LQ
-**/OMR_Files
+**/gitignore
+**/ignore
 **/outputs
-# outputs/Results
+inputs/OMR_Files/
 OMRChecker.wiki/

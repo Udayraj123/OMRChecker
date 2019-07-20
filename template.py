@@ -260,9 +260,8 @@ def read_template(filename):
 
 
 templJSON={
-'J' : read_template("inputs/Layouts/J_template.json"),
-'H' : read_template("inputs/Layouts/H_template.json")
-# 'H' : read_template("inputs/Layouts/H_template2.json")
+'J' : read_template("inputs/J_template.json"),
+'H' : read_template("inputs/H_template.json")
 }
 TEMPLATES={}
 
