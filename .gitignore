@@ -5,8 +5,7 @@
 **/gitignore
 **/ignore
 **/outputs
-inputs/H_template.json
-inputs/J_template.json
+inputs/*
+!inputs/samples/
 inputs/OMR_Files/
-inputs/omr_marker.jpg
 OMRChecker.wiki/

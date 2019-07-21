@@ -47,7 +47,7 @@ for _dir in [manualDir,resultDir]:
     else:
         print('Present : '+_dir)
 
-for _dir in [multiMarkedPath,errorPath,badRollsPath]:
+for _dir in [multiMarkedDir,errorsDir,badRollsDir]:
     if(not os.path.exists(_dir)):
         print('Created : '+ _dir)
         os.makedirs(_dir)
@@ -59,7 +59,8 @@ for _dir in [multiMarkedPath,errorPath,badRollsPath]:
 
 # In[64]:
 def waitQ():
-    while(cv2.waitKey(1)& 0xFF != ord('q')):pass
+    ESC_KEY = 27
+    while(cv2.waitKey(1)& 0xFF not in [ord('q'), ESC_KEY]):pass
     cv2.destroyAllWindows()
 
 def normalize_util(img, alpha=0, beta=255):
@@ -130,6 +131,7 @@ def show(name,orig,pause=1,resize=False,resetpos=None):
         windowX += w
 
     if(pause):
+        print("Showing "+name+": Press Q to continue, Ctrl+C in terminal to exit")
         waitQ()
         
 
@@ -385,7 +387,7 @@ def getBestMatch(image_eroded_sub):
             best_scale, allMaxT = s, maxT
 
     if(allMaxT < thresholdCircle):
-        print("Warnning: Template matching too low! Should pass --noCrop in command?")
+        print("Warnning: Template matching too low! Should pass --noCropping in command?")
         if(showimglvl>=1):
             show("res",res,1,0)
 
@@ -409,7 +411,7 @@ thresholdCircles=[]
 badThresholds=[]
 veryBadPoints=[]
 
-def getROI(image, filename, noCrop=False, noMarkers=False):
+def getROI(image, filename, noCropping=False, noMarkers=False):
     global clahe, marker_eroded_sub
     for i in range(saveimglvl):
         resetSaveImg(i+1)
@@ -425,8 +427,8 @@ def getROI(image, filename, noCrop=False, noMarkers=False):
             Check roll field morphed 
     """
 
-    # TODO: (remove noCrop bool) Automate the case of close up scan(incorrect page)-
-    # ^Note: App rejects noCrops along with others
+    # TODO: (remove noCropping bool) Automate the case of close up scan(incorrect page)-
+    # ^Note: App rejects noCroppings along with others
 
     # image = resize_util(image, uniform_width, uniform_height)
 
@@ -436,13 +438,13 @@ def getROI(image, filename, noCrop=False, noMarkers=False):
     img = cv2.GaussianBlur(img,(3,3),0)
     image_norm = normalize_util(img);
 
-    if(noCrop == False):
+    if(noCropping == False):
         #Need this resize for arbitrary high res images: before passing to findPage
         if(image_norm.shape[1] > uniform_width*2):
             image_norm = resize_util(image_norm, uniform_width*2)
         sheet = findPage(image_norm)
         if sheet==[]:
-            print("Error: Paper boundary not found! Should pass --noCrop in command?")
+            print("Error: Paper boundary not found! Should pass --noCropping in command?")
             return None
         else:
             print("Found page boundaries: ", sheet.tolist())
@@ -495,7 +497,7 @@ def getROI(image, filename, noCrop=False, noMarkers=False):
             print("Q"+str(k+1)+": maxT", round(maxT,3), end="\t")
             if(maxT < thresholdCircle or abs(allMaxT-maxT) >= thresholdVar):
                 # Warning - code will stop in the middle. Keep Threshold low to avoid.
-                print(filename,"\nError: No circle found in Quad",k+1, "\n\tthresholdVar", thresholdVar, "maxT", maxT,"allMaxT",allMaxT, "Should pass noCrop = False?")
+                print(filename,"\nError: No circle found in Quad",k+1, "\n\tthresholdVar", thresholdVar, "maxT", maxT,"allMaxT",allMaxT, "Should you Not pass --noCropping?")
                 if(showimglvl>=1):
                     show("no_pts_"+filename,image_eroded_sub,0)
                     show("res_Q"+str(k+1),res,1)
@@ -709,7 +711,7 @@ def saveImg(path, final_marked):
     print('Saving Image to '+path)
     cv2.imwrite(path,final_marked)
 
-def readResponse(squad,image,name,save=None,noAlign=False):
+def readResponse(squad,image,name,savedir=None,noAlign=False):
     global clahe
     TEMPLATE = TEMPLATES[squad]
     try:
@@ -948,8 +950,7 @@ def readResponse(squad,image,name,save=None,noAlign=False):
 
                     # TODO Make this part useful! (Abstract visualizer to check status)
                     if (detected):
-                        q = pt.qNo
-                        val = str(pt.val)
+                        q, val = pt.qNo, str(pt.val)
                         cv2.putText(final_marked,val,(x,y),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE,(20,20,10),int(1+3.5*TEXT_SIZE))
                         # Only send rolls multi-marked in the directory
                         multimarkedL = q in OMRresponse
@@ -999,29 +1000,27 @@ def readResponse(squad,image,name,save=None,noAlign=False):
             plt.tight_layout(pad=0.5)
             plt.show()
 
-            # TODO: refactor "type(save) != type(None) "
-        if (saveMarked and type(save) != type(None) ):
-            if(multiroll):
-                save = save+'_MULTI_/'
-            saveImg(save+'Marked_'+name, final_marked)
-
         if(showimglvl>=3 and final_align is not None):
+            final_align = resize_util_h(final_align,int(display_height))
             show("Template Alignment Adjustment", final_align, 0, 0)# [final_align.shape[1],0])
+        
+        # TODO: refactor "type(savedir) != type(None) "
+        if (saveMarked and type(savedir) != type(None) ):
+            if(multiroll):
+                savedir = savedir+'_MULTI_/'
+            saveImg(savedir+name, final_marked)
+
         if(showimglvl>=1):
             # final_align = resize_util_h(final_align,int(display_height))
             # show("Final Alignment : "+name,final_align,0,0)
-            final_marked = resize_util_h(final_marked,int(display_height*1.3))
-            show("Final Marked Bubbles : "+name,final_marked,1,1)
+            show("Final Marked Bubbles : "+name,resize_util_h(final_marked,int(display_height*1.3)),1,1)
 
         appendSaveImg(2,final_marked)
 
         # saveImgList[3] = [hist, final_marked]
 
-        # to show img
-        # save = None 
-
         for i in range(saveimglvl):
-            saveOrShowStacks(i+1, name, save)
+            saveOrShowStacks(i+1, name, savedir)
 
         return OMRresponse,final_marked,multimarked,multiroll
 
@@ -1031,13 +1030,13 @@ def readResponse(squad,image,name,save=None,noAlign=False):
         print("Error from readResponse: ",e)
         print(exc_type, fname, exc_tb.tb_lineno)
 
-def saveOrShowStacks(key, name, save=None,pause=1):
+def saveOrShowStacks(key, name, savedir=None,pause=1):
     global saveImgList
     if(saveimglvl >= int(key) and saveImgList[key]!=[]):
         result = np.hstack(tuple([resize_util_h(img,uniform_height) for img in saveImgList[key]]))
         result = resize_util(result,min(len(saveImgList[key])*uniform_width//3,int(uniform_width*2.5)))
-        if (type(save) != type(None)):
-            saveImg(save+'stack/'+name+'_'+str(key)+'_stack.jpg', result)
+        if (type(savedir) != type(None)):
+            saveImg(savedir+'stack/'+name+'_'+str(key)+'_stack.jpg', result)
         else:
             show(name+'_'+str(key),result,pause,0)
             
