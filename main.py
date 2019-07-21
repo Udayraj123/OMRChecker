@@ -289,7 +289,6 @@ for filepath in allOMRs:
         filesNotMoved+=1;
         # Write to results file (resultFileObj is opened in append mode)
         pd.DataFrame(results).T.to_csv(resultFileObj[squad],header=False,index=False)
-        
         print("[%d] Graded with score: %.2f" % (filesCounter, score), '\t',newfilename)
 
         # print(filesCounter,newfilename,resp['Roll'],'score : ',score)
