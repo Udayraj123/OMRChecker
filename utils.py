@@ -1003,9 +1003,11 @@ def readResponse(squad,image,name,save=None,noAlign=False):
         if (saveMarked and type(save) != type(None) ):
             if(multiroll):
                 save = save+'_MULTI_/'
-            saveImg(save+'Marked_'+name, final_marked)
+            # saveImg(save+'Marked_'+name, final_marked)
+            saveImg(save+name, final_marked)
 
         if(showimglvl>=3 and final_align is not None):
+            final_align = resize_util_h(final_align,int(display_height))
             show("Template Alignment Adjustment", final_align, 0, 0)# [final_align.shape[1],0])
         if(showimglvl>=1):
             # final_align = resize_util_h(final_align,int(display_height))

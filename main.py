@@ -1,5 +1,3 @@
-
-
 """
 
 Designed and Developed by-
@@ -20,13 +18,12 @@ from random import randint
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import imutils #thru the pip package.
-# from skimage.filters import threshold_adaptive
+import imutils
 from globals import *
 from utils import *
 from template import *
 
-# Sometime later-
+# TODO: Sometime later-
 # from colorama import init
 # init()
 # from colorama import Fore, Back, Style
@@ -74,7 +71,7 @@ def processOMR(squad, omrResp):
     # Note: Concatenations and Singles together should be mutually exclusive 
     # and should cover all questions in the template(exhaustive)
     # ^TODO add a warning if omrResp has unused keys remaining
-    # Done : write concatenation etc in generalized way from template here.
+    
     return resp
 
 # In[76]:
@@ -216,6 +213,7 @@ filesCounter=0
 mws, mbs = [],[]
 # PRELIM_CHECKS for thresholding
 if(PRELIM_CHECKS):
+    # TODO: add more using unit testing
     TEMPLATE = TEMPLATES["H"]
     ALL_WHITE = 255 * np.ones((TEMPLATE.dims[1],TEMPLATE.dims[0]), dtype='uint8')
     OMRresponseDict,final_marked,multimarked,multiroll = readResponse("H",ALL_WHITE,name = "ALL_WHITE", save = None, noAlign=True)
@@ -252,9 +250,9 @@ for filepath in allOMRs:
         exit(0)
 
     inOMR = cv2.imread(filepath,cv2.IMREAD_GRAYSCALE)
-    # show("inOMR",inOMR,1,1)
     print('')
     print('(%d) Checking: \t' % (filesCounter),filepath, "\tResolution: ",inOMR.shape)
+    # show("inOMR",inOMR,1,1)
     OMRcrop = getROI(inOMR,filename, noCrop=args["noCrop"], noMarkers=args["noMarkers"])
     if(OMRcrop is None):
         err = move(NO_MARKER_ERR, filepath, errorPath+squadlang,filename)
@@ -323,7 +321,7 @@ else:
     print("\nTotal script time :", timeChecking,"seconds")
 
 if(filesCounter==0):
-    print("\n\tINFO: No Images found. Check your directory structure.")
+    print("\n\tINFO: No Images found at "+OMR_INPUT_DIR+'*/*/*.jpg'+". Check your directory structure.")
 
 if(showimglvl<=1):
     # colorama this
@@ -332,8 +330,8 @@ if(showimglvl<=1):
 # Use this data to train as +ve feedback
 if(showimglvl>=0 and filesCounter>10):
     for x in [badThresholds,veryBadPoints,thresholdCircles, mws, mbs]:
-        if(x!=[]):
-            x=pd.DataFrame(x)
+        if(x != []):
+            x = pd.DataFrame(x)
             print( x.describe() )
             plt.plot(range(len(x)),x)
             plt.title("Mystery Plot")

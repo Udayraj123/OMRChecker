@@ -27,6 +27,10 @@ Grade exams fast and accurately using a scanner 🖨 or your phone 🤳.
 
 ## 🎯 Features
 
+![Current_Speed](https://img.shields.io/badge/Speed-200_OMRs/m-brightgreen.svg?style=flat-square)
+![Current_Size](https://img.shields.io/badge/Code_Size-500KB-brightgreen.svg?style=flat-square) 
+![Min Resolution](https://img.shields.io/badge/Min_Resolution-640x480-brightgreen.svg?style=flat-square) 
+
 A full-fledged OMR checking software that can read and evaluate OMR sheets scanned at any angle and having any color. Support is also provided for a customisable marking scheme with section-wise marking, bonus questions, etc.
 
 💯 **Accurate** - Currently nearly 100% accurate on good quality document scans; and about 90% accurate on mobile images.
@@ -37,7 +41,7 @@ A full-fledged OMR checking software that can read and evaluate OMR sheets scann
 
 ✅ **Extensible** - [**Easily apply**](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide) to different OMR layouts, surveys, etc.
 
-📊 **[Visually Rich Outputs](https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals)** - get insights to configure and debug easily.
+📊 **Visually Rich Outputs** - [get insights](https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals) to configure and debug easily.
 
 🎈 **Lightweight** - Code size is less than 500 KB(Sample images excluded).
 
@@ -53,15 +57,11 @@ For any help: [![Join](https://img.shields.io/badge/Join-on_Discord-purple.svg?s
 
 <!-- 💁🏿‍♂️ **User Friendly** - WIP, Help by contributing! -->
 
-![Current_Speed](https://img.shields.io/badge/Speed-200_OMRs/m-brightgreen.svg?style=flat-square)
-![Current_Size](https://img.shields.io/badge/Code_Size-500KB-brightgreen.svg?style=flat-square) 
-![Min Resolution](https://img.shields.io/badge/Min_Resolution-640x480-brightgreen.svg?style=flat-square) 
-
 See more at [Project Wiki](https://github.com/Udayraj123/OMRChecker/wiki/).
 
 ## Getting started
 ![Setup Time](https://img.shields.io/badge/Setup_Time-20_min-blue.svg)
-Note: You may use _CodeCopy_ to get a copy button for below commands([Chrome](https://chrome.google.com/webstore/detail/codecopy/fkbfebkcoelajmhanocgppanfoojcdmg) | [Firefox](https://addons.mozilla.org/en-US/firefox/addon/codecopy/)).
+
 
 ### Operating System
 Although windows is supported, **Linux** is recommended for bug-free experience.
@@ -69,21 +69,24 @@ Although windows is supported, **Linux** is recommended for bug-free experience.
 ### 1. Install dependencies 
 ![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4](https://img.shields.io/badge/python-3.4-blue.svg)
 
+_Note: To get a copy button for below commands, use [CodeCopy Chrome](https://chrome.google.com/webstore/detail/codecopy/fkbfebkcoelajmhanocgppanfoojcdmg) | [CodeCopy Firefox](https://addons.mozilla.org/en-US/firefox/addon/codecopy/)._
 ```
 python3 -m pip install --user --upgrade pip
 python3 -m pip install --user opencv-python
 python3 -m pip install --user opencv-contrib-python
 ```
-More details [here](https://www.pyimagesearch.com/2018/09/19/pip-install-opencv/).
+More details on pip install openCV [here](https://www.pyimagesearch.com/2018/09/19/pip-install-opencv/).
 
-**Note:** On a fresh computer some of the libraries may get missing in above pip install. Install them using the [following commands](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/):
+> **Note:** On a fresh computer some of the libraries may get missing in above pip install. 
+
+Install them using the [following commands](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/):
+Windows users may skip this step.
 ```
 sudo apt-get install -y build-essential cmake unzip pkg-config
 sudo apt-get install -y libjpeg-dev libpng-dev libtiff-dev
 sudo apt-get install -y libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
 sudo apt-get install -y libatlas-base-dev gfortran
 ```
-Windows users may skip the step above.
 
 ### 2. Clone the repo
 ```
@@ -109,15 +112,15 @@ python3 -m pip install --user -r requirements.txt
 	```
 	**Note:** If you are not running this for the first time, delete previous inputs first
 	```
-	mv inputs/OMR_Files/ ~/.trash
-	# Or you can delete permanently: rm -rf inputs/OMR_Files/
+	** mv inputs/OMR_Files/ ~/.trash ** # delete permanently with: rm -rf inputs/OMR_Files/
 	cp -r inputs/samples/sample1/* inputs/
 	```
 2. Run OMRChecker: **` python3 main.py `**
 3. ???
 4. [Profit](https://knowyourmeme.com/memes/profit)!!
 
-**Note:** For subsequent runs, if you don't want the outputs to append to previous results - Make sure the `outputs` folder is clean : `rm -rf outputs/`.
+_**Note:** For subsequent runs, if you don't want the outputs to append to previous results- 
+Make sure the `outputs` folder is clean : `rm -rf outputs/`._
 
 <!-- ### Folder Structure 
 <img align="center" src="https://raw.githubusercontent.com/Udayraj123/OMRChecker/master/directory_structure.png" alt="Directory Structure" height="350">
@@ -128,8 +131,8 @@ This structure has been created to suit for better organization of OMRs (Citywis
 <!-- Template alignment image here -->
 1. Follow the [User Guide](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide/) to create your own Template Layout.
 2. Open `globals.py` and play with the parameters (although most of them would need no change :smile:)
-<!-- 3. Add answer key( TODO: add answer key/marking scheme guide)  -->
 3. Run the code with [appropriate arguments](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide#Run-the-code).
+<!-- 3. Add answer key( TODO: add answer key/marking scheme guide)  -->
 
 <!-- #### Testing the code
 Datasets to test on : 
@@ -147,16 +150,15 @@ Images can be taken from various angles as shown below-
 </p>
 
 These images will be processed in the following manner: 
-
-*Note: below image is generated by the code itself!*
-
 <p align="center">
 	<a href="https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals">
 		<img alt="rotation_stack" width="650" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/Progress/2019-04-26/images/rotation.PNG">
 	</a>
+	<br>
+	*Note: This image is generated by the code itself!*
 </p>
 
-Finally a CSV file will be generated containing all the responses and scoring
+Finally a CSV file will also be generated containing all the responses and scoring
 
 <p align="center">
 	<a href="https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals">
@@ -173,22 +175,13 @@ Our Motto:
 After seeing it work fabulously at large scale on scanned OMR sheets at Technothlon, we have decided to open source the code and roll out mobile based scanning as well. The feedback from you all will be extremely valuable in making this idea become successful.
 
 ### Can I use this code in my work?
-OMRChecker is completely [![Open Source Love svg1](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badges/) and published under **GPLv3** license which is just to give a heads up to **disclose usage** of this software in your code. 
+[![Open Source Love svg1](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badges/)
 
-**OMRChecker can be forked and modified. You are encouraged to play with it and we would love to see your own projects in action!**
+OMRChecker is completely open source and published under **GPLv3** license which is just to give you a heads up to **disclose usage** of this software in your code. 
 
-<!-- Begin donate section -->
+OMRChecker can be forked and modified. **You are encouraged to play with it and we would love to see your own projects in action!**
 
-> If this project saved you large costs on OMR Software licenses and/or want to give me some credit: [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif)](https://www.paypal.me/Udayraj123)
-
-> To keep my 💡 brain juices flowing and create more such projects, [Buy Me A Coffee ☕](https://www.buymeacoffee.com/Udayraj123) 
-<!-- ![☕](https://miro.medium.com/fit/c/256/256/1*br7aoq_JVfxeg73x5tF_Sw.png) -->
-<!-- [![paypal.me](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Z5BNNK7AVFVH8&source=url) -->
-<!-- https://www.amazon.in/hz/wishlist/ls/3V0TDQBI3T8IL -->
-
-<!-- End donate section -->
-
-### Credits 
+## Credits 
 _A Huge thanks to :_
 _The creative master **Adrian Rosebrock** for his blog :_ https://pyimagesearch.com 
 
@@ -207,7 +200,7 @@ some SO answers from roughworks
 prof
 -->
 
-### License 
+## License 
 ```
 Copyright © 2019 Udayraj Deshmukh
 OMRChecker : Grade exams fast and accurately using a scanner 🖨 or your phone 🤳
@@ -215,11 +208,11 @@ This is free software, and you are welcome to redistribute it under certain cond
 ```
 For more details see [![GitHub license](https://img.shields.io/github/license/Udayraj123/OMRChecker.svg)](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE)
 
-### Related Projects
+## Related Projects
 Here's a sneak peak of the [Android OMR Helper App(WIP)](https://github.com/Udayraj123/AndroidOMRHelper): 
 <p align="center">
 	<a href="https://github.com/Udayraj123/AndroidOMRHelper">
-		<img height="400" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/Progress/2019-04-26/images/app_flow.PNG">
+		<img height="350" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/Progress/2019-04-26/images/app_flow.PNG">
 	</a>
 </p>
 
@@ -234,4 +227,16 @@ Here's a sneak peak of the [Android OMR Helper App(WIP)](https://github.com/Uday
 [![GitHub contributors](https://img.shields.io/github/contributors/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/graphs/contributors/)
 
 
-#### Help us reach 550 stars ⭐ to become #1 on the "OMR" tag on github [![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/) - [Currently #4](https://github.com/topics/omr)
+#### Help us reach 550 stars ⭐ to become #1 ([Currently #4](https://github.com/topics/omr)) on the "OMR" tag on github [![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
+
+<!-- Begin donate section -->
+
+> If this project saved you large costs on OMR Software licenses and/or want to give me some credit: [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif)](https://www.paypal.me/Udayraj123)
+
+> To keep my 💡 brain juices flowing and create more such projects, [Buy Me A Coffee ☕](https://www.buymeacoffee.com/Udayraj123) 
+<!-- ![☕](https://miro.medium.com/fit/c/256/256/1*br7aoq_JVfxeg73x5tF_Sw.png) -->
+<!-- [![paypal.me](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Z5BNNK7AVFVH8&source=url) -->
+<!-- https://www.amazon.in/hz/wishlist/ls/3V0TDQBI3T8IL -->
+
+<!-- End donate section -->
+
