@@ -6,6 +6,7 @@ https://github.com/Udayraj123
 
 """
 import cv2
+import os
 import json
 import numpy as np
 from globals import *
@@ -259,10 +260,14 @@ def read_template(filename):
         return json.load(f)
 
 
-templJSON={
-'J' : read_template("inputs/J_template.json"),
-'H' : read_template("inputs/H_template.json")
-}
+templJSON={}
+for squad in ["J", "H"]:
+    TEMPLATE_FILE = "inputs/"+squad+"_template.json";
+    if(os.path.exists(TEMPLATE_FILE)):
+        templJSON[squad] = read_template(TEMPLATE_FILE)
+if(len(templJSON.keys()) == 0):
+    print("Error: No template files present at 'inputs/'")
+    exit(0)
 TEMPLATES={}
 
 for squad in templJSON.keys():
