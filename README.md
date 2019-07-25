@@ -8,8 +8,9 @@ Grade exams fast and accurately using a scanner 🖨 or your phone 🤳.
 ![Extensible](https://img.shields.io/badge/Extensible-✔-green.svg?style=flat-square)
 
 
-[![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
+[![UserGuide](https://img.shields.io/badge/UserGuide-✔-green.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/wiki/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/pull/new/master)
+[![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
 
 #### **TLDR;** Jump to [Getting Started](#getting-started).
 
@@ -70,7 +71,7 @@ Although windows is supported, **Linux** is recommended for bug-free experience.
 ![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4](https://img.shields.io/badge/python-3.4-blue.svg)
 
 _Note: To get a copy button for below commands, use [CodeCopy Chrome](https://chrome.google.com/webstore/detail/codecopy/fkbfebkcoelajmhanocgppanfoojcdmg) | [CodeCopy Firefox](https://addons.mozilla.org/en-US/firefox/addon/codecopy/)._
-```
+```bash
 python3 -m pip install --user --upgrade pip
 python3 -m pip install --user opencv-python
 python3 -m pip install --user opencv-contrib-python
@@ -81,7 +82,7 @@ More details on pip install openCV [here](https://www.pyimagesearch.com/2018/09/
 
 Install them using the [following commands](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/):
 Windows users may skip this step.
-```
+```bash
 sudo apt-get install -y build-essential cmake unzip pkg-config
 sudo apt-get install -y libjpeg-dev libpng-dev libtiff-dev
 sudo apt-get install -y libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
@@ -89,14 +90,14 @@ sudo apt-get install -y libatlas-base-dev gfortran
 ```
 
 ### 2. Clone the repo
-```
+```bash
 git clone https://github.com/Udayraj123/OMRChecker
 ```
 
 #### Install other requirements 
 ![imutils 0.5.2](https://img.shields.io/badge/imutils-0.5.2-blue.svg) ![matplotlib 3.0.2](https://img.shields.io/badge/matplotlib-3.0.2-blue.svg) ![pandas 0.24.0](https://img.shields.io/badge/pandas-0.24.0-blue.svg) ![numpy 1.16.0](https://img.shields.io/badge/numpy-1.16.0-blue.svg)
 
-```
+```bash
 cd OMRChecker/
 python3 -m pip install --user -r requirements.txt
 ```
@@ -107,12 +108,12 @@ python3 -m pip install --user -r requirements.txt
 ### 3. Run the code(on sample images)
 <!-- (Do not make changes to other folder names) -->
 1. Copy sample data: 
-	```
+	```bash
 	cp -r inputs/samples/sample1/* inputs/
 	```
 	**Note:** If you are not running this for the first time, delete previous inputs first
-	```
-	** mv inputs/OMR_Files/ ~/.trash ** # delete permanently with: rm -rf inputs/OMR_Files/
+	```bash
+	mv inputs/OMR_Files/ ~/.trash # delete permanently with: rm -rf inputs/OMR_Files/
 	cp -r inputs/samples/sample1/* inputs/
 	```
 2. Run OMRChecker: **` python3 main.py `**
@@ -231,9 +232,11 @@ Here's a sneak peak of the [Android OMR Helper App(WIP)](https://github.com/Uday
 
 <!-- Begin donate section -->
 
-> If this project saved you large costs on OMR Software licenses and/or want to give me some credit: [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif)](https://www.paypal.me/Udayraj123)
+> If this project saved you large costs on OMR Software licenses, or saved efforts to make one, or simply want to give me some credit: [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif)](https://www.paypal.me/Udayraj123/500) 
 
-> To keep my 💡 brain juices flowing and create more such projects, [Buy Me A Coffee ☕](https://www.buymeacoffee.com/Udayraj123) 
+> _Note: Following non-profit traditions of [Technothlon](https://www.facebook.com/technothlon.techniche), all of your your donations will go into funding good initiatives._
+
+> To keep my 💡 brain juices flowing and create more such projects, [☕ Buy Me A Coffee](https://www.buymeacoffee.com/Udayraj123) 
 <!-- ![☕](https://miro.medium.com/fit/c/256/256/1*br7aoq_JVfxeg73x5tF_Sw.png) -->
 <!-- [![paypal.me](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Z5BNNK7AVFVH8&source=url) -->
 <!-- https://www.amazon.in/hz/wishlist/ls/3V0TDQBI3T8IL -->
