@@ -1,4 +1,4 @@
-# OMR Checker
+ OMR Checker
 Grade exams fast and accurately using a scanner 🖨 or your phone 🤳. 
 
 ![Accurate](https://img.shields.io/badge/Accurate-✔-green.svg?style=flat-square) 
@@ -113,7 +113,7 @@ python3 -m pip install --user -r requirements.txt
 	```
 	**Note:** If you are not running this for the first time, delete previous inputs first
 	```bash
-	mv inputs/OMR_Files/ ~/.trash # can delete permanently using: rm -rf inputs/OMR_Files/
+	mv inputs/OMR_Files/ ~/.trash # delete permanently with: rm -rf inputs/OMR_Files/
 	cp -r inputs/samples/sample1/* inputs/
 	```
 2. Run OMRChecker: **` python3 main.py `**
@@ -235,7 +235,15 @@ Here's a sneak peak of the [Android OMR Helper App(WIP)](https://github.com/Uday
 
 > If this project saved you large costs on OMR Software licenses, or saved efforts to make one, or simply want to give me some credit: [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif)](https://www.paypal.me/Udayraj123/500) 
 
+<<<<<<< HEAD
 > _Note: As per non-profit traditions of [Technothlon](https://www.facebook.com/technothlon.techniche), all of your your donations will go into funding good initiatives in the future._
+
+=======
+> If this project saved you large costs on OMR Software licenses, or saved efforts to make one, or simply want to give me some credit: [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif)](https://www.paypal.me/Udayraj123/500) 
+
+> _Note: Following non-profit traditions of [Technothlon](https://www.facebook.com/technothlon.techniche), all of your your donations will go into funding good initiatives._
+
+> To keep my 💡 brain juices flowing and create more such projects, [☕ Buy Me A Coffee](https://www.buymeacoffee.com/Udayraj123) 
 
 <!-- ![☕](https://miro.medium.com/fit/c/256/256/1*br7aoq_JVfxeg73x5tF_Sw.png) -->
 <!-- [![paypal.me](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Z5BNNK7AVFVH8&source=url) -->
