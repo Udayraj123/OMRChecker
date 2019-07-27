@@ -135,7 +135,7 @@ def show(name,orig,pause=1,resize=False,resetpos=None):
         windowX += w
 
     if(pause):
-        print("Showing '"+name+"'\n\tPress Q to continue or Press Ctrl+C in terminal to exit")
+        print("Showing '"+name+"'\n\tPress Q on image to continue; Press Ctrl+C in terminal to exit")
         waitQ()
         
 

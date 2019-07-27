@@ -310,7 +310,7 @@ for filepath in allOMRs:
     # TODO: Apply validation on columns like roll no to make use of badRollsArray
     
     # flush after every 20 files
-    if(filesCounter % 2 == 0):
+    if(filesCounter % 20 == 0):
         for squad in templJSON.keys():
             for fileKey in filesMap[squad].keys():
                 filesObj[squad][fileKey].flush()
