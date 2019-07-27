@@ -255,9 +255,17 @@ def calcGaps(PointsX,PointsY,numsX,numsY):
     gapsY = ( abs(PointsY[0]-PointsY[1])/(numsY[0]-1),abs(PointsY[2]-PointsY[3]) )
     return (gapsX,gapsY)
 
+
 def read_template(filename):
     with open(filename, "r") as f:
-        return json.load(f)
+        try: 
+            return json.load(f)
+        except Exception as e:
+            print("Error: Invalid JSON file '"+filename+"'")
+            print('\t',e)
+            exit(0)
+
+
 
 
 templJSON={}
@@ -265,6 +273,7 @@ for squad in ["J", "H"]:
     TEMPLATE_FILE = "inputs/"+squad+"_template.json";
     if(os.path.exists(TEMPLATE_FILE)):
         templJSON[squad] = read_template(TEMPLATE_FILE)
+
 if(len(templJSON.keys()) == 0):
     print("Error: No template files present at 'inputs/'")
     exit(0)
