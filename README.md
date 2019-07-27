@@ -114,6 +114,7 @@ python3 -m pip install --user -r requirements.txt
 	**Note:** If you are not running this for the first time, delete previous inputs first
 	```bash
 	mv inputs/OMR_Files/ ~/.trash # can delete permanently using: rm -rf inputs/OMR_Files/
+  
 	cp -r inputs/samples/sample1/* inputs/
 	```
 2. Run OMRChecker: **` python3 main.py `**
