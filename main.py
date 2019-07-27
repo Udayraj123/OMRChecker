@@ -197,7 +197,7 @@ for squad in templJSON.keys():
             # Create Header Columns
             pd.DataFrame([sheetCols], dtype = str).to_csv(filesObj[squad][fileKey], quoting = QUOTE_NONNUMERIC,header=False, index=False) 
         else:
-            print('Present : %s. Appending.' % (fileName))
+            print('Present : appending to %s' % (fileName))
             filesObj[squad][fileKey] = open(fileName,'a')
 
 squadlang="XXdummySquad"
@@ -243,6 +243,9 @@ for filepath in allOMRs:
         print("Error: Filepath not matching to Regex: "+filepath)
         continue
 
+    if(squad not in templJSON.keys()):
+        print("Error: Template not present for squad:",squad, 'Filepath:', filepath)
+        continue
     # TODO make it independent of squad rule
     if(squad not in ['H','J']):
         print("Error: Unexpected Squad Folder-",squad, 'Filepath:', filepath)
@@ -274,7 +277,7 @@ for filepath in allOMRs:
 
     #convert to ABCD, getRoll,etc
     resp = processOMR(squad,OMRresponseDict)
-    print("Read Response: ", resp)
+    print("Read Response: \t", resp)
 
     #This evaluates and returns the score attribute
     score = evaluate(resp, squad,explain=explain)
@@ -307,7 +310,7 @@ for filepath in allOMRs:
     # TODO: Apply validation on columns like roll no to make use of badRollsArray
     
     # flush after every 20 files
-    if(filesCounter % 2 == 0):
+    if(filesCounter % 20 == 0):
         for squad in templJSON.keys():
             for fileKey in filesMap[squad].keys():
                 filesObj[squad][fileKey].flush()

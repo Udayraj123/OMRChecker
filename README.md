@@ -44,7 +44,7 @@ A full-fledged OMR checking software that can read and evaluate OMR sheets scann
 
 📊 **Visually Rich Outputs** - [get insights](https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals) to configure and debug easily.
 
-🎈 **Lightweight** - Code size is less than 500 KB(Sample images excluded).
+🎈 **Lightweight** - Core code size is **less than 500 KB**(Samples excluded).
 
 🏫 **Large Scale** - Already used on tens of thousands of OMRs at [Technothlon](https://www.facebook.com/technothlon.techniche).
 
@@ -52,20 +52,19 @@ A full-fledged OMR checking software that can read and evaluate OMR sheets scann
 
 👩🏿‍💻 **Dev Friendly** - [**Well documented**](https://github.com/Udayraj123/OMRChecker/wiki/) repository based on python and openCV. 
 
-See [**TODOs**](https://github.com/Udayraj123/OMRChecker/wiki/TODOs) for live challenges.
+Devs can look at [**TODOs**](https://github.com/Udayraj123/OMRChecker/wiki/TODOs) for live challenges. See more at [Project Wiki](https://github.com/Udayraj123/OMRChecker/wiki/).
 
 For any help: [![Join](https://img.shields.io/badge/Join-on_Discord-purple.svg?style=flat-square)](https://discord.gg/qFv2Vqf)
 
 <!-- 💁🏿‍♂️ **User Friendly** - WIP, Help by contributing! -->
 
-See more at [Project Wiki](https://github.com/Udayraj123/OMRChecker/wiki/).
 
 ## Getting started
 ![Setup Time](https://img.shields.io/badge/Setup_Time-20_min-blue.svg)
 
 
 ### Operating System
-Although windows is supported, **Linux** is recommended for bug-free experience.
+Although windows is supported, **Linux** is recommended for a bug-free experience.
 
 ### 1. Install dependencies 
 ![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4](https://img.shields.io/badge/python-3.4-blue.svg)
@@ -101,7 +100,8 @@ git clone https://github.com/Udayraj123/OMRChecker
 cd OMRChecker/
 python3 -m pip install --user -r requirements.txt
 ```
-> **Note:** If you face an distutils error, use the `--ignore-installed` flag 
+> **Note:** If you face a distutils error, use the `--ignore-installed` flag 
+
 >	sudo python3 -m pip install --ignore-installed -r requirements.txt
 
 <!-- Wiki should not get cloned -->
@@ -113,7 +113,8 @@ python3 -m pip install --user -r requirements.txt
 	```
 	**Note:** If you are not running this for the first time, delete previous inputs first
 	```bash
-	mv inputs/OMR_Files/ ~/.trash # delete permanently with: rm -rf inputs/OMR_Files/
+	mv inputs/OMR_Files/ ~/.trash # can delete permanently using: rm -rf inputs/OMR_Files/
+  
 	cp -r inputs/samples/sample1/* inputs/
 	```
 2. Run OMRChecker: **` python3 main.py `**
@@ -231,12 +232,12 @@ Here's a sneak peak of the [Android OMR Helper App(WIP)](https://github.com/Uday
 #### Help us reach 550 stars ⭐ to become #1 ([Currently #4](https://github.com/topics/omr)) on the "OMR" tag on github [![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
 
 <!-- Begin donate section -->
+> To keep my 💡 brain juices flowing and create more such projects, [☕ Buy Me A Coffee](https://www.buymeacoffee.com/Udayraj123) 
 
 > If this project saved you large costs on OMR Software licenses, or saved efforts to make one, or simply want to give me some credit: [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif)](https://www.paypal.me/Udayraj123/500) 
 
-> _Note: Following non-profit traditions of [Technothlon](https://www.facebook.com/technothlon.techniche), all of your your donations will go into funding good initiatives._
+> _Note: As per non-profit traditions of [Technothlon](https://www.facebook.com/technothlon.techniche), all of your your donations will go into funding good initiatives in the future._
 
-> To keep my 💡 brain juices flowing and create more such projects, [☕ Buy Me A Coffee](https://www.buymeacoffee.com/Udayraj123) 
 <!-- ![☕](https://miro.medium.com/fit/c/256/256/1*br7aoq_JVfxeg73x5tF_Sw.png) -->
 <!-- [![paypal.me](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Z5BNNK7AVFVH8&source=url) -->
 <!-- https://www.amazon.in/hz/wishlist/ls/3V0TDQBI3T8IL -->

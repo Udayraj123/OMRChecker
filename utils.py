@@ -88,16 +88,20 @@ def resize_util_h(img, u_height, u_width=None):
 
 ### Image Template Part ###
 # TODO : Create class to put these into 
-marker = cv2.imread('inputs/omr_marker.jpg',cv2.IMREAD_GRAYSCALE) #,cv2.CV_8UC1/IMREAD_COLOR/UNCHANGED
-marker = resize_util(marker, int(uniform_width/templ_scale_fac))
-marker = cv2.GaussianBlur(marker, (5, 5), 0)
-marker = cv2.normalize(marker, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
-# marker_eroded_sub = marker-cv2.erode(marker,None)
-marker_eroded_sub = marker - cv2.erode(marker, kernel=np.ones((5,5)),iterations=5)
-# lonmarkerinv = cv2.imread('inputs/omr_autorotate.jpg',cv2.IMREAD_GRAYSCALE)
-# lonmarkerinv = imutils.rotate_bound(lonmarkerinv,angle=180)
-# lonmarkerinv = imutils.resize(lonmarkerinv,height=int(lonmarkerinv.shape[1]*0.75))
-# cv2.imwrite('inputs/lonmarker-inv-resized.jpg',lonmarkerinv)
+MARKER_PATH = 'inputs/omr_marker.jpg'
+marker = cv2.imread(MARKER_PATH,cv2.IMREAD_GRAYSCALE) #,cv2.CV_8UC1/IMREAD_COLOR/UNCHANGED
+marker_eroded_sub = None
+if(marker is not None):
+    print("Found marker at:",MARKER_PATH,"Shape:", marker.shape)
+    marker = resize_util(marker, int(uniform_width/templ_scale_fac))
+    marker = cv2.GaussianBlur(marker, (5, 5), 0)
+    marker = cv2.normalize(marker, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+    # marker_eroded_sub = marker-cv2.erode(marker,None)
+    marker_eroded_sub = marker - cv2.erode(marker, kernel=np.ones((5,5)),iterations=5)
+    # lonmarkerinv = cv2.imread('inputs/omr_autorotate.jpg',cv2.IMREAD_GRAYSCALE)
+    # lonmarkerinv = imutils.rotate_bound(lonmarkerinv,angle=180)
+    # lonmarkerinv = imutils.resize(lonmarkerinv,height=int(lonmarkerinv.shape[1]*0.75))
+    # cv2.imwrite('inputs/lonmarker-inv-resized.jpg',lonmarkerinv)
 ### //Image Template Part ###
 
 def show(name,orig,pause=1,resize=False,resetpos=None):
@@ -131,7 +135,7 @@ def show(name,orig,pause=1,resize=False,resetpos=None):
         windowX += w
 
     if(pause):
-        print("Showing "+name+": Press Q to continue, Ctrl+C in terminal to exit")
+        print("Showing '"+name+"'\n\tPress Q on image to continue; Press Ctrl+C in terminal to exit")
         waitQ()
         
 
@@ -447,7 +451,7 @@ def getROI(image, filename, noCropping=False, noMarkers=False):
             print("Error: Paper boundary not found! Should pass --noCropping in command?")
             return None
         else:
-            print("Found page boundaries: ", sheet.tolist())
+            print("Found page corners: ", sheet.tolist())
 
         # Warp layer 1
         image_norm = four_point_transform(image_norm, sheet)
@@ -490,7 +494,7 @@ def getROI(image, filename, noCropping=False, noMarkers=False):
         h,w=templ.shape[:2]
         centres = []
         sumT, maxT = 0, 0
-        print("Matching Marker:", end=" ")
+        print("Matching Marker:\t", end=" ")
         for k in range(0,4):
             res = cv2.matchTemplate(quads[k],templ,cv2.TM_CCOEFF_NORMED)
             maxT = res.max()
@@ -880,7 +884,7 @@ def readResponse(squad,image,name,savedir=None,noAlign=False):
         globalTHR, j_low, j_high = getGlobalThreshold(allQVals)#, "Mean Intensity Histogram", plotShow=False, sortInPlot=True)
         
         # TODO colorama
-        print("Thresholding: globalTHR: ",round(globalTHR,2),"\tglobalStdTHR: ",round(globalStdTHR,2),"\t(Looks like a Xeroxed OMR)" if(globalTHR == 255) else "")
+        print("Thresholding:\t globalTHR: ",round(globalTHR,2),"\tglobalStdTHR: ",round(globalStdTHR,2),"\t(Looks like a Xeroxed OMR)" if(globalTHR == 255) else "")
         # plt.show()
         # hist = getPlotImg()
         # show("StdHist", hist, 0, 1)

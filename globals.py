@@ -78,9 +78,9 @@ OMR_INPUT_DIR ='inputs/OMR_Files/'
 saveMarkedDir='outputs/CheckedOMRs/' 
 resultDir='outputs/Results/'
 manualDir='outputs/Manual/'
-errorPath=manualDir+'ErrorFiles/'
-badRollsPath=manualDir+'BadRollNosFiles/'
-multiMarkedPath=manualDir+'MultiMarkedFiles/'
+errorsDir=manualDir+'ErrorFiles/'
+badRollsDir=manualDir+'BadRollNosFiles/'
+multiMarkedDir=manualDir+'MultiMarkedFiles/'
 
 
 """
