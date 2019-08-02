@@ -25,7 +25,7 @@ explain= 0
 
 BATCH_NO=1000
 NO_MARKER_ERR=12
-MULTI_BUBBLE_ERR=15
+MULTI_BUBBLE_WARN=15
 
 # For preProcessing
 GAMMA_LOW = 0.7
@@ -35,9 +35,10 @@ ERODE_SUB_OFF = 1
 
 # For new ways of determining threshold
 MIN_GAP, MIN_STD = 30, 25
-MIN_JUMP = 20
-CONFIDENT_JUMP = 25
-JUMP_DELTA = 40
+MIN_JUMP = 18
+# If only not confident, take help of globalTHR
+CONFIDENT_JUMP = MIN_JUMP+15
+JUMP_DELTA = 30
 # MIN_GAP : worst case gap of black and gray
 
 # Templ alignment parameters

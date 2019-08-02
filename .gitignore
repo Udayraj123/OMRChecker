@@ -5,7 +5,11 @@
 **/gitignore
 **/ignore
 **/outputs
-inputs/*
-!inputs/samples/
-inputs/OMR_Files/
+/\.DS_Store
 OMRChecker.wiki/
+# Everything in inputs/
+inputs/*
+# Except *.json and OMR_Files/
+!inputs/OMR_Files/
+!inputs/*.json
+!inputs/omr_marker.jpg

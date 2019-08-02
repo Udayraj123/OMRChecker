@@ -9,22 +9,12 @@ Grade exams fast and accurately using a scanner 🖨 or your phone 🤳.
 
 
 [![UserGuide](https://img.shields.io/badge/UserGuide-✔-green.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/wiki/)
+<!-- [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/gist/Udayraj123/a125b1531c61cceed5f06994329cba66/omrchecker-on-cloud.ipynb) -->
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/pull/new/master)
 [![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
 
 #### **TLDR;** Jump to [Getting Started](#getting-started).
 
-<!-- gif here -->
-### Code in action on images taken by scanner: 🔥
-<p align="center">
-	<img alt="document_scanner" width="450" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/mini_scripts/outputs/gif/document_scanner.gif">
-
-</p>
-
-### Code in action on images taken by a mobile phone: 🔥
-<p align="center">
-	<img alt="checking_xeroxed_mobile" width="450" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/mini_scripts/outputs/gif/checking_xeroxed_mobile.gif">
-</p>
 
 ## 🎯 Features
 
@@ -58,10 +48,19 @@ For any help: [![Join](https://img.shields.io/badge/Join-on_Discord-purple.svg?s
 
 <!-- 💁🏿‍♂️ **User Friendly** - WIP, Help by contributing! -->
 
+### Code in action on images taken by scanner: 🔥
+<p align="center">
+	<img alt="document_scanner" height="350" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/mini_scripts/outputs/gif/document_scanner.gif">
+
+</p>
+
+### Code in action on images taken by a mobile phone: 🔥
+<p align="center">
+	<img alt="checking_xeroxed_mobile" height="350" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/mini_scripts/outputs/gif/checking_xeroxed_mobile.gif">
+</p>
 
 ## Getting started
 ![Setup Time](https://img.shields.io/badge/Setup_Time-20_min-blue.svg)
-
 
 ### Operating System
 Although windows is supported, **Linux** is recommended for a bug-free experience.
@@ -105,21 +104,32 @@ python3 -m pip install --user -r requirements.txt
 >	sudo python3 -m pip install --ignore-installed -r requirements.txt
 
 <!-- Wiki should not get cloned -->
-### 3. Run the code(on sample images)
-<!-- (Do not make changes to other folder names) -->
-1. Copy sample data: 
-	```bash
-	cp -r inputs/samples/sample1/* inputs/
-	```
-	**Note:** If you are not running this for the first time, delete previous inputs first
-	```bash
-	mv inputs/OMR_Files/ ~/.trash # delete permanently with: rm -rf inputs/OMR_Files/
-	cp -r inputs/samples/sample1/* inputs/
-	```
-2. Run OMRChecker: **` python3 main.py `**
-3. ???
-4. [Profit](https://knowyourmeme.com/memes/profit)!!
+### 3. Run the code
 
+#### Running default sample
+If you want to try out the default sample, you can directly run:
+```bash
+	python3 main.py
+```
+#### Running other samples
+1. Remove previous inputs: 
+	```bash
+	# remove permanently: 
+	rm -rf inputs/*
+	# or move to trash
+	mv inputs/* ~/.trash  
+	```
+2. Copy your new inputs. You can use sample data as shown below: 
+	<!-- mkdir inputs/ -->
+	```bash
+	cp -r ./samples/sample2/* inputs/
+	```
+	_Note: Change the number in sample1 to see more examples_
+3. Run OMRChecker: 
+	**` python3 main.py [-c] [-m] [-a] `**
+	See full usage of the available options [here](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide#Run-the-code).
+
+<!-- 4. [Profit](https://knowyourmeme.com/memes/profit)!! -->
 _**Note:** For subsequent runs, if you don't want the outputs to append to previous results- 
 Make sure the `outputs` folder is clean : `rm -rf outputs/`._
 
@@ -128,7 +138,7 @@ Make sure the `outputs` folder is clean : `rm -rf outputs/`._
 
 This structure has been created to suit for better organization of OMRs (Citywise then Group-wise and Language-wise). Making changes to this would require changes in the code.
 -->
-## Applying it on your own OMR Sheets
+#### Running it on your own OMR Sheets
 <!-- Template alignment image here -->
 1. Follow the [User Guide](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide/) to create your own Template Layout.
 2. Open `globals.py` and play with the parameters (although most of them would need no change :smile:)
@@ -167,13 +177,13 @@ Finally a CSV file will also be generated containing all the responses and scori
 	</a>
 </p>
 
-### There are a lot more visuals in the wiki. [Check them out!](https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals)
+### There are many visuals in the wiki. [Check them out!](https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals)
 
 ## 💡 Why is this software free?
 Our Motto: 
 > Don't reinvent the wheel, use good wheels to make great vehicles! 
 
-After seeing it work fabulously at large scale on scanned OMR sheets at Technothlon, we have decided to open source the code and roll out mobile based scanning as well. The feedback from you all will be extremely valuable in making this idea become successful.
+After seeing it work fabulously at large scale at Technothlon, we have decided to open source the code and roll out mobile based scanning as well. The [feedback](https://github.com/Udayraj123/OMRChecker/issues/9) from you all will be extremely valuable in making this idea become successful.
 
 ### Can I use this code in my work?
 [![Open Source Love svg1](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badges/)
@@ -218,8 +228,9 @@ Here's a sneak peak of the [Android OMR Helper App(WIP)](https://github.com/Uday
 </p>
 
 ## Activity: 
-[![Chat](https://img.shields.io/badge/Join-on_Discord-purple.svg?style=flat-square)](https://discord.gg/qFv2Vqf)
+Discord Group: [![Chat](https://img.shields.io/badge/Join-on_Discord-purple.svg?style=flat-square)](https://discord.gg/qFv2Vqf)
 [![Ask me](https://img.shields.io/badge/Ask_me-anything-purple.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/issues/5)
+[![Discuss on Reddit](https://img.shields.io/badge/Discuss%20on-reddit-orange.svg)](https://www.reddit.com/r/computervision/comments/ccbj6f/omrchecker_grade_exams_using_python_and_opencv/)
 
 [![HitCount](http://hits.dwyl.io/udayraj123/OMRchecker.svg)](http://hits.dwyl.io/udayraj123/OMRchecker)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/Udayraj123/OMRChecker/wiki/TODOs)
@@ -227,6 +238,7 @@ Here's a sneak peak of the [Android OMR Helper App(WIP)](https://github.com/Uday
 [![GitHub issues-closed](https://img.shields.io/github/issues-closed/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/issues?q=is%3Aissue+is%3Aclosed)
 [![GitHub contributors](https://img.shields.io/github/contributors/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/graphs/contributors/)
 
+*Find OMRChecker on* [***Product Hunt***](https://www.producthunt.com/posts/omr-checker/)  **|** [**Swyya**](https://www.swyya.com/projects/omrchecker) ***|*** [***Hacker News***](https://news.ycombinator.com/item?id=20420602)
 
 #### Help us reach 550 stars ⭐ to become #1 ([Currently #4](https://github.com/topics/omr)) on the "OMR" tag on github [![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
 
@@ -235,19 +247,10 @@ Here's a sneak peak of the [Android OMR Helper App(WIP)](https://github.com/Uday
 
 > If this project saved you large costs on OMR Software licenses, or saved efforts to make one, or simply want to give me some credit: [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif)](https://www.paypal.me/Udayraj123/500) 
 
-<<<<<<< HEAD
-> _Note: As per non-profit traditions of [Technothlon](https://www.facebook.com/technothlon.techniche), all of your your donations will go into funding good initiatives in the future._
-
-=======
-> If this project saved you large costs on OMR Software licenses, or saved efforts to make one, or simply want to give me some credit: [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif)](https://www.paypal.me/Udayraj123/500) 
-
-> _Note: Following non-profit traditions of [Technothlon](https://www.facebook.com/technothlon.techniche), all of your your donations will go into funding good initiatives._
-
-> To keep my 💡 brain juices flowing and create more such projects, [☕ Buy Me A Coffee](https://www.buymeacoffee.com/Udayraj123) 
+> _Note: This project was possible due to [Technothlon](https://www.facebook.com/technothlon.techniche), a non-profit organization run by students of IIT Guwahati. All of the proceedings will be utilised for funding good initiatives in the future._
 
 <!-- ![☕](https://miro.medium.com/fit/c/256/256/1*br7aoq_JVfxeg73x5tF_Sw.png) -->
 <!-- [![paypal.me](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Z5BNNK7AVFVH8&source=url) -->
 <!-- https://www.amazon.in/hz/wishlist/ls/3V0TDQBI3T8IL -->
 
 <!-- End donate section -->
-

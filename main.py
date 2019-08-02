@@ -165,17 +165,17 @@ start_time = int(time())
 argparser = argparse.ArgumentParser()
 # https://docs.python.org/3/howto/argparse.html
 # store_true: if the option is specified, assign the value True to args.verbose. Not specifying it implies False.
-argparser.add_argument("-c", "--noCropping", required=False, dest='noCropping', action='store_true', help="Disable page contour detection - the program will take image as it is.")
-argparser.add_argument("-m", "--noMarkers", required=False, dest='noMarkers', action='store_true', help="Disable marker detection - if page is already cropped at marker points.")
-argparser.add_argument("-a", "--noAlign", required=False, dest='noAlign', action='store_true', help="Disable automatic template alignment - if columns are not varying significantly(saves computation).")
-argparser.add_argument("-l", "--setLayout", required=False, dest='setLayout', action='store_true', help="Use this option to set up OMR template layout by modifying your '*_template.json' file interactively")
+argparser.add_argument("-c", "--noCropping", required=False, dest='noCropping', action='store_true', help="Disable page contour detection - use only when page boundary is visible, e.g. images from mobile camera.")
+argparser.add_argument("-m", "--noMarkers", required=False, dest='noMarkers', action='store_true', help="Disable marker detection - use only when 4 marker points are present surrounding the bubbles.")
+argparser.add_argument("-a", "--autoAlign", required=False, dest='autoAlign', action='store_true', help="Enable automatic template alignment - use only when the paper was bent slightly when scanning.")
+argparser.add_argument("-l", "--setLayout", required=False, dest='setLayout', action='store_true', help="Set up OMR template layout - modify your json file and run again until the template is set.")
 
 args, unknown = argparser.parse_known_args()
 args = vars(args)
 if(len(unknown)>0):
     print("\nError: Unknown arguments:",unknown)
     argparser.print_help()
-    exit(0)
+    exit(1)
 
 OUTPUT_SET, respCols, emptyResp, filesObj, filesMap = {}, {}, {}, {}, {}
 print("\nChecking Files...")
@@ -216,21 +216,21 @@ if(PRELIM_CHECKS):
     # TODO: add more using unit testing
     TEMPLATE = TEMPLATES["H"]
     ALL_WHITE = 255 * np.ones((TEMPLATE.dims[1],TEMPLATE.dims[0]), dtype='uint8')
-    OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse("H",ALL_WHITE,name = "ALL_WHITE", savedir = None, noAlign=True)
+    OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse("H",ALL_WHITE,name = "ALL_WHITE", savedir = None, autoAlign=True)
     print("ALL_WHITE",OMRresponseDict)
     if(OMRresponseDict!={}):
         print("Preliminary Checks Failed.")
-        exit(0)
+        exit(2)
     ALL_BLACK = np.zeros((TEMPLATE.dims[1],TEMPLATE.dims[0]), dtype='uint8')
-    OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse("H",ALL_BLACK,name = "ALL_BLACK", savedir = None, noAlign=True)
+    OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse("H",ALL_BLACK,name = "ALL_BLACK", savedir = None, autoAlign=True)
     print("ALL_BLACK",OMRresponseDict)
     show("Confirm : All bubbles are black",final_marked,1,1)
 
-print('\nConfig:')
-print("\tPages Cropped   : "+str(args["noCropping"]))
-print("\tMarkers Present : "+str(not args["noMarkers"]))
-print("\tAuto Alignment  : "+str(not args["noAlign"]))
-print("\n %d total images present." % (len(allOMRs)))
+print('\nAdditional Modules:')
+print("\tCropping Enabled   : "+str(not args["noCropping"]))
+print("\tMarkers Enabled    : "+str(not args["noMarkers"]))
+print("\tAuto Alignment     : "+str(args["autoAlign"]))
+print("\nTotal images present    : %d" % (len(allOMRs)))
 
 for filepath in allOMRs:
     filesCounter+=1
@@ -255,7 +255,7 @@ for filepath in allOMRs:
     # TODO make it independent of squad rule
     if(squad not in ['H','J']):
         print("Error: Unexpected Squad Folder-",squad, 'Filepath:', filepath)
-        exit(0)
+        exit(3)
 
     inOMR = cv2.imread(filepath,cv2.IMREAD_GRAYSCALE)
     print('')
@@ -274,22 +274,22 @@ for filepath in allOMRs:
         # show("Sample OMR", resize_util_h(OMRcrop,display_height), 0) <-- showimglvl 2 does the job
         templateLayout = drawTemplateLayout(OMRcrop, TEMPLATES[squad], shifted=False, border=2)
         show("Template Layout", templateLayout,1,1)
-        print('Setup Layout Note: Press Q to continue, Ctrl+C in terminal to exit')
         continue
     #uniquify
     newfilename = inputFolderName + '_' + filename
     savedir = saveMarkedDir+squadlang
-    OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse(squad,OMRcrop,name = newfilename, savedir = savedir, noAlign=args["noAlign"])
+    OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse(squad,OMRcrop,name = newfilename, savedir = savedir, autoAlign=args["autoAlign"])
 
     #convert to ABCD, getRoll,etc
     resp = processOMR(squad,OMRresponseDict)
-    print("Read Response: \t", resp)
+    print("\nRead Response: \t", resp)
 
     #This evaluates and returns the score attribute
     score = evaluate(resp, squad,explain=explain)
     respArray=[]
     for k in respCols[squad]:
         respArray.append(resp[k])
+        
     OUTPUT_SET[squad].append([filename]+respArray)
     # if((multiroll or not (resp['Roll'] is not None and len(resp['Roll'])==11))):
     if(MultiMarked == 0):
@@ -328,7 +328,7 @@ for squad in templJSON.keys():
     for fileKey in filesMap[squad].keys():
         filesObj[squad][fileKey].close()
     
-timeChecking=float(time()-start_time) if filesCounter else 1
+timeChecking=round(time()-start_time,2) if filesCounter else 1
 print('')
 print('Total files processed : %d ' % (filesCounter))
 print('Total files moved : %d ' % (filesMoved))
@@ -349,7 +349,7 @@ if(showimglvl<=1):
     # colorama this
     print("\nTip: To see some awesome visuals, open globals.py and increase 'showimglvl'")
 
-
+# Evaluating based on corrected responses file(after manual verification) on the same dataset
 for squad in templJSON.keys():
     TEST_FILE = 'inputs/TechnothlonOMRDataset_'+squad+'.csv'
     if(os.path.exists(TEST_FILE)):

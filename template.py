@@ -17,7 +17,7 @@ class Pt():
     Container for a Point Box on the OMR
     """
     """
-    qNo is the question's property-
+    qNo is the point's property- question to which this point belongs to
     It can be used as a roll number column as well. (eg roll1)
     It can also correspond to a single digit of integer type Q (eg q5d1)
     """
@@ -60,6 +60,15 @@ qtype_data = {
         'orient':'H'
     },
     # Add custom question types here-
+    # ,
+    # 'QTYPE_MCQ_COL_5A':{'vals' : ['A']*5, 'orient':'V'},
+    # 'QTYPE_MCQ_COL_5B':{'vals' : ['B']*5, 'orient':'V'},
+    # 'QTYPE_MCQ_COL_5C':{'vals' : ['C']*5, 'orient':'V'},
+    # 'QTYPE_MCQ_COL_5D':{'vals' : ['D']*5, 'orient':'V'},
+    # 'QTYPE_MCQ_COL_4A':{'vals' : ['A']*4, 'orient':'V'},
+    # 'QTYPE_MCQ_COL_4B':{'vals' : ['B']*4, 'orient':'V'},
+    # 'QTYPE_MCQ_COL_4C':{'vals' : ['C']*4, 'orient':'V'},
+    # 'QTYPE_MCQ_COL_4D':{'vals' : ['D']*4, 'orient':'V'},
 }
 
 class Template():
@@ -78,11 +87,11 @@ class Template():
         self.QBlocks += genGrid(self.bubbleDims, key, **rect,**qtype_data[rect['qType']])
         # self.QBlocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
 
-def genQBlock(bubbleDims, QBlockDims, key, orig, qNos, gaps, vals, qType, orient):
+def genQBlock(bubbleDims, QBlockDims, key, orig, qNos, gaps, vals, qType, orient, col_orient):
     """
     Input:
     orig - start point
-    qNo  - a qNos tuple
+    qNos  - a tuple of qNos
     gaps - (gapX,gapY) are the gaps between rows and cols in a block
     vals - a 1D array of values of each alternative for a question
 
@@ -111,22 +120,36 @@ def genQBlock(bubbleDims, QBlockDims, key, orig, qNos, gaps, vals, qType, orient
     Qs=[]
     traverse_pts = []
     o = orig.copy()
-    for q in range(len(qNos)):
-        pt = o.copy()
-        pts = []
+    if(col_orient == orient):
+        for q in range(len(qNos)):
+            pt = o.copy()
+            pts = []
+            for v in range(len(vals)):
+                pts.append(Pt(pt.copy(),qNos[q],qType,vals[v]))
+                pt[H] += gaps[H]
+            # For diagonalal endpoint of QBlock
+            pt[H] += bubbleDims[H] - gaps[H]
+            pt[V] += bubbleDims[V]
+            #TODO- make a mini object for this
+            traverse_pts.append(([o.copy(), pt.copy()], pts))
+            o[V] += gaps[V]
+    else:
         for v in range(len(vals)):
-            pts.append(Pt(pt.copy(),qNos[q],qType,vals[v]))
-            pt[H] += gaps[H]
-        pt[H] += bubbleDims[H] - gaps[H]
-        pt[V] += bubbleDims[V]
-        #TODO- make a mini object for this
-        traverse_pts.append(([o.copy(), pt.copy()], pts))
-        o[V] += gaps[V]
-
+            pt = o.copy()
+            pts = []
+            for q in range(len(qNos)):
+                pts.append(Pt(pt.copy(),qNos[q],qType,vals[v]))
+                pt[V] += gaps[V]
+            # For diagonalal endpoint of QBlock
+            pt[V] += bubbleDims[V] - gaps[V]
+            pt[H] += bubbleDims[H]
+            #TODO- make a mini object for this
+            traverse_pts.append(([o.copy(), pt.copy()], pts))
+            o[H] += gaps[H]
     # Pass first three args as is. only append 'traverse_pts'
     return QBlock(QBlockDims, key, orig, traverse_pts)
 
-def genGrid(bubbleDims, key, qType, orig, bigGaps, gaps, qNos, vals, orient='V'):
+def genGrid(bubbleDims, key, qType, orig, bigGaps, gaps, qNos, vals, orient='V', col_orient='V'):
     """
     Input(Directly passable from JSON parameters):
     bubbleDims - dimesions of single QBox
@@ -182,7 +205,7 @@ TODO: Update this part, add more examples like-
     # print(gridData.shape, gridData)
     if(0 and len(gridData.shape)!=3 or gridData.size==0): # product of shape is zero
         print("Error(genGrid): Invalid qNos array given:", gridData.shape, gridData)
-        exit(0)
+        exit(4)
         return []
 
     # ^4ENDUSER should also validate no overlap of rect points somehow?!
@@ -243,7 +266,7 @@ TODO: Update this part, add more examples like-
                 gaps[1] * (numDims[H]-1) + bubbleDims[V]
             ]
             # WATCH FOR BLUNDER(use .copy()) - qStart was getting passed by reference! (others args read-only)
-            QBlocks.append(genQBlock(bubbleDims, QBlockDims, key, qStart.copy(),qTuple,gaps,vals,qType,orient))
+            QBlocks.append(genQBlock(bubbleDims, QBlockDims, key, qStart.copy(),qTuple,gaps,vals,qType,orient,col_orient))
             # Goes vertically down first
             qStart[V] += origGap[V]
         qStart[H] += origGap[H]
@@ -263,7 +286,7 @@ def read_template(filename):
         except Exception as e:
             print("Error: Invalid JSON file '"+filename+"'")
             print('\t',e)
-            exit(0)
+            exit(5)
 
 
 
@@ -276,7 +299,7 @@ for squad in ["J", "H"]:
 
 if(len(templJSON.keys()) == 0):
     print("Error: No template files present at 'inputs/'")
-    exit(0)
+    exit(6)
 TEMPLATES={}
 
 for squad in templJSON.keys():

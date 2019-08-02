@@ -60,7 +60,7 @@ for _dir in [multiMarkedDir,errorsDir,badRollsDir]:
 # In[64]:
 def waitQ():
     ESC_KEY = 27
-    while(cv2.waitKey(1)& 0xFF not in [ord('q'), ESC_KEY]):pass
+    while(cv2.waitKey(1) & 0xFF not in [ord('q'), ESC_KEY]):pass
     cv2.destroyAllWindows()
 
 def normalize_util(img, alpha=0, beta=255):
@@ -86,24 +86,6 @@ def resize_util_h(img, u_height, u_width=None):
         u_width = int(w*u_height/h)
     return cv2.resize(img,(u_width,u_height))
 
-### Image Template Part ###
-# TODO : Create class to put these into 
-MARKER_PATH = 'inputs/omr_marker.jpg'
-marker = cv2.imread(MARKER_PATH,cv2.IMREAD_GRAYSCALE) #,cv2.CV_8UC1/IMREAD_COLOR/UNCHANGED
-marker_eroded_sub = None
-if(marker is not None):
-    print("Found marker at:",MARKER_PATH,"Shape:", marker.shape)
-    marker = resize_util(marker, int(uniform_width/templ_scale_fac))
-    marker = cv2.GaussianBlur(marker, (5, 5), 0)
-    marker = cv2.normalize(marker, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
-    # marker_eroded_sub = marker-cv2.erode(marker,None)
-    marker_eroded_sub = marker - cv2.erode(marker, kernel=np.ones((5,5)),iterations=5)
-    # lonmarkerinv = cv2.imread('inputs/omr_autorotate.jpg',cv2.IMREAD_GRAYSCALE)
-    # lonmarkerinv = imutils.rotate_bound(lonmarkerinv,angle=180)
-    # lonmarkerinv = imutils.resize(lonmarkerinv,height=int(lonmarkerinv.shape[1]*0.75))
-    # cv2.imwrite('inputs/lonmarker-inv-resized.jpg',lonmarkerinv)
-### //Image Template Part ###
-
 def show(name,orig,pause=1,resize=False,resetpos=None):
     global windowX, windowY, display_width
     if(type(orig) == type(None)):
@@ -122,7 +104,7 @@ def show(name,orig,pause=1,resize=False,resetpos=None):
     h,w = img.shape[:2]
     
     # Set next window position
-    margin = 75
+    margin = 25
     w += margin
     h += margin
     if(windowX+w > windowWidth):
@@ -135,7 +117,7 @@ def show(name,orig,pause=1,resize=False,resetpos=None):
         windowX += w
 
     if(pause):
-        print("Showing '"+name+"'\n\tPress Q on image to continue; Press Ctrl+C in terminal to exit")
+        print("Showing '"+name+"'\n\tPress Q on image to continue; Press Ctrl + C in terminal to exit")
         waitQ()
         
 
@@ -368,9 +350,27 @@ def findPage(image_norm):
     return sheet
 
 
+### Image Template Part ###
+# TODO : Create class to put these into 
+MARKER_PATH = 'inputs/omr_marker.jpg'
+marker = cv2.imread(MARKER_PATH,cv2.IMREAD_GRAYSCALE) #,cv2.CV_8UC1/IMREAD_COLOR/UNCHANGED
+marker_eroded_sub = None
+if(marker is not None):
+    print("Found marker at:",MARKER_PATH,"Shape:", marker.shape)
+    marker = resize_util(marker, int(uniform_width/templ_scale_fac))
+    marker = cv2.GaussianBlur(marker, (5, 5), 0)
+    marker = cv2.normalize(marker, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+    # marker_eroded_sub = marker-cv2.erode(marker,None)
+    marker_eroded_sub = marker - cv2.erode(marker, kernel=np.ones((5,5)),iterations=5)
+    # lonmarkerinv = cv2.imread('inputs/omr_autorotate.jpg',cv2.IMREAD_GRAYSCALE)
+    # lonmarkerinv = imutils.rotate_bound(lonmarkerinv,angle=180)
+    # lonmarkerinv = imutils.resize(lonmarkerinv,height=int(lonmarkerinv.shape[1]*0.75))
+    # cv2.imwrite('inputs/lonmarker-inv-resized.jpg',lonmarkerinv)
+### //Image Template Part ###
+
 # Resizing the marker within scaleRange at rate of descent_per_step to find the best match.
 def getBestMatch(image_eroded_sub):
-    global marker_eroded_sub
+    global marker_eroded_sub    
 
     descent_per_step = (markerScaleRange[1]-markerScaleRange[0])//markerScaleSteps
     h, w = marker_eroded_sub.shape[:2]
@@ -391,7 +391,7 @@ def getBestMatch(image_eroded_sub):
             best_scale, allMaxT = s, maxT
 
     if(allMaxT < thresholdCircle):
-        print("Warnning: Template matching too low! Should pass --noCropping in command?")
+        print("\tWarning: Template matching too low! Should you pass --noCropping flag?")
         if(showimglvl>=1):
             show("res",res,1,0)
 
@@ -432,13 +432,13 @@ def getROI(image, filename, noCropping=False, noMarkers=False):
     """
 
     # TODO: (remove noCropping bool) Automate the case of close up scan(incorrect page)-
-    # ^Note: App rejects noCroppings along with others
+    # ^Note: App rejects croppeds along with others
 
     # image = resize_util(image, uniform_width, uniform_height)
 
     # Preprocessing the image
     img = image.copy()
-    # TODO: need to detect if image is too blurry already! (M1: check crop dimensions b4 resizing; coz it won't be blurry otherwise _/)
+    # TODO: need to detect if image is too blurry already! (M1: check noCropping dimensions b4 resizing; coz it won't be blurry otherwise _/)
     img = cv2.GaussianBlur(img,(3,3),0)
     image_norm = normalize_util(img);
 
@@ -448,7 +448,7 @@ def getROI(image, filename, noCropping=False, noMarkers=False):
             image_norm = resize_util(image_norm, uniform_width*2)
         sheet = findPage(image_norm)
         if sheet==[]:
-            print("Error: Paper boundary not found! Should pass --noCropping in command?")
+            print("\tError: Paper boundary not found! Should you pass --noCropping flag?")
             return None
         else:
             print("Found page corners: ", sheet.tolist())
@@ -456,12 +456,12 @@ def getROI(image, filename, noCropping=False, noMarkers=False):
         # Warp layer 1
         image_norm = four_point_transform(image_norm, sheet)
     
-    # Resize only after cropping the page for clarity as well as uniformity for non cropped images
+    # Resize only after cropping the page for clarity as well as uniformity for non noCropping images
     image_norm = resize_util(image_norm, uniform_width, uniform_height)
     image = resize_util(image, uniform_width, uniform_height)
     appendSaveImg(1,image_norm)
     
-    if(noMarkers == True):
+    if(noMarkers == True):    
         # Return preprocessed image
         return image_norm
     else:
@@ -482,6 +482,9 @@ def getROI(image, filename, noCropping=False, noMarkers=False):
 
         # print(image_eroded_sub.shape)
         # show("2",image_eroded_sub)
+        if(marker_eroded_sub is None):
+            print("\nError: No marker present. Should you pass --noMarkers flag?")
+            exit(1)
 
         best_scale, allMaxT = getBestMatch(image_eroded_sub)
         if(best_scale == None):
@@ -501,7 +504,7 @@ def getROI(image, filename, noCropping=False, noMarkers=False):
             print("Q"+str(k+1)+": maxT", round(maxT,3), end="\t")
             if(maxT < thresholdCircle or abs(allMaxT-maxT) >= thresholdVar):
                 # Warning - code will stop in the middle. Keep Threshold low to avoid.
-                print(filename,"\nError: No circle found in Quad",k+1, "\n\tthresholdVar", thresholdVar, "maxT", maxT,"allMaxT",allMaxT, "Should you Not pass --noCropping?")
+                print(filename,"\nError: No circle found in Quad",k+1, "\n\tthresholdVar", thresholdVar, "maxT", maxT,"allMaxT",allMaxT, "Should you pass --noCropping flag?")
                 if(showimglvl>=1):
                     show("no_pts_"+filename,image_eroded_sub,0)
                     show("res_Q"+str(k+1),res,1)
@@ -576,6 +579,7 @@ def getGlobalThreshold(QVals_orig, plotTitle=None, plotShow=True, sortInPlot=Tru
             max1 = jump
             thr1 = QVals[i-1] + jump/2
 
+# NOTE: thr2 is deprecated, thus is JUMP_DELTA
     # Make use of the fact that the JUMP_DELTA(Vertical gap ofc) between values at detected jumps would be atleast 20
     max2,thr2=MIN_JUMP,255
     # Requires atleast 1 gray box to be present (Roll field will ensure this)
@@ -671,13 +675,17 @@ def getLocalThreshold(qNo, QVals, globalTHR, noOutliers, plotTitle=None, plotSho
                 thr1 = QVals[i-1] + jump/2
         # print(qNo,QVals,max1)
 
-        # If only not confident, take help of globalTHR
-        if(max1 < CONFIDENT_JUMP and noOutliers):
-            # All Black or All White case
-            thr1 = globalTHR     
+        # If not confident, then only take help of globalTHR
+        if(max1 < CONFIDENT_JUMP):
+            if(noOutliers):
+                # All Black or All White case
+                thr1 = globalTHR   
+            else:
+                # TODO: Low confidence parameters here
+                pass  
 
-        if(thr1 == 255):
-            print("Warning: threshold is unexpectedly 255!")
+        # if(thr1 == 255):
+        #     print("Warning: threshold is unexpectedly 255! (Outlier Delta issue?)",plotTitle)
 
     if(plotShow and plotTitle is not None):    
         f, ax = plt.subplots()
@@ -715,13 +723,13 @@ def saveImg(path, final_marked):
     print('Saving Image to '+path)
     cv2.imwrite(path,final_marked)
 
-def readResponse(squad,image,name,savedir=None,noAlign=False):
+def readResponse(squad,image,name,savedir=None,autoAlign=False):
     global clahe
     TEMPLATE = TEMPLATES[squad]
     try:
         img = image.copy()
         origDim = img.shape[:2]
-        # print("Cropped dim", origDim)
+        # print("noCropping dim", origDim)
         img = resize_util(img,TEMPLATE.dims[0],TEMPLATE.dims[1])
         # print("Resized dim", img.shape[:2])
 
@@ -736,7 +744,7 @@ def readResponse(squad,image,name,savedir=None,noAlign=False):
         appendSaveImg(3,morph)
 
         # TODO: evaluate if CLAHE is really req
-        if(noAlign==False):
+        if(autoAlign==True):
             # Note: clahe is good for morphology, bad for thresholding
             morph = clahe.apply(morph) 
             appendSaveImg(3,morph)
@@ -767,7 +775,7 @@ def readResponse(squad,image,name,savedir=None,noAlign=False):
 
 
         ### Find Shifts for the QBlocks --> Before calculating threshold!
-        if(noAlign == False):
+        if(autoAlign == True):
             # print("Begin Alignment")
             # Open : erode then dilate
             # Vertical kernel 
@@ -848,7 +856,7 @@ def readResponse(squad,image,name,savedir=None,noAlign=False):
             appendSaveImg(2,initial_align)
             appendSaveImg(2,final_align)
             appendSaveImg(5,img)
-            if(noAlign == False):
+            if(autoAlign == True):
                 final_align = np.hstack((initial_align, final_align))
 
         # Get mean vals n other stats
@@ -873,7 +881,7 @@ def readResponse(squad,image,name,savedir=None,noAlign=False):
                 totalQStripNo+=1
             allQStdVals.extend(QStdVals)
         # print("Begin getGlobalThresholdStd")
-        globalStdTHR, jstd_low, jstd_high = getGlobalThreshold(allQStdVals)#, "Q-wise Std-dev Plot", plotShow=False, sortInPlot=True)
+        globalStdTHR, jstd_low, jstd_high = getGlobalThreshold(allQStdVals)#, "Q-wise Std-dev Plot", plotShow=True, sortInPlot=True)
         # print("End getGlobalThresholdStd")
         # print("Begin getGlobalThreshold")
         # plt.show()
@@ -881,7 +889,7 @@ def readResponse(squad,image,name,savedir=None,noAlign=False):
         # show("StdHist", hist, 0, 1)
         
         #Note: Plotting takes Significant times here --> Change Plotting args to support showimglvl
-        globalTHR, j_low, j_high = getGlobalThreshold(allQVals)#, "Mean Intensity Histogram", plotShow=False, sortInPlot=True)
+        globalTHR, j_low, j_high = getGlobalThreshold(allQVals)#, "Mean Intensity Histogram", plotShow=True, sortInPlot=True)
         
         # TODO colorama
         print("Thresholding:\t globalTHR: ",round(globalTHR,2),"\tglobalStdTHR: ",round(globalStdTHR,2),"\t(Looks like a Xeroxed OMR)" if(globalTHR == 255) else "")
@@ -913,9 +921,9 @@ def readResponse(squad,image,name,savedir=None,noAlign=False):
                 # print(totalQStripNo, qBoxPts[0].qNo, allQStdVals[totalQStripNo], "noOutliers:", noOutliers)
                 perQStripThreshold = getLocalThreshold(qBoxPts[0].qNo, allQStripArrs[totalQStripNo], 
                     globalTHR, noOutliers, 
-                    "Mean Intensity Histogram for "+ key +"."+ qBoxPts[0].qNo, 
+                    "Mean Intensity Histogram for "+ key +"."+ qBoxPts[0].qNo+'.'+str(blockQStripNo), 
                     # None,
-                    # "q5" in (qBoxPts[0].qNo) or 
+                    # "q15.1" in (qBoxPts[0].qNo+'.'+str(blockQStripNo)) or 
                     showimglvl>=6)
                 # print(qBoxPts[0].qNo,key,blockQStripNo, "THR: ",round(perQStripThreshold,2))
                 perOMRThresholdAvg += perQStripThreshold
@@ -979,7 +987,7 @@ def readResponse(squad,image,name,savedir=None,noAlign=False):
             # /for QBlock
         if(totalQStripNo==0):
             print("\n\t UNEXPECTED Template Incorrect Error: totalQStripNo is zero! QBlocks: ",TEMPLATE.QBlocks)
-            exit(0)
+            exit(7)
         perOMRThresholdAvg /= totalQStripNo
         perOMRThresholdAvg = round(perOMRThresholdAvg,2)
         # Translucent
