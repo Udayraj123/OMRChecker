@@ -127,7 +127,7 @@ python3 main.py
 	```
 	_Note: Change the number N in sampleN to see more examples_
 3. Run OMRChecker: 
-	**` python3 main.py [-c] [-m] [-a] `**
+	**` python3 main.py --noMarkers `**
 	See usage guide [here](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide#Run-the-code).
 
 <!-- 4. [Profit](https://knowyourmeme.com/memes/profit)!! -->
