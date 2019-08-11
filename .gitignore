@@ -10,6 +10,6 @@ OMRChecker.wiki/
 # Everything in inputs/
 inputs/*
 # Except *.json and OMR_Files/
-!inputs/OMR_Files/
-!inputs/*.json
-!inputs/omr_marker.jpg
+# !inputs/OMR_Files/
+# !inputs/*.json
+# !inputs/omr_marker.jpg

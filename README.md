@@ -1,14 +1,14 @@
  OMR Checker
 Grade exams fast and accurately using a scanner 🖨 or your phone 🤳. 
 
-![Accurate](https://img.shields.io/badge/Accurate-✔-green.svg?style=flat-square) 
-![Robust](https://img.shields.io/badge/Robust-✔-green.svg?style=flat-square)![Large_Scale](https://img.shields.io/badge/Large_Scale-✔-green.svg?style=flat-square) 
-![Fast](https://img.shields.io/badge/Fast-✔-green.svg?style=flat-square) 
-![Lightweight](https://img.shields.io/badge/Lightweight-✔-green.svg?style=flat-square)
-![Extensible](https://img.shields.io/badge/Extensible-✔-green.svg?style=flat-square)
+![Accurate](https://img.shields.io/badge/Accurate-✔-brightgreen.svg?style=flat-square) 
+![Robust](https://img.shields.io/badge/Robust-✔-brightgreen.svg?style=flat-square)![Large_Scale](https://img.shields.io/badge/Large_Scale-✔-brightgreen.svg?style=flat-square) 
+![Fast](https://img.shields.io/badge/Fast-✔-brightgreen.svg?style=flat-square) 
+![Lightweight](https://img.shields.io/badge/Lightweight-✔-brightgreen.svg?style=flat-square)
+![Extensible](https://img.shields.io/badge/Extensible-✔-brightgreen.svg?style=flat-square)
 
 
-[![UserGuide](https://img.shields.io/badge/UserGuide-✔-green.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/wiki/)
+[![UserGuide](https://img.shields.io/badge/UserGuide-✔-brightgreen.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/wiki/)
 <!-- [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/gist/Udayraj123/a125b1531c61cceed5f06994329cba66/omrchecker-on-cloud.ipynb) -->
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/pull/new/master)
 [![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
@@ -18,9 +18,9 @@ Grade exams fast and accurately using a scanner 🖨 or your phone 🤳.
 
 ## 🎯 Features
 
-![Current_Speed](https://img.shields.io/badge/Speed-200_OMRs/m-brightgreen.svg?style=flat-square)
-![Current_Size](https://img.shields.io/badge/Code_Size-500KB-brightgreen.svg?style=flat-square) 
-![Min Resolution](https://img.shields.io/badge/Min_Resolution-640x480-brightgreen.svg?style=flat-square) 
+![Current_Speed](https://img.shields.io/badge/Speed-200_OMRs/m-blue.svg?style=flat-square)
+![Current_Size](https://img.shields.io/badge/Code_Size-500KB-blue.svg?style=flat-square) 
+![Min Resolution](https://img.shields.io/badge/Min_Resolution-640x480-blue.svg?style=flat-square) 
 
 A full-fledged OMR checking software that can read and evaluate OMR sheets scanned at any angle and having any color. Support is also provided for a customisable marking scheme with section-wise marking, bonus questions, etc.
 
@@ -50,13 +50,13 @@ For any help: [![Join](https://img.shields.io/badge/Join-on_Discord-purple.svg?s
 
 ### Code in action on images taken by scanner: 🔥
 <p align="center">
-	<img alt="document_scanner" height="350" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/mini_scripts/outputs/gif/document_scanner.gif">
+	<img alt="document_scanner" height="300" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/mini_scripts/outputs/gif/document_scanner.gif">
 
 </p>
 
 ### Code in action on images taken by a mobile phone: 🔥
 <p align="center">
-	<img alt="checking_xeroxed_mobile" height="350" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/mini_scripts/outputs/gif/checking_xeroxed_mobile.gif">
+	<img alt="checking_xeroxed_mobile" height="300" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/mini_scripts/outputs/gif/checking_xeroxed_mobile.gif">
 </p>
 
 ## Getting started
@@ -109,7 +109,7 @@ python3 -m pip install --user -r requirements.txt
 #### Running default sample
 If you want to try out the default sample, you can directly run:
 ```bash
-	python3 main.py
+python3 main.py
 ```
 #### Running other samples
 1. Remove previous inputs: 
@@ -122,12 +122,13 @@ If you want to try out the default sample, you can directly run:
 2. Copy your new inputs. You can use sample data as shown below: 
 	<!-- mkdir inputs/ -->
 	```bash
+	# sample1 is the default sample
 	cp -r ./samples/sample2/* inputs/
 	```
-	_Note: Change the number in sample1 to see more examples_
+	_Note: Change the number N in sampleN to see more examples_
 3. Run OMRChecker: 
 	**` python3 main.py [-c] [-m] [-a] `**
-	See full usage of the available options [here](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide#Run-the-code).
+	See usage guide [here](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide#Run-the-code).
 
 <!-- 4. [Profit](https://knowyourmeme.com/memes/profit)!! -->
 _**Note:** For subsequent runs, if you don't want the outputs to append to previous results- 
@@ -233,7 +234,7 @@ Discord Group: [![Chat](https://img.shields.io/badge/Join-on_Discord-purple.svg?
 [![Discuss on Reddit](https://img.shields.io/badge/Discuss%20on-reddit-orange.svg)](https://www.reddit.com/r/computervision/comments/ccbj6f/omrchecker_grade_exams_using_python_and_opencv/)
 
 [![HitCount](http://hits.dwyl.io/udayraj123/OMRchecker.svg)](http://hits.dwyl.io/udayraj123/OMRchecker)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/Udayraj123/OMRChecker/wiki/TODOs)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg)](https://github.com/Udayraj123/OMRChecker/wiki/TODOs)
 [![GitHub pull-requests closed](https://img.shields.io/github/issues-pr-closed/Udayraj123/OMRChecker.svg)](https://github.com/Udayraj123/OMRChecker/pulls?q=is%3Aclosed)
 [![GitHub issues-closed](https://img.shields.io/github/issues-closed/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/issues?q=is%3Aissue+is%3Aclosed)
 [![GitHub contributors](https://img.shields.io/github/contributors/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/graphs/contributors/)
