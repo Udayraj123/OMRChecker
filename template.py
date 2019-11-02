@@ -80,11 +80,25 @@ class Template():
         self.concats = jsonObj["Concatenations"]
         self.singles = jsonObj["Singles"]
 
+        # Add new qTypes from template
+        if "qTypes" in jsonObj:
+            qtype_data.update(jsonObj["qTypes"])
+
+        # Allow template to override globals
+        if "Globals" in jsonObj:
+            globals().update(jsonObj['Globals'])
+
     # Expects bubbleDims to be set already
     def addQBlocks(self, key, rect):
         assert(self.bubbleDims != [-1, -1])
+        # For qType defined in QBlocks
+        if 'qType' in rect:
+            rect.update(**qtype_data[rect['qType']])
+        else:
+            rect['qType'] = {'vals':rect['vals'],
+                             'orient': rect['orient']}
         # keyword arg unpacking followed by named args
-        self.QBlocks += genGrid(self.bubbleDims, key, **rect,**qtype_data[rect['qType']])
+        self.QBlocks += genGrid(self.bubbleDims, key, **rect)
         # self.QBlocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
 
 def genQBlock(bubbleDims, QBlockDims, key, orig, qNos, gaps, vals, qType, orient, col_orient):
@@ -305,6 +319,6 @@ TEMPLATES={}
 for squad in templJSON.keys():
     TEMPLATES[squad] = Template(templJSON[squad])
     for k, QBlocks in templJSON[squad].items():
-        if(k not in ["Dimensions","BubbleDimensions","Concatenations","Singles"]):
+        if(k not in ["Dimensions","BubbleDimensions","Concatenations","Singles","Globals","qTypes"]):
             # Add QBlock to array of grids
             TEMPLATES[squad].addQBlocks(k, QBlocks)
