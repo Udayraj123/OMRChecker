@@ -5,7 +5,7 @@
 **/gitignore
 **/ignore
 **/outputs
-/\.DS_Store
+.DS_Store
 OMRChecker.wiki/
 # Everything in inputs/
 inputs/*
