@@ -24,37 +24,37 @@ from random import randint
 from time import localtime,strftime,time
 # from skimage.filters import threshold_adaptive
 
-
-print('Checking Directories...')
-for _dir in [saveMarkedDir]:
-    if(not os.path.exists(_dir)):
-        print('Created : '+ _dir)
-        os.makedirs(_dir)
-        for sl in ['HE','JE']:#,'HH','JH']:
-            os.mkdir(_dir+sl)
-            os.mkdir(_dir+sl+'/stack')
-            os.mkdir(_dir+sl+'/_MULTI_')
-            os.mkdir(_dir+sl+'/_MULTI_'+'/stack')
-            # os.mkdir(_dir+sl+'/_BADSCAN_')
-            # os.mkdir(_dir+sl+'/_BADSCAN_'+'/stack')
-    else:
-        print('Present : '+_dir)
-
-for _dir in [manualDir,resultDir]:
-    if(not os.path.exists(_dir)):
+def check_dirs(paths):
+    print('Checking Directories...')
+    for _dir in [paths.saveMarkedDir]:
+        if(not os.path.exists(_dir)):
             print('Created : '+ _dir)
             os.makedirs(_dir)
-    else:
-        print('Present : '+_dir)
+            for sl in ['HE','JE']:#,'HH','JH']:
+                os.mkdir(_dir+sl)
+                os.mkdir(_dir+sl+'/stack')
+                os.mkdir(_dir+sl+'/_MULTI_')
+                os.mkdir(_dir+sl+'/_MULTI_'+'/stack')
+                # os.mkdir(_dir+sl+'/_BADSCAN_')
+                # os.mkdir(_dir+sl+'/_BADSCAN_'+'/stack')
+        else:
+            print('Present : '+_dir)
 
-for _dir in [multiMarkedDir,errorsDir,badRollsDir]:
-    if(not os.path.exists(_dir)):
-        print('Created : '+ _dir)
-        os.makedirs(_dir)
-        for sl in ['HE','JE']:#,'HH','JH']:
-            os.mkdir(_dir+sl)
-    else:
-        print('Present : '+_dir)
+    for _dir in [paths.manualDir,paths.resultDir]:
+        if(not os.path.exists(_dir)):
+                print('Created : '+ _dir)
+                os.makedirs(_dir)
+        else:
+            print('Present : '+_dir)
+
+    for _dir in [paths.multiMarkedDir,paths.errorsDir,paths.badRollsDir]:
+        if(not os.path.exists(_dir)):
+            print('Created : '+ _dir)
+            os.makedirs(_dir)
+            for sl in ['HE','JE']:#,'HH','JH']:
+                os.mkdir(_dir+sl)
+        else:
+            print('Present : '+_dir)
 
 
 # In[64]:

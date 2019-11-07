@@ -305,20 +305,4 @@ def read_template(filename):
 
 
 
-templJSON={}
-for squad in ["J", "H"]:
-    TEMPLATE_FILE = "inputs/"+squad+"_template.json";
-    if(os.path.exists(TEMPLATE_FILE)):
-        templJSON[squad] = read_template(TEMPLATE_FILE)
 
-if(len(templJSON.keys()) == 0):
-    print("Error: No template files present at 'inputs/'")
-    exit(6)
-TEMPLATES={}
-
-for squad in templJSON.keys():
-    TEMPLATES[squad] = Template(templJSON[squad])
-    for k, QBlocks in templJSON[squad].items():
-        if(k not in ["Dimensions","BubbleDimensions","Concatenations","Singles","Globals","qTypes"]):
-            # Add QBlock to array of grids
-            TEMPLATES[squad].addQBlocks(k, QBlocks)

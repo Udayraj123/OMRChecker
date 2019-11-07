@@ -75,14 +75,18 @@ CLR_DARK_GRAY = (90,90,90)
 
 MIN_PAGE_AREA = 80000
 
-OMR_INPUT_DIR ='inputs/OMR_Files/'
-saveMarkedDir='outputs/CheckedOMRs/' 
-resultDir='outputs/Results/'
-manualDir='outputs/Manual/'
-errorsDir=manualDir+'ErrorFiles/'
-badRollsDir=manualDir+'BadRollNosFiles/'
-multiMarkedDir=manualDir+'MultiMarkedFiles/'
-
+# Filepaths
+class Paths:
+	def __init__(self, input, output):
+		self.input = input
+		self.output = output
+		self.omrInputDir=f'{input}/OMR_Files/'
+		self.saveMarkedDir=f'{output}/CheckedOMRs/' 
+		self.resultDir=f'{output}/Results/'
+		self.manualDir=f'{output}/Manual/'
+		self.errorsDir=f'{self.manualDir}ErrorFiles/'
+		self.badRollsDir=f'{self.manualDir}BadRollNosFiles/'
+		self.multiMarkedDir=f'{self.manualDir}MultiMarkedFiles/'
 
 """
 Variables

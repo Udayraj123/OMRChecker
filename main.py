@@ -155,9 +155,6 @@ def evaluate(resp,squad,explain=False):
 
     return marks
 
-# os.sep is not an issue here in iglob (handled internally)
-allOMRs = list(glob.iglob(OMR_INPUT_DIR+'*/*/*.jpg')) + list(glob.iglob(OMR_INPUT_DIR+'*/*/*.png'))
-
 timeNowHrs=strftime("%I%p",localtime())
 start_time = int(time())
 
@@ -169,6 +166,9 @@ argparser.add_argument("-c", "--noCropping", required=False, dest='noCropping', 
 argparser.add_argument("-m", "--noMarkers", required=False, dest='noMarkers', action='store_true', help="Disable marker detection - use only when 4 marker points are present surrounding the bubbles.")
 argparser.add_argument("-a", "--autoAlign", required=False, dest='autoAlign', action='store_true', help="Enable automatic template alignment - use only when the paper was bent slightly when scanning.")
 argparser.add_argument("-l", "--setLayout", required=False, dest='setLayout', action='store_true', help="Set up OMR template layout - modify your json file and run again until the template is set.")
+argparser.add_argument("-i", "--inputDir", default='inputs', required=False, dest='inputDir', help="Specify an input directory.")
+argparser.add_argument("-o", "--outputDir", default='outputs', required=False, dest='outputDir', help="Specify an output directory.")
+
 
 args, unknown = argparser.parse_known_args()
 args = vars(args)
@@ -177,10 +177,42 @@ if(len(unknown)>0):
     argparser.print_help()
     exit(1)
 
+# Load paths
+paths = Paths(args['inputDir'], args['outputDir'])
+
+# Check directories
+check_dirs(paths)
+
+# Load templates
+TEMPLATES = {}
+for squad in 'HJ':
+    TEMPLATE_FILE =  f'{paths.input}/{squad}_template.json'
+    if(os.path.exists(TEMPLATE_FILE)):
+        template = Template(read_template(TEMPLATE_FILE))
+
+        # Process templates if required           
+        if 'ReferenceImage' in template.options:
+            ref = f"{paths.input}/{template.options['ReferenceImage']}"
+            if(os.path.exists(ref)):
+                template.options['ReferenceImage'] = cv2.imread(ref, cv2.IMREAD_COLOR)
+            else:
+                print(f"Error: No reference image '{ref}' found.")
+                exit(6)
+
+        TEMPLATES[squad] = template
+
+if not TEMPLATES:
+    print(f"Error: No template files present at '{paths.input}/'")
+    exit(6)
+
+
+# os.sep is not an issue here in iglob (handled internally)
+allOMRs = list(glob.iglob(paths.omrInputDir+'*/*/*.jpg')) + list(glob.iglob(paths.omrInputDir+'*/*/*.png'))
+
 OUTPUT_SET, respCols, emptyResp, filesObj, filesMap = {}, {}, {}, {}, {}
 print("\nChecking Files...")
 # Loop over squads
-for squad in templJSON.keys():
+for squad in TEMPLATES:
     # Concats + Singles includes : all template keys including RollNo if present
     # sort qNos using integer instead of alphabetically
     KEY_FN_SORTING = lambda x: int(x[1:]) if ord(x[1]) in range(48,58) else 0
@@ -191,10 +223,10 @@ for squad in templJSON.keys():
     OUTPUT_SET[squad] = []
     filesObj[squad] = {}
     filesMap[squad] = {
-        "Results": resultDir+'Results_'+squad+'_'+timeNowHrs+'.csv',
-        "MultiMarked": manualDir+'MultiMarkedFiles_'+squad+'.csv',
-        "Errors": manualDir+'ErrorFiles_'+squad+'.csv',
-        "BadRollNos": manualDir+'BadRollNoFiles_'+squad+'.csv'
+        "Results": paths.resultDir+'Results_'+squad+'_'+timeNowHrs+'.csv',
+        "MultiMarked": paths.manualDir+'MultiMarkedFiles_'+squad+'.csv',
+        "Errors": paths.manualDir+'ErrorFiles_'+squad+'.csv',
+        "BadRollNos": paths.manualDir+'BadRollNoFiles_'+squad+'.csv'
     }
     for fileKey,fileName in filesMap[squad].items():
         if(not os.path.exists(fileName)):
@@ -249,7 +281,7 @@ for filepath in allOMRs:
         print("Error: Filepath not matching to Regex: "+filepath)
         continue
 
-    if(squad not in templJSON.keys()):
+    if(squad not in TEMPLATES.keys()):
         print("Error: Template not present for squad:",squad, 'Filepath:', filepath)
         continue
     # TODO make it independent of squad rule
@@ -263,7 +295,7 @@ for filepath in allOMRs:
     # show("inOMR",inOMR,1,1)
     OMRcrop = getROI(inOMR,filename, noCropping=args["noCropping"], noMarkers=args["noMarkers"])
     if(OMRcrop is None):
-        newfilepath = errorsDir+squadlang+filename
+        newfilepath = paths.errorsDir+squadlang+filename
         OUTPUT_SET[squad].append([filename]+emptyResp[squad])
         if(move(NO_MARKER_ERR, filepath, newfilepath)):
             err_line = [filename,filepath,newfilepath,"NA"]+emptyResp[squad]
@@ -277,7 +309,7 @@ for filepath in allOMRs:
         continue
     #uniquify
     newfilename = inputFolderName + '_' + filename
-    savedir = saveMarkedDir+squadlang
+    savedir = paths.saveMarkedDir+squadlang
     OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse(squad,OMRcrop,name = newfilename, savedir = savedir, autoAlign=args["autoAlign"])
 
     #convert to ABCD, getRoll,etc
@@ -304,7 +336,7 @@ for filepath in allOMRs:
     else:
         # MultiMarked file
         print('[%d] MultiMarked, moving File: %s' % (filesCounter, newfilename))
-        newfilepath = multiMarkedDir+squadlang+filename
+        newfilepath = paths.multiMarkedDir+squadlang+filename
         if(move(MULTI_BUBBLE_WARN, filepath, newfilepath)):
             mm_line = [filename,filepath,newfilepath,"NA"]+respArray
             pd.DataFrame(mm_line, dtype=str).T.to_csv(filesObj[squad]["MultiMarked"], quoting = QUOTE_NONNUMERIC,header=False,index=False)
@@ -317,14 +349,14 @@ for filepath in allOMRs:
     
     # flush after every 20 files
     if(filesCounter % 20 == 0):
-        for squad in templJSON.keys():
+        for squad in TEMPLATES.keys():
             for fileKey in filesMap[squad].keys():
                 filesObj[squad][fileKey].flush()
         break
 # x = x.sort_values(by=['score','num_correct','num_wrong'],ascending=False)
 # x.to_sql('test.sql','SQLAlchemy')
 
-for squad in templJSON.keys():
+for squad in TEMPLATES.keys():
     for fileKey in filesMap[squad].keys():
         filesObj[squad][fileKey].close()
     
@@ -334,7 +366,7 @@ print('Total files processed : %d ' % (filesCounter))
 print('Total files moved : %d ' % (filesMoved))
 print('Total files not moved (Sum should tally) : %d ' % (filesNotMoved))
 if(filesCounter==0):
-    print("\n\tINFO: No Images found at "+OMR_INPUT_DIR+'*/*/*.jpg'+". Check your directory structure.")
+    print("\n\tINFO: No Images found at "+paths.omrInputDir+'*/*/*.jpg'+". Check your directory structure.")
 else:
     if(showimglvl<=0):
         print('\nFinished Checking %d files in %.1f seconds i.e. ~%.1f minutes.' % 
@@ -350,7 +382,7 @@ if(showimglvl<=1):
     print("\nTip: To see some awesome visuals, open globals.py and increase 'showimglvl'")
 
 # Evaluating based on corrected responses file(after manual verification) on the same dataset
-for squad in templJSON.keys():
+for squad in TEMPLATES.keys():
     TEST_FILE = 'inputs/TechnothlonOMRDataset_'+squad+'.csv'
     if(os.path.exists(TEST_FILE)):
         print("\nStarting evaluation for: "+TEST_FILE)
