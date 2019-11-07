@@ -1,7 +1,7 @@
 """
 
 Designed and Developed by-
-Udayraj Deshmukh 
+Udayraj Deshmukh
 https://github.com/Udayraj123
 
 """
@@ -30,7 +30,7 @@ from template import *
 # from colorama import Fore, Back, Style
 
 def move(error_code, filepath,filepath2):
-    print("Dummy Move:  "+filepath, " --> ",filepath2)
+    # print("Dummy Move:  "+filepath, " --> ",filepath2)
     global filesNotMoved
     filesNotMoved += 1
     return True
@@ -52,25 +52,25 @@ def move(error_code, filepath,filepath2):
 
 
 def processOMR(squad, omrResp):
-    # Note: This is a reference function. It is not part of the OMR checker 
+    # Note: This is a reference function. It is not part of the OMR checker
     #       So its implementation is completely subjective to user's requirements.
-    
+
     # Additional Concatenation key
-    omrResp['Squad'] = squad 
+    omrResp['Squad'] = squad
     resp={}
     # symbol for absent response
     UNMARKED = '' # 'X'
-
+    # print("omrResp",omrResp)
     # Multi-Integer Type Qs / RollNo / Name
-    for qNo, respKeys in TEMPLATES[squad].concats.items():
+    for qNo, respKeys in TEMPLATES[squad].concatenations.items():
         resp[qNo] = ''.join([omrResp.get(k,UNMARKED) for k in respKeys])
     # Normal Questions
     for qNo in TEMPLATES[squad].singles:
         resp[qNo] = omrResp.get(qNo,UNMARKED)
-    # Note: Concatenations and Singles together should be mutually exclusive 
+    # Note: Concatenations and Singles together should be mutually exclusive
     # and should cover all questions in the template(exhaustive)
     # ^TODO add a warning if omrResp has unused keys remaining
-    
+
     return resp
 
 # In[76]:
@@ -154,11 +154,10 @@ def evaluate(resp,squad,explain=False):
             prevcorrect = correct
 
     return marks
-
 # os.sep is not an issue here in iglob (handled internally)
-allOMRs = list(glob.iglob(OMR_INPUT_DIR+'*/*/*.jpg')) + list(glob.iglob(OMR_INPUT_DIR+'*/*/*.png'))
+allOMRs = sorted(list(glob.iglob(OMR_INPUT_DIR+'*/*/*.jpg')) + list(glob.iglob(OMR_INPUT_DIR+'*/*/*.png')))
 
-timeNowHrs=strftime("%I%p",localtime())
+# timeNowHrs=strftime("%I%p",localtime())
 start_time = int(time())
 
 # construct the argument parse and parse the arguments
@@ -169,6 +168,7 @@ argparser.add_argument("-c", "--noCropping", required=False, dest='noCropping', 
 argparser.add_argument("-m", "--noMarkers", required=False, dest='noMarkers', action='store_true', help="Disable marker detection - use only when 4 marker points are present surrounding the bubbles.")
 argparser.add_argument("-a", "--autoAlign", required=False, dest='autoAlign', action='store_true', help="Enable automatic template alignment - use only when the paper was bent slightly when scanning.")
 argparser.add_argument("-l", "--setLayout", required=False, dest='setLayout', action='store_true', help="Set up OMR template layout - modify your json file and run again until the template is set.")
+argparser.add_argument("-t", "--testAccuracy", required=False, dest='testAccuracy', action='store_true', help="If you have a ground truth file for verification - use this option to evaluate OMRChecker's output.")
 
 args, unknown = argparser.parse_known_args()
 args = vars(args)
@@ -177,21 +177,52 @@ if(len(unknown)>0):
     argparser.print_help()
     exit(1)
 
-OUTPUT_SET, respCols, emptyResp, filesObj, filesMap = {}, {}, {}, {}, {}
+
+print('Checking Directories...')
+for _dir in [saveMarkedDir, saveCroppedDir]:
+    if(not os.path.exists(_dir)):
+        print('Created : ' + _dir)
+        os.makedirs(_dir)
+        for sl in ['HE', 'JE']:  # ,'HH','JH']:
+            os.mkdir(_dir+sl)
+            os.mkdir(_dir+sl+'/stack')
+            os.mkdir(_dir+sl+'/_MULTI_')
+            os.mkdir(_dir+sl+'/_MULTI_'+'/stack')
+    else:
+        print('Present : '+_dir)
+
+for _dir in [manualDir, resultsDir]:
+    if(not os.path.exists(_dir)):
+            print('Created : ' + _dir)
+            os.makedirs(_dir)
+    else:
+        print('Present : '+_dir)
+
+for _dir in [multiMarkedDir, errorsDir, badRollsDir]:
+    if(not os.path.exists(_dir)):
+        print('Created : ' + _dir)
+        os.makedirs(_dir)
+        for sl in ['HE', 'JE']:
+            os.mkdir(_dir+sl)
+    else:
+        print('Present : '+_dir)
+
+
+respCols, emptyResp, filesObj, filesMap = {}, {}, {}, {}
 print("\nChecking Files...")
 # Loop over squads
 for squad in templJSON.keys():
-    # Concats + Singles includes : all template keys including RollNo if present
+    # Concatenations + Singles includes : all template keys including RollNo if present
     # sort qNos using integer instead of alphabetically
     KEY_FN_SORTING = lambda x: int(x[1:]) if ord(x[1]) in range(48,58) else 0
-    respCols[squad] = sorted( list(TEMPLATES[squad].concats.keys()) + TEMPLATES[squad].singles, key=KEY_FN_SORTING)
+    respCols[squad] = sorted( list(TEMPLATES[squad].concatenations.keys()) + TEMPLATES[squad].singles, key=KEY_FN_SORTING)
     emptyResp[squad] = ['']*len(respCols[squad])
     sheetCols = ['file_id','input_path','output_path','score']+respCols[squad]
-    
-    OUTPUT_SET[squad] = []
+
     filesObj[squad] = {}
     filesMap[squad] = {
-        "Results": resultDir+'Results_'+squad+'_'+timeNowHrs+'.csv',
+        "Results": resultsDir+'Results_'+squad+'.csv',
+        "OutputSet": resultsDir+'OutputSet_'+squad+'.csv',
         "MultiMarked": manualDir+'MultiMarkedFiles_'+squad+'.csv',
         "Errors": manualDir+'ErrorFiles_'+squad+'.csv',
         "BadRollNos": manualDir+'BadRollNoFiles_'+squad+'.csv'
@@ -201,11 +232,64 @@ for squad in templJSON.keys():
             print("Note: Created new file: %s" % (fileName))
             filesObj[squad][fileKey] = open(fileName,'a') # still append mode req [THINK!]
             # Create Header Columns
-            pd.DataFrame([sheetCols], dtype = str).to_csv(filesObj[squad][fileKey], quoting = QUOTE_NONNUMERIC,header=False, index=False) 
+            pd.DataFrame([sheetCols], dtype = str).to_csv(filesObj[squad][fileKey], quoting = QUOTE_NONNUMERIC,header=False, index=False)
         else:
             print('Present : appending to %s' % (fileName))
             filesObj[squad][fileKey] = open(fileName,'a')
 
+def getAccuracy(checkIntegrity=True):
+    global respCols
+    # Evaluating based on corrected responses file(after manual verification) on the same dataset
+    for squad in templJSON.keys():
+        # First export your verification output in this file
+        VERF_FILE = 'inputs/OMRDataset_'+squad+'.csv'
+        # Then paste your OutputSet file here after checking it has correct number of entries
+        OUTPUT_FILE = 'inputs/OutputSet_'+squad+'.csv'
+
+        print("\n\tEvaluating squad "+squad+" with file: "+VERF_FILE)
+        if(not os.path.exists(VERF_FILE)):
+            print("Note: Test file not present for squad: "+squad)
+            continue
+        if(not os.path.exists(OUTPUT_FILE)):
+            print("Note: Output file not present for squad: "+squad)
+            continue
+
+        TEST_COLS = ['input_path']+respCols[squad]
+        y_df = pd.read_csv(VERF_FILE, dtype=str)[TEST_COLS].replace(np.nan,'',regex=True).set_index('input_path').sort_index()
+        y_df.index = y_df.index.map(str.lower)
+        if(np.any(y_df.index.duplicated)):
+            # Note affirmed: in case of multiple duplicates, index.duplicated will keep one and return rest duplicates
+            y_df_filtered = y_df.loc[~y_df.index.duplicated(keep='first')]
+            print("\nNote:\t Found %d duplicate file-ids in the file %s. \n\t Continuing with %d rows out of %d\n" % (y_df.shape[0] - y_df_filtered.shape[0], VERF_FILE, y_df_filtered.shape[0], y_df.shape[0]))
+            y_df = y_df_filtered
+
+        x_df = pd.read_csv(OUTPUT_FILE, dtype=str)[TEST_COLS].replace(np.nan,'',regex=True).set_index('input_path').sort_index()
+        x_df.index = x_df.index.map(str.lower)
+
+        intersection = y_df.index.intersection(x_df.index)
+        #checking the merge is okay
+        if(checkIntegrity and intersection.size != x_df.index.size):
+            print("\nERROR: Insufficient Testing Data in ", VERF_FILE)
+            # TODO: extend the flagging system for these files (with ease)
+            missing_list = sorted(list(x_df.index.difference(intersection)))
+            print( "%d Missing File-ids: \n" % len(missing_list), missing_list)
+            print("Note: Have you included multi-marked data?")
+            return
+
+        x_df = x_df.loc[intersection]
+        y_df = y_df.loc[intersection]
+        print("Head of ",OUTPUT_FILE, "\n", x_df.head(7))
+        print("\nHead of ",VERF_FILE, "\n", y_df.head(7))
+        x_df['TestResult'] = (x_df==y_df).all(axis=1).astype(int)
+        print("\n\t Accuracy on the %s Dataset: %.6f" %(VERF_FILE, (x_df['TestResult'].sum()/x_df.shape[0])))
+
+
+if(args["testAccuracy"] == True):
+    getAccuracy(False)
+    exit(0)
+
+
+# Todo: get rid of these declarations with class
 squadlang="XXdummySquad"
 inputFolderName="dummyFolder"
 
@@ -242,8 +326,8 @@ for filepath in allOMRs:
     if(finder):
         inputFolderName, squadlang, filename = finder.groups()
         #FIXME : SEE FOR HINDI ISSUES
-        squad,lang = squadlang[0],squadlang[1]
-        squadlang = squadlang+"/"
+        squad,lang = squadlang[0].upper(), "E" # squadlang[1].upper()
+        squadlang = squad + lang+"/"
     else:
         filename = 'dummyFile'+str(filesCounter)
         print("Error: Filepath not matching to Regex: "+filepath)
@@ -261,10 +345,12 @@ for filepath in allOMRs:
     print('')
     print('(%d) Opening image: \t' % (filesCounter),filepath, "\tResolution: ",inOMR.shape)
     # show("inOMR",inOMR,1,1)
-    OMRcrop = getROI(inOMR,filename, noCropping=args["noCropping"], noMarkers=args["noMarkers"])
+    #uniquify
+    newfilename = inputFolderName + '_' + filename
+    saveCroppedPath = saveCroppedDir + squadlang + newfilename
+    OMRcrop = getROI(inOMR,filename, saveCroppedPath, noCropping=args["noCropping"], noMarkers=args["noMarkers"])
     if(OMRcrop is None):
         newfilepath = errorsDir+squadlang+filename
-        OUTPUT_SET[squad].append([filename]+emptyResp[squad])
         if(move(NO_MARKER_ERR, filepath, newfilepath)):
             err_line = [filename,filepath,newfilepath,"NA"]+emptyResp[squad]
             pd.DataFrame(err_line, dtype=str).T.to_csv(filesObj[squad]["Errors"], quoting = QUOTE_NONNUMERIC,header=False,index=False)
@@ -275,9 +361,7 @@ for filepath in allOMRs:
         templateLayout = drawTemplateLayout(OMRcrop, TEMPLATES[squad], shifted=False, border=2)
         show("Template Layout", templateLayout,1,1)
         continue
-    #uniquify
-    newfilename = inputFolderName + '_' + filename
-    savedir = saveMarkedDir+squadlang
+    savedir = saveMarkedDir+squad+lang
     OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse(squad,OMRcrop,name = newfilename, savedir = savedir, autoAlign=args["autoAlign"])
 
     #convert to ABCD, getRoll,etc
@@ -289,8 +373,9 @@ for filepath in allOMRs:
     respArray=[]
     for k in respCols[squad]:
         respArray.append(resp[k])
-        
-    OUTPUT_SET[squad].append([filename]+respArray)
+
+    # For accuracy calcs (save all nonErrs)
+    pd.DataFrame([filename]+respArray, dtype=str).T.to_csv(filesObj[squad]["OutputSet"], quoting = QUOTE_NONNUMERIC,header=False,index=False)
     # if((multiroll or not (resp['Roll'] is not None and len(resp['Roll'])==11))):
     if(MultiMarked == 0):
         filesNotMoved+=1;
@@ -304,6 +389,7 @@ for filepath in allOMRs:
     else:
         # MultiMarked file
         print('[%d] MultiMarked, moving File: %s' % (filesCounter, newfilename))
+        # TODO: No file should move, output path be pointing to CheckedOMR always
         newfilepath = multiMarkedDir+squadlang+filename
         if(move(MULTI_BUBBLE_WARN, filepath, newfilepath)):
             mm_line = [filename,filepath,newfilepath,"NA"]+respArray
@@ -311,23 +397,23 @@ for filepath in allOMRs:
         # else:
         #     Add appropriate record handling here
         #     pass
-            
-    #else if: 
+
+    #else if:
     # TODO: Apply validation on columns like roll no to make use of badRollsArray
-    
+
     # flush after every 20 files
     if(filesCounter % 20 == 0):
         for squad in templJSON.keys():
             for fileKey in filesMap[squad].keys():
                 filesObj[squad][fileKey].flush()
-        break
 # x = x.sort_values(by=['score','num_correct','num_wrong'],ascending=False)
 # x.to_sql('test.sql','SQLAlchemy')
 
 for squad in templJSON.keys():
     for fileKey in filesMap[squad].keys():
         filesObj[squad][fileKey].close()
-    
+
+
 timeChecking=round(time()-start_time,2) if filesCounter else 1
 print('')
 print('Total files processed : %d ' % (filesCounter))
@@ -337,48 +423,16 @@ if(filesCounter==0):
     print("\n\tINFO: No Images found at "+OMR_INPUT_DIR+'*/*/*.jpg'+". Check your directory structure.")
 else:
     if(showimglvl<=0):
-        print('\nFinished Checking %d files in %.1f seconds i.e. ~%.1f minutes.' % 
+        print('\nFinished Checking %d files in %.1f seconds i.e. ~%.1f minutes.' %
         (filesCounter, timeChecking, timeChecking/60))
         print('OMR Processing Rate :\t  ~%.2f sec/OMR' % (timeChecking/filesCounter))
         print('OMR Processing Speed :\t ~%.2f OMRs/minute' % ((filesCounter*60)/timeChecking))
     else:
         print("\nTotal script time :", timeChecking,"seconds")
 
-
 if(showimglvl<=1):
     # colorama this
     print("\nTip: To see some awesome visuals, open globals.py and increase 'showimglvl'")
-
-# Evaluating based on corrected responses file(after manual verification) on the same dataset
-for squad in templJSON.keys():
-    TEST_FILE = 'inputs/TechnothlonOMRDataset_'+squad+'.csv'
-    if(os.path.exists(TEST_FILE)):
-        print("\nStarting evaluation for: "+TEST_FILE)
-
-        TEST_COLS = ['file_id']+respCols[squad]
-        y_df = pd.read_csv(TEST_FILE, dtype=str)[TEST_COLS].replace(np.nan,'',regex=True).set_index('file_id')
-        
-        if(np.any(y_df.index.duplicated)):
-            y_df_filtered = y_df.loc[~y_df.index.duplicated(keep='first')]
-            print("WARNING: Found duplicate File-ids in file %s. Removed %d rows from testing data. Rows remaining: %d" % (TEST_FILE, y_df.shape[0] - y_df_filtered.shape[0], y_df_filtered.shape[0] ))
-            y_df = y_df_filtered
-        
-        x_df = pd.DataFrame(OUTPUT_SET[squad], dtype=str, columns=TEST_COLS).set_index('file_id')
-        # print("x_df",x_df.head())
-        # print("\ny_df",y_df.head())
-        
-        intersection = y_df.index.intersection(x_df.index)
-        #checking the merge is okay
-        if(intersection.size == x_df.index.size): 
-            y_df = y_df.loc[intersection]
-            x_df['TestResult'] = (x_df==y_df).all(axis=1).astype(int)
-            print(x_df.head())
-            print("\n\t Accuracy on the %s Dataset: %.6f" %(TEST_FILE, (x_df['TestResult'].sum()/x_df.shape[0])))
-        else:
-            print("\nERROR: Insufficient Testing Data: Have you appended MultiMarked data yet?")
-            print("Missing File-ids: ", list(x_df.index.difference(intersection)))
-
-
 
 # Use this data to train as +ve feedback
 if(showimglvl>=0 and filesCounter>10):
@@ -391,4 +445,3 @@ if(showimglvl>=0 and filesCounter>10):
             plt.show()
         else:
             print(x)
-

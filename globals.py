@@ -1,7 +1,7 @@
 """
 
 Designed and Developed by-
-Udayraj Deshmukh 
+Udayraj Deshmukh
 https://github.com/Udayraj123
 
 """
@@ -15,7 +15,8 @@ windowWidth = 1280
 windowHeight = 720
 
 saveMarked = 1
-showimglvl = 2
+saveCropped = 1
+showimglvl = 0
 saveimglvl = 0
 PRELIM_CHECKS=0
 saveImgList = {}
@@ -35,25 +36,25 @@ ERODE_SUB_OFF = 1
 
 # For new ways of determining threshold
 MIN_GAP, MIN_STD = 30, 25
-MIN_JUMP = 18
+MIN_JUMP = 25
 # If only not confident, take help of globalTHR
 CONFIDENT_JUMP = MIN_JUMP+15
 JUMP_DELTA = 30
 # MIN_GAP : worst case gap of black and gray
 
 # Templ alignment parameters
-ALIGN_RANGE  = range(-5,6,1) 
+ALIGN_RANGE  = range(-5,6,1)
 #TODO ^THIS SHOULD BE IN LAYOUT FILE AS ITS RELATED TO DIMENSIONS
 # ALIGN_RANGE  = [-6,-4,-2,-1,0,1,2,4,6]
 
 # max threshold difference for template matching
 thresholdVar = 0.41
 
-# TODO: remove unnec variables here- 
+# TODO: remove unnec variables here-
 thresholdCircle = 0.3 #matchTemplate returns 0 to 1
 # thresholdCircle = 0.4 #matchTemplate returns 0 to 1
 markerScaleRange=(35,100)
-markerScaleSteps = 10 
+markerScaleSteps = 10
 templ_scale_fac = 17
 
 # Presentation variables
@@ -76,8 +77,9 @@ CLR_DARK_GRAY = (90,90,90)
 MIN_PAGE_AREA = 80000
 
 OMR_INPUT_DIR ='inputs/OMR_Files/'
-saveMarkedDir='outputs/CheckedOMRs/' 
-resultDir='outputs/Results/'
+saveMarkedDir='outputs/CheckedOMRs/'
+saveCroppedDir='outputs/Cropped/'
+resultsDir='outputs/Results/'
 manualDir='outputs/Manual/'
 errorsDir=manualDir+'ErrorFiles/'
 badRollsDir=manualDir+'BadRollNosFiles/'
@@ -91,7 +93,7 @@ filesMoved=0
 filesNotMoved=0
 
 # for positioning image windows
-windowX,windowY = 0,0 
+windowX,windowY = 0,0
 
 
 # TODO: move to template or similar json
@@ -131,4 +133,3 @@ Sections = {
 		'Boom2':{'ques':[17,18,19,20],'+seq':[3,3,3,3],'-seq':[1,1,1,1]},
 	},
 }
-

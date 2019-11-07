@@ -77,7 +77,7 @@ class Template():
         # throw exception on key not exist
         self.dims = jsonObj["Dimensions"]
         self.bubbleDims = jsonObj["BubbleDimensions"]
-        self.concats = jsonObj["Concatenations"]
+        self.concatenations = jsonObj["Concatenations"]
         self.singles = jsonObj["Singles"]
 
         # Add new qTypes from template
@@ -95,8 +95,7 @@ class Template():
         if 'qType' in rect:
             rect.update(**qtype_data[rect['qType']])
         else:
-            rect['qType'] = {'vals':rect['vals'],
-                             'orient': rect['orient']}
+            rect['qType'] = {'vals':rect['vals'], 'orient': rect['orient']}
         # keyword arg unpacking followed by named args
         self.QBlocks += genGrid(self.bubbleDims, key, **rect)
         # self.QBlocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
