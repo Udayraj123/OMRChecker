@@ -22,8 +22,8 @@ class Pt():
     It can also correspond to a single digit of integer type Q (eg q5d1)
     """
     def __init__(self, pt, qNo, qType, val):
-        self.x=pt[0]
-        self.y=pt[1]
+        self.x=round(pt[0])
+        self.y=round(pt[1])
         self.qNo=qNo
         self.qType=qType
         self.val=val
@@ -31,7 +31,7 @@ class Pt():
 class QBlock():
     def __init__(self, dims, key, orig, traverse_pts):
         # dims = (width, height)
-        self.dims = dims
+        self.dims = tuple(round(x) for x in dims)
         self.key = key
         self.orig = orig
         self.traverse_pts = traverse_pts
@@ -131,9 +131,9 @@ def genQBlock(bubbleDims, QBlockDims, key, orig, qNos, gaps, vals, qType, orient
     """
     H, V = (0,1) if(orient=='H') else (1,0)
     # orig[0] += np.random.randint(-6,6)*2 # test random shift
-    Qs=[]
     traverse_pts = []
-    o = orig.copy()
+    o = [float(i) for i in orig]
+
     if(col_orient == orient):
         for q in range(len(qNos)):
             pt = o.copy()
@@ -307,7 +307,7 @@ def read_template(filename):
 
 templJSON={}
 for squad in ["J", "H"]:
-    TEMPLATE_FILE = "inputs/"+squad+"_template.json";
+    TEMPLATE_FILE = "inputs/"+squad+"_template.json"
     if(os.path.exists(TEMPLATE_FILE)):
         templJSON[squad] = read_template(TEMPLATE_FILE)
 
