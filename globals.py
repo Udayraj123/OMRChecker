@@ -27,6 +27,9 @@ BATCH_NO=1000
 NO_MARKER_ERR=12
 MULTI_BUBBLE_WARN=15
 
+# name of template file
+TEMPLATE_FILE = 'template.json'
+
 # For preProcessing
 GAMMA_LOW = 0.7
 GAMMA_HIGH = 1.25
@@ -77,10 +80,8 @@ MIN_PAGE_AREA = 80000
 
 # Filepaths
 class Paths:
-	def __init__(self, input, output):
-		self.input = input
+	def __init__(self, output):
 		self.output = output
-		self.omrInputDir=f'{input}/OMR_Files/'
 		self.saveMarkedDir=f'{output}/CheckedOMRs/' 
 		self.resultDir=f'{output}/Results/'
 		self.manualDir=f'{output}/Manual/'

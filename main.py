@@ -29,6 +29,39 @@ from template import *
 # init()
 # from colorama import Fore, Back, Style
 
+def process_dir(subdir, template):
+    curr_dir = os.path.join(args['input_dir'], subdir)
+
+    # Look for template in current dir
+    template_file = os.path.join(curr_dir, TEMPLATE_FILE)
+    if os.path.exists(template_file):
+        template = Template(template_file)
+        print(f'Found template in {curr_dir}')
+
+    # look for images in current dir to process
+    paths = Paths(os.path.join(args['output_dir'], subdir))   
+    exts = ('*.png', '*.jpg')
+    omr_files = [f for ext in exts for f in glob.glob(os.path.join(curr_dir, ext))]
+
+    if omr_files:
+        check_dirs(paths)  
+        output_set = setup_output(paths, template)
+
+        print(f'\nProcessing {curr_dir}...')
+        print('Additional Modules:')
+        print("\tCropping Enabled   : "+str(not args["noCropping"]))
+        print("\tMarkers Enabled    : "+str(template.marker))
+        print("\tAuto Alignment     : "+str(args["autoAlign"]))
+        print("\nTotal images present    : %d" % (len(omr_files)))
+
+        process_files(omr_files, template, output_set)
+
+    # recursively process sub directories
+    for file in os.listdir(curr_dir):
+        if os.path.isdir(os.path.join(curr_dir, file)):
+            process_dir(os.path.join(subdir, file), template)
+    
+
 def move(error_code, filepath,filepath2):
     print("Dummy Move:  "+filepath, " --> ",filepath2)
     global filesNotMoved
@@ -51,21 +84,20 @@ def move(error_code, filepath,filepath2):
     return True
 
 
-def processOMR(squad, omrResp):
+def processOMR(template, omrResp):
     # Note: This is a reference function. It is not part of the OMR checker 
     #       So its implementation is completely subjective to user's requirements.
     
     # Additional Concatenation key
-    omrResp['Squad'] = squad 
     resp={}
     # symbol for absent response
     UNMARKED = '' # 'X'
 
     # Multi-Integer Type Qs / RollNo / Name
-    for qNo, respKeys in TEMPLATES[squad].concats.items():
+    for qNo, respKeys in template.concats.items():
         resp[qNo] = ''.join([omrResp.get(k,UNMARKED) for k in respKeys])
     # Normal Questions
-    for qNo in TEMPLATES[squad].singles:
+    for qNo in template.singles:
         resp[qNo] = omrResp.get(qNo,UNMARKED)
     # Note: Concatenations and Singles together should be mutually exclusive 
     # and should cover all questions in the template(exhaustive)
@@ -80,8 +112,8 @@ def report(Status,streak,scheme,qNo,marked,ans,prevmarks,currmarks,marks):
           Status,str(streak), '['+scheme+'] ',(str(prevmarks)+' + '+str(currmarks)+' ='+str(marks)),str(marked),str(ans)))
 
 # check sectionwise only.
-def evaluate(resp,squad,explain=False):
-    global Answers,Sections
+def evaluate(resp, squad="H", explain=False):
+    global Answers, Sections
     marks = 0
     answers = Answers[squad]
     if(explain):
@@ -155,219 +187,158 @@ def evaluate(resp,squad,explain=False):
 
     return marks
 
-timeNowHrs=strftime("%I%p",localtime())
-start_time = int(time())
+def setup_output(paths, template):
+    ns = argparse.Namespace()
+    print("\nChecking Files...")
 
-# construct the argument parse and parse the arguments
-argparser = argparse.ArgumentParser()
-# https://docs.python.org/3/howto/argparse.html
-# store_true: if the option is specified, assign the value True to args.verbose. Not specifying it implies False.
-argparser.add_argument("-c", "--noCropping", required=False, dest='noCropping', action='store_true', help="Disable page contour detection - use only when page boundary is visible, e.g. images from mobile camera.")
-argparser.add_argument("-m", "--noMarkers", required=False, dest='noMarkers', action='store_true', help="Disable marker detection - use only when 4 marker points are present surrounding the bubbles.")
-argparser.add_argument("-a", "--autoAlign", required=False, dest='autoAlign', action='store_true', help="Enable automatic template alignment - use only when the paper was bent slightly when scanning.")
-argparser.add_argument("-l", "--setLayout", required=False, dest='setLayout', action='store_true', help="Set up OMR template layout - modify your json file and run again until the template is set.")
-argparser.add_argument("-i", "--inputDir", default='inputs', required=False, dest='inputDir', help="Specify an input directory.")
-argparser.add_argument("-o", "--outputDir", default='outputs', required=False, dest='outputDir', help="Specify an output directory.")
+    # Include current output paths
+    ns.paths = paths
 
-
-args, unknown = argparser.parse_known_args()
-args = vars(args)
-if(len(unknown)>0):
-    print("\nError: Unknown arguments:",unknown)
-    argparser.print_help()
-    exit(1)
-
-# Load paths
-paths = Paths(args['inputDir'], args['outputDir'])
-
-# Check directories
-check_dirs(paths)
-
-# Load templates
-TEMPLATES = {}
-for squad in 'HJ':
-    TEMPLATE_FILE =  f'{paths.input}/{squad}_template.json'
-    if(os.path.exists(TEMPLATE_FILE)):
-        template = Template(read_template(TEMPLATE_FILE))
-
-        # Process templates if required           
-        if 'ReferenceImage' in template.options:
-            ref = f"{paths.input}/{template.options['ReferenceImage']}"
-            if(os.path.exists(ref)):
-                template.options['ReferenceImage'] = cv2.imread(ref, cv2.IMREAD_COLOR)
-            else:
-                print(f"Error: No reference image '{ref}' found.")
-                exit(6)
-
-        TEMPLATES[squad] = template
-
-if not TEMPLATES:
-    print(f"Error: No template files present at '{paths.input}/'")
-    exit(6)
-
-
-# os.sep is not an issue here in iglob (handled internally)
-allOMRs = list(glob.iglob(paths.omrInputDir+'*/*/*.jpg')) + list(glob.iglob(paths.omrInputDir+'*/*/*.png'))
-
-OUTPUT_SET, respCols, emptyResp, filesObj, filesMap = {}, {}, {}, {}, {}
-print("\nChecking Files...")
-# Loop over squads
-for squad in TEMPLATES:
     # Concats + Singles includes : all template keys including RollNo if present
     # sort qNos using integer instead of alphabetically
-    KEY_FN_SORTING = lambda x: int(x[1:]) if ord(x[1]) in range(48,58) else 0
-    respCols[squad] = sorted( list(TEMPLATES[squad].concats.keys()) + TEMPLATES[squad].singles, key=KEY_FN_SORTING)
-    emptyResp[squad] = ['']*len(respCols[squad])
-    sheetCols = ['file_id','input_path','output_path','score']+respCols[squad]
+    ns.respCols = sorted(list(template.concats.keys()) + template.singles, 
+                         key=lambda x: int(x[1:]) if ord(x[1]) in range(48,58) else 0)
+    ns.emptyResp = ['']*len(ns.respCols)
+    ns.sheetCols = ['file_id','input_path','output_path','score']+ns.respCols
     
-    OUTPUT_SET[squad] = []
-    filesObj[squad] = {}
-    filesMap[squad] = {
-        "Results": paths.resultDir+'Results_'+squad+'_'+timeNowHrs+'.csv',
-        "MultiMarked": paths.manualDir+'MultiMarkedFiles_'+squad+'.csv',
-        "Errors": paths.manualDir+'ErrorFiles_'+squad+'.csv',
-        "BadRollNos": paths.manualDir+'BadRollNoFiles_'+squad+'.csv'
+    ns.OUTPUT_SET = []
+    ns.filesObj = {}
+    ns.filesMap = {
+        "Results":     paths.resultDir+'Results_'+timeNowHrs+'.csv',
+        "MultiMarked": paths.manualDir+'MultiMarkedFiles_.csv',
+        "Errors":      paths.manualDir+'ErrorFiles_.csv',
+        "BadRollNos":  paths.manualDir+'BadRollNoFiles_.csv'
     }
-    for fileKey,fileName in filesMap[squad].items():
+    for fileKey,fileName in ns.filesMap.items():
         if(not os.path.exists(fileName)):
             print("Note: Created new file: %s" % (fileName))
-            filesObj[squad][fileKey] = open(fileName,'a') # still append mode req [THINK!]
+            ns.filesObj[fileKey] = open(fileName, 'a') # still append mode req [THINK!]
             # Create Header Columns
-            pd.DataFrame([sheetCols], dtype = str).to_csv(filesObj[squad][fileKey], quoting = QUOTE_NONNUMERIC,header=False, index=False) 
+            pd.DataFrame([ns.sheetCols], dtype = str).to_csv(ns.filesObj[fileKey], quoting = QUOTE_NONNUMERIC,header=False, index=False) 
         else:
             print('Present : appending to %s' % (fileName))
-            filesObj[squad][fileKey] = open(fileName,'a')
+            ns.filesObj[fileKey] = open(fileName,'a')
 
-squadlang="XXdummySquad"
-inputFolderName="dummyFolder"
+    return ns
 
-filesCounter=0
-mws, mbs = [],[]
-# PRELIM_CHECKS for thresholding
-if(PRELIM_CHECKS):
-    # TODO: add more using unit testing
-    TEMPLATE = TEMPLATES["H"]
-    ALL_WHITE = 255 * np.ones((TEMPLATE.dims[1],TEMPLATE.dims[0]), dtype='uint8')
-    OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse("H",ALL_WHITE,name = "ALL_WHITE", savedir = None, autoAlign=True)
-    print("ALL_WHITE",OMRresponseDict)
-    if(OMRresponseDict!={}):
-        print("Preliminary Checks Failed.")
-        exit(2)
-    ALL_BLACK = np.zeros((TEMPLATE.dims[1],TEMPLATE.dims[0]), dtype='uint8')
-    OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse("H",ALL_BLACK,name = "ALL_BLACK", savedir = None, autoAlign=True)
-    print("ALL_BLACK",OMRresponseDict)
-    show("Confirm : All bubbles are black",final_marked,1,1)
+''' TODO: Refactor into new process flow.
+    Currently I have no idea what this does so I left it out'''
+def preliminary_check():
+    filesCounter=0
+    mws, mbs = [],[]
+    # PRELIM_CHECKS for thresholding
+    if(PRELIM_CHECKS):
+        # TODO: add more using unit testing
+        TEMPLATE = TEMPLATES["H"]
+        ALL_WHITE = 255 * np.ones((TEMPLATE.dims[1],TEMPLATE.dims[0]), dtype='uint8')
+        OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse("H",ALL_WHITE,name = "ALL_WHITE", savedir = None, autoAlign=True)
+        print("ALL_WHITE",OMRresponseDict)
+        if(OMRresponseDict!={}):
+            print("Preliminary Checks Failed.")
+            exit(2)
+        ALL_BLACK = np.zeros((TEMPLATE.dims[1],TEMPLATE.dims[0]), dtype='uint8')
+        OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse("H",ALL_BLACK,name = "ALL_BLACK", savedir = None, autoAlign=True)
+        print("ALL_BLACK",OMRresponseDict)
+        show("Confirm : All bubbles are black",final_marked,1,1)
 
-print('\nAdditional Modules:')
-print("\tCropping Enabled   : "+str(not args["noCropping"]))
-print("\tMarkers Enabled    : "+str(not args["noMarkers"]))
-print("\tAuto Alignment     : "+str(args["autoAlign"]))
-print("\nTotal images present    : %d" % (len(allOMRs)))
 
-for filepath in allOMRs:
-    filesCounter+=1
-    # In windows: all '\' will be replaced by '/'
-    filepath = filepath.replace(os.sep,'/')
 
-    # Prefixing a 'r' to use raw string (escape character '\' is taken literally)
-    finder = re.search(r'.*/(.*)/(.*)/(.*)',filepath,re.IGNORECASE)
-    if(finder):
-        inputFolderName, squadlang, filename = finder.groups()
-        #FIXME : SEE FOR HINDI ISSUES
-        squad,lang = squadlang[0],squadlang[1]
-        squadlang = squadlang+"/"
-    else:
-        filename = 'dummyFile'+str(filesCounter)
-        print("Error: Filepath not matching to Regex: "+filepath)
-        continue
+def process_files(omr_files, template, out):
+    filesCounter = 0
+    filesNotMoved = 0
+    # HACK: For logging and verbose output. Should refactor into proper logging system
+    global curr_filename  # name of currently processing file
+    
+    for filepath in omr_files:
+        filesCounter+=1
+        # In windows: all '\' will be replaced by '/'
+        filepath = filepath.replace(os.sep,'/')
 
-    if(squad not in TEMPLATES.keys()):
-        print("Error: Template not present for squad:",squad, 'Filepath:', filepath)
-        continue
-    # TODO make it independent of squad rule
-    if(squad not in ['H','J']):
-        print("Error: Unexpected Squad Folder-",squad, 'Filepath:', filepath)
-        exit(3)
+        # Prefixing a 'r' to use raw string (escape character '\' is taken literally)
+        finder = re.search(r'.*/(.*)/(.*)',filepath,re.IGNORECASE)
+        if(finder):
+            inputFolderName, filename = finder.groups()
+        else:
+            filename = 'dummyFile'+str(filesCounter)
+            print("Error: Filepath not matching to Regex: "+filepath)
+            continue
+        # set global var for reading
+        curr_filename = filename
 
-    inOMR = cv2.imread(filepath,cv2.IMREAD_GRAYSCALE)
-    print('')
-    print('(%d) Opening image: \t' % (filesCounter),filepath, "\tResolution: ",inOMR.shape)
-    # show("inOMR",inOMR,1,1)
-    OMRcrop = getROI(inOMR,filename, noCropping=args["noCropping"], noMarkers=args["noMarkers"])
-    if(OMRcrop is None):
-        newfilepath = paths.errorsDir+squadlang+filename
-        OUTPUT_SET[squad].append([filename]+emptyResp[squad])
-        if(move(NO_MARKER_ERR, filepath, newfilepath)):
-            err_line = [filename,filepath,newfilepath,"NA"]+emptyResp[squad]
-            pd.DataFrame(err_line, dtype=str).T.to_csv(filesObj[squad]["Errors"], quoting = QUOTE_NONNUMERIC,header=False,index=False)
-        continue
+        inOMR = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
+        print('')
+        print('(%d) Opening image: \t' % (filesCounter), filepath, "\tResolution: ", inOMR.shape)
+        # show("inOMR",inOMR,1,1)
+        OMRcrop = getROI(inOMR, filename, noCropping=args["noCropping"])
 
-    if(args["setLayout"]):
-        # show("Sample OMR", resize_util_h(OMRcrop,display_height), 0) <-- showimglvl 2 does the job
-        templateLayout = drawTemplateLayout(OMRcrop, TEMPLATES[squad], shifted=False, border=2)
-        show("Template Layout", templateLayout,1,1)
-        continue
-    #uniquify
-    newfilename = inputFolderName + '_' + filename
-    savedir = paths.saveMarkedDir+squadlang
-    OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse(squad,OMRcrop,name = newfilename, savedir = savedir, autoAlign=args["autoAlign"])
+        if template.marker:
+            OMRCrop = handle_markers(OMRCrop, template.marker)
 
-    #convert to ABCD, getRoll,etc
-    resp = processOMR(squad,OMRresponseDict)
-    print("\nRead Response: \t", resp)
+        if(OMRcrop is None):
+            newfilepath = out.paths.errorsDir+filename
+            out.OUTPUT_SET.append([filename] + out.emptyResp)
+            if(move(NO_MARKER_ERR, filepath, newfilepath)):
+                err_line = [filename, filepath, newfilepath, "NA"] + out.emptyResp
+                pd.DataFrame(err_line, dtype=str).T.to_csv(out.filesObj["Errors"], quoting = QUOTE_NONNUMERIC,header=False,index=False)
+            continue
 
-    #This evaluates and returns the score attribute
-    score = evaluate(resp, squad,explain=explain)
-    respArray=[]
-    for k in respCols[squad]:
-        respArray.append(resp[k])
-        
-    OUTPUT_SET[squad].append([filename]+respArray)
-    # if((multiroll or not (resp['Roll'] is not None and len(resp['Roll'])==11))):
-    if(MultiMarked == 0):
-        filesNotMoved+=1;
-        newfilepath = savedir+newfilename
-        # Enter into Results sheet-
-        results_line = [filename,filepath,newfilepath,score]+respArray
-        # Write/Append to results_line file(opened in append mode)
-        pd.DataFrame(results_line, dtype=str).T.to_csv(filesObj[squad]["Results"], quoting = QUOTE_NONNUMERIC,header=False,index=False)
-        print("[%d] Graded with score: %.2f" % (filesCounter, score), '\t',newfilename)
-        # print(filesCounter,newfilename,resp['Roll'],'score : ',score)
-    else:
-        # MultiMarked file
-        print('[%d] MultiMarked, moving File: %s' % (filesCounter, newfilename))
-        newfilepath = paths.multiMarkedDir+squadlang+filename
-        if(move(MULTI_BUBBLE_WARN, filepath, newfilepath)):
-            mm_line = [filename,filepath,newfilepath,"NA"]+respArray
-            pd.DataFrame(mm_line, dtype=str).T.to_csv(filesObj[squad]["MultiMarked"], quoting = QUOTE_NONNUMERIC,header=False,index=False)
-        # else:
-        #     Add appropriate record handling here
-        #     pass
+        if(args["setLayout"]):
+            # show("Sample OMR", resize_util_h(OMRcrop,display_height), 0) <-- showimglvl 2 does the job
+            templateLayout = drawTemplateLayout(OMRcrop, template, shifted=False, border=2)
+            show("Template Layout", templateLayout,1,1)
+            continue
+        #uniquify
+        newfilename = inputFolderName + '_' + filename
+        savedir = out.paths.saveMarkedDir
+        OMRresponseDict, final_marked, MultiMarked, multiroll = \
+            readResponse(template, OMRcrop, name = newfilename, savedir = savedir, autoAlign=args["autoAlign"])
+
+        #convert to ABCD, getRoll,etc
+        resp = processOMR(template, OMRresponseDict)
+        print("\nRead Response: \t", resp)
+
+        #This evaluates and returns the score attribute
+        score = evaluate(resp, explain=explain)
+        respArray=[]
+        for k in out.respCols:
+            respArray.append(resp[k])
             
-    #else if: 
-    # TODO: Apply validation on columns like roll no to make use of badRollsArray
-    
-    # flush after every 20 files
-    if(filesCounter % 20 == 0):
-        for squad in TEMPLATES.keys():
-            for fileKey in filesMap[squad].keys():
-                filesObj[squad][fileKey].flush()
-        break
-# x = x.sort_values(by=['score','num_correct','num_wrong'],ascending=False)
-# x.to_sql('test.sql','SQLAlchemy')
+        out.OUTPUT_SET.append([filename]+respArray)
+        # if((multiroll or not (resp['Roll'] is not None and len(resp['Roll'])==11))):
+        if(MultiMarked == 0):
+            filesNotMoved+=1;
+            newfilepath = savedir+newfilename
+            # Enter into Results sheet-
+            results_line = [filename,filepath,newfilepath,score]+respArray
+            # Write/Append to results_line file(opened in append mode)
+            pd.DataFrame(results_line, dtype=str).T.to_csv(out.filesObj["Results"], quoting = QUOTE_NONNUMERIC,header=False,index=False)
+            print("[%d] Graded with score: %.2f" % (filesCounter, score), '\t',newfilename)
+            # print(filesCounter,newfilename,resp['Roll'],'score : ',score)
+        else:
+            # MultiMarked file
+            print('[%d] MultiMarked, moving File: %s' % (filesCounter, newfilename))
+            newfilepath = out.paths.multiMarkedDir+filename
+            if(move(MULTI_BUBBLE_WARN, filepath, newfilepath)):
+                mm_line = [filename,filepath,newfilepath,"NA"]+respArray
+                pd.DataFrame(mm_line, dtype=str).T.to_csv(out.filesObj["MultiMarked"], quoting = QUOTE_NONNUMERIC,header=False,index=False)
+            # else:
+            #     Add appropriate record handling here
+            #     pass
+                
+        #else if: 
+        # TODO: Apply validation on columns like roll no to make use of badRollsArray
+        
+        # flush after every 20 files
+        if(filesCounter % 20 == 0):
+            for fileKey in out.filesMap.keys():
+                out.filesObj[fileKey].flush()
 
-for squad in TEMPLATES.keys():
-    for fileKey in filesMap[squad].keys():
-        filesObj[squad][fileKey].close()
-    
-timeChecking=round(time()-start_time,2) if filesCounter else 1
-print('')
-print('Total files processed : %d ' % (filesCounter))
-print('Total files moved : %d ' % (filesMoved))
-print('Total files not moved (Sum should tally) : %d ' % (filesNotMoved))
-if(filesCounter==0):
-    print("\n\tINFO: No Images found at "+paths.omrInputDir+'*/*/*.jpg'+". Check your directory structure.")
-else:
+    timeChecking=round(time()-start_time,2) if filesCounter else 1
+    print('')
+    print('Total files processed : %d ' % (filesCounter))
+    print('Total files moved : %d ' % (filesMoved))
+    print('Total files not moved (Sum should tally) : %d ' % (filesNotMoved))
+
     if(showimglvl<=0):
         print('\nFinished Checking %d files in %.1f seconds i.e. ~%.1f minutes.' % 
         (filesCounter, timeChecking, timeChecking/60))
@@ -377,17 +348,32 @@ else:
         print("\nTotal script time :", timeChecking,"seconds")
 
 
-if(showimglvl<=1):
-    # colorama this
-    print("\nTip: To see some awesome visuals, open globals.py and increase 'showimglvl'")
+    if(showimglvl<=1):
+        # colorama this
+        print("\nTip: To see some awesome visuals, open globals.py and increase 'showimglvl'")
+
+    evaluate_correctness(template, out)
+
+    # Use this data to train as +ve feedback
+    if(showimglvl >= 0 and filesCounter > 10):
+        for x in [thresholdCircles]:#,badThresholds,veryBadPoints, mws, mbs]:
+            if(x != []):
+                x = pd.DataFrame(x)
+                print( x.describe() )
+                plt.plot(range(len(x)),x)
+                plt.title("Mystery Plot")
+                plt.show()
+            else:
+                print(x)
+
 
 # Evaluating based on corrected responses file(after manual verification) on the same dataset
-for squad in TEMPLATES.keys():
-    TEST_FILE = 'inputs/TechnothlonOMRDataset_'+squad+'.csv'
+def evaluate_correctness(template, out):
+    TEST_FILE = 'inputs/TechnothlonOMRDataset.csv'
     if(os.path.exists(TEST_FILE)):
         print("\nStarting evaluation for: "+TEST_FILE)
 
-        TEST_COLS = ['file_id']+respCols[squad]
+        TEST_COLS = ['file_id']+out.respCols
         y_df = pd.read_csv(TEST_FILE, dtype=str)[TEST_COLS].replace(np.nan,'',regex=True).set_index('file_id')
         
         if(np.any(y_df.index.duplicated)):
@@ -395,7 +381,7 @@ for squad in TEMPLATES.keys():
             print("WARNING: Found duplicate File-ids in file %s. Removed %d rows from testing data. Rows remaining: %d" % (TEST_FILE, y_df.shape[0] - y_df_filtered.shape[0], y_df_filtered.shape[0] ))
             y_df = y_df_filtered
         
-        x_df = pd.DataFrame(OUTPUT_SET[squad], dtype=str, columns=TEST_COLS).set_index('file_id')
+        x_df = pd.DataFrame(out.OUTPUT_SET, dtype=str, columns=TEST_COLS).set_index('file_id')
         # print("x_df",x_df.head())
         # print("\ny_df",y_df.head())
         
@@ -411,16 +397,25 @@ for squad in TEMPLATES.keys():
             print("Missing File-ids: ", list(x_df.index.difference(intersection)))
 
 
+timeNowHrs=strftime("%I%p",localtime())
+start_time = int(time())
 
-# Use this data to train as +ve feedback
-if(showimglvl>=0 and filesCounter>10):
-    for x in [thresholdCircles]:#,badThresholds,veryBadPoints, mws, mbs]:
-        if(x != []):
-            x = pd.DataFrame(x)
-            print( x.describe() )
-            plt.plot(range(len(x)),x)
-            plt.title("Mystery Plot")
-            plt.show()
-        else:
-            print(x)
+# construct the argument parse and parse the arguments
+argparser = argparse.ArgumentParser()
+# https://docs.python.org/3/howto/argparse.html
+# store_true: if the option is specified, assign the value True to args.verbose. Not specifying it implies False.
+argparser.add_argument("-c", "--noCropping", required=False, dest='noCropping', action='store_true', help="Disable page contour detection - use only when page boundary is visible, e.g. images from mobile camera.")
+argparser.add_argument("-a", "--autoAlign", required=False, dest='autoAlign', action='store_true', help="Enable automatic template alignment - use only when the paper was bent slightly when scanning.")
+argparser.add_argument("-l", "--setLayout", required=False, dest='setLayout', action='store_true', help="Set up OMR template layout - modify your json file and run again until the template is set.")
+argparser.add_argument("-i", "--inputDir", default='inputs', required=False, dest='input_dir', help="Specify an input directory.")
+argparser.add_argument("-o", "--outputDir", default='outputs', required=False, dest='output_dir', help="Specify an output directory.")
 
+
+args, unknown = argparser.parse_known_args()
+args = vars(args)
+if(len(unknown)>0):
+    print("\nError: Unknown arguments:",unknown)
+    argparser.print_help()
+    exit(1)
+
+process_dir('', None)
