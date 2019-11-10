@@ -29,8 +29,8 @@ from template import *
 # init()
 # from colorama import Fore, Back, Style
 
-def process_dir(subdir, template):
-    curr_dir = os.path.join(args['input_dir'], subdir)
+def process_dir(root_dir, subdir, template):
+    curr_dir = os.path.join(root_dir, subdir)
 
     # Look for template in current dir
     template_file = os.path.join(curr_dir, TEMPLATE_FILE)
@@ -44,6 +44,11 @@ def process_dir(subdir, template):
     omr_files = [f for ext in exts for f in glob.glob(os.path.join(curr_dir, ext))]
 
     if omr_files:
+        if not template:
+            print(f'Error: No template file when processing {curr_dir}.')
+            print(f'  Place {TEMPLATE_FILE} in the directory or specify a template using -t.')
+            return
+
         check_dirs(paths)  
         output_set = setup_output(paths, template)
 
@@ -59,7 +64,7 @@ def process_dir(subdir, template):
     # recursively process sub directories
     for file in os.listdir(curr_dir):
         if os.path.isdir(os.path.join(curr_dir, file)):
-            process_dir(os.path.join(subdir, file), template)
+            process_dir(root_dir, os.path.join(subdir, file), template)
     
 
 def move(error_code, filepath,filepath2):
@@ -407,8 +412,9 @@ argparser = argparse.ArgumentParser()
 argparser.add_argument("-c", "--noCropping", required=False, dest='noCropping', action='store_true', help="Disable page contour detection - use only when page boundary is visible, e.g. images from mobile camera.")
 argparser.add_argument("-a", "--autoAlign", required=False, dest='autoAlign', action='store_true', help="Enable automatic template alignment - use only when the paper was bent slightly when scanning.")
 argparser.add_argument("-l", "--setLayout", required=False, dest='setLayout', action='store_true', help="Set up OMR template layout - modify your json file and run again until the template is set.")
-argparser.add_argument("-i", "--inputDir", default='inputs', required=False, dest='input_dir', help="Specify an input directory.")
+argparser.add_argument("-i", "--inputDir", required=False, action='append', dest='input_dir', help="Specify an input directory.")
 argparser.add_argument("-o", "--outputDir", default='outputs', required=False, dest='output_dir', help="Specify an output directory.")
+argparser.add_argument("-t", "--template", required=False, dest='template', help="Specify a default template if no template file in input directories.")
 
 
 args, unknown = argparser.parse_known_args()
@@ -418,4 +424,11 @@ if(len(unknown)>0):
     argparser.print_help()
     exit(1)
 
-process_dir('', None)
+if args['input_dir'] == None:
+    args['input_dir'] = ['inputs']
+    
+if args['template']:
+    args['template'] = Template(args['template'])
+
+for root in args['input_dir']:
+    process_dir(root, '', args['template'])
