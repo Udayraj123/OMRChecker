@@ -25,7 +25,34 @@ from time import localtime,strftime,time
 # from skimage.filters import threshold_adaptive
 
 
-# In[64]:
+def setup_dirs(paths):
+    print('Checking Directories...')
+    for _dir in [paths.saveMarkedDir]:
+        if(not os.path.exists(_dir)):
+            print('Created : ' + _dir)
+            os.makedirs(_dir)
+            os.mkdir(_dir+'/stack')
+            os.mkdir(_dir+'/_MULTI_')
+            os.mkdir(_dir+'/_MULTI_'+'/stack')
+            # os.mkdir(_dir+sl+'/_BADSCAN_')
+            # os.mkdir(_dir+sl+'/_BADSCAN_'+'/stack')
+        else:
+            print('Present : '+_dir)
+
+    for _dir in [paths.manualDir, paths.resultDir]:
+        if(not os.path.exists(_dir)):
+                print('Created : ' + _dir)
+                os.makedirs(_dir)
+        else:
+            print('Present : '+_dir)
+
+    for _dir in [paths.multiMarkedDir, paths.errorsDir, paths.badRollsDir]:
+        if(not os.path.exists(_dir)):
+            print('Created : ' + _dir)
+            os.makedirs(_dir)
+        else:
+            print('Present : '+_dir)
+
 def waitQ():
     ESC_KEY = 27
     while(cv2.waitKey(1) & 0xFF not in [ord('q'), ESC_KEY]):pass
@@ -318,30 +345,13 @@ def findPage(image_norm):
     return sheet
 
 
-### Image Template Part ###
-# TODO : Create class to put these into
-MARKER_PATH = 'inputs/omr_marker.jpg'
-marker = cv2.imread(MARKER_PATH,cv2.IMREAD_GRAYSCALE) #,cv2.CV_8UC1/IMREAD_COLOR/UNCHANGED
-marker_eroded_sub = None
-if(marker is not None):
-    print("Found marker at:",MARKER_PATH,"Shape:", marker.shape)
-    marker = resize_util(marker, int(uniform_width/templ_scale_fac))
-    marker = cv2.GaussianBlur(marker, (5, 5), 0)
-    marker = cv2.normalize(marker, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
-    # marker_eroded_sub = marker-cv2.erode(marker,None)
-    marker_eroded_sub = marker - cv2.erode(marker, kernel=np.ones((5,5)),iterations=5)
-    # lonmarkerinv = cv2.imread('inputs/omr_autorotate.jpg',cv2.IMREAD_GRAYSCALE)
-    # lonmarkerinv = imutils.rotate_bound(lonmarkerinv,angle=180)
-    # lonmarkerinv = imutils.resize(lonmarkerinv,height=int(lonmarkerinv.shape[1]*0.75))
-    # cv2.imwrite('inputs/lonmarker-inv-resized.jpg',lonmarkerinv)
-### //Image Template Part ###
+
 
 # Resizing the marker within scaleRange at rate of descent_per_step to find the best match.
-def getBestMatch(image_eroded_sub):
-    global marker_eroded_sub
+def getBestMatch(image_eroded_sub, marker):
 
     descent_per_step = (markerScaleRange[1]-markerScaleRange[0])//markerScaleSteps
-    h, w = marker_eroded_sub.shape[:2]
+    h, w = marker.shape[:2]
     res, best_scale=None, None
     allMaxT = 0
 
@@ -349,7 +359,7 @@ def getBestMatch(image_eroded_sub):
         s=float(r0*1/100)
         if(s == 0.0):
             continue
-        templ_scaled = imutils.resize(marker if ERODE_SUB_OFF else marker_eroded_sub, height = int(h*s))
+        templ_scaled = imutils.resize(marker if ERODE_SUB_OFF else marker, height = int(h*s))
         # res is the black image with white dots
         res = cv2.matchTemplate(image_eroded_sub,templ_scaled,cv2.TM_CCOEFF_NORMED)
 
@@ -383,17 +393,8 @@ thresholdCircles=[]
 badThresholds=[]
 veryBadPoints=[]
 
-fac1=0.67
-fac2=0.97
-def coverNames(img):
-	# img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-	h,w = img.shape[:2]
-	# dbl blur
-	img[int(h*fac1):int(h*fac2),:] = cv2.blur(img[int(h*fac1):int(h*fac2),:],(35,35))
-	return img;
-
-def getROI(image, filename, saveCroppedPath, noCropping=False, noMarkers=False):
-    global clahe, marker_eroded_sub
+def getROI(image, filename, noCropping=False):
+    global clahe
     for i in range(saveimglvl):
         resetSaveImg(i+1)
 
@@ -438,86 +439,89 @@ def getROI(image, filename, saveCroppedPath, noCropping=False, noMarkers=False):
     image = resize_util(image, uniform_width, uniform_height)
     appendSaveImg(1,image_norm)
 
-    if(noMarkers == False):
-        image_eroded_sub = normalize_util(image_norm) if ERODE_SUB_OFF else normalize_util(image_norm - cv2.erode(image_norm, kernel=np.ones((5,5)),iterations=5))
-        # Quads on warped image
-        quads={}
-        h1, w1 = image_eroded_sub.shape[:2]
-        midh,midw = h1//3, w1//2
-        origins=[[0,0],[midw,0],[0,midh],[midw,midh]]
-        quads[0]=image_eroded_sub[0:midh,0:midw];
-        quads[1]=image_eroded_sub[0:midh,midw:w1];
-        quads[2]=image_eroded_sub[midh:h1,0:midw];
-        quads[3]=image_eroded_sub[midh:h1,midw:w1];
+    # Return preprocessed image
+    return image_norm
+    
+    
+def handle_markers(image_norm, marker):
+    global curr_filename
 
-        # Draw Quadlines
-        image_eroded_sub[ : , midw:midw+2] = 255
-        image_eroded_sub[ midh:midh+2, : ] = 255
+    if ERODE_SUB_OFF:
+        image_eroded_sub = normalize_util(image_norm) 
+    else:
+        image_eroded_sub = normalize_util(image_norm 
+                                            - cv2.erode(image_norm, 
+                                                        kernel=np.ones((5,5)),
+                                                        iterations=5))
+    # Quads on warped image
+    quads={}
+    h1, w1 = image_eroded_sub.shape[:2]
+    midh,midw = h1//3, w1//2
+    origins=[[0,0],[midw,0],[0,midh],[midw,midh]]
+    quads[0]=image_eroded_sub[0:midh,0:midw];
+    quads[1]=image_eroded_sub[0:midh,midw:w1];
+    quads[2]=image_eroded_sub[midh:h1,0:midw];
+    quads[3]=image_eroded_sub[midh:h1,midw:w1];
 
-        # print(image_eroded_sub.shape)
-        # show("2",image_eroded_sub)
-        if(marker_eroded_sub is None):
-            print("\nError: No marker present. Should you pass --noMarkers flag?")
-            exit(1)
+    # Draw Quadlines
+    image_eroded_sub[ : , midw:midw+2] = 255
+    image_eroded_sub[ midh:midh+2, : ] = 255
 
-        best_scale, allMaxT = getBestMatch(image_eroded_sub)
-        if(best_scale == None):
-            # TODO: Plot and see performance of markerscaleRange
+    best_scale, allMaxT = getBestMatch(image_eroded_sub)
+    if(best_scale == None):
+        # TODO: Plot and see performance of markerscaleRange
+        if(showimglvl>=1):
+            show('Quads',image_eroded_sub)
+        return None
+
+    templ = imutils.resize(marker if ERODE_SUB_OFF else marker, height = int(marker.shape[0]*best_scale))
+    h,w=templ.shape[:2]
+    centres = []
+    sumT, maxT = 0, 0
+    print("Matching Marker:\t", end=" ")
+    for k in range(0,4):
+        res = cv2.matchTemplate(quads[k],templ,cv2.TM_CCOEFF_NORMED)
+        maxT = res.max()
+        print("Q"+str(k+1)+": maxT", round(maxT,3), end="\t")
+        if(maxT < thresholdCircle or abs(allMaxT-maxT) >= thresholdVar):
+            # Warning - code will stop in the middle. Keep Threshold low to avoid.
+            print(curr_filename, "\nError: No circle found in Quad",k+1, "\n\tthresholdVar", thresholdVar, "maxT", maxT,"allMaxT",allMaxT, "Should you pass --noCropping flag?")
             if(showimglvl>=1):
-                show('Quads',image_eroded_sub)
+                show("no_pts_"+curr_filename, image_eroded_sub,0)
+                show("res_Q"+str(k+1),res,1)
             return None
 
-        templ = imutils.resize(marker if ERODE_SUB_OFF else marker_eroded_sub, height = int(marker_eroded_sub.shape[0]*best_scale))
-        h,w=templ.shape[:2]
-        centres = []
-        sumT, maxT = 0, 0
-        print("Matching Marker:\t", end=" ")
-        for k in range(0,4):
-            res = cv2.matchTemplate(quads[k],templ,cv2.TM_CCOEFF_NORMED)
-            maxT = res.max()
-            print("Q"+str(k+1)+": maxT", round(maxT,3), end="\t")
-            if(maxT < thresholdCircle or abs(allMaxT-maxT) >= thresholdVar):
-                # Warning - code will stop in the middle. Keep Threshold low to avoid.
-                print(filename, "\nError: No circle found in Quad", k+1,"->", ("Is the page really cropped?" if noCropping else "Is the page boundary clear?"), "\n\tthresholdVar", thresholdVar, "maxT", maxT, "allMaxT", allMaxT)
-                if(showimglvl>=1):
-                    show("no_pts_"+filename,image_eroded_sub,0)
-                    show("res_Q"+str(k+1),res,1)
-                return None
+        pt=np.argwhere(res==maxT)[0];
+        pt = [pt[1],pt[0]]
+        pt[0]+=origins[k][0]
+        pt[1]+=origins[k][1]
+        # print(">>",pt)
+        image_norm = cv2.rectangle(image_norm,tuple(pt),(pt[0]+w,pt[1]+h),(150,150,150),2)
+        # display: 
+        image_eroded_sub = cv2.rectangle(image_eroded_sub,tuple(pt),(pt[0]+w,pt[1]+h),(50,50,50) if ERODE_SUB_OFF else (155,155,155), 4)
+        centres.append([pt[0]+w/2,pt[1]+h/2])
+        sumT += maxT
+    print("Scale",best_scale)
+    # analysis data
+    thresholdCircles.append(sumT/4)
 
-            pt=np.argwhere(res==maxT)[0];
-            pt = [pt[1],pt[0]]
-            pt[0]+=origins[k][0]
-            pt[1]+=origins[k][1]
-            # print(">>",pt)
-            image_norm = cv2.rectangle(image_norm,tuple(pt),(pt[0]+w,pt[1]+h),(150,150,150),2)
-            # display:
-            image_eroded_sub = cv2.rectangle(image_eroded_sub,tuple(pt),(pt[0]+w,pt[1]+h),(50,50,50) if ERODE_SUB_OFF else (155,155,155), 4)
-            centres.append([pt[0]+w/2,pt[1]+h/2])
-            sumT += maxT
-        print("Scale",best_scale)
-        # analysis data
-        thresholdCircles.append(sumT/4)
+    image_norm = four_point_transform(image_norm, np.array(centres))
+    # appendSaveImg(1,image_eroded_sub)
+    # appendSaveImg(1,image_norm)
 
-        image_norm = four_point_transform(image_norm, np.array(centres))
-        # appendSaveImg(1,image_eroded_sub)
-        # appendSaveImg(1,image_norm)
-
-        appendSaveImg(2,image_eroded_sub)
-        # res = cv2.matchTemplate(image_eroded_sub,templ,cv2.TM_CCOEFF_NORMED)
-        # res[ : , midw:midw+2] = 255
-        # res[ midh:midh+2, : ] = 255
-        # show("Markers Matching",res)
-        if(showimglvl>=2 and showimglvl < 4):
-            image_eroded_sub = resize_util_h(image_eroded_sub, image_norm.shape[0])
-            image_eroded_sub[:,-5:] = 0
-            h_stack = np.hstack((resize_util_h(image, image_norm.shape[0]),image_eroded_sub, image_norm))
-            show("Warped: "+filename,resize_util(h_stack,int(display_width*1.6)),0,0,[0,0])
-        # iterations : Tuned to 2.
-        # image_eroded_sub = image_norm - cv2.erode(image_norm, kernel=np.ones((5,5)),iterations=2)
-
-    # Save only those which have markers.
-    if(saveCropped):
-        saveImg(saveCroppedPath, coverNames(image))
+    appendSaveImg(2,image_eroded_sub)
+    # res = cv2.matchTemplate(image_eroded_sub,templ,cv2.TM_CCOEFF_NORMED)
+    # res[ : , midw:midw+2] = 255
+    # res[ midh:midh+2, : ] = 255
+    # show("Markers Matching",res)
+    if(showimglvl>=2 and showimglvl < 4):
+        image_eroded_sub = resize_util_h(image_eroded_sub, image_norm.shape[0])
+        image = resize_util_h(image, image_norm.shape[0])
+        image_eroded_sub[:,-5:] = 0
+        h_stack = np.hstack((image,image_eroded_sub, image_norm))
+        show("Warped: "+curr_filename, resize_util(h_stack,int(display_width*1.6)),0,0,[0,0])
+    # iterations : Tuned to 2.
+    # image_eroded_sub = image_norm - cv2.erode(image_norm, kernel=np.ones((5,5)),iterations=2)
     return image_norm
 
 
@@ -701,14 +705,15 @@ def saveImg(path, final_marked):
     print('Saving Image to '+path)
     cv2.imwrite(path,final_marked)
 
-def readResponse(squad,image,name,savedir=None,autoAlign=False):
+
+def readResponse(template, image, name, savedir=None, autoAlign=False):
     global clahe
-    TEMPLATE = TEMPLATES[squad]
+
     try:
         img = image.copy()
         origDim = img.shape[:2]
         # print("noCropping dim", origDim)
-        img = resize_util(img,TEMPLATE.dims[0],TEMPLATE.dims[1])
+        img = resize_util(img,template.dims[0],template.dims[1])
         # print("Resized dim", img.shape[:2])
 
         if(img.max()>img.min()):
@@ -738,14 +743,15 @@ def readResponse(squad,image,name,savedir=None,autoAlign=False):
         alpha = 0.65
         alpha1 = 0.55
 
-        boxW,boxH = TEMPLATE.bubbleDims
+        boxW,boxH = template.bubbleDims
         lang = ['E','H']
         OMRresponse={}
 
         multimarked,multiroll=0,0
-
-        blackVals=[0]
-        whiteVals=[255]
+        
+        # TODO Make this part useful for visualizing status checks
+        # blackVals=[0]
+        # whiteVals=[255]
 
         if(showimglvl>=5):
             allCBoxvals={"Int":[],"Mcq":[]}#"QTYPE_ROLL":[]}#,"QTYPE_MED":[]}
@@ -792,7 +798,7 @@ def readResponse(squad,image,name,savedir=None,autoAlign=False):
 
             # templ alignment code
             # OUTPUT : each QBlock.shift is updated
-            for QBlock in TEMPLATE.QBlocks:
+            for QBlock in template.QBlocks:
                 s,d = QBlock.orig, QBlock.dims
                 # internal constants - wont need change much
                 #TODO - ALIGN_STRIDE would depend on template's Dimensions
@@ -828,8 +834,8 @@ def readResponse(squad,image,name,savedir=None,autoAlign=False):
 
         final_align = None
         if(showimglvl>=2):
-            initial_align = drawTemplateLayout(img, TEMPLATE, shifted=False)
-            final_align = drawTemplateLayout(img, TEMPLATE, shifted=True, draw_qvals=True)
+            initial_align = drawTemplateLayout(img, template, shifted=False)
+            final_align = drawTemplateLayout(img, template, shifted=True, draw_qvals=True)
             # appendSaveImg(4,mean_vals)
             appendSaveImg(2,initial_align)
             appendSaveImg(2,final_align)
@@ -840,7 +846,7 @@ def readResponse(squad,image,name,savedir=None,autoAlign=False):
         # Get mean vals n other stats
         allQVals, allQStripArrs, allQStdVals =[], [], []
         totalQStripNo = 0
-        for QBlock in TEMPLATE.QBlocks:
+        for QBlock in template.QBlocks:
             QStdVals=[]
             for qStrip, qBoxPts in QBlock.traverse_pts:
                 QStripvals = []
@@ -883,11 +889,9 @@ def readResponse(squad,image,name,savedir=None,autoAlign=False):
         #     appendSaveImg(4,hist)
         #     appendSaveImg(5,hist)
         #     appendSaveImg(2,hist)
-        # name,
-
 
         perOMRThresholdAvg, totalQStripNo, totalQBoxNo = 0, 0, 0
-        for QBlock in TEMPLATE.QBlocks:
+        for QBlock in template.QBlocks:
             blockQStripNo = 1 # start from 1 is fine here
             shift=QBlock.shift
             s,d = QBlock.orig, QBlock.dims
@@ -905,8 +909,8 @@ def readResponse(squad,image,name,savedir=None,autoAlign=False):
                     showimglvl>=6)
                 # print(qBoxPts[0].qNo,key,blockQStripNo, "THR: ",round(perQStripThreshold,2))
                 perOMRThresholdAvg += perQStripThreshold
-
-
+                
+                # Little debugging visualization - view the particular Qstrip
                 # if(
                 #     0
                 #     # or "q17" in (qBoxPts[0].qNo)
@@ -921,7 +925,7 @@ def readResponse(squad,image,name,savedir=None,autoAlign=False):
                     boxval0 = allQVals[totalQBoxNo]
                     detected = perQStripThreshold > boxval0
 
-                    #TODO: add an option to select PLUS SIGN
+                    #TODO: add an option to select PLUS SIGN RESPONSE READING
                     # extra_check_rects = []
                     # # [y,y+boxH,x,x+boxW]
                     # for rect in extra_check_rects:
@@ -947,9 +951,9 @@ def readResponse(squad,image,name,savedir=None,autoAlign=False):
                         multimarked = multimarkedL or multimarked
                         OMRresponse[q] = (OMRresponse[q] + val) if multimarkedL else val
                         multiroll = multimarkedL and 'roll' in str(q)
-                        blackVals.append(boxval0)
-                    else:
-                        whiteVals.append(boxval0)
+                        # blackVals.append(boxval0)
+                    # else:
+                        # whiteVals.append(boxval0)
 
                     totalQBoxNo+=1
                     # /for qBoxPts
@@ -1001,13 +1005,9 @@ def readResponse(squad,image,name,savedir=None,autoAlign=False):
             saveImg(savedir+name, final_marked)
 
         if(showimglvl>=1):
-            # final_align = resize_util_h(final_align,int(display_height))
-            # show("Final Alignment : "+name,final_align,0,0)
             show("Final Marked Bubbles : "+name,resize_util_h(final_marked,int(display_height*1.3)),1,1)
 
         appendSaveImg(2,final_marked)
-
-        # saveImgList[3] = [hist, final_marked]
 
         for i in range(saveimglvl):
             saveOrShowStacks(i+1, name, savedir)

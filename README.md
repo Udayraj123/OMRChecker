@@ -103,8 +103,10 @@ sudo apt-get install -y libatlas-base-dev gfortran
 
 ### 2. Clone the repo
 ```bash
-git clone https://github.com/Udayraj123/OMRChecker
+# Shallow clone - takes latest code with minimal size
+git clone https://github.com/Udayraj123/OMRChecker --depth=1
 ```
+Note: Contributors should take a full clone(without the --depth flag).
 
 #### Install other requirements 
 ![imutils 0.5.2](https://img.shields.io/badge/imutils-0.5.2-blue.svg) ![matplotlib 3.0.2](https://img.shields.io/badge/matplotlib-3.0.2-blue.svg) ![pandas 0.24.0](https://img.shields.io/badge/pandas-0.24.0-blue.svg) ![numpy 1.16.0](https://img.shields.io/badge/numpy-1.16.0-blue.svg)

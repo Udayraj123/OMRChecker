@@ -28,6 +28,9 @@ BATCH_NO=1000
 NO_MARKER_ERR=12
 MULTI_BUBBLE_WARN=15
 
+# name of template file
+TEMPLATE_FILE = 'template.json'
+
 # For preProcessing
 GAMMA_LOW = 0.7
 GAMMA_HIGH = 1.25
@@ -76,15 +79,16 @@ CLR_DARK_GRAY = (90,90,90)
 
 MIN_PAGE_AREA = 80000
 
-OMR_INPUT_DIR ='inputs/OMR_Files/'
-saveMarkedDir='outputs/CheckedOMRs/'
-saveCroppedDir='outputs/Cropped/'
-resultsDir='outputs/Results/'
-manualDir='outputs/Manual/'
-errorsDir=manualDir+'ErrorFiles/'
-badRollsDir=manualDir+'BadRollNosFiles/'
-multiMarkedDir=manualDir+'MultiMarkedFiles/'
-
+# Filepaths
+class Paths:
+	def __init__(self, output):
+		self.output = output
+		self.saveMarkedDir=f'{output}/CheckedOMRs/' 
+		self.resultDir=f'{output}/Results/'
+		self.manualDir=f'{output}/Manual/'
+		self.errorsDir=f'{self.manualDir}ErrorFiles/'
+		self.badRollsDir=f'{self.manualDir}BadRollNosFiles/'
+		self.multiMarkedDir=f'{self.manualDir}MultiMarkedFiles/'
 
 """
 Variables

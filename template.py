@@ -72,21 +72,51 @@ qtype_data = {
 }
 
 class Template():
-    def __init__(self, jsonObj):
+    def __init__(self, template_filename):
+        with open(template_filename, "r") as f:
+            json_obj = json.load(f)
+
         self.QBlocks = []
         # throw exception on key not exist
-        self.dims = jsonObj["Dimensions"]
-        self.bubbleDims = jsonObj["BubbleDimensions"]
-        self.concatenations = jsonObj["Concatenations"]
-        self.singles = jsonObj["Singles"]
+        self.dims = json_obj["Dimensions"]
+        self.bubbleDims = json_obj["BubbleDimensions"]
+        self.concats = json_obj["Concatenations"]
+        self.singles = json_obj["Singles"]
 
         # Add new qTypes from template
-        if "qTypes" in jsonObj:
-            qtype_data.update(jsonObj["qTypes"])
+        if "qTypes" in json_obj:
+            qtype_data.update(json_obj["qTypes"])
+
+        # process local options
+        self.options = json_obj.get("Options", {})
+
+        # process markers
+        if "Marker" in self.options:
+            MARKER_PATH = os.path.join(os.path.dirname(template_filename), self.options["Marker"])
+            marker = cv2.imread(MARKER_PATH,cv2.IMREAD_GRAYSCALE) #,cv2.CV_8UC1/IMREAD_COLOR/UNCHANGED
+            print("Found marker at:", MARKER_PATH, "Shape:", marker.shape)
+            marker = resize_util(marker, int(uniform_width/templ_scale_fac))
+            marker = cv2.GaussianBlur(marker, (5, 5), 0)
+            marker = cv2.normalize(marker, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+            # marker_eroded_sub = marker-cv2.erode(marker,None)
+            self.marker = marker - cv2.erode(marker, kernel=np.ones((5,5)),iterations=5)
+        else:
+            self.marker = None
 
         # Allow template to override globals
-        if "Globals" in jsonObj:
-            globals().update(jsonObj['Globals'])
+        # TODO: This is a hack as there should no be any global configuration
+        # All template configuration should be local. Global config should 
+        # be via command args.
+        self.globals = json_obj.get("Globals")
+        self.update_globals()
+
+        # Add QBlocks
+        for name, block in json_obj["QBlocks"].items():
+            self.addQBlocks(name, block)
+
+    def update_globals(self):
+        if self.globals:
+            globals().update(self.globals)
 
     # Expects bubbleDims to be set already
     def addQBlocks(self, key, rect):
@@ -292,32 +322,7 @@ def calcGaps(PointsX,PointsY,numsX,numsY):
     return (gapsX,gapsY)
 
 
-def read_template(filename):
-    with open(filename, "r") as f:
-        try: 
-            return json.load(f)
-        except Exception as e:
-            print("Error: Invalid JSON file '"+filename+"'")
-            print('\t',e)
-            exit(5)
 
 
 
 
-templJSON={}
-for squad in ["J", "H"]:
-    TEMPLATE_FILE = "inputs/"+squad+"_template.json"
-    if(os.path.exists(TEMPLATE_FILE)):
-        templJSON[squad] = read_template(TEMPLATE_FILE)
-
-if(len(templJSON.keys()) == 0):
-    print("Error: No template files present at 'inputs/'")
-    exit(6)
-TEMPLATES={}
-
-for squad in templJSON.keys():
-    TEMPLATES[squad] = Template(templJSON[squad])
-    for k, QBlocks in templJSON[squad].items():
-        if(k not in ["Dimensions","BubbleDimensions","Concatenations","Singles","Globals","qTypes"]):
-            # Add QBlock to array of grids
-            TEMPLATES[squad].addQBlocks(k, QBlocks)
