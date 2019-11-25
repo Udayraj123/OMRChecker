@@ -5,7 +5,12 @@ Udayraj Deshmukh
 https://github.com/Udayraj123
 
 """
-from globals import *
+# Locals
+saveImgList = {}
+resetpos = [0,0]
+# for positioning image windows
+windowX,windowY = 0,0 
+
 
 # In[62]:
 import re
@@ -19,10 +24,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 plt.rcParams['figure.figsize'] = (10.0, 8.0)
 
-from template import *
 from random import randint
 from time import localtime,strftime,time
 # from skimage.filters import threshold_adaptive
+from pathlib import Path
+
+import config
+import template
 
 def check_dirs(paths):
     print('Checking Directories...')
@@ -83,14 +91,14 @@ def resize_util_h(img, u_height, u_width=None):
     return cv2.resize(img,(u_width,u_height))
 
 def show(name,orig,pause=1,resize=False,resetpos=None):
-    global windowX, windowY, display_width
+    global windowX, windowY
     if(type(orig) == type(None)):
         print(name," NoneType image to show!")
         if(pause):
             cv2.destroyAllWindows()
         return
     origDim = orig.shape[:2]
-    img = resize_util(orig,display_width,display_height) if resize else orig
+    img = resize_util(orig, config.display_width, config.display_height) if resize else orig
     cv2.imshow(name,img)
     if(resetpos):
         windowX=resetpos[0]
@@ -103,9 +111,9 @@ def show(name,orig,pause=1,resize=False,resetpos=None):
     margin = 25
     w += margin
     h += margin
-    if(windowX+w > windowWidth):
+    if(windowX+w > config.windowWidth):
         windowX = 0
-        if(windowY+h > windowHeight):
+        if(windowY+h > config.windowHeight):
             windowY = 0
         else:
             windowY += h 
@@ -118,7 +126,7 @@ def show(name,orig,pause=1,resize=False,resetpos=None):
         
 
 def putLabel(img,label, size):
-    scale = img.shape[1]/display_width
+    scale = img.shape[1]/config.display_width
     bgVal = int(np.mean(img))
     pos = (int(scale*80), int(scale*30))
     clr = (255 - bgVal,)*3
@@ -133,18 +141,38 @@ def drawTemplateLayout(img, template, shifted=True, draw_qvals=False, border=-1)
         s,d = QBlock.orig, QBlock.dims
         shift = QBlock.shift
         if(shifted):
-            cv2.rectangle(final_align,(s[0]+shift,s[1]),(s[0]+shift+d[0],s[1]+d[1]),CLR_BLACK,3)
+            cv2.rectangle(final_align,
+                          (s[0]+shift,s[1]),
+                          (s[0]+shift+d[0],s[1]+d[1]),
+                          config.CLR_BLACK,
+                          3)
         else:
-            cv2.rectangle(final_align,(s[0],s[1]),(s[0]+d[0],s[1]+d[1]),CLR_BLACK,3)
+            cv2.rectangle(final_align,(s[0],s[1]),(s[0]+d[0],s[1]+d[1]), config.CLR_BLACK,3)
         for qStrip, qBoxPts in QBlock.traverse_pts:
             for pt in qBoxPts:
                 x,y = (pt.x + QBlock.shift,pt.y) if shifted else (pt.x,pt.y)
-                cv2.rectangle(final_align,(int(x+boxW/10),int(y+boxH/10)),(int(x+boxW-boxW/10),int(y+boxH-boxH/10)), CLR_DARK_GRAY,border)
+                cv2.rectangle(final_align,
+                              (int(x+boxW/10), int(y+boxH/10)),
+                              (int(x+boxW-boxW/10), int(y+boxH-boxH/10)),
+                              config.CLR_DARK_GRAY, 
+                              border)
                 if(draw_qvals):
                     rect = [y,y+boxH,x,x+boxW]
-                    cv2.putText(final_align,'%d'% (cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0]), (rect[2]+2, rect[0] + (boxH*2)//3),cv2.FONT_HERSHEY_SIMPLEX, 0.6,CLR_BLACK,2)
+                    cv2.putText(final_align,
+                                '%d'% (cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0]),
+                                (rect[2]+2, rect[0] + (boxH*2)//3),
+                                cv2.FONT_HERSHEY_SIMPLEX, 
+                                0.6, 
+                                config.CLR_BLACK,
+                                2)
         if(shifted):
-            cv2.putText(final_align,'s%s'% (shift), tuple(s - [template.dims[0]//20,-d[1]//2]),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE,CLR_BLACK,4)
+            cv2.putText(final_align,
+                        's%s'% (shift), 
+                        tuple(s - [template.dims[0]//20,-d[1]//2]),
+                        cv2.FONT_HERSHEY_SIMPLEX, 
+                        config.TEXT_SIZE, 
+                        config.CLR_BLACK, 
+                        4)
     return final_align
 
 def getPlotImg():
@@ -245,7 +273,9 @@ def angle(p1, p2, p0):
     dy1 = float(p1[1] - p0[1])
     dx2 = float(p2[0] - p0[0])
     dy2 = float(p2[1] - p0[1])
-    return (dx1 * dx2 + dy1 * dy2) / np.sqrt((dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2) + 1e-10);
+    return (dx1 * dx2 + dy1 * dy2) / np.sqrt((dx1 * dx1 + dy1 * dy1) \
+                                             * (dx2 * dx2 + dy2 * dy2) \
+                                             + 1e-10)
 
 
 def checkMaxCosine(approx):
@@ -253,15 +283,15 @@ def checkMaxCosine(approx):
     maxCosine = 0
     minCosine = 1.5
     for i in range(2, 5):
-        cosine  = abs(angle(approx[i % 4], approx[i - 2], approx[i - 1]));
-        maxCosine = max(cosine, maxCosine);
-        minCosine = min(cosine, minCosine);
+        cosine  = abs(angle(approx[i % 4], approx[i - 2], approx[i - 1]))
+        maxCosine = max(cosine, maxCosine)
+        minCosine = min(cosine, minCosine)
     # TODO add to plot dict
     # print(maxCosine)
     if(maxCosine >= 0.35):
         print('Quadrilateral is not a rectangle.')
         return False
-    return True;
+    return True
 
 def validateRect(approx):
     # TODO: add logic from app?!
@@ -285,7 +315,7 @@ def resetSaveImg(key):
     saveImgList[key] = []
 
 def appendSaveImg(key,img):
-    if(saveimglvl >= int(key)):
+    if(config.saveimglvl >= int(key)):
         global saveImgList
         if(key not in saveImgList):
             saveImgList[key] = []
@@ -294,7 +324,6 @@ def appendSaveImg(key,img):
 def findPage(image_norm):
     # Done: find ORIGIN for the quadrants
     # Done, Auto tune! : Get canny parameters tuned (https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/)    
-    
 
     image_norm = normalize_util(image_norm)
     ret, image_norm = cv2.threshold(image_norm,200,255,cv2.THRESH_TRUNC)
@@ -317,13 +346,15 @@ def findPage(image_norm):
     edge = cv2.Canny(closed, 185, 55)
 
     # findContours returns outer boundaries in CW and inner boundaries in ACW order.
-    cnts = imutils.grab_contours(cv2.findContours(edge, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE))
+    cnts = imutils.grab_contours(cv2.findContours(edge, 
+                                                  cv2.RETR_LIST, 
+                                                  cv2.CHAIN_APPROX_SIMPLE))
     # hullify to resolve disordered curves due to noise
     cnts = [cv2.convexHull(c) for c in cnts]
     cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
     sheet = []
     for c in cnts:
-        if cv2.contourArea(c) < MIN_PAGE_AREA:
+        if cv2.contourArea(c) < config.MIN_PAGE_AREA:
             continue
         peri = cv2.arcLength(c,True)
         # ez algo - https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm
@@ -351,16 +382,19 @@ def findPage(image_norm):
 # Resizing the marker within scaleRange at rate of descent_per_step to find the best match.
 def getBestMatch(image_eroded_sub, marker):
 
-    descent_per_step = (markerScaleRange[1]-markerScaleRange[0])//markerScaleSteps
+    descent_per_step = (config.markerScaleRange[1]-config.markerScaleRange[0]) \
+                       // config.markerScaleSteps
     h, w = marker.shape[:2]
     res, best_scale=None, None
     allMaxT = 0
 
-    for r0 in np.arange(markerScaleRange[1],markerScaleRange[0],-1*descent_per_step): #reverse order
+    for r0 in np.arange(config.markerScaleRange[1], 
+                        config.markerScaleRange[0], 
+                        -1*descent_per_step): #reverse order
         s=float(r0*1/100)
         if(s == 0.0):
             continue
-        templ_scaled = imutils.resize(marker if ERODE_SUB_OFF else marker, height = int(h*s))
+        templ_scaled = imutils.resize(marker if config.ERODE_SUB_OFF else marker, height = int(h*s))
         # res is the black image with white dots
         res = cv2.matchTemplate(image_eroded_sub,templ_scaled,cv2.TM_CCOEFF_NORMED)
 
@@ -369,13 +403,13 @@ def getBestMatch(image_eroded_sub, marker):
             # print('Scale: '+str(s)+', Circle Match: '+str(round(maxT*100,2))+'%')
             best_scale, allMaxT = s, maxT
 
-    if(allMaxT < thresholdCircle):
+    if(allMaxT < config.thresholdCircle):
         print("\tWarning: Template matching too low! Should you pass --noCropping flag?")
-        if(showimglvl>=1):
+        if(config.showimglvl>=1):
             show("res",res,1,0)
 
     if(best_scale == None):
-            print("No matchings for given scaleRange:",markerScaleRange)
+            print("No matchings for given scaleRange:", config.markerScaleRange)
     return best_scale, allMaxT
 
 def adjust_gamma(image, gamma=1.0):
@@ -396,7 +430,7 @@ veryBadPoints=[]
 
 def getROI(image, filename, noCropping=False):
     global clahe
-    for i in range(saveimglvl):
+    for i in range(config.saveimglvl):
         resetSaveImg(i+1)
     
     appendSaveImg(1,image)
@@ -419,12 +453,12 @@ def getROI(image, filename, noCropping=False):
     img = image.copy()
     # TODO: need to detect if image is too blurry already! (M1: check noCropping dimensions b4 resizing; coz it won't be blurry otherwise _/)
     img = cv2.GaussianBlur(img,(3,3),0)
-    image_norm = normalize_util(img);
+    image_norm = normalize_util(img)
 
     if(noCropping == False):
         #Need this resize for arbitrary high res images: before passing to findPage
-        if(image_norm.shape[1] > uniform_width*2):
-            image_norm = resize_util(image_norm, uniform_width*2)
+        if(image_norm.shape[1] > config.uniform_width*2):
+            image_norm = resize_util(image_norm, config.uniform_width*2)
         sheet = findPage(image_norm)
         if sheet==[]:
             print("\tError: Paper boundary not found! Should you pass --noCropping flag?")
@@ -436,8 +470,8 @@ def getROI(image, filename, noCropping=False):
         image_norm = four_point_transform(image_norm, sheet)
     
     # Resize only after cropping the page for clarity as well as uniformity for non noCropping images
-    image_norm = resize_util(image_norm, uniform_width, uniform_height)
-    image = resize_util(image, uniform_width, uniform_height)
+    image_norm = resize_util(image_norm, config.uniform_width, config.uniform_height)
+    image = resize_util(image, config.uniform_width, config.uniform_height)
     appendSaveImg(1,image_norm)
 
     # Return preprocessed image
@@ -447,7 +481,7 @@ def getROI(image, filename, noCropping=False):
 def handle_markers(image_norm, marker):
     global curr_filename
 
-    if ERODE_SUB_OFF:
+    if config.ERODE_SUB_OFF:
         image_eroded_sub = normalize_util(image_norm) 
     else:
         image_eroded_sub = normalize_util(image_norm 
@@ -459,23 +493,23 @@ def handle_markers(image_norm, marker):
     h1, w1 = image_eroded_sub.shape[:2]
     midh,midw = h1//3, w1//2
     origins=[[0,0],[midw,0],[0,midh],[midw,midh]]
-    quads[0]=image_eroded_sub[0:midh,0:midw];
-    quads[1]=image_eroded_sub[0:midh,midw:w1];
-    quads[2]=image_eroded_sub[midh:h1,0:midw];
-    quads[3]=image_eroded_sub[midh:h1,midw:w1];
+    quads[0]=image_eroded_sub[0:midh, 0:midw]
+    quads[1]=image_eroded_sub[0:midh, midw:w1]
+    quads[2]=image_eroded_sub[midh:h1, 0:midw]
+    quads[3]=image_eroded_sub[midh:h1, midw:w1]
 
     # Draw Quadlines
     image_eroded_sub[ : , midw:midw+2] = 255
     image_eroded_sub[ midh:midh+2, : ] = 255
 
-    best_scale, allMaxT = getBestMatch(image_eroded_sub)
+    best_scale, allMaxT = getBestMatch(image_eroded_sub, marker)
     if(best_scale == None):
         # TODO: Plot and see performance of markerscaleRange
-        if(showimglvl>=1):
+        if(config.showimglvl>=1):
             show('Quads',image_eroded_sub)
         return None
 
-    templ = imutils.resize(marker if ERODE_SUB_OFF else marker, height = int(marker.shape[0]*best_scale))
+    templ = imutils.resize(marker if config.ERODE_SUB_OFF else marker, height = int(marker.shape[0]*best_scale))
     h,w=templ.shape[:2]
     centres = []
     sumT, maxT = 0, 0
@@ -484,22 +518,27 @@ def handle_markers(image_norm, marker):
         res = cv2.matchTemplate(quads[k],templ,cv2.TM_CCOEFF_NORMED)
         maxT = res.max()
         print("Q"+str(k+1)+": maxT", round(maxT,3), end="\t")
-        if(maxT < thresholdCircle or abs(allMaxT-maxT) >= thresholdVar):
+        if(maxT < config.thresholdCircle or abs(allMaxT-maxT) >= config.thresholdVar):
             # Warning - code will stop in the middle. Keep Threshold low to avoid.
-            print(curr_filename, "\nError: No circle found in Quad",k+1, "\n\tthresholdVar", thresholdVar, "maxT", maxT,"allMaxT",allMaxT, "Should you pass --noCropping flag?")
-            if(showimglvl>=1):
+            print(curr_filename, "\nError: No circle found in Quad", k+1, 
+                  "\n\tthresholdVar", config.thresholdVar, "maxT", maxT, 
+                  "allMaxT", allMaxT, "Should you pass --noCropping flag?")
+            if(config.showimglvl>=1):
                 show("no_pts_"+curr_filename, image_eroded_sub,0)
                 show("res_Q"+str(k+1),res,1)
             return None
 
-        pt=np.argwhere(res==maxT)[0];
+        pt=np.argwhere(res==maxT)[0]
         pt = [pt[1],pt[0]]
         pt[0]+=origins[k][0]
         pt[1]+=origins[k][1]
         # print(">>",pt)
         image_norm = cv2.rectangle(image_norm,tuple(pt),(pt[0]+w,pt[1]+h),(150,150,150),2)
         # display: 
-        image_eroded_sub = cv2.rectangle(image_eroded_sub,tuple(pt),(pt[0]+w,pt[1]+h),(50,50,50) if ERODE_SUB_OFF else (155,155,155), 4)
+        image_eroded_sub = cv2.rectangle(image_eroded_sub,tuple(pt),
+                                         (pt[0]+w,pt[1]+h), 
+                                         (50,50,50) if config.ERODE_SUB_OFF else (155,155,155),
+                                         4)
         centres.append([pt[0]+w/2,pt[1]+h/2])
         sumT += maxT
     print("Scale",best_scale)
@@ -515,12 +554,12 @@ def handle_markers(image_norm, marker):
     # res[ : , midw:midw+2] = 255
     # res[ midh:midh+2, : ] = 255
     # show("Markers Matching",res)
-    if(showimglvl>=2 and showimglvl < 4):
+    if(config.showimglvl >= 2 and config.showimglvl < 4):
         image_eroded_sub = resize_util_h(image_eroded_sub, image_norm.shape[0])
         image = resize_util_h(image, image_norm.shape[0])
         image_eroded_sub[:,-5:] = 0
         h_stack = np.hstack((image,image_eroded_sub, image_norm))
-        show("Warped: "+curr_filename, resize_util(h_stack,int(display_width*1.6)),0,0,[0,0])
+        show("Warped: "+ curr_filename, resize_util(h_stack,int(config.display_width*1.6)),0,0,[0,0])
     # iterations : Tuned to 2.
     # image_eroded_sub = image_norm - cv2.erode(image_norm, kernel=np.ones((5,5)),iterations=2)
     return image_norm
@@ -554,7 +593,7 @@ def getGlobalThreshold(QVals_orig, plotTitle=None, plotShow=True, sortInPlot=Tru
     QVals = sorted(QVals_orig)
     # Find the FIRST LARGE GAP and set it as threshold:
     l=len(QVals)-1
-    max1,thr1=MIN_JUMP,255
+    max1, thr1 = config.MIN_JUMP, 255
     for i in range(1,l):
         jump = QVals[i+1] - QVals[i-1]
         if(jump > max1):
@@ -563,12 +602,12 @@ def getGlobalThreshold(QVals_orig, plotTitle=None, plotShow=True, sortInPlot=Tru
 
 # NOTE: thr2 is deprecated, thus is JUMP_DELTA
     # Make use of the fact that the JUMP_DELTA(Vertical gap ofc) between values at detected jumps would be atleast 20
-    max2,thr2=MIN_JUMP,255
+    max2, thr2=config.MIN_JUMP, 255
     # Requires atleast 1 gray box to be present (Roll field will ensure this)
     for i in range(1,l):
         jump = QVals[i+1] - QVals[i-1]
         newThr = QVals[i-1] + jump/2
-        if(jump > max2 and abs(thr1-newThr) > JUMP_DELTA):
+        if(jump > max2 and abs(thr1-newThr) > config.JUMP_DELTA):
             max2=jump
             thr2=newThr
     # globalTHR = min(thr1,thr2) 
@@ -582,7 +621,7 @@ def getGlobalThreshold(QVals_orig, plotTitle=None, plotShow=True, sortInPlot=Tru
 
     if(plotTitle is not None):    
         f, ax = plt.subplots()
-        ax.bar(range(len(QVals_orig)),QVals if sortInPlot else QVals_orig);
+        ax.bar(range(len(QVals_orig)),QVals if sortInPlot else QVals_orig)
         ax.set_title(plotTitle)
         thrline=ax.axhline(globalTHR,color='green',ls='--', linewidth=5)
         thrline.set_label("Global Threshold")
@@ -631,7 +670,7 @@ def getLocalThreshold(qNo, QVals, globalTHR, noOutliers, plotTitle=None, plotSho
     # Small no of pts cases:
     # base case: 1 or 2 pts
     if(len(QVals) < 3): 
-        thr1 = globalTHR if np.max(QVals)-np.min(QVals) < MIN_GAP else np.mean(QVals)
+        thr1 = globalTHR if np.max(QVals)-np.min(QVals) < config.MIN_GAP else np.mean(QVals)
     else:
         # qmin, qmax, qmean, qstd = round(np.min(QVals),2), round(np.max(QVals),2), round(np.mean(QVals),2), round(np.std(QVals),2)
         # GVals = [round(abs(q-qmean),2) for q in QVals]
@@ -649,7 +688,7 @@ def getLocalThreshold(qNo, QVals, globalTHR, noOutliers, plotTitle=None, plotSho
         # else:
         # Find the LARGEST GAP and set it as threshold: //(FIRST LARGE GAP)
         l=len(QVals)-1
-        max1,thr1=MIN_JUMP,255
+        max1, thr1 = config.MIN_JUMP, 255
         for i in range(1,l):
             jump = QVals[i+1] - QVals[i-1]
             if(jump > max1):
@@ -658,7 +697,7 @@ def getLocalThreshold(qNo, QVals, globalTHR, noOutliers, plotTitle=None, plotSho
         # print(qNo,QVals,max1)
 
         # If not confident, then only take help of globalTHR
-        if(max1 < CONFIDENT_JUMP):
+        if(max1 < config.CONFIDENT_JUMP):
             if(noOutliers):
                 # All Black or All White case
                 thr1 = globalTHR   
@@ -671,7 +710,7 @@ def getLocalThreshold(qNo, QVals, globalTHR, noOutliers, plotTitle=None, plotSho
 
     if(plotShow and plotTitle is not None):    
         f, ax = plt.subplots()
-        ax.bar(range(len(QVals)),QVals);
+        ax.bar(range(len(QVals)),QVals)
         thrline=ax.axhline(thr1,color='green',ls=('-.'), linewidth=3)
         thrline.set_label("Local Threshold")
         thrline=ax.axhline(globalTHR,color='red',ls=':', linewidth=5)
@@ -732,11 +771,11 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             morph = clahe.apply(morph) 
             appendSaveImg(3,morph)
             # Remove shadows further, make columns/boxes darker (less gamma)
-            morph = adjust_gamma(morph,GAMMA_LOW)
+            morph = adjust_gamma(morph, config.GAMMA_LOW)
             ret, morph = cv2.threshold(morph,220,220,cv2.THRESH_TRUNC)
             morph = normalize_util(morph)
             appendSaveImg(3,morph)
-            if(showimglvl>=4):
+            if(config.showimglvl >= 4):
                 show("morph1",morph,0,1)
 
         # Overlay Transparencies
@@ -752,7 +791,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
         blackVals=[0]
         whiteVals=[255]
 
-        if(showimglvl>=5):
+        if(config.showimglvl>=5):
             allCBoxvals={"Int":[],"Mcq":[]}#"QTYPE_ROLL":[]}#,"QTYPE_MED":[]}
             qNums={"Int":[],"Mcq":[]}#,"QTYPE_ROLL":[]}#,"QTYPE_MED":[]}
 
@@ -767,7 +806,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             ret, morph_v = cv2.threshold(morph_v,200,200,cv2.THRESH_TRUNC)
             morph_v = 255 - normalize_util(morph_v)
             
-            if(showimglvl>=3):
+            if(config.showimglvl>=3):
                 show("morphed_vertical",morph_v,0,1)
             
             # show("morph1",morph,0,1)
@@ -789,7 +828,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             # show("morph_h",morph_h,0,1)
             # _, morph_h = cv2.threshold(morph_h,morphTHR,255,cv2.THRESH_BINARY)
             # morph_h = cv2.erode(morph_h,  np.ones((5,5),np.uint8), iterations = 2)
-            if(showimglvl>=3):
+            if(config.showimglvl>=3):
                 show("morph_thr_eroded", morph_v, 0, 1)
             
             
@@ -811,7 +850,11 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                     # For demonstration purposes-
                     if(QBlock.key=="Int1"):
                         ret = morph_v.copy()
-                        cv2.rectangle(ret,(s[0]+shift-THK,s[1]),(s[0]+shift+THK+d[0],s[1]+d[1]),CLR_WHITE,3)
+                        cv2.rectangle(ret,
+                                      (s[0]+shift-THK,s[1]),
+                                      (s[0]+shift+THK+d[0],s[1]+d[1]), 
+                                      config.CLR_WHITE,
+                                      3)
                         appendSaveImg(6,ret)
                     # print(shift, L, R)
                     LW,RW= L > 100, R > 100
@@ -832,7 +875,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             # print("End Alignment")
         
         final_align = None
-        if(showimglvl>=2):
+        if(config.showimglvl>=2):
             initial_align = drawTemplateLayout(img, template, shifted=False)
             final_align = drawTemplateLayout(img, template, shifted=True, draw_qvals=True)
             # appendSaveImg(4,mean_vals)
@@ -907,7 +950,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                     "Mean Intensity Histogram for "+ key +"."+ qBoxPts[0].qNo+'.'+str(blockQStripNo), 
                     # None,
                     # "q15.1" in (qBoxPts[0].qNo+'.'+str(blockQStripNo)) or 
-                    showimglvl>=6)
+                    config.showimglvl >= 6)
                 # print(qBoxPts[0].qNo,key,blockQStripNo, "THR: ",round(perQStripThreshold,2))
                 perOMRThresholdAvg += perQStripThreshold
                 
@@ -939,14 +982,29 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                     #         break;
 
                     if (detected):
-                        cv2.rectangle(final_marked,(int(x+boxW/12),int(y+boxH/12)),(int(x+boxW-boxW/12),int(y+boxH-boxH/12)), CLR_DARK_GRAY, 3)
+                        cv2.rectangle(final_marked,
+                                      (int(x+boxW/12),
+                                      int(y+boxH/12)),
+                                      (int(x+boxW-boxW/12), int(y+boxH-boxH/12)),
+                                      config.CLR_DARK_GRAY, 
+                                      3)
                     else:
-                        cv2.rectangle(final_marked,(int(x+boxW/10),int(y+boxH/10)),(int(x+boxW-boxW/10),int(y+boxH-boxH/10)), CLR_GRAY,-1)
+                        cv2.rectangle(final_marked,
+                                      (int(x+boxW/10),int(y+boxH/10)),
+                                      (int(x+boxW-boxW/10),int(y+boxH-boxH/10)),
+                                      config.CLR_GRAY,
+                                      -1)
 
                     # TODO Make this part useful! (Abstract visualizer to check status)
                     if (detected):
                         q, val = pt.qNo, str(pt.val)
-                        cv2.putText(final_marked,val,(x,y),cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE,(20,20,10),int(1+3.5*TEXT_SIZE))
+                        cv2.putText(final_marked,
+                                    val,
+                                    (x,y),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 
+                                    config.TEXT_SIZE,
+                                    (20,20,10),
+                                    int(1 + 3.5*config.TEXT_SIZE))
                         # Only send rolls multi-marked in the directory
                         multimarkedL = q in OMRresponse
                         multimarked = multimarkedL or multimarked
@@ -960,7 +1018,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                     # /for qBoxPts
                 # /for qStrip
 
-                if( showimglvl>=5):
+                if(config.showimglvl >= 5):
                     if(key in allCBoxvals):
                         qNums[key].append(key[:2]+'_c'+str(blockQStripNo))
                         allCBoxvals[key].append(allQStripArrs[totalQStripNo])
@@ -969,14 +1027,14 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                 totalQStripNo += 1
             # /for QBlock
         if(totalQStripNo==0):
-            print("\n\t UNEXPECTED Template Incorrect Error: totalQStripNo is zero! QBlocks: ",TEMPLATE.QBlocks)
+            print("\n\t UNEXPECTED Template Incorrect Error: totalQStripNo is zero! QBlocks: ", template.QBlocks)
             exit(7)
         perOMRThresholdAvg /= totalQStripNo
         perOMRThresholdAvg = round(perOMRThresholdAvg,2)
         # Translucent
         cv2.addWeighted(final_marked,alpha,transp_layer,1-alpha,0,final_marked)
         # Box types
-        if( showimglvl>=5):
+        if config.showimglvl >= 5:
             # plt.draw()
             f, axes = plt.subplots(len(allCBoxvals),sharey=True)
             f.canvas.set_window_title(name)
@@ -995,26 +1053,26 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             plt.tight_layout(pad=0.5)
             plt.show()
 
-        if(showimglvl>=3 and final_align is not None):
-            final_align = resize_util_h(final_align,int(display_height))
+        if config.showimglvl>=3 and final_align is not None:
+            final_align = resize_util_h(final_align,int(config.display_height))
             show("Template Alignment Adjustment", final_align, 0, 0)# [final_align.shape[1],0])
         
         # TODO: refactor "type(savedir) != type(None) "
-        if (saveMarked and type(savedir) != type(None) ):
+        if config.saveMarked and type(savedir) != type(None):
             if(multiroll):
                 savedir = savedir+'_MULTI_/'
             saveImg(savedir+name, final_marked)
 
-        if(showimglvl>=1):
+        if config.showimglvl >= 1:
             # final_align = resize_util_h(final_align,int(display_height))
             # show("Final Alignment : "+name,final_align,0,0)
-            show("Final Marked Bubbles : "+name,resize_util_h(final_marked,int(display_height*1.3)),1,1)
+            show("Final Marked Bubbles : "+name,resize_util_h(final_marked,int(config.display_height*1.3)),1,1)
 
         appendSaveImg(2,final_marked)
 
         # saveImgList[3] = [hist, final_marked]
 
-        for i in range(saveimglvl):
+        for i in range(config.saveimglvl):
             saveOrShowStacks(i+1, name, savedir)
 
         return OMRresponse,final_marked,multimarked,multiroll
@@ -1027,9 +1085,11 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
 
 def saveOrShowStacks(key, name, savedir=None,pause=1):
     global saveImgList
-    if(saveimglvl >= int(key) and saveImgList[key]!=[]):
-        result = np.hstack(tuple([resize_util_h(img,uniform_height) for img in saveImgList[key]]))
-        result = resize_util(result,min(len(saveImgList[key])*uniform_width//3,int(uniform_width*2.5)))
+    if(config.saveimglvl >= int(key) and saveImgList[key]!=[]):
+        result = np.hstack(tuple([resize_util_h(img, config.uniform_height) for img in saveImgList[key]]))
+        result = resize_util(result,
+                             min(len(saveImgList[key]) * config.uniform_width // 3,
+                                 int(config.uniform_width * 2.5)))
         if (type(savedir) != type(None)):
             saveImg(savedir+'stack/'+name+'_'+str(key)+'_stack.jpg', result)
         else:
