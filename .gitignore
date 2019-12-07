@@ -1,8 +1,5 @@
-# outputs/Results
 **/__pycache__
 **/CheckedOMRs
-**/convertedOMRs_LQ
-**/gitignore
 **/ignore
 **/.DS_Store
 OMRChecker.wiki/
