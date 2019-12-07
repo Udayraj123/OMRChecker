@@ -103,8 +103,10 @@ sudo apt-get install -y libatlas-base-dev gfortran
 
 ### 2. Clone the repo
 ```bash
-git clone https://github.com/Udayraj123/OMRChecker
+# Shallow clone - takes latest code with minimal size
+git clone https://github.com/Udayraj123/OMRChecker --depth=1
 ```
+Note: Contributors should take a full clone(without the --depth flag).
 
 #### Install other requirements 
 ![imutils 0.5.2](https://img.shields.io/badge/imutils-0.5.2-blue.svg) ![matplotlib 3.0.2](https://img.shields.io/badge/matplotlib-3.0.2-blue.svg) ![pandas 0.24.0](https://img.shields.io/badge/pandas-0.24.0-blue.svg) ![numpy 1.16.0](https://img.shields.io/badge/numpy-1.16.0-blue.svg)
@@ -120,39 +122,41 @@ python3 -m pip install --user -r requirements.txt
 <!-- Wiki should not get cloned -->
 ### 3. Run the code
 
-#### A. Running default sample
-If you want to try out the default sample, you can directly run:
-```bash
-python3 main.py
-```
-#### B. Running other samples
-
 1. Put your data in inputs folder. You can copy sample data as shown below: 
-	<!-- mkdir inputs/ -->
 	```bash
-	# Note: remove previous inputs if any with `mv inputs/* ~/.trash` 
-	# sample1 is the default sample
-	cp -r ./samples/sample2/* inputs/
+	# Note: you may remove previous inputs if any with `mv inputs/* ~/.trash` 
+	cp -r ./samples/sample1 inputs/
 	```
 	_Note: Change the number N in sampleN to see more examples_
 2. Run OMRChecker: 
-	**` python3 main.py --noMarkers `**
-	See usage guide [here](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide#Run-the-code).
+	**` python3 main.py `**
 
-<!-- 4. [Profit](https://knowyourmeme.com/memes/profit)!! -->
-_**Note:** For subsequent runs, if you don't want the outputs to append to previous results file: Make sure the outputs folder is clean too : `rm -rf outputs/`._
+These samples demonstrate different ways OMRChecker can be used.
 
-<!-- ### Folder Structure 
-<img align="center" src="https://raw.githubusercontent.com/Udayraj123/OMRChecker/master/directory_structure.png" alt="Directory Structure" height="350">
+#### Running it on your own OMR Sheets
 
-This structure has been created to suit for better organization of OMRs (Citywise then Group-wise and Language-wise). Making changes to this would require changes in the code.
--->
-#### C. Running it on your own OMR Sheets
-<!-- Template alignment image here -->
-1. Follow the [User Guide](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide/) to create your own Template Layout.
-2. Open `globals.py` and play with the parameters (although most of them would need no change :smile:)
-3. Run the code with [appropriate arguments](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide#Run-the-code).
+1. First create your own template.json. You may modify json from one of the samples with help from `--setLayout` option (See usage below)
+2. Open `globals.py` and play with the tuning parameters (although most of them would need no change :smile:)
 <!-- 3. Add answer key( TODO: add answer key/marking scheme guide)  -->
+
+##### Full Usage 
+```
+python3 main.py [--setLayout] [--noCropping] [--autoAlign] [--inputDir dir1] [--outputDir dir1] [--template path/to/template.json]
+```
+
+Explanation for the arguments:
+
+`--setLayout`: To setup template layout interactively(for custom OMRs). See Walkthrough here.
+
+`--autoAlign`: Enables automatic template alignment(experimental) - use only when the paper was bent slightly when scanning.
+
+`--noCropping`: Disables page contour detection - used for images from a document scanner where page boundary is not visible.
+
+`--inputDir`: Specify an input directory.
+
+`--outputDir`: Specify an output directory.
+
+`--template`: Specify a default template if no template file in input directories.
 
 <!-- #### Testing the code
 Datasets to test on : 
@@ -160,7 +164,6 @@ Low Quality Dataset(For CV Based methods)) (1.5 GB)
 Standard Quality Dataset(For ML Based methods) (3 GB)
 High Quality Dataset(For custom processing) (6 GB) 
 -->
-
 
 ## 💡 Why is this software free?
 

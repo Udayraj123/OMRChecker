@@ -10,6 +10,7 @@ import os
 import json
 import numpy as np
 from globals import *
+from utils import *
 
 ### Coordinates Part ###
 class Pt():
@@ -72,21 +73,56 @@ qtype_data = {
 }
 
 class Template():
-    def __init__(self, jsonObj):
+    def __init__(self, path):
+        with open(path, "r") as f:
+            json_obj = json.load(f)
+        self.path = path
         self.QBlocks = []
         # throw exception on key not exist
-        self.dims = jsonObj["Dimensions"]
-        self.bubbleDims = jsonObj["BubbleDimensions"]
-        self.concatenations = jsonObj["Concatenations"]
-        self.singles = jsonObj["Singles"]
+        self.dims = json_obj["Dimensions"]
+        self.bubbleDims = json_obj["BubbleDimensions"]
+        self.concats = json_obj["Concatenations"]
+        self.singles = json_obj["Singles"]
 
         # Add new qTypes from template
-        if "qTypes" in jsonObj:
-            qtype_data.update(jsonObj["qTypes"])
+        if "qTypes" in json_obj:
+            qtype_data.update(json_obj["qTypes"])
+
+        # process local options
+        self.options = json_obj.get("Options", {})
+
+        self.marker = None
+        self.marker_path = None
+        # process markers
+        if "Marker" in self.options:
+            markerOps = self.options["Marker"]
+            self.marker_path = os.path.join(os.path.dirname(path), markerOps.get("RelativePath", MARKER_FILE))
+            if(not os.path.exists(self.marker_path)): 
+                print("Error: Marker not found at path provided in template:", self.marker_path)
+                exit(31)
+    
+            marker = cv2.imread(self.marker_path,cv2.IMREAD_GRAYSCALE)
+            if("SheetToMarkerWidthRatio" in markerOps):
+                marker = resize_util(marker, uniform_width/int(markerOps["SheetToMarkerWidthRatio"]))
+            marker = cv2.GaussianBlur(marker, (5, 5), 0)
+            marker = cv2.normalize(marker, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+            # marker_eroded_sub = marker-cv2.erode(marker,None)
+            self.marker = marker - cv2.erode(marker, kernel=np.ones((5,5)),iterations=5)
 
         # Allow template to override globals
-        if "Globals" in jsonObj:
-            globals().update(jsonObj['Globals'])
+        # TODO: This is a hack as there should no be any global configuration
+        # All template configuration should be local. Global config should 
+        # be via command args.
+        self.globals = json_obj.get("Globals")
+        self.update_globals()
+
+        # Add QBlocks
+        for name, block in json_obj["QBlocks"].items():
+            self.addQBlocks(name, block)
+
+    def update_globals(self):
+        if self.globals:
+            globals().update(self.globals)
 
     # Expects bubbleDims to be set already
     def addQBlocks(self, key, rect):
@@ -218,11 +254,8 @@ TODO: Update this part, add more examples like-
     # print(gridData.shape, gridData)
     if(0 and len(gridData.shape)!=3 or gridData.size==0): # product of shape is zero
         print("Error(genGrid): Invalid qNos array given:", gridData.shape, gridData)
-        exit(4)
-        return []
-
-    # ^4ENDUSER should also validate no overlap of rect points somehow?!
-
+        exit(32)
+        
     """
     orient = 'H'
     numVals = 4
@@ -292,32 +325,7 @@ def calcGaps(PointsX,PointsY,numsX,numsY):
     return (gapsX,gapsY)
 
 
-def read_template(filename):
-    with open(filename, "r") as f:
-        try: 
-            return json.load(f)
-        except Exception as e:
-            print("Error: Invalid JSON file '"+filename+"'")
-            print('\t',e)
-            exit(5)
 
 
 
 
-templJSON={}
-for squad in ["J", "H"]:
-    TEMPLATE_FILE = "inputs/"+squad+"_template.json"
-    if(os.path.exists(TEMPLATE_FILE)):
-        templJSON[squad] = read_template(TEMPLATE_FILE)
-
-if(len(templJSON.keys()) == 0):
-    print("Error: No template files present at 'inputs/'")
-    exit(6)
-TEMPLATES={}
-
-for squad in templJSON.keys():
-    TEMPLATES[squad] = Template(templJSON[squad])
-    for k, QBlocks in templJSON[squad].items():
-        if(k not in ["Dimensions","BubbleDimensions","Concatenations","Singles","Globals","qTypes"]):
-            # Add QBlock to array of grids
-            TEMPLATES[squad].addQBlocks(k, QBlocks)
