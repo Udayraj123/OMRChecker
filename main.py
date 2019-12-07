@@ -439,9 +439,9 @@ argparser = argparse.ArgumentParser()
 # https://docs.python.org/3/howto/argparse.html
 # store_true: if the option is specified, assign the value True to args.verbose. Not specifying it implies False.
 argparser.add_argument("-c", "--noCropping", required=False, dest='noCropping', action='store_true',
-                       help="Disable page contour detection - use only when page boundary is visible, e.g. images from mobile camera.")
+                       help="Disables page contour detection - used for images from a document scanner where page boundary is not visible.")
 argparser.add_argument("-a", "--autoAlign", required=False, dest='autoAlign', action='store_true',
-                       help="Enable automatic template alignment - use only when the paper was bent slightly when scanning.")
+                       help="Enables automatic template alignment - use only when the paper was bent slightly when scanning.")
 argparser.add_argument("-l", "--setLayout", required=False, dest='setLayout', action='store_true',
                        help="Set up OMR template layout - modify your json file and run again until the template is set.")
 argparser.add_argument("-i", "--inputDir", required=False, action='append',
