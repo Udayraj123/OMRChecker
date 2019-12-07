@@ -118,7 +118,7 @@ Answers={
 	'q14': ['C'],'q15': ['B'],'q16': ['C'],'q17': ['C'],'q18': ['C'],'q19': ['B'],'q20': ['C']},
 }
 
-# Fibo is across the sections - Q4,5,6,7,13,
+# TODO: Make this generalized and move it to samples
 Sections = {
 	'J':{
 		'Fibo1':{'ques':[1,2,3,4],'+seq':[2,3,5,8],'-seq':[0,1,1,2]},
