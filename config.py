@@ -9,13 +9,13 @@ https://github.com/Udayraj123
 """
 Constants
 """
-display_height = int(480)
-display_width  = int(640)
-windowWidth = 1280
-windowHeight = 720
+display_height = int(1170)
+display_width  = int(826)
+windowWidth = 826
+windowHeight = 1170
 
 saveMarked = 1
-showimglvl = 2
+showimglvl = 0
 saveimglvl = 0
 PRELIM_CHECKS=0
 
@@ -34,6 +34,10 @@ GAMMA_LOW = 0.7
 GAMMA_HIGH = 1.25
 
 ERODE_SUB_OFF = 1
+
+# For feature based image alignment using reference image
+MAX_FEATURES = 500
+GOOD_MATCH_PERCENT = 0.15
 
 # For new ways of determining threshold
 MIN_GAP, MIN_STD = 30, 25

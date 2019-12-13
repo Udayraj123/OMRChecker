@@ -91,6 +91,12 @@ class Template():
         # process local options
         self.options = json_obj.get("Options", {})
 
+        # process refernence image
+        if "Reference" in self.options:
+            ref_path = os.path.join(os.path.dirname(template_filename), self.options["Reference"])
+            self.reference = cv2.imread(ref_path, cv2.IMREAD_GRAYSCALE)
+        
+
         # process markers
         if "Marker" in self.options:
             MARKER_PATH = os.path.join(os.path.dirname(template_filename), self.options["Marker"])

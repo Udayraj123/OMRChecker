@@ -146,12 +146,12 @@ def setup_output(paths, template):
     for fileKey,fileName in ns.filesMap.items():
         if(not os.path.exists(fileName)):
             print("Note: Created new file: %s" % (fileName))
-            ns.filesObj[fileKey] = open(fileName, 'a') # still append mode req [THINK!]
+            ns.filesObj[fileKey] = fileName
             # Create Header Columns
-            pd.DataFrame([ns.sheetCols], dtype = str).to_csv(ns.filesObj[fileKey], quoting = QUOTE_NONNUMERIC,header=False, index=False) 
+            pd.DataFrame([ns.sheetCols], dtype = str).to_csv(ns.filesObj[fileKey], mode='a', quoting = QUOTE_NONNUMERIC,header=False, index=False) 
         else:
             print('Present : appending to %s' % (fileName))
-            ns.filesObj[fileKey] = open(fileName,'a')
+            ns.filesObj[fileKey] = fileName
 
     return ns
 
@@ -204,6 +204,10 @@ def process_files(omr_files, template, out):
         print('')
         print('(%d) Opening image: \t' % (filesCounter), filepath, "\tResolution: ", inOMR.shape)
         # show("inOMR",inOMR,1,1)
+
+        if "Reference" in template.options:
+            inOMR, h = utils.align_images(inOMR, template.reference)            
+        
         OMRcrop = utils.getROI(inOMR, filename, noCropping=args["noCropping"])
 
         if template.marker:
@@ -214,7 +218,7 @@ def process_files(omr_files, template, out):
             out.OUTPUT_SET.append([filename] + out.emptyResp)
             if(move(config.NO_MARKER_ERR, filepath, newfilepath)):
                 err_line = [filename, filepath, newfilepath, "NA"] + out.emptyResp
-                pd.DataFrame(err_line, dtype=str).T.to_csv(out.filesObj["Errors"], quoting = QUOTE_NONNUMERIC,header=False,index=False)
+                pd.DataFrame(err_line, dtype=str).T.to_csv(out.filesObj["Errors"], mode='a', quoting = QUOTE_NONNUMERIC,header=False,index=False)
             continue
 
         if(args["setLayout"]):
@@ -249,7 +253,7 @@ def process_files(omr_files, template, out):
             # Enter into Results sheet-
             results_line = [filename,filepath,newfilepath,score]+respArray
             # Write/Append to results_line file(opened in append mode)
-            pd.DataFrame(results_line, dtype=str).T.to_csv(out.filesObj["Results"], quoting = QUOTE_NONNUMERIC,header=False,index=False)
+            pd.DataFrame(results_line, dtype=str).T.to_csv(out.filesObj["Results"], mode='a', quoting = QUOTE_NONNUMERIC,header=False,index=False)
             print("[%d] Graded with score: %.2f" % (filesCounter, score), '\t',newfilename)
             # print(filesCounter,newfilename,resp['Roll'],'score : ',score)
         else:
@@ -258,7 +262,7 @@ def process_files(omr_files, template, out):
             newfilepath = out.paths.multiMarkedDir+filename
             if(move(config.MULTI_BUBBLE_WARN, filepath, newfilepath)):
                 mm_line = [filename,filepath,newfilepath,"NA"]+respArray
-                pd.DataFrame(mm_line, dtype=str).T.to_csv(out.filesObj["MultiMarked"], quoting = QUOTE_NONNUMERIC,header=False,index=False)
+                pd.DataFrame(mm_line, dtype=str).T.to_csv(out.filesObj["MultiMarked"], mode='a', quoting = QUOTE_NONNUMERIC,header=False,index=False)
             # else:
             #     Add appropriate record handling here
             #     pass
