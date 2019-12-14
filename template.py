@@ -73,10 +73,10 @@ qtype_data = {
 }
 
 class Template():
-    def __init__(self, template_filename):
-        with open(template_filename, "r") as f:
+    def __init__(self, path):
+        with open(path, "r") as f:
             json_obj = json.load(f)
-
+        self.path = path
         self.QBlocks = []
         # throw exception on key not exist
         self.dims = json_obj["Dimensions"]
@@ -91,23 +91,23 @@ class Template():
         # process local options
         self.options = json_obj.get("Options", {})
 
+        self.marker = None
+        self.marker_path = None
         # process markers
         if "Marker" in self.options:
-            MARKER_PATH = os.path.join(os.path.dirname(template_filename), self.options["Marker"])
-            marker = cv2.imread(MARKER_PATH,cv2.IMREAD_GRAYSCALE) #,cv2.CV_8UC1/IMREAD_COLOR/UNCHANGED
-
-            print("Found marker at:", MARKER_PATH, "Shape:", marker.shape)
-            marker = utils.resize_util(marker, int(config.uniform_width / config.templ_scale_fac))
+            markerOps = self.options["Marker"]
+            self.marker_path = os.path.join(os.path.dirname(path), markerOps.get("RelativePath", config.MARKER_FILE))
+            if(not os.path.exists(self.marker_path)): 
+                print("Error: Marker not found at path provided in template:", self.marker_path)
+                exit(31)
+    
+            marker = cv2.imread(self.marker_path,cv2.IMREAD_GRAYSCALE)
+            if("SheetToMarkerWidthRatio" in markerOps):
+                marker = utils.resize_util(marker, config.uniform_width/int(markerOps["SheetToMarkerWidthRatio"]))
             marker = cv2.GaussianBlur(marker, (5, 5), 0)
             marker = cv2.normalize(marker, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
             # marker_eroded_sub = marker-cv2.erode(marker,None)
             self.marker = marker - cv2.erode(marker, kernel=np.ones((5,5)),iterations=5)
-            # lonmarkerinv = cv2.imread('inputs/omr_autorotate.jpg',cv2.IMREAD_GRAYSCALE)
-            # lonmarkerinv = imutils.rotate_bound(lonmarkerinv,angle=180)
-            # lonmarkerinv = imutils.resize(lonmarkerinv,height=int(lonmarkerinv.shape[1]*0.75))
-            # cv2.imwrite('inputs/lonmarker-inv-resized.jpg',lonmarkerinv)
-        else:
-            self.marker = None
 
         # Add QBlocks
         for name, block in json_obj["QBlocks"].items():
@@ -121,8 +121,7 @@ class Template():
         if 'qType' in rect:
             rect.update(**qtype_data[rect['qType']])
         else:
-            rect['qType'] = {'vals':rect['vals'],
-                             'orient': rect['orient']}
+            rect['qType'] = {'vals':rect['vals'], 'orient': rect['orient']}
         # keyword arg unpacking followed by named args
         self.QBlocks += genGrid(self.bubbleDims, key, **rect)
         # self.QBlocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
@@ -245,11 +244,8 @@ TODO: Update this part, add more examples like-
     # print(gridData.shape, gridData)
     if(0 and len(gridData.shape)!=3 or gridData.size==0): # product of shape is zero
         print("Error(genGrid): Invalid qNos array given:", gridData.shape, gridData)
-        exit(4)
-        return []
-
-    # ^4ENDUSER should also validate no overlap of rect points somehow?!
-
+        exit(32)
+        
     """
     orient = 'H'
     numVals = 4
