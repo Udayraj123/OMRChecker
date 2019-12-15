@@ -104,7 +104,7 @@ class Template():
             markerOps = self.options["Marker"]
             self.marker_path = os.path.join(
                 os.path.dirname(path), markerOps.get(
-                    "RelativePath", MARKER_FILE))
+                    "RelativePath", config.MARKER_FILE))
             if(not os.path.exists(self.marker_path)):
                 print(
                     "Error: Marker not found at path provided in template:",

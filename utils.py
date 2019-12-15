@@ -11,27 +11,23 @@ resetpos = [0,0]
 # for positioning image windows
 windowX,windowY = 0,0 
 
-
-# In[62]:
 import re
 import os
 import sys
 import cv2
 import glob
-import imutils
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 plt.rcParams['figure.figsize'] = (10.0, 8.0)
 
-from random import randint
-from time import localtime,strftime,time
-# from skimage.filters import threshold_adaptive
 from pathlib import Path
+from random import randint
+from imutils import grab_contours
+# from skimage.filters import threshold_adaptive
 
 import config
 import template
-
 
 def setup_dirs(paths):
     print('\nChecking Directories...')
@@ -180,7 +176,7 @@ def drawTemplateLayout(
                 if(draw_qvals):
                     rect = [y, y + boxH, x, x + boxW]
                     cv2.putText(final_align,
-                                '%d'% (cv2.mean(img[rect[0]:rect[1], rect[2]:rect[3])[0]),
+                                '%d'% (cv2.mean(img[rect[0]:rect[1], rect[2]:rect[3]])[0]),
                                 (rect[2] + 2, rect[0] + (boxH * 2) // 3),
                                 cv2.FONT_HERSHEY_SIMPLEX, 
                                 0.6, 
@@ -374,7 +370,7 @@ def findPage(image_norm):
 
     # findContours returns outer boundaries in CW and inner boundaries in ACW
     # order.
-    cnts = imutils.grab_contours(
+    cnts = grab_contours(
         cv2.findContours(
             edge,
             cv2.RETR_LIST,
@@ -549,7 +545,7 @@ def handle_markers(image_norm, marker, curr_filename):
             show('Quads', image_eroded_sub)
         return None
 
-    optimal_marker = imutils.resize_util_h(
+    optimal_marker = resize_util_h(
         marker if config.ERODE_SUB_OFF else marker, u_height=int(
             marker.shape[0] * best_scale))
     h, w = optimal_marker.shape[:2]
