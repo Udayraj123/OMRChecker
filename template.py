@@ -9,8 +9,8 @@ import cv2
 import os
 import json
 import numpy as np
-from globals import *
-from utils import *
+import config
+import utils
 
 ### Coordinates Part ###
 
@@ -113,7 +113,7 @@ class Template():
 
             marker = cv2.imread(self.marker_path, cv2.IMREAD_GRAYSCALE)
             if("SheetToMarkerWidthRatio" in markerOps):
-                marker = resize_util(marker, uniform_width /
+                marker = utils.resize_util(marker, config.uniform_width /
                                      int(markerOps["SheetToMarkerWidthRatio"]))
             marker = cv2.GaussianBlur(marker, (5, 5), 0)
             marker = cv2.normalize(
@@ -126,20 +126,11 @@ class Template():
             self.marker = marker - \
                 cv2.erode(marker, kernel=np.ones((5, 5)), iterations=5)
 
-        # Allow template to override globals
-        # TODO: This is a hack as there should no be any global configuration
-        # All template configuration should be local. Global config should
-        # be via command args.
-        self.globals = json_obj.get("Globals")
-        self.update_globals()
 
         # Add QBlocks
         for name, block in json_obj["QBlocks"].items():
             self.addQBlocks(name, block)
 
-    def update_globals(self):
-        if self.globals:
-            globals().update(self.globals)
 
     # Expects bubbleDims to be set already
     def addQBlocks(self, key, rect):

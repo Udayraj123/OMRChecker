@@ -13,10 +13,16 @@ import argparse
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import imutils
 
-# from utils import * #Now imported via template
-from globals import *
-from template import *
+import config
+import utils
+from template import Template
+
+# Local globals
+filesMoved=0
+filesNotMoved=0
+
 from glob import glob
 from csv import QUOTE_NONNUMERIC
 from time import localtime, strftime, time
@@ -31,12 +37,12 @@ def process_dir(root_dir, subdir, template):
     curr_dir = os.path.join(root_dir, subdir)
 
     # Look for template in current dir
-    template_file = os.path.join(curr_dir, TEMPLATE_FILE)
+    template_file = os.path.join(curr_dir, config.TEMPLATE_FILE)
     if os.path.exists(template_file):
         template = Template(template_file)
 
     # look for images in current dir to process
-    paths = Paths(os.path.join(args['output_dir'], subdir))
+    paths = config.Paths(os.path.join(args['output_dir'], subdir))   
     exts = ('*.png', '*.jpg')
     omr_files = sorted(
         [f for ext in exts for f in glob(os.path.join(curr_dir, ext))])
@@ -63,11 +69,10 @@ def process_dir(root_dir, subdir, template):
 
         if not template:
             print(f'Error: No template file when processing {curr_dir}.')
-            print(
-                f'  Place {TEMPLATE_FILE} in the directory or specify a template using -t.')
+            print(f'  Place {config.TEMPLATE_FILE} in the directory or specify a template using -t.')
             return
 
-        setup_dirs(paths)
+        utils.setup_dirs(paths)
         output_set = setup_output(paths, template)
         process_files(omr_files, template, args_local, output_set)
     elif(len(subfolders) == 0):
@@ -269,24 +274,24 @@ def setup_output(paths, template):
 
 
 def preliminary_check():
-    filesCounter = 0
-    # PRELIM_CHECKS for thresholding
-    if(PRELIM_CHECKS):
-        # TODO: add more using unit testing
-        ALL_WHITE = 255 * \
-            np.ones((TEMPLATE.dims[1], TEMPLATE.dims[0]), dtype='uint8')
-        OMRresponseDict, final_marked, MultiMarked, multiroll = readResponse(
-            ALL_WHITE, name="ALL_WHITE", savedir=None, autoAlign=True)
-        print("ALL_WHITE", OMRresponseDict)
-        if(OMRresponseDict != {}):
-            print("Preliminary Checks Failed.")
-            exit(12)
-        ALL_BLACK = np.zeros(
-            (TEMPLATE.dims[1], TEMPLATE.dims[0]), dtype='uint8')
-        OMRresponseDict, final_marked, MultiMarked, multiroll = readResponse(
-            ALL_BLACK, name="ALL_BLACK", savedir=None, autoAlign=True)
-        print("ALL_BLACK", OMRresponseDict)
-        show("Confirm : All bubbles are black", final_marked, 1, 1)
+    pass
+    # filesCounter=0
+    # mws, mbs = [],[]
+    # # PRELIM_CHECKS for thresholding
+    # if(config.PRELIM_CHECKS):
+    #     # TODO: add more using unit testing
+    #     TEMPLATE = TEMPLATES["H"]
+    #     ALL_WHITE = 255 * np.ones((TEMPLATE.dims[1],TEMPLATE.dims[0]), dtype='uint8')
+    #     OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse("H",ALL_WHITE,name = "ALL_WHITE", savedir = None, autoAlign=True)
+    #     print("ALL_WHITE",OMRresponseDict)
+    #     if(OMRresponseDict!={}):
+    #         print("Preliminary Checks Failed.")
+    #         exit(2)
+    #     ALL_BLACK = np.zeros((TEMPLATE.dims[1],TEMPLATE.dims[0]), dtype='uint8')
+    #     OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse("H",ALL_BLACK,name = "ALL_BLACK", savedir = None, autoAlign=True)
+    #     print("ALL_BLACK",OMRresponseDict)
+    #     show("Confirm : All bubbles are black",final_marked,1,1)
+
 
 
 def process_files(omr_files, template, args, out):
@@ -317,13 +322,13 @@ def process_files(omr_files, template, args, out):
             "\tResolution: ",
             inOMR.shape)
 
-        OMRCrop = getROI(inOMR, filename, noCropping=args["noCropping"])
+        OMRCrop = utils.getROI(inOMR, filename, noCropping=args["noCropping"])
 
         if(OMRCrop is None):
             # Error OMR - could not crop
             newfilepath = out.paths.errorsDir + filename
             out.OUTPUT_SET.append([filename] + out.emptyResp)
-            if(checkAndMove(NO_MARKER_ERR, filepath, newfilepath)):
+            if(checkAndMove(config.NO_MARKER_ERR, filepath, newfilepath)):
                 err_line = [filename, filepath,
                             newfilepath, "NA"] + out.emptyResp
                 pd.DataFrame(
@@ -336,28 +341,31 @@ def process_files(omr_files, template, args, out):
             continue
 
         if template.marker is not None:
-            OMRCrop = handle_markers(OMRCrop, template.marker, filename)
+            OMRCrop = utils.handle_markers(OMRCrop, template.marker, filename)
 
         if(args["setLayout"]):
-            templateLayout = drawTemplateLayout(
+            templateLayout = utils.drawTemplateLayout(
                 OMRCrop, template, shifted=False, border=2)
-            show("Template Layout", templateLayout, 1, 1)
+            utils.show("Template Layout", templateLayout, 1, 1)
             continue
 
         # uniquify
         file_id = inputFolderName + '_' + filename
         savedir = out.paths.saveMarkedDir
         OMRresponseDict, final_marked, MultiMarked, multiroll = \
-            readResponse(template, OMRCrop, name=file_id,
+            utils.readResponse(template, OMRCrop, name=file_id,
                          savedir=savedir, autoAlign=args["autoAlign"])
 
         # concatenate roll nos, set unmarked responses, etc
         resp = processOMR(template, OMRresponseDict)
         print("\nRead Response: \t", resp)
 
-        # This evaluates and returns the score attribute
-        score = evaluate(resp, explain=explain)
-        respArray = []
+        #This evaluates and returns the score attribute
+        # TODO: Automatic scoring
+        #score = evaluate(resp, explain=explain)
+        score = 0
+        
+        respArray=[]
         for k in out.respCols:
             respArray.append(resp[k])
 
@@ -385,7 +393,7 @@ def process_files(omr_files, template, args, out):
             print('[%d] MultiMarked, moving File: %s' %
                   (filesCounter, file_id))
             newfilepath = out.paths.multiMarkedDir + filename
-            if(checkAndMove(MULTI_BUBBLE_WARN, filepath, newfilepath)):
+            if(checkAndMove(config.MULTI_BUBBLE_WARN, filepath, newfilepath)):
                 mm_line = [filename, filepath, newfilepath, "NA"] + respArray
                 pd.DataFrame(
                     mm_line,
@@ -415,7 +423,7 @@ def process_files(omr_files, template, args, out):
              filesMoved +
              filesNotMoved) else 'Not Tallying!'))
 
-    if(showimglvl <= 0):
+    if(config.showimglvl <= 0):
         print(
             '\nFinished Checking %d files in %.1f seconds i.e. ~%.1f minutes.' %
             (filesCounter, timeChecking, timeChecking / 60))
@@ -426,17 +434,16 @@ def process_files(omr_files, template, args, out):
     else:
         print("\nTotal script time :", timeChecking, "seconds")
 
-    if(showimglvl <= 1):
+    if(config.showimglvl <= 1):
         # TODO: colorama this
         print(
             "\nTip: To see some awesome visuals, open globals.py and increase 'showimglvl'")
 
-    evaluate_correctness(template, out)
+    #evaluate_correctness(template, out)
 
     # Use this data to train as +ve feedback
-    if(showimglvl >= 0 and filesCounter > 10):
-        # TODO: Find good parameters to plot and depict image set quality
-        for x in [thresholdCircles]:  # ,badThresholds,veryBadPoints, , mbs]:
+    if config.showimglvl >= 0 and filesCounter > 10:
+        for x in [utils.thresholdCircles]:#,badThresholds,veryBadPoints, mws, mbs]:
             if(x != []):
                 x = pd.DataFrame(x)
                 print(x.describe())
