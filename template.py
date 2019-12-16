@@ -1,7 +1,7 @@
 """
 
 Designed and Developed by-
-Udayraj Deshmukh 
+Udayraj Deshmukh
 https://github.com/Udayraj123
 
 """
@@ -11,8 +11,11 @@ import json
 import numpy as np
 import config
 import utils
+from argparse import Namespace
 
 ### Coordinates Part ###
+
+
 class Pt():
     """
     Container for a Point Box on the OMR
@@ -22,12 +25,14 @@ class Pt():
     It can be used as a roll number column as well. (eg roll1)
     It can also correspond to a single digit of integer type Q (eg q5d1)
     """
+
     def __init__(self, pt, qNo, qType, val):
-        self.x=round(pt[0])
-        self.y=round(pt[1])
-        self.qNo=qNo
-        self.qType=qType
-        self.val=val
+        self.x = round(pt[0])
+        self.y = round(pt[1])
+        self.qNo = qNo
+        self.qType = qType
+        self.val = val
+
 
 class QBlock():
     def __init__(self, dims, key, orig, traverse_pts):
@@ -39,26 +44,27 @@ class QBlock():
         # will be set when using
         self.shift = 0
 
+
 qtype_data = {
-    'QTYPE_MED':{
-        'vals' : ['E','H'],
-        'orient':'V'
+    'QTYPE_MED': {
+        'vals': ['E', 'H'],
+        'orient': 'V'
     },
-    'QTYPE_ROLL':{
-        'vals':range(10),
-        'orient':'V'
+    'QTYPE_ROLL': {
+        'vals': range(10),
+        'orient': 'V'
     },
-    'QTYPE_INT':{
-        'vals':range(10),
-        'orient':'V'
+    'QTYPE_INT': {
+        'vals': range(10),
+        'orient': 'V'
     },
-    'QTYPE_MCQ4':{
-        'vals' : ['A','B','C','D'],
-        'orient':'H'
+    'QTYPE_MCQ4': {
+        'vals': ['A', 'B', 'C', 'D'],
+        'orient': 'H'
     },
-    'QTYPE_MCQ5':{
-        'vals' : ['A','B','C','D','E'],
-        'orient':'H'
+    'QTYPE_MCQ5': {
+        'vals': ['A', 'B', 'C', 'D', 'E'],
+        'orient': 'H'
     },
     # Add custom question types here-
     # ,
@@ -72,11 +78,20 @@ qtype_data = {
     # 'QTYPE_MCQ_COL_4D':{'vals' : ['D']*4, 'orient':'V'},
 }
 
-class Template():
-    def __init__(self, template_filename):
-        with open(template_filename, "r") as f:
-            json_obj = json.load(f)
 
+class Options(Namespace):
+    def __init__(self, **kwargs):
+        # set default attributes
+        self.desc = lambda : ''
+        for name in kwargs:
+            setattr(self, name.lower(), kwargs[name])
+
+
+class Template():
+    def __init__(self, path):
+        with open(path, "r") as f:
+            json_obj = json.load(f)
+        self.path = path
         self.QBlocks = []
         # throw exception on key not exist
         self.dims = json_obj["Dimensions"]
@@ -88,32 +103,52 @@ class Template():
         if "qTypes" in json_obj:
             qtype_data.update(json_obj["qTypes"])
 
+        # list of files to exclude from processing
+        self.exclude_files = []
+
         # process local options
-        self.options = json_obj.get("Options", {})
+        self.options = Namespace(**json_obj.get("Options", {}))
 
         # process refernence image
-        if "Reference" in self.options:
-            ref_path = os.path.join(os.path.dirname(template_filename), self.options["Reference"])
-            self.reference = cv2.imread(ref_path, cv2.IMREAD_GRAYSCALE)
+        if "reference" in self.options:
+            ref_path = os.path.join(os.path.dirname(path), self.options.reference)
+            self.options.reference = Options()
+            self.options.reference.image = cv2.imread(ref_path, cv2.IMREAD_GRAYSCALE)
+            self.options.reference.desc = lambda : ref_path
+
+            self.exclude_files.append(ref_path)
         
-
         # process markers
-        if "Marker" in self.options:
-            MARKER_PATH = os.path.join(os.path.dirname(template_filename), self.options["Marker"])
-            marker = cv2.imread(MARKER_PATH,cv2.IMREAD_GRAYSCALE) #,cv2.CV_8UC1/IMREAD_COLOR/UNCHANGED
+        if "marker" in self.options:
+            marker_ops = self.options["marker"]
+            marker_path = os.path.join(
+                os.path.dirname(path), marker_ops.get(
+                    "RelativePath", config.MARKER_FILE))
+            if(not os.path.exists(marker_path)):
+                print(
+                    "Error: Marker not found at path provided in template:",
+                    marker_path)
+                exit(31)
 
-            print("Found marker at:", MARKER_PATH, "Shape:", marker.shape)
-            marker = utils.resize_util(marker, int(config.uniform_width / config.templ_scale_fac))
+            marker = cv2.imread(marker_path, cv2.IMREAD_GRAYSCALE)
+            if("SheetToMarkerWidthRatio" in marker_ops):
+                marker = utils.resize_util(marker, config.uniform_width /
+                                     int(marker_ops["SheetToMarkerWidthRatio"]))
             marker = cv2.GaussianBlur(marker, (5, 5), 0)
-            marker = cv2.normalize(marker, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
-            # marker_eroded_sub = marker-cv2.erode(marker,None)
-            self.marker = marker - cv2.erode(marker, kernel=np.ones((5,5)),iterations=5)
-            # lonmarkerinv = cv2.imread('inputs/omr_autorotate.jpg',cv2.IMREAD_GRAYSCALE)
-            # lonmarkerinv = imutils.rotate_bound(lonmarkerinv,angle=180)
-            # lonmarkerinv = imutils.resize(lonmarkerinv,height=int(lonmarkerinv.shape[1]*0.75))
-            # cv2.imwrite('inputs/lonmarker-inv-resized.jpg',lonmarkerinv)
-        else:
-            self.marker = None
+            marker = cv2.normalize(
+                marker,
+                None,
+                alpha=0,
+                beta=255,
+                norm_type=cv2.NORM_MINMAX)
+            marker -= cv2.erode(marker, kernel=np.ones((5, 5)), iterations=5)
+            
+            self.options.marker = Options()
+            self.options.marker_ops.image = marker
+            self.options.marker.desc = lambda : marker_path
+
+            self.exclude_files.append(marker_path)
+
 
         # Add QBlocks
         for name, block in json_obj["QBlocks"].items():
@@ -127,13 +162,23 @@ class Template():
         if 'qType' in rect:
             rect.update(**qtype_data[rect['qType']])
         else:
-            rect['qType'] = {'vals':rect['vals'],
-                             'orient': rect['orient']}
+            rect['qType'] = {'vals': rect['vals'], 'orient': rect['orient']}
         # keyword arg unpacking followed by named args
         self.QBlocks += genGrid(self.bubbleDims, key, **rect)
         # self.QBlocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
 
-def genQBlock(bubbleDims, QBlockDims, key, orig, qNos, gaps, vals, qType, orient, col_orient):
+
+def genQBlock(
+        bubbleDims,
+        QBlockDims,
+        key,
+        orig,
+        qNos,
+        gaps,
+        vals,
+        qType,
+        orient,
+        col_orient):
     """
     Input:
     orig - start point
@@ -144,7 +189,7 @@ def genQBlock(bubbleDims, QBlockDims, key, orig, qNos, gaps, vals, qType, orient
     Output:
     // Returns set of coordinates of a rectangular grid of points
     Returns a QBlock containing array of Qs and some metadata?!
-    
+
     Ref:
         1 2 3 4
         1 2 3 4
@@ -161,7 +206,7 @@ def genQBlock(bubbleDims, QBlockDims, key, orig, qNos, gaps, vals, qType, orient
         (q1.1,q1.2)
 
     """
-    H, V = (0,1) if(orient=='H') else (1,0)
+    H, V = (0, 1) if(orient == 'H') else (1, 0)
     # orig[0] += np.random.randint(-6,6)*2 # test random shift
     traverse_pts = []
     o = [float(i) for i in orig]
@@ -171,12 +216,12 @@ def genQBlock(bubbleDims, QBlockDims, key, orig, qNos, gaps, vals, qType, orient
             pt = o.copy()
             pts = []
             for v in range(len(vals)):
-                pts.append(Pt(pt.copy(),qNos[q],qType,vals[v]))
+                pts.append(Pt(pt.copy(), qNos[q], qType, vals[v]))
                 pt[H] += gaps[H]
             # For diagonalal endpoint of QBlock
             pt[H] += bubbleDims[H] - gaps[H]
             pt[V] += bubbleDims[V]
-            #TODO- make a mini object for this
+            # TODO- make a mini object for this
             traverse_pts.append(([o.copy(), pt.copy()], pts))
             o[V] += gaps[V]
     else:
@@ -184,18 +229,29 @@ def genQBlock(bubbleDims, QBlockDims, key, orig, qNos, gaps, vals, qType, orient
             pt = o.copy()
             pts = []
             for q in range(len(qNos)):
-                pts.append(Pt(pt.copy(),qNos[q],qType,vals[v]))
+                pts.append(Pt(pt.copy(), qNos[q], qType, vals[v]))
                 pt[V] += gaps[V]
             # For diagonalal endpoint of QBlock
             pt[V] += bubbleDims[V] - gaps[V]
             pt[H] += bubbleDims[H]
-            #TODO- make a mini object for this
+            # TODO- make a mini object for this
             traverse_pts.append(([o.copy(), pt.copy()], pts))
             o[H] += gaps[H]
     # Pass first three args as is. only append 'traverse_pts'
     return QBlock(QBlockDims, key, orig, traverse_pts)
 
-def genGrid(bubbleDims, key, qType, orig, bigGaps, gaps, qNos, vals, orient='V', col_orient='V'):
+
+def genGrid(
+        bubbleDims,
+        key,
+        qType,
+        orig,
+        bigGaps,
+        gaps,
+        qNos,
+        vals,
+        orient='V',
+        col_orient='V'):
     """
     Input(Directly passable from JSON parameters):
     bubbleDims - dimesions of single QBox
@@ -249,83 +305,65 @@ TODO: Update this part, add more examples like-
     """
     gridData = np.array(qNos)
     # print(gridData.shape, gridData)
-    if(0 and len(gridData.shape)!=3 or gridData.size==0): # product of shape is zero
-        print("Error(genGrid): Invalid qNos array given:", gridData.shape, gridData)
-        exit(4)
-        return []
-
-    # ^4ENDUSER should also validate no overlap of rect points somehow?!
-
-    """
-    orient = 'H'
-    numVals = 4
-    [
-    [["q1", "q2", "q3", "q4"], ["q5", "q6", "q7", "q8"]],
-    [["q9", "q10", "q11", "q12"], ["q13", "q14", "q15", "q16"]]
-    ]
-
-    q1          q9
-    q2          q10
-    q3          q11
-    q4          q12
-
-    q5          q13
-    q6          q14
-    q7          q15
-    q8          q16
-    """
+    if(0 and len(gridData.shape) != 3 or gridData.size == 0):  # product of shape is zero
+        print(
+            "Error(genGrid): Invalid qNos array given:",
+            gridData.shape,
+            gridData)
+        exit(32)
 
     orig = np.array(orig)
     numQsMax = max([max([len(qb) for qb in row]) for row in gridData])
-    
+
     numDims = [numQsMax, len(vals)]
 
-    QBlocks=[]
-    
+    QBlocks = []
+
     # **Simple is powerful**
-    # H and V are named with respect to orient == 'H', reverse their meaning when orient = 'V'
-    H, V = (0,1) if(orient=='H') else (1,0)
+    # H and V are named with respect to orient == 'H', reverse their meaning
+    # when orient = 'V'
+    H, V = (0, 1) if(orient == 'H') else (1, 0)
 
     # print(orig, numDims, gridData.shape, gridData)
     # orient is also the direction of making QBlocks
-    
+
     # print(key, numDims, orig, gaps, bigGaps, origGap )
     qStart = orig.copy()
 
     origGap = [0, 0]
-    
+
     # Usually single row
     for row in gridData:
         qStart[V] = orig[V]
-        
+
         # Usually multiple qTuples
         for qTuple in row:
             # Update numDims and origGaps
             numDims[0] = len(qTuple)
             # bigGaps is indep of orientation
-            origGap[0] = bigGaps[0] + (numDims[V]-1)*gaps[H]
-            origGap[1] = bigGaps[1] + (numDims[H]-1)*gaps[V]
+            origGap[0] = bigGaps[0] + (numDims[V] - 1) * gaps[H]
+            origGap[1] = bigGaps[1] + (numDims[H] - 1) * gaps[V]
             # each qTuple will have qNos
             QBlockDims = [
                 # width x height in pixels
-                gaps[0] * (numDims[V]-1) + bubbleDims[H],
-                gaps[1] * (numDims[H]-1) + bubbleDims[V]
+                gaps[0] * (numDims[V] - 1) + bubbleDims[H],
+                gaps[1] * (numDims[H] - 1) + bubbleDims[V]
             ]
-            # WATCH FOR BLUNDER(use .copy()) - qStart was getting passed by reference! (others args read-only)
-            QBlocks.append(genQBlock(bubbleDims, QBlockDims, key, qStart.copy(),qTuple,gaps,vals,qType,orient,col_orient))
+            # WATCH FOR BLUNDER(use .copy()) - qStart was getting passed by
+            # reference! (others args read-only)
+            QBlocks.append(
+                genQBlock(
+                    bubbleDims,
+                    QBlockDims,
+                    key,
+                    qStart.copy(),
+                    qTuple,
+                    gaps,
+                    vals,
+                    qType,
+                    orient,
+                    col_orient))
             # Goes vertically down first
             qStart[V] += origGap[V]
         qStart[H] += origGap[H]
     return QBlocks
-
-# The utility for GUI
-def calcGaps(PointsX,PointsY,numsX,numsY):
-    gapsX = ( abs(PointsX[0]-PointsX[1])/(numsX[0]-1),abs(PointsX[2]-PointsX[3]) )
-    gapsY = ( abs(PointsY[0]-PointsY[1])/(numsY[0]-1),abs(PointsY[2]-PointsY[3]) )
-    return (gapsX,gapsY)
-
-
-
-
-
-

@@ -1,14 +1,11 @@
-# outputs/Results
 **/__pycache__
 **/CheckedOMRs
-**/convertedOMRs_LQ
-**/gitignore
 **/ignore
-**/outputs
-.DS_Store
+**/.DS_Store
 OMRChecker.wiki/
-# Everything in inputs/
+# Everything in inputs/ and outputs/
 inputs/*
+outputs/*
 # Except *.json and OMR_Files/
 # !inputs/OMR_Files/
 # !inputs/*.json
