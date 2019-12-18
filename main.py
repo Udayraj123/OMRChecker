@@ -17,6 +17,7 @@ import imutils
 
 import config
 import utils
+from extension import ExtensionManager
 from template import Template
 
 # Local globals
@@ -39,7 +40,7 @@ def process_dir(root_dir, subdir, template):
     # Look for template in current dir
     template_file = os.path.join(curr_dir, config.TEMPLATE_FILE)
     if os.path.exists(template_file):
-        template = Template(template_file)
+        template = Template(template_file, ext_mgr.extensions)
 
     # look for images in current dir to process
     paths = config.Paths(os.path.join(args['output_dir'], subdir))   
@@ -48,7 +49,10 @@ def process_dir(root_dir, subdir, template):
         [f for ext in exts for f in glob(os.path.join(curr_dir, ext))])
 
     # Exclude images
-    omr_files = [f for f in omr_files if f not in template.exclude_files]
+    excluded_files = []
+    for pp in template.preprocessors:
+        excluded_files.extend(pp.exclude_files())       
+    omr_files = [f for f in omr_files if f not in excluded_files]
 
     subfolders = sorted([file for file in os.listdir(
         curr_dir) if os.path.isdir(os.path.join(curr_dir, file))])
@@ -63,8 +67,8 @@ def process_dir(root_dir, subdir, template):
         print("\tAuto Alignment     : " + str(args_local["autoAlign"]))
         print("\tUsing Template     : " + str(template.path) if(template) else "N/A")
         # Print options
-        for key, val in vars(template.options).items():
-            print(f'\tUsing {key.title():13}: {val.desc()}')
+        for pp in template.preprocessors:
+            print(f'\tUsing {pp.__class__.__name__:13}: {pp}')
 
         print('')
 
@@ -324,11 +328,11 @@ def process_files(omr_files, template, args, out):
         print('(%d) Opening image: \t' % (filesCounter), filepath, "\tResolution: ", inOMR.shape)
         # show("inOMR",inOMR,1,1)
 
-        if 'reference' in template.options:
-            inOMR, h = utils.align_images(inOMR, template.options.reference.image)            
+        # run preprocessors
+        for pp in template.preprocessors:
+            inOMR = pp.apply_filter(inOMR, filename)           
         
         OMRCrop = utils.getROI(inOMR, filename, noCropping=args["noCropping"])
-
         
         if(OMRCrop is None):
             # Error OMR - could not crop
@@ -345,9 +349,6 @@ def process_files(omr_files, template, args, out):
                           header=False,
                           index=False)
             continue
-
-        if 'marker' in template.options:
-            OMRCrop = utils.handle_markers(OMRCrop, template.option.marker.image, filename)
 
         if(args["setLayout"]):
             templateLayout = utils.drawTemplateLayout(
@@ -549,8 +550,11 @@ if(len(unknown) > 0):
     argparser.print_help()
     exit(11)
 
+# Load extensions
+ext_mgr = ExtensionManager(config.EXTENSION_PATH)
+
 if args['template']:
-    args['template'] = Template(args['template'])
+    args['template'] = Template(args['template'], ext_mgr.extensions)
 
 if args['input_dir'] is None:
     args['input_dir'] = ['inputs']

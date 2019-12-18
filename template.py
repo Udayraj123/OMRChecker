@@ -5,13 +5,14 @@ Udayraj Deshmukh
 https://github.com/Udayraj123
 
 """
-import cv2
 import os
 import json
-import numpy as np
 import config
 import utils
+
+import numpy as np
 from argparse import Namespace
+from collections import OrderedDict  # For Python 3.5 and earlier
 
 ### Coordinates Part ###
 
@@ -79,18 +80,10 @@ qtype_data = {
 }
 
 
-class Options(Namespace):
-    def __init__(self, **kwargs):
-        # set default attributes
-        self.desc = lambda : ''
-        for name in kwargs:
-            setattr(self, name.lower(), kwargs[name])
-
-
 class Template():
-    def __init__(self, path):
+    def __init__(self, path, extensions):
         with open(path, "r") as f:
-            json_obj = json.load(f)
+            json_obj = json.load(f, object_pairs_hook=OrderedDict)
         self.path = path
         self.QBlocks = []
         # throw exception on key not exist
@@ -103,52 +96,11 @@ class Template():
         if "qTypes" in json_obj:
             qtype_data.update(json_obj["qTypes"])
 
-        # list of files to exclude from processing
-        self.exclude_files = []
+        # load image preprocessors
+        self.preprocessors = [extensions[name](opts, path) for name, opts in json_obj.get("Preprocessors", {}).items()]
 
-        # process local options
-        self.options = Namespace(**json_obj.get("Options", {}))
-
-        # process refernence image
-        if "reference" in self.options:
-            ref_path = os.path.join(os.path.dirname(path), self.options.reference)
-            self.options.reference = Options()
-            self.options.reference.image = cv2.imread(ref_path, cv2.IMREAD_GRAYSCALE)
-            self.options.reference.desc = lambda : ref_path
-
-            self.exclude_files.append(ref_path)
-        
-        # process markers
-        if "marker" in self.options:
-            marker_ops = self.options["marker"]
-            marker_path = os.path.join(
-                os.path.dirname(path), marker_ops.get(
-                    "RelativePath", config.MARKER_FILE))
-            if(not os.path.exists(marker_path)):
-                print(
-                    "Error: Marker not found at path provided in template:",
-                    marker_path)
-                exit(31)
-
-            marker = cv2.imread(marker_path, cv2.IMREAD_GRAYSCALE)
-            if("SheetToMarkerWidthRatio" in marker_ops):
-                marker = utils.resize_util(marker, config.uniform_width /
-                                     int(marker_ops["SheetToMarkerWidthRatio"]))
-            marker = cv2.GaussianBlur(marker, (5, 5), 0)
-            marker = cv2.normalize(
-                marker,
-                None,
-                alpha=0,
-                beta=255,
-                norm_type=cv2.NORM_MINMAX)
-            marker -= cv2.erode(marker, kernel=np.ones((5, 5)), iterations=5)
-            
-            self.options.marker = Options()
-            self.options.marker_ops.image = marker
-            self.options.marker.desc = lambda : marker_path
-
-            self.exclude_files.append(marker_path)
-
+        # Add Options
+        self.options = json_obj.get("Options", {})
 
         # Add QBlocks
         for name, block in json_obj["QBlocks"].items():
