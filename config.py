@@ -16,7 +16,7 @@ windowHeight = 720
 
 saveMarked = 1
 saveCropped = 1
-showimglvl = 4
+showimglvl = 0
 saveimglvl = 0
 PRELIM_CHECKS = 0
 

@@ -52,13 +52,13 @@ class Markers(ImagePreprocessor):
     def exclude_files(self):
         return [self.marker_path]
 
-    def apply_filter(self, image_norm, curr_filename):
+    def apply_filter(self, image, args):
 
         if self.ERODE_SUB_OFF:
-            image_eroded_sub = utils.normalize_util(image_norm)
+            image_eroded_sub = utils.normalize_util(image)
         else:
-            image_eroded_sub = utils.normalize_util(image_norm
-                                            - cv2.erode(image_norm,
+            image_eroded_sub = utils.normalize_util(image
+                                            - cv2.erode(image,
                                                         kernel=np.ones((5, 5)),
                                                         iterations=5))
         # Quads on warped image
@@ -97,7 +97,7 @@ class Markers(ImagePreprocessor):
                 # Warning - code will stop in the middle. Keep Threshold low to
                 # avoid.
                 print(
-                    curr_filename,
+                    args['curr_filename'],
                     "\nError: No circle found in Quad",
                     k + 1,
                     "\n\tthresholdVar",
@@ -117,7 +117,7 @@ class Markers(ImagePreprocessor):
             pt[0] += origins[k][0]
             pt[1] += origins[k][1]
             # print(">>",pt)
-            image_norm = cv2.rectangle(image_norm, tuple(
+            image = cv2.rectangle(image, tuple(
                 pt), (pt[0] + w, pt[1] + h), (150, 150, 150), 2)
             # display:
             image_eroded_sub = cv2.rectangle(
@@ -138,7 +138,7 @@ class Markers(ImagePreprocessor):
         # analysis data
         self.thresholdCircles.append(sumT / 4)
 
-        image_norm = utils.four_point_transform(image_norm, np.array(centres))
+        image = utils.four_point_transform(image, np.array(centres))
         # appendSaveImg(1,image_eroded_sub)
         # appendSaveImg(1,image_norm)
 
@@ -149,11 +149,11 @@ class Markers(ImagePreprocessor):
         # res[ midh:midh+2, : ] = 255
         # show("Markers Matching",res)
         if(config.showimglvl >= 2 and config.showimglvl < 4):
-            image_eroded_sub = utils.resize_util_h(image_eroded_sub, image_norm.shape[0])
+            image_eroded_sub = utils.resize_util_h(image_eroded_sub, image.shape[0])
             image_eroded_sub[:, -5:] = 0
-            h_stack = np.hstack((image_eroded_sub, image_norm))
-            utils.show("Warped: " + curr_filename, utils.resize_util(h_stack,
+            h_stack = np.hstack((image_eroded_sub, image))
+            utils.show("Warped: " + args['curr_filename'], utils.resize_util(h_stack,
                                                         int(config.display_width * 1.6)), 0, 0, [0, 0])
         # iterations : Tuned to 2.
         # image_eroded_sub = image_norm - cv2.erode(image_norm, kernel=np.ones((5,5)),iterations=2)
-        return image_norm
+        return image

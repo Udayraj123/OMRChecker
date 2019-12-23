@@ -23,15 +23,17 @@ class FeatureBasedAlignment(ImagePreprocessor):
 
     ''' Image based feature alignment
     Credits: https://www.learnopencv.com/image-alignment-feature-based-using-opencv-c-python/'''
-    def apply_filter(self, im1, curr_file):
+    def apply_filter(self, img, args):
         
         # Convert images to grayscale
         # im1Gray = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
         # im2Gray = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
+
+        img = cv2.normalize(img, 0, 255, norm_type=cv2.NORM_MINMAX)
         
         # Detect ORB features and compute descriptors.
         orb = cv2.ORB_create(self.MAX_FEATURES)
-        keypoints1, descriptors1 = orb.detectAndCompute(im1, None)
+        keypoints1, descriptors1 = orb.detectAndCompute(img, None)
         keypoints2, descriptors2 = orb.detectAndCompute(self.ref_img, None)
         
         # Match features.
@@ -62,6 +64,6 @@ class FeatureBasedAlignment(ImagePreprocessor):
         
         # Use homography
         height, width = self.ref_img.shape
-        im1Reg = cv2.warpPerspective(im1, h, (width, height))
+        im1Reg = cv2.warpPerspective(img, h, (width, height))
         
         return im1Reg

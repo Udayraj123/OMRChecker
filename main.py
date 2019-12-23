@@ -27,6 +27,7 @@ filesNotMoved=0
 from glob import glob
 from csv import QUOTE_NONNUMERIC
 from time import localtime, strftime, time
+from pathlib import Path
 
 
 # TODO(beginner task) :-
@@ -34,28 +35,29 @@ from time import localtime, strftime, time
 # init()
 # from colorama import Fore, Back, Style
 
-def process_dir(root_dir, subdir, template):
-    curr_dir = os.path.join(root_dir, subdir)
+def process_dir(curr_dir, template):
 
     # Look for template in current dir
-    template_file = os.path.join(curr_dir, config.TEMPLATE_FILE)
+    template_file = curr_dir.joinpath(config.TEMPLATE_FILE)
     if os.path.exists(template_file):
         template = Template(template_file, ext_mgr.extensions)
 
     # look for images in current dir to process
-    paths = config.Paths(os.path.join(args['output_dir'], subdir))   
+    paths = config.Paths(Path(args['output_dir'], curr_dir.name))
     exts = ('*.png', '*.jpg')
+    
     omr_files = sorted(
-        [f for ext in exts for f in glob(os.path.join(curr_dir, ext))])
+        [f for ext in exts for f in curr_dir.glob(ext)])
 
     # Exclude images
     excluded_files = []
     for pp in template.preprocessors:
-        excluded_files.extend(pp.exclude_files())       
+        excluded_files.extend(Path(p) for p in pp.exclude_files())
+
     omr_files = [f for f in omr_files if f not in excluded_files]
 
-    subfolders = sorted([file for file in os.listdir(
-        curr_dir) if os.path.isdir(os.path.join(curr_dir, file))])
+    subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
+    
     if omr_files:
         args_local = args.copy()
         if("OverrideFlags" in template.options):
@@ -80,13 +82,14 @@ def process_dir(root_dir, subdir, template):
         utils.setup_dirs(paths)
         output_set = setup_output(paths, template)
         process_files(omr_files, template, args_local, output_set)
-    elif(len(subfolders) == 0):
+
+    elif(len(subdirs) == 0):
         # the directory should have images or be non-leaf
         print(f'Note: No valid images or subfolders found in {curr_dir}')
 
     # recursively process subfolders
-    for folder in subfolders:
-        process_dir(root_dir, os.path.join(subdir, folder), template)
+    for d in subdirs:
+        process_dir(d, template)
 
 
 def checkAndMove(error_code, filepath, filepath2):
@@ -310,29 +313,22 @@ def process_files(omr_files, template, args, out):
 
     for filepath in omr_files:
         filesCounter += 1
-        # For windows filesystem support: all '\' will be replaced by '/'
-        filepath = filepath.replace(os.sep, '/')
 
-        # Prefixing a 'r' to use raw string (escape character '\' is taken
-        # literally)
-        finder = re.search(r'.*/(.*)/(.*)', filepath, re.IGNORECASE)
-        if(finder):
-            inputFolderName, filename = finder.groups()
-        else:
-            print("Error: Filepath not matching to Regex: " + filepath)
-            continue
-        # set global var for reading
+        inputFolderName = filepath.parent
+        filename = filepath.name
+        args['current_file'] = filepath
 
-        inOMR = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
+        inOMR = cv2.imread(str(filepath), cv2.IMREAD_GRAYSCALE)
         print('')
-        print('(%d) Opening image: \t' % (filesCounter), filepath, "\tResolution: ", inOMR.shape)
-        # show("inOMR",inOMR,1,1)
+        print(f'({filesCounter}) Opening image: \t{filepath}\tResolution: {inOMR.shape}')
 
         # run preprocessors
         for pp in template.preprocessors:
-            inOMR = pp.apply_filter(inOMR, filename)           
+            inOMR = pp.apply_filter(inOMR, args)           
         
-        OMRCrop = utils.getROI(inOMR, filename, noCropping=args["noCropping"])
+        OMRCrop = inOMR
+        # Disable getROI for now
+        #OMRCrop = utils.getROI(inOMR, filename, noCropping=args["noCropping"])
         
         if(OMRCrop is None):
             # Error OMR - could not crop
@@ -414,9 +410,9 @@ def process_files(omr_files, template, args, out):
             #     pass
 
         # flush after every 20 files for a live view
-        if(filesCounter % 20 == 0 or filesCounter == len(omr_files)):
-            for fileKey in out.filesMap.keys():
-                out.filesObj[fileKey].flush()
+        # if(filesCounter % 20 == 0 or filesCounter == len(omr_files)):
+        #     for fileKey in out.filesMap.keys():
+        #         out.filesObj[fileKey].flush()
 
     timeChecking = round(time() - start_time, 2) if filesCounter else 1
     print('')
@@ -450,7 +446,7 @@ def process_files(omr_files, template, args, out):
 
     # Use this data to train as +ve feedback
     if config.showimglvl >= 0 and filesCounter > 10:
-        for x in [utils.thresholdCircles]:#,badThresholds,veryBadPoints, mws, mbs]:
+        for x in [thresholdCircles]:#,badThresholds,veryBadPoints, mws, mbs]:
             if(x != []):
                 x = pd.DataFrame(x)
                 print(x.describe())
@@ -560,4 +556,4 @@ if args['input_dir'] is None:
     args['input_dir'] = ['inputs']
 
 for root in args['input_dir']:
-    process_dir(root, '', args['template'])
+    process_dir(Path(root), args['template'])
