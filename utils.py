@@ -104,7 +104,7 @@ def show(name, orig, pause=1, resize=False, resetpos=None):
             cv2.destroyAllWindows()
         return
     origDim = orig.shape[:2]
-    img = resize_util(orig, config.display_width, config.display_height) if resize else orig
+    img = resize_util(orig, config.display_width) if resize else orig
     cv2.imshow(name, img)
     if(resetpos):
         windowX = resetpos[0]

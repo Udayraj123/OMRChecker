@@ -55,7 +55,6 @@ def process_dir(curr_dir, template):
         excluded_files.extend(Path(p) for p in pp.exclude_files())
 
     omr_files = [f for f in omr_files if f not in excluded_files]
-
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
     
     if omr_files:
@@ -353,7 +352,7 @@ def process_files(omr_files, template, args, out):
             continue
 
         # uniquify
-        file_id = inputFolderName + '_' + filename
+        file_id = f'{inputFolderName}_{filename}'        
         savedir = out.paths.saveMarkedDir
         OMRresponseDict, final_marked, MultiMarked, multiroll = \
             utils.readResponse(template, OMRCrop, name=file_id,
