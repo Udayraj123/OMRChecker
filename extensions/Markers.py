@@ -20,7 +20,7 @@ class Markers(ImagePreprocessor):
     def __init__(self, marker_ops, path):
         # process markers
         self.marker_path = os.path.join(
-            os.path.dirname(path), marker_ops.get("RelativePath", MARKER_FILE))
+            os.path.dirname(path), marker_ops.get("relativepath", MARKER_FILE))
 
         if(not os.path.exists(self.marker_path)):
             print(
@@ -30,9 +30,9 @@ class Markers(ImagePreprocessor):
 
         marker = cv2.imread(self.marker_path, cv2.IMREAD_GRAYSCALE)
 
-        if("SheetToMarkerWidthRatio" in marker_ops):
+        if("sheettomarkerwidthratio" in marker_ops):
             marker = utils.resize_util(marker, config.uniform_width /
-                                    int(marker_ops["SheetToMarkerWidthRatio"]))
+                                    int(marker_ops["sheettomarkerwidthratio"]))
         marker = cv2.GaussianBlur(marker, (5, 5), 0)
         marker = cv2.normalize(
             marker,
@@ -43,7 +43,7 @@ class Markers(ImagePreprocessor):
         marker -= cv2.erode(marker, kernel=np.ones((5, 5)), iterations=5)
         
         self.marker = marker
-        self.ERODE_SUB_OFF = marker_ops.get("ErodeSubOff", ERODE_SUB_OFF)
+        self.ERODE_SUB_OFF = marker_ops.get("erodesuboff", ERODE_SUB_OFF)
         self.thresholdCircles = []
 
     def __str__(self):

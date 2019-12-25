@@ -325,11 +325,10 @@ def process_files(omr_files, template, args, out):
         for pp in template.preprocessors:
             inOMR = pp.apply_filter(inOMR, args)           
         
-        OMRCrop = inOMR
         # Disable getROI for now
         #OMRCrop = utils.getROI(inOMR, filename, noCropping=args["noCropping"])
         
-        if(OMRCrop is None):
+        if(inOMR is None):
             # Error OMR - could not crop
             newfilepath = out.paths.errorsDir + filename
             out.OUTPUT_SET.append([filename] + out.emptyResp)
@@ -345,9 +344,12 @@ def process_files(omr_files, template, args, out):
                           index=False)
             continue
 
+        # resize to conform to template
+        imOMR = resize_util(inOMR, config.uniform_width, config.uniform_height)
+
         if(args["setLayout"]):
             templateLayout = utils.drawTemplateLayout(
-                OMRCrop, template, shifted=False, border=2)
+                inOMR, template, shifted=False, border=2)
             utils.show("Template Layout", templateLayout, 1, 1)
             continue
 
@@ -355,7 +357,7 @@ def process_files(omr_files, template, args, out):
         file_id = f'{inputFolderName}_{filename}'        
         savedir = out.paths.saveMarkedDir
         OMRresponseDict, final_marked, MultiMarked, multiroll = \
-            utils.readResponse(template, OMRCrop, name=file_id,
+            utils.readResponse(template, inOMR, name=file_id,
                          savedir=savedir, autoAlign=args["autoAlign"])
 
         # concatenate roll nos, set unmarked responses, etc

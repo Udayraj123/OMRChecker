@@ -18,8 +18,9 @@ class Extension:
 class ImagePreprocessor(Extension):
     '''Base class for extension that applies some preprocessing to the input image
     '''
-    def __init__(self, options, path):
-        raise NotImplementedError
+    def __init__(self, options, args):
+        self.options = options
+        self.args = args
 
     def apply_filter(self, image, filename):
         ''' Apply filter to the image and returns modified image
@@ -69,7 +70,7 @@ class ExtensionManager:
                     # Only add classes that are a sub class of Extension, but NOT Extension itself
                     if issubclass(c, Extension) & (c is not Extension):
                         print(f'    Found extension class: {c.__module__}.{c.__name__}')
-                        self.extensions[c.__name__] = c
+                        self.extensions[c.__name__.lower()] = c
 
 
         # Now that we have looked at all the modules in the current package, start looking

@@ -79,31 +79,38 @@ qtype_data = {
     # 'QTYPE_MCQ_COL_4D':{'vals' : ['D']*4, 'orient':'V'},
 }
 
+class LowercaseOrderedDict(OrderedDict):
+    def __setitem__(self, key, value):
+        if isinstance(key, str):
+            return super().__setitem__(key.lower(), value)
+        return super().__setitem__(key, value)
 
 class Template():
     def __init__(self, path, extensions):
         with open(path, "r") as f:
-            json_obj = json.load(f, object_pairs_hook=OrderedDict)
+            json_obj = json.load(f, object_pairs_hook=LowercaseOrderedDict)
         self.path = path
         self.QBlocks = []
         # throw exception on key not exist
-        self.dims = json_obj["Dimensions"]
-        self.bubbleDims = json_obj["BubbleDimensions"]
-        self.concats = json_obj["Concatenations"]
-        self.singles = json_obj["Singles"]
+        self.dims = json_obj["dimensions"]
+        self.bubbleDims = json_obj["bubbledimensions"]
+        self.concats = json_obj["concatenations"]
+        self.singles = json_obj["singles"]
 
         # Add new qTypes from template
-        if "qTypes" in json_obj:
-            qtype_data.update(json_obj["qTypes"])
+        if "qtypes" in json_obj:
+            qtype_data.update(json_obj["qtypes"])
 
         # load image preprocessors
-        self.preprocessors = [extensions[name](opts, path) for name, opts in json_obj.get("Preprocessors", {}).items()]
+        self.preprocessors = [extensions[name](opts, path) 
+                              for name, opts in json_obj.get(
+                                    "preprocessors", {}).items()]
 
         # Add Options
-        self.options = json_obj.get("Options", {})
+        self.options = json_obj.get("options", {})
 
         # Add QBlocks
-        for name, block in json_obj["QBlocks"].items():
+        for name, block in json_obj["qblocks"].items():
             self.addQBlocks(name, block)
 
 
@@ -111,10 +118,10 @@ class Template():
     def addQBlocks(self, key, rect):
         assert(self.bubbleDims != [-1, -1])
         # For qType defined in QBlocks
-        if 'qType' in rect:
-            rect.update(**qtype_data[rect['qType']])
+        if 'qtype' in rect:
+            rect.update(**qtype_data[rect['qtype']])
         else:
-            rect['qType'] = {'vals': rect['vals'], 'orient': rect['orient']}
+            rect['qtype'] = {'vals': rect['vals'], 'orient': rect['orient']}
         # keyword arg unpacking followed by named args
         self.QBlocks += genGrid(self.bubbleDims, key, **rect)
         # self.QBlocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
@@ -194,13 +201,13 @@ def genQBlock(
 
 
 def genGrid(
-        bubbleDims,
+        bubbledims,
         key,
-        qType,
+        qtype,
         orig,
-        bigGaps,
+        biggaps,
         gaps,
-        qNos,
+        qnos,
         vals,
         orient='V',
         col_orient='V'):
@@ -255,7 +262,7 @@ TODO: Update this part, add more examples like-
         ]
 
     """
-    gridData = np.array(qNos)
+    gridData = np.array(qnos)
     # print(gridData.shape, gridData)
     if(0 and len(gridData.shape) != 3 or gridData.size == 0):  # product of shape is zero
         print(
@@ -293,26 +300,26 @@ TODO: Update this part, add more examples like-
             # Update numDims and origGaps
             numDims[0] = len(qTuple)
             # bigGaps is indep of orientation
-            origGap[0] = bigGaps[0] + (numDims[V] - 1) * gaps[H]
-            origGap[1] = bigGaps[1] + (numDims[H] - 1) * gaps[V]
+            origGap[0] = biggaps[0] + (numDims[V] - 1) * gaps[H]
+            origGap[1] = biggaps[1] + (numDims[H] - 1) * gaps[V]
             # each qTuple will have qNos
             QBlockDims = [
                 # width x height in pixels
-                gaps[0] * (numDims[V] - 1) + bubbleDims[H],
-                gaps[1] * (numDims[H] - 1) + bubbleDims[V]
+                gaps[0] * (numDims[V] - 1) + bubbledims[H],
+                gaps[1] * (numDims[H] - 1) + bubbledims[V]
             ]
             # WATCH FOR BLUNDER(use .copy()) - qStart was getting passed by
             # reference! (others args read-only)
             QBlocks.append(
                 genQBlock(
-                    bubbleDims,
+                    bubbledims,
                     QBlockDims,
                     key,
                     qStart.copy(),
                     qTuple,
                     gaps,
                     vals,
-                    qType,
+                    qtype,
                     orient,
                     col_orient))
             # Goes vertically down first

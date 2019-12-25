@@ -12,9 +12,9 @@ class FeatureBasedAlignment(ImagePreprocessor):
         # process reference image
         self.ref_path = os.path.join(os.path.dirname(path), options['reference'])
         self.ref_img = cv2.imread(self.ref_path, cv2.IMREAD_GRAYSCALE)
-        self.MAX_FEATURES = options.get('MaxFeatures', MAX_FEATURES)
-        self.GOOD_MATCH_PERCENT = options.get('GoodMatchPercent', GOOD_MATCH_PERCENT)
-        self.TRANSFORM_2D = options.get('2D', False)
+        self.MAX_FEATURES = options.get('maxfeatures', MAX_FEATURES)
+        self.GOOD_MATCH_PERCENT = options.get('goodmatchpercent', GOOD_MATCH_PERCENT)
+        self.TRANSFORM_2D = options.get('2d', False)
         # Extract keypoints and description of source image
         self.orb = cv2.ORB_create(self.MAX_FEATURES)
         self.to_keypoints, self.to_descriptors = self.orb.detectAndCompute(self.ref_img, None)

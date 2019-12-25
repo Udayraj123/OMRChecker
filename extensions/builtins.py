@@ -18,9 +18,9 @@ class Levels(ImagePreprocessor):
 
         self.gamma = np.array(
             [output_level(i, 
-                          int(255 * options.get("Low", 0)), 
-                          int(255 * options.get("High", 1)),
-                          options.get("Gamma", 1.0)) 
+                          int(255 * options.get("low", 0)), 
+                          int(255 * options.get("high", 1)),
+                          options.get("gamma", 1.0)) 
              for i in np.arange(0, 256)]).astype("uint8")
 
     def apply_filter(self, image, filename):
@@ -28,10 +28,10 @@ class Levels(ImagePreprocessor):
 
 
 class GaussianBlur(ImagePreprocessor):
-    def __init__(self, options, args):
-        self.options = options
-
     def apply_filter(self, image, filename):
         return cv2.GaussianBlur(image, 
-                                tuple(self.options.get("kSize", (3, 3))),
-                                self.options.get("sigmaX", 0))
+                                tuple(self.options.get("ksize", (3, 3))),
+                                self.options.get("sigmax", 0))
+
+
+
