@@ -2,16 +2,18 @@ import os
 import cv2
 import numpy as np
 from extension import ImagePreprocessor
+import utils
+import config
 
 # defaults
 MAX_FEATURES = 500
 GOOD_MATCH_PERCENT = 0.15
 
 class FeatureBasedAlignment(ImagePreprocessor):
-    def __init__(self, options, path):
+    def __init__(self, options, path):        
         # process reference image
-        self.ref_path = os.path.join(os.path.dirname(path), options['reference'])
-        self.ref_img = cv2.imread(self.ref_path, cv2.IMREAD_GRAYSCALE)
+        self.ref_path = path.joinpath(options['reference'])
+        self.ref_img = cv2.imread(str(self.ref_path), cv2.IMREAD_GRAYSCALE)
         self.MAX_FEATURES = options.get('maxfeatures', MAX_FEATURES)
         self.GOOD_MATCH_PERCENT = options.get('goodmatchpercent', GOOD_MATCH_PERCENT)
         self.TRANSFORM_2D = options.get('2d', False)
@@ -21,7 +23,7 @@ class FeatureBasedAlignment(ImagePreprocessor):
 
 
     def __str__(self):
-        return self.ref_path
+        return self.ref_path.name
 
     def exclude_files(self):
         return [self.ref_path]
@@ -51,8 +53,9 @@ class FeatureBasedAlignment(ImagePreprocessor):
         matches = matches[:numGoodMatches]
         
         # Draw top matches
-        #imMatches = cv2.drawMatches(im1, from_keypoints, im2, self.to_keypoints, matches, None)
-        #show('Aligning', imMatches, resize=True)    
+        if config.showimglvl > 2:
+            imMatches = cv2.drawMatches(img, from_keypoints, self.ref_img, self.to_keypoints, matches, None)
+            utils.show('Aligning', imMatches, resize=True)    
         
         # Extract location of good matches
         points1 = np.zeros((len(matches), 2), dtype=np.float32)

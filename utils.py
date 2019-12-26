@@ -873,10 +873,11 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
         return OMRresponse, final_marked, multimarked, multiroll
 
     except Exception as e:
-        exc_type, exc_obj, exc_tb = sys.exc_info()
-        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        print("Error from readResponse: ", e)
-        print(exc_type, fname, exc_tb.tb_lineno)
+        raise e
+    #     exc_type, exc_obj, exc_tb = sys.exc_info()
+    #     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+    #     print("Error from readResponse: ", e)
+    #     print(exc_type, fname, exc_tb.tb_lineno)
 
 
 def saveOrShowStacks(key, name, savedir=None, pause=1):

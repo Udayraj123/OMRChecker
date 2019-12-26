@@ -86,10 +86,10 @@ class LowercaseOrderedDict(OrderedDict):
         return super().__setitem__(key, value)
 
 class Template():
-    def __init__(self, path, extensions):
-        with open(path, "r") as f:
-            json_obj = json.load(f, object_pairs_hook=LowercaseOrderedDict)
-        self.path = path
+    def __init__(self, template_file, extensions):
+        with open(template_file, "r") as f:
+            json_obj = json.load(f, object_pairs_hook=LowercaseOrderedDict)        
+        self.path = template_file.name
         self.QBlocks = []
         # throw exception on key not exist
         self.dims = json_obj["dimensions"]
@@ -102,7 +102,7 @@ class Template():
             qtype_data.update(json_obj["qtypes"])
 
         # load image preprocessors
-        self.preprocessors = [extensions[name](opts, path) 
+        self.preprocessors = [extensions[name](opts, template_file.parent) 
                               for name, opts in json_obj.get(
                                     "preprocessors", {}).items()]
 
@@ -125,6 +125,9 @@ class Template():
         # keyword arg unpacking followed by named args
         self.QBlocks += genGrid(self.bubbleDims, key, **rect)
         # self.QBlocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
+
+    def __str__(self):
+        return self.path
 
 
 def genQBlock(

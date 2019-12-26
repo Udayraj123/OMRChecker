@@ -35,27 +35,40 @@ from pathlib import Path
 # init()
 # from colorama import Fore, Back, Style
 
-def process_dir(curr_dir, template):
+def process_dir(root_dir, curr_dir, template):
 
     # Look for template in current dir
     template_file = curr_dir.joinpath(config.TEMPLATE_FILE)
     if os.path.exists(template_file):
         template = Template(template_file, ext_mgr.extensions)
 
+    # Look for subdirectories for processing
+    subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
+
+    if not template: 
+        # No template in current directory        
+        print(f'Note: No template file when processing {curr_dir}.')
+        if not subdirs:                        
+            print(f'  Place {config.TEMPLATE_FILE} in the directory or specify a template using -t.')
+        else:    
+            # recursively process subfolders
+            for d in subdirs:
+                process_dir(root_dir, d, template)
+        return
+
+    paths = config.Paths(Path(args['output_dir'], curr_dir.relative_to(root_dir)))
+
     # look for images in current dir to process
-    paths = config.Paths(Path(args['output_dir'], curr_dir.name))
-    exts = ('*.png', '*.jpg')
-    
+    exts = ('*.png', '*.jpg')       
     omr_files = sorted(
         [f for ext in exts for f in curr_dir.glob(ext)])
-
+    
     # Exclude images
     excluded_files = []
     for pp in template.preprocessors:
         excluded_files.extend(Path(p) for p in pp.exclude_files())
 
     omr_files = [f for f in omr_files if f not in excluded_files]
-    subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
     
     if omr_files:
         args_local = args.copy()
@@ -66,29 +79,24 @@ def process_dir(curr_dir, template):
         print("\tTotal images       : %d" % (len(omr_files)))
         print("\tCropping Enabled   : " + str(not args_local["noCropping"]))
         print("\tAuto Alignment     : " + str(args_local["autoAlign"]))
-        print("\tUsing Template     : " + str(template.path) if(template) else "N/A")
+        print("\tUsing Template     : " + str(template))
         # Print options
         for pp in template.preprocessors:
             print(f'\tUsing {pp.__class__.__name__:13}: {pp}')
 
         print('')
 
-        if not template:
-            print(f'Error: No template file when processing {curr_dir}.')
-            print(f'  Place {config.TEMPLATE_FILE} in the directory or specify a template using -t.')
-            return
-
         utils.setup_dirs(paths)
         output_set = setup_output(paths, template)
         process_files(omr_files, template, args_local, output_set)
 
-    elif(len(subdirs) == 0):
+    elif len(subdirs) == 0:
         # the directory should have images or be non-leaf
         print(f'Note: No valid images or subfolders found in {curr_dir}')
 
     # recursively process subfolders
     for d in subdirs:
-        process_dir(d, template)
+        process_dir(root_dir, d, template)
 
 
 def checkAndMove(error_code, filepath, filepath2):
@@ -313,13 +321,18 @@ def process_files(omr_files, template, args, out):
     for filepath in omr_files:
         filesCounter += 1
 
-        inputFolderName = filepath.parent
         filename = filepath.name
         args['current_file'] = filepath
 
         inOMR = cv2.imread(str(filepath), cv2.IMREAD_GRAYSCALE)
         print('')
         print(f'({filesCounter}) Opening image: \t{filepath}\tResolution: {inOMR.shape}')
+
+        # TODO: Get rid of saveImgList
+        for i in range(config.saveimglvl):
+            utils.resetSaveImg(i+1)
+
+        utils.appendSaveImg(1, inOMR)
 
         # run preprocessors
         for pp in template.preprocessors:
@@ -345,7 +358,7 @@ def process_files(omr_files, template, args, out):
             continue
 
         # resize to conform to template
-        imOMR = resize_util(inOMR, config.uniform_width, config.uniform_height)
+        imOMR = utils.resize_util(inOMR, config.uniform_width, config.uniform_height)
 
         if(args["setLayout"]):
             templateLayout = utils.drawTemplateLayout(
@@ -354,7 +367,7 @@ def process_files(omr_files, template, args, out):
             continue
 
         # uniquify
-        file_id = f'{inputFolderName}_{filename}'        
+        file_id = str(filename)
         savedir = out.paths.saveMarkedDir
         OMRresponseDict, final_marked, MultiMarked, multiroll = \
             utils.readResponse(template, inOMR, name=file_id,
@@ -514,6 +527,7 @@ argparser.add_argument(
     dest='noCropping',
     action='store_true',
     help="Disables page contour detection - used when page boundary is not visible e.g. document scanner.")
+
 argparser.add_argument(
     "-a",
     "--autoAlign",
@@ -521,6 +535,7 @@ argparser.add_argument(
     dest='autoAlign',
     action='store_true',
     help="(experimental) Enables automatic template alignment - use if the scans show slight misalignments.")
+
 argparser.add_argument(
     "-l",
     "--setLayout",
@@ -528,15 +543,29 @@ argparser.add_argument(
     dest='setLayout',
     action='store_true',
     help="Set up OMR template layout - modify your json file and run again until the template is set.")
-argparser.add_argument("-i", "--inputDir", required=False, action='append',
-                       dest='input_dir', help="Specify an input directory.")
-argparser.add_argument("-o", "--outputDir", default='outputs', required=False,
-                       dest='output_dir', help="Specify an output directory.")
+
+argparser.add_argument(
+    "-i", 
+    "--inputDir", 
+    required=False, 
+    action='append',
+    dest='input_dir', 
+    help="Specify an input directory.")
+
+argparser.add_argument(
+    "-o", 
+    "--outputDir", 
+    default='outputs', 
+    required=False,
+    dest='output_dir', 
+    help="Specify an output directory.")
+
 argparser.add_argument(
     "-t",
     "--template",
     required=False,
     dest='template',
+    default=None,
     help="Specify a default template if no template file in input directories.")
 
 
@@ -551,10 +580,10 @@ if(len(unknown) > 0):
 ext_mgr = ExtensionManager(config.EXTENSION_PATH)
 
 if args['template']:
-    args['template'] = Template(args['template'], ext_mgr.extensions)
+    args['template'] = Template(Path(args['template']), ext_mgr.extensions)
 
 if args['input_dir'] is None:
     args['input_dir'] = ['inputs']
 
 for root in args['input_dir']:
-    process_dir(Path(root), args['template'])
+    process_dir(Path(root), Path(root), args['template'])
