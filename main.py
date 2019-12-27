@@ -17,6 +17,7 @@ import imutils
 
 import config
 import utils
+from extension import ExtensionManager
 from template import Template
 
 # Local globals
@@ -26,6 +27,7 @@ filesNotMoved=0
 from glob import glob
 from csv import QUOTE_NONNUMERIC
 from time import localtime, strftime, time
+from pathlib import Path
 
 
 # TODO(beginner task) :-
@@ -33,26 +35,41 @@ from time import localtime, strftime, time
 # init()
 # from colorama import Fore, Back, Style
 
-def process_dir(root_dir, subdir, template):
-    curr_dir = os.path.join(root_dir, subdir)
+def process_dir(root_dir, curr_dir, template):
 
     # Look for template in current dir
-    template_file = os.path.join(curr_dir, config.TEMPLATE_FILE)
+    template_file = curr_dir.joinpath(config.TEMPLATE_FILE)
     if os.path.exists(template_file):
-        template = Template(template_file)
+        template = Template(template_file, ext_mgr.extensions)
+
+    # Look for subdirectories for processing
+    subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
+
+    if not template: 
+        # No template in current directory        
+        print(f'Note: No template file when processing {curr_dir}.')
+        if not subdirs:                        
+            print(f'  Place {config.TEMPLATE_FILE} in the directory or specify a template using -t.')
+        else:    
+            # recursively process subfolders
+            for d in subdirs:
+                process_dir(root_dir, d, template)
+        return
+
+    paths = config.Paths(Path(args['output_dir'], curr_dir.relative_to(root_dir)))
 
     # look for images in current dir to process
-    paths = config.Paths(os.path.join(args['output_dir'], subdir))   
-    exts = ('*.png', '*.jpg')
+    exts = ('*.png', '*.jpg')       
     omr_files = sorted(
-        [f for ext in exts for f in glob(os.path.join(curr_dir, ext))])
+        [f for ext in exts for f in curr_dir.glob(ext)])
+    
+    # Exclude images
+    excluded_files = []
+    for pp in template.preprocessors:
+        excluded_files.extend(Path(p) for p in pp.exclude_files())
 
-    # Exclude marker image if exists
-    if(template and template.marker_path):
-        omr_files = [f for f in omr_files if f != template.marker_path]
-
-    subfolders = sorted([file for file in os.listdir(
-        curr_dir) if os.path.isdir(os.path.join(curr_dir, file))])
+    omr_files = [f for f in omr_files if f not in excluded_files]
+    
     if omr_files:
         args_local = args.copy()
         if("OverrideFlags" in template.options):
@@ -62,26 +79,24 @@ def process_dir(root_dir, subdir, template):
         print("\tTotal images       : %d" % (len(omr_files)))
         print("\tCropping Enabled   : " + str(not args_local["noCropping"]))
         print("\tAuto Alignment     : " + str(args_local["autoAlign"]))
-        print("\tUsing Template     : " + str(template.path) if(template) else "N/A")
-        print("\tUsing Marker       : " + str(template.marker_path)
-              if(template.marker is not None) else "N/A")
-        print('')
+        print("\tUsing Template     : " + str(template))
+        # Print options
+        for pp in template.preprocessors:
+            print(f'\tUsing {pp.__class__.__name__:13}: {pp}')
 
-        if not template:
-            print(f'Error: No template file when processing {curr_dir}.')
-            print(f'  Place {config.TEMPLATE_FILE} in the directory or specify a template using -t.')
-            return
+        print('')
 
         utils.setup_dirs(paths)
         output_set = setup_output(paths, template)
         process_files(omr_files, template, args_local, output_set)
-    elif(len(subfolders) == 0):
+
+    elif len(subdirs) == 0:
         # the directory should have images or be non-leaf
         print(f'Note: No valid images or subfolders found in {curr_dir}')
 
     # recursively process subfolders
-    for folder in subfolders:
-        process_dir(root_dir, os.path.join(subdir, folder), template)
+    for d in subdirs:
+        process_dir(root_dir, d, template)
 
 
 def checkAndMove(error_code, filepath, filepath2):
@@ -257,11 +272,15 @@ def setup_output(paths, template):
     for fileKey, fileName in ns.filesMap.items():
         if(not os.path.exists(fileName)):
             print("Note: Created new file: %s" % (fileName))
-            # still append mode req [THINK!]
-            ns.filesObj[fileKey] = open(fileName, 'a')
+            # moved handling of files to pandas csv writer
+            ns.filesObj[fileKey] = fileName
             # Create Header Columns
-            pd.DataFrame([ns.sheetCols], dtype=str).to_csv(
-                ns.filesObj[fileKey], quoting=QUOTE_NONNUMERIC, header=False, index=False)
+            pd.DataFrame([ns.sheetCols], dtype=str) \
+              .to_csv(ns.filesObj[fileKey], 
+                      mode='a', 
+                      quoting=QUOTE_NONNUMERIC, 
+                      header=False, 
+                      index=False)
         else:
             print('Present : appending to %s' % (fileName))
             ns.filesObj[fileKey] = open(fileName, 'a')
@@ -301,59 +320,57 @@ def process_files(omr_files, template, args, out):
 
     for filepath in omr_files:
         filesCounter += 1
-        # For windows filesystem support: all '\' will be replaced by '/'
-        filepath = filepath.replace(os.sep, '/')
 
-        # Prefixing a 'r' to use raw string (escape character '\' is taken
-        # literally)
-        finder = re.search(r'.*/(.*)/(.*)', filepath, re.IGNORECASE)
-        if(finder):
-            inputFolderName, filename = finder.groups()
-        else:
-            print("Error: Filepath not matching to Regex: " + filepath)
-            continue
-        # set global var for reading
+        filename = filepath.name
+        args['current_file'] = filepath
 
-        inOMR = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
-        print(
-            '\n[%d] Processing image: \t' %
-            (filesCounter),
-            filepath,
-            "\tResolution: ",
-            inOMR.shape)
+        inOMR = cv2.imread(str(filepath), cv2.IMREAD_GRAYSCALE)
+        print('')
+        print(f'({filesCounter}) Opening image: \t{filepath}\tResolution: {inOMR.shape}')
 
-        OMRCrop = utils.getROI(inOMR, filename, noCropping=args["noCropping"])
+        # TODO: Get rid of saveImgList
+        for i in range(config.saveimglvl):
+            utils.resetSaveImg(i+1)
 
-        if(OMRCrop is None):
+        utils.appendSaveImg(1, inOMR)
+
+        # run preprocessors
+        for pp in template.preprocessors:
+            inOMR = pp.apply_filter(inOMR, args)           
+        
+        # Disable getROI for now
+        #OMRCrop = utils.getROI(inOMR, filename, noCropping=args["noCropping"])
+        
+        if(inOMR is None):
             # Error OMR - could not crop
             newfilepath = out.paths.errorsDir + filename
             out.OUTPUT_SET.append([filename] + out.emptyResp)
             if(checkAndMove(config.NO_MARKER_ERR, filepath, newfilepath)):
                 err_line = [filename, filepath,
                             newfilepath, "NA"] + out.emptyResp
-                pd.DataFrame(
-                    err_line,
-                    dtype=str).T.to_csv(
-                    out.filesObj["Errors"],
-                    quoting=QUOTE_NONNUMERIC,
-                    header=False,
-                    index=False)
+                pd.DataFrame(err_line, dtype=str) \
+                  .T                              \
+                  .to_csv(out.filesObj["Errors"],
+                          mode='a',
+                          quoting=QUOTE_NONNUMERIC,
+                          header=False,
+                          index=False)
             continue
 
-        if template.marker is not None:
-            OMRCrop = utils.handle_markers(OMRCrop, template.marker, filename)
+        # resize to conform to template
+        imOMR = utils.resize_util(inOMR, config.uniform_width, config.uniform_height)
 
         if(args["setLayout"]):
             templateLayout = utils.drawTemplateLayout(
-                OMRCrop, template, shifted=False, border=2)
+                inOMR, template, shifted=False, border=2)
             utils.show("Template Layout", templateLayout, 1, 1)
             continue
 
         # uniquify
-        file_id = inputFolderName + '_' + filename
+        file_id = str(filename)
         savedir = out.paths.saveMarkedDir
         OMRresponseDict, final_marked, MultiMarked, multiroll = \
-            utils.readResponse(template, OMRCrop, name=file_id,
+            utils.readResponse(template, inOMR, name=file_id,
                          savedir=savedir, autoAlign=args["autoAlign"])
 
         # concatenate roll nos, set unmarked responses, etc
@@ -378,13 +395,13 @@ def process_files(omr_files, template, args, out):
             # Enter into Results sheet-
             results_line = [filename, filepath, newfilepath, score] + respArray
             # Write/Append to results_line file(opened in append mode)
-            pd.DataFrame(
-                results_line,
-                dtype=str).T.to_csv(
-                out.filesObj["Results"],
-                quoting=QUOTE_NONNUMERIC,
-                header=False,
-                index=False)
+            pd.DataFrame(results_line, dtype=str) \
+              .T                                  \
+              .to_csv(out.filesObj["Results"],
+                      mode='a',
+                      quoting=QUOTE_NONNUMERIC,
+                      header=False,
+                      index=False)
             print("[%d] Graded with score: %.2f" %
                   (filesCounter, score), '\t file_id: ', file_id)
             # print(filesCounter,file_id,resp['Roll'],'score : ',score)
@@ -395,21 +412,21 @@ def process_files(omr_files, template, args, out):
             newfilepath = out.paths.multiMarkedDir + filename
             if(checkAndMove(config.MULTI_BUBBLE_WARN, filepath, newfilepath)):
                 mm_line = [filename, filepath, newfilepath, "NA"] + respArray
-                pd.DataFrame(
-                    mm_line,
-                    dtype=str).T.to_csv(
-                    out.filesObj["MultiMarked"],
-                    quoting=QUOTE_NONNUMERIC,
-                    header=False,
-                    index=False)
+                pd.DataFrame(mm_line, dtype=str) \
+                  .T                             \
+                  .to_csv(out.filesObj["MultiMarked"],
+                          mode='a',
+                          quoting=QUOTE_NONNUMERIC,
+                          header=False,
+                          index=False)
             # else:
             #     TODO:  Add appropriate record handling here
             #     pass
 
         # flush after every 20 files for a live view
-        if(filesCounter % 20 == 0 or filesCounter == len(omr_files)):
-            for fileKey in out.filesMap.keys():
-                out.filesObj[fileKey].flush()
+        # if(filesCounter % 20 == 0 or filesCounter == len(omr_files)):
+        #     for fileKey in out.filesMap.keys():
+        #         out.filesObj[fileKey].flush()
 
     timeChecking = round(time() - start_time, 2) if filesCounter else 1
     print('')
@@ -443,7 +460,7 @@ def process_files(omr_files, template, args, out):
 
     # Use this data to train as +ve feedback
     if config.showimglvl >= 0 and filesCounter > 10:
-        for x in [utils.thresholdCircles]:#,badThresholds,veryBadPoints, mws, mbs]:
+        for x in [thresholdCircles]:#,badThresholds,veryBadPoints, mws, mbs]:
             if(x != []):
                 x = pd.DataFrame(x)
                 print(x.describe())
@@ -510,6 +527,7 @@ argparser.add_argument(
     dest='noCropping',
     action='store_true',
     help="Disables page contour detection - used when page boundary is not visible e.g. document scanner.")
+
 argparser.add_argument(
     "-a",
     "--autoAlign",
@@ -517,6 +535,7 @@ argparser.add_argument(
     dest='autoAlign',
     action='store_true',
     help="(experimental) Enables automatic template alignment - use if the scans show slight misalignments.")
+
 argparser.add_argument(
     "-l",
     "--setLayout",
@@ -524,15 +543,29 @@ argparser.add_argument(
     dest='setLayout',
     action='store_true',
     help="Set up OMR template layout - modify your json file and run again until the template is set.")
-argparser.add_argument("-i", "--inputDir", required=False, action='append',
-                       dest='input_dir', help="Specify an input directory.")
-argparser.add_argument("-o", "--outputDir", default='outputs', required=False,
-                       dest='output_dir', help="Specify an output directory.")
+
+argparser.add_argument(
+    "-i", 
+    "--inputDir", 
+    required=False, 
+    action='append',
+    dest='input_dir', 
+    help="Specify an input directory.")
+
+argparser.add_argument(
+    "-o", 
+    "--outputDir", 
+    default='outputs', 
+    required=False,
+    dest='output_dir', 
+    help="Specify an output directory.")
+
 argparser.add_argument(
     "-t",
     "--template",
     required=False,
     dest='template',
+    default=None,
     help="Specify a default template if no template file in input directories.")
 
 
@@ -543,11 +576,14 @@ if(len(unknown) > 0):
     argparser.print_help()
     exit(11)
 
+# Load extensions
+ext_mgr = ExtensionManager(config.EXTENSION_PATH)
+
 if args['template']:
-    args['template'] = Template(args['template'])
+    args['template'] = Template(Path(args['template']), ext_mgr.extensions)
 
 if args['input_dir'] is None:
     args['input_dir'] = ['inputs']
 
 for root in args['input_dir']:
-    process_dir(root, '', args['template'])
+    process_dir(Path(root), Path(root), args['template'])
