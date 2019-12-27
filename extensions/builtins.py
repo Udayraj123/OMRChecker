@@ -8,13 +8,13 @@ class Levels(ImagePreprocessor):
     def __init__(self, options, args):
 
         def output_level(input, low, high, gamma):
-            invGamma = 1.0 / gamma
             if input <= low:
                 return 0
             elif input >= high:
                 return 255
             else:
-                return (((input-low)/(high-low)) ** invGamma) * (high-low)
+                invGamma = 1.0 / gamma
+                return (((input-low)/(high-low)) ** invGamma) * 255
 
         self.gamma = np.array(
             [output_level(i, 
