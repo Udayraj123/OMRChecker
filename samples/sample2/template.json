@@ -7,6 +7,14 @@
     25,
     25
   ],
+  "Preprocessors": {
+    "CropPage": {
+      "MorphKernel": [
+        10,
+        10
+      ]
+    }
+  },
   "Concatenations": {},
   "Singles": [
     "q1",

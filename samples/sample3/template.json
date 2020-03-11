@@ -7,13 +7,10 @@
     40,
     40
   ],
-  "Options": {
-    "Marker": {
+  "Preprocessors": {
+    "CropOnMarkers": {
       "RelativePath": "omr_marker.jpg",
       "SheetToMarkerWidthRatio": 17
-    },
-    "OverrideFlags":{
-      "noCropping": true
     }
   },
   "Concatenations": {

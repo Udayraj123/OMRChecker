@@ -6,7 +6,7 @@ from extension import ImagePreprocessor
 
 MIN_PAGE_AREA = 80000
 
-# TODO: (remove noCropping bool) Automate the case of close up scan(incorrect page)-
+# TODO: Automate the case of close up scan(incorrect page) when page boundary is not found
 # ^Note: App rejects croppeds along with others
 def normalize(image):
     return cv2.normalize(image, 0, 255, norm_type=cv2.NORM_MINMAX)
@@ -114,9 +114,6 @@ class CropPage(ImagePreprocessor):
                 Match logo - can work, but 'lon' too big and may unnecessarily rotate? - but you know the scale
                 Check roll field morphed
         """
-
-        # TODO: need to detect if image is too blurry already! (M1: check
-        # noCropping dimensions b4 resizing coz it won't be blurry otherwise _/)
         
         # TODO: Take this out into separate preprocessor
         image = normalize(cv2.GaussianBlur(image, (3, 3), 0))
@@ -124,7 +121,7 @@ class CropPage(ImagePreprocessor):
         # Resize should be done with another preprocessor is needed
         sheet = self.findPage(image)
         if sheet == []:
-            print("\tError: Paper boundary not found! Should you pass --noCropping flag?")
+            print("\tError: Paper boundary not found! Have you accidentally included CropPage preprocessor?")
             return None
         else:
             print("Found page corners: \t", sheet.tolist())

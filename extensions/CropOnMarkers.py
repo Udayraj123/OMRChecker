@@ -81,7 +81,7 @@ class CropOnMarkers(ImagePreprocessor):
                 best_scale, allMaxT = s, maxT
 
         if(allMaxT < self.minMatchingThreshold):
-            print("\tWarning: Template matching too low! Should you pass --noCropping flag?")
+            print("\tWarning: Template matching too low! Consider rechecking preprocessors applied before this.")
             if(config.showimglvl >= 1):
                 show("res", res, 1, 0)
 
@@ -130,16 +130,17 @@ class CropOnMarkers(ImagePreprocessor):
                     args['current_file'].name,
                     "\nError: No circle found in Quad",
                     k + 1,
-                    "\n\tmaxMatchingVariation",
+                    "\n\tminMatchingThreshold",
+                    self.minMatchingThreshold,
+                    "\tmaxMatchingVariation",
                     self.maxMatchingVariation,
-                    "maxT",
+                    "\tmaxT",
                     maxT,
-                    "allMaxT",
-                    allMaxT,
-                    "Should you pass --noCropping flag?")
+                    "\tallMaxT",
+                    allMaxT)
                 if(config.showimglvl >= 1):
                     utils.show("no_pts_" + args['current_file'].name, image_eroded_sub, 0)
-                    utils.show("res_Q" + str(k + 1), res, 1)
+                    utils.show("res_Q" + str(k + 1) + " ("+str(maxT)+")", res, 1)
                 return None
 
             pt = np.argwhere(res == maxT)[0]

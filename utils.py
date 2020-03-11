@@ -530,10 +530,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
     try:
         img = image.copy()
         origDim = img.shape[:2]
-        # print("noCropping dim", origDim)
         img = resize_util(img, template.dims[0], template.dims[1])
-        # print("Resized dim", img.shape[:2])
-
         if(img.max() > img.min()):
             img = normalize_util(img)
         # Processing copies
@@ -869,10 +866,6 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             if(multiroll):
                 savedir = savedir + '_MULTI_/'
             saveImg(savedir + name, final_marked)
-
-        if(config.showimglvl >= 1):
-            show("Final Marked Bubbles : " + name,
-                 resize_util_h(final_marked, int(config.display_height * 1.3)), 1, 1)
 
         appendSaveImg(2, final_marked)
 

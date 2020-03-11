@@ -20,7 +20,7 @@ import utils
 from extension import ExtensionManager
 from template import Template
 
-# Local globals
+# TODO: Move these globals into a class
 filesMoved=0
 filesNotMoved=0
 
@@ -61,9 +61,8 @@ def process_dir(root_dir, curr_dir, template):
     omr_files = [f for f in omr_files if f not in excluded_files]
     
     if omr_files:
-        if not template and not subdirs:
-            print(
-                f'Error: Found images, but no template in the directory tree of "{curr_dir}". \nPlace {config.TEMPLATE_FILE} in the directory or specify a template using -t.')
+        if not template:
+            print(f'Error: Found images, but no template in the directory tree of "{curr_dir}". \nPlace {config.TEMPLATE_FILE} in the directory or specify a template using -t.')
             return
         args_local = args.copy()
         if("OverrideFlags" in template.options):
@@ -71,12 +70,12 @@ def process_dir(root_dir, curr_dir, template):
         print('\n------------------------------------------------------------------')
         print(f'Processing directory "{curr_dir}" with settings- ')
         print("\tTotal images       : %d" % (len(omr_files)))
-        print("\tCropping Enabled   : " + str(not args_local["noCropping"]))
+        print("\tCropping Enabled   : " + str("croponmarkers" in template.preprocessors))
         print("\tAuto Alignment     : " + str(args_local["autoAlign"]))
         print("\tUsing Template     : " + str(template))
         # Print options
         for pp in template.preprocessors:
-            print(f'\tUsing {pp.__class__.__name__:13}: {pp}')
+            print(f'\tUsing preprocessor "{pp.__class__.__name__:13}({pp})"')
 
         print('')
 
@@ -308,6 +307,7 @@ def preliminary_check():
 
 def process_files(omr_files, template, args, out):
     start_time = int(time())
+    global filesNotMoved
     filesCounter = 0
     filesNotMoved = 0
 
@@ -327,12 +327,13 @@ def process_files(omr_files, template, args, out):
 
         utils.appendSaveImg(1, inOMR)
 
+        # resize to conform to template
+        inOMR = utils.resize_util(
+            inOMR, config.uniform_width, config.uniform_height)
+
         # run preprocessors
         for pp in template.preprocessors:
             inOMR = pp.apply_filter(inOMR, args)           
-        
-        # Disable getROI for now
-        #OMRCrop = utils.getROI(inOMR, filename, noCropping=args["noCropping"])
         
         if(inOMR is None):
             # Error OMR - could not crop
@@ -350,9 +351,6 @@ def process_files(omr_files, template, args, out):
                           index=False)
             continue
 
-        # resize to conform to template
-        imOMR = utils.resize_util(inOMR, config.uniform_width, config.uniform_height)
-
         if(args["setLayout"]):
             templateLayout = utils.drawTemplateLayout(
                 inOMR, template, shifted=False, border=2)
@@ -368,7 +366,10 @@ def process_files(omr_files, template, args, out):
 
         # concatenate roll nos, set unmarked responses, etc
         resp = processOMR(template, OMRresponseDict)
-        print("\nRead Response: \t", resp)
+        print("\nRead Response: \t", resp,"\n")
+        if(config.showimglvl >= 1):
+            utils.show("Final Marked Bubbles : " + file_id,
+                 utils.resize_util_h(final_marked, int(config.display_height * 1.3)), 1, 1)
 
         #This evaluates and returns the score attribute
         # TODO: Automatic scoring
@@ -511,15 +512,14 @@ timeNowHrs = strftime("%I%p", localtime())
 # construct the argument parse and parse the arguments
 argparser = argparse.ArgumentParser()
 # https://docs.python.org/3/howto/argparse.html
-# store_true: if the option is specified, assign the value True to
-# args.verbose. Not specifying it implies False.
-argparser.add_argument(
-    "-c",
-    "--noCropping",
-    required=False,
-    dest='noCropping',
-    action='store_true',
-    help="Disables page contour detection - used when page boundary is not visible e.g. document scanner.")
+# store_true: if the option is specified, assign the value True to dest. Not specifying it implies False.
+# argparser.add_argument(
+#     "-c",
+#     "--noCropping",
+#     required=False,
+#     dest='noCropping',
+#     action='store_true',
+#     help="Disables page contour detection - used when page boundary is not visible e.g. document scanner.")
 
 argparser.add_argument(
     "-a",
