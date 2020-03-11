@@ -45,32 +45,26 @@ def process_dir(root_dir, curr_dir, template):
     # Look for subdirectories for processing
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
 
-    if not template: 
-        # No template in current directory        
-        print(f'Note: No template file when processing {curr_dir}.')
-        if not subdirs:                        
-            print(f'  Place {config.TEMPLATE_FILE} in the directory or specify a template using -t.')
-        else:    
-            # recursively process subfolders
-            for d in subdirs:
-                process_dir(root_dir, d, template)
-        return
-
     paths = config.Paths(Path(args['output_dir'], curr_dir.relative_to(root_dir)))
 
     # look for images in current dir to process
     exts = ('*.png', '*.jpg')       
     omr_files = sorted(
         [f for ext in exts for f in curr_dir.glob(ext)])
-    
-    # Exclude images
+
+    # Exclude images (take union over all preprocessors)
     excluded_files = []
-    for pp in template.preprocessors:
-        excluded_files.extend(Path(p) for p in pp.exclude_files())
+    if(template):
+        for pp in template.preprocessors:
+            excluded_files.extend(Path(p) for p in pp.exclude_files())
 
     omr_files = [f for f in omr_files if f not in excluded_files]
     
     if omr_files:
+        if not template and not subdirs:
+            print(
+                f'Error: Found images, but no template in the directory tree of "{curr_dir}". \nPlace {config.TEMPLATE_FILE} in the directory or specify a template using -t.')
+            return
         args_local = args.copy()
         if("OverrideFlags" in template.options):
             args_local.update(template.options["OverrideFlags"])
@@ -91,8 +85,8 @@ def process_dir(root_dir, curr_dir, template):
         process_files(omr_files, template, args_local, output_set)
 
     elif len(subdirs) == 0:
-        # the directory should have images or be non-leaf
-        print(f'Note: No valid images or subfolders found in {curr_dir}')
+        # Each subdirectory should have images or should be non-leaf
+        print(f'Note: No valid images or subfolders found in {curr_dir}. Empty directories not allowed.')
 
     # recursively process subfolders
     for d in subdirs:
@@ -166,84 +160,84 @@ def report(
 # check sectionwise only.
 
 
-def evaluate(resp, squad="H", explain=False):
-    # TODO: @contributors - Need help generalizing this function
-    global Answers, Sections
-    marks = 0
-    answers = Answers[squad]
-    if(explain):
-        print('Question\tStatus \t Streak\tSection \tMarks_Update\tMarked:\tAnswer:')
-    for scheme, section in Sections[squad].items():
-        sectionques = section['ques']
-        prevcorrect = None
-        allflag = 1
-        streak = 0
-        for q in sectionques:
-            qNo = 'q' + str(q)
-            ans = answers[qNo]
-            marked = resp.get(qNo, 'X')
-            firstQ = sectionques[0]
-            lastQ = sectionques[len(sectionques) - 1]
-            unmarked = marked == 'X' or marked == ''
-            bonus = 'BONUS' in ans
-            correct = bonus or (marked in ans)
-            inrange = 0
+# def evaluate(resp, squad="H", explain=False):
+#     # TODO: @contributors - Need help generalizing this function
+#     global Answers, Sections
+#     marks = 0
+#     answers = Answers[squad]
+#     if(explain):
+#         print('Question\tStatus \t Streak\tSection \tMarks_Update\tMarked:\tAnswer:')
+#     for scheme, section in Sections[squad].items():
+#         sectionques = section['ques']
+#         prevcorrect = None
+#         allflag = 1
+#         streak = 0
+#         for q in sectionques:
+#             qNo = 'q' + str(q)
+#             ans = answers[qNo]
+#             marked = resp.get(qNo, 'X')
+#             firstQ = sectionques[0]
+#             lastQ = sectionques[len(sectionques) - 1]
+#             unmarked = marked == 'X' or marked == ''
+#             bonus = 'BONUS' in ans
+#             correct = bonus or (marked in ans)
+#             inrange = 0
 
-            if(unmarked or int(q) == firstQ):
-                streak = 0
-            elif(prevcorrect == correct):
-                streak += 1
-            else:
-                streak = 0
+#             if(unmarked or int(q) == firstQ):
+#                 streak = 0
+#             elif(prevcorrect == correct):
+#                 streak += 1
+#             else:
+#                 streak = 0
 
-            if('allNone' in scheme):
-                # loop on all sectionques
-                allflag = allflag and correct
-                if(q == lastQ):
-                    # at the end check allflag
-                    prevcorrect = correct
-                    currmarks = section['marks'] if allflag else 0
-                else:
-                    currmarks = 0
+#             if('allNone' in scheme):
+#                 # loop on all sectionques
+#                 allflag = allflag and correct
+#                 if(q == lastQ):
+#                     # at the end check allflag
+#                     prevcorrect = correct
+#                     currmarks = section['marks'] if allflag else 0
+#                 else:
+#                     currmarks = 0
 
-            elif('Proxy' in scheme):
-                a = int(ans[0])
-                # proximity check
-                inrange = 1 if unmarked else (
-                    float(abs(int(marked) - a)) / float(a) <= 0.25)
-                currmarks = section['+marks'] if correct else (
-                    0 if inrange else -section['-marks'])
+#             elif('Proxy' in scheme):
+#                 a = int(ans[0])
+#                 # proximity check
+#                 inrange = 1 if unmarked else (
+#                     float(abs(int(marked) - a)) / float(a) <= 0.25)
+#                 currmarks = section['+marks'] if correct else (
+#                     0 if inrange else -section['-marks'])
 
-            elif('Fibo' in scheme or 'Power' in scheme or 'Boom' in scheme):
-                currmarks = section['+seq'][streak] if correct else (
-                    0 if unmarked else -section['-seq'][streak])
-            elif('TechnoFin' in scheme):
-                currmarks = 0
-            else:
-                print('Invalid Sections')
-            prevmarks = marks
-            marks += currmarks
+#             elif('Fibo' in scheme or 'Power' in scheme or 'Boom' in scheme):
+#                 currmarks = section['+seq'][streak] if correct else (
+#                     0 if unmarked else -section['-seq'][streak])
+#             elif('TechnoFin' in scheme):
+#                 currmarks = 0
+#             else:
+#                 print('Invalid Sections')
+#             prevmarks = marks
+#             marks += currmarks
 
-            if(explain):
-                if bonus:
-                    report('BonusQ', streak, scheme, qNo, marked,
-                           ans, prevmarks, currmarks, marks)
-                elif correct:
-                    report('Correct', streak, scheme, qNo, marked,
-                           ans, prevmarks, currmarks, marks)
-                elif unmarked:
-                    report('Unmarked', streak, scheme, qNo, marked,
-                           ans, prevmarks, currmarks, marks)
-                elif inrange:
-                    report('InProximity', streak, scheme, qNo,
-                           marked, ans, prevmarks, currmarks, marks)
-                else:
-                    report('Incorrect', streak, scheme, qNo,
-                           marked, ans, prevmarks, currmarks, marks)
+#             if(explain):
+#                 if bonus:
+#                     report('BonusQ', streak, scheme, qNo, marked,
+#                            ans, prevmarks, currmarks, marks)
+#                 elif correct:
+#                     report('Correct', streak, scheme, qNo, marked,
+#                            ans, prevmarks, currmarks, marks)
+#                 elif unmarked:
+#                     report('Unmarked', streak, scheme, qNo, marked,
+#                            ans, prevmarks, currmarks, marks)
+#                 elif inrange:
+#                     report('InProximity', streak, scheme, qNo,
+#                            marked, ans, prevmarks, currmarks, marks)
+#                 else:
+#                     report('Incorrect', streak, scheme, qNo,
+#                            marked, ans, prevmarks, currmarks, marks)
 
-            prevcorrect = correct
+#             prevcorrect = correct
 
-    return marks
+#     return marks
 
 
 def setup_output(paths, template):
@@ -290,7 +284,6 @@ def setup_output(paths, template):
 
 ''' TODO: Refactor into new process flow.
     Currently I have no idea what this does so I left it out'''
-
 
 def preliminary_check():
     pass
@@ -454,21 +447,21 @@ def process_files(omr_files, template, args, out):
     if(config.showimglvl <= 1):
         # TODO: colorama this
         print(
-            "\nTip: To see some awesome visuals, open globals.py and increase 'showimglvl'")
+            "\nTip: To see some awesome visuals, open config.py and increase 'showimglvl'")
 
     #evaluate_correctness(template, out)
 
     # Use this data to train as +ve feedback
-    if config.showimglvl >= 0 and filesCounter > 10:
-        for x in [thresholdCircles]:#,badThresholds,veryBadPoints, mws, mbs]:
-            if(x != []):
-                x = pd.DataFrame(x)
-                print(x.describe())
-                plt.plot(range(len(x)), x)
-                plt.title("Mystery Plot")
-                plt.show()
-            else:
-                print(x)
+    # if config.showimglvl >= 0 and filesCounter > 10:
+    #     for x in [thresholdCircles]:#,badThresholds,veryBadPoints, mws, mbs]:
+    #         if(x != []):
+    #             x = pd.DataFrame(x)
+    #             print(x.describe())
+    #             plt.plot(range(len(x)), x)
+    #             plt.title("Mystery Plot")
+    #             plt.show()
+    #         else:
+    #             print(x)
 
 
 # Evaluate accuracy based on OMRDataset file generated through moderation

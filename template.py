@@ -67,16 +67,9 @@ qtype_data = {
         'vals': ['A', 'B', 'C', 'D', 'E'],
         'orient': 'H'
     },
-    # Add custom question types here-
-    # ,
-    # 'QTYPE_MCQ_COL_5A':{'vals' : ['A']*5, 'orient':'V'},
-    # 'QTYPE_MCQ_COL_5B':{'vals' : ['B']*5, 'orient':'V'},
-    # 'QTYPE_MCQ_COL_5C':{'vals' : ['C']*5, 'orient':'V'},
-    # 'QTYPE_MCQ_COL_5D':{'vals' : ['D']*5, 'orient':'V'},
-    # 'QTYPE_MCQ_COL_4A':{'vals' : ['A']*4, 'orient':'V'},
-    # 'QTYPE_MCQ_COL_4B':{'vals' : ['B']*4, 'orient':'V'},
-    # 'QTYPE_MCQ_COL_4C':{'vals' : ['C']*4, 'orient':'V'},
-    # 'QTYPE_MCQ_COL_4D':{'vals' : ['D']*4, 'orient':'V'},
+    #
+    # You can create and append custom question types here-
+    # 
 }
 
 class LowercaseOrderedDict(OrderedDict):

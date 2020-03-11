@@ -14,9 +14,10 @@ display_width = int(640)
 windowWidth = 1280
 windowHeight = 720
 
+# These flags need to be independant of template.json files.
 saveMarked = 1
 saveCropped = 1
-showimglvl = 0
+showimglvl = 2
 saveimglvl = 2
 PRELIM_CHECKS = 0
 

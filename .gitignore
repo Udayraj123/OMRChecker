@@ -2,6 +2,7 @@
 **/CheckedOMRs
 **/ignore
 **/.DS_Store
+**/.vscode
 OMRChecker.wiki/
 # Everything in inputs/ and outputs/
 inputs/*

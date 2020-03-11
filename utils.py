@@ -213,6 +213,60 @@ def get_reflection(pt, pt1, pt2):
         map(lambda x: np.array(x, dtype=float), [pt, pt1, pt2]))
     return (pt1 + pt2) - pt
 
+# These are used inside multiple extensions
+def order_points(pts):
+    rect = np.zeros((4, 2), dtype="float32")
+
+    # the top-left point will have the smallest sum, whereas
+    # the bottom-right point will have the largest sum
+    s = pts.sum(axis=1)
+    rect[0] = pts[np.argmin(s)]
+    rect[2] = pts[np.argmax(s)]
+    diff = np.diff(pts, axis=1)
+    rect[1] = pts[np.argmin(diff)]
+    rect[3] = pts[np.argmax(diff)]
+
+    # return the ordered coordinates
+    return rect
+
+
+def four_point_transform(image, pts):
+    # obtain a consistent order of the points and unpack them
+    # individually
+    rect = order_points(pts)
+    (tl, tr, br, bl) = rect
+
+    # compute the width of the new image, which will be the
+    widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
+    widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
+
+    maxWidth = max(int(widthA), int(widthB))
+    # maxWidth = max(int(np.linalg.norm(br-bl)), int(np.linalg.norm(tr-tl)))
+
+    # compute the height of the new image, which will be the
+    heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
+    heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
+    maxHeight = max(int(heightA), int(heightB))
+    # maxHeight = max(int(np.linalg.norm(tr-br)), int(np.linalg.norm(tl-br)))
+
+    # now that we have the dimensions of the new image, construct
+    # the set of destination points to obtain a "birds eye view",
+    # (i.e. top-down view) of the image, again specifying points
+    # in the top-left, top-right, bottom-right, and bottom-left
+    # order
+    dst = np.array([
+        [0, 0],
+        [maxWidth - 1, 0],
+        [maxWidth - 1, maxHeight - 1],
+        [0, maxHeight - 1]], dtype="float32")
+
+    # compute the perspective transform matrix and then apply it
+    M = cv2.getPerspectiveTransform(rect, dst)
+    warped = cv2.warpPerspective(image, M, (maxWidth, maxHeight))
+
+    # return the warped image
+    return warped
+
 
 def printbuf(x):
     sys.stdout.write(str(x))
@@ -232,7 +286,6 @@ def get_fourth_pt(three_pts):
     fourth_pt = get_reflection(
         three_pts[refl], three_pts[(refl + 1) % 3], three_pts[(refl + 2) % 3])
     return fourth_pt
-
 
 def auto_canny(image, sigma=0.93):
     # compute the median of the single channel pixel intensities
@@ -257,46 +310,6 @@ def appendSaveImg(key, img):
         if(key not in saveImgList):
             saveImgList[key] = []
         saveImgList[key].append(img.copy())
-
-
-# Resizing the marker within scaleRange at rate of descent_per_step to
-# find the best match.
-def getBestMatch(image_eroded_sub, marker):
-
-    descent_per_step = (
-        config.marker_rescale_range[1] - config.marker_rescale_range[0]) // config.marker_rescale_steps
-    h, w = marker.shape[:2]
-    res, best_scale = None, None
-    allMaxT = 0
-
-    for r0 in np.arange(
-            config.marker_rescale_range[1], config.marker_rescale_range[0], -1 * descent_per_step):  # reverse order
-        s = float(r0 * 1 / 100)
-        if(s == 0.0):
-            continue
-        rescaled_marker = resize_util_h(
-            marker if config.ERODE_SUB_OFF else marker,
-            u_height=int(
-                h * s))
-        # res is the black image with white dots
-        res = cv2.matchTemplate(
-            image_eroded_sub,
-            rescaled_marker,
-            cv2.TM_CCOEFF_NORMED)
-
-        maxT = res.max()
-        if(allMaxT < maxT):
-            # print('Scale: '+str(s)+', Circle Match: '+str(round(maxT*100,2))+'%')
-            best_scale, allMaxT = s, maxT
-
-    if(allMaxT < config.thresholdCircle):
-        print("\tWarning: Template matching too low! Should you pass --noCropping flag?")
-        if(config.showimglvl>=1):
-            show("res", res, 1, 0)
-
-    if(best_scale is None):
-        print("No matchings for given scaleRange:", config.marker_rescale_range)
-    return best_scale, allMaxT
 
 
 def adjust_gamma(image, gamma=1.0):

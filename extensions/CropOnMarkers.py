@@ -2,26 +2,22 @@ import os
 import cv2
 from extension import ImagePreprocessor
 import numpy as np
-import imutils
 
 import utils
 import config
 
-# defaults
-MARKER_FILE = "omr_marker.jpg"
-ERODE_SUB_OFF = 1
-
-thresholdVar = 0.41    # max threshold difference for template matching
-thresholdCircle = 0.3
-marker_rescale_range = (35, 100)
-marker_rescale_steps = 10
-
-class Markers(ImagePreprocessor):
-    def __init__(self, marker_ops, path):
-        # process markers
+class CropOnMarkers(ImagePreprocessor):
+    def __init__(self, marker_ops, cwd):
+        self.thresholdCircles = []
+        # options with defaults
         self.marker_path = os.path.join(
-            os.path.dirname(path), marker_ops.get("relativepath", MARKER_FILE))
-
+            cwd, marker_ops.get("relativepath", "omr_marker.jpg"))
+        self.minMatchingThreshold = marker_ops.get("minmatchingthreshold", 0.3)
+        self.maxMatchingVariation = marker_ops.get("maxmatchingvariation", 0.41)
+        self.marker_rescale_range = marker_ops.get(
+            "marker_rescale_range", (35, 100))
+        self.marker_rescale_steps = marker_ops.get("marker_rescale_steps", 10)
+        self.apply_erode_subtract = marker_ops.get("apply_erode_subtract", 1)
         if(not os.path.exists(self.marker_path)):
             print(
                 "Error: Marker not found at path provided in template:",
@@ -31,6 +27,7 @@ class Markers(ImagePreprocessor):
         marker = cv2.imread(self.marker_path, cv2.IMREAD_GRAYSCALE)
 
         if("sheettomarkerwidthratio" in marker_ops):
+            # TODO: uniform_width should come through proper channel
             marker = utils.resize_util(marker, config.uniform_width /
                                     int(marker_ops["sheettomarkerwidthratio"]))
         marker = cv2.GaussianBlur(marker, (5, 5), 0)
@@ -40,11 +37,13 @@ class Markers(ImagePreprocessor):
             alpha=0,
             beta=255,
             norm_type=cv2.NORM_MINMAX)
-        marker -= cv2.erode(marker, kernel=np.ones((5, 5)), iterations=5)
+
+        if(self.apply_erode_subtract):
+            # TODO: verify its effectiveness in practical cases
+            marker -= cv2.erode(marker, kernel=np.ones((5, 5)), iterations=5)
         
         self.marker = marker
-        self.ERODE_SUB_OFF = marker_ops.get("erodesuboff", ERODE_SUB_OFF)
-        self.thresholdCircles = []
+        
 
     def __str__(self):
         return self.marker_path
@@ -52,15 +51,47 @@ class Markers(ImagePreprocessor):
     def exclude_files(self):
         return [self.marker_path]
 
-    def apply_filter(self, image, args):
+    # Resizing the marker within scaleRange at rate of descent_per_step to
+    # find the best match.
+    def getBestMatch(self, image_eroded_sub):
 
-        if self.ERODE_SUB_OFF:
-            image_eroded_sub = utils.normalize_util(image)
-        else:
-            image_eroded_sub = utils.normalize_util(image
-                                            - cv2.erode(image,
-                                                        kernel=np.ones((5, 5)),
-                                                        iterations=5))
+        descent_per_step = (
+            self.marker_rescale_range[1] - self.marker_rescale_range[0]) // self.marker_rescale_steps
+        h, w = self.marker.shape[:2]
+        res, best_scale = None, None
+        allMaxT = 0
+
+        for r0 in np.arange(
+                self.marker_rescale_range[1], self.marker_rescale_range[0], -1 * descent_per_step):  # reverse order
+            s = float(r0 * 1 / 100)
+            if(s == 0.0):
+                continue
+            rescaled_marker = utils.resize_util_h(self.marker,
+                u_height=int(
+                    h * s))
+            # res is the black image with white dots
+            res = cv2.matchTemplate(
+                image_eroded_sub,
+                rescaled_marker,
+                cv2.TM_CCOEFF_NORMED)
+
+            maxT = res.max()
+            if(allMaxT < maxT):
+                # print('Scale: '+str(s)+', Circle Match: '+str(round(maxT*100,2))+'%')
+                best_scale, allMaxT = s, maxT
+
+        if(allMaxT < self.minMatchingThreshold):
+            print("\tWarning: Template matching too low! Should you pass --noCropping flag?")
+            if(config.showimglvl >= 1):
+                show("res", res, 1, 0)
+
+        if(best_scale is None):
+            print("No matchings for given scaleRange:", self.marker_rescale_range)
+        return best_scale, allMaxT
+
+    def apply_filter(self, image, args):
+        image_eroded_sub = utils.normalize_util(image if self.apply_erode_subtract else (
+            image - cv2.erode(image, kernel=np.ones((5, 5)), iterations=5)))
         # Quads on warped image
         quads = {}
         h1, w1 = image_eroded_sub.shape[:2]
@@ -75,15 +106,14 @@ class Markers(ImagePreprocessor):
         image_eroded_sub[:, midw:midw + 2] = 255
         image_eroded_sub[midh:midh + 2, :] = 255
 
-        best_scale, allMaxT = utils.getBestMatch(image_eroded_sub, self.marker)
+        best_scale, allMaxT = self.getBestMatch(image_eroded_sub)
         if(best_scale is None):
             # TODO: Plot and see performance of marker_rescale_range
             if(config.showimglvl >= 1):
                 utils.show('Quads', image_eroded_sub)
             return None
 
-        optimal_marker = imutils.resize_util_h(
-            self.marker if self.ERODE_SUB_OFF else self.marker, u_height=int(
+        optimal_marker = utils.resize_util_h(self.marker, u_height=int(
                 self.marker.shape[0] * best_scale))
         h, w = optimal_marker.shape[:2]
         centres = []
@@ -93,22 +123,22 @@ class Markers(ImagePreprocessor):
             res = cv2.matchTemplate(quads[k], optimal_marker, cv2.TM_CCOEFF_NORMED)
             maxT = res.max()
             print("Q" + str(k + 1) + ": maxT", round(maxT, 3), end="\t")
-            if(maxT < thresholdCircle or abs(allMaxT - maxT) >= thresholdVar):
+            if(maxT < self.minMatchingThreshold or abs(allMaxT - maxT) >= self.maxMatchingVariation):
                 # Warning - code will stop in the middle. Keep Threshold low to
                 # avoid.
                 print(
-                    args['curr_filename'],
+                    args['current_file'].name,
                     "\nError: No circle found in Quad",
                     k + 1,
-                    "\n\tthresholdVar",
-                    thresholdVar,
+                    "\n\tmaxMatchingVariation",
+                    self.maxMatchingVariation,
                     "maxT",
                     maxT,
                     "allMaxT",
                     allMaxT,
                     "Should you pass --noCropping flag?")
                 if(config.showimglvl >= 1):
-                    utils.show("no_pts_" + curr_filename, image_eroded_sub, 0)
+                    utils.show("no_pts_" + args['current_file'].name, image_eroded_sub, 0)
                     utils.show("res_Q" + str(k + 1), res, 1)
                 return None
 
@@ -127,7 +157,7 @@ class Markers(ImagePreprocessor):
                 pt[1] + h),
                 (50,
                 50,
-                50) if self.ERODE_SUB_OFF else (
+                50) if self.apply_erode_subtract else (
                     155,
                     155,
                     155),
@@ -152,7 +182,7 @@ class Markers(ImagePreprocessor):
             image_eroded_sub = utils.resize_util_h(image_eroded_sub, image.shape[0])
             image_eroded_sub[:, -5:] = 0
             h_stack = np.hstack((image_eroded_sub, image))
-            utils.show("Warped: " + args['curr_filename'], utils.resize_util(h_stack,
+            utils.show("Warped: " + args['current_file'].name, utils.resize_util(h_stack,
                                                         int(config.display_width * 1.6)), 0, 0, [0, 0])
         # iterations : Tuned to 2.
         # image_eroded_sub = image_norm - cv2.erode(image_norm, kernel=np.ones((5,5)),iterations=2)
