@@ -62,6 +62,9 @@ def waitQ():
     ESC_KEY = 27
     while(cv2.waitKey(1) & 0xFF not in [ord('q'), ESC_KEY]):
         pass
+    global windowX, windowY
+    windowX = 0
+    windowY = 0
     cv2.destroyAllWindows()
 
 
@@ -569,10 +572,9 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
         # whiteVals=[255]
 
         if(config.showimglvl >= 5):
-            # "QTYPE_ROLL":[]}#,"QTYPE_MED":[]}
-            allCBoxvals = {"Int": [], "Mcq": []}
+            allCBoxvals = {"int": [], "mcq": []}
             # ,"QTYPE_ROLL":[]}#,"QTYPE_MED":[]}
-            qNums = {"Int": [], "Mcq": []}
+            qNums = {"int": [], "mcq": []}
 
         # Find Shifts for the QBlocks --> Before calculating threshold!
         if(autoAlign):
@@ -629,7 +631,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                     R = np.mean(morph_v[s[1]:s[1]+d[1],s[0]+shift-MATCH_COL+d[0]+THK:THK+s[0]+shift+d[0]])
                     
                     # For demonstration purposes-
-                    if(QBlock.key == "Int1"):
+                    if(QBlock.key == "int1"):
                         ret = morph_v.copy()
                         cv2.rectangle(ret,
                                       (s[0]+shift-THK,s[1]),
@@ -679,7 +681,9 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                     x, y = (pt.x + QBlock.shift, pt.y)
                     rect = [y, y + boxH, x, x + boxW]
                     QStripvals.append(
-                        cv2.mean(img[rect[0]:rect[1], rect[2]:rect[3]])[0])
+                        cv2.mean(img[rect[0]:rect[1], rect[2]:rect[3]])[0]
+                        # detectCross(img, rect) ? 100 : 0
+                        )
                 QStdVals.append(round(np.std(QStripvals), 2))
                 allQStripArrs.append(QStripvals)
                 # _, _, _ = getGlobalThreshold(QStripvals, "QStrip Plot", plotShow=False, sortInPlot=True)
@@ -723,7 +727,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
 
         perOMRThresholdAvg, totalQStripNo, totalQBoxNo = 0, 0, 0
         for QBlock in template.QBlocks:
-            blockQStripNo = 1  # start from 1 is fine here
+            blockQStripNo = 1  
             shift = QBlock.shift
             s, d = QBlock.orig, QBlock.dims
             key = QBlock.key[:3]
@@ -839,10 +843,10 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             f.canvas.set_window_title(name)
             ctr = 0
             typeName = {
-                "Int": "Integer",
-                "Mcq": "MCQ",
-                "Med": "MED",
-                "Rol": "Roll"}
+                "int": "Integer",
+                "mcq": "MCQ",
+                "med": "MED",
+                "rol": "Roll"}
             for k, boxvals in allCBoxvals.items():
                 axes[ctr].title.set_text(typeName[k] + " Type")
                 axes[ctr].boxplot(boxvals)

@@ -21,13 +21,13 @@ Grade exams fast and accurately using a scanner 🖨 or your phone 🤳.
 A full-fledged OMR checking software that can read and evaluate OMR sheets scanned at any angle and having any color. Support is also provided for a customisable marking scheme with section-wise marking, bonus questions, etc.
 
 |       Specs      | ![Current_Speed](https://img.shields.io/badge/Speed-200_OMRs/m-blue.svg?style=flat-square) ![Current_Size](https://img.shields.io/badge/Code_Size-500KB-blue.svg?style=flat-square)  ![Min Resolution](https://img.shields.io/badge/Min_Resolution-640x480-blue.svg?style=flat-square) |
-|:----------------:|-----------------------------------------------------------------------------------------------------------------------------------|
+|:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------|
 |  💯 **Accurate**  | Currently nearly 100% accurate on good quality document scans; and about 90% accurate on mobile images.                           |
 | 💪🏿 **Robust**    | Supports low resolution, xeroxed sheets. See [**Robustness**](https://github.com/Udayraj123/OMRChecker/wiki/Robustness) for more. |
 | ⏩ **Fast**       | Current processing speed without any optimization is 200 OMRs/minute.                                                             |
 | ✅ **Extensible** | [**Easily apply**](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide) to different OMR layouts, surveys, etc.              |
-| 📊 **Visually Rich Outputs** | [Get insights](https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals) to configure and debug easily.              |
-| 🎈 **Extremely lightweight** |  Core code size is **less than 500 KB**(Samples excluded).              |
+| 📊 **Visually Rich** | [Get insights](https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals) to configure and debug easily.              |
+| 🎈 **Lightweight** |  Core code size is **less than 500 KB**(Samples excluded).              |
 | 🏫 **Large Scale** |  Used on tens of thousands of OMRs at [Technothlon](https://www.facebook.com/technothlon.techniche).              |
 | 👩🏿‍💻 **Dev Friendly** |  [**Well documented**](https://github.com/Udayraj123/OMRChecker/wiki/) repository based on python and openCV with [an active discussion group](https://discord.gg/qFv2Vqf).              | 
 
