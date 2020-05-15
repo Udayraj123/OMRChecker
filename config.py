@@ -9,7 +9,7 @@ https://github.com/Udayraj123
 """
 Constants
 """
-display_height = int(480)
+display_height = int(640)
 display_width = int(640)
 windowWidth = 1280
 windowHeight = 720

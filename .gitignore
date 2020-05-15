@@ -1,7 +1,9 @@
 **/__pycache__
 **/CheckedOMRs
-**/ignore
 **/.DS_Store
+**/.vscode
+
+**/ignore
 OMRChecker.wiki/
 # Everything in inputs/ and outputs/
 inputs/*

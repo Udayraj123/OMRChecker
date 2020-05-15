@@ -57,6 +57,10 @@ qtype_data = {
         'vals': range(10),
         'orient': 'V'
     },
+    'QTYPE_INT4': {
+        'vals': [1,2,3,0],
+        'orient': 'V'
+    },
     'QTYPE_MCQ4': {
         'vals': ['A', 'B', 'C', 'D'],
         'orient': 'H'
