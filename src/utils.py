@@ -5,6 +5,9 @@ Udayraj Deshmukh
 https://github.com/Udayraj123
 
 """
+from operator import itemgetter
+
+
 # Locals
 saveImgList = {}
 resetpos = [0,0]
@@ -26,7 +29,7 @@ from random import randint
 from imutils import grab_contours
 # from skimage.filters import threshold_adaptive
 
-import config
+import constants
 import template
 
 def setup_dirs(paths):
@@ -103,7 +106,7 @@ def show(name, orig, pause=1, resize=False, resetpos=None):
             cv2.destroyAllWindows()
         return
     origDim = orig.shape[:2]
-    img = resize_util(orig, config.display_width) if resize else orig
+    img = resize_util(orig, config.dimensions.display_width) if resize else orig
     cv2.imshow(name, img)
     if(resetpos):
         windowX = resetpos[0]
@@ -116,9 +119,9 @@ def show(name, orig, pause=1, resize=False, resetpos=None):
     margin = 25
     w += margin
     h += margin
-    if(windowX + w > config.windowWidth):
+    if(windowX + w > config.dimensions.windowWidth):
         windowX = 0
-        if(windowY + h > config.windowHeight):
+        if(windowY + h > config.dimensions.windowHeight):
             windowY = 0
         else:
             windowY += h
@@ -134,7 +137,7 @@ def show(name, orig, pause=1, resize=False, resetpos=None):
 
 
 def putLabel(img, label, size):
-    scale = img.shape[1] / config.display_width
+    scale = img.shape[1] / config.dimensions.display_width
     bgVal = int(np.mean(img))
     pos = (int(scale * 80), int(scale * 30))
     clr = (255 - bgVal,) * 3
@@ -158,13 +161,13 @@ def drawTemplateLayout(
             cv2.rectangle(final_align,
                           (s[0]+shift,s[1]),
                           (s[0]+shift+d[0],s[1]+d[1]),
-                          config.CLR_BLACK,
+                          constants.CLR_BLACK,
                           3)
         else:
             cv2.rectangle(final_align,
                           (s[0], s[1]),
                           (s[0] + d[0], s[1] + d[1]),
-                          config.CLR_BLACK
+                          constants.CLR_BLACK
                           ,3)
         for qStrip, qBoxPts in QBlock.traverse_pts:
             for pt in qBoxPts:
@@ -174,7 +177,7 @@ def drawTemplateLayout(
                                int(y + boxH / 10)),
                               (int(x + boxW - boxW / 10),
                                 int(y + boxH - boxH / 10)),
-                              config.CLR_GRAY,
+                              constants.CLR_GRAY,
                               border)
                 if(draw_qvals):
                     rect = [y, y + boxH, x, x + boxW]
@@ -183,15 +186,15 @@ def drawTemplateLayout(
                                 (rect[2] + 2, rect[0] + (boxH * 2) // 3),
                                 cv2.FONT_HERSHEY_SIMPLEX, 
                                 0.6, 
-                                config.CLR_BLACK,
+                                constants.CLR_BLACK,
                                 2)
         if(shifted):
             cv2.putText(final_align,
                         's%s'% (shift), 
                         tuple(s - [template.dims[0] // 20, -d[1] // 2]),
                         cv2.FONT_HERSHEY_SIMPLEX, 
-                        config.TEXT_SIZE, 
-                        config.CLR_BLACK, 
+                        constants.TEXT_SIZE, 
+                        constants.CLR_BLACK, 
                         4)
     return final_align
 
@@ -308,7 +311,7 @@ def resetSaveImg(key):
     saveImgList[key] = []
 
 def appendSaveImg(key, img):
-    if(config.saveimglvl >= int(key)):
+    if(config.outputs.save_image_level >= int(key)):
         global saveImgList
         if(key not in saveImgList):
             saveImgList[key] = []
@@ -366,7 +369,7 @@ def getGlobalThreshold(
     # Find the FIRST LARGE GAP and set it as threshold:
     ls = (looseness + 1) // 2
     l = len(QVals) - ls
-    max1, thr1 = config.MIN_JUMP, 255
+    max1, thr1 = config.threshold_params.MIN_JUMP, 255
     for i in range(ls, l):
         jump = QVals[i + ls] - QVals[i - ls]
         if(jump > max1):
@@ -376,12 +379,12 @@ def getGlobalThreshold(
 # NOTE: thr2 is deprecated, thus is JUMP_DELTA
     # Make use of the fact that the JUMP_DELTA(Vertical gap ofc) between
     # values at detected jumps would be atleast 20
-    max2, thr2 = config.MIN_JUMP, 255
+    max2, thr2 = config.threshold_params.MIN_JUMP, 255
     # Requires atleast 1 gray box to be present (Roll field will ensure this)
     for i in range(ls,l):
         jump = QVals[i+ls] - QVals[i-ls]
         newThr = QVals[i-ls] + jump/2
-        if(jump > max2 and abs(thr1-newThr) > config.JUMP_DELTA):
+        if(jump > max2 and abs(thr1-newThr) > config.threshold_params.JUMP_DELTA):
             max2=jump
             thr2=newThr
     # globalTHR = min(thr1,thr2)
@@ -451,7 +454,7 @@ def getLocalThreshold(
     # base case: 1 or 2 pts
     if(len(QVals) < 3):
         thr1 = globalTHR if np.max(
-            QVals) - np.min(QVals) < config.MIN_GAP else np.mean(QVals)
+            QVals) - np.min(QVals) < config.threshold_params.MIN_GAP else np.mean(QVals)
     else:
         # qmin, qmax, qmean, qstd = round(np.min(QVals),2), round(np.max(QVals),2), round(np.mean(QVals),2), round(np.std(QVals),2)
         # GVals = [round(abs(q-qmean),2) for q in QVals]
@@ -469,7 +472,7 @@ def getLocalThreshold(
         # else:
         # Find the LARGEST GAP and set it as threshold: //(FIRST LARGE GAP)
         l = len(QVals) - 1
-        max1, thr1 = config.MIN_JUMP, 255
+        max1, thr1 = config.threshold_paramsMIN_JUMP, 255
         for i in range(1, l):
             jump = QVals[i + 1] - QVals[i - 1]
             if(jump > max1):
@@ -478,7 +481,7 @@ def getLocalThreshold(
         # print(qNo,QVals,max1)
 
         # If not confident, then only take help of globalTHR
-        if(max1 < config.CONFIDENT_JUMP):
+        if(max1 < config.threshold_paramsCONFIDENT_JUMP):
             if(noOutliers):
                 # All Black or All White case
                 thr1 = globalTHR
@@ -550,11 +553,12 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             morph = clahe.apply(morph)
             appendSaveImg(3, morph)
             # Remove shadows further, make columns/boxes darker (less gamma)
-            morph = adjust_gamma(morph, config.GAMMA_LOW)
+            morph = adjust_gamma(morph, config.threshold_params.GAMMA_LOW)
+            # TODO: all numbers should come from either constants or config
             ret, morph = cv2.threshold(morph, 220, 220, cv2.THRESH_TRUNC)
             morph = normalize_util(morph)
             appendSaveImg(3,morph)
-            if(config.showimglvl>=4):
+            if(config.outputs.show_image_level>=4):
                 show("morph1",morph,0,1)
 
         # Overlay Transparencies
@@ -571,7 +575,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
         # blackVals=[0]
         # whiteVals=[255]
 
-        if(config.showimglvl >= 5):
+        if(config.outputs.show_image_level >= 5):
             allCBoxvals = {"int": [], "mcq": []}
             # ,"QTYPE_ROLL":[]}#,"QTYPE_MED":[]}
             qNums = {"int": [], "mcq": []}
@@ -587,7 +591,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             ret, morph_v = cv2.threshold(morph_v, 200, 200, cv2.THRESH_TRUNC)
             morph_v = 255 - normalize_util(morph_v)
 
-            if(config.showimglvl >= 3):
+            if(config.outputs.show_image_level >= 3):
                 show("morphed_vertical", morph_v, 0, 1)
 
             # show("morph1",morph,0,1)
@@ -612,33 +616,33 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             # show("morph_h",morph_h,0,1)
             # _, morph_h = cv2.threshold(morph_h,morphTHR,255,cv2.THRESH_BINARY)
             # morph_h = cv2.erode(morph_h,  np.ones((5,5),np.uint8), iterations = 2)
-            if(config.showimglvl >= 3):
+            if(config.outputs.show_image_level >= 3):
                 show("morph_thr_eroded", morph_v, 0, 1)
 
             appendSaveImg(6, morph_v)
 
-            # template alignment code
+            # template alignment code (relative alignment algo)
             # OUTPUT : each QBlock.shift is updated
             for QBlock in template.QBlocks:
                 s, d = QBlock.orig, QBlock.dims
                 # internal constants - wont need change much
                 # TODO - ALIGN_STRIDE would depend on template's Dimensions
-                ALIGN_STRIDE, MATCH_COL, ALIGN_STEPS = 1, 5, int(boxW * 2 / 3)
+                MATCH_COL,MAX_STEPS, ALIGN_STRIDE, THK  = itemgetter(['match_col', 'max_steps', 'stride','thickness',])(config.alignment_params)
                 shift, steps = 0, 0
-                THK = 3
-                while steps < ALIGN_STEPS:
+                while steps < MAX_STEPS:
                     L = np.mean(morph_v[s[1]:s[1]+d[1],s[0]+shift-THK:-THK+s[0]+shift+MATCH_COL])
                     R = np.mean(morph_v[s[1]:s[1]+d[1],s[0]+shift-MATCH_COL+d[0]+THK:THK+s[0]+shift+d[0]])
                     
                     # For demonstration purposes-
-                    if(QBlock.key == "int1"):
-                        ret = morph_v.copy()
-                        cv2.rectangle(ret,
-                                      (s[0]+shift-THK,s[1]),
-                                      (s[0]+shift+THK+d[0],s[1]+d[1]),
-                                      config.CLR_WHITE,
-                                      3)
-                        appendSaveImg(6,ret)
+                    # if(QBlock.key == "int1"):
+                    #     ret = morph_v.copy()
+                    #     cv2.rectangle(ret,
+                    #                   (s[0]+shift-THK,s[1]),
+                    #                   (s[0]+shift+THK+d[0],s[1]+d[1]),
+                    #                   constants.CLR_WHITE,
+                    #                   3)
+                    #     appendSaveImg(6,ret)
+
                     # print(shift, L, R)
                     LW,RW= L > 100, R > 100
                     if(LW):
@@ -658,7 +662,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             # print("End Alignment")
 
         final_align = None
-        if(config.showimglvl >= 2):
+        if(config.outputs.show_image_level >= 2):
             initial_align = drawTemplateLayout(img, template, shifted=False)
             final_align = drawTemplateLayout(
                 img, template, shifted=True, draw_qvals=True)
@@ -702,7 +706,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
         # show("StdHist", hist, 0, 1)
 
         # Note: Plotting takes Significant times here --> Change Plotting args
-        # to support showimglvl
+        # to support show_image_level
         # , "Mean Intensity Histogram",plotShow=True, sortInPlot=True)
         globalTHR, j_low, j_high = getGlobalThreshold(allQVals, looseness=4)
 
@@ -718,7 +722,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
 
         # print("End getGlobalThreshold")
 
-        # if(showimglvl>=1):
+        # if(config.outputs.show_image_level>=1):
         #     hist = getPlotImg()
         #     show("Hist", hist, 0, 1)
         #     appendSaveImg(4,hist)
@@ -741,7 +745,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                                                        "Mean Intensity Histogram for " + key + "." +
                                                        qBoxPts[0].qNo + '.' +
                                                        str(blockQStripNo),
-                                                       config.showimglvl >= 6)
+                                                       config.outputs.show_image_level >= 6)
                 # print(qBoxPts[0].qNo,key,blockQStripNo, "THR: ",round(perQStripThreshold,2))
                 perOMRThresholdAvg += perQStripThreshold
 
@@ -777,13 +781,13 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                                       (int(x+boxW/12),
                                       int(y+boxH/12)),
                                       (int(x+boxW-boxW/12), int(y+boxH-boxH/12)),
-                                      config.CLR_DARK_GRAY, 
+                                      constants.CLR_DARK_GRAY, 
                                       3)
                     else:
                         cv2.rectangle(final_marked,
                                       (int(x+boxW/10),int(y+boxH/10)),
                                       (int(x+boxW-boxW/10),int(y+boxH-boxH/10)),
-                                      config.CLR_GRAY,
+                                      constants.CLR_GRAY,
                                       -1)
 
                     # TODO Make this part useful! (Abstract visualizer to check status)
@@ -793,9 +797,9 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                                     val,
                                     (x, y),
                                     cv2.FONT_HERSHEY_SIMPLEX, 
-                                    config.TEXT_SIZE,
+                                    constants.TEXT_SIZE,
                                     (20, 20, 10),
-                                    int(1 + 3.5*config.TEXT_SIZE))
+                                    int(1 + 3.5*constants.TEXT_SIZE))
                         # Only send rolls multi-marked in the directory
                         multimarkedL = q in OMRresponse
                         multimarked = multimarkedL or multimarked
@@ -810,7 +814,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                     # /for qBoxPts
                 # /for qStrip
 
-                if(config.showimglvl >= 5):
+                if(config.outputs.show_image_level >= 5):
                     if(key in allCBoxvals):
                         qNums[key].append(key[:2] + '_c' + str(blockQStripNo))
                         allCBoxvals[key].append(allQStripArrs[totalQStripNo])
@@ -837,7 +841,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             0,
             final_marked)
         # Box types
-        if(config.showimglvl >= 5):
+        if(config.outputs.show_image_level >= 5):
             # plt.draw()
             f, axes = plt.subplots(len(allCBoxvals), sharey=True)
             f.canvas.set_window_title(name)
@@ -860,20 +864,20 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             plt.tight_layout(pad=0.5)
             plt.show()
 
-        if(config.showimglvl >= 3 and final_align is not None):
-            final_align = resize_util_h(final_align, int(config.display_height))
+        if(config.outputs.show_image_level >= 3 and final_align is not None):
+            final_align = resize_util_h(final_align, int(config.dimensions.display_height))
             # [final_align.shape[1],0])
             show("Template Alignment Adjustment", final_align, 0, 0)
 
         # TODO: refactor "type(savedir) != type(None) "
-        if (config.saveMarked and type(savedir) != type(None)):
+        if (config.outputs.save_detections and type(savedir) != type(None)):
             if(multiroll):
                 savedir = savedir + '_MULTI_/'
             saveImg(savedir + name, final_marked)
 
         appendSaveImg(2, final_marked)
 
-        for i in range(config.saveimglvl):
+        for i in range(config.outputs.save_image_level):
             saveOrShowStacks(i + 1, name, savedir)
 
         return OMRresponse, final_marked, multimarked, multiroll
@@ -888,12 +892,12 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
 
 def saveOrShowStacks(key, name, savedir=None, pause=1):
     global saveImgList
-    if(config.saveimglvl >= int(key) and saveImgList[key] != []):
+    if(config.outputs.save_image_level >= int(key) and saveImgList[key] != []):
         result = np.hstack(
-            tuple([resize_util_h(img, config.uniform_height) for img in saveImgList[key]]))
+            tuple([resize_util_h(img, config.dimensions.display_height) for img in saveImgList[key]]))
         result = resize_util(result,
-                             min(len(saveImgList[key]) * config.uniform_width // 3,
-                                 int(config.uniform_width * 2.5)))
+                             min(len(saveImgList[key]) * config.dimensions.display_width // 3,
+                                 int(config.dimensions.display_width * 2.5)))
         if (type(savedir) != type(None)):
             saveImg(savedir+'stack/'+name+'_'+str(key)+'_stack.jpg', result)
         else:

@@ -53,7 +53,7 @@ class FeatureBasedAlignment(ImagePreprocessor):
         matches = matches[:numGoodMatches]
         
         # Draw top matches
-        if config.showimglvl > 2:
+        if config.outputs.show_image_level > 2:
             imMatches = cv2.drawMatches(img, from_keypoints, self.ref_img, self.to_keypoints, matches, None)
             utils.show('Aligning', imMatches, resize=True)    
         

@@ -1,0 +1,11 @@
+{
+  "Preprocessors": {
+    "CropPage": {
+      "MorphKernel" : [10,10]
+    },
+    "CropOnMarkers": {
+      "RelativePath": "omr_marker.jpg",
+      "SheetToMarkerWidthRatio": 17
+    }
+  }
+}

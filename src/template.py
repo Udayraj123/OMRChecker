@@ -7,7 +7,7 @@ https://github.com/Udayraj123
 """
 import os
 import json
-import config
+# import constants
 import utils
 
 import numpy as np
@@ -79,10 +79,10 @@ class LowercaseOrderedDict(OrderedDict):
         return super().__setitem__(key, value)
 
 class Template():
-    def __init__(self, template_file, extensions):
-        with open(template_file, "r") as f:
+    def __init__(self, template_path, extensions):
+        with open(template_path, "r") as f:
             json_obj = json.load(f, object_pairs_hook=LowercaseOrderedDict)        
-        self.path = template_file.name
+        self.path = template_path.name
         self.QBlocks = []
         # throw exception on key not exist
         self.dims = json_obj["dimensions"]
@@ -95,7 +95,7 @@ class Template():
             qtype_data.update(json_obj["qtypes"])
 
         # load image preprocessors
-        self.preprocessors = [extensions[name](opts, template_file.parent) 
+        self.preprocessors = [extensions[name](opts, template_path.parent) 
                               for name, opts in json_obj.get(
                                     "preprocessors", {}).items()]
 

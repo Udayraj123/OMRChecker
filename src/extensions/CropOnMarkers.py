@@ -27,8 +27,8 @@ class CropOnMarkers(ImagePreprocessor):
         marker = cv2.imread(self.marker_path, cv2.IMREAD_GRAYSCALE)
 
         if("sheettomarkerwidthratio" in marker_ops):
-            # TODO: uniform_width should come through proper channel
-            marker = utils.resize_util(marker, config.uniform_width /
+            # TODO: processing_width should come through proper channel
+            marker = utils.resize_util(marker, config.dimensions.processing_width /
                                     int(marker_ops["sheettomarkerwidthratio"]))
         marker = cv2.GaussianBlur(marker, (5, 5), 0)
         marker = cv2.normalize(
@@ -82,7 +82,7 @@ class CropOnMarkers(ImagePreprocessor):
 
         if(allMaxT < self.minMatchingThreshold):
             print("\tWarning: Template matching too low! Consider rechecking preprocessors applied before this.")
-            if(config.showimglvl >= 1):
+            if(config.outputs.show_image_level >= 1):
                 show("res", res, 1, 0)
 
         if(best_scale is None):
@@ -109,7 +109,7 @@ class CropOnMarkers(ImagePreprocessor):
         best_scale, allMaxT = self.getBestMatch(image_eroded_sub)
         if(best_scale is None):
             # TODO: Plot and see performance of marker_rescale_range
-            if(config.showimglvl >= 1):
+            if(config.outputs.show_image_level >= 1):
                 utils.show('Quads', image_eroded_sub)
             return None
 
@@ -138,7 +138,7 @@ class CropOnMarkers(ImagePreprocessor):
                     maxT,
                     "\tallMaxT",
                     allMaxT)
-                if(config.showimglvl >= 1):
+                if(config.outputs.show_image_level >= 1):
                     utils.show("no_pts_" + args['current_file'].name, image_eroded_sub, 0)
                     utils.show("res_Q" + str(k + 1) + " ("+str(maxT)+")", res, 1)
                 return None
@@ -179,7 +179,7 @@ class CropOnMarkers(ImagePreprocessor):
         # res[ : , midw:midw+2] = 255
         # res[ midh:midh+2, : ] = 255
         # show("Markers Matching",res)
-        if(config.showimglvl >= 2 and config.showimglvl < 4):
+        if(config.outputs.show_image_level >= 2 and config.outputs.show_image_level < 4):
             image_eroded_sub = utils.resize_util_h(image_eroded_sub, image.shape[0])
             image_eroded_sub[:, -5:] = 0
             h_stack = np.hstack((image_eroded_sub, image))
