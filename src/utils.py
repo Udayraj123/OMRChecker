@@ -32,9 +32,15 @@ from imutils import grab_contours
 import constants
 import template
 
+
+def loadJson(path, **rest):
+    with open(path, "r") as f:
+        loaded = json.load(f,**rest)
+    return loaded
+
 def setup_dirs(paths):
     print('\nChecking Directories...')
-    for _dir in [paths.saveMarkedDir]:
+    for _dir in [paths.SAVE_MARKED_DIR]:
         if(not os.path.exists(_dir)):
             print('Created : ' + _dir)
             os.makedirs(_dir)
@@ -46,14 +52,14 @@ def setup_dirs(paths):
         else:
             print('Present : ' + _dir)
 
-    for _dir in [paths.manualDir, paths.resultDir]:
+    for _dir in [paths.MANUAL_DIR, paths.RESULTS_DIR]:
         if(not os.path.exists(_dir)):
             print('Created : ' + _dir)
             os.makedirs(_dir)
         else:
             print('Present : ' + _dir)
 
-    for _dir in [paths.multiMarkedDir, paths.errorsDir, paths.badRollsDir]:
+    for _dir in [paths.MULTI_MARKED_DIR, paths.ERRORS_DIR, paths.BAD_ROLLS_DIR]:
         if(not os.path.exists(_dir)):
             print('Created : ' + _dir)
             os.makedirs(_dir)
@@ -472,7 +478,7 @@ def getLocalThreshold(
         # else:
         # Find the LARGEST GAP and set it as threshold: //(FIRST LARGE GAP)
         l = len(QVals) - 1
-        max1, thr1 = config.threshold_paramsMIN_JUMP, 255
+        max1, thr1 = config.threshold_params.MIN_JUMP, 255
         for i in range(1, l):
             jump = QVals[i + 1] - QVals[i - 1]
             if(jump > max1):
@@ -480,8 +486,9 @@ def getLocalThreshold(
                 thr1 = QVals[i - 1] + jump / 2
         # print(qNo,QVals,max1)
 
+        CONFIDENT_JUMP = config.threshold_params.MIN_JUMP + config.threshold_params.CONFIDENT_SURPLUS
         # If not confident, then only take help of globalTHR
-        if(max1 < config.threshold_paramsCONFIDENT_JUMP):
+        if(max1 < config.CONFIDENT_JUMP):
             if(noOutliers):
                 # All Black or All White case
                 thr1 = globalTHR

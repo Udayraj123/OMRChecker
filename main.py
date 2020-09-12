@@ -48,4 +48,4 @@ if(len(unknown) > 0):
     exit(11)
 
 for root in args['input_paths']:
-    entry_point(Path(root), Path(root))
+    entry_point(Path(root), Path(root),args)

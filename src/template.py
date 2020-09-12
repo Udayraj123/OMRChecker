@@ -8,7 +8,15 @@ https://github.com/Udayraj123
 import os
 import json
 # import constants
-import utils
+
+from constants import TEMPLATE_DEFAULTS_PATH
+from utils import loadJson
+
+templateDefaults = loadJson(TEMPLATE_DEFAULTS_PATH)
+
+def openTemplateWithDefaults(templatePath, **rest):
+    user_template = loadJson(templatePath, **rest)
+    return always_merger.merge(templateDefaults, user_template)
 
 import numpy as np
 from argparse import Namespace
@@ -80,8 +88,8 @@ class LowercaseOrderedDict(OrderedDict):
 
 class Template():
     def __init__(self, template_path, extensions):
-        with open(template_path, "r") as f:
-            json_obj = json.load(f, object_pairs_hook=LowercaseOrderedDict)        
+            # TODO: get rid of LowercaseOrderedDict as it's counterintuitive
+        json_obj = openTemplateWithDefaults(template_path,object_pairs_hook=LowercaseOrderedDict)
         self.path = template_path.name
         self.QBlocks = []
         # throw exception on key not exist
@@ -101,6 +109,7 @@ class Template():
 
         # Add Options
         self.options = json_obj.get("options", {})
+
 
         # Add QBlocks
         for name, block in json_obj["qblocks"].items():

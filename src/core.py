@@ -30,21 +30,21 @@ from glob import glob
 from csv import QUOTE_NONNUMERIC
 from time import localtime, strftime, time
 from pathlib import Path
-
+from config import openTemplateWithDefaults, openConfigWithDefaults
 
 # TODO(beginner task) :-
 # from colorama import init
 # init()
 # from colorama import Fore, Back, Style
 
-def entry_point(root_dir, curr_dir, template):
-    return process_dir(root_dir, curr_dir, template)
+def entry_point(root_dir, curr_dir, args):
+    return process_dir(root_dir, curr_dir, args)
 
 # TODO: make this function pure
-def process_dir(root_dir, curr_dir, template):
+def process_dir(root_dir, curr_dir, args, template):
 
     # Update local template (in current recursion stack) 
-    local_template_path = curr_dir.joinpath(constants.template_filename)
+    local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
     if os.path.exists(local_template_path):
         template = Template(local_template_path, ext_mgr.extensions)
 
@@ -68,8 +68,10 @@ def process_dir(root_dir, curr_dir, template):
     
     if omr_files:
         if not template:
-            print(f'Error: Found images, but no template in the directory tree of "{curr_dir}". \nPlace {constants.template_filename} in the directory or specify a template using -t.')
+            print(f'Error: Found images, but no template in the directory tree of "{curr_dir}". \nPlace {constants.TEMPLATE_FILENAME} in the directory or specify a template using -t.')
             return
+        
+        # TODO: get rid of args here 
         args_local = args.copy()
         if("OverrideFlags" in template.options):
             args_local.update(template.options["OverrideFlags"])
@@ -95,7 +97,7 @@ def process_dir(root_dir, curr_dir, template):
 
     # recursively process subfolders
     for d in subdirs:
-        process_dir(root_dir, d, template)
+        process_dir(root_dir, d, args, template)
 
 
 def checkAndMove(error_code, filepath, filepath2):
@@ -180,10 +182,10 @@ def setup_output(paths, template):
     ns.OUTPUT_SET = []
     ns.filesObj = {}
     ns.filesMap = {
-        "Results": paths.resultDir + 'Results_' + timeNowHrs + '.csv',
-        "MultiMarked": paths.manualDir + 'MultiMarkedFiles_.csv',
-        "Errors": paths.manualDir + 'ErrorFiles_.csv',
-        "BadRollNos": paths.manualDir + 'BadRollNoFiles_.csv'
+        "Results": paths.RESULTS_DIR + 'Results_' + timeNowHrs + '.csv',
+        "MultiMarked": paths.MANUAL_DIR + 'MultiMarkedFiles_.csv',
+        "Errors": paths.MANUAL_DIR + 'ErrorFiles_.csv',
+        "BadRollNos": paths.MANUAL_DIR + 'BadRollNoFiles_.csv'
     }
 
     for fileKey, fileName in ns.filesMap.items():
@@ -229,6 +231,7 @@ def preliminary_check():
 
 
 
+# TODO: take a look at 'out.paths'
 def process_files(omr_files, template, args, out):
     start_time = int(time())
     global filesNotMoved
@@ -255,13 +258,13 @@ def process_files(omr_files, template, args, out):
         inOMR = utils.resize_util(
             inOMR, config.dimensions.processing_width, config.dimensions.processing_height)
 
-        # run preprocessors
-        for pp in template.preprocessors:
-            inOMR = pp.apply_filter(inOMR, args)           
+        # run preprocessors in sequence
+        for preprocessor in template.preprocessors:
+            inOMR = preprocessor.apply_filter(inOMR, args)           
         
         if(inOMR is None):
-            # Error OMR - could not crop
-            newfilepath = out.paths.errorsDir + filename
+            # Error OMR case
+            newfilepath = out.paths.ERRORS_DIR + filename
             out.OUTPUT_SET.append([filename] + out.emptyResp)
             if(checkAndMove(constants.ERROR_CODES.NO_MARKER_ERR, filepath, newfilepath)):
                 err_line = [filename, filepath,
@@ -283,7 +286,7 @@ def process_files(omr_files, template, args, out):
 
         # uniquify
         file_id = str(filename)
-        savedir = out.paths.saveMarkedDir
+        savedir = out.paths.SAVE_MARKED_DIR
         OMRresponseDict, final_marked, MultiMarked, multiroll = \
             utils.readResponse(template, inOMR, name=file_id,
                          savedir=savedir, autoAlign=args["autoAlign"])
@@ -327,7 +330,7 @@ def process_files(omr_files, template, args, out):
             # MultiMarked file
             print('[%d] MultiMarked, moving File: %s' %
                   (filesCounter, file_id))
-            newfilepath = out.paths.multiMarkedDir + filename
+            newfilepath = out.paths.MULTI_MARKED_DIR + filename
             if(checkAndMove(constants.ERROR_CODES.MULTI_BUBBLE_WARN, filepath, newfilepath)):
                 mm_line = [filename, filepath, newfilepath, "NA"] + respArray
                 pd.DataFrame(mm_line, dtype=str) \
