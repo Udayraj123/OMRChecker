@@ -1,9 +1,9 @@
 import os
 import cv2
 import numpy as np
-from extension import ImagePreprocessor
-import utils
-import config
+from .interfaces.ImagePreprocessor import ImagePreprocessor
+import src.utils
+import src.config
 
 # defaults
 MAX_FEATURES = 500

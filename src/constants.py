@@ -1,21 +1,27 @@
 """
 
-Designed and Developed by-
-Udayraj Deshmukh 
-https://github.com/Udayraj123
+ OMRChecker
+ Designed and Developed by-
+ Udayraj Deshmukh
+ https://github.com/Udayraj123
 
 """
+import os 
 
 """
 Constants
 """
-EXTENSION_PATH="./extensions"
-TEMPLATE_FILENAME="template.json"
-CONFIG_FILENAME="config.json"
 
-CONFIG_DEFAULTS_PATH = "./defaults/config.json"
-TEMPLATE_DEFAULTS_PATH = "./defaults/template.json"
+# Paths
+current_module_dir=os.path.dirname(__file__)
+CONFIG_DEFAULTS_PATH = os.path.join(current_module_dir,"defaults/config.json")
+TEMPLATE_DEFAULTS_PATH = os.path.join(current_module_dir, "defaults/template.json")
 
+# Filenames
+TEMPLATE_FILENAME = "template.json"
+CONFIG_FILENAME = "config.json"
+
+# 
 ERROR_CODES = {
     "MULTI_BUBBLE_WARN": 1,
     "NO_MARKER_ERR": 2,

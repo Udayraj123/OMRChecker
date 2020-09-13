@@ -1,8 +1,8 @@
 import cv2
 import imutils
-import utils
+import src.utils
 import numpy as np
-from extension import ImagePreprocessor
+from .interfaces.ImagePreprocessor import ImagePreprocessor
 
 MIN_PAGE_AREA = 80000
 

@@ -1,81 +1,39 @@
 """
-
-Designed and Developed by-
-Udayraj Deshmukh
-https://github.com/Udayraj123
-
+ OMRChecker
+ Designed and Developed by-
+ Udayraj Deshmukh
+ https://github.com/Udayraj123
 """
+
+# Use all imports relative to root directory (https://chrisyeh96.github.io/2017/08/08/definitive-guide-python-imports.html#case-2-syspath-could-change)
+import src.constants
+
+from imutils import grab_contours
+from random import randint
+from pathlib import Path
+import matplotlib.pyplot as plt
+import pandas as pd
+import glob
+import cv2
+import sys
+import os
+import re
+import numpy as np
+import json
 from operator import itemgetter
 
 
-# Locals
+# Locals (TODO: put into class)
 saveImgList = {}
-resetpos = [0,0]
-# for positioning image windows
-windowX,windowY = 0,0 
+resetpos = [0, 0]
 
-import re
-import os
-import sys
-import cv2
-import glob
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
+# for positioning image windows
+windowX, windowY = 0, 0
+
 plt.rcParams['figure.figsize'] = (10.0, 8.0)
 
-from pathlib import Path
-from random import randint
-from imutils import grab_contours
-# from skimage.filters import threshold_adaptive
 
-import constants
-import template
-
-
-def loadJson(path, **rest):
-    with open(path, "r") as f:
-        loaded = json.load(f,**rest)
-    return loaded
-
-def setup_dirs(paths):
-    print('\nChecking Directories...')
-    for _dir in [paths.SAVE_MARKED_DIR]:
-        if(not os.path.exists(_dir)):
-            print('Created : ' + _dir)
-            os.makedirs(_dir)
-            os.mkdir(_dir + '/stack')
-            os.mkdir(_dir + '/_MULTI_')
-            os.mkdir(_dir + '/_MULTI_' + '/stack')
-            # os.mkdir(_dir+sl+'/_BADSCAN_')
-            # os.mkdir(_dir+sl+'/_BADSCAN_'+'/stack')
-        else:
-            print('Present : ' + _dir)
-
-    for _dir in [paths.MANUAL_DIR, paths.RESULTS_DIR]:
-        if(not os.path.exists(_dir)):
-            print('Created : ' + _dir)
-            os.makedirs(_dir)
-        else:
-            print('Present : ' + _dir)
-
-    for _dir in [paths.MULTI_MARKED_DIR, paths.ERRORS_DIR, paths.BAD_ROLLS_DIR]:
-        if(not os.path.exists(_dir)):
-            print('Created : ' + _dir)
-            os.makedirs(_dir)
-        else:
-            print('Present : ' + _dir)
-
-
-def waitQ():
-    ESC_KEY = 27
-    while(cv2.waitKey(1) & 0xFF not in [ord('q'), ESC_KEY]):
-        pass
-    global windowX, windowY
-    windowX = 0
-    windowY = 0
-    cv2.destroyAllWindows()
-
+# Image-processing utils
 
 def normalize_util(img, alpha=0, beta=255):
     return cv2.normalize(img, alpha, beta, norm_type=cv2.NORM_MINMAX)
@@ -102,44 +60,6 @@ def resize_util_h(img, u_height, u_width=None):
         h, w = img.shape[:2]
         u_width = int(w * u_height / h)
     return cv2.resize(img, (int(u_width), int(u_height)))
-
-
-def show(name, orig, pause=1, resize=False, resetpos=None):
-    global windowX, windowY
-    if(type(orig) == type(None)):
-        print(name, " NoneType image to show!")
-        if(pause):
-            cv2.destroyAllWindows()
-        return
-    origDim = orig.shape[:2]
-    img = resize_util(orig, config.dimensions.display_width) if resize else orig
-    cv2.imshow(name, img)
-    if(resetpos):
-        windowX = resetpos[0]
-        windowY = resetpos[1]
-    cv2.moveWindow(name, windowX, windowY)
-
-    h, w = img.shape[:2]
-
-    # Set next window position
-    margin = 25
-    w += margin
-    h += margin
-    if(windowX + w > config.dimensions.windowWidth):
-        windowX = 0
-        if(windowY + h > config.dimensions.windowHeight):
-            windowY = 0
-        else:
-            windowY += h
-    else:
-        windowX += w
-
-    if(pause):
-        print(
-            "Showing '" +
-            name +
-            "'\n\tPress Q on image to continue Press Ctrl + C in terminal to exit")
-        waitQ()
 
 
 def putLabel(img, label, size):
@@ -279,12 +199,6 @@ def four_point_transform(image, pts):
     # return the warped image
     return warped
 
-
-def printbuf(x):
-    sys.stdout.write(str(x))
-    sys.stdout.write('\r')
-
-
 def get_fourth_pt(three_pts):
     m = []
     for i in range(3):
@@ -310,19 +224,6 @@ def auto_canny(image, sigma=0.93):
 
     # return the edged image
     return edged
-
-
-def resetSaveImg(key):
-    global saveImgList
-    saveImgList[key] = []
-
-def appendSaveImg(key, img):
-    if(config.outputs.save_image_level >= int(key)):
-        global saveImgList
-        if(key not in saveImgList):
-            saveImgList[key] = []
-        saveImgList[key].append(img.copy())
-
 
 def adjust_gamma(image, gamma=1.0):
     # build a lookup table mapping the pixel values [0, 255] to
@@ -382,7 +283,7 @@ def getGlobalThreshold(
             max1 = jump
             thr1 = QVals[i - ls] + jump / 2
 
-# NOTE: thr2 is deprecated, thus is JUMP_DELTA
+    # NOTE: thr2 is deprecated, thus is JUMP_DELTA
     # Make use of the fact that the JUMP_DELTA(Vertical gap ofc) between
     # values at detected jumps would be atleast 20
     max2, thr2 = config.threshold_params.MIN_JUMP, 255
@@ -532,10 +433,90 @@ def getLocalThreshold(
 #     #     appendSaveImg(appendImgLvl,getPlotImg())
 
 
-def saveImg(path, final_marked):
-    print('Saving Image to ' + path)
-    cv2.imwrite(path, final_marked)
+# Non image-processing utils
 
+def loadJson(path, **rest):
+    with open(path, "r") as f:
+        loaded = json.load(f, **rest)
+    return loaded
+
+
+def setup_dirs(paths):
+    print('\nChecking Directories...')
+    for _dir in [paths.SAVE_MARKED_DIR]:
+        if(not os.path.exists(_dir)):
+            print('Created : ' + _dir)
+            os.makedirs(_dir)
+            os.mkdir(_dir + '/stack')
+            os.mkdir(_dir + '/_MULTI_')
+            os.mkdir(_dir + '/_MULTI_' + '/stack')
+            # os.mkdir(_dir+sl+'/_BADSCAN_')
+            # os.mkdir(_dir+sl+'/_BADSCAN_'+'/stack')
+        else:
+            print('Present : ' + _dir)
+
+    for _dir in [paths.MANUAL_DIR, paths.RESULTS_DIR]:
+        if(not os.path.exists(_dir)):
+            print('Created : ' + _dir)
+            os.makedirs(_dir)
+        else:
+            print('Present : ' + _dir)
+
+    for _dir in [paths.MULTI_MARKED_DIR, paths.ERRORS_DIR, paths.BAD_ROLLS_DIR]:
+        if(not os.path.exists(_dir)):
+            print('Created : ' + _dir)
+            os.makedirs(_dir)
+        else:
+            print('Present : ' + _dir)
+
+
+def waitQ():
+    ESC_KEY = 27
+    while(cv2.waitKey(1) & 0xFF not in [ord('q'), ESC_KEY]):
+        pass
+    global windowX, windowY
+    windowX = 0
+    windowY = 0
+    cv2.destroyAllWindows()
+
+
+def show(name, orig, pause=1, resize=False, resetpos=None):
+    global windowX, windowY
+    if(type(orig) == type(None)):
+        print(name, " NoneType image to show!")
+        if(pause):
+            cv2.destroyAllWindows()
+        return
+    origDim = orig.shape[:2]
+    img = resize_util(
+        orig, config.dimensions.display_width) if resize else orig
+    cv2.imshow(name, img)
+    if(resetpos):
+        windowX = resetpos[0]
+        windowY = resetpos[1]
+    cv2.moveWindow(name, windowX, windowY)
+
+    h, w = img.shape[:2]
+
+    # Set next window position
+    margin = 25
+    w += margin
+    h += margin
+    if(windowX + w > config.dimensions.windowWidth):
+        windowX = 0
+        if(windowY + h > config.dimensions.windowHeight):
+            windowY = 0
+        else:
+            windowY += h
+    else:
+        windowX += w
+
+    if(pause):
+        print(
+            "Showing '" +
+            name +
+            "'\n\tPress Q on image to continue Press Ctrl + C in terminal to exit")
+        waitQ()
 
 def readResponse(template, image, name, savedir=None, autoAlign=False):
     global clahe
@@ -897,6 +878,23 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
     #     print(exc_type, fname, exc_tb.tb_lineno)
 
 
+def resetSaveImg(key):
+    global saveImgList
+    saveImgList[key] = []
+
+
+def appendSaveImg(key, img):
+    if(config.outputs.save_image_level >= int(key)):
+        global saveImgList
+        if(key not in saveImgList):
+            saveImgList[key] = []
+        saveImgList[key].append(img.copy())
+
+
+def saveImg(path, final_marked):
+    print('Saving Image to ' + path)
+    cv2.imwrite(path, final_marked)
+
 def saveOrShowStacks(key, name, savedir=None, pause=1):
     global saveImgList
     if(config.outputs.save_image_level >= int(key) and saveImgList[key] != []):
@@ -909,3 +907,9 @@ def saveOrShowStacks(key, name, savedir=None, pause=1):
             saveImg(savedir+'stack/'+name+'_'+str(key)+'_stack.jpg', result)
         else:
             show(name + '_' + str(key), result, pause, 0)
+
+
+def printbuf(x):
+    sys.stdout.write(str(x))
+    sys.stdout.write('\r')
+

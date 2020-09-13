@@ -1,10 +1,10 @@
 import os
 import cv2
-from extension import ImagePreprocessor
+from .interfaces.ImagePreprocessor import ImagePreprocessor
 import numpy as np
 
-import utils
-import config
+import src.utils
+import src.config
 
 class CropOnMarkers(ImagePreprocessor):
     def __init__(self, marker_ops, cwd):

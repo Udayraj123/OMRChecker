@@ -1,7 +1,7 @@
 import json
 from deepmerge import always_merger
-from constants import CONFIG_DEFAULTS_PATH, TEMPLATE_DEFAULTS_PATH
-from utils import loadJson
+from .constants import CONFIG_DEFAULTS_PATH, TEMPLATE_DEFAULTS_PATH
+from .utils import loadJson
 
 templateDefaults = loadJson(TEMPLATE_DEFAULTS_PATH)
 

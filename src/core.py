@@ -6,31 +6,33 @@ https://github.com/Udayraj123
 
 """
 
-import re
-import os
-import cv2
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import imutils
-
-import constants
-import utils
-from template import Template
-from extension import ExtensionManager
-
-# Load extensions
-ext_mgr = ExtensionManager(constants.EXTENSION_PATH)
-
-# TODO: Move these globals into a class
-filesMoved=0
-filesNotMoved=0
-
+# import sys
 from glob import glob
 from csv import QUOTE_NONNUMERIC
 from time import localtime, strftime, time
 from pathlib import Path
-from config import openTemplateWithDefaults, openConfigWithDefaults
+from .config import openTemplateWithDefaults, openConfigWithDefaults
+from .processors.manager import ProcessorManager
+from .template import Template
+
+import src.utils
+import src.constants
+
+import imutils
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+import cv2
+import re
+import os
+
+
+# Load processors
+processorManager = ProcessorManager()
+
+# TODO: Move these globals into a class
+filesMoved=0
+filesNotMoved=0
 
 # TODO(beginner task) :-
 # from colorama import init
@@ -46,7 +48,7 @@ def process_dir(root_dir, curr_dir, args, template):
     # Update local template (in current recursion stack) 
     local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
     if os.path.exists(local_template_path):
-        template = Template(local_template_path, ext_mgr.extensions)
+        template = Template(local_template_path, processorManager.processors)
 
     # Look for subdirectories for processing
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]

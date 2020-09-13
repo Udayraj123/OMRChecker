@@ -6,11 +6,9 @@ https://github.com/Udayraj123
 
 """
 import os
-import json
-# import constants
 
-from constants import TEMPLATE_DEFAULTS_PATH
-from utils import loadJson
+from .constants import TEMPLATE_DEFAULTS_PATH
+from .utils import loadJson
 
 templateDefaults = loadJson(TEMPLATE_DEFAULTS_PATH)
 
@@ -80,6 +78,7 @@ qtype_data = {
     # 
 }
 
+# Note: removing this(LowercaseOrderedDict) will also impact code in processors
 class LowercaseOrderedDict(OrderedDict):
     def __setitem__(self, key, value):
         if isinstance(key, str):
