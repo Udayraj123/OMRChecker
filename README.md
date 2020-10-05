@@ -209,6 +209,10 @@ Here's a sneak peak of the [Android OMR Helper App(WIP)](https://github.com/Uday
 	</a>
 </p>
 
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/Udayraj123/OMRChecker.svg)](https://starchart.cc/Udayraj123/OMRChecker)
+      
 <!-- Begin donate section -->
 ### Other ways you can contribute:
 - Help OMRChecker cross 560 stars ⭐ to become #1 ([Currently #4](https://github.com/topics/omr)). 
