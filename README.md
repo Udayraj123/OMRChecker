@@ -215,7 +215,7 @@ Here's a sneak peak of the [Android OMR Helper App(WIP)](https://github.com/Uday
       
 <!-- Begin donate section -->
 ### Other ways you can contribute:
-- Help OMRChecker cross 560 stars ⭐ to become #1 ([Currently #4](https://github.com/topics/omr)). 
+- Help OMRChecker cross 750 stars ⭐ to become #1 ([Currently #3](https://github.com/topics/omr)). 
 Current stars: [![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
 
 - [Buy Me A Coffee ☕](https://www.buymeacoffee.com/Udayraj123) - To keep my brain juices flowing and help me create more such projects 💡 
