@@ -5,10 +5,10 @@ Udayraj Deshmukh
 https://github.com/Udayraj123
 
 """
-import os
+from deepmerge import always_merger
 
 from .constants import TEMPLATE_DEFAULTS_PATH
-from .utils import loadJson
+from .utils.file import loadJson
 
 templateDefaults = loadJson(TEMPLATE_DEFAULTS_PATH)
 

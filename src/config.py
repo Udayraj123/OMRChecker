@@ -1,15 +1,12 @@
-import json
 from deepmerge import always_merger
-from .constants import CONFIG_DEFAULTS_PATH, TEMPLATE_DEFAULTS_PATH
-from .utils import loadJson
+from .constants import CONFIG_DEFAULTS_PATH
+from .utils.file import loadJson
+from dotmap import DotMap
 
-templateDefaults = loadJson(TEMPLATE_DEFAULTS_PATH)
-
-def openTemplateWithDefaults(templatePath):
-    user_template = loadJson(templatePath)
-    return always_merger.merge(templateDefaults, user_template)
-
-configDefaults = loadJson(CONFIG_DEFAULTS_PATH)
+configDefaults = DotMap(loadJson(CONFIG_DEFAULTS_PATH))
 def openConfigWithDefaults(configPath):
     user_config = loadJson(configPath)
-    return always_merger.merge(configDefaults, user_config)
+    merged_dict = always_merger.merge(configDefaults, user_config)
+    return DotMap(merged_dict)
+
+

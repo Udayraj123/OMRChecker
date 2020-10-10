@@ -7,6 +7,8 @@
 
 # Use all imports relative to root directory (https://chrisyeh96.github.io/2017/08/08/definitive-guide-python-imports.html#case-2-syspath-could-change)
 import src.constants
+# TODO: pass config in runtime later
+from src.config import configDefaults as config
 
 from imutils import grab_contours
 from random import randint
@@ -31,7 +33,6 @@ resetpos = [0, 0]
 windowX, windowY = 0, 0
 
 plt.rcParams['figure.figsize'] = (10.0, 8.0)
-
 
 # Image-processing utils
 
@@ -434,11 +435,6 @@ def getLocalThreshold(
 
 
 # Non image-processing utils
-
-def loadJson(path, **rest):
-    with open(path, "r") as f:
-        loaded = json.load(f, **rest)
-    return loaded
 
 
 def setup_dirs(paths):

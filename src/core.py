@@ -6,17 +6,22 @@ https://github.com/Udayraj123
 
 """
 
-# import sys
+import argparse
 from glob import glob
 from csv import QUOTE_NONNUMERIC
 from time import localtime, strftime, time
 from pathlib import Path
-from .config import openTemplateWithDefaults, openConfigWithDefaults
+
+# TODO: further break utils down and separate the imports
+import src.utils.core as utils 
+import src.constants as constants
+
+# TODO: use openConfigWithDefaults after making a Config class.
+from .config import configDefaults as config
+
+# Note: dot-imported paths are relative to current directory
 from .processors.manager import ProcessorManager
 from .template import Template
-
-import src.utils
-import src.constants
 
 import imutils
 import matplotlib.pyplot as plt
@@ -43,7 +48,7 @@ def entry_point(root_dir, curr_dir, args):
     return process_dir(root_dir, curr_dir, args)
 
 # TODO: make this function pure
-def process_dir(root_dir, curr_dir, args, template):
+def process_dir(root_dir, curr_dir, args, template = None):
 
     # Update local template (in current recursion stack) 
     local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
@@ -53,7 +58,7 @@ def process_dir(root_dir, curr_dir, args, template):
     # Look for subdirectories for processing
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
 
-    paths = config.Paths(Path(args['output_dir'], curr_dir.relative_to(root_dir)))
+    paths = constants.Paths(Path(args['output_dir'], curr_dir.relative_to(root_dir)))
 
     # look for images in current dir to process
     exts = ('*.png', '*.jpg')       
@@ -90,8 +95,8 @@ def process_dir(root_dir, curr_dir, args, template):
         print('')
 
         utils.setup_dirs(paths)
-        output_set = setup_output(paths, template)
-        process_files(omr_files, template, args_local, output_set)
+        out = setup_output(paths, template)
+        process_files(omr_files, template, args_local, out)
 
     elif len(subdirs) == 0:
         # Each subdirectory should have images or should be non-leaf
