@@ -7,7 +7,7 @@
     40,
     40
   ],
-  "Preprocessors": {
+  "PreProcessors": {
     "CropOnMarkers": {
       "RelativePath": "omr_marker.jpg",
       "SheetToMarkerWidthRatio": 17
