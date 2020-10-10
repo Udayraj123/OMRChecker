@@ -13,7 +13,7 @@ from time import localtime, strftime, time
 from pathlib import Path
 
 # TODO: further break utils down and separate the imports
-import src.utils.core as utils 
+import src.utils.notSorted as utils
 import src.constants as constants
 
 # TODO: use openConfigWithDefaults after making a Config class.
