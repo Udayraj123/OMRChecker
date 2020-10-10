@@ -12,8 +12,8 @@ from .utils.object import override_merger
 
 templateDefaults = loadJson(TEMPLATE_DEFAULTS_PATH)
 
-def openTemplateWithDefaults(templatePath, **rest):
-    user_template = loadJson(templatePath, **rest)
+def openTemplateWithDefaults(templatePath):
+    user_template = loadJson(templatePath)
     return override_merger.merge(templateDefaults, user_template)
 
 import numpy as np
@@ -42,16 +42,16 @@ class Pt():
 
 
 class QBlock():
-    def __init__(self, dims, key, orig, traverse_pts):
-        # dims = (width, height)
-        self.dims = tuple(round(x) for x in dims)
+    def __init__(self, dimensions, key, orig, traverse_pts):
+        # dimensions = (width, height)
+        self.dimensions = tuple(round(x) for x in dimensions)
         self.key = key
         self.orig = orig
         self.traverse_pts = traverse_pts
         # will be set when using
         self.shift = 0
 
-
+# TODO: get this out
 qtype_data = {
     'QTYPE_MED': {
         'vals': ['E', 'H'],
@@ -77,55 +77,47 @@ qtype_data = {
     # You can create and append custom question types here-
     # 
 }
-
-# Note: removing this(LowercaseOrderedDict) will also impact code in processors
-class LowercaseOrderedDict(OrderedDict):
-    def __setitem__(self, key, value):
-        if isinstance(key, str):
-            return super().__setitem__(key.lower(), value)
-        return super().__setitem__(key, value)
-
 class Template():
     def __init__(self, template_path, extensions):
-            # TODO: get rid of LowercaseOrderedDict as it's counterintuitive
-        json_obj = openTemplateWithDefaults(template_path,object_pairs_hook=LowercaseOrderedDict)
+        json_obj = openTemplateWithDefaults(template_path)
         self.path = template_path.name
-        self.QBlocks = []
-        # throw exception on key not exist
-        self.dims = json_obj["dimensions"]
-        self.bubbleDimensions = json_obj["bubbledimensions"]
-        self.concats = json_obj["concatenations"]
+        self.qBlocks = []
+        # TODO: ajv validation - throw exception on key not exist
+        # TODO: extend DotMap here and only access keys that need extra parsing
+        self.dimensions = json_obj["dimensions"]
+        self.bubbleDimensions = json_obj["bubbleDimensions"]
+        self.concatenations = json_obj["concatenations"]
         self.singles = json_obj["singles"]
 
         # Add new qTypes from template
         if "qtypes" in json_obj:
             qtype_data.update(json_obj["qtypes"])
 
-        # load image preprocessors
-        self.preprocessors = [extensions[name](opts, template_path.parent) 
+        # load image preProcessors
+        self.preProcessors = [extensions[name](opts, template_path.parent) 
                               for name, opts in json_obj.get(
-                                    "preprocessors", {}).items()]
+                                    "preProcessors", {}).items()]
 
-        # Add Options
+        # Add options
         self.options = json_obj.get("options", {})
 
 
-        # Add QBlocks
-        for name, block in json_obj["qblocks"].items():
+        # Add qBlocks
+        for name, block in json_obj["qBlocks"].items():
             self.addQBlocks(name, block)
 
 
     # Expects bubbleDimensions to be set already
     def addQBlocks(self, key, rect):
         assert(self.bubbleDimensions != [-1, -1])
-        # For qType defined in QBlocks
-        if 'qtype' in rect:
-            rect.update(**qtype_data[rect['qtype']])
+        # For qType defined in qBlocks
+        if 'qType' in rect:
+            rect.update(**qtype_data[rect['qType']])
         else:
-            rect['qtype'] = {'vals': rect['vals'], 'orient': rect['orient']}
+            rect['qType'] = {'vals': rect['vals'], 'orient': rect['orient']}
         # keyword arg unpacking followed by named args
-        self.QBlocks += genGrid(self.bubbleDimensions, key, **rect)
-        # self.QBlocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
+        self.qBlocks += genGrid(self.bubbleDimensions, key, **rect)
+        # self.qBlocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
 
     def __str__(self):
         return self.path
@@ -141,7 +133,7 @@ def genQBlock(
         vals,
         qType,
         orient,
-        col_orient):
+        colOrient):
     """
     Input:
     orig - start point
@@ -174,7 +166,7 @@ def genQBlock(
     traverse_pts = []
     o = [float(i) for i in orig]
 
-    if(col_orient == orient):
+    if(colOrient == orient):
         for q in range(len(qNos)):
             pt = o.copy()
             pts = []
@@ -207,14 +199,14 @@ def genQBlock(
 def genGrid(
         bubbleDimensions,
         key,
-        qtype,
+        qType,
         orig,
-        biggaps,
+        bigGaps,
         gaps,
-        qnos,
+        qNos,
         vals,
         orient='V',
-        col_orient='V'):
+        colOrient='V'):
     """
     Input(Directly passable from JSON parameters):
     bubbleDimensions - dimesions of single QBox
@@ -266,7 +258,7 @@ TODO: Update this part, add more examples like-
         ]
 
     """
-    gridData = np.array(qnos)
+    gridData = np.array(qNos)
     # print(gridData.shape, gridData)
     if(0 and len(gridData.shape) != 3 or gridData.size == 0):  # product of shape is zero
         print(
@@ -280,7 +272,7 @@ TODO: Update this part, add more examples like-
 
     numDims = [numQsMax, len(vals)]
 
-    QBlocks = []
+    qBlocks = []
 
     # **Simple is powerful**
     # H and V are named with respect to orient == 'H', reverse their meaning
@@ -288,7 +280,7 @@ TODO: Update this part, add more examples like-
     H, V = (0, 1) if(orient == 'H') else (1, 0)
 
     # print(orig, numDims, gridData.shape, gridData)
-    # orient is also the direction of making QBlocks
+    # orient is also the direction of making qBlocks
 
     # print(key, numDims, orig, gaps, bigGaps, origGap )
     qStart = orig.copy()
@@ -304,8 +296,8 @@ TODO: Update this part, add more examples like-
             # Update numDims and origGaps
             numDims[0] = len(qTuple)
             # bigGaps is indep of orientation
-            origGap[0] = biggaps[0] + (numDims[V] - 1) * gaps[H]
-            origGap[1] = biggaps[1] + (numDims[H] - 1) * gaps[V]
+            origGap[0] = bigGaps[0] + (numDims[V] - 1) * gaps[H]
+            origGap[1] = bigGaps[1] + (numDims[H] - 1) * gaps[V]
             # each qTuple will have qNos
             QBlockDims = [
                 # width x height in pixels
@@ -314,7 +306,7 @@ TODO: Update this part, add more examples like-
             ]
             # WATCH FOR BLUNDER(use .copy()) - qStart was getting passed by
             # reference! (others args read-only)
-            QBlocks.append(
+            qBlocks.append(
                 genQBlock(
                     bubbleDimensions,
                     QBlockDims,
@@ -323,10 +315,10 @@ TODO: Update this part, add more examples like-
                     qTuple,
                     gaps,
                     vals,
-                    qtype,
+                    qType,
                     orient,
-                    col_orient))
+                    colOrient))
             # Goes vertically down first
             qStart[V] += origGap[V]
         qStart[H] += origGap[H]
-    return QBlocks
+    return qBlocks

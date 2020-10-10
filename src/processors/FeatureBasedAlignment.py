@@ -2,8 +2,8 @@ import os
 import cv2
 import numpy as np
 from .interfaces.ImagePreprocessor import ImagePreprocessor
-import src.utils
-import src.config
+import src.utils.notSorted as utils
+from src.config import configDefaults as config
 
 # defaults
 MAX_FEATURES = 500
@@ -14,8 +14,8 @@ class FeatureBasedAlignment(ImagePreprocessor):
         # process reference image
         self.ref_path = path.joinpath(options['reference'])
         self.ref_img = cv2.imread(str(self.ref_path), cv2.IMREAD_GRAYSCALE)
-        self.MAX_FEATURES = options.get('maxfeatures', MAX_FEATURES)
-        self.GOOD_MATCH_PERCENT = options.get('goodmatchpercent', GOOD_MATCH_PERCENT)
+        self.MAX_FEATURES = options.get('maxFeatures', MAX_FEATURES)
+        self.GOOD_MATCH_PERCENT = options.get('goodMatchPercent', GOOD_MATCH_PERCENT)
         self.TRANSFORM_2D = options.get('2d', False)
         # Extract keypoints and description of source image
         self.orb = cv2.ORB_create(self.MAX_FEATURES)

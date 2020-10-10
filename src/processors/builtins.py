@@ -30,7 +30,7 @@ class Levels(ImagePreprocessor):
 class GaussianBlur(ImagePreprocessor):
     def apply_filter(self, image, filename):
         return cv2.GaussianBlur(image, 
-                                tuple(self.options.get("ksize", (3, 3))),
+                                tuple(self.options.get("kSize", (3, 3))),
                                 self.options.get("sigmax", 0))
 
 

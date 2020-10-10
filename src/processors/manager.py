@@ -55,4 +55,4 @@ class ProcessorManager:
                     # Only add classes that are a sub class of Processor, but NOT Processor itself
                     if issubclass(c, Processor) & (c is not Processor):
                         print(f'    Found processor class: {c.__module__}.{c.__name__}')
-                        self.processors[c.__name__.lower()] = c
+                        self.processors[c.__name__] = c

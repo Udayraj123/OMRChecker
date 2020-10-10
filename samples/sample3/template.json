@@ -1,19 +1,19 @@
 {
-  "Dimensions": [
+  "dimensions": [
     1846,
     1500
   ],
-  "BubbleDimensions": [
+  "bubbleDimensions": [
     40,
     40
   ],
-  "PreProcessors": {
+  "preProcessors": {
     "CropOnMarkers": {
-      "RelativePath": "omr_marker.jpg",
-      "SheetToMarkerWidthRatio": 17
+      "relativePath": "omr_marker.jpg",
+      "sheetToMarkerWidthRatio": 17
     }
   },
-  "Concatenations": {
+  "concatenations": {
     "Roll": [
       "Squad",
       "Medium",
@@ -48,7 +48,7 @@
       "q10.2"
     ]
   },
-  "Singles": [
+  "singles": [
     "q1",
     "q2",
     "q3",
@@ -67,7 +67,7 @@
     "q21",
     "q22"
   ],
-  "QBlocks": {
+  "qBlocks": {
     "Medium": {
       "qType": "QTYPE_MED",
       "orig": [

@@ -4,8 +4,8 @@
       "display_width": 640,
       "processing_height": 820,
       "processing_width": 666,
-      "windowWidth": 1280,
-      "windowHeight": 720
+      "window_width": 1280,
+      "window_height": 720
   },
   "threshold_params":{
     "GAMMA_LOW": 0.7,

@@ -17,7 +17,7 @@ import src.utils.notSorted as utils
 import src.constants as constants
 
 # TODO: use openConfigWithDefaults after making a Config class.
-from .config import configDefaults as config
+from src.config import configDefaults as config
 
 # Note: dot-imported paths are relative to current directory
 from .processors.manager import ProcessorManager
@@ -65,10 +65,10 @@ def process_dir(root_dir, curr_dir, args, template = None):
     omr_files = sorted(
         [f for ext in exts for f in curr_dir.glob(ext)])
 
-    # Exclude images (take union over all preprocessors)
+    # Exclude images (take union over all preProcessors)
     excluded_files = []
     if(template):
-        for pp in template.preprocessors:
+        for pp in template.preProcessors:
             excluded_files.extend(Path(p) for p in pp.exclude_files())
 
     omr_files = [f for f in omr_files if f not in excluded_files]
@@ -85,11 +85,12 @@ def process_dir(root_dir, curr_dir, args, template = None):
         print('\n------------------------------------------------------------------')
         print(f'Processing directory "{curr_dir}" with settings- ')
         print("\tTotal images       : %d" % (len(omr_files)))
-        print("\tCropping Enabled   : " + str("croponmarkers" in template.preprocessors))
+        print("\tCropping Enabled   : " +
+              str("CropOnMarkers" in template.preProcessors))
         print("\tAuto Alignment     : " + str(args_local["autoAlign"]))
         print("\tUsing Template     : " + str(template))
         # Print options
-        for pp in template.preprocessors:
+        for pp in template.preProcessors:
             print(f'\tUsing preprocessor "{pp.__class__.__name__:13}({pp})"')
 
         print('')
@@ -138,7 +139,7 @@ def processOMR(template, omrResp):
     # print("omrResp",omrResp)
 
     # Multi-column/multi-row questions which need to be concatenated
-    for qNo, respKeys in template.concats.items():
+    for qNo, respKeys in template.concatenations.items():
         csvResp[qNo] = ''.join([omrResp.get(k, UNMARKED_SYMBOL)
                                 for k in respKeys])
 
@@ -146,7 +147,7 @@ def processOMR(template, omrResp):
     for qNo in template.singles:
         csvResp[qNo] = omrResp.get(qNo, UNMARKED_SYMBOL)
 
-    # Note: Concatenations and Singles together should be mutually exclusive
+    # Note: concatenations and singles together should be mutually exclusive
     # and should cover all questions in the template(exhaustive)
     # TODO: ^add a warning if omrResp has unused keys remaining
     return csvResp
@@ -181,7 +182,7 @@ def setup_output(paths, template):
 
     # custom sort: To use integer order in question names instead of
     # alphabetical - avoids q1, q10, q2 and orders them q1, q2, ..., q10
-    ns.respCols = sorted(list(template.concats.keys()) + template.singles,
+    ns.respCols = sorted(list(template.concatenations.keys()) + template.singles,
                          key=lambda x: int(x[1:]) if ord(x[1]) in range(48, 58) else 0)
     ns.emptyResp = [''] * len(ns.respCols)
     ns.sheetCols = ['file_id', 'input_path',
@@ -225,13 +226,13 @@ def preliminary_check():
     # if(config.PRELIM_CHECKS):
     #     # TODO: add more using unit testing
     #     TEMPLATE = TEMPLATES["H"]
-    #     ALL_WHITE = 255 * np.ones((TEMPLATE.dims[1],TEMPLATE.dims[0]), dtype='uint8')
+    #     ALL_WHITE = 255 * np.ones((TEMPLATE.dimensions[1],TEMPLATE.dimensions[0]), dtype='uint8')
     #     OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse("H",ALL_WHITE,name = "ALL_WHITE", savedir = None, autoAlign=True)
     #     print("ALL_WHITE",OMRresponseDict)
     #     if(OMRresponseDict!={}):
     #         print("Preliminary Checks Failed.")
     #         exit(2)
-    #     ALL_BLACK = np.zeros((TEMPLATE.dims[1],TEMPLATE.dims[0]), dtype='uint8')
+    #     ALL_BLACK = np.zeros((TEMPLATE.dimensions[1],TEMPLATE.dimensions[0]), dtype='uint8')
     #     OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse("H",ALL_BLACK,name = "ALL_BLACK", savedir = None, autoAlign=True)
     #     print("ALL_BLACK",OMRresponseDict)
     #     show("Confirm : All bubbles are black",final_marked,1,1)
@@ -265,17 +266,17 @@ def process_files(omr_files, template, args, out):
         inOMR = utils.resize_util(
             inOMR, config.dimensions.processing_width, config.dimensions.processing_height)
 
-        # run preprocessors in sequence
-        for preprocessor in template.preprocessors:
-            inOMR = preprocessor.apply_filter(inOMR, args)           
+        # run preProcessors in sequence
+        for preProcessor in template.preProcessors:
+            inOMR = preProcessor.apply_filter(inOMR, args)           
         
         if(inOMR is None):
             # Error OMR case
-            newfilepath = out.paths.ERRORS_DIR + filename
+            new_filepath = out.paths.ERRORS_DIR + filename
             out.OUTPUT_SET.append([filename] + out.emptyResp)
-            if(checkAndMove(constants.ERROR_CODES.NO_MARKER_ERR, filepath, newfilepath)):
+            if(checkAndMove(constants.ERROR_CODES.NO_MARKER_ERR, filepath, new_filepath)):
                 err_line = [filename, filepath,
-                            newfilepath, "NA"] + out.emptyResp
+                            new_filepath, "NA"] + out.emptyResp
                 pd.DataFrame(err_line, dtype=str) \
                   .T                              \
                   .to_csv(out.filesObj["Errors"],
@@ -319,9 +320,9 @@ def process_files(omr_files, template, args, out):
         # TODO: Add roll number validation here
         if(MultiMarked == 0):
             filesNotMoved += 1
-            newfilepath = savedir + file_id
+            new_filepath = savedir + file_id
             # Enter into Results sheet-
-            results_line = [filename, filepath, newfilepath, score] + respArray
+            results_line = [filename, filepath, new_filepath, score] + respArray
             # Write/Append to results_line file(opened in append mode)
             pd.DataFrame(results_line, dtype=str) \
               .T                                  \
@@ -337,9 +338,9 @@ def process_files(omr_files, template, args, out):
             # MultiMarked file
             print('[%d] MultiMarked, moving File: %s' %
                   (filesCounter, file_id))
-            newfilepath = out.paths.MULTI_MARKED_DIR + filename
-            if(checkAndMove(constants.ERROR_CODES.MULTI_BUBBLE_WARN, filepath, newfilepath)):
-                mm_line = [filename, filepath, newfilepath, "NA"] + respArray
+            new_filepath = out.paths.MULTI_MARKED_DIR + filename
+            if(checkAndMove(constants.ERROR_CODES.MULTI_BUBBLE_WARN, filepath, new_filepath)):
+                mm_line = [filename, filepath, new_filepath, "NA"] + respArray
                 pd.DataFrame(mm_line, dtype=str) \
                   .T                             \
                   .to_csv(out.filesObj["MultiMarked"],

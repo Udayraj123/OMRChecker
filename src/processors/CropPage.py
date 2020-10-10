@@ -1,6 +1,6 @@
 import cv2
 import imutils
-import src.utils
+import src.utils.notSorted as utils
 import numpy as np
 from .interfaces.ImagePreprocessor import ImagePreprocessor
 
@@ -44,7 +44,7 @@ def checkMaxCosine(approx):
 class CropPage(ImagePreprocessor):
     def __init__(self, cropping_ops, args):
         self.args = args
-        self.morph_kernel = tuple(cropping_ops.get("morphkernel", [10, 10]))
+        self.morphKernel = tuple(cropping_ops.get("morphKernel", [10, 10]))
         # TODO: Rest of config defaults here
 
     def findPage(self, image):
@@ -58,7 +58,7 @@ class CropPage(ImagePreprocessor):
         image = normalize(image)
 
         # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 10))
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, self.morph_kernel)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, self.morphKernel)
         """
         # Closing is reverse of Opening, Dilation followed by Erosion.
         A pixel in the original image (either 1 or 0) will be considered 1 only if all the pixels

@@ -77,11 +77,11 @@ def drawTemplateLayout(
         shifted=True,
         draw_qvals=False,
         border=-1):
-    img = resize_util(img, template.dims[0], template.dims[1])
+    img = resize_util(img, template.dimensions[0], template.dimensions[1])
     final_align = img.copy()
     boxW, boxH = template.bubbleDimensions
-    for QBlock in template.QBlocks:
-        s, d = QBlock.orig, QBlock.dims
+    for QBlock in template.qBlocks:
+        s, d = QBlock.orig, QBlock.dimensions
         shift = QBlock.shift
         if(shifted):
             cv2.rectangle(final_align,
@@ -117,7 +117,7 @@ def drawTemplateLayout(
         if(shifted):
             cv2.putText(final_align,
                         's%s'% (shift), 
-                        tuple(s - [template.dims[0] // 20, -d[1] // 2]),
+                        tuple(s - [template.dimensions[0] // 20, -d[1] // 2]),
                         cv2.FONT_HERSHEY_SIMPLEX, 
                         constants.TEXT_SIZE, 
                         constants.CLR_BLACK, 
@@ -497,9 +497,9 @@ def show(name, orig, pause=1, resize=False, resetpos=None):
     margin = 25
     w += margin
     h += margin
-    if(windowX + w > config.dimensions.windowWidth):
+    if(windowX + w > config.dimensions.window_width):
         windowX = 0
-        if(windowY + h > config.dimensions.windowHeight):
+        if(windowY + h > config.dimensions.window_height):
             windowY = 0
         else:
             windowY += h
@@ -519,7 +519,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
     try:
         img = image.copy()
         origDim = img.shape[:2]
-        img = resize_util(img, template.dims[0], template.dims[1])
+        img = resize_util(img, template.dimensions[0], template.dimensions[1])
         if(img.max() > img.min()):
             img = normalize_util(img)
         # Processing copies
@@ -563,7 +563,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             # ,"QTYPE_ROLL":[]}#,"QTYPE_MED":[]}
             qNums = {"int": [], "mcq": []}
 
-        # Find Shifts for the QBlocks --> Before calculating threshold!
+        # Find Shifts for the qBlocks --> Before calculating threshold!
         if(autoAlign):
             # print("Begin Alignment")
             # Open : erode then dilate
@@ -606,10 +606,10 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
 
             # template alignment code (relative alignment algo)
             # OUTPUT : each QBlock.shift is updated
-            for QBlock in template.QBlocks:
-                s, d = QBlock.orig, QBlock.dims
+            for QBlock in template.qBlocks:
+                s, d = QBlock.orig, QBlock.dimensions
                 # internal constants - wont need change much
-                # TODO - ALIGN_STRIDE would depend on template's Dimensions
+                # TODO - ALIGN_STRIDE would depend on template's dimensions
                 MATCH_COL,MAX_STEPS, ALIGN_STRIDE, THK  = itemgetter(['match_col', 'max_steps', 'stride','thickness',])(config.alignment_params)
                 shift, steps = 0, 0
                 while steps < MAX_STEPS:
@@ -641,7 +641,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                     steps += 1
 
                 QBlock.shift = shift
-                # print("Aligned QBlock: ",QBlock.key,"Corrected Shift:", QBlock.shift,", Dimensions:", QBlock.dims, "orig:", QBlock.orig,'\n')
+                # print("Aligned QBlock: ",QBlock.key,"Corrected Shift:", QBlock.shift,", dimensions:", QBlock.dimensions, "orig:", QBlock.orig,'\n')
             # print("End Alignment")
 
         final_align = None
@@ -659,7 +659,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
         # Get mean vals n other stats
         allQVals, allQStripArrs, allQStdVals = [], [], []
         totalQStripNo = 0
-        for QBlock in template.QBlocks:
+        for QBlock in template.qBlocks:
             QStdVals = []
             for qStrip, qBoxPts in QBlock.traverse_pts:
                 QStripvals = []
@@ -713,10 +713,10 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
         #     appendSaveImg(2,hist)
 
         perOMRThresholdAvg, totalQStripNo, totalQBoxNo = 0, 0, 0
-        for QBlock in template.QBlocks:
+        for QBlock in template.qBlocks:
             blockQStripNo = 1  
             shift = QBlock.shift
-            s, d = QBlock.orig, QBlock.dims
+            s, d = QBlock.orig, QBlock.dimensions
             key = QBlock.key[:3]
             # cv2.rectangle(final_marked,(s[0]+shift,s[1]),(s[0]+shift+d[0],s[1]+d[1]),CLR_BLACK,3)
             for qStrip, qBoxPts in QBlock.traverse_pts:
@@ -809,8 +809,8 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
         # TODO: move this validation into template.py -
         if(totalQStripNo == 0):
             print(
-                "\n\t UNEXPECTED Template Incorrect Error: totalQStripNo is zero! QBlocks: ",
-                template.QBlocks)
+                "\n\t UNEXPECTED Template Incorrect Error: totalQStripNo is zero! qBlocks: ",
+                template.qBlocks)
             exit(21)
 
         perOMRThresholdAvg /= totalQStripNo

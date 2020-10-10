@@ -3,17 +3,18 @@ import cv2
 from .interfaces.ImagePreprocessor import ImagePreprocessor
 import numpy as np
 
-import src.utils
-import src.config
+import src.utils.notSorted as utils
+from src.config import configDefaults as config
 
 class CropOnMarkers(ImagePreprocessor):
     def __init__(self, marker_ops, cwd):
         self.thresholdCircles = []
         # options with defaults
         self.marker_path = os.path.join(
-            cwd, marker_ops.get("relativepath", "omr_marker.jpg"))
-        self.minMatchingThreshold = marker_ops.get("minmatchingthreshold", 0.3)
-        self.maxMatchingVariation = marker_ops.get("maxmatchingvariation", 0.41)
+            cwd, marker_ops.get("relativePath", "omr_marker.jpg"))
+        self.minMatchingThreshold = marker_ops.get("minMatchingThreshold", 0.3)
+        self.maxMatchingVariation = marker_ops.get(
+            "maxMatchingVariation", 0.41)
         self.marker_rescale_range = marker_ops.get(
             "marker_rescale_range", (35, 100))
         self.marker_rescale_steps = marker_ops.get("marker_rescale_steps", 10)
@@ -26,10 +27,10 @@ class CropOnMarkers(ImagePreprocessor):
 
         marker = cv2.imread(self.marker_path, cv2.IMREAD_GRAYSCALE)
 
-        if("sheettomarkerwidthratio" in marker_ops):
+        if("sheetToMarkerWidthRatio" in marker_ops):
             # TODO: processing_width should come through proper channel
             marker = utils.resize_util(marker, config.dimensions.processing_width /
-                                    int(marker_ops["sheettomarkerwidthratio"]))
+                                    int(marker_ops["sheetToMarkerWidthRatio"]))
         marker = cv2.GaussianBlur(marker, (5, 5), 0)
         marker = cv2.normalize(
             marker,
@@ -81,7 +82,7 @@ class CropOnMarkers(ImagePreprocessor):
                 best_scale, allMaxT = s, maxT
 
         if(allMaxT < self.minMatchingThreshold):
-            print("\tWarning: Template matching too low! Consider rechecking preprocessors applied before this.")
+            print("\tWarning: Template matching too low! Consider rechecking preProcessors applied before this.")
             if(config.outputs.show_image_level >= 1):
                 show("res", res, 1, 0)
 

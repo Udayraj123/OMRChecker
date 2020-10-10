@@ -1,14 +1,14 @@
 {
   "Globals": {
-    "windowWidth": 2480,
-    "windowHeight": 3508,
+    "window_width": 2480,
+    "window_height": 3508,
     "display_width": 2480 ,
     "display_height": 3508
   },
-  "Dimensions": [2480, 3508 ],
-  "BubbleDimensions": [42, 42 ],
+  "dimensions": [2480, 3508 ],
+  "bubbleDimensions": [42, 42 ],
   
-  "PreProcessors": {
+  "preProcessors": {
     "Levels": {
       "Low": 0.70,
       "High": 0.8
@@ -19,12 +19,12 @@
     }
   },
 
-  "Concatenations" : {
+  "concatenations" : {
     "Roll" : ["stu","roll0", "roll1", "roll2", "roll3", "roll4", "roll5", "roll6", "check"]
   },
-  "Singles":[      
+  "singles":[      
   ],
-  "QBlocks": {
+  "qBlocks": {
     "Check1": {
       "orig": [2033, 1290],
       "gaps": [ 50, 50],

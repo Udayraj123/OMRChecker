@@ -1,29 +1,29 @@
 {
-  "Dimensions": [
+  "dimensions": [
     300,
     400
   ],
-  "BubbleDimensions": [
+  "bubbleDimensions": [
     25,
     25
   ],
-  "PreProcessors": {
+  "preProcessors": {
     "CropPage": {
-      "MorphKernel": [
+      "morphKernel": [
         10,
         10
       ]
     }
   },
-  "Concatenations": {},
-  "Singles": [
+  "concatenations": {},
+  "singles": [
     "q1",
     "q2",
     "q3",
     "q4",
     "q5"
   ],
-  "QBlocks": {
+  "qBlocks": {
     "MCQBlock1": {
       "qType": "QTYPE_MCQ5",
       "orig": [
