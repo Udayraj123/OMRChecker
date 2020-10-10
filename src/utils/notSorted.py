@@ -40,7 +40,7 @@ def normalize_util(img, alpha=0, beta=255):
 
 
 def normalize_hist(img):
-    hist, bins = np.histogram(img.flatten(), 256, [0, 256])
+    hist, _ = np.histogram(img.flatten(), 256, [0, 256])
     cdf = hist.cumsum()
     cdf_m = np.ma.masked_equal(cdf, 0)
     cdf_m = (cdf_m - cdf_m.min()) * 255 / (cdf_m.max() - cdf_m.min())
@@ -95,7 +95,7 @@ def drawTemplateLayout(
                           (s[0] + d[0], s[1] + d[1]),
                           constants.CLR_BLACK
                           ,3)
-        for qStrip, qBoxPts in QBlock.traverse_pts:
+        for _, qBoxPts in QBlock.traverse_pts:
             for pt in qBoxPts:
                 x, y = (pt.x + QBlock.shift, pt.y) if shifted else (pt.x, pt.y)
                 cv2.rectangle(final_align,
@@ -126,6 +126,7 @@ def drawTemplateLayout(
 
 
 def getPlotImg():
+    # Why save the image and delete? Can convert to grayscale directly?
     plt.savefig('tmp.png')
     # img = cv2.imread('tmp.png',cv2.IMREAD_COLOR)
     img = cv2.imread('tmp.png', cv2.IMREAD_GRAYSCALE)
@@ -272,6 +273,7 @@ def getGlobalThreshold(
 
     """
     # Sort the Q vals
+    # Change var name of QVals
     QVals = sorted(QVals_orig)
     # Find the FIRST LARGE GAP and set it as threshold:
     ls = (looseness + 1) // 2
@@ -303,8 +305,8 @@ def getGlobalThreshold(
     #     print("Note: taking safer thr line.")
     #     globalTHR, j_low, j_high = thr2, thr2 - max2//2, thr2 + max2//2
 
-    if(plotTitle is not None):
-        f, ax = plt.subplots()
+    if plotTitle:
+        _, ax = plt.subplots()
         ax.bar(range(len(QVals_orig)), QVals if sortInPlot else QVals_orig)
         ax.set_title(plotTitle)
         thrline = ax.axhline(globalTHR, color='green', ls='--', linewidth=5)
@@ -400,8 +402,9 @@ def getLocalThreshold(
         # if(thr1 == 255):
         #     print("Warning: threshold is unexpectedly 255! (Outlier Delta issue?)",plotTitle)
 
+    # Make a common plot function to show local and global thresholds
     if(plotShow and plotTitle is not None):
-        f, ax = plt.subplots()
+        _, ax = plt.subplots()
         ax.bar(range(len(QVals)), QVals)
         thrline = ax.axhline(thr1, color='green', ls=('-.'), linewidth=3)
         thrline.set_label("Local Threshold")
@@ -482,7 +485,7 @@ def show(name, orig, pause=1, resize=False, resetpos=None):
         if(pause):
             cv2.destroyAllWindows()
         return
-    origDim = orig.shape[:2]
+    # origDim = orig.shape[:2]
     img = resize_util(
         orig, config.dimensions.display_width) if resize else orig
     cv2.imshow(name, img)
@@ -518,7 +521,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
 
     try:
         img = image.copy()
-        origDim = img.shape[:2]
+        # origDim = img.shape[:2]
         img = resize_util(img, template.dimensions[0], template.dimensions[1])
         if(img.max() > img.min()):
             img = normalize_util(img)
@@ -538,7 +541,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             # Remove shadows further, make columns/boxes darker (less gamma)
             morph = adjust_gamma(morph, config.threshold_params.GAMMA_LOW)
             # TODO: all numbers should come from either constants or config
-            ret, morph = cv2.threshold(morph, 220, 220, cv2.THRESH_TRUNC)
+            _, morph = cv2.threshold(morph, 220, 220, cv2.THRESH_TRUNC)
             morph = normalize_util(morph)
             appendSaveImg(3,morph)
             if(config.outputs.show_image_level>=4):
@@ -546,10 +549,10 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
 
         # Overlay Transparencies
         alpha = 0.65
-        alpha1 = 0.55
+        # alpha1 = 0.55
 
         boxW, boxH = template.bubbleDimensions
-        lang = ['E', 'H']
+        # lang = ['E', 'H']
         OMRresponse = {}
 
         multimarked, multiroll = 0, 0
@@ -571,7 +574,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 10))
             morph_v = cv2.morphologyEx(
                 morph, cv2.MORPH_OPEN, v_kernel, iterations=3)
-            ret, morph_v = cv2.threshold(morph_v, 200, 200, cv2.THRESH_TRUNC)
+            _, morph_v = cv2.threshold(morph_v, 200, 200, cv2.THRESH_TRUNC)
             morph_v = 255 - normalize_util(morph_v)
 
             if(config.outputs.show_image_level >= 3):
@@ -661,7 +664,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
         totalQStripNo = 0
         for QBlock in template.qBlocks:
             QStdVals = []
-            for qStrip, qBoxPts in QBlock.traverse_pts:
+            for _, qBoxPts in QBlock.traverse_pts:
                 QStripvals = []
                 for pt in qBoxPts:
                     # shifted
@@ -681,7 +684,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                 totalQStripNo += 1
             allQStdVals.extend(QStdVals)
         # print("Begin getGlobalThresholdStd")
-        globalStdTHR, jstd_low, jstd_high = getGlobalThreshold(allQStdVals)# , "Q-wise Std-dev Plot", plotShow=True, sortInPlot=True)
+        globalStdTHR, _, _ = getGlobalThreshold(allQStdVals)# , "Q-wise Std-dev Plot", plotShow=True, sortInPlot=True)
         # print("End getGlobalThresholdStd")
         # print("Begin getGlobalThreshold")
         # plt.show()
@@ -691,7 +694,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
         # Note: Plotting takes Significant times here --> Change Plotting args
         # to support show_image_level
         # , "Mean Intensity Histogram",plotShow=True, sortInPlot=True)
-        globalTHR, j_low, j_high = getGlobalThreshold(allQVals, looseness=4)
+        globalTHR, _, _ = getGlobalThreshold(allQVals, looseness=4)
 
         # TODO colorama
         print(
@@ -719,7 +722,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             s, d = QBlock.orig, QBlock.dimensions
             key = QBlock.key[:3]
             # cv2.rectangle(final_marked,(s[0]+shift,s[1]),(s[0]+shift+d[0],s[1]+d[1]),CLR_BLACK,3)
-            for qStrip, qBoxPts in QBlock.traverse_pts:
+            for _, qBoxPts in QBlock.traverse_pts:
                 # All Black or All White case
                 noOutliers = allQStdVals[totalQStripNo] < globalStdTHR
                 # print(totalQStripNo, qBoxPts[0].qNo, allQStdVals[totalQStripNo], "noOutliers:", noOutliers)
