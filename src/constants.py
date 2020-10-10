@@ -11,7 +11,7 @@ import os
 """
 Constants
 """
-
+from dotmap import DotMap 
 # Paths
 current_module_dir=os.path.dirname(__file__)
 CONFIG_DEFAULTS_PATH = os.path.join(current_module_dir,"defaults/config.json")
@@ -22,10 +22,10 @@ TEMPLATE_FILENAME = "template.json"
 CONFIG_FILENAME = "config.json"
 
 # 
-ERROR_CODES = {
+ERROR_CODES = DotMap({
     "MULTI_BUBBLE_WARN": 1,
     "NO_MARKER_ERR": 2,
-}
+})
 
 # Rather these are internal constants & not configs
 # CLR_BLACK = rgb2tuple(CLR_BLACK)

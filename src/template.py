@@ -5,16 +5,16 @@ Udayraj Deshmukh
 https://github.com/Udayraj123
 
 """
-from deepmerge import always_merger
 
 from .constants import TEMPLATE_DEFAULTS_PATH
 from .utils.file import loadJson
+from .utils.object import override_merger
 
 templateDefaults = loadJson(TEMPLATE_DEFAULTS_PATH)
 
 def openTemplateWithDefaults(templatePath, **rest):
     user_template = loadJson(templatePath, **rest)
-    return always_merger.merge(templateDefaults, user_template)
+    return override_merger.merge(templateDefaults, user_template)
 
 import numpy as np
 from argparse import Namespace
@@ -93,7 +93,7 @@ class Template():
         self.QBlocks = []
         # throw exception on key not exist
         self.dims = json_obj["dimensions"]
-        self.bubbleDims = json_obj["bubbledimensions"]
+        self.bubbleDimensions = json_obj["bubbledimensions"]
         self.concats = json_obj["concatenations"]
         self.singles = json_obj["singles"]
 
@@ -115,16 +115,16 @@ class Template():
             self.addQBlocks(name, block)
 
 
-    # Expects bubbleDims to be set already
+    # Expects bubbleDimensions to be set already
     def addQBlocks(self, key, rect):
-        assert(self.bubbleDims != [-1, -1])
+        assert(self.bubbleDimensions != [-1, -1])
         # For qType defined in QBlocks
         if 'qtype' in rect:
             rect.update(**qtype_data[rect['qtype']])
         else:
             rect['qtype'] = {'vals': rect['vals'], 'orient': rect['orient']}
         # keyword arg unpacking followed by named args
-        self.QBlocks += genGrid(self.bubbleDims, key, **rect)
+        self.QBlocks += genGrid(self.bubbleDimensions, key, **rect)
         # self.QBlocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
 
     def __str__(self):
@@ -132,7 +132,7 @@ class Template():
 
 
 def genQBlock(
-        bubbleDims,
+        bubbleDimensions,
         QBlockDims,
         key,
         orig,
@@ -182,8 +182,8 @@ def genQBlock(
                 pts.append(Pt(pt.copy(), qNos[q], qType, vals[v]))
                 pt[H] += gaps[H]
             # For diagonalal endpoint of QBlock
-            pt[H] += bubbleDims[H] - gaps[H]
-            pt[V] += bubbleDims[V]
+            pt[H] += bubbleDimensions[H] - gaps[H]
+            pt[V] += bubbleDimensions[V]
             # TODO- make a mini object for this
             traverse_pts.append(([o.copy(), pt.copy()], pts))
             o[V] += gaps[V]
@@ -195,8 +195,8 @@ def genQBlock(
                 pts.append(Pt(pt.copy(), qNos[q], qType, vals[v]))
                 pt[V] += gaps[V]
             # For diagonalal endpoint of QBlock
-            pt[V] += bubbleDims[V] - gaps[V]
-            pt[H] += bubbleDims[H]
+            pt[V] += bubbleDimensions[V] - gaps[V]
+            pt[H] += bubbleDimensions[H]
             # TODO- make a mini object for this
             traverse_pts.append(([o.copy(), pt.copy()], pts))
             o[H] += gaps[H]
@@ -205,7 +205,7 @@ def genQBlock(
 
 
 def genGrid(
-        bubbledims,
+        bubbleDimensions,
         key,
         qtype,
         orig,
@@ -217,7 +217,7 @@ def genGrid(
         col_orient='V'):
     """
     Input(Directly passable from JSON parameters):
-    bubbleDims - dimesions of single QBox
+    bubbleDimensions - dimesions of single QBox
     orig- start point
     qNos - an array of qNos tuples(see below) that align with dimension of the big grid (gridDims extracted from here)
     bigGaps - (bigGapX,bigGapY) are the gaps between blocks
@@ -309,14 +309,14 @@ TODO: Update this part, add more examples like-
             # each qTuple will have qNos
             QBlockDims = [
                 # width x height in pixels
-                gaps[0] * (numDims[V] - 1) + bubbledims[H],
-                gaps[1] * (numDims[H] - 1) + bubbledims[V]
+                gaps[0] * (numDims[V] - 1) + bubbleDimensions[H],
+                gaps[1] * (numDims[H] - 1) + bubbleDimensions[V]
             ]
             # WATCH FOR BLUNDER(use .copy()) - qStart was getting passed by
             # reference! (others args read-only)
             QBlocks.append(
                 genQBlock(
-                    bubbledims,
+                    bubbleDimensions,
                     QBlockDims,
                     key,
                     qStart.copy(),

@@ -6,7 +6,7 @@
 """
 
 # Use all imports relative to root directory (https://chrisyeh96.github.io/2017/08/08/definitive-guide-python-imports.html#case-2-syspath-could-change)
-import src.constants
+import src.constants as constants
 # TODO: pass config in runtime later
 from src.config import configDefaults as config
 
@@ -23,7 +23,6 @@ import re
 import numpy as np
 import json
 from operator import itemgetter
-
 
 # Locals (TODO: put into class)
 saveImgList = {}
@@ -80,7 +79,7 @@ def drawTemplateLayout(
         border=-1):
     img = resize_util(img, template.dims[0], template.dims[1])
     final_align = img.copy()
-    boxW, boxH = template.bubbleDims
+    boxW, boxH = template.bubbleDimensions
     for QBlock in template.QBlocks:
         s, d = QBlock.orig, QBlock.dims
         shift = QBlock.shift
@@ -390,7 +389,7 @@ def getLocalThreshold(
 
         CONFIDENT_JUMP = config.threshold_params.MIN_JUMP + config.threshold_params.CONFIDENT_SURPLUS
         # If not confident, then only take help of globalTHR
-        if(max1 < config.CONFIDENT_JUMP):
+        if(max1 < CONFIDENT_JUMP):
             if(noOutliers):
                 # All Black or All White case
                 thr1 = globalTHR
@@ -549,7 +548,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
         alpha = 0.65
         alpha1 = 0.55
 
-        boxW, boxH = template.bubbleDims
+        boxW, boxH = template.bubbleDimensions
         lang = ['E', 'H']
         OMRresponse = {}
 

@@ -11,6 +11,7 @@
     "GAMMA_LOW": 0.7,
     "MIN_GAP": 30,
     "MIN_JUMP": 25,
+    "CONFIDENT_SURPLUS": 5,
     "JUMP_DELTA": 30
   },
   "alignment_params":{
