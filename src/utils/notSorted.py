@@ -25,7 +25,65 @@ import json
 from operator import itemgetter
 
 # Locals (TODO: put into class)
-saveImgList = {}
+class ImageUtils:
+    """Class to hold indicators of images and save images."""
+
+    def __init__(self):
+        """Constructor for class ImageUtils"""
+        self.save_img_list = {}
+        self.save_image_level = config.outputs.save_image_level
+
+    def reset_save_img(self, key):
+        self.save_img_list[key] = []
+
+    def append_save_img(self, key, img):
+        if self.save_image_level >= int(key):
+            if key not in self.save_img_list:
+                self.save_img_list[key] = []
+            self.save_img_list[key].append(img.copy())
+
+    def saveImg(self, path, final_marked):
+        print("Saving Image to " + path)
+        cv2.imwrite(path, final_marked)
+
+    def saveOrShowStacks(self, key, name, savedir=None, pause=1):
+        if self.save_image_level >= int(key) and self.save_img_list[key] != []:
+            result = np.hstack(
+                tuple(
+                    [
+                        resize_util_h(img, config.dimensions.display_height)
+                        for img in self.save_img_list[key]
+                    ]
+                )
+            )
+            result = resize_util(
+                result,
+                min(
+                    len(self.save_img_list[key]) * config.dimensions.display_width // 3,
+                    int(config.dimensions.display_width * 2.5),
+                ),
+            )
+            if type(savedir) != type(None):
+                self.saveImg(
+                    savedir + "stack/" + name + "_" + str(key) + "_stack.jpg", result
+                )
+            else:
+                show(name + "_" + str(key), result, pause, 0)
+
+    def resize_util(self, img, u_width, u_height=None):
+    if u_height is None:
+        h, w = img.shape[:2]
+        u_height = int(h * u_width / w)
+    return cv2.resize(img, (int(u_width), int(u_height)))
+
+
+    def resize_util_h(self, img, u_height, u_width=None):
+        if u_width is None:
+            h, w = img.shape[:2]
+            u_width = int(w * u_height / h)
+        return cv2.resize(img, (int(u_width), int(u_height)))
+
+
 resetpos = [0, 0]
 
 # for positioning image windows
@@ -46,20 +104,6 @@ def normalize_hist(img):
     cdf_m = (cdf_m - cdf_m.min()) * 255 / (cdf_m.max() - cdf_m.min())
     cdf = np.ma.filled(cdf_m, 0).astype('uint8')
     return cdf[img]
-
-
-def resize_util(img, u_width, u_height=None):
-    if u_height is None:
-        h, w = img.shape[:2]
-        u_height = int(h * u_width / w)
-    return cv2.resize(img, (int(u_width), int(u_height)))
-
-
-def resize_util_h(img, u_height, u_width=None):
-    if u_width is None:
-        h, w = img.shape[:2]
-        u_width = int(w * u_height / h)
-    return cv2.resize(img, (int(u_width), int(u_height)))
 
 
 def putLabel(img, label, size):
@@ -126,7 +170,7 @@ def drawTemplateLayout(
 
 
 def getPlotImg():
-    # Why save the image and delete? Can convert to grayscale directly?
+    # Implement better logic here
     plt.savefig('tmp.png')
     # img = cv2.imread('tmp.png',cv2.IMREAD_COLOR)
     img = cv2.imread('tmp.png', cv2.IMREAD_GRAYSCALE)
@@ -531,21 +575,21 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
         # putLabel(final_marked,"Crop Size: " + str(origDim[0])+"x"+str(origDim[1]) + " "+name, size=1)
 
         morph = img.copy()
-        appendSaveImg(3, morph)
+        append_save_img(3, morph)
 
         # TODO: evaluate if CLAHE is really req
-        if(autoAlign):
+        if autoAlign:
             # Note: clahe is good for morphology, bad for thresholding
             morph = clahe.apply(morph)
-            appendSaveImg(3, morph)
+            append_save_img(3, morph)
             # Remove shadows further, make columns/boxes darker (less gamma)
             morph = adjust_gamma(morph, config.threshold_params.GAMMA_LOW)
             # TODO: all numbers should come from either constants or config
             _, morph = cv2.threshold(morph, 220, 220, cv2.THRESH_TRUNC)
             morph = normalize_util(morph)
-            appendSaveImg(3,morph)
-            if(config.outputs.show_image_level>=4):
-                show("morph1",morph,0,1)
+            append_save_img(3, morph)
+            if config.outputs.show_image_level >= 4:
+                show("morph1", morph, 0, 1)
 
         # Overlay Transparencies
         alpha = 0.65
@@ -561,40 +605,36 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
         # blackVals=[0]
         # whiteVals=[255]
 
-        if(config.outputs.show_image_level >= 5):
+        if config.outputs.show_image_level >= 5:
             allCBoxvals = {"int": [], "mcq": []}
             # ,"QTYPE_ROLL":[]}#,"QTYPE_MED":[]}
             qNums = {"int": [], "mcq": []}
 
         # Find Shifts for the qBlocks --> Before calculating threshold!
-        if(autoAlign):
+        if autoAlign:
             # print("Begin Alignment")
             # Open : erode then dilate
             # Vertical kernel
             v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 10))
-            morph_v = cv2.morphologyEx(
-                morph, cv2.MORPH_OPEN, v_kernel, iterations=3)
+            morph_v = cv2.morphologyEx(morph, cv2.MORPH_OPEN, v_kernel, iterations=3)
             _, morph_v = cv2.threshold(morph_v, 200, 200, cv2.THRESH_TRUNC)
             morph_v = 255 - normalize_util(morph_v)
 
-            if(config.outputs.show_image_level >= 3):
+            if config.outputs.show_image_level >= 3:
                 show("morphed_vertical", morph_v, 0, 1)
 
             # show("morph1",morph,0,1)
             # show("morphed_vertical",morph_v,0,1)
 
-            appendSaveImg(3, morph_v)
+            append_save_img(3, morph_v)
 
             morphTHR = 60  # for Mobile images
             # morphTHR = 40 # for scan Images
             # best tuned to 5x5 now
-            _, morph_v = cv2.threshold(
-                morph_v, morphTHR, 255, cv2.THRESH_BINARY)
-            morph_v = cv2.erode(
-                morph_v, np.ones(
-                    (5, 5), np.uint8), iterations=2)
+            _, morph_v = cv2.threshold(morph_v, morphTHR, 255, cv2.THRESH_BINARY)
+            morph_v = cv2.erode(morph_v, np.ones((5, 5), np.uint8), iterations=2)
 
-            appendSaveImg(3, morph_v)
+            append_save_img(3, morph_v)
             # h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 2))
             # morph_h = cv2.morphologyEx(morph, cv2.MORPH_OPEN, h_kernel, iterations=3)
             # ret, morph_h = cv2.threshold(morph_h,200,200,cv2.THRESH_TRUNC)
@@ -602,10 +642,10 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             # show("morph_h",morph_h,0,1)
             # _, morph_h = cv2.threshold(morph_h,morphTHR,255,cv2.THRESH_BINARY)
             # morph_h = cv2.erode(morph_h,  np.ones((5,5),np.uint8), iterations = 2)
-            if(config.outputs.show_image_level >= 3):
+            if config.outputs.show_image_level >= 3:
                 show("morph_thr_eroded", morph_v, 0, 1)
 
-            appendSaveImg(6, morph_v)
+            append_save_img(6, morph_v)
 
             # template alignment code (relative alignment algo)
             # OUTPUT : each QBlock.shift is updated
@@ -613,12 +653,36 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                 s, d = QBlock.orig, QBlock.dimensions
                 # internal constants - wont need change much
                 # TODO - ALIGN_STRIDE would depend on template's dimensions
-                MATCH_COL,MAX_STEPS, ALIGN_STRIDE, THK  = itemgetter(['match_col', 'max_steps', 'stride','thickness',])(config.alignment_params)
+                MATCH_COL, MAX_STEPS, ALIGN_STRIDE, THK = itemgetter(
+                    [
+                        "match_col",
+                        "max_steps",
+                        "stride",
+                        "thickness",
+                    ]
+                )(config.alignment_params)
                 shift, steps = 0, 0
                 while steps < MAX_STEPS:
-                    L = np.mean(morph_v[s[1]:s[1]+d[1],s[0]+shift-THK:-THK+s[0]+shift+MATCH_COL])
-                    R = np.mean(morph_v[s[1]:s[1]+d[1],s[0]+shift-MATCH_COL+d[0]+THK:THK+s[0]+shift+d[0]])
-                    
+                    L = np.mean(
+                        morph_v[
+                            s[1] : s[1] + d[1],
+                            s[0] + shift - THK : -THK + s[0] + shift + MATCH_COL,
+                        ]
+                    )
+                    R = np.mean(
+                        morph_v[
+                            s[1] : s[1] + d[1],
+                            s[0]
+                            + shift
+                            - MATCH_COL
+                            + d[0]
+                            + THK : THK
+                            + s[0]
+                            + shift
+                            + d[0],
+                        ]
+                    )
+
                     # For demonstration purposes-
                     # if(QBlock.key == "int1"):
                     #     ret = morph_v.copy()
@@ -630,14 +694,14 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                     #     appendSaveImg(6,ret)
 
                     # print(shift, L, R)
-                    LW,RW= L > 100, R > 100
-                    if(LW):
-                        if(RW):
+                    LW, RW = L > 100, R > 100
+                    if LW:
+                        if RW:
                             break
                         else:
                             shift -= ALIGN_STRIDE
                     else:
-                        if(RW):
+                        if RW:
                             shift += ALIGN_STRIDE
                         else:
                             break
@@ -648,15 +712,16 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
             # print("End Alignment")
 
         final_align = None
-        if(config.outputs.show_image_level >= 2):
+        if config.outputs.show_image_level >= 2:
             initial_align = drawTemplateLayout(img, template, shifted=False)
             final_align = drawTemplateLayout(
-                img, template, shifted=True, draw_qvals=True)
+                img, template, shifted=True, draw_qvals=True
+            )
             # appendSaveImg(4,mean_vals)
-            appendSaveImg(2, initial_align)
-            appendSaveImg(2, final_align)
-            appendSaveImg(5, img)
-            if(autoAlign):
+            append_save_img(2, initial_align)
+            append_save_img(2, final_align)
+            append_save_img(5, img)
+            if autoAlign:
                 final_align = np.hstack((initial_align, final_align))
 
         # Get mean vals n other stats
@@ -671,9 +736,9 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                     x, y = (pt.x + QBlock.shift, pt.y)
                     rect = [y, y + boxH, x, x + boxW]
                     QStripvals.append(
-                        cv2.mean(img[rect[0]:rect[1], rect[2]:rect[3]])[0]
+                        cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]
                         # detectCross(img, rect) ? 100 : 0
-                        )
+                    )
                 QStdVals.append(round(np.std(QStripvals), 2))
                 allQStripArrs.append(QStripvals)
                 # _, _, _ = getGlobalThreshold(QStripvals, "QStrip Plot", plotShow=False, sortInPlot=True)
@@ -684,7 +749,9 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                 totalQStripNo += 1
             allQStdVals.extend(QStdVals)
         # print("Begin getGlobalThresholdStd")
-        globalStdTHR, _, _ = getGlobalThreshold(allQStdVals)# , "Q-wise Std-dev Plot", plotShow=True, sortInPlot=True)
+        globalStdTHR, _, _ = getGlobalThreshold(
+            allQStdVals
+        )  # , "Q-wise Std-dev Plot", plotShow=True, sortInPlot=True)
         # print("End getGlobalThresholdStd")
         # print("Begin getGlobalThreshold")
         # plt.show()
@@ -698,10 +765,12 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
 
         # TODO colorama
         print(
-            "Thresholding:\t\t globalTHR: ", round(
-                globalTHR, 2), "\tglobalStdTHR: ", round(
-                globalStdTHR, 2), "\t(Looks like a Xeroxed OMR)" if(
-                globalTHR == 255) else "")
+            "Thresholding:\t\t globalTHR: ",
+            round(globalTHR, 2),
+            "\tglobalStdTHR: ",
+            round(globalStdTHR, 2),
+            "\t(Looks like a Xeroxed OMR)" if (globalTHR == 255) else "",
+        )
         # plt.show()
         # hist = getPlotImg()
         # show("StdHist", hist, 0, 1)
@@ -717,7 +786,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
 
         perOMRThresholdAvg, totalQStripNo, totalQBoxNo = 0, 0, 0
         for QBlock in template.qBlocks:
-            blockQStripNo = 1  
+            blockQStripNo = 1
             shift = QBlock.shift
             s, d = QBlock.orig, QBlock.dimensions
             key = QBlock.key[:3]
@@ -726,12 +795,19 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                 # All Black or All White case
                 noOutliers = allQStdVals[totalQStripNo] < globalStdTHR
                 # print(totalQStripNo, qBoxPts[0].qNo, allQStdVals[totalQStripNo], "noOutliers:", noOutliers)
-                perQStripThreshold = getLocalThreshold(qBoxPts[0].qNo, allQStripArrs[totalQStripNo],
-                                                       globalTHR, noOutliers,
-                                                       "Mean Intensity Histogram for " + key + "." +
-                                                       qBoxPts[0].qNo + '.' +
-                                                       str(blockQStripNo),
-                                                       config.outputs.show_image_level >= 6)
+                perQStripThreshold = getLocalThreshold(
+                    qBoxPts[0].qNo,
+                    allQStripArrs[totalQStripNo],
+                    globalTHR,
+                    noOutliers,
+                    "Mean Intensity Histogram for "
+                    + key
+                    + "."
+                    + qBoxPts[0].qNo
+                    + "."
+                    + str(blockQStripNo),
+                    config.outputs.show_image_level >= 6,
+                )
                 # print(qBoxPts[0].qNo,key,blockQStripNo, "THR: ",round(perQStripThreshold,2))
                 perOMRThresholdAvg += perQStripThreshold
 
@@ -861,7 +937,7 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
                 savedir = savedir + '_MULTI_/'
             saveImg(savedir + name, final_marked)
 
-        appendSaveImg(2, final_marked)
+        append_save_img(2, final_marked)
 
         for i in range(config.outputs.save_image_level):
             saveOrShowStacks(i + 1, name, savedir)
@@ -876,38 +952,6 @@ def readResponse(template, image, name, savedir=None, autoAlign=False):
     #     print(exc_type, fname, exc_tb.tb_lineno)
 
 
-def resetSaveImg(key):
-    global saveImgList
-    saveImgList[key] = []
-
-
-def appendSaveImg(key, img):
-    if(config.outputs.save_image_level >= int(key)):
-        global saveImgList
-        if(key not in saveImgList):
-            saveImgList[key] = []
-        saveImgList[key].append(img.copy())
-
-
-def saveImg(path, final_marked):
-    print('Saving Image to ' + path)
-    cv2.imwrite(path, final_marked)
-
-def saveOrShowStacks(key, name, savedir=None, pause=1):
-    global saveImgList
-    if(config.outputs.save_image_level >= int(key) and saveImgList[key] != []):
-        result = np.hstack(
-            tuple([resize_util_h(img, config.dimensions.display_height) for img in saveImgList[key]]))
-        result = resize_util(result,
-                             min(len(saveImgList[key]) * config.dimensions.display_width // 3,
-                                 int(config.dimensions.display_width * 2.5)))
-        if (type(savedir) != type(None)):
-            saveImg(savedir+'stack/'+name+'_'+str(key)+'_stack.jpg', result)
-        else:
-            show(name + '_' + str(key), result, pause, 0)
-
-
 def printbuf(x):
     sys.stdout.write(str(x))
-    sys.stdout.write('\r')
-
+    sys.stdout.write("\r")
