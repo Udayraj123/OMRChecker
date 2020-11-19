@@ -4,7 +4,7 @@ from .interfaces.ImagePreprocessor import ImagePreprocessor
 import numpy as np
 
 import src.utils.notSorted as utils
-from src.config import configDefaults as config
+from src.config import CONFIG_DEFAULTS as config
 
 
 class CropOnMarkers(ImagePreprocessor):

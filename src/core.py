@@ -16,8 +16,8 @@ from pathlib import Path
 import src.utils.notSorted as utils
 import src.constants as constants
 
-# TODO: use openConfigWithDefaults after making a Config class.
-from src.config import configDefaults as config
+# TODO: use open_config_with_defaults after making a Config class.
+from src.config import CONFIG_DEFAULTS as config
 
 # Note: dot-imported paths are relative to current directory
 from .processors.manager import ProcessorManager

@@ -11,7 +11,8 @@
 # --disable=W".
 disable=import-error,
         too-few-public-methods,
-        missing-docstring
+        missing-docstring,
+        relative-beyond-top-level
 
 
 

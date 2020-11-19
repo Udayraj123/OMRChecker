@@ -9,7 +9,7 @@
 import src.constants as constants
 
 # TODO: pass config in runtime later
-from src.config import configDefaults as config
+from src.config import CONFIG_DEFAULTS as config
 
 from imutils import grab_contours
 from random import randint
