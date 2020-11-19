@@ -38,7 +38,6 @@ from .template import Template
 # Load processors
 PROCESSOR_MANAGER = ProcessorManager()
 IMAGE_UTILS = ImageUtils()
-MAIN_OPERATIONS = MainOperations()
 STATS = constants.Stats()
 
 # TODO(beginner task) :-
@@ -306,7 +305,7 @@ def process_files(omr_files, template, args, out):
         # uniquify
         file_id = str(file_name)
         save_dir = out.paths.save_marked_dir
-        response_dict, final_marked, multi_marked, _ = MAIN_OPERATIONS.read_response(
+        response_dict, final_marked, multi_marked, _ = MainOperations.read_response(
             template,
             image=in_omr,
             name=file_id,
