@@ -6,14 +6,25 @@ https://github.com/Udayraj123
 
 """
 
-import argparse
-from glob import glob
 from csv import QUOTE_NONNUMERIC
 from time import localtime, strftime, time
 from pathlib import Path
+import os
+import argparse
+import cv2
+
+# import matplotlib.pyplot as plt
+
+import pandas as pd
+import numpy as np
 
 # TODO: further break utils down and separate the imports
-import src.utils.notSorted as utils
+from src.utils.notSorted import (
+    ImageUtils,
+    MainOperations,
+    draw_template_layout,
+    setup_dirs,
+)
 import src.constants as constants
 
 # TODO: use open_config_with_defaults after making a Config class.
@@ -23,21 +34,12 @@ from src.config import CONFIG_DEFAULTS as config
 from .processors.manager import ProcessorManager
 from .template import Template
 
-import imutils
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
-import cv2
-import re
-import os
-
 
 # Load processors
-processorManager = ProcessorManager()
-
-# TODO: Move these globals into a class
-filesMoved = 0
-filesNotMoved = 0
+PROCESSOR_MANAGER = ProcessorManager()
+IMAGE_UTILS = ImageUtils()
+MAIN_OPERATIONS = MainOperations()
+STATS = constants.Stats()
 
 # TODO(beginner task) :-
 # from colorama import init
@@ -55,7 +57,7 @@ def process_dir(root_dir, curr_dir, args, template=None):
     # Update local template (in current recursion stack)
     local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
     if os.path.exists(local_template_path):
-        template = Template(local_template_path, processorManager.processors)
+        template = Template(local_template_path, PROCESSOR_MANAGER.processors)
 
     # Look for subdirectories for processing
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
@@ -66,10 +68,10 @@ def process_dir(root_dir, curr_dir, args, template=None):
     exts = ("*.png", "*.jpg")
     omr_files = sorted([f for ext in exts for f in curr_dir.glob(ext)])
 
-    # Exclude images (take union over all preProcessors)
+    # Exclude images (take union over all pre_processors)
     excluded_files = []
     if template:
-        for pp in template.preProcessors:
+        for pp in template.pre_processors:
             excluded_files.extend(Path(p) for p in pp.exclude_files())
 
     omr_files = [f for f in omr_files if f not in excluded_files]
@@ -77,7 +79,9 @@ def process_dir(root_dir, curr_dir, args, template=None):
     if omr_files:
         if not template:
             print(
-                f'Error: Found images, but no template in the directory tree of "{curr_dir}". \nPlace {constants.TEMPLATE_FILENAME} in the directory or specify a template using -t.'
+                f'Error: Found images, but no template in the directory tree \
+                of "{curr_dir}". \nPlace {constants.TEMPLATE_FILENAME} in the \
+                directory or specify a template using -t.'
             )
             return
 
@@ -89,24 +93,25 @@ def process_dir(root_dir, curr_dir, args, template=None):
         print(f'Processing directory "{curr_dir}" with settings- ')
         print("\tTotal images       : %d" % (len(omr_files)))
         print(
-            "\tCropping Enabled   : " + str("CropOnMarkers" in template.preProcessors)
+            "\tCropping Enabled   : " + str("CropOnMarkers" in template.pre_processors)
         )
         print("\tAuto Alignment     : " + str(args_local["autoAlign"]))
         print("\tUsing Template     : " + str(template))
         # Print options
-        for pp in template.preProcessors:
+        for pp in template.pre_processors:
             print(f'\tUsing preprocessor "{pp.__class__.__name__:13}({pp})"')
 
         print("")
 
-        utils.setup_dirs(paths)
+        setup_dirs(paths)
         out = setup_output(paths, template)
         process_files(omr_files, template, args_local, out)
 
-    elif len(subdirs) == 0:
+    elif not subdirs:
         # Each subdirectory should have images or should be non-leaf
         print(
-            f"Note: No valid images or subfolders found in {curr_dir}. Empty directories not allowed."
+            f"Note: No valid images or subfolders found in {curr_dir}.\
+            Empty directories not allowed."
         )
 
     # recursively process subfolders
@@ -114,59 +119,57 @@ def process_dir(root_dir, curr_dir, args, template=None):
         process_dir(root_dir, d, args, template)
 
 
-def checkAndMove(error_code, filepath, filepath2):
-    # print("Dummy Move:  "+filepath, " --> ",filepath2)
-    global filesNotMoved
-    filesNotMoved += 1
+def check_and_move(error_code, file_path, filepath2):
+    # print("Dummy Move:  "+file_path, " --> ",filepath2)
+    STATS.files_not_moved += 1
     return True
 
-    global filesMoved
-    if not os.path.exists(filepath):
-        print("File already moved")
+    if not os.path.exists(file_path):
+        print(f"File already moved: {file_path}")
         return False
     if os.path.exists(filepath2):
-        print("ERROR : Duplicate file at " + filepath2)
+        print(f"ERROR {error_code}: Duplicate file at {filepath2}")
         return False
 
-    print("Moved:  " + filepath, " --> ", filepath2)
-    os.rename(filepath, filepath2)
-    filesMoved += 1
+    print(f"Moved: {file_path} --> {filepath2}")
+    os.rename(file_path, filepath2)
+    STATS.files_moved += 1
     return True
 
 
-def processOMR(template, omrResp):
+def process_omr(template, omr_resp):
     # Note: This is a reference function. It is not part of the OMR checker
     # So its implementation is completely subjective to user's requirements.
-    csvResp = {}
+    csv_resp = {}
 
     # symbol for absent response
-    UNMARKED_SYMBOL = ""
+    unmarked_symbol = ""
 
-    # print("omrResp",omrResp)
+    # print("omr_resp",omr_resp)
 
     # Multi-column/multi-row questions which need to be concatenated
-    for qNo, respKeys in template.concatenations.items():
-        csvResp[qNo] = "".join([omrResp.get(k, UNMARKED_SYMBOL) for k in respKeys])
+    for q_no, resp_keys in template.concatenations.items():
+        csv_resp[q_no] = "".join([omr_resp.get(k, unmarked_symbol) for k in resp_keys])
 
     # Single-column/single-row questions
-    for qNo in template.singles:
-        csvResp[qNo] = omrResp.get(qNo, UNMARKED_SYMBOL)
+    for q_no in template.singles:
+        csv_resp[q_no] = omr_resp.get(q_no, unmarked_symbol)
 
     # Note: concatenations and singles together should be mutually exclusive
     # and should cover all questions in the template(exhaustive)
-    # TODO: ^add a warning if omrResp has unused keys remaining
-    return csvResp
+    # TODO: ^add a warning if omr_resp has unused keys remaining
+    return csv_resp
 
 
-def report(Status, streak, scheme, qNo, marked, ans, prevmarks, currmarks, marks):
+def report(status, streak, scheme, q_no, marked, ans, prev_marks, curr_marks, marks):
     print(
         "%s \t %s \t\t %s \t %s \t %s \t %s \t %s "
         % (
-            qNo,
-            Status,
+            q_no,
+            status,
             str(streak),
             "[" + scheme + "] ",
-            (str(prevmarks) + " + " + str(currmarks) + " =" + str(marks)),
+            (str(prev_marks) + " + " + str(curr_marks) + " =" + str(marks)),
             str(marked),
             str(ans),
         )
@@ -182,45 +185,42 @@ def setup_output(paths, template):
 
     # custom sort: To use integer order in question names instead of
     # alphabetical - avoids q1, q10, q2 and orders them q1, q2, ..., q10
-    ns.respCols = sorted(
+    ns.resp_cols = sorted(
         list(template.concatenations.keys()) + template.singles,
         key=lambda x: int(x[1:]) if ord(x[1]) in range(48, 58) else 0,
     )
-    ns.emptyResp = [""] * len(ns.respCols)
-    ns.sheetCols = ["file_id", "input_path", "output_path", "score"] + ns.respCols
+    ns.empty_resp = [""] * len(ns.resp_cols)
+    ns.sheetCols = ["file_id", "input_path", "output_path", "score"] + ns.resp_cols
     ns.OUTPUT_SET = []
-    ns.filesObj = {}
+    ns.files_obj = {}
     ns.filesMap = {
-        "Results": paths.results_dir + "Results_" + timeNowHrs + ".csv",
+        "Results": paths.results_dir + "Results_" + TIME_NOW_HRS + ".csv",
         "MultiMarked": paths.manual_dir + "MultiMarkedFiles_.csv",
         "Errors": paths.manual_dir + "ErrorFiles_.csv",
         "BadRollNos": paths.manual_dir + "BadRollNoFiles_.csv",
     }
 
-    for fileKey, fileName in ns.filesMap.items():
-        if not os.path.exists(fileName):
-            print("Note: Created new file: %s" % (fileName))
+    for file_key, file_name in ns.filesMap.items():
+        if not os.path.exists(file_name):
+            print("Note: Created new file: %s" % (file_name))
             # moved handling of files to pandas csv writer
-            ns.filesObj[fileKey] = fileName
+            ns.files_obj[file_key] = file_name
             # Create Header Columns
             pd.DataFrame([ns.sheetCols], dtype=str).to_csv(
-                ns.filesObj[fileKey],
+                ns.files_obj[file_key],
                 mode="a",
                 quoting=QUOTE_NONNUMERIC,
                 header=False,
                 index=False,
             )
         else:
-            print("Present : appending to %s" % (fileName))
-            ns.filesObj[fileKey] = open(fileName, "a")
+            print("Present : appending to %s" % (file_name))
+            ns.files_obj[file_key] = open(file_name, "a")
 
     return ns
 
 
-""" TODO: Refactor into new process flow.
-    Currently I have no idea what this does so I left it out"""
-
-
+# TODO: Refactor into new process flow.
 def preliminary_check():
     pass
     # filesCounter=0
@@ -230,64 +230,65 @@ def preliminary_check():
     #     # TODO: add more using unit testing
     #     TEMPLATE = TEMPLATES["H"]
     #     ALL_WHITE = 255 * np.ones((TEMPLATE.dimensions[1],TEMPLATE.dimensions[0]), dtype='uint8')
-    #     OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse("H",ALL_WHITE,name = "ALL_WHITE", savedir = None, autoAlign=True)
-    #     print("ALL_WHITE",OMRresponseDict)
-    #     if(OMRresponseDict!={}):
+    #     response_dict, final_marked, multi_marked, multiroll = read_response(
+    #         "H", ALL_WHITE, name="ALL_WHITE", save_dir=None, autoAlign=True
+    #     )
+    #     print("ALL_WHITE",response_dict)
+    #     if(response_dict!={}):
     #         print("Preliminary Checks Failed.")
     #         exit(2)
     #     ALL_BLACK = np.zeros((TEMPLATE.dimensions[1],TEMPLATE.dimensions[0]), dtype='uint8')
-    #     OMRresponseDict,final_marked,MultiMarked,multiroll = readResponse("H",ALL_BLACK,name = "ALL_BLACK", savedir = None, autoAlign=True)
-    #     print("ALL_BLACK",OMRresponseDict)
+    #     response_dict, final_marked, multi_marked, multiroll = read_response(
+    #      "H", ALL_BLACK, name="ALL_BLACK", save_dir=None, autoAlign=True
+    #     )
+    #     print("ALL_BLACK",response_dict)
     #     show("Confirm : All bubbles are black",final_marked,1,1)
 
 
 # TODO: take a look at 'out.paths'
 def process_files(omr_files, template, args, out):
     start_time = int(time())
-    global filesNotMoved
     files_counter = 0
-    filesNotMoved = 0
+    STATS.files_not_moved = 0
 
-    img_utils = ImageUtils()
-
-    for filepath in omr_files:
+    for file_path in omr_files:
         files_counter += 1
 
-        filename = filepath.name
-        args["current_file"] = filepath
+        file_name = file_path.name
+        args["current_file"] = file_path
 
-        inOMR = cv2.imread(str(filepath), cv2.IMREAD_GRAYSCALE)
+        in_omr = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
         print(
-            f"\n({files_counter}) Opening image: \t{filepath}\tResolution: {inOMR.shape}"
+            f"\n({files_counter}) Opening image: \t{file_path}\tResolution: {in_omr.shape}"
         )
 
         # TODO: Get rid of saveImgList
-        for i in range(img_utils.save_image_level):
-            img_utils.reset_save_img(i + 1)
+        for i in range(IMAGE_UTILS.save_image_level):
+            IMAGE_UTILS.reset_save_img(i + 1)
 
-        img_utils.append_save_img(1, inOMR)
+        IMAGE_UTILS.append_save_img(1, in_omr)
 
         # resize to conform to template
-        inOMR = img_utils.resize_util(
-            inOMR,
+        in_omr = ImageUtils.resize_util(
+            in_omr,
             config.dimensions.processing_width,
             config.dimensions.processing_height,
         )
 
-        # run preProcessors in sequence
-        for preProcessor in template.preProcessors:
-            inOMR = preProcessor.apply_filter(inOMR, args)
+        # run pre_processors in sequence
+        for pre_processor in template.pre_processors:
+            in_omr = pre_processor.apply_filter(in_omr, args)
 
-        if inOMR is None:
+        if in_omr is None:
             # Error OMR case
-            new_filepath = out.paths.errors_dir + filename
-            out.OUTPUT_SET.append([filename] + out.emptyResp)
-            if checkAndMove(
-                constants.ERROR_CODES.NO_MARKER_ERR, filepath, new_filepath
+            new_file_path = out.paths.errors_dir + file_name
+            out.OUTPUT_SET.append([file_name] + out.empty_resp)
+            if check_and_move(
+                constants.ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path
             ):
-                err_line = [filename, filepath, new_filepath, "NA"] + out.emptyResp
+                err_line = [file_name, file_path, new_file_path, "NA"] + out.empty_resp
                 pd.DataFrame(err_line, dtype=str).T.to_csv(
-                    out.filesObj["Errors"],
+                    out.files_obj["Errors"],
                     mode="a",
                     quoting=QUOTE_NONNUMERIC,
                     header=False,
@@ -296,26 +297,30 @@ def process_files(omr_files, template, args, out):
             continue
 
         if args["setLayout"]:
-            templateLayout = utils.drawTemplateLayout(
-                inOMR, template, shifted=False, border=2
+            template_layout = draw_template_layout(
+                in_omr, template, shifted=False, border=2
             )
-            utils.show("Template Layout", templateLayout, 1, 1)
+            MainOperations.show("Template Layout", template_layout, 1, 1)
             continue
 
         # uniquify
-        file_id = str(filename)
-        savedir = out.paths.save_marked_dir
-        OMRresponseDict, final_marked, MultiMarked, _ = utils.readResponse(
-            template, inOMR, name=file_id, savedir=savedir, autoAlign=args["autoAlign"]
+        file_id = str(file_name)
+        save_dir = out.paths.save_marked_dir
+        response_dict, final_marked, multi_marked, _ = MAIN_OPERATIONS.read_response(
+            template,
+            image=in_omr,
+            name=file_id,
+            save_dir=save_dir,
+            auto_align=args["autoAlign"],
         )
 
         # concatenate roll nos, set unmarked responses, etc
-        resp = processOMR(template, OMRresponseDict)
+        resp = process_omr(template, response_dict)
         print("\nRead Response: \t", resp, "\n")
         if config.outputs.show_image_level >= 1:
-            utils.show(
+            MainOperations.show(
                 "Final Marked Bubbles : " + file_id,
-                utils.resize_util_h(
+                ImageUtils.resize_util_h(
                     final_marked, int(config.dimensions.display_height * 1.3)
                 ),
                 1,
@@ -327,21 +332,21 @@ def process_files(omr_files, template, args, out):
         # score = evaluate(resp, explain_scoring=config.outputs.explain_scoring)
         score = 0
 
-        respArray = []
-        for k in out.respCols:
-            respArray.append(resp[k])
+        resp_array = []
+        for k in out.resp_cols:
+            resp_array.append(resp[k])
 
-        out.OUTPUT_SET.append([filename] + respArray)
+        out.OUTPUT_SET.append([file_name] + resp_array)
 
         # TODO: Add roll number validation here
-        if MultiMarked == 0:
-            filesNotMoved += 1
-            new_filepath = savedir + file_id
+        if multi_marked == 0:
+            STATS.files_not_moved += 1
+            new_file_path = save_dir + file_id
             # Enter into Results sheet-
-            results_line = [filename, filepath, new_filepath, score] + respArray
+            results_line = [file_name, file_path, new_file_path, score] + resp_array
             # Write/Append to results_line file(opened in append mode)
             pd.DataFrame(results_line, dtype=str).T.to_csv(
-                out.filesObj["Results"],
+                out.files_obj["Results"],
                 mode="a",
                 quoting=QUOTE_NONNUMERIC,
                 header=False,
@@ -354,15 +359,15 @@ def process_files(omr_files, template, args, out):
             )
             # print(files_counter,file_id,resp['Roll'],'score : ',score)
         else:
-            # MultiMarked file
-            print("[%d] MultiMarked, moving File: %s" % (files_counter, file_id))
-            new_filepath = out.paths.multi_marked_dir + filename
-            if checkAndMove(
-                constants.ERROR_CODES.MULTI_BUBBLE_WARN, filepath, new_filepath
+            # multi_marked file
+            print("[%d] multi_marked, moving File: %s" % (files_counter, file_id))
+            new_file_path = out.paths.multi_marked_dir + file_name
+            if check_and_move(
+                constants.ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path
             ):
-                mm_line = [filename, filepath, new_filepath, "NA"] + respArray
+                mm_line = [file_name, file_path, new_file_path, "NA"] + resp_array
                 pd.DataFrame(mm_line, dtype=str).T.to_csv(
-                    out.filesObj["MultiMarked"],
+                    out.files_obj["MultiMarked"],
                     mode="a",
                     quoting=QUOTE_NONNUMERIC,
                     header=False,
@@ -376,22 +381,22 @@ def process_files(omr_files, template, args, out):
 
     # flush after every 20 files for a live view
     # if(files_counter % 20 == 0 or files_counter == len(omr_files)):
-    #     for fileKey in out.filesMap.keys():
-    #         out.filesObj[fileKey].flush()
+    #     for file_key in out.filesMap.keys():
+    #         out.files_obj[file_key].flush()
 
 
 def print_stats(start_time, files_counter):
     time_checking = round(time() - start_time, 2) if files_counter else 1
     print("")
-    print("Total files moved        : %d " % (filesMoved))
-    print("Total files not moved    : %d " % (filesNotMoved))
+    print("Total files moved        : %d " % (STATS.files_moved))
+    print("Total files not moved    : %d " % (STATS.files_not_moved))
     print("------------------------------")
     print(
         "Total files processed    : %d (%s)"
         % (
             files_counter,
             "Sum Tallied!"
-            if files_counter == (filesMoved + filesNotMoved)
+            if files_counter == (STATS.files_moved + STATS.files_not_moved)
             else "Not Tallying!",
         )
     )
@@ -418,7 +423,7 @@ def print_stats(start_time, files_counter):
             "\nTip: To see some awesome visuals, open config.py and increase 'show_image_level'"
         )
 
-    # evaluate_correctness(template, out)
+    # evaluate_correctness(out)
 
     # Use this data to train as +ve feedback
     # if config.outputs.show_image_level >= 0 and files_counter > 10:
@@ -435,15 +440,15 @@ def print_stats(start_time, files_counter):
 
 # Evaluate accuracy based on OMRDataset file generated through moderation
 # portal on the same set of images
-def evaluate_correctness(template, out):
-    # TODO: TEST_FILE WOULD BE RELATIVE TO INPUT SUBDIRECTORY NOW-
-    TEST_FILE = "inputs/OMRDataset.csv"
-    if os.path.exists(TEST_FILE):
-        print("\nStarting evaluation for: " + TEST_FILE)
+def evaluate_correctness(out):
+    # TODO: test_file WOULD BE RELATIVE TO INPUT SUBDIRECTORY NOW-
+    test_file = "inputs/OMRDataset.csv"
+    if os.path.exists(test_file):
+        print("\nStarting evaluation for: " + test_file)
 
-        TEST_COLS = ["file_id"] + out.respCols
+        test_cols = ["file_id"] + out.resp_cols
         y_df = (
-            pd.read_csv(TEST_FILE, dtype=str)[TEST_COLS]
+            pd.read_csv(test_file, dtype=str)[test_cols]
             .replace(np.nan, "", regex=True)
             .set_index("file_id")
         )
@@ -451,16 +456,17 @@ def evaluate_correctness(template, out):
         if np.any(y_df.index.duplicated):
             y_df_filtered = y_df.loc[~y_df.index.duplicated(keep="first")]
             print(
-                "WARNING: Found duplicate File-ids in file %s. Removed %d rows from testing data. Rows remaining: %d"
+                "WARNING: Found duplicate File-ids in file %s. \
+                Removed %d rows from testing data. Rows remaining: %d"
                 % (
-                    TEST_FILE,
+                    test_file,
                     y_df.shape[0] - y_df_filtered.shape[0],
                     y_df_filtered.shape[0],
                 )
             )
             y_df = y_df_filtered
 
-        x_df = pd.DataFrame(out.OUTPUT_SET, dtype=str, columns=TEST_COLS).set_index(
+        x_df = pd.DataFrame(out.OUTPUT_SET, dtype=str, columns=test_cols).set_index(
             "file_id"
         )
         # print("x_df",x_df.head())
@@ -474,7 +480,7 @@ def evaluate_correctness(template, out):
             print(x_df.head())
             print(
                 "\n\t Accuracy on the %s Dataset: %.6f"
-                % (TEST_FILE, (x_df["TestResult"].sum() / x_df.shape[0]))
+                % (test_file, (x_df["TestResult"].sum() / x_df.shape[0]))
             )
         else:
             print(
@@ -483,4 +489,4 @@ def evaluate_correctness(template, out):
             print("Missing File-ids: ", list(x_df.index.difference(intersection)))
 
 
-timeNowHrs = strftime("%I%p", localtime())
+TIME_NOW_HRS = strftime("%I%p", localtime())

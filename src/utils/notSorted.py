@@ -38,6 +38,7 @@ class ImageUtils:
     def reset_save_img(self, key):
         self.save_img_list[key] = []
 
+    # TODO: why is this static
     @staticmethod
     def append_save_img(key, img):
         if self.save_image_level >= int(key):
@@ -51,7 +52,7 @@ class ImageUtils:
         cv2.imwrite(path, final_marked)
 
     @staticmethod
-    def save_or_show_stacks(self, key, name, savedir=None, pause=1):
+    def save_or_show_stacks(self, key, name, save_dir=None, pause=1):
         if self.save_image_level >= int(key) and self.save_img_list[key] != []:
             result = np.hstack(
                 tuple(
@@ -68,9 +69,9 @@ class ImageUtils:
                     int(config.dimensions.display_width * 2.5),
                 ),
             )
-            if type(savedir) != type(None):
+            if type(save_dir) != type(None):
                 self.save_img(
-                    savedir + "stack/" + name + "_" + str(key) + "_stack.jpg", result
+                    save_dir + "stack/" + name + "_" + str(key) + "_stack.jpg", result
                 )
             else:
                 show(name + "_" + str(key), result, pause, 0)
@@ -131,7 +132,7 @@ def put_label(img, label, size):
 def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-1):
     img = ImageUtils.resize_util(img, template.dimensions[0], template.dimensions[1])
     final_align = img.copy()
-    boxW, boxH = template.bubble_dimensions
+    boxW, boxH = template.bubbleDimensions
     for QBlock in template.qBlocks:
         s, d = QBlock.orig, QBlock.dimensions
         shift = QBlock.shift
@@ -586,7 +587,7 @@ class MainOperations:
             )
             self.waitQ()
 
-    def read_response(self, template, image, name, savedir=None, auto_align=False):
+    def read_response(self, template, image, name, save_dir=None, auto_align=False):
         # global clahe
 
         try:
@@ -624,7 +625,7 @@ class MainOperations:
             alpha = 0.65
             # alpha1 = 0.55
 
-            boxW, boxH = template.bubble_dimensions
+            boxW, boxH = template.bubbleDimensions
             # lang = ['E', 'H']
             OMR_response = {}
 
@@ -963,16 +964,16 @@ class MainOperations:
                 # [final_align.shape[1],0])
                 self.show("Template Alignment Adjustment", final_align, 0, 0)
 
-            # TODO: refactor "type(savedir) != type(None) "
-            if config.outputs.save_detections and type(savedir) != type(None):
+            # TODO: refactor "type(save_dir) != type(None) "
+            if config.outputs.save_detections and type(save_dir) != type(None):
                 if multiroll:
-                    savedir = savedir + "_MULTI_/"
-                ImageUtils.save_img(savedir + name, final_marked)
+                    save_dir = save_dir + "_MULTI_/"
+                ImageUtils.save_img(save_dir + name, final_marked)
 
             ImageUtils.append_save_img(2, final_marked)
 
             for i in range(config.outputs.save_image_level):
-                ImageUtils.save_or_show_stacks(i + 1, name, savedir)
+                ImageUtils.save_or_show_stacks(i + 1, name, save_dir)
 
             return OMR_response, final_marked, multimarked, multiroll
 

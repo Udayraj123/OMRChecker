@@ -57,3 +57,9 @@ class Paths:
         self.errors_dir = f"{self.manual_dir}ErrorFiles/"
         self.bad_rolls_dir = f"{self.manual_dir}BadRollNosFiles/"
         self.multi_marked_dir = f"{self.manual_dir}MultiMarkedFiles/"
+
+
+class Stats:
+    def __init__(self):
+        self.files_moved = 0
+        self.files_not_moved = 0
