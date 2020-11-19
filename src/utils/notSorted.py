@@ -23,13 +23,80 @@ import re
 import numpy as np
 import json
 from operator import itemgetter
+from dataclasses import dataclass
 
-# Locals (TODO: put into class)
-saveImgList = {}
-resetpos = [0, 0]
+class ImageUtils:
+    """Class to hold indicators of images and save images."""
 
-# for positioning image windows
-windowX, windowY = 0, 0
+    def __init__(self):
+        """Constructor for class ImageUtils"""
+        self.save_img_list = {}
+        self.save_image_level = config.outputs.save_image_level
+
+    def reset_save_img(self, key):
+        self.save_img_list[key] = []
+
+    @staticmethod
+    def append_save_img(key, img):
+        if self.save_image_level >= int(key):
+            if key not in self.save_img_list:
+                self.save_img_list[key] = []
+            self.save_img_list[key].append(img.copy())
+
+    @staticmethod
+    def saveImg(path, final_marked):
+        print("Saving Image to " + path)
+        cv2.imwrite(path, final_marked)
+
+    @staticmethod
+    def saveOrShowStacks(self, key, name, savedir=None, pause=1):
+        if self.save_image_level >= int(key) and self.save_img_list[key] != []:
+            result = np.hstack(
+                tuple(
+                    [
+                        self.resize_util_h(img, config.dimensions.display_height)
+                        for img in self.save_img_list[key]
+                    ]
+                )
+            )
+            result = self.resize_util(
+                result,
+                min(
+                    len(self.save_img_list[key]) * config.dimensions.display_width // 3,
+                    int(config.dimensions.display_width * 2.5),
+                ),
+            )
+            if type(savedir) != type(None):
+                self.saveImg(
+                    savedir + "stack/" + name + "_" + str(key) + "_stack.jpg", result
+                )
+            else:
+                show(name + "_" + str(key), result, pause, 0)
+
+    @staticmethod
+    def resize_util(img, u_width, u_height=None):
+        if u_height is None:
+            h, w = img.shape[:2]
+            u_height = int(h * u_width / w)
+        return cv2.resize(img, (int(u_width), int(u_height)))
+
+    @staticmethod
+    def resize_util_h(img, u_height, u_width=None):
+        if u_width is None:
+            h, w = img.shape[:2]
+            u_width = int(w * u_height / h)
+        return cv2.resize(img, (int(u_width), int(u_height)))
+
+
+@dataclass
+class ImageMetrics:
+    resetpos = [0, 0]
+    # for positioning image windows
+    window_x, window_y = 0, 0
+    clahe = cv2.createCLAHE(clipLimit=5.0, tileGridSize=(8, 8))
+    # TODO Fill these for stats
+    badThresholds = []
+    veryBadPoints = []
 
 plt.rcParams['figure.figsize'] = (10.0, 8.0)
 
@@ -40,26 +107,12 @@ def normalize_util(img, alpha=0, beta=255):
 
 
 def normalize_hist(img):
-    hist, bins = np.histogram(img.flatten(), 256, [0, 256])
+    hist, _ = np.histogram(img.flatten(), 256, [0, 256])
     cdf = hist.cumsum()
     cdf_m = np.ma.masked_equal(cdf, 0)
     cdf_m = (cdf_m - cdf_m.min()) * 255 / (cdf_m.max() - cdf_m.min())
     cdf = np.ma.filled(cdf_m, 0).astype('uint8')
     return cdf[img]
-
-
-def resize_util(img, u_width, u_height=None):
-    if u_height is None:
-        h, w = img.shape[:2]
-        u_height = int(h * u_width / w)
-    return cv2.resize(img, (int(u_width), int(u_height)))
-
-
-def resize_util_h(img, u_height, u_width=None):
-    if u_width is None:
-        h, w = img.shape[:2]
-        u_width = int(w * u_height / h)
-    return cv2.resize(img, (int(u_width), int(u_height)))
 
 
 def putLabel(img, label, size):
@@ -77,7 +130,7 @@ def drawTemplateLayout(
         shifted=True,
         draw_qvals=False,
         border=-1):
-    img = resize_util(img, template.dimensions[0], template.dimensions[1])
+    img = ImageUtils.resize_util(img, template.dimensions[0], template.dimensions[1])
     final_align = img.copy()
     boxW, boxH = template.bubbleDimensions
     for QBlock in template.qBlocks:
@@ -95,7 +148,7 @@ def drawTemplateLayout(
                           (s[0] + d[0], s[1] + d[1]),
                           constants.CLR_BLACK
                           ,3)
-        for qStrip, qBoxPts in QBlock.traverse_pts:
+        for _, qBoxPts in QBlock.traverse_pts:
             for pt in qBoxPts:
                 x, y = (pt.x + QBlock.shift, pt.y) if shifted else (pt.x, pt.y)
                 cv2.rectangle(final_align,
@@ -126,6 +179,7 @@ def drawTemplateLayout(
 
 
 def getPlotImg():
+    # Implement better logic here
     plt.savefig('tmp.png')
     # img = cv2.imread('tmp.png',cv2.IMREAD_COLOR)
     img = cv2.imread('tmp.png', cv2.IMREAD_GRAYSCALE)
@@ -236,12 +290,6 @@ def adjust_gamma(image, gamma=1.0):
     return cv2.LUT(image, table)
 
 
-clahe = cv2.createCLAHE(clipLimit=5.0, tileGridSize=(8, 8))
-# TODO Fill these for stats
-badThresholds = []
-veryBadPoints = []
-
-
 def getGlobalThreshold(
         QVals_orig,
         plotTitle=None,
@@ -272,6 +320,7 @@ def getGlobalThreshold(
 
     """
     # Sort the Q vals
+    # Change var name of QVals
     QVals = sorted(QVals_orig)
     # Find the FIRST LARGE GAP and set it as threshold:
     ls = (looseness + 1) // 2
@@ -303,8 +352,8 @@ def getGlobalThreshold(
     #     print("Note: taking safer thr line.")
     #     globalTHR, j_low, j_high = thr2, thr2 - max2//2, thr2 + max2//2
 
-    if(plotTitle is not None):
-        f, ax = plt.subplots()
+    if plotTitle:
+        _, ax = plt.subplots()
         ax.bar(range(len(QVals_orig)), QVals if sortInPlot else QVals_orig)
         ax.set_title(plotTitle)
         thrline = ax.axhline(globalTHR, color='green', ls='--', linewidth=5)
@@ -400,8 +449,9 @@ def getLocalThreshold(
         # if(thr1 == 255):
         #     print("Warning: threshold is unexpectedly 255! (Outlier Delta issue?)",plotTitle)
 
+    # Make a common plot function to show local and global thresholds
     if(plotShow and plotTitle is not None):
-        f, ax = plt.subplots()
+        _, ax = plt.subplots()
         ax.bar(range(len(QVals)), QVals)
         thrline = ax.axhline(thr1, color='green', ls=('-.'), linewidth=3)
         thrline.set_label("Local Threshold")
@@ -465,446 +515,460 @@ def setup_dirs(paths):
             print('Present : ' + _dir)
 
 
-def waitQ():
-    ESC_KEY = 27
-    while(cv2.waitKey(1) & 0xFF not in [ord('q'), ESC_KEY]):
-        pass
-    global windowX, windowY
-    windowX = 0
-    windowY = 0
-    cv2.destroyAllWindows()
+class MainOperations:
+    """Perform primary functions such as displaying images and reading responses
+    """
+    def __init__(self):
+        self.image_metrics = ImageMetrics()
+        self.image_utils = ImageUtils()
 
+    def waitQ(self):
+        ESC_KEY = 27
+        while cv2.waitKey(1) & 0xFF not in [ord("q"), ESC_KEY]:
+            pass
+        self.image_metrics.window_x = 0
+        self.image_metrics.window_y = 0
+        cv2.destroyAllWindows()
 
-def show(name, orig, pause=1, resize=False, resetpos=None):
-    global windowX, windowY
-    if(type(orig) == type(None)):
-        print(name, " NoneType image to show!")
-        if(pause):
-            cv2.destroyAllWindows()
-        return
-    origDim = orig.shape[:2]
-    img = resize_util(
-        orig, config.dimensions.display_width) if resize else orig
-    cv2.imshow(name, img)
-    if(resetpos):
-        windowX = resetpos[0]
-        windowY = resetpos[1]
-    cv2.moveWindow(name, windowX, windowY)
+    def show(self, name, orig, pause=1, resize=False, resetpos=None):
+        if type(orig) == type(None):
+            print(name, " NoneType image to show!")
+            if pause:
+                cv2.destroyAllWindows()
+            return
+        # origDim = orig.shape[:2]
+        img = (
+            ImageUtils.resize_util(orig, config.dimensions.display_width)
+            if resize
+            else orig
+        )
+        cv2.imshow(name, img)
+        if resetpos:
+            self.image_metrics.window_x = resetpos[0]
+            self.image_metrics.window_y = resetpos[1]
+        cv2.moveWindow(name, self.image_metrics.window_x, self.image_metrics.window_y)
 
-    h, w = img.shape[:2]
+        h, w = img.shape[:2]
 
-    # Set next window position
-    margin = 25
-    w += margin
-    h += margin
-    if(windowX + w > config.dimensions.window_width):
-        windowX = 0
-        if(windowY + h > config.dimensions.window_height):
-            windowY = 0
+        # Set next window position
+        margin = 25
+        w += margin
+        h += margin
+        if self.image_metrics.window_x + w > config.dimensions.window_width:
+            self.image_metrics.window_x = 0
+            if self.image_metrics.window_y + h > config.dimensions.window_height:
+                self.image_metrics.window_y = 0
+            else:
+                self.image_metrics.window_y += h
         else:
-            windowY += h
-    else:
-        windowX += w
+            self.image_metrics.window_x += w
 
-    if(pause):
-        print(
-            "Showing '" +
-            name +
-            "'\n\tPress Q on image to continue Press Ctrl + C in terminal to exit")
-        waitQ()
+        if pause:
+            print(
+                "Showing '"
+                + name
+                + "'\n\tPress Q on image to continue Press Ctrl + C in terminal to exit"
+            )
+            self.waitQ()
 
-def readResponse(template, image, name, savedir=None, autoAlign=False):
-    global clahe
+    def readResponse(self, template, image, name, savedir=None, autoAlign=False):
+        # global clahe
 
-    try:
-        img = image.copy()
-        origDim = img.shape[:2]
-        img = resize_util(img, template.dimensions[0], template.dimensions[1])
-        if(img.max() > img.min()):
-            img = normalize_util(img)
-        # Processing copies
-        transp_layer = img.copy()
-        final_marked = img.copy()
-        # putLabel(final_marked,"Crop Size: " + str(origDim[0])+"x"+str(origDim[1]) + " "+name, size=1)
+        try:
+            img = image.copy()
+            # origDim = img.shape[:2]
+            img = ImageUtils.resize_util(
+                img, template.dimensions[0], template.dimensions[1]
+            )
+            if img.max() > img.min():
+                img = normalize_util(img)
+            # Processing copies
+            transp_layer = img.copy()
+            final_marked = img.copy()
+            # putLabel(final_marked,"Crop Size: " + str(origDim[0])+"x"+str(origDim[1]) + " "+name, size=1)
 
-        morph = img.copy()
-        appendSaveImg(3, morph)
+            morph = img.copy()
+            ImageUtils.append_save_img(3, morph)
 
-        # TODO: evaluate if CLAHE is really req
-        if(autoAlign):
-            # Note: clahe is good for morphology, bad for thresholding
-            morph = clahe.apply(morph)
-            appendSaveImg(3, morph)
-            # Remove shadows further, make columns/boxes darker (less gamma)
-            morph = adjust_gamma(morph, config.threshold_params.GAMMA_LOW)
-            # TODO: all numbers should come from either constants or config
-            ret, morph = cv2.threshold(morph, 220, 220, cv2.THRESH_TRUNC)
-            morph = normalize_util(morph)
-            appendSaveImg(3,morph)
-            if(config.outputs.show_image_level>=4):
-                show("morph1",morph,0,1)
+            # TODO: evaluate if CLAHE is really req
+            if autoAlign:
+                # Note: clahe is good for morphology, bad for thresholding
+                morph = self.image_metrics.clahe.apply(morph)
+                ImageUtils.append_save_img(3, morph)
+                # Remove shadows further, make columns/boxes darker (less gamma)
+                morph = adjust_gamma(morph, config.threshold_params.GAMMA_LOW)
+                # TODO: all numbers should come from either constants or config
+                _, morph = cv2.threshold(morph, 220, 220, cv2.THRESH_TRUNC)
+                morph = normalize_util(morph)
+                ImageUtils.append_save_img(3, morph)
+                if config.outputs.show_image_level >= 4:
+                    self.show("morph1", morph, 0, 1)
 
-        # Overlay Transparencies
-        alpha = 0.65
-        alpha1 = 0.55
+            # Move them to data class if needed
+            # Overlay Transparencies
+            alpha = 0.65
+            # alpha1 = 0.55
 
-        boxW, boxH = template.bubbleDimensions
-        lang = ['E', 'H']
-        OMRresponse = {}
+            boxW, boxH = template.bubbleDimensions
+            # lang = ['E', 'H']
+            OMRresponse = {}
 
-        multimarked, multiroll = 0, 0
+            multimarked, multiroll = 0, 0
 
-        # TODO Make this part useful for visualizing status checks
-        # blackVals=[0]
-        # whiteVals=[255]
+            # TODO Make this part useful for visualizing status checks
+            # blackVals=[0]
+            # whiteVals=[255]
 
-        if(config.outputs.show_image_level >= 5):
-            allCBoxvals = {"int": [], "mcq": []}
-            # ,"QTYPE_ROLL":[]}#,"QTYPE_MED":[]}
-            qNums = {"int": [], "mcq": []}
+            if config.outputs.show_image_level >= 5:
+                allCBoxvals = {"int": [], "mcq": []}
+                # ,"QTYPE_ROLL":[]}#,"QTYPE_MED":[]}
+                qNums = {"int": [], "mcq": []}
 
-        # Find Shifts for the qBlocks --> Before calculating threshold!
-        if(autoAlign):
-            # print("Begin Alignment")
-            # Open : erode then dilate
-            # Vertical kernel
-            v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 10))
-            morph_v = cv2.morphologyEx(
-                morph, cv2.MORPH_OPEN, v_kernel, iterations=3)
-            ret, morph_v = cv2.threshold(morph_v, 200, 200, cv2.THRESH_TRUNC)
-            morph_v = 255 - normalize_util(morph_v)
+            # Find Shifts for the qBlocks --> Before calculating threshold!
+            if autoAlign:
+                # print("Begin Alignment")
+                # Open : erode then dilate
+                # Vertical kernel
+                v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 10))
+                morph_v = cv2.morphologyEx(
+                    morph, cv2.MORPH_OPEN, v_kernel, iterations=3
+                )
+                _, morph_v = cv2.threshold(morph_v, 200, 200, cv2.THRESH_TRUNC)
+                morph_v = 255 - normalize_util(morph_v)
 
-            if(config.outputs.show_image_level >= 3):
-                show("morphed_vertical", morph_v, 0, 1)
+                if config.outputs.show_image_level >= 3:
+                    self.show("morphed_vertical", morph_v, 0, 1)
 
-            # show("morph1",morph,0,1)
-            # show("morphed_vertical",morph_v,0,1)
+                # show("morph1",morph,0,1)
+                # show("morphed_vertical",morph_v,0,1)
 
-            appendSaveImg(3, morph_v)
+                ImageUtils.append_save_img(3, morph_v)
 
-            morphTHR = 60  # for Mobile images
-            # morphTHR = 40 # for scan Images
-            # best tuned to 5x5 now
-            _, morph_v = cv2.threshold(
-                morph_v, morphTHR, 255, cv2.THRESH_BINARY)
-            morph_v = cv2.erode(
-                morph_v, np.ones(
-                    (5, 5), np.uint8), iterations=2)
+                morphTHR = 60  # for Mobile images
+                # morphTHR = 40 # for scan Images
+                # best tuned to 5x5 now
+                _, morph_v = cv2.threshold(morph_v, morphTHR, 255, cv2.THRESH_BINARY)
+                morph_v = cv2.erode(morph_v, np.ones((5, 5), np.uint8), iterations=2)
 
-            appendSaveImg(3, morph_v)
-            # h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 2))
-            # morph_h = cv2.morphologyEx(morph, cv2.MORPH_OPEN, h_kernel, iterations=3)
-            # ret, morph_h = cv2.threshold(morph_h,200,200,cv2.THRESH_TRUNC)
-            # morph_h = 255 - normalize_util(morph_h)
-            # show("morph_h",morph_h,0,1)
-            # _, morph_h = cv2.threshold(morph_h,morphTHR,255,cv2.THRESH_BINARY)
-            # morph_h = cv2.erode(morph_h,  np.ones((5,5),np.uint8), iterations = 2)
-            if(config.outputs.show_image_level >= 3):
-                show("morph_thr_eroded", morph_v, 0, 1)
+                ImageUtils.append_save_img(3, morph_v)
+                # h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 2))
+                # morph_h = cv2.morphologyEx(morph, cv2.MORPH_OPEN, h_kernel, iterations=3)
+                # ret, morph_h = cv2.threshold(morph_h,200,200,cv2.THRESH_TRUNC)
+                # morph_h = 255 - normalize_util(morph_h)
+                # show("morph_h",morph_h,0,1)
+                # _, morph_h = cv2.threshold(morph_h,morphTHR,255,cv2.THRESH_BINARY)
+                # morph_h = cv2.erode(morph_h,  np.ones((5,5),np.uint8), iterations = 2)
+                if config.outputs.show_image_level >= 3:
+                    self.show("morph_thr_eroded", morph_v, 0, 1)
 
-            appendSaveImg(6, morph_v)
+                ImageUtils.append_save_img(6, morph_v)
 
-            # template alignment code (relative alignment algo)
-            # OUTPUT : each QBlock.shift is updated
-            for QBlock in template.qBlocks:
-                s, d = QBlock.orig, QBlock.dimensions
-                # internal constants - wont need change much
-                # TODO - ALIGN_STRIDE would depend on template's dimensions
-                MATCH_COL,MAX_STEPS, ALIGN_STRIDE, THK  = itemgetter(['match_col', 'max_steps', 'stride','thickness',])(config.alignment_params)
-                shift, steps = 0, 0
-                while steps < MAX_STEPS:
-                    L = np.mean(morph_v[s[1]:s[1]+d[1],s[0]+shift-THK:-THK+s[0]+shift+MATCH_COL])
-                    R = np.mean(morph_v[s[1]:s[1]+d[1],s[0]+shift-MATCH_COL+d[0]+THK:THK+s[0]+shift+d[0]])
-                    
-                    # For demonstration purposes-
-                    # if(QBlock.key == "int1"):
-                    #     ret = morph_v.copy()
-                    #     cv2.rectangle(ret,
-                    #                   (s[0]+shift-THK,s[1]),
-                    #                   (s[0]+shift+THK+d[0],s[1]+d[1]),
-                    #                   constants.CLR_WHITE,
-                    #                   3)
-                    #     appendSaveImg(6,ret)
-
-                    # print(shift, L, R)
-                    LW,RW= L > 100, R > 100
-                    if(LW):
-                        if(RW):
-                            break
-                        else:
-                            shift -= ALIGN_STRIDE
-                    else:
-                        if(RW):
-                            shift += ALIGN_STRIDE
-                        else:
-                            break
-                    steps += 1
-
-                QBlock.shift = shift
-                # print("Aligned QBlock: ",QBlock.key,"Corrected Shift:", QBlock.shift,", dimensions:", QBlock.dimensions, "orig:", QBlock.orig,'\n')
-            # print("End Alignment")
-
-        final_align = None
-        if(config.outputs.show_image_level >= 2):
-            initial_align = drawTemplateLayout(img, template, shifted=False)
-            final_align = drawTemplateLayout(
-                img, template, shifted=True, draw_qvals=True)
-            # appendSaveImg(4,mean_vals)
-            appendSaveImg(2, initial_align)
-            appendSaveImg(2, final_align)
-            appendSaveImg(5, img)
-            if(autoAlign):
-                final_align = np.hstack((initial_align, final_align))
-
-        # Get mean vals n other stats
-        allQVals, allQStripArrs, allQStdVals = [], [], []
-        totalQStripNo = 0
-        for QBlock in template.qBlocks:
-            QStdVals = []
-            for qStrip, qBoxPts in QBlock.traverse_pts:
-                QStripvals = []
-                for pt in qBoxPts:
-                    # shifted
-                    x, y = (pt.x + QBlock.shift, pt.y)
-                    rect = [y, y + boxH, x, x + boxW]
-                    QStripvals.append(
-                        cv2.mean(img[rect[0]:rect[1], rect[2]:rect[3]])[0]
-                        # detectCross(img, rect) ? 100 : 0
+                # template alignment code (relative alignment algo)
+                # OUTPUT : each QBlock.shift is updated
+                for QBlock in template.qBlocks:
+                    s, d = QBlock.orig, QBlock.dimensions
+                    # internal constants - wont need change much
+                    # TODO - ALIGN_STRIDE would depend on template's dimensions
+                    MATCH_COL, MAX_STEPS, ALIGN_STRIDE, THK = itemgetter(
+                        [
+                            "match_col",
+                            "max_steps",
+                            "stride",
+                            "thickness",
+                        ]
+                    )(config.alignment_params)
+                    shift, steps = 0, 0
+                    while steps < MAX_STEPS:
+                        L = np.mean(
+                            morph_v[
+                                s[1] : s[1] + d[1],
+                                s[0] + shift - THK : -THK + s[0] + shift + MATCH_COL,
+                            ]
                         )
-                QStdVals.append(round(np.std(QStripvals), 2))
-                allQStripArrs.append(QStripvals)
-                # _, _, _ = getGlobalThreshold(QStripvals, "QStrip Plot", plotShow=False, sortInPlot=True)
-                # hist = getPlotImg()
-                # show("QStrip "+qBoxPts[0].qNo, hist, 0, 1)
-                allQVals.extend(QStripvals)
-                # print(totalQStripNo, qBoxPts[0].qNo, QStdVals[len(QStdVals)-1])
-                totalQStripNo += 1
-            allQStdVals.extend(QStdVals)
-        # print("Begin getGlobalThresholdStd")
-        globalStdTHR, jstd_low, jstd_high = getGlobalThreshold(allQStdVals)# , "Q-wise Std-dev Plot", plotShow=True, sortInPlot=True)
-        # print("End getGlobalThresholdStd")
-        # print("Begin getGlobalThreshold")
-        # plt.show()
-        # hist = getPlotImg()
-        # show("StdHist", hist, 0, 1)
+                        R = np.mean(
+                            morph_v[
+                                s[1] : s[1] + d[1],
+                                s[0]
+                                + shift
+                                - MATCH_COL
+                                + d[0]
+                                + THK : THK
+                                + s[0]
+                                + shift
+                                + d[0],
+                            ]
+                        )
 
-        # Note: Plotting takes Significant times here --> Change Plotting args
-        # to support show_image_level
-        # , "Mean Intensity Histogram",plotShow=True, sortInPlot=True)
-        globalTHR, j_low, j_high = getGlobalThreshold(allQVals, looseness=4)
+                        # For demonstration purposes-
+                        # if(QBlock.key == "int1"):
+                        #     ret = morph_v.copy()
+                        #     cv2.rectangle(ret,
+                        #                   (s[0]+shift-THK,s[1]),
+                        #                   (s[0]+shift+THK+d[0],s[1]+d[1]),
+                        #                   constants.CLR_WHITE,
+                        #                   3)
+                        #     appendSaveImg(6,ret)
 
-        # TODO colorama
-        print(
-            "Thresholding:\t\t globalTHR: ", round(
-                globalTHR, 2), "\tglobalStdTHR: ", round(
-                globalStdTHR, 2), "\t(Looks like a Xeroxed OMR)" if(
-                globalTHR == 255) else "")
-        # plt.show()
-        # hist = getPlotImg()
-        # show("StdHist", hist, 0, 1)
+                        # print(shift, L, R)
+                        LW, RW = L > 100, R > 100
+                        if LW:
+                            if RW:
+                                break
+                            else:
+                                shift -= ALIGN_STRIDE
+                        else:
+                            if RW:
+                                shift += ALIGN_STRIDE
+                            else:
+                                break
+                        steps += 1
 
-        # print("End getGlobalThreshold")
+                    QBlock.shift = shift
+                    # print("Aligned QBlock: ",QBlock.key,"Corrected Shift:", QBlock.shift,", dimensions:", QBlock.dimensions, "orig:", QBlock.orig,'\n')
+                # print("End Alignment")
 
-        # if(config.outputs.show_image_level>=1):
-        #     hist = getPlotImg()
-        #     show("Hist", hist, 0, 1)
-        #     appendSaveImg(4,hist)
-        #     appendSaveImg(5,hist)
-        #     appendSaveImg(2,hist)
+            final_align = None
+            if config.outputs.show_image_level >= 2:
+                initial_align = drawTemplateLayout(img, template, shifted=False)
+                final_align = drawTemplateLayout(
+                    img, template, shifted=True, draw_qvals=True
+                )
+                # appendSaveImg(4,mean_vals)
+                ImageUtils.append_save_img(2, initial_align)
+                ImageUtils.append_save_img(2, final_align)
+                ImageUtils.append_save_img(5, img)
+                if autoAlign:
+                    final_align = np.hstack((initial_align, final_align))
 
-        perOMRThresholdAvg, totalQStripNo, totalQBoxNo = 0, 0, 0
-        for QBlock in template.qBlocks:
-            blockQStripNo = 1  
-            shift = QBlock.shift
-            s, d = QBlock.orig, QBlock.dimensions
-            key = QBlock.key[:3]
-            # cv2.rectangle(final_marked,(s[0]+shift,s[1]),(s[0]+shift+d[0],s[1]+d[1]),CLR_BLACK,3)
-            for qStrip, qBoxPts in QBlock.traverse_pts:
-                # All Black or All White case
-                noOutliers = allQStdVals[totalQStripNo] < globalStdTHR
-                # print(totalQStripNo, qBoxPts[0].qNo, allQStdVals[totalQStripNo], "noOutliers:", noOutliers)
-                perQStripThreshold = getLocalThreshold(qBoxPts[0].qNo, allQStripArrs[totalQStripNo],
-                                                       globalTHR, noOutliers,
-                                                       "Mean Intensity Histogram for " + key + "." +
-                                                       qBoxPts[0].qNo + '.' +
-                                                       str(blockQStripNo),
-                                                       config.outputs.show_image_level >= 6)
-                # print(qBoxPts[0].qNo,key,blockQStripNo, "THR: ",round(perQStripThreshold,2))
-                perOMRThresholdAvg += perQStripThreshold
+            # Get mean vals n other stats
+            allQVals, allQStripArrs, allQStdVals = [], [], []
+            totalQStripNo = 0
+            for QBlock in template.qBlocks:
+                QStdVals = []
+                for _, qBoxPts in QBlock.traverse_pts:
+                    QStripvals = []
+                    for pt in qBoxPts:
+                        # shifted
+                        x, y = (pt.x + QBlock.shift, pt.y)
+                        rect = [y, y + boxH, x, x + boxW]
+                        QStripvals.append(
+                            cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]
+                            # detectCross(img, rect) ? 100 : 0
+                        )
+                    QStdVals.append(round(np.std(QStripvals), 2))
+                    allQStripArrs.append(QStripvals)
+                    # _, _, _ = getGlobalThreshold(QStripvals, "QStrip Plot", plotShow=False, sortInPlot=True)
+                    # hist = getPlotImg()
+                    # show("QStrip "+qBoxPts[0].qNo, hist, 0, 1)
+                    allQVals.extend(QStripvals)
+                    # print(totalQStripNo, qBoxPts[0].qNo, QStdVals[len(QStdVals)-1])
+                    totalQStripNo += 1
+                allQStdVals.extend(QStdVals)
+            # print("Begin getGlobalThresholdStd")
+            globalStdTHR, _, _ = getGlobalThreshold(
+                allQStdVals
+            )  # , "Q-wise Std-dev Plot", plotShow=True, sortInPlot=True)
+            # print("End getGlobalThresholdStd")
+            # print("Begin getGlobalThreshold")
+            # plt.show()
+            # hist = getPlotImg()
+            # show("StdHist", hist, 0, 1)
 
-                # Note: Little debugging visualization - view the particular Qstrip
-                # if(
-                #     0
-                #     # or "q17" in (qBoxPts[0].qNo)
-                #     # or (qBoxPts[0].qNo+str(blockQStripNo))=="q15"
-                #  ):
-                #     st, end = qStrip
-                #     show("QStrip: "+key+"-"+str(blockQStripNo), img[st[1] : end[1], st[0]+shift : end[0]+shift],0)
+            # Note: Plotting takes Significant times here --> Change Plotting args
+            # to support show_image_level
+            # , "Mean Intensity Histogram",plotShow=True, sortInPlot=True)
+            globalTHR, _, _ = getGlobalThreshold(allQVals, looseness=4)
 
-                for pt in qBoxPts:
-                    # shifted
-                    x, y = (pt.x + QBlock.shift, pt.y)
-                    boxval0 = allQVals[totalQBoxNo]
-                    detected = perQStripThreshold > boxval0
+            # TODO colorama
+            print(
+                "Thresholding:\t\t globalTHR: ",
+                round(globalTHR, 2),
+                "\tglobalStdTHR: ",
+                round(globalStdTHR, 2),
+                "\t(Looks like a Xeroxed OMR)" if (globalTHR == 255) else "",
+            )
+            # plt.show()
+            # hist = getPlotImg()
+            # show("StdHist", hist, 0, 1)
 
-                    # TODO: add an option to select PLUS SIGN RESPONSE READING
-                    # extra_check_rects = []
-                    # # [y,y+boxH,x,x+boxW]
-                    # for rect in extra_check_rects:
-                    #     # Note: This is NOT pixel-based thresholding, It is boxed mean-thresholding
-                    #     boxval = cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0]
-                    #     if(perQStripThreshold > boxval):
-                    #         # for critical analysis
-                    #         boxval0 = max(boxval,boxval0)
-                    #         detected=True
-                    #         break
+            # print("End getGlobalThreshold")
 
-                    if (detected):
-                        cv2.rectangle(final_marked,
-                                      (int(x+boxW/12),
-                                      int(y+boxH/12)),
-                                      (int(x+boxW-boxW/12), int(y+boxH-boxH/12)),
-                                      constants.CLR_DARK_GRAY, 
-                                      3)
-                    else:
-                        cv2.rectangle(final_marked,
-                                      (int(x+boxW/10),int(y+boxH/10)),
-                                      (int(x+boxW-boxW/10),int(y+boxH-boxH/10)),
-                                      constants.CLR_GRAY,
-                                      -1)
+            # if(config.outputs.show_image_level>=1):
+            #     hist = getPlotImg()
+            #     show("Hist", hist, 0, 1)
+            #     appendSaveImg(4,hist)
+            #     appendSaveImg(5,hist)
+            #     appendSaveImg(2,hist)
 
-                    # TODO Make this part useful! (Abstract visualizer to check status)
-                    if (detected):
-                        q, val = pt.qNo, str(pt.val)
-                        cv2.putText(final_marked,
-                                    val,
-                                    (x, y),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 
-                                    constants.TEXT_SIZE,
-                                    (20, 20, 10),
-                                    int(1 + 3.5*constants.TEXT_SIZE))
-                        # Only send rolls multi-marked in the directory
-                        multimarkedL = q in OMRresponse
-                        multimarked = multimarkedL or multimarked
-                        OMRresponse[q] = (
-                            OMRresponse[q] + val) if multimarkedL else val
-                        multiroll = multimarkedL and 'roll' in str(q)
-                        # blackVals.append(boxval0)
-                    # else:
+            perOMRThresholdAvg, totalQStripNo, totalQBoxNo = 0, 0, 0
+            for QBlock in template.qBlocks:
+                blockQStripNo = 1
+                shift = QBlock.shift
+                s, d = QBlock.orig, QBlock.dimensions
+                key = QBlock.key[:3]
+                # cv2.rectangle(final_marked,(s[0]+shift,s[1]),(s[0]+shift+d[0],s[1]+d[1]),CLR_BLACK,3)
+                for _, qBoxPts in QBlock.traverse_pts:
+                    # All Black or All White case
+                    noOutliers = allQStdVals[totalQStripNo] < globalStdTHR
+                    # print(totalQStripNo, qBoxPts[0].qNo, allQStdVals[totalQStripNo], "noOutliers:", noOutliers)
+                    perQStripThreshold = getLocalThreshold(
+                        qBoxPts[0].qNo,
+                        allQStripArrs[totalQStripNo],
+                        globalTHR,
+                        noOutliers,
+                        "Mean Intensity Histogram for "
+                        + key
+                        + "."
+                        + qBoxPts[0].qNo
+                        + "."
+                        + str(blockQStripNo),
+                        config.outputs.show_image_level >= 6,
+                    )
+                    # print(qBoxPts[0].qNo,key,blockQStripNo, "THR: ",round(perQStripThreshold,2))
+                    perOMRThresholdAvg += perQStripThreshold
+
+                    # Note: Little debugging visualization - view the particular Qstrip
+                    # if(
+                    #     0
+                    #     # or "q17" in (qBoxPts[0].qNo)
+                    #     # or (qBoxPts[0].qNo+str(blockQStripNo))=="q15"
+                    #  ):
+                    #     st, end = qStrip
+                    #     show("QStrip: "+key+"-"+str(blockQStripNo), img[st[1] : end[1], st[0]+shift : end[0]+shift],0)
+
+                    for pt in qBoxPts:
+                        # shifted
+                        x, y = (pt.x + QBlock.shift, pt.y)
+                        boxval0 = allQVals[totalQBoxNo]
+                        detected = perQStripThreshold > boxval0
+
+                        # TODO: add an option to select PLUS SIGN RESPONSE READING
+                        # extra_check_rects = []
+                        # # [y,y+boxH,x,x+boxW]
+                        # for rect in extra_check_rects:
+                        #     # Note: This is NOT pixel-based thresholding, It is boxed mean-thresholding
+                        #     boxval = cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0]
+                        #     if(perQStripThreshold > boxval):
+                        #         # for critical analysis
+                        #         boxval0 = max(boxval,boxval0)
+                        #         detected=True
+                        #         break
+
+                        if detected:
+                            cv2.rectangle(
+                                final_marked,
+                                (int(x + boxW / 12), int(y + boxH / 12)),
+                                (int(x + boxW - boxW / 12), int(y + boxH - boxH / 12)),
+                                constants.CLR_DARK_GRAY,
+                                3,
+                            )
+                        else:
+                            cv2.rectangle(
+                                final_marked,
+                                (int(x + boxW / 10), int(y + boxH / 10)),
+                                (int(x + boxW - boxW / 10), int(y + boxH - boxH / 10)),
+                                constants.CLR_GRAY,
+                                -1,
+                            )
+
+                        # TODO Make this part useful! (Abstract visualizer to check status)
+                        if detected:
+                            q, val = pt.qNo, str(pt.val)
+                            cv2.putText(
+                                final_marked,
+                                val,
+                                (x, y),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                constants.TEXT_SIZE,
+                                (20, 20, 10),
+                                int(1 + 3.5 * constants.TEXT_SIZE),
+                            )
+                            # Only send rolls multi-marked in the directory
+                            multimarkedL = q in OMRresponse
+                            multimarked = multimarkedL or multimarked
+                            OMRresponse[q] = (
+                                (OMRresponse[q] + val) if multimarkedL else val
+                            )
+                            multiroll = multimarkedL and "roll" in str(q)
+                            # blackVals.append(boxval0)
+                        # else:
                         # whiteVals.append(boxval0)
 
-                    totalQBoxNo += 1
-                    # /for qBoxPts
-                # /for qStrip
+                        totalQBoxNo += 1
+                        # /for qBoxPts
+                    # /for qStrip
 
-                if(config.outputs.show_image_level >= 5):
-                    if(key in allCBoxvals):
-                        qNums[key].append(key[:2] + '_c' + str(blockQStripNo))
-                        allCBoxvals[key].append(allQStripArrs[totalQStripNo])
+                    if config.outputs.show_image_level >= 5:
+                        if key in allCBoxvals:
+                            qNums[key].append(key[:2] + "_c" + str(blockQStripNo))
+                            allCBoxvals[key].append(allQStripArrs[totalQStripNo])
 
-                blockQStripNo += 1
-                totalQStripNo += 1
-            # /for QBlock
+                    blockQStripNo += 1
+                    totalQStripNo += 1
+                # /for QBlock
 
-        # TODO: move this validation into template.py -
-        if(totalQStripNo == 0):
-            print(
-                "\n\t UNEXPECTED Template Incorrect Error: totalQStripNo is zero! qBlocks: ",
-                template.qBlocks)
-            exit(21)
+            # TODO: move this validation into template.py -
+            if totalQStripNo == 0:
+                print(
+                    "\n\t UNEXPECTED Template Incorrect Error: totalQStripNo is zero! qBlocks: ",
+                    template.qBlocks,
+                )
+                exit(21)
 
-        perOMRThresholdAvg /= totalQStripNo
-        perOMRThresholdAvg = round(perOMRThresholdAvg, 2)
-        # Translucent
-        cv2.addWeighted(
-            final_marked,
-            alpha,
-            transp_layer,
-            1 - alpha,
-            0,
-            final_marked)
-        # Box types
-        if(config.outputs.show_image_level >= 5):
-            # plt.draw()
-            f, axes = plt.subplots(len(allCBoxvals), sharey=True)
-            f.canvas.set_window_title(name)
-            ctr = 0
-            typeName = {
-                "int": "Integer",
-                "mcq": "MCQ",
-                "med": "MED",
-                "rol": "Roll"}
-            for k, boxvals in allCBoxvals.items():
-                axes[ctr].title.set_text(typeName[k] + " Type")
-                axes[ctr].boxplot(boxvals)
-                # thrline=axes[ctr].axhline(perOMRThresholdAvg,color='red',ls='--')
-                # thrline.set_label("Average THR")
-                axes[ctr].set_ylabel("Intensity")
-                axes[ctr].set_xticklabels(qNums[k])
-                # axes[ctr].legend()
-                ctr += 1
-            # imshow will do the waiting
-            plt.tight_layout(pad=0.5)
-            plt.show()
+            perOMRThresholdAvg /= totalQStripNo
+            perOMRThresholdAvg = round(perOMRThresholdAvg, 2)
+            # Translucent
+            cv2.addWeighted(
+                final_marked, alpha, transp_layer, 1 - alpha, 0, final_marked
+            )
+            # Box types
+            if config.outputs.show_image_level >= 5:
+                # plt.draw()
+                f, axes = plt.subplots(len(allCBoxvals), sharey=True)
+                f.canvas.set_window_title(name)
+                ctr = 0
+                typeName = {"int": "Integer", "mcq": "MCQ", "med": "MED", "rol": "Roll"}
+                for k, boxvals in allCBoxvals.items():
+                    axes[ctr].title.set_text(typeName[k] + " Type")
+                    axes[ctr].boxplot(boxvals)
+                    # thrline=axes[ctr].axhline(perOMRThresholdAvg,color='red',ls='--')
+                    # thrline.set_label("Average THR")
+                    axes[ctr].set_ylabel("Intensity")
+                    axes[ctr].set_xticklabels(qNums[k])
+                    # axes[ctr].legend()
+                    ctr += 1
+                # imshow will do the waiting
+                plt.tight_layout(pad=0.5)
+                plt.show()
 
-        if(config.outputs.show_image_level >= 3 and final_align is not None):
-            final_align = resize_util_h(final_align, int(config.dimensions.display_height))
-            # [final_align.shape[1],0])
-            show("Template Alignment Adjustment", final_align, 0, 0)
+            if config.outputs.show_image_level >= 3 and final_align is not None:
+                final_align = ImageUtils.resize_util_h(
+                    final_align, int(config.dimensions.display_height)
+                )
+                # [final_align.shape[1],0])
+                self.show("Template Alignment Adjustment", final_align, 0, 0)
 
-        # TODO: refactor "type(savedir) != type(None) "
-        if (config.outputs.save_detections and type(savedir) != type(None)):
-            if(multiroll):
-                savedir = savedir + '_MULTI_/'
-            saveImg(savedir + name, final_marked)
+            # TODO: refactor "type(savedir) != type(None) "
+            if config.outputs.save_detections and type(savedir) != type(None):
+                if multiroll:
+                    savedir = savedir + "_MULTI_/"
+                ImageUtils.saveImg(savedir + name, final_marked)
 
-        appendSaveImg(2, final_marked)
+            ImageUtils.append_save_img(2, final_marked)
 
-        for i in range(config.outputs.save_image_level):
-            saveOrShowStacks(i + 1, name, savedir)
+            for i in range(config.outputs.save_image_level):
+                ImageUtils.saveOrShowStacks(i + 1, name, savedir)
 
-        return OMRresponse, final_marked, multimarked, multiroll
+            return OMRresponse, final_marked, multimarked, multiroll
 
-    except Exception as e:
-        raise e
-    #     exc_type, exc_obj, exc_tb = sys.exc_info()
-    #     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-    #     print("Error from readResponse: ", e)
-    #     print(exc_type, fname, exc_tb.tb_lineno)
-
-
-def resetSaveImg(key):
-    global saveImgList
-    saveImgList[key] = []
-
-
-def appendSaveImg(key, img):
-    if(config.outputs.save_image_level >= int(key)):
-        global saveImgList
-        if(key not in saveImgList):
-            saveImgList[key] = []
-        saveImgList[key].append(img.copy())
-
-
-def saveImg(path, final_marked):
-    print('Saving Image to ' + path)
-    cv2.imwrite(path, final_marked)
-
-def saveOrShowStacks(key, name, savedir=None, pause=1):
-    global saveImgList
-    if(config.outputs.save_image_level >= int(key) and saveImgList[key] != []):
-        result = np.hstack(
-            tuple([resize_util_h(img, config.dimensions.display_height) for img in saveImgList[key]]))
-        result = resize_util(result,
-                             min(len(saveImgList[key]) * config.dimensions.display_width // 3,
-                                 int(config.dimensions.display_width * 2.5)))
-        if (type(savedir) != type(None)):
-            saveImg(savedir+'stack/'+name+'_'+str(key)+'_stack.jpg', result)
-        else:
-            show(name + '_' + str(key), result, pause, 0)
+        except Exception as e:
+            raise e
+        #     exc_type, exc_obj, exc_tb = sys.exc_info()
+        #     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        #     print("Error from readResponse: ", e)
+        #     print(exc_type, fname, exc_tb.tb_lineno)
 
 
 def printbuf(x):
     sys.stdout.write(str(x))
-    sys.stdout.write('\r')
-
+    sys.stdout.write("\r")

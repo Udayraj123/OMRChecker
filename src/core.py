@@ -243,47 +243,54 @@ def preliminary_check():
 def process_files(omr_files, template, args, out):
     start_time = int(time())
     global filesNotMoved
-    filesCounter = 0
+    files_counter = 0
     filesNotMoved = 0
 
+    img_utils = ImageUtils()
+
     for filepath in omr_files:
-        filesCounter += 1
+        files_counter += 1
 
         filename = filepath.name
-        args['current_file'] = filepath
+        args["current_file"] = filepath
 
         inOMR = cv2.imread(str(filepath), cv2.IMREAD_GRAYSCALE)
-        print('')
-        print(f'({filesCounter}) Opening image: \t{filepath}\tResolution: {inOMR.shape}')
+        print(
+            f"\n({files_counter}) Opening image: \t{filepath}\tResolution: {inOMR.shape}"
+        )
 
         # TODO: Get rid of saveImgList
-        for i in range(config.outputs.save_image_level):
-            utils.resetSaveImg(i+1)
+        for i in range(img_utils.save_image_level):
+            img_utils.reset_save_img(i + 1)
 
-        utils.appendSaveImg(1, inOMR)
+        img_utils.append_save_img(1, inOMR)
 
         # resize to conform to template
-        inOMR = utils.resize_util(
-            inOMR, config.dimensions.processing_width, config.dimensions.processing_height)
+        inOMR = img_utils.resize_util(
+            inOMR,
+            config.dimensions.processing_width,
+            config.dimensions.processing_height,
+        )
 
         # run preProcessors in sequence
         for preProcessor in template.preProcessors:
-            inOMR = preProcessor.apply_filter(inOMR, args)           
-        
-        if(inOMR is None):
+            inOMR = preProcessor.apply_filter(inOMR, args)
+
+        if inOMR is None:
             # Error OMR case
             new_filepath = out.paths.ERRORS_DIR + filename
             out.OUTPUT_SET.append([filename] + out.emptyResp)
-            if(checkAndMove(constants.ERROR_CODES.NO_MARKER_ERR, filepath, new_filepath)):
-                err_line = [filename, filepath,
-                            new_filepath, "NA"] + out.emptyResp
-                pd.DataFrame(err_line, dtype=str) \
-                  .T                              \
-                  .to_csv(out.filesObj["Errors"],
-                          mode='a',
-                          quoting=QUOTE_NONNUMERIC,
-                          header=False,
-                          index=False)
+            if checkAndMove(
+                constants.ERROR_CODES.NO_MARKER_ERR, filepath, new_filepath
+            ):
+                err_line = [filename, filepath, new_filepath, "NA"] + out.emptyResp
+                pd.DataFrame(err_line, dtype=str).T.to_csv(
+                    out.filesObj["Errors"],
+                    mode="a",
+                    quoting=QUOTE_NONNUMERIC,
+                    header=False,
+                    index=False,
+                )
             continue
 
         if(args["setLayout"]):
@@ -295,7 +302,7 @@ def process_files(omr_files, template, args, out):
         # uniquify
         file_id = str(filename)
         savedir = out.paths.SAVE_MARKED_DIR
-        OMRresponseDict, final_marked, MultiMarked, multiroll = \
+        OMRresponseDict, final_marked, MultiMarked, _ = \
             utils.readResponse(template, inOMR, name=file_id,
                          savedir=savedir, autoAlign=args["autoAlign"])
 
@@ -332,12 +339,12 @@ def process_files(omr_files, template, args, out):
                       header=False,
                       index=False)
             print("[%d] Graded with score: %.2f" %
-                  (filesCounter, score), '\t file_id: ', file_id)
-            # print(filesCounter,file_id,resp['Roll'],'score : ',score)
+                  (files_counter, score), '\t file_id: ', file_id)
+            # print(files_counter,file_id,resp['Roll'],'score : ',score)
         else:
             # MultiMarked file
             print('[%d] MultiMarked, moving File: %s' %
-                  (filesCounter, file_id))
+                  (files_counter, file_id))
             new_filepath = out.paths.MULTI_MARKED_DIR + filename
             if(checkAndMove(constants.ERROR_CODES.MULTI_BUBBLE_WARN, filepath, new_filepath)):
                 mm_line = [filename, filepath, new_filepath, "NA"] + respArray
@@ -351,44 +358,57 @@ def process_files(omr_files, template, args, out):
             # else:
             #     TODO:  Add appropriate record handling here
             #     pass
+        
+    print_stats(start_time, files_counter)
 
         # flush after every 20 files for a live view
-        # if(filesCounter % 20 == 0 or filesCounter == len(omr_files)):
+        # if(files_counter % 20 == 0 or files_counter == len(omr_files)):
         #     for fileKey in out.filesMap.keys():
         #         out.filesObj[fileKey].flush()
 
-    timeChecking = round(time() - start_time, 2) if filesCounter else 1
-    print('')
-    print('Total files moved        : %d ' % (filesMoved))
-    print('Total files not moved    : %d ' % (filesNotMoved))
-    print('------------------------------')
+def print_stats(start_time, files_counter):
+    time_checking = round(time() - start_time, 2) if files_counter else 1
+    print("")
+    print("Total files moved        : %d " % (filesMoved))
+    print("Total files not moved    : %d " % (filesNotMoved))
+    print("------------------------------")
     print(
-        'Total files processed    : %d (%s)' %
-        (filesCounter,
-         'Sum Tallied!' if filesCounter == (
-             filesMoved +
-             filesNotMoved) else 'Not Tallying!'))
+        "Total files processed    : %d (%s)"
+        % (
+            files_counter,
+            "Sum Tallied!"
+            if files_counter == (filesMoved + filesNotMoved)
+            else "Not Tallying!",
+        )
+    )
 
-    if(config.outputs.show_image_level <= 0):
+    if config.outputs.show_image_level <= 0:
         print(
-            '\nFinished Checking %d files in %.1f seconds i.e. ~%.1f minutes.' %
-            (filesCounter, timeChecking, timeChecking / 60))
-        print('OMR Processing Rate  :\t ~ %.2f seconds/OMR' %
-              (timeChecking / filesCounter))
-        print('OMR Processing Speed :\t ~ %.2f OMRs/minute' %
-              ((filesCounter * 60) / timeChecking))
+            "\nFinished Checking %d files in %.1f seconds i.e. ~%.1f minutes."
+            % (files_counter, time_checking, time_checking / 60)
+        )
+        print(
+            "OMR Processing Rate  :\t ~ %.2f seconds/OMR"
+            % (time_checking / files_counter)
+        )
+        print(
+            "OMR Processing Speed :\t ~ %.2f OMRs/minute"
+            % ((files_counter * 60) / time_checking)
+        )
     else:
-        print("\nTotal script time :", timeChecking, "seconds")
+        print("\nTotal script time :", time_checking, "seconds")
 
-    if(config.outputs.show_image_level <= 1):
+    if config.outputs.show_image_level <= 1:
         # TODO: colorama this
         print(
-            "\nTip: To see some awesome visuals, open config.py and increase 'show_image_level'")
+            "\nTip: To see some awesome visuals, open config.py and increase 'show_image_level'"
+        )
+
 
     #evaluate_correctness(template, out)
 
     # Use this data to train as +ve feedback
-    # if config.outputs.show_image_level >= 0 and filesCounter > 10:
+    # if config.outputs.show_image_level >= 0 and files_counter > 10:
     #     for x in [thresholdCircles]:#,badThresholds,veryBadPoints, mws, mbs]:
     #         if(x != []):
     #             x = pd.DataFrame(x)
@@ -404,7 +424,7 @@ def process_files(omr_files, template, args, out):
 # portal on the same set of images
 def evaluate_correctness(template, out):
     # TODO: TEST_FILE WOULD BE RELATIVE TO INPUT SUBDIRECTORY NOW-
-    TEST_FILE = 'inputs/OMRDataset.csv'
+    TEST_FILE = "inputs/OMRDataset.csv"
     if(os.path.exists(TEST_FILE)):
         print("\nStarting evaluation for: " + TEST_FILE)
 

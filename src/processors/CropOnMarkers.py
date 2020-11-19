@@ -174,7 +174,7 @@ class CropOnMarkers(ImagePreprocessor):
         # appendSaveImg(1,image_eroded_sub)
         # appendSaveImg(1,image_norm)
 
-        utils.appendSaveImg(2, image_eroded_sub)
+        utils.append_save_img(2, image_eroded_sub)
         # Debugging image -
         # res = cv2.matchTemplate(image_eroded_sub,optimal_marker,cv2.TM_CCOEFF_NORMED)
         # res[ : , midw:midw+2] = 255
