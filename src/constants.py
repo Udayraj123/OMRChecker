@@ -6,26 +6,29 @@
  https://github.com/Udayraj123
 
 """
-import os 
+import os
 
 """
 Constants
 """
 from dotmap import DotMap
+
 # Paths
-current_module_dir=os.path.dirname(__file__)
-CONFIG_DEFAULTS_PATH = os.path.join(current_module_dir,"defaults/config.json")
+current_module_dir = os.path.dirname(__file__)
+CONFIG_DEFAULTS_PATH = os.path.join(current_module_dir, "defaults/config.json")
 TEMPLATE_DEFAULTS_PATH = os.path.join(current_module_dir, "defaults/template.json")
 
 # Filenames
 TEMPLATE_FILENAME = "template.json"
 CONFIG_FILENAME = "config.json"
 
-# 
-ERROR_CODES = DotMap({
-    "MULTI_BUBBLE_WARN": 1,
-    "NO_MARKER_ERR": 2,
-})
+#
+ERROR_CODES = DotMap(
+    {
+        "MULTI_BUBBLE_WARN": 1,
+        "NO_MARKER_ERR": 2,
+    }
+)
 
 # Rather these are internal constants & not configs
 # CLR_BLACK = rgb2tuple(CLR_BLACK)
@@ -40,11 +43,9 @@ CLR_DARK_GRAY = (100, 100, 100)
 class Paths:
     def __init__(self, outputDir):
         self.OUTPUT_DIR = outputDir
-        self.SAVE_MARKED_DIR = f'{self.OUTPUT_DIR}/CheckedOMRs/'
-        self.RESULTS_DIR = f'{self.OUTPUT_DIR}/Results/'
-        self.MANUAL_DIR = f'{self.OUTPUT_DIR}/Manual/'
-        self.ERRORS_DIR = f'{self.MANUAL_DIR}ErrorFiles/'
-        self.BAD_ROLLS_DIR = f'{self.MANUAL_DIR}BadRollNosFiles/'
-        self.MULTI_MARKED_DIR = f'{self.MANUAL_DIR}MultiMarkedFiles/'
-
-
+        self.SAVE_MARKED_DIR = f"{self.OUTPUT_DIR}/CheckedOMRs/"
+        self.RESULTS_DIR = f"{self.OUTPUT_DIR}/Results/"
+        self.MANUAL_DIR = f"{self.OUTPUT_DIR}/Manual/"
+        self.ERRORS_DIR = f"{self.MANUAL_DIR}ErrorFiles/"
+        self.BAD_ROLLS_DIR = f"{self.MANUAL_DIR}BadRollNosFiles/"
+        self.MULTI_MARKED_DIR = f"{self.MANUAL_DIR}MultiMarkedFiles/"

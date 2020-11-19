@@ -1,10 +1,12 @@
+# docstring, snake_case
 """
  OMRChecker
  Designed and Developed by-
  Udayraj Deshmukh
  https://github.com/Udayraj123
 """
-import json 
+import json
+
 
 def loadJson(path, **rest):
     with open(path, "r") as f:

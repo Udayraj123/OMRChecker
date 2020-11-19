@@ -1,6 +1,7 @@
+# docstring
 from deepmerge import Merger
 
-override_merger = Merger(
+OVERRIDE_MERGER = Merger(
     # pass in a list of tuples,with the
     # strategies you are looking to apply
     # to each type.
@@ -13,5 +14,5 @@ override_merger = Merger(
     ["override"],
     # finally, choose the strategies in
     # the case where the types conflict:
-    ["override"]
+    ["override"],
 )
