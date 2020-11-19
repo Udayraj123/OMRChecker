@@ -27,6 +27,17 @@ ERROR_CODES = DotMap(
     }
 )
 
+QTYPE_DATA = {
+    "QTYPE_MED": {"vals": ["E", "H"], "orient": "V"},
+    "QTYPE_ROLL": {"vals": range(10), "orient": "V"},
+    "QTYPE_INT": {"vals": range(10), "orient": "V"},
+    "QTYPE_MCQ4": {"vals": ["A", "B", "C", "D"], "orient": "H"},
+    "QTYPE_MCQ5": {"vals": ["A", "B", "C", "D", "E"], "orient": "H"},
+    #
+    # You can create and append custom question types here-
+    #
+}
+
 # Rather these are internal constants & not configs
 # CLR_BLACK = rgb2tuple(CLR_BLACK)
 TEXT_SIZE = 0.95

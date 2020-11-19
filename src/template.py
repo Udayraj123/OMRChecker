@@ -1,3 +1,4 @@
+# Note: too-many-arguments and too-many-locals needs to be fixed
 """
 
 Designed and Developed by-
@@ -6,41 +7,34 @@ https://github.com/Udayraj123
 
 """
 
-from .constants import TEMPLATE_DEFAULTS_PATH
-from .utils.file import loadJson
+import numpy as np
+from .constants import TEMPLATE_DEFAULTS_PATH, QTYPE_DATA
+from .utils.file import load_json
 from .utils.object import OVERRIDE_MERGER
 
-templateDefaults = loadJson(TEMPLATE_DEFAULTS_PATH)
+TEMPLATE_DEFAULTS = load_json(TEMPLATE_DEFAULTS_PATH)
 
 
-def openTemplateWithDefaults(templatePath):
-    user_template = loadJson(templatePath)
-    return OVERRIDE_MERGER.merge(templateDefaults, user_template)
+def open_template_with_defaults(template_path):
+    user_template = load_json(template_path)
+    return OVERRIDE_MERGER.merge(TEMPLATE_DEFAULTS, user_template)
 
-
-import numpy as np
-from argparse import Namespace
-from collections import OrderedDict  # For Python 3.5 and earlier
 
 ### Coordinates Part ###
-
-
 class Pt:
     """
     Container for a Point Box on the OMR
-    """
 
-    """
-    qNo is the point's property- question to which this point belongs to
+    q_no is the point's property- question to which this point belongs to
     It can be used as a roll number column as well. (eg roll1)
     It can also correspond to a single digit of integer type Q (eg q5d1)
     """
 
-    def __init__(self, pt, qNo, qType, val):
+    def __init__(self, pt, q_no, q_type, val):
         self.x = round(pt[0])
         self.y = round(pt[1])
-        self.qNo = qNo
-        self.qType = qType
+        self.q_no = q_no
+        self.q_type = q_type
         self.val = val
 
 
@@ -55,37 +49,24 @@ class QBlock:
         self.shift = 0
 
 
-# TODO: get this out
-qtype_data = {
-    "QTYPE_MED": {"vals": ["E", "H"], "orient": "V"},
-    "QTYPE_ROLL": {"vals": range(10), "orient": "V"},
-    "QTYPE_INT": {"vals": range(10), "orient": "V"},
-    "QTYPE_MCQ4": {"vals": ["A", "B", "C", "D"], "orient": "H"},
-    "QTYPE_MCQ5": {"vals": ["A", "B", "C", "D", "E"], "orient": "H"},
-    #
-    # You can create and append custom question types here-
-    #
-}
-
-
 class Template:
     def __init__(self, template_path, extensions):
-        json_obj = openTemplateWithDefaults(template_path)
+        json_obj = open_template_with_defaults(template_path)
         self.path = template_path.name
-        self.qBlocks = []
+        self.q_blocks = []
         # TODO: ajv validation - throw exception on key not exist
         # TODO: extend DotMap here and only access keys that need extra parsing
         self.dimensions = json_obj["dimensions"]
-        self.bubbleDimensions = json_obj["bubbleDimensions"]
+        self.bubble_dimensions = json_obj["bubbleDimensions"]
         self.concatenations = json_obj["concatenations"]
         self.singles = json_obj["singles"]
 
         # Add new qTypes from template
         if "qtypes" in json_obj:
-            qtype_data.update(json_obj["qtypes"])
+            QTYPE_DATA.update(json_obj["qTypes"])
 
-        # load image preProcessors
-        self.preProcessors = [
+        # load image pre_processors
+        self.pre_processors = [
             extensions[name](opts, template_path.parent)
             for name, opts in json_obj.get("preProcessors", {}).items()
         ]
@@ -93,33 +74,42 @@ class Template:
         # Add options
         self.options = json_obj.get("options", {})
 
-        # Add qBlocks
+        # Add q_blocks
         for name, block in json_obj["qBlocks"].items():
-            self.addQBlocks(name, block)
+            self.add_q_blocks(name, block)
 
-    # Expects bubbleDimensions to be set already
-    def addQBlocks(self, key, rect):
-        assert self.bubbleDimensions != [-1, -1]
-        # For qType defined in qBlocks
-        if "qType" in rect:
-            rect.update(**qtype_data[rect["qType"]])
+    # Expects bubble_dimensions to be set already
+    def add_q_blocks(self, key, rect):
+        assert self.bubble_dimensions != [-1, -1]
+        # For q_type defined in q_blocks
+        if "q_type" in rect:
+            rect.update(**QTYPE_DATA[rect["q_type"]])
         else:
-            rect["qType"] = {"vals": rect["vals"], "orient": rect["orient"]}
+            rect["q_type"] = {"vals": rect["vals"], "orient": rect["orient"]}
         # keyword arg unpacking followed by named args
-        self.qBlocks += genGrid(self.bubbleDimensions, key, **rect)
-        # self.qBlocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
+        self.q_blocks += gen_grid(self.bubble_dimensions, key, **rect)
+        # self.q_blocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
 
     def __str__(self):
         return self.path
 
 
-def genQBlock(
-    bubbleDimensions, QBlockDims, key, orig, qNos, gaps, vals, qType, orient, colOrient
+def gen_q_block(
+    bubble_dimensions,
+    q_block_dims,
+    key,
+    orig,
+    q_nos,
+    gaps,
+    vals,
+    q_type,
+    orient,
+    col_orient,
 ):
     """
     Input:
     orig - start point
-    qNos  - a tuple of qNos
+    q_nos  - a tuple of q_nos
     gaps - (gapX,gapY) are the gaps between rows and cols in a block
     vals - a 1D array of values of each alternative for a question
 
@@ -143,59 +133,59 @@ def genQBlock(
         (q1.1,q1.2)
 
     """
-    H, V = (0, 1) if (orient == "H") else (1, 0)
+    _h, _v = (0, 1) if (orient == "H") else (1, 0)
     # orig[0] += np.random.randint(-6,6)*2 # test random shift
     traverse_pts = []
     o = [float(i) for i in orig]
 
-    if colOrient == orient:
-        for q in range(len(qNos)):
+    if col_orient == orient:
+        for q in enumerate(q_nos):
             pt = o.copy()
             pts = []
-            for v in range(len(vals)):
-                pts.append(Pt(pt.copy(), qNos[q], qType, vals[v]))
-                pt[H] += gaps[H]
+            for v in enumerate(vals):
+                pts.append(Pt(pt.copy(), q_nos[q], q_type, vals[v]))
+                pt[_h] += gaps[_h]
             # For diagonalal endpoint of QBlock
-            pt[H] += bubbleDimensions[H] - gaps[H]
-            pt[V] += bubbleDimensions[V]
+            pt[_h] += bubble_dimensions[_h] - gaps[_h]
+            pt[_v] += bubble_dimensions[_v]
             # TODO- make a mini object for this
             traverse_pts.append(([o.copy(), pt.copy()], pts))
-            o[V] += gaps[V]
+            o[_v] += gaps[_v]
     else:
-        for v in range(len(vals)):
+        for v in enumerate(vals):
             pt = o.copy()
             pts = []
-            for q in range(len(qNos)):
-                pts.append(Pt(pt.copy(), qNos[q], qType, vals[v]))
-                pt[V] += gaps[V]
+            for q in enumerate(q_nos):
+                pts.append(Pt(pt.copy(), q_nos[q], q_type, vals[v]))
+                pt[_v] += gaps[_v]
             # For diagonalal endpoint of QBlock
-            pt[V] += bubbleDimensions[V] - gaps[V]
-            pt[H] += bubbleDimensions[H]
-            # TODO- make a mini object for this
+            pt[_v] += bubble_dimensions[_v] - gaps[_v]
+            pt[_h] += bubble_dimensions[_h]
             traverse_pts.append(([o.copy(), pt.copy()], pts))
-            o[H] += gaps[H]
+            o[_h] += gaps[_h]
     # Pass first three args as is. only append 'traverse_pts'
-    return QBlock(QBlockDims, key, orig, traverse_pts)
+    return QBlock(q_block_dims, key, orig, traverse_pts)
 
 
-def genGrid(
-    bubbleDimensions,
+def gen_grid(
+    bubble_dimensions,
     key,
-    qType,
+    q_type,
     orig,
-    bigGaps,
+    big_gaps,
     gaps,
-    qNos,
+    q_nos,
     vals,
     orient="V",
-    colOrient="V",
+    col_orient="V",
 ):
     """
         Input(Directly passable from JSON parameters):
-        bubbleDimensions - dimesions of single QBox
+        bubble_dimensions - dimesions of single QBox
         orig- start point
-        qNos - an array of qNos tuples(see below) that align with dimension of the big grid (gridDims extracted from here)
-        bigGaps - (bigGapX,bigGapY) are the gaps between blocks
+        q_nos - an array of q_nos tuples(see below) that align with dimension
+               of the big grid (gridDims extracted from here)
+        big_gaps - (bigGapX,bigGapY) are the gaps between blocks
         gaps - (gapX,gapY) are the gaps between rows and cols in a block
         vals - a 1D array of values of each alternative for a question
         orient - The way of arranging the vals (vertical or horizontal)
@@ -209,7 +199,7 @@ def genGrid(
        Q2   1 2 3 4    1 2 3 4      22    22    22    22         1234567
        Q3   1 2 3 4    1 2 3 4      33    33    33    33         1234567
                                     44    44    44    44
-                                ,   55    55    55    55    ,    1234567                       and many more possibilities!
+                                ,   55    55    55    55    ,    1234567
        Q7   1 2 3 4    1 2 3 4      66    66    66    66         1234567
        Q8   1 2 3 4    1 2 3 4      77    77    77    77
        Q9   1 2 3 4    1 2 3 4      88    88    88    88
@@ -224,13 +214,13 @@ def genGrid(
         Q4  1 2 3 4
         Q5  1 2 3 4
 
-        MCQ type (orient='H')-
+        MCQ type (orient="H")-
             [
                 [(q1,q2,q3),(q4,q5,q6)]
                 [(q7,q8,q9),(q10,q11,q12)]
             ]
 
-        INT type (orient='V')-
+        INT type (orient="V")-
             [
                 [(q1d1,q1d2),(q2d1,q2d2),(q3d1,q3d2),(q4d1,q4d2)]
             ]
@@ -241,66 +231,68 @@ def genGrid(
             ]
 
     """
-    gridData = np.array(qNos)
-    # print(gridData.shape, gridData)
-    if 0 and len(gridData.shape) != 3 or gridData.size == 0:  # product of shape is zero
-        print("Error(genGrid): Invalid qNos array given:", gridData.shape, gridData)
+    grid_data = np.array(q_nos)
+    # print(grid_data.shape, grid_data)
+    if (
+        0 and len(grid_data.shape) != 3 or grid_data.size == 0
+    ):  # product of shape is zero
+        print("Error(gen_grid): Invalid q_nos array given:", grid_data.shape, grid_data)
         exit(32)
 
     orig = np.array(orig)
-    numQsMax = max([max([len(qb) for qb in row]) for row in gridData])
+    num_qs_max = max([max([len(qb) for qb in row]) for row in grid_data])
 
-    numDims = [numQsMax, len(vals)]
+    num_dims = [num_qs_max, len(vals)]
 
-    qBlocks = []
+    q_blocks = []
 
     # **Simple is powerful**
-    # H and V are named with respect to orient == 'H', reverse their meaning
-    # when orient = 'V'
-    H, V = (0, 1) if (orient == "H") else (1, 0)
+    # _h and _v are named with respect to orient == "H", reverse their meaning
+    # when orient = "V"
+    _h, _v = (0, 1) if (orient == "H") else (1, 0)
 
-    # print(orig, numDims, gridData.shape, gridData)
-    # orient is also the direction of making qBlocks
+    # print(orig, num_dims, grid_data.shape, grid_data)
+    # orient is also the direction of making q_blocks
 
-    # print(key, numDims, orig, gaps, bigGaps, origGap )
-    qStart = orig.copy()
+    # print(key, num_dims, orig, gaps, big_gaps, orig_gap )
+    q_start = orig.copy()
 
-    origGap = [0, 0]
+    orig_gap = [0, 0]
 
     # Usually single row
-    for row in gridData:
-        qStart[V] = orig[V]
+    for row in grid_data:
+        q_start[_v] = orig[_v]
 
         # Usually multiple qTuples
-        for qTuple in row:
-            # Update numDims and origGaps
-            numDims[0] = len(qTuple)
-            # bigGaps is indep of orientation
-            origGap[0] = bigGaps[0] + (numDims[V] - 1) * gaps[H]
-            origGap[1] = bigGaps[1] + (numDims[H] - 1) * gaps[V]
-            # each qTuple will have qNos
-            QBlockDims = [
+        for q_tuple in row:
+            # Update num_dims and origGaps
+            num_dims[0] = len(q_tuple)
+            # big_gaps is indep of orientation
+            orig_gap[0] = big_gaps[0] + (num_dims[_v] - 1) * gaps[_h]
+            orig_gap[1] = big_gaps[1] + (num_dims[_h] - 1) * gaps[_v]
+            # each q_tuple will have q_nos
+            q_block_dims = [
                 # width x height in pixels
-                gaps[0] * (numDims[V] - 1) + bubbleDimensions[H],
-                gaps[1] * (numDims[H] - 1) + bubbleDimensions[V],
+                gaps[0] * (num_dims[_v] - 1) + bubble_dimensions[_h],
+                gaps[1] * (num_dims[_h] - 1) + bubble_dimensions[_v],
             ]
-            # WATCH FOR BLUNDER(use .copy()) - qStart was getting passed by
+            # WATCH FOR BLUNDER(use .copy()) - q_start was getting passed by
             # reference! (others args read-only)
-            qBlocks.append(
-                genQBlock(
-                    bubbleDimensions,
-                    QBlockDims,
+            q_blocks.append(
+                gen_q_block(
+                    bubble_dimensions,
+                    q_block_dims,
                     key,
-                    qStart.copy(),
-                    qTuple,
+                    q_start.copy(),
+                    q_tuple,
                     gaps,
                     vals,
-                    qType,
+                    q_type,
                     orient,
-                    colOrient,
+                    col_orient,
                 )
             )
             # Goes vertically down first
-            qStart[V] += origGap[V]
-        qStart[H] += origGap[H]
-    return qBlocks
+            q_start[_v] += orig_gap[_v]
+        q_start[_h] += orig_gap[_h]
+    return q_blocks

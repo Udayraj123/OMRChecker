@@ -131,7 +131,7 @@ def put_label(img, label, size):
 def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-1):
     img = ImageUtils.resize_util(img, template.dimensions[0], template.dimensions[1])
     final_align = img.copy()
-    boxW, boxH = template.bubbleDimensions
+    boxW, boxH = template.bubble_dimensions
     for QBlock in template.qBlocks:
         s, d = QBlock.orig, QBlock.dimensions
         shift = QBlock.shift
@@ -624,7 +624,7 @@ class MainOperations:
             alpha = 0.65
             # alpha1 = 0.55
 
-            boxW, boxH = template.bubbleDimensions
+            boxW, boxH = template.bubble_dimensions
             # lang = ['E', 'H']
             OMR_response = {}
 
