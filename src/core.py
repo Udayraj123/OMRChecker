@@ -191,10 +191,10 @@ def setup_output(paths, template):
     ns.OUTPUT_SET = []
     ns.filesObj = {}
     ns.filesMap = {
-        "Results": paths.RESULTS_DIR + "Results_" + timeNowHrs + ".csv",
-        "MultiMarked": paths.MANUAL_DIR + "MultiMarkedFiles_.csv",
-        "Errors": paths.MANUAL_DIR + "ErrorFiles_.csv",
-        "BadRollNos": paths.MANUAL_DIR + "BadRollNoFiles_.csv",
+        "Results": paths.results_dir + "Results_" + timeNowHrs + ".csv",
+        "MultiMarked": paths.manual_dir + "MultiMarkedFiles_.csv",
+        "Errors": paths.manual_dir + "ErrorFiles_.csv",
+        "BadRollNos": paths.manual_dir + "BadRollNoFiles_.csv",
     }
 
     for fileKey, fileName in ns.filesMap.items():
@@ -280,7 +280,7 @@ def process_files(omr_files, template, args, out):
 
         if inOMR is None:
             # Error OMR case
-            new_filepath = out.paths.ERRORS_DIR + filename
+            new_filepath = out.paths.errors_dir + filename
             out.OUTPUT_SET.append([filename] + out.emptyResp)
             if checkAndMove(
                 constants.ERROR_CODES.NO_MARKER_ERR, filepath, new_filepath
@@ -304,7 +304,7 @@ def process_files(omr_files, template, args, out):
 
         # uniquify
         file_id = str(filename)
-        savedir = out.paths.SAVE_MARKED_DIR
+        savedir = out.paths.save_marked_dir
         OMRresponseDict, final_marked, MultiMarked, _ = utils.readResponse(
             template, inOMR, name=file_id, savedir=savedir, autoAlign=args["autoAlign"]
         )
@@ -356,7 +356,7 @@ def process_files(omr_files, template, args, out):
         else:
             # MultiMarked file
             print("[%d] MultiMarked, moving File: %s" % (files_counter, file_id))
-            new_filepath = out.paths.MULTI_MARKED_DIR + filename
+            new_filepath = out.paths.multi_marked_dir + filename
             if checkAndMove(
                 constants.ERROR_CODES.MULTI_BUBBLE_WARN, filepath, new_filepath
             ):

@@ -7,6 +7,7 @@
 
 # Use all imports relative to root directory (https://chrisyeh96.github.io/2017/08/08/definitive-guide-python-imports.html#case-2-syspath-could-change)
 import src.constants as constants
+
 # TODO: pass config in runtime later
 from src.config import configDefaults as config
 
@@ -24,6 +25,7 @@ import numpy as np
 import json
 from operator import itemgetter
 from dataclasses import dataclass
+
 
 class ImageUtils:
     """Class to hold indicators of images and save images."""
@@ -98,9 +100,11 @@ class ImageMetrics:
     badThresholds = []
     veryBadPoints = []
 
-plt.rcParams['figure.figsize'] = (10.0, 8.0)
+
+plt.rcParams["figure.figsize"] = (10.0, 8.0)
 
 # Image-processing utils
+
 
 def normalize_util(img, alpha=0, beta=255):
     return cv2.normalize(img, alpha, beta, norm_type=cv2.NORM_MINMAX)
@@ -111,7 +115,7 @@ def normalize_hist(img):
     cdf = hist.cumsum()
     cdf_m = np.ma.masked_equal(cdf, 0)
     cdf_m = (cdf_m - cdf_m.min()) * 255 / (cdf_m.max() - cdf_m.min())
-    cdf = np.ma.filled(cdf_m, 0).astype('uint8')
+    cdf = np.ma.filled(cdf_m, 0).astype("uint8")
     return cdf[img]
 
 
@@ -120,69 +124,72 @@ def putLabel(img, label, size):
     bgVal = int(np.mean(img))
     pos = (int(scale * 80), int(scale * 30))
     clr = (255 - bgVal,) * 3
-    img[(pos[1] - size * 30):(pos[1] + size * 2), :] = bgVal
+    img[(pos[1] - size * 30) : (pos[1] + size * 2), :] = bgVal
     cv2.putText(img, label, pos, cv2.FONT_HERSHEY_SIMPLEX, size, clr, 3)
 
 
-def drawTemplateLayout(
-        img,
-        template,
-        shifted=True,
-        draw_qvals=False,
-        border=-1):
+def drawTemplateLayout(img, template, shifted=True, draw_qvals=False, border=-1):
     img = ImageUtils.resize_util(img, template.dimensions[0], template.dimensions[1])
     final_align = img.copy()
     boxW, boxH = template.bubbleDimensions
     for QBlock in template.qBlocks:
         s, d = QBlock.orig, QBlock.dimensions
         shift = QBlock.shift
-        if(shifted):
-            cv2.rectangle(final_align,
-                          (s[0]+shift,s[1]),
-                          (s[0]+shift+d[0],s[1]+d[1]),
-                          constants.CLR_BLACK,
-                          3)
+        if shifted:
+            cv2.rectangle(
+                final_align,
+                (s[0] + shift, s[1]),
+                (s[0] + shift + d[0], s[1] + d[1]),
+                constants.CLR_BLACK,
+                3,
+            )
         else:
-            cv2.rectangle(final_align,
-                          (s[0], s[1]),
-                          (s[0] + d[0], s[1] + d[1]),
-                          constants.CLR_BLACK
-                          ,3)
+            cv2.rectangle(
+                final_align,
+                (s[0], s[1]),
+                (s[0] + d[0], s[1] + d[1]),
+                constants.CLR_BLACK,
+                3,
+            )
         for _, qBoxPts in QBlock.traverse_pts:
             for pt in qBoxPts:
                 x, y = (pt.x + QBlock.shift, pt.y) if shifted else (pt.x, pt.y)
-                cv2.rectangle(final_align,
-                              (int(x + boxW / 10),
-                               int(y + boxH / 10)),
-                              (int(x + boxW - boxW / 10),
-                                int(y + boxH - boxH / 10)),
-                              constants.CLR_GRAY,
-                              border)
-                if(draw_qvals):
+                cv2.rectangle(
+                    final_align,
+                    (int(x + boxW / 10), int(y + boxH / 10)),
+                    (int(x + boxW - boxW / 10), int(y + boxH - boxH / 10)),
+                    constants.CLR_GRAY,
+                    border,
+                )
+                if draw_qvals:
                     rect = [y, y + boxH, x, x + boxW]
-                    cv2.putText(final_align,
-                                '%d'% (cv2.mean(img[rect[0]:rect[1], rect[2]:rect[3]])[0]),
-                                (rect[2] + 2, rect[0] + (boxH * 2) // 3),
-                                cv2.FONT_HERSHEY_SIMPLEX, 
-                                0.6, 
-                                constants.CLR_BLACK,
-                                2)
-        if(shifted):
-            cv2.putText(final_align,
-                        's%s'% (shift), 
-                        tuple(s - [template.dimensions[0] // 20, -d[1] // 2]),
-                        cv2.FONT_HERSHEY_SIMPLEX, 
-                        constants.TEXT_SIZE, 
-                        constants.CLR_BLACK, 
-                        4)
+                    cv2.putText(
+                        final_align,
+                        "%d" % (cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]),
+                        (rect[2] + 2, rect[0] + (boxH * 2) // 3),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.6,
+                        constants.CLR_BLACK,
+                        2,
+                    )
+        if shifted:
+            cv2.putText(
+                final_align,
+                "s%s" % (shift),
+                tuple(s - [template.dimensions[0] // 20, -d[1] // 2]),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                constants.TEXT_SIZE,
+                constants.CLR_BLACK,
+                4,
+            )
     return final_align
 
 
 def getPlotImg():
     # Implement better logic here
-    plt.savefig('tmp.png')
+    plt.savefig("tmp.png")
     # img = cv2.imread('tmp.png',cv2.IMREAD_COLOR)
-    img = cv2.imread('tmp.png', cv2.IMREAD_GRAYSCALE)
+    img = cv2.imread("tmp.png", cv2.IMREAD_GRAYSCALE)
     os.remove("tmp.png")
     # plt.cla()
     # plt.clf()
@@ -195,9 +202,9 @@ def dist(p1, p2):
 
 
 def get_reflection(pt, pt1, pt2):
-    pt, pt1, pt2 = tuple(
-        map(lambda x: np.array(x, dtype=float), [pt, pt1, pt2]))
+    pt, pt1, pt2 = tuple(map(lambda x: np.array(x, dtype=float), [pt, pt1, pt2]))
     return (pt1 + pt2) - pt
+
 
 # These are used inside multiple extensions
 def order_points(pts):
@@ -240,11 +247,10 @@ def four_point_transform(image, pts):
     # (i.e. top-down view) of the image, again specifying points
     # in the top-left, top-right, bottom-right, and bottom-left
     # order
-    dst = np.array([
-        [0, 0],
-        [maxWidth - 1, 0],
-        [maxWidth - 1, maxHeight - 1],
-        [0, maxHeight - 1]], dtype="float32")
+    dst = np.array(
+        [[0, 0], [maxWidth - 1, 0], [maxWidth - 1, maxHeight - 1], [0, maxHeight - 1]],
+        dtype="float32",
+    )
 
     # compute the perspective transform matrix and then apply it
     M = cv2.getPerspectiveTransform(rect, dst)
@@ -253,6 +259,7 @@ def four_point_transform(image, pts):
     # return the warped image
     return warped
 
+
 def get_fourth_pt(three_pts):
     m = []
     for i in range(3):
@@ -260,12 +267,14 @@ def get_fourth_pt(three_pts):
 
     v = max(m)
     for i in range(3):
-        if(m[i] != v and m[(i + 1) % 3] != v):
+        if m[i] != v and m[(i + 1) % 3] != v:
             refl = (i + 1) % 3
             break
     fourth_pt = get_reflection(
-        three_pts[refl], three_pts[(refl + 1) % 3], three_pts[(refl + 2) % 3])
+        three_pts[refl], three_pts[(refl + 1) % 3], three_pts[(refl + 2) % 3]
+    )
     return fourth_pt
+
 
 def auto_canny(image, sigma=0.93):
     # compute the median of the single channel pixel intensities
@@ -279,44 +288,43 @@ def auto_canny(image, sigma=0.93):
     # return the edged image
     return edged
 
+
 def adjust_gamma(image, gamma=1.0):
     # build a lookup table mapping the pixel values [0, 255] to
     # their adjusted gamma values
     invGamma = 1.0 / gamma
-    table = np.array([((i / 255.0) ** invGamma) * 255
-                      for i in np.arange(0, 256)]).astype("uint8")
+    table = np.array(
+        [((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]
+    ).astype("uint8")
 
     # apply gamma correction using the lookup table
     return cv2.LUT(image, table)
 
 
 def getGlobalThreshold(
-        QVals_orig,
-        plotTitle=None,
-        plotShow=True,
-        sortInPlot=True,
-        looseness=1):
+    QVals_orig, plotTitle=None, plotShow=True, sortInPlot=True, looseness=1
+):
     """
-        Note: Cannot assume qStrip has only-gray or only-white bg (in which case there is only one jump).
-              So there will be either 1 or 2 jumps.
-        1 Jump :
-                ......
-                ||||||
-                ||||||  <-- risky THR
-                ||||||  <-- safe THR
-            ....||||||
-            ||||||||||
+    Note: Cannot assume qStrip has only-gray or only-white bg (in which case there is only one jump).
+          So there will be either 1 or 2 jumps.
+    1 Jump :
+            ......
+            ||||||
+            ||||||  <-- risky THR
+            ||||||  <-- safe THR
+        ....||||||
+        ||||||||||
 
-        2 Jumps :
-                  ......
-                  |||||| <-- wrong THR
-              ....||||||
-              |||||||||| <-- safe THR
-            ..||||||||||
-            ||||||||||||
+    2 Jumps :
+              ......
+              |||||| <-- wrong THR
+          ....||||||
+          |||||||||| <-- safe THR
+        ..||||||||||
+        ||||||||||||
 
-        The abstract "First LARGE GAP" is perfect for this.
-        Current code is considering ONLY TOP 2 jumps(>= MIN_GAP) to be big, gives the smaller one
+    The abstract "First LARGE GAP" is perfect for this.
+    Current code is considering ONLY TOP 2 jumps(>= MIN_GAP) to be big, gives the smaller one
 
     """
     # Sort the Q vals
@@ -328,7 +336,7 @@ def getGlobalThreshold(
     max1, thr1 = config.threshold_params.MIN_JUMP, 255
     for i in range(ls, l):
         jump = QVals[i + ls] - QVals[i - ls]
-        if(jump > max1):
+        if jump > max1:
             max1 = jump
             thr1 = QVals[i - ls] + jump / 2
 
@@ -337,12 +345,12 @@ def getGlobalThreshold(
     # values at detected jumps would be atleast 20
     max2, thr2 = config.threshold_params.MIN_JUMP, 255
     # Requires atleast 1 gray box to be present (Roll field will ensure this)
-    for i in range(ls,l):
-        jump = QVals[i+ls] - QVals[i-ls]
-        newThr = QVals[i-ls] + jump/2
-        if(jump > max2 and abs(thr1-newThr) > config.threshold_params.JUMP_DELTA):
-            max2=jump
-            thr2=newThr
+    for i in range(ls, l):
+        jump = QVals[i + ls] - QVals[i - ls]
+        newThr = QVals[i - ls] + jump / 2
+        if jump > max2 and abs(thr1 - newThr) > config.threshold_params.JUMP_DELTA:
+            max2 = jump
+            thr2 = newThr
     # globalTHR = min(thr1,thr2)
     globalTHR, j_low, j_high = thr1, thr1 - max1 // 2, thr1 + max1 // 2
 
@@ -356,9 +364,9 @@ def getGlobalThreshold(
         _, ax = plt.subplots()
         ax.bar(range(len(QVals_orig)), QVals if sortInPlot else QVals_orig)
         ax.set_title(plotTitle)
-        thrline = ax.axhline(globalTHR, color='green', ls='--', linewidth=5)
+        thrline = ax.axhline(globalTHR, color="green", ls="--", linewidth=5)
         thrline.set_label("Global Threshold")
-        thrline = ax.axhline(thr2, color='red', ls=':', linewidth=3)
+        thrline = ax.axhline(thr2, color="red", ls=":", linewidth=3)
         thrline.set_label("THR2 Line")
         # thrline=ax.axhline(j_low,color='red',ls='-.', linewidth=3)
         # thrline=ax.axhline(j_high,color='red',ls='-.', linewidth=3)
@@ -367,20 +375,14 @@ def getGlobalThreshold(
         ax.set_ylabel("Values")
         ax.set_xlabel("Position")
         ax.legend()
-        if(plotShow):
+        if plotShow:
             plt.title(plotTitle)
             plt.show()
 
     return globalTHR, j_low, j_high
 
 
-def getLocalThreshold(
-        qNo,
-        QVals,
-        globalTHR,
-        noOutliers,
-        plotTitle=None,
-        plotShow=True):
+def getLocalThreshold(qNo, QVals, globalTHR, noOutliers, plotTitle=None, plotShow=True):
     """
     TODO: Update this documentation too-
     //No more - Assumption : Colwise background color is uniformly gray or white, but not alternating. In this case there is atmost one jump.
@@ -408,9 +410,12 @@ def getLocalThreshold(
 
     # Small no of pts cases:
     # base case: 1 or 2 pts
-    if(len(QVals) < 3):
-        thr1 = globalTHR if np.max(
-            QVals) - np.min(QVals) < config.threshold_params.MIN_GAP else np.mean(QVals)
+    if len(QVals) < 3:
+        thr1 = (
+            globalTHR
+            if np.max(QVals) - np.min(QVals) < config.threshold_params.MIN_GAP
+            else np.mean(QVals)
+        )
     else:
         # qmin, qmax, qmean, qstd = round(np.min(QVals),2), round(np.max(QVals),2), round(np.mean(QVals),2), round(np.std(QVals),2)
         # GVals = [round(abs(q-qmean),2) for q in QVals]
@@ -431,15 +436,17 @@ def getLocalThreshold(
         max1, thr1 = config.threshold_params.MIN_JUMP, 255
         for i in range(1, l):
             jump = QVals[i + 1] - QVals[i - 1]
-            if(jump > max1):
+            if jump > max1:
                 max1 = jump
                 thr1 = QVals[i - 1] + jump / 2
         # print(qNo,QVals,max1)
 
-        CONFIDENT_JUMP = config.threshold_params.MIN_JUMP + config.threshold_params.CONFIDENT_SURPLUS
+        CONFIDENT_JUMP = (
+            config.threshold_params.MIN_JUMP + config.threshold_params.CONFIDENT_SURPLUS
+        )
         # If not confident, then only take help of globalTHR
-        if(max1 < CONFIDENT_JUMP):
-            if(noOutliers):
+        if max1 < CONFIDENT_JUMP:
+            if noOutliers:
                 # All Black or All White case
                 thr1 = globalTHR
             else:
@@ -450,12 +457,12 @@ def getLocalThreshold(
         #     print("Warning: threshold is unexpectedly 255! (Outlier Delta issue?)",plotTitle)
 
     # Make a common plot function to show local and global thresholds
-    if(plotShow and plotTitle is not None):
+    if plotShow and plotTitle is not None:
         _, ax = plt.subplots()
         ax.bar(range(len(QVals)), QVals)
-        thrline = ax.axhline(thr1, color='green', ls=('-.'), linewidth=3)
+        thrline = ax.axhline(thr1, color="green", ls=("-."), linewidth=3)
         thrline.set_label("Local Threshold")
-        thrline = ax.axhline(globalTHR, color='red', ls=':', linewidth=5)
+        thrline = ax.axhline(globalTHR, color="red", ls=":", linewidth=5)
         thrline.set_label("Global Threshold")
         ax.set_title(plotTitle)
         ax.set_ylabel("Bubble Mean Intensity")
@@ -463,9 +470,10 @@ def getLocalThreshold(
         ax.legend()
         # TODO append QStrip to this plot-
         # appendSaveImg(6,getPlotImg())
-        if(plotShow):
+        if plotShow:
             plt.show()
     return thr1
+
 
 # from matplotlib.ticker import MaxNLocator
 # def plotArray(QVals, plotTitle, sort = False, plot=True ):
@@ -487,37 +495,37 @@ def getLocalThreshold(
 
 
 def setup_dirs(paths):
-    print('\nChecking Directories...')
-    for _dir in [paths.SAVE_MARKED_DIR]:
-        if(not os.path.exists(_dir)):
-            print('Created : ' + _dir)
+    print("\nChecking Directories...")
+    for _dir in [paths.save_marked_dir]:
+        if not os.path.exists(_dir):
+            print("Created : " + _dir)
             os.makedirs(_dir)
-            os.mkdir(_dir + '/stack')
-            os.mkdir(_dir + '/_MULTI_')
-            os.mkdir(_dir + '/_MULTI_' + '/stack')
+            os.mkdir(_dir + "/stack")
+            os.mkdir(_dir + "/_MULTI_")
+            os.mkdir(_dir + "/_MULTI_" + "/stack")
             # os.mkdir(_dir+sl+'/_BADSCAN_')
             # os.mkdir(_dir+sl+'/_BADSCAN_'+'/stack')
         else:
-            print('Present : ' + _dir)
+            print("Present : " + _dir)
 
-    for _dir in [paths.MANUAL_DIR, paths.RESULTS_DIR]:
-        if(not os.path.exists(_dir)):
-            print('Created : ' + _dir)
+    for _dir in [paths.manual_dir, paths.results_dir]:
+        if not os.path.exists(_dir):
+            print("Created : " + _dir)
             os.makedirs(_dir)
         else:
-            print('Present : ' + _dir)
+            print("Present : " + _dir)
 
-    for _dir in [paths.MULTI_MARKED_DIR, paths.ERRORS_DIR, paths.BAD_ROLLS_DIR]:
-        if(not os.path.exists(_dir)):
-            print('Created : ' + _dir)
+    for _dir in [paths.multi_marked_dir, paths.errors_dir, paths.bad_rolls_dir]:
+        if not os.path.exists(_dir):
+            print("Created : " + _dir)
             os.makedirs(_dir)
         else:
-            print('Present : ' + _dir)
+            print("Present : " + _dir)
 
 
 class MainOperations:
-    """Perform primary functions such as displaying images and reading responses
-    """
+    """Perform primary functions such as displaying images and reading responses"""
+
     def __init__(self):
         self.image_metrics = ImageMetrics()
         self.image_utils = ImageUtils()

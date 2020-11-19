@@ -1,3 +1,4 @@
+# docstring
 """
 
  OMRChecker
@@ -7,16 +8,12 @@
 
 """
 import os
-
-"""
-Constants
-"""
 from dotmap import DotMap
 
 # Paths
-current_module_dir = os.path.dirname(__file__)
-CONFIG_DEFAULTS_PATH = os.path.join(current_module_dir, "defaults/config.json")
-TEMPLATE_DEFAULTS_PATH = os.path.join(current_module_dir, "defaults/template.json")
+CURRENT_MODULE_DIR = os.path.dirname(__file__)
+CONFIG_DEFAULTS_PATH = os.path.join(CURRENT_MODULE_DIR, "defaults/config.json")
+TEMPLATE_DEFAULTS_PATH = os.path.join(CURRENT_MODULE_DIR, "defaults/template.json")
 
 # Filenames
 TEMPLATE_FILENAME = "template.json"
@@ -41,11 +38,11 @@ CLR_DARK_GRAY = (100, 100, 100)
 
 # Filepaths - object is better
 class Paths:
-    def __init__(self, outputDir):
-        self.OUTPUT_DIR = outputDir
-        self.SAVE_MARKED_DIR = f"{self.OUTPUT_DIR}/CheckedOMRs/"
-        self.RESULTS_DIR = f"{self.OUTPUT_DIR}/Results/"
-        self.MANUAL_DIR = f"{self.OUTPUT_DIR}/Manual/"
-        self.ERRORS_DIR = f"{self.MANUAL_DIR}ErrorFiles/"
-        self.BAD_ROLLS_DIR = f"{self.MANUAL_DIR}BadRollNosFiles/"
-        self.MULTI_MARKED_DIR = f"{self.MANUAL_DIR}MultiMarkedFiles/"
+    def __init__(self, output_dir):
+        self.output_dir = output_dir
+        self.save_marked_dir = f"{self.output_dir}/CheckedOMRs/"
+        self.results_dir = f"{self.output_dir}/Results/"
+        self.manual_dir = f"{self.output_dir}/Manual/"
+        self.errors_dir = f"{self.manual_dir}ErrorFiles/"
+        self.bad_rolls_dir = f"{self.manual_dir}BadRollNosFiles/"
+        self.multi_marked_dir = f"{self.manual_dir}MultiMarkedFiles/"
