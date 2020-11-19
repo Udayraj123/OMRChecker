@@ -1,6 +1,8 @@
 import argparse
 from pathlib import Path
-from src.core import entry_point
+from src.core import (
+    entry_point,
+)
 
 # construct the argument parse and parse the arguments
 argparser = argparse.ArgumentParser()
@@ -33,7 +35,8 @@ argparser.add_argument(
     required=False,
     dest="autoAlign",
     action="store_true",
-    help="(experimental) Enables automatic template alignment - use if the scans show slight misalignments.",
+    help="(experimental) Enables automatic template alignment - \
+    use if the scans show slight misalignments.",
 )
 
 argparser.add_argument(
@@ -42,16 +45,27 @@ argparser.add_argument(
     required=False,
     dest="setLayout",
     action="store_true",
-    help="Set up OMR template layout - modify your json file and run again until the template is set.",
+    help="Set up OMR template layout - modify your json file and \
+    run again until the template is set.",
 )
 
 
-args, unknown = argparser.parse_known_args()
+(
+    args,
+    unknown,
+) = argparser.parse_known_args()
 args = vars(args)
 if len(unknown) > 0:
-    print("\nError: Unknown arguments:", unknown)
+    print(
+        "\nError: Unknown arguments:",
+        unknown,
+    )
     argparser.print_help()
     exit(11)
 
 for root in args["input_paths"]:
-    entry_point(Path(root), Path(root), args)
+    entry_point(
+        Path(root),
+        Path(root),
+        args,
+    )

@@ -11,7 +11,7 @@ import os
 """
 Constants
 """
-from dotmap import DotMap 
+from dotmap import DotMap
 # Paths
 current_module_dir=os.path.dirname(__file__)
 CONFIG_DEFAULTS_PATH = os.path.join(current_module_dir,"defaults/config.json")
