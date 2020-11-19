@@ -9,7 +9,6 @@
 # (https://chrisyeh96.github.io/2017/08/08/definitive-guide-python-imports.html)
 import sys
 import os
-from operator import itemgetter
 from dataclasses import dataclass
 import cv2
 import numpy as np
@@ -674,14 +673,15 @@ class MainOperations:
                     s, d = q_block.orig, q_block.dimensions
 
                     # TODO - align_stride would depend on template's dimensions
-                    match_col, max_steps, align_stride, thk = itemgetter(
+                    match_col, max_steps, align_stride, thk = map(
+                        config.alignment_params.get,
                         [
                             "match_col",
                             "max_steps",
                             "stride",
                             "thickness",
-                        ]
-                    )(config.alignment_params)
+                        ],
+                    )
                     shift, steps = 0, 0
                     while steps < max_steps:
                         left_mean = np.mean(

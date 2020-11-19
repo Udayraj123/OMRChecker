@@ -8,8 +8,6 @@ https://github.com/Udayraj123
 """
 
 import numpy as np
-from operator import itemgetter
-from dotmap import DotMap
 from .constants import TEMPLATE_DEFAULTS_PATH, QTYPE_DATA
 from .utils.file import load_json
 from .utils.object import OVERRIDE_MERGER
@@ -222,9 +220,10 @@ def gen_grid(bubble_dimensions, key, rectParams):
             ]
 
     """
-    rect = DotMap(OVERRIDE_MERGER.merge({"orient": "V", "col_orient": "V"}, rectParams))
+    rect = OVERRIDE_MERGER.merge({"orient": "V", "col_orient": "V"}, rectParams)
     # case mapping
-    (q_type, orig, big_gaps, gaps, q_nos, vals, orient, col_orient) = itemgetter(
+    (q_type, orig, big_gaps, gaps, q_nos, vals, orient, col_orient) = map(
+        rect.get,
         [
             "qType",
             "orig",
@@ -234,8 +233,8 @@ def gen_grid(bubble_dimensions, key, rectParams):
             "vals",
             "orient",
             "col_orient",
-        ]
-    )(rect)
+        ],
+    )
 
     grid_data = np.array(q_nos)
     # print(grid_data.shape, grid_data)
