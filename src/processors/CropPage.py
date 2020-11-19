@@ -1,6 +1,6 @@
 import cv2
 import imutils
-import src.utils.notSorted as utils
+import src.utils.not_sorted as utils
 import numpy as np
 from .interfaces.ImagePreprocessor import ImagePreprocessor
 
@@ -22,8 +22,9 @@ def angle(p1, p2, p0):
     dy1 = float(p1[1] - p0[1])
     dx2 = float(p2[0] - p0[0])
     dy2 = float(p2[1] - p0[1])
-    return (dx1 * dx2 + dy1 * dy2) / \
-        np.sqrt((dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2) + 1e-10)
+    return (dx1 * dx2 + dy1 * dy2) / np.sqrt(
+        (dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2) + 1e-10
+    )
 
 
 def checkMaxCosine(approx):
@@ -36,10 +37,11 @@ def checkMaxCosine(approx):
         minCosine = min(cosine, minCosine)
     # TODO add to plot dict
     # print(maxCosine)
-    if(maxCosine >= 0.35):
-        print('Quadrilateral is not a rectangle.')
+    if maxCosine >= 0.35:
+        print("Quadrilateral is not a rectangle.")
         return False
     return True
+
 
 class CropPage(ImagePreprocessor):
     def __init__(self, cropping_ops, args):
@@ -66,17 +68,15 @@ class CropPage(ImagePreprocessor):
         """
         # Close the small holes, i.e. Complete the edges on canny image
         closed = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
-        
+
         # TODO: Parametrize this from template config
         edge = cv2.Canny(closed, 185, 55)
 
         # findContours returns outer boundaries in CW and inner boundaries in ACW
         # order.
         cnts = imutils.grab_contours(
-                cv2.findContours(
-                    edge,
-                    cv2.RETR_LIST,
-                    cv2.CHAIN_APPROX_SIMPLE))
+            cv2.findContours(edge, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        )
         # hullify to resolve disordered curves due to noise
         cnts = [cv2.convexHull(c) for c in cnts]
         cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
@@ -91,7 +91,7 @@ class CropPage(ImagePreprocessor):
             # print("Area",cv2.contourArea(c), "Peri", peri)
 
             # check its rectangle-ness:
-            if(validateRect(approx)):
+            if validateRect(approx):
                 sheet = np.reshape(approx, (4, -1))
                 cv2.drawContours(image, [approx], -1, (0, 255, 0), 2)
                 cv2.drawContours(edge, [approx], -1, (255, 255, 255), 10)
@@ -114,14 +114,16 @@ class CropPage(ImagePreprocessor):
                 Match logo - can work, but 'lon' too big and may unnecessarily rotate? - but you know the scale
                 Check roll field morphed
         """
-        
+
         # TODO: Take this out into separate preprocessor
         image = normalize(cv2.GaussianBlur(image, (3, 3), 0))
 
         # Resize should be done with another preprocessor is needed
         sheet = self.findPage(image)
         if sheet == []:
-            print("\tError: Paper boundary not found! Have you accidentally included CropPage preprocessor?")
+            print(
+                "\tError: Paper boundary not found! Have you accidentally included CropPage preprocessor?"
+            )
             return None
         else:
             print("Found page corners: \t", sheet.tolist())

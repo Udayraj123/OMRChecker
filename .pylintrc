@@ -4,7 +4,7 @@
 variable-rgx=[a-z0-9_]{1,30}$
 
 # Good variable names which should always be accepted, separated by a comma.
-good-names=x,y
+good-names=x,y,pt
 
 [MESSAGES CONTROL]
 
@@ -22,7 +22,8 @@ disable=import-error,
         missing-docstring,
         relative-beyond-top-level,
         too-many-instance-attributes,
-        bad-continuation
+        bad-continuation,
+        no-member
 
 # Note: bad-continuation is a false positive showing bug in pylint
 # https://github.com/psf/black/issues/48

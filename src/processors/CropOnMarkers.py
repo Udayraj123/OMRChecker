@@ -3,7 +3,7 @@ import cv2
 from .interfaces.ImagePreprocessor import ImagePreprocessor
 import numpy as np
 
-from src.utils.notSorted import (
+from src.utils.not_sorted import (
     ImageUtils,
     MainOperations,
     normalize_util,

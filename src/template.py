@@ -8,6 +8,8 @@ https://github.com/Udayraj123
 """
 
 import numpy as np
+from operator import itemgetter
+from dotmap import DotMap
 from .constants import TEMPLATE_DEFAULTS_PATH, QTYPE_DATA
 from .utils.file import load_json
 from .utils.object import OVERRIDE_MERGER
@@ -62,7 +64,7 @@ class Template:
         self.singles = json_obj["singles"]
 
         # Add new qTypes from template
-        if "qtypes" in json_obj:
+        if "qTypes" in json_obj:
             QTYPE_DATA.update(json_obj["qTypes"])
 
         # load image pre_processors
@@ -82,12 +84,12 @@ class Template:
     def add_q_blocks(self, key, rect):
         assert self.bubble_dimensions != [-1, -1]
         # For q_type defined in q_blocks
-        if "q_type" in rect:
-            rect.update(**QTYPE_DATA[rect["q_type"]])
+        if "qType" in rect:
+            rect.update(**QTYPE_DATA[rect["qType"]])
         else:
-            rect["q_type"] = {"vals": rect["vals"], "orient": rect["orient"]}
+            rect["qType"] = {"vals": rect["vals"], "orient": rect["orient"]}
         # keyword arg unpacking followed by named args
-        self.q_blocks += gen_grid(self.bubble_dimensions, key, **rect)
+        self.q_blocks += gen_grid(self.bubble_dimensions, key, rect)
         # self.q_blocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
 
     def __str__(self):
@@ -139,10 +141,10 @@ def gen_q_block(
     o = [float(i) for i in orig]
 
     if col_orient == orient:
-        for q in enumerate(q_nos):
+        for (q, _) in enumerate(q_nos):
             pt = o.copy()
             pts = []
-            for v in enumerate(vals):
+            for (v, _) in enumerate(vals):
                 pts.append(Pt(pt.copy(), q_nos[q], q_type, vals[v]))
                 pt[_h] += gaps[_h]
             # For diagonalal endpoint of QBlock
@@ -152,10 +154,10 @@ def gen_q_block(
             traverse_pts.append(([o.copy(), pt.copy()], pts))
             o[_v] += gaps[_v]
     else:
-        for v in enumerate(vals):
+        for (v, _) in enumerate(vals):
             pt = o.copy()
             pts = []
-            for q in enumerate(q_nos):
+            for (q, _) in enumerate(q_nos):
                 pts.append(Pt(pt.copy(), q_nos[q], q_type, vals[v]))
                 pt[_v] += gaps[_v]
             # For diagonalal endpoint of QBlock
@@ -167,18 +169,7 @@ def gen_q_block(
     return QBlock(q_block_dims, key, orig, traverse_pts)
 
 
-def gen_grid(
-    bubble_dimensions,
-    key,
-    q_type,
-    orig,
-    big_gaps,
-    gaps,
-    q_nos,
-    vals,
-    orient="V",
-    col_orient="V",
-):
+def gen_grid(bubble_dimensions, key, rectParams):
     """
         Input(Directly passable from JSON parameters):
         bubble_dimensions - dimesions of single QBox
@@ -231,6 +222,21 @@ def gen_grid(
             ]
 
     """
+    rect = DotMap(OVERRIDE_MERGER.merge({"orient": "V", "col_orient": "V"}, rectParams))
+    # case mapping
+    (q_type, orig, big_gaps, gaps, q_nos, vals, orient, col_orient) = itemgetter(
+        [
+            "qType",
+            "orig",
+            "bigGaps",
+            "gaps",
+            "qNos",
+            "vals",
+            "orient",
+            "col_orient",
+        ]
+    )(rect)
+
     grid_data = np.array(q_nos)
     # print(grid_data.shape, grid_data)
     if (

@@ -19,7 +19,7 @@ import pandas as pd
 import numpy as np
 
 # TODO: further break utils down and separate the imports
-from src.utils.notSorted import (
+from src.utils.not_sorted import (
     ImageUtils,
     MainOperations,
     draw_template_layout,
@@ -37,7 +37,6 @@ from .template import Template
 
 # Load processors
 PROCESSOR_MANAGER = ProcessorManager()
-IMAGE_UTILS = ImageUtils()
 STATS = constants.Stats()
 
 # TODO(beginner task) :-
@@ -262,10 +261,10 @@ def process_files(omr_files, template, args, out):
         )
 
         # TODO: Get rid of saveImgList
-        for i in range(IMAGE_UTILS.save_image_level):
-            IMAGE_UTILS.reset_save_img(i + 1)
+        for i in range(ImageUtils.save_image_level):
+            ImageUtils.reset_save_img(i + 1)
 
-        IMAGE_UTILS.append_save_img(1, in_omr)
+        ImageUtils.append_save_img(1, in_omr)
 
         # resize to conform to template
         in_omr = ImageUtils.resize_util(

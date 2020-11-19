@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 from .interfaces.ImagePreprocessor import ImagePreprocessor
-import src.utils.notSorted as utils
+import src.utils.not_sorted as utils
 from src.config import CONFIG_DEFAULTS as config
 
 # defaults
