@@ -1,4 +1,12 @@
-# docstring
+"""
+
+ OMRChecker 
+
+ Author: Udayraj Deshmukh 
+ Github: https://github.com/Udayraj123
+
+"""
+
 from deepmerge import Merger
 
 OVERRIDE_MERGER = Merger(

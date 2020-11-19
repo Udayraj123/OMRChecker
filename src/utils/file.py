@@ -1,10 +1,3 @@
-# docstring, snake_case
-"""
- OMRChecker
- Designed and Developed by-
- Udayraj Deshmukh
- https://github.com/Udayraj123
-"""
 import json
 
 

@@ -1,3 +1,12 @@
+"""
+
+ OMRChecker 
+
+ Author: Udayraj Deshmukh 
+ Github: https://github.com/Udayraj123
+
+"""
+
 import argparse
 from pathlib import Path
 from src.core import (

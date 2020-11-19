@@ -1,12 +1,12 @@
-# docstring
 """
 
- OMRChecker
- Designed and Developed by-
- Udayraj Deshmukh
- https://github.com/Udayraj123
+ OMRChecker 
+
+ Author: Udayraj Deshmukh 
+ Github: https://github.com/Udayraj123
 
 """
+
 import os
 from dotmap import DotMap
 
