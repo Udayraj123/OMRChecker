@@ -29,21 +29,20 @@ from dataclasses import dataclass
 
 class ImageUtils:
     """Class to hold indicators of images and save images."""
-
-    def __init__(self):
-        """Constructor for class ImageUtils"""
-        self.save_img_list = {}
-        self.save_image_level = config.outputs.save_image_level
+    save_image_level = config.outputs.save_image_level
+    save_img_list = {}
+    # def __init__(self):
+    #     """Constructor for class ImageUtils"""
 
     def reset_save_img(self, key):
-        self.save_img_list[key] = []
+        ImageUtils.save_img_list[key] = []
 
     @staticmethod
     def append_save_img(key, img):
-        if self.save_image_level >= int(key):
-            if key not in self.save_img_list:
-                self.save_img_list[key] = []
-            self.save_img_list[key].append(img.copy())
+        if ImageUtils.save_image_level >= int(key):
+            if key not in ImageUtils.save_img_list:
+                ImageUtils.save_img_list[key] = []
+            ImageUtils.save_img_list[key].append(img.copy())
 
     @staticmethod
     def save_img(path, final_marked):
@@ -51,25 +50,25 @@ class ImageUtils:
         cv2.imwrite(path, final_marked)
 
     @staticmethod
-    def save_or_show_stacks(self, key, name, savedir=None, pause=1):
-        if self.save_image_level >= int(key) and self.save_img_list[key] != []:
+    def save_or_show_stacks(key, name, savedir=None, pause=1):
+        if ImageUtils.save_image_level >= int(key) and ImageUtils.save_img_list[key] != []:
             result = np.hstack(
                 tuple(
                     [
-                        self.resize_util_h(img, config.dimensions.display_height)
-                        for img in self.save_img_list[key]
+                        ImageUtils.resize_util_h(img, config.dimensions.display_height)
+                        for img in ImageUtils.save_img_list[key]
                     ]
                 )
             )
-            result = self.resize_util(
+            result = ImageUtils.resize_util(
                 result,
                 min(
-                    len(self.save_img_list[key]) * config.dimensions.display_width // 3,
+                    len(ImageUtils.save_img_list[key]) * config.dimensions.display_width // 3,
                     int(config.dimensions.display_width * 2.5),
                 ),
             )
             if type(savedir) != type(None):
-                self.save_img(
+                ImageUtils.save_img(
                     savedir + "stack/" + name + "_" + str(key) + "_stack.jpg", result
                 )
             else:
@@ -533,19 +532,21 @@ def setup_dirs(paths):
 class MainOperations:
     """Perform primary functions such as displaying images and reading responses"""
 
+    image_metrics = ImageMetrics()
     def __init__(self):
-        self.image_metrics = ImageMetrics()
         self.image_utils = ImageUtils()
 
-    def waitQ(self):
+    @staticmethod
+    def waitQ():
         ESC_KEY = 27
         while cv2.waitKey(1) & 0xFF not in [ord("q"), ESC_KEY]:
             pass
-        self.image_metrics.window_x = 0
-        self.image_metrics.window_y = 0
+        MainOperations.image_metrics.window_x = 0
+        MainOperations.image_metrics.window_y = 0
         cv2.destroyAllWindows()
 
-    def show(self, name, orig, pause=1, resize=False, resetpos=None):
+    @staticmethod
+    def show(name, orig, pause=1, resize=False, resetpos=None):
         if type(orig) == type(None):
             print(name, " NoneType image to show!")
             if pause:
@@ -559,9 +560,9 @@ class MainOperations:
         )
         cv2.imshow(name, img)
         if resetpos:
-            self.image_metrics.window_x = resetpos[0]
-            self.image_metrics.window_y = resetpos[1]
-        cv2.moveWindow(name, self.image_metrics.window_x, self.image_metrics.window_y)
+            MainOperations.image_metrics.window_x = resetpos[0]
+            MainOperations.image_metrics.window_y = resetpos[1]
+        cv2.moveWindow(name, MainOperations.image_metrics.window_x, MainOperations.image_metrics.window_y)
 
         h, w = img.shape[:2]
 
@@ -569,14 +570,14 @@ class MainOperations:
         margin = 25
         w += margin
         h += margin
-        if self.image_metrics.window_x + w > config.dimensions.window_width:
-            self.image_metrics.window_x = 0
-            if self.image_metrics.window_y + h > config.dimensions.window_height:
-                self.image_metrics.window_y = 0
+        if MainOperations.image_metrics.window_x + w > config.dimensions.window_width:
+            MainOperations.image_metrics.window_x = 0
+            if MainOperations.image_metrics.window_y + h > config.dimensions.window_height:
+                MainOperations.image_metrics.window_y = 0
             else:
-                self.image_metrics.window_y += h
+                MainOperations.image_metrics.window_y += h
         else:
-            self.image_metrics.window_x += w
+            MainOperations.image_metrics.window_x += w
 
         if pause:
             print(
@@ -584,9 +585,10 @@ class MainOperations:
                 + name
                 + "'\n\tPress Q on image to continue Press Ctrl + C in terminal to exit"
             )
-            self.waitQ()
+            MainOperations.waitQ()
 
-    def read_response(self, template, image, name, savedir=None, auto_align=False):
+    @staticmethod
+    def read_response(template, image, name, savedir=None, auto_align=False):
         # global clahe
 
         try:
@@ -608,7 +610,7 @@ class MainOperations:
             # TODO: evaluate if CLAHE is really req
             if auto_align:
                 # Note: clahe is good for morphology, bad for thresholding
-                morph = self.image_metrics.clahe.apply(morph)
+                morph = MainOperations.image_metrics.clahe.apply(morph)
                 ImageUtils.append_save_img(3, morph)
                 # Remove shadows further, make columns/boxes darker (less gamma)
                 morph = adjust_gamma(morph, config.threshold_params.GAMMA_LOW)
@@ -617,7 +619,7 @@ class MainOperations:
                 morph = normalize_util(morph)
                 ImageUtils.append_save_img(3, morph)
                 if config.outputs.show_image_level >= 4:
-                    self.show("morph1", morph, 0, 1)
+                    MainOperations.show("morph1", morph, 0, 1)
 
             # Move them to data class if needed
             # Overlay Transparencies
@@ -652,7 +654,7 @@ class MainOperations:
                 morph_v = 255 - normalize_util(morph_v)
 
                 if config.outputs.show_image_level >= 3:
-                    self.show("morphed_vertical", morph_v, 0, 1)
+                    MainOperations.show("morphed_vertical", morph_v, 0, 1)
 
                 # show("morph1",morph,0,1)
                 # show("morphed_vertical",morph_v,0,1)
@@ -674,7 +676,7 @@ class MainOperations:
                 # _, morph_h = cv2.threshold(morph_h,morphTHR,255,cv2.THRESH_BINARY)
                 # morph_h = cv2.erode(morph_h,  np.ones((5,5),np.uint8), iterations = 2)
                 if config.outputs.show_image_level >= 3:
-                    self.show("morph_thr_eroded", morph_v, 0, 1)
+                    MainOperations.show("morph_thr_eroded", morph_v, 0, 1)
 
                 ImageUtils.append_save_img(6, morph_v)
 
@@ -961,7 +963,7 @@ class MainOperations:
                     final_align, int(config.dimensions.display_height)
                 )
                 # [final_align.shape[1],0])
-                self.show("Template Alignment Adjustment", final_align, 0, 0)
+                MainOperations.show("Template Alignment Adjustment", final_align, 0, 0)
 
             # TODO: refactor "type(savedir) != type(None) "
             if config.outputs.save_detections and type(savedir) != type(None):

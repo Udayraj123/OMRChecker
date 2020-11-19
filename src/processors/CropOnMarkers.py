@@ -3,7 +3,7 @@ import cv2
 from .interfaces.ImagePreprocessor import ImagePreprocessor
 import numpy as np
 
-import src.utils.notSorted as utils
+from src.utils.notSorted import ImageUtils, normalize_util, four_point_transform
 from src.config import configDefaults as config
 
 
@@ -32,7 +32,7 @@ class CropOnMarkers(ImagePreprocessor):
 
         if "sheetToMarkerWidthRatio" in marker_ops:
             # TODO: processing_width should come through proper channel
-            marker = utils.resize_util(
+            marker = ImageUtils.resize_util(
                 marker,
                 config.dimensions.processing_width
                 / int(marker_ops["sheetToMarkerWidthRatio"]),
@@ -73,7 +73,7 @@ class CropOnMarkers(ImagePreprocessor):
             s = float(r0 * 1 / 100)
             if s == 0.0:
                 continue
-            rescaled_marker = utils.resize_util_h(self.marker, u_height=int(h * s))
+            rescaled_marker = ImageUtils.resize_util_h(self.marker, u_height=int(h * s))
             # res is the black image with white dots
             res = cv2.matchTemplate(
                 image_eroded_sub, rescaled_marker, cv2.TM_CCOEFF_NORMED
@@ -96,7 +96,7 @@ class CropOnMarkers(ImagePreprocessor):
         return best_scale, allMaxT
 
     def apply_filter(self, image, args):
-        image_eroded_sub = utils.normalize_util(
+        image_eroded_sub = normalize_util(
             image
             if self.apply_erode_subtract
             else (image - cv2.erode(image, kernel=np.ones((5, 5)), iterations=5))
@@ -122,7 +122,7 @@ class CropOnMarkers(ImagePreprocessor):
                 utils.show("Quads", image_eroded_sub)
             return None
 
-        optimal_marker = utils.resize_util_h(
+        optimal_marker = ImageUtils.resize_util_h(
             self.marker, u_height=int(self.marker.shape[0] * best_scale)
         )
         h, w = optimal_marker.shape[:2]
@@ -181,23 +181,23 @@ class CropOnMarkers(ImagePreprocessor):
         # analysis data
         self.thresholdCircles.append(sumT / 4)
 
-        image = utils.four_point_transform(image, np.array(centres))
+        image = four_point_transform(image, np.array(centres))
         # appendSaveImg(1,image_eroded_sub)
         # appendSaveImg(1,image_norm)
 
-        utils.append_save_img(2, image_eroded_sub)
+        ImageUtils.append_save_img(2, image_eroded_sub)
         # Debugging image -
         # res = cv2.matchTemplate(image_eroded_sub,optimal_marker,cv2.TM_CCOEFF_NORMED)
         # res[ : , midw:midw+2] = 255
         # res[ midh:midh+2, : ] = 255
         # show("Markers Matching",res)
         if config.outputs.show_image_level >= 2 and config.outputs.show_image_level < 4:
-            image_eroded_sub = utils.resize_util_h(image_eroded_sub, image.shape[0])
+            image_eroded_sub = ImageUtils.resize_util_h(image_eroded_sub, image.shape[0])
             image_eroded_sub[:, -5:] = 0
             h_stack = np.hstack((image_eroded_sub, image))
             utils.show(
                 "Warped: " + args["current_file"].name,
-                utils.resize_util(h_stack, int(config.display_width * 1.6)),
+                ImageUtils.resize_util(h_stack, int(config.display_width * 1.6)),
                 0,
                 0,
                 [0, 0],

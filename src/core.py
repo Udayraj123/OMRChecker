@@ -13,7 +13,7 @@ from time import localtime, strftime, time
 from pathlib import Path
 
 # TODO: further break utils down and separate the imports
-import src.utils.notSorted as utils
+from src.utils.notSorted import ImageUtils, MainOperations, setup_dirs
 import src.constants as constants
 
 # TODO: use openConfigWithDefaults after making a Config class.
@@ -99,7 +99,7 @@ def process_dir(root_dir, curr_dir, args, template=None):
 
         print("")
 
-        utils.setup_dirs(paths)
+        setup_dirs(paths)
         out = setup_output(paths, template)
         process_files(omr_files, template, args_local, out)
 
@@ -305,17 +305,17 @@ def process_files(omr_files, template, args, out):
         # uniquify
         file_id = str(filename)
         savedir = out.paths.save_marked_dir
-        OMRresponseDict, final_marked, MultiMarked, _ = utils.readResponse(
-            template, inOMR, name=file_id, savedir=savedir, autoAlign=args["autoAlign"]
+        OMRresponseDict, final_marked, MultiMarked, _ = MainOperations.read_response(
+            template, inOMR, name=file_id, savedir=savedir, auto_align=args["autoAlign"]
         )
 
         # concatenate roll nos, set unmarked responses, etc
         resp = processOMR(template, OMRresponseDict)
         print("\nRead Response: \t", resp, "\n")
         if config.outputs.show_image_level >= 1:
-            utils.show(
+            MainOperations.show(
                 "Final Marked Bubbles : " + file_id,
-                utils.resize_util_h(
+                ImageUtils.resize_util_h(
                     final_marked, int(config.dimensions.display_height * 1.3)
                 ),
                 1,
