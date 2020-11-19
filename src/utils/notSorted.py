@@ -36,16 +36,19 @@ class ImageUtils:
     def reset_save_img(self, key):
         self.save_img_list[key] = []
 
-    def append_save_img(self, key, img):
+    @staticmethod
+    def append_save_img(key, img):
         if self.save_image_level >= int(key):
             if key not in self.save_img_list:
                 self.save_img_list[key] = []
             self.save_img_list[key].append(img.copy())
 
-    def saveImg(self, path, final_marked):
+    @staticmethod
+    def saveImg(path, final_marked):
         print("Saving Image to " + path)
         cv2.imwrite(path, final_marked)
 
+    @staticmethod
     def saveOrShowStacks(self, key, name, savedir=None, pause=1):
         if self.save_image_level >= int(key) and self.save_img_list[key] != []:
             result = np.hstack(
@@ -70,14 +73,15 @@ class ImageUtils:
             else:
                 show(name + "_" + str(key), result, pause, 0)
 
-    def resize_util(self, img, u_width, u_height=None):
+    @staticmethod
+    def resize_util(img, u_width, u_height=None):
         if u_height is None:
             h, w = img.shape[:2]
             u_height = int(h * u_width / w)
         return cv2.resize(img, (int(u_width), int(u_height)))
 
-
-    def resize_util_h(self, img, u_height, u_width=None):
+    @staticmethod
+    def resize_util_h(img, u_height, u_width=None):
         if u_width is None:
             h, w = img.shape[:2]
             u_width = int(w * u_height / h)
@@ -534,7 +538,7 @@ class MainOperations:
             return
         # origDim = orig.shape[:2]
         img = (
-            ImageUtils().resize_util(orig, config.dimensions.display_width)
+            ImageUtils.resize_util(orig, config.dimensions.display_width)
             if resize
             else orig
         )
@@ -573,7 +577,7 @@ class MainOperations:
         try:
             img = image.copy()
             # origDim = img.shape[:2]
-            img = ImageUtils().resize_util(
+            img = ImageUtils.resize_util(
                 img, template.dimensions[0], template.dimensions[1]
             )
             if img.max() > img.min():
@@ -584,19 +588,19 @@ class MainOperations:
             # putLabel(final_marked,"Crop Size: " + str(origDim[0])+"x"+str(origDim[1]) + " "+name, size=1)
 
             morph = img.copy()
-            ImageUtils().append_save_img(3, morph)
+            ImageUtils.append_save_img(3, morph)
 
             # TODO: evaluate if CLAHE is really req
             if autoAlign:
                 # Note: clahe is good for morphology, bad for thresholding
                 morph = self.image_metrics.clahe.apply(morph)
-                ImageUtils().append_save_img(3, morph)
+                ImageUtils.append_save_img(3, morph)
                 # Remove shadows further, make columns/boxes darker (less gamma)
                 morph = adjust_gamma(morph, config.threshold_params.GAMMA_LOW)
                 # TODO: all numbers should come from either constants or config
                 _, morph = cv2.threshold(morph, 220, 220, cv2.THRESH_TRUNC)
                 morph = normalize_util(morph)
-                ImageUtils().append_save_img(3, morph)
+                ImageUtils.append_save_img(3, morph)
                 if config.outputs.show_image_level >= 4:
                     self.show("morph1", morph, 0, 1)
 
@@ -638,7 +642,7 @@ class MainOperations:
                 # show("morph1",morph,0,1)
                 # show("morphed_vertical",morph_v,0,1)
 
-                ImageUtils().append_save_img(3, morph_v)
+                ImageUtils.append_save_img(3, morph_v)
 
                 morphTHR = 60  # for Mobile images
                 # morphTHR = 40 # for scan Images
@@ -646,7 +650,7 @@ class MainOperations:
                 _, morph_v = cv2.threshold(morph_v, morphTHR, 255, cv2.THRESH_BINARY)
                 morph_v = cv2.erode(morph_v, np.ones((5, 5), np.uint8), iterations=2)
 
-                ImageUtils().append_save_img(3, morph_v)
+                ImageUtils.append_save_img(3, morph_v)
                 # h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 2))
                 # morph_h = cv2.morphologyEx(morph, cv2.MORPH_OPEN, h_kernel, iterations=3)
                 # ret, morph_h = cv2.threshold(morph_h,200,200,cv2.THRESH_TRUNC)
@@ -657,7 +661,7 @@ class MainOperations:
                 if config.outputs.show_image_level >= 3:
                     self.show("morph_thr_eroded", morph_v, 0, 1)
 
-                ImageUtils().append_save_img(6, morph_v)
+                ImageUtils.append_save_img(6, morph_v)
 
                 # template alignment code (relative alignment algo)
                 # OUTPUT : each QBlock.shift is updated
@@ -730,9 +734,9 @@ class MainOperations:
                     img, template, shifted=True, draw_qvals=True
                 )
                 # appendSaveImg(4,mean_vals)
-                ImageUtils().append_save_img(2, initial_align)
-                ImageUtils().append_save_img(2, final_align)
-                ImageUtils().append_save_img(5, img)
+                ImageUtils.append_save_img(2, initial_align)
+                ImageUtils.append_save_img(2, final_align)
+                ImageUtils.append_save_img(5, img)
                 if autoAlign:
                     final_align = np.hstack((initial_align, final_align))
 
@@ -938,7 +942,7 @@ class MainOperations:
                 plt.show()
 
             if config.outputs.show_image_level >= 3 and final_align is not None:
-                final_align = ImageUtils().resize_util_h(
+                final_align = ImageUtils.resize_util_h(
                     final_align, int(config.dimensions.display_height)
                 )
                 # [final_align.shape[1],0])
@@ -948,12 +952,12 @@ class MainOperations:
             if config.outputs.save_detections and type(savedir) != type(None):
                 if multiroll:
                     savedir = savedir + "_MULTI_/"
-                ImageUtils().saveImg(savedir + name, final_marked)
+                ImageUtils.saveImg(savedir + name, final_marked)
 
-            ImageUtils().append_save_img(2, final_marked)
+            ImageUtils.append_save_img(2, final_marked)
 
             for i in range(config.outputs.save_image_level):
-                ImageUtils().saveOrShowStacks(i + 1, name, savedir)
+                ImageUtils.saveOrShowStacks(i + 1, name, savedir)
 
             return OMRresponse, final_marked, multimarked, multiroll
 
