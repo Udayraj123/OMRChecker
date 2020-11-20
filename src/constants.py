@@ -1,8 +1,8 @@
 """
 
- OMRChecker 
+ OMRChecker
 
- Author: Udayraj Deshmukh 
+ Author: Udayraj Deshmukh
  Github: https://github.com/Udayraj123
 
 """
