@@ -8,7 +8,7 @@ class ImagePreprocessor(Processor):
     def __init__(self, options, args):
         self.options = options
         self.args = args
-        super().__init__(args)
+        super().__init__()
 
     def apply_filter(self, image, filename):
         """Apply filter to the image and returns modified image"""
