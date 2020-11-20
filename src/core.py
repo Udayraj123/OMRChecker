@@ -316,7 +316,7 @@ def process_files(omr_files, template, args, out):
         # concatenate roll nos, set unmarked responses, etc
         resp = process_omr(template, response_dict)
         print("\nRead Response: \t", resp, "\n")
-        if config.outputs.show_image_level >= 1:
+        if config.outputs.show_image_level >= 2:
             MainOperations.show(
                 "Final Marked Bubbles : " + file_id,
                 ImageUtils.resize_util_h(
