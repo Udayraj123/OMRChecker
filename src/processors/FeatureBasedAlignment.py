@@ -1,13 +1,13 @@
-import os
+"""
+Image based feature alignment
+Credits: https://www.learnopencv.com/image-alignment-feature-based-using-opencv-c-python/
+"""
+
 import cv2
 import numpy as np
-from .interfaces.ImagePreprocessor import ImagePreprocessor
-import src.utils.not_sorted as utils
+from src.utils.not_sorted import MainOperations
 from src.config import CONFIG_DEFAULTS as config
-
-# defaults
-MAX_FEATURES = 500
-GOOD_MATCH_PERCENT = 0.15
+from .interfaces.ImagePreprocessor import ImagePreprocessor
 
 
 class FeatureBasedAlignment(ImagePreprocessor):
@@ -15,11 +15,12 @@ class FeatureBasedAlignment(ImagePreprocessor):
         # process reference image
         self.ref_path = path.joinpath(options["reference"])
         self.ref_img = cv2.imread(str(self.ref_path), cv2.IMREAD_GRAYSCALE)
-        self.MAX_FEATURES = options.get("maxFeatures", MAX_FEATURES)
-        self.GOOD_MATCH_PERCENT = options.get("goodMatchPercent", GOOD_MATCH_PERCENT)
-        self.TRANSFORM_2D = options.get("2d", False)
+        # get options with defaults
+        self.max_features = options.get("maxFeatures", 500)
+        self.good_match_percent = options.get("goodMatchPercent", 0.15)
+        self.transform_2_d = options.get("2d", False)
         # Extract keypoints and description of source image
-        self.orb = cv2.ORB_create(self.MAX_FEATURES)
+        self.orb = cv2.ORB_create(self.max_features)
         self.to_keypoints, self.to_descriptors = self.orb.detectAndCompute(
             self.ref_img, None
         )
@@ -30,10 +31,7 @@ class FeatureBasedAlignment(ImagePreprocessor):
     def exclude_files(self):
         return [self.ref_path]
 
-    """ Image based feature alignment
-    Credits: https://www.learnopencv.com/image-alignment-feature-based-using-opencv-c-python/"""
-
-    def apply_filter(self, img, args):
+    def apply_filter(self, img, _args):
 
         # Convert images to grayscale
         # im1Gray = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
@@ -54,15 +52,15 @@ class FeatureBasedAlignment(ImagePreprocessor):
         matches.sort(key=lambda x: x.distance, reverse=False)
 
         # Remove not so good matches
-        numGoodMatches = int(len(matches) * self.GOOD_MATCH_PERCENT)
-        matches = matches[:numGoodMatches]
+        num_good_matches = int(len(matches) * self.good_match_percent)
+        matches = matches[:num_good_matches]
 
         # Draw top matches
         if config.outputs.show_image_level > 2:
-            imMatches = cv2.drawMatches(
+            im_matches = cv2.drawMatches(
                 img, from_keypoints, self.ref_img, self.to_keypoints, matches, None
             )
-            utils.show("Aligning", imMatches, resize=True)
+            MainOperations.show("Aligning", im_matches, resize=True)
 
         # Extract location of good matches
         points1 = np.zeros((len(matches), 2), dtype=np.float32)
@@ -74,10 +72,10 @@ class FeatureBasedAlignment(ImagePreprocessor):
 
         # Find homography
         height, width = self.ref_img.shape
-        if self.TRANSFORM_2D:
-            m, inliers = cv2.estimateAffine2D(points1, points2)
+        if self.transform_2_d:
+            m, _inliers = cv2.estimateAffine2D(points1, points2)
             return cv2.warpAffine(img, m, (width, height))
-        else:
-            # Use homography
-            h, mask = cv2.findHomography(points1, points2, cv2.RANSAC)
-            return cv2.warpPerspective(img, h, (width, height))
+
+        # Use homography
+        h, _mask = cv2.findHomography(points1, points2, cv2.RANSAC)
+        return cv2.warpPerspective(img, h, (width, height))

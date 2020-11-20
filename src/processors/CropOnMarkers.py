@@ -1,7 +1,7 @@
 import os
 import cv2
-from .interfaces.ImagePreprocessor import ImagePreprocessor
 import numpy as np
+from .interfaces.ImagePreprocessor import ImagePreprocessor
 
 from src.utils.not_sorted import (
     ImageUtils,
@@ -14,15 +14,15 @@ from src.config import CONFIG_DEFAULTS as config
 
 class CropOnMarkers(ImagePreprocessor):
     def __init__(self, marker_ops, cwd):
-        self.thresholdCircles = []
+        self.threshold_circles = []
         # img_utils = ImageUtils()
 
         # options with defaults
         self.marker_path = os.path.join(
             cwd, marker_ops.get("relativePath", "omr_marker.jpg")
         )
-        self.minMatchingThreshold = marker_ops.get("minMatchingThreshold", 0.3)
-        self.maxMatchingVariation = marker_ops.get("maxMatchingVariation", 0.41)
+        self.min_matching_threshold = marker_ops.get("min_matching_threshold", 0.3)
+        self.max_matching_variation = marker_ops.get("max_matching_variation", 0.41)
         self.marker_rescale_range = marker_ops.get("marker_rescale_range", (35, 100))
         self.marker_rescale_steps = marker_ops.get("marker_rescale_steps", 10)
         self.apply_erode_subtract = marker_ops.get("apply_erode_subtract", 1)
@@ -66,9 +66,9 @@ class CropOnMarkers(ImagePreprocessor):
         descent_per_step = (
             self.marker_rescale_range[1] - self.marker_rescale_range[0]
         ) // self.marker_rescale_steps
-        h, w = self.marker.shape[:2]
+        _h, _w = self.marker.shape[:2]
         res, best_scale = None, None
-        allMaxT = 0
+        all_max_t = 0
 
         for r0 in np.arange(
             self.marker_rescale_range[1],
@@ -78,18 +78,20 @@ class CropOnMarkers(ImagePreprocessor):
             s = float(r0 * 1 / 100)
             if s == 0.0:
                 continue
-            rescaled_marker = ImageUtils.resize_util_h(self.marker, u_height=int(h * s))
+            rescaled_marker = ImageUtils.resize_util_h(
+                self.marker, u_height=int(_h * s)
+            )
             # res is the black image with white dots
             res = cv2.matchTemplate(
                 image_eroded_sub, rescaled_marker, cv2.TM_CCOEFF_NORMED
             )
 
-            maxT = res.max()
-            if allMaxT < maxT:
-                # print('Scale: '+str(s)+', Circle Match: '+str(round(maxT*100,2))+'%')
-                best_scale, allMaxT = s, maxT
+            max_t = res.max()
+            if all_max_t < max_t:
+                # print('Scale: '+str(s)+', Circle Match: '+str(round(max_t*100,2))+'%')
+                best_scale, all_max_t = s, max_t
 
-        if allMaxT < self.minMatchingThreshold:
+        if all_max_t < self.min_matching_threshold:
             print(
                 "\tWarning: Template matching too low! Consider rechecking preProcessors applied before this."
             )
@@ -98,7 +100,7 @@ class CropOnMarkers(ImagePreprocessor):
 
         if best_scale is None:
             print("No matchings for given scaleRange:", self.marker_rescale_range)
-        return best_scale, allMaxT
+        return best_scale, all_max_t
 
     def apply_filter(self, image, args):
         image_eroded_sub = normalize_util(
@@ -120,7 +122,7 @@ class CropOnMarkers(ImagePreprocessor):
         image_eroded_sub[:, midw : midw + 2] = 255
         image_eroded_sub[midh : midh + 2, :] = 255
 
-        best_scale, allMaxT = self.getBestMatch(image_eroded_sub)
+        best_scale, all_max_t = self.getBestMatch(image_eroded_sub)
         if best_scale is None:
             # TODO: Plot and see performance of marker_rescale_range
             if config.outputs.show_image_level >= 1:
@@ -130,17 +132,17 @@ class CropOnMarkers(ImagePreprocessor):
         optimal_marker = ImageUtils.resize_util_h(
             self.marker, u_height=int(self.marker.shape[0] * best_scale)
         )
-        h, w = optimal_marker.shape[:2]
+        _h, w = optimal_marker.shape[:2]
         centres = []
-        sumT, maxT = 0, 0
+        sum_t, max_t = 0, 0
         print("Matching Marker:\t", end=" ")
         for k in range(0, 4):
             res = cv2.matchTemplate(quads[k], optimal_marker, cv2.TM_CCOEFF_NORMED)
-            maxT = res.max()
-            print("Q" + str(k + 1) + ": maxT", round(maxT, 3), end="\t")
+            max_t = res.max()
+            print("Q" + str(k + 1) + ": max_t", round(max_t, 3), end="\t")
             if (
-                maxT < self.minMatchingThreshold
-                or abs(allMaxT - maxT) >= self.maxMatchingVariation
+                max_t < self.min_matching_threshold
+                or abs(all_max_t - max_t) >= self.max_matching_variation
             ):
                 # Warning - code will stop in the middle. Keep Threshold low to
                 # avoid.
@@ -148,45 +150,45 @@ class CropOnMarkers(ImagePreprocessor):
                     args["current_file"].name,
                     "\nError: No circle found in Quad",
                     k + 1,
-                    "\n\tminMatchingThreshold",
-                    self.minMatchingThreshold,
-                    "\tmaxMatchingVariation",
-                    self.maxMatchingVariation,
-                    "\tmaxT",
-                    maxT,
-                    "\tallMaxT",
-                    allMaxT,
+                    "\n\t min_matching_threshold",
+                    self.min_matching_threshold,
+                    "\t max_matching_variation",
+                    self.max_matching_variation,
+                    "\t max_t",
+                    max_t,
+                    "\t all_max_t",
+                    all_max_t,
                 )
                 if config.outputs.show_image_level >= 1:
                     MainOperations.show(
                         "no_pts_" + args["current_file"].name, image_eroded_sub, 0
                     )
                     MainOperations.show(
-                        "res_Q" + str(k + 1) + " (" + str(maxT) + ")", res, 1
+                        "res_Q" + str(k + 1) + " (" + str(max_t) + ")", res, 1
                     )
                 return None
 
-            pt = np.argwhere(res == maxT)[0]
+            pt = np.argwhere(res == max_t)[0]
             pt = [pt[1], pt[0]]
             pt[0] += origins[k][0]
             pt[1] += origins[k][1]
             # print(">>",pt)
             image = cv2.rectangle(
-                image, tuple(pt), (pt[0] + w, pt[1] + h), (150, 150, 150), 2
+                image, tuple(pt), (pt[0] + w, pt[1] + _h), (150, 150, 150), 2
             )
             # display:
             image_eroded_sub = cv2.rectangle(
                 image_eroded_sub,
                 tuple(pt),
-                (pt[0] + w, pt[1] + h),
+                (pt[0] + w, pt[1] + _h),
                 (50, 50, 50) if self.apply_erode_subtract else (155, 155, 155),
                 4,
             )
-            centres.append([pt[0] + w / 2, pt[1] + h / 2])
-            sumT += maxT
+            centres.append([pt[0] + w / 2, pt[1] + _h / 2])
+            sum_t += max_t
         print("Optimal Scale:", best_scale)
         # analysis data
-        self.thresholdCircles.append(sumT / 4)
+        self.threshold_circles.append(sum_t / 4)
 
         image = four_point_transform(image, np.array(centres))
         # appendSaveImg(1,image_eroded_sub)

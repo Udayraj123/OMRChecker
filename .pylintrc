@@ -18,6 +18,7 @@ good-names=x,y,pt
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
 disable=import-error,
+        unresolved-import,
         too-few-public-methods,
         missing-docstring,
         relative-beyond-top-level,
