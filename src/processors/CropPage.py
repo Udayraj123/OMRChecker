@@ -4,9 +4,8 @@ https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-det
 
 
 import cv2
-import imutils
 import numpy as np
-from src.utils.not_sorted import four_point_transform
+from src.utils.not_sorted import four_point_transform, ImageUtils
 from .interfaces.ImagePreprocessor import ImagePreprocessor
 
 MIN_PAGE_AREA = 80000
@@ -78,7 +77,7 @@ class CropPage(ImagePreprocessor):
 
         # findContours returns outer boundaries in CW and inner boundaries in ACW
         # order.
-        cnts = imutils.grab_contours(
+        cnts = ImageUtils.grab_contours(
             cv2.findContours(edge, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
         )
         # hullify to resolve disordered curves due to noise
