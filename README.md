@@ -2,13 +2,13 @@
 Grade exams fast and accurately using a scanner 🖨 or your phone 🤳. 
 
 [![HitCount](http://hits.dwyl.io/udayraj123/OMRchecker.svg)](http://hits.dwyl.io/udayraj123/OMRchecker)
-<!-- [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg)](https://github.com/Udayraj123/OMRChecker/wiki/TODOs) -->
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/pull/new/master)
+[![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/pull/new/master) <!-- [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg)](https://github.com/Udayraj123/OMRChecker/wiki/TODOs) -->
+
 [![GitHub pull-requests closed](https://img.shields.io/github/issues-pr-closed/Udayraj123/OMRChecker.svg)](https://github.com/Udayraj123/OMRChecker/pulls?q=is%3Aclosed)
 [![GitHub issues-closed](https://img.shields.io/github/issues-closed/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/issues?q=is%3Aissue+is%3Aclosed)
 [![GitHub contributors](https://img.shields.io/github/contributors/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/graphs/contributors/)
 
-[![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
 [![Join](https://img.shields.io/badge/Join-Discord_group-purple.svg?style=flat-square)](https://discord.gg/qFv2Vqf)
 [![Ask me](https://img.shields.io/badge/Discuss-on_Github-purple.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/issues/5)
 <!-- [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/gist/Udayraj123/a125b1531c61cceed5f06994329cba66/omrchecker-on-cloud.ipynb) -->
@@ -22,6 +22,7 @@ A full-fledged OMR checking software that can read and evaluate OMR sheets scann
 
 | Specs               | ![Current_Speed](https://img.shields.io/badge/Speed-200_OMRs/m-blue.svg?style=flat-square) ![Current_Size](https://img.shields.io/badge/Code_Size-500KB-blue.svg?style=flat-square)  ![Min Resolution](https://img.shields.io/badge/Min_Resolution-640x480-blue.svg?style=flat-square) |
 | :------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <img width=300/>    | <img width=300/>                                                                                                                                                                                                                                                                       |
 | 💯 **Accurate**      | Currently nearly 100% accurate on good quality document scans; and about 90% accurate on mobile images.                                                                                                                                                                                |
 | 💪🏿 **Robust**        | Supports low resolution, xeroxed sheets. See [**Robustness**](https://github.com/Udayraj123/OMRChecker/wiki/Robustness) for more.                                                                                                                                                      |
 | ⏩ **Fast**          | Current processing speed without any optimization is 200 OMRs/minute.                                                                                                                                                                                                                  |
@@ -31,7 +32,9 @@ A full-fledged OMR checking software that can read and evaluate OMR sheets scann
 | 🏫 **Large Scale**   | Tested on a large scale OMRs at [Technothlon](https://www.facebook.com/technothlon.techniche).                                                                                                                                                                                         |
 | 👩🏿‍💻 **Dev Friendly**  | [Pylinted](http://pylint.pycqa.org/) and [Black formatted](https://github.com/psf/black) code (check dev branch for latest code). Also has [a developer community on discord](https://discord.gg/qFv2Vqf).                                                                             |
 
-Note: For solving interesting challenges, developers can checkout [**Dev Branch**](https://github.com/Udayraj123/OMRChecker/tree/dev) and [**TODOs**](https://github.com/Udayraj123/OMRChecker/wiki/TODOs). See complete guide and details at [Project Wiki](https://github.com/Udayraj123/OMRChecker/wiki/).
+Note: For solving interesting challenges, developers can checkout [**Dev Branch**](https://github.com/Udayraj123/OMRChecker/tree/dev) and [**TODOs**](https://github.com/Udayraj123/OMRChecker/wiki/TODOs). 
+
+See complete guide and details at [Project Wiki](https://github.com/Udayraj123/OMRChecker/wiki/).
 
 <!-- 💁🏿‍♂️ **User Friendly** - WIP, Help by contributing! -->
 ## 💡 What can OMRChecker do for me?
@@ -53,7 +56,9 @@ Images can be taken from various angles as shown below-
 	<img alt="checking_xeroxed_mobile" height="300" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/mini_scripts/outputs/gif/checking_xeroxed_mobile.gif">
 </p>
 
-### Visuals
+## Visuals
+
+### Processing steps
 See step by step processing of any OMR sheet:
 
 <p align="center">
@@ -78,10 +83,9 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 ## Getting started
 ![Setup Time](https://img.shields.io/badge/Setup_Time-20_min-blue.svg)
 
-### Operating System
-**OSX or Linux** is recommended although windows is also supported currently.
+**Operating system:** OSX or Linux is recommended although windows is also supported currently.
 
-### 1. Install dependencies 
+### 1. Install global dependencies 
 ![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4+](https://img.shields.io/badge/python-3.4+-blue.svg)
 
 _Note: To get a copy button for below commands, use [CodeCopy Chrome](https://chrome.google.com/webstore/detail/codecopy/fkbfebkcoelajmhanocgppanfoojcdmg) | [CodeCopy Firefox](https://addons.mozilla.org/en-US/firefox/addon/codecopy/)._
@@ -96,7 +100,7 @@ More details on pip install openCV [here](https://www.pyimagesearch.com/2018/09/
 
 **Installing missing libraries(if any):** 
 
-Windows users may skip this step.
+*Windows users may skip this step.*
 
 On a fresh computer, some of the libraries may get missing in event after a successful pip install. Install them using following commands[(ref)](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/):
 
@@ -107,7 +111,8 @@ sudo apt-get install -y libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
 sudo apt-get install -y libatlas-base-dev gfortran
 ```
 
-### 2. Clone the repo
+### 2. Install project dependencies
+#### Clone the repo
 ```bash
 # Shallow clone - takes latest code with minimal size
 git clone https://github.com/Udayraj123/OMRChecker --depth=1
@@ -129,38 +134,41 @@ python3 -m pip install --user -r requirements.txt
 
 1. First copy and examine the sample data to know how to structure your inputs: 
 	```bash
-	# Note: you may remove previous inputs if any with `mv inputs/* ~/.trash` 
 	cp -r ./samples/sample1 inputs/
+	# Note: you may remove previous inputs (if any) with `mv inputs/* ~/.trash` 
+	# Change the number N in sampleN to see more examples
 	```
-	_Note: Change the number N in sampleN to see more examples_
 2. Run OMRChecker: 
-	**` python3 main.py `**
+	```bash
+	python3 main.py
+	```
 
 Each example in samples folder demonstrates different ways in which OMRChecker can be used.
 
-#### Running it on your own OMR Sheets
+### 4. Running it on your own OMR Sheets
 
 1. First [create your own template.json](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide).
 2. Configure the tuning parameters (help needed for documentation!).
 <!-- 3. Add answer key( TODO: add answer key/marking scheme guide)  -->
-3. Run OMRChecker with appropriate arguments.
-	#### Full Usage 
-	```
-	python3 main.py [--setLayout] [--noCropping] [--autoAlign] [--inputDir dir1] [--outputDir dir1] [--template path/to/template.json]
-	```
-	Explanation for the arguments:
+3. Run OMRChecker with appropriate arguments (See full usage).
 
-	`--setLayout`: Set up OMR template layout - modify your json file and run again until the template is set.
+### Full Usage 
+```
+python3 main.py [--setLayout] [--noCropping] [--autoAlign] [--inputDir dir1] [--outputDir dir1] [--template path/to/template.json]
+```
+Explanation for the arguments:
 
-	`--autoAlign`: (experimental) Enables automatic template alignment - use if the scans show slight misalignments.
+`--setLayout`: Set up OMR template layout - modify your json file and run again until the template is set.
 
-	`--noCropping`: Disables page contour detection - used when page boundary is not visible e.g. document scanner.
+`--autoAlign`: (experimental) Enables automatic template alignment - use if the scans show slight misalignments.
 
-	`--inputDir`: Specify an input directory.
+`--noCropping`: Disables page contour detection - used when page boundary is not visible e.g. document scanner.
 
-	`--outputDir`: Specify an output directory.
+`--inputDir`: Specify an input directory.
 
-	`--template`: Specify a default template if no template file in input directories.
+`--outputDir`: Specify an output directory.
+
+`--template`: Specify a default template if no template file in input directories.
 
 <!-- #### Testing the code
 Datasets to test on : 
@@ -171,10 +179,6 @@ High Quality Dataset(For custom processing) (6 GB)
 
 ## FAQ 
 
-### Can I use this code in my work?
-
-OMRChecker can be forked and modified. **You are encouraged to play with it and we would love to see your own projects in action!** The only requirement is **disclose usage** of this software in your code. It is published under the GPLv3 license.
-
 ### Why is this software free?
 
 This project was born out of a student-led organization called as [Technothlon](https://technothlon.techniche.org.in). It is a logic-based international school championship organized by students of IIT Guwahati. Being a non-profit organization, and after seeing it work fabulously at such a large scale we decided to share this tool with the world. The OMR checking processes still involves so much tediousness which we aim to reduce dramatically.
@@ -182,6 +186,14 @@ This project was born out of a student-led organization called as [Technothlon](
 We believe in the power of open source! Currently, OMRChecker is in an intermediate stage where only developers can use it. We hope to see it become more user-friendly as well as robust from exposure to different inputs from you all!
 
 [![Open Source](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badges/)
+
+### Can I use this code in my work?
+
+OMRChecker can be forked and modified. You are encouraged to play with it and we would love to see your own projects in action! 
+
+The only requirement is **disclose usage** of this software in your code. 
+
+It is published under the GPLv3 license.
 
 ## Credits 
 _A Huge thanks to :_
@@ -209,8 +221,14 @@ Here's a sneak peak of the [Android OMR Helper App (WIP)](https://github.com/Uda
 	</a>
 </p>
 
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/Udayraj123/OMRChecker.svg)](https://starchart.cc/Udayraj123/OMRChecker)
+
 ### Ways to contribute:
-- Help OMRChecker reach more people by giving a star! Goal is to reach top position for the [OMR Topic](https://github.com/topics/omr) [![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
+- Help OMRChecker reach more people by giving a star! 
+
+  The Goal is to reach top position for the [OMR Topic](https://github.com/topics/omr) [![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
 
 - If this project saved you large costs on OMR Software licenses, or saved efforts to make one. Consider donating an amount of your choice below: 
   - **Paypal:** [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif)](https://www.paypal.me/Udayraj123/500)
