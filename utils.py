@@ -349,7 +349,7 @@ def findPage(image_norm):
     # (https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/)
 
     image_norm = normalize_util(image_norm)
-    ret, image_norm = cv2.threshold(image_norm, 200, 255, cv2.THRESH_TRUNC)
+    ret, image_norm = cv2.threshold(image_norm, 210, 255, cv2.THRESH_TRUNC)
     image_norm = normalize_util(image_norm)
 
     appendSaveImg(1, image_norm)
@@ -401,6 +401,10 @@ def findPage(image_norm):
     # show('Morphed Edges',np.hstack((closed,edge)),1,1)
 
     appendSaveImg(1, edge)
+    if(sheet ==  []):
+        print("\tError: Paper boundary not found! Should you pass --noCropping flag?")
+        if(config.showimglvl >= 4):
+            show('Morphed Edges', np.hstack((closed,edge)),resize =1)
     return sheet
 
 
@@ -497,7 +501,6 @@ def getROI(image, filename, noCropping=False):
             image_norm = resize_util(image_norm, config.uniform_width * 2)
         sheet = findPage(image_norm)
         if sheet == []:
-            print("\tError: Paper boundary not found! Should you pass --noCropping flag?")
             return None
         else:
             print("Found page corners: \t", sheet.tolist())
