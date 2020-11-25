@@ -3,8 +3,8 @@ Grade exams fast and accurately using a scanner 🖨 or your phone 🤳.
 
 [![HitCount](http://hits.dwyl.io/udayraj123/OMRchecker.svg)](http://hits.dwyl.io/udayraj123/OMRchecker)
 [![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/pull/new/master) <!-- [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg)](https://github.com/Udayraj123/OMRChecker/wiki/TODOs) -->
 
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/pull/new/master) <!-- [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg)](https://github.com/Udayraj123/OMRChecker/wiki/TODOs) -->
 [![GitHub pull-requests closed](https://img.shields.io/github/issues-pr-closed/Udayraj123/OMRChecker.svg)](https://github.com/Udayraj123/OMRChecker/pulls?q=is%3Aclosed)
 [![GitHub issues-closed](https://img.shields.io/github/issues-closed/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/issues?q=is%3Aissue+is%3Aclosed)
 [![GitHub contributors](https://img.shields.io/github/contributors/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/graphs/contributors/)
@@ -20,17 +20,16 @@ Grade exams fast and accurately using a scanner 🖨 or your phone 🤳.
 
 A full-fledged OMR checking software that can read and evaluate OMR sheets scanned at any angle and having any color. Support is also provided for a customisable marking scheme with section-wise marking, bonus questions, etc.
 
-| Specs               | ![Current_Speed](https://img.shields.io/badge/Speed-200_OMRs/m-blue.svg?style=flat-square) ![Current_Size](https://img.shields.io/badge/Code_Size-500KB-blue.svg?style=flat-square)  ![Min Resolution](https://img.shields.io/badge/Min_Resolution-640x480-blue.svg?style=flat-square) |
+| Specs <img width=200/>   | ![Current_Speed](https://img.shields.io/badge/Speed-200_OMRs/m-blue.svg?style=flat-square) ![Current_Size](https://img.shields.io/badge/Code_Size-500KB-blue.svg?style=flat-square)  ![Min Resolution](https://img.shields.io/badge/Min_Resolution-640x480-blue.svg?style=flat-square) <img width=200/>    |
 | :------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <img width=300/>    | <img width=300/>                                                                                                                                                                                                                                                                       |
 | 💯 **Accurate**      | Currently nearly 100% accurate on good quality document scans; and about 90% accurate on mobile images.                                                                                                                                                                                |
 | 💪🏿 **Robust**        | Supports low resolution, xeroxed sheets. See [**Robustness**](https://github.com/Udayraj123/OMRChecker/wiki/Robustness) for more.                                                                                                                                                      |
 | ⏩ **Fast**          | Current processing speed without any optimization is 200 OMRs/minute.                                                                                                                                                                                                                  |
-| ✅ **Extensible**    | [**Easily apply**](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide) to different OMR layouts, surveys, etc.                                                                                                                                                                   |
+| ✅ **Extensible**    | [Easily apply](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide) to different OMR layouts, surveys, etc.                                                                                                                                                                   |
 | 📊 **Visually Rich** | [Get insights](https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals) to configure and debug easily.                                                                                                                                                                              |
 | 🎈 **Lightweight**   | Core code size(excluding images) is **less than 500 KB**.                                                                                                                                                                                                                              |
-| 🏫 **Large Scale**   | Tested on a large scale OMRs at [Technothlon](https://www.facebook.com/technothlon.techniche).                                                                                                                                                                                         |
-| 👩🏿‍💻 **Dev Friendly**  | [Pylinted](http://pylint.pycqa.org/) and [Black formatted](https://github.com/psf/black) code (check dev branch for latest code). Also has a [developer community](https://discord.gg/qFv2Vqf) on discord.                                                                             |
+| 🏫 **Large Scale**   | Tested on a large scale at [Technothlon](https://www.facebook.com/technothlon.techniche).                                                                                                                                                                                         |
+| 👩🏿‍💻 **Dev Friendly**  | [Pylinted](http://pylint.pycqa.org/) and [Black formatted](https://github.com/psf/black) code (check [dev branch](https://github.com/Udayraj123/OMRChecker/tree/dev) for latest code). Also has a [developer community](https://discord.gg/qFv2Vqf) on discord.                                                                             |
 
 Note: For solving interesting challenges, developers can checkout [**Dev Branch**](https://github.com/Udayraj123/OMRChecker/tree/dev) and [**TODOs**](https://github.com/Udayraj123/OMRChecker/wiki/TODOs). 
 
@@ -112,6 +111,9 @@ sudo apt-get install -y libatlas-base-dev gfortran
 ```
 
 ### 2. Install project dependencies
+<!-- ![imutils 0.5.2](https://img.shields.io/badge/imutils-0.5.2-blue.svg)  -->
+![matplotlib 3.0.2](https://img.shields.io/badge/matplotlib-3.0.2-blue.svg) ![pandas 0.24.0](https://img.shields.io/badge/pandas-0.24.0-blue.svg) ![numpy 1.16.0](https://img.shields.io/badge/numpy-1.16.0-blue.svg) ![deepmerge 0.1.0](https://img.shields.io/badge/deepmerge-0.1.0-blue.svg) ![dotmap 1.3.17](https://img.shields.io/badge/dotmap-1.3.17-blue.svg)
+
 #### Clone the repo
 ```bash
 # Shallow clone - takes latest code with minimal size
@@ -120,8 +122,6 @@ git clone https://github.com/Udayraj123/OMRChecker --depth=1
 **Note:** Contributors should take a full clone(without the --depth flag).
 
 #### Install pip requirements 
-<!-- ![imutils 0.5.2](https://img.shields.io/badge/imutils-0.5.2-blue.svg)  -->
-![matplotlib 3.0.2](https://img.shields.io/badge/matplotlib-3.0.2-blue.svg) ![pandas 0.24.0](https://img.shields.io/badge/pandas-0.24.0-blue.svg) ![numpy 1.16.0](https://img.shields.io/badge/numpy-1.16.0-blue.svg) ![deepmerge 0.1.0](https://img.shields.io/badge/deepmerge-0.1.0-blue.svg) ![dotmap 1.3.17](https://img.shields.io/badge/dotmap-1.3.17-blue.svg)
 
 ```bash
 # cd OMRChecker/
@@ -228,10 +228,12 @@ Here's a sneak peak of the [Android OMR Helper App (WIP)](https://github.com/Uda
 ### Ways to contribute:
 - Help OMRChecker reach more people by giving a star! 
 
-  The Goal is to reach top position for the [OMR Topic](https://github.com/topics/omr) [![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
+  The Goal is to reach top position for the [OMR Topic](https://github.com/topics/omr)
 
 - If this project saved you large costs on OMR Software licenses, or saved efforts to make one. Consider donating an amount of your choice below: 
-  - **Paypal:** [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif)](https://www.paypal.me/Udayraj123/500)
+  - [**Paypal:**](https://www.paypal.me/Udayraj123/500) 
+  	
+	[![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif)](https://www.paypal.me/Udayraj123/500)
   - [**Buy Me A Coffee ☕**](https://www.buymeacoffee.com/Udayraj123)
 
 - Join the [Discord](https://discord.gg/qFv2Vqf) community to help others with using OMRChecker
@@ -242,11 +244,12 @@ Here's a sneak peak of the [Android OMR Helper App (WIP)](https://github.com/Uda
 
 
 ### License 
+[![GitHub license](https://img.shields.io/github/license/Udayraj123/OMRChecker.svg)](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE)
 ```
 Copyright © 2019-2020 Udayraj Deshmukh
 OMRChecker : Grade exams fast and accurately using a scanner 🖨 or your phone 🤳
 This is free software, and you are welcome to redistribute it under certain conditions;
 ```
-For more details see [![GitHub license](https://img.shields.io/github/license/Udayraj123/OMRChecker.svg)](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE)
+For more details see [LICENSE](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE). 
 
 *Find OMRChecker on* [***Product Hunt***](https://www.producthunt.com/posts/omr-checker/) **|** [***Hacker News***](https://news.ycombinator.com/item?id=20420602) **|** [***Reddit***](https://www.reddit.com/r/computervision/comments/ccbj6f/omrchecker_grade_exams_using_python_and_opencv/) **|** [***Swyya***](https://www.swyya.com/projects/omrchecker) **|** [**Discord**](https://discord.gg/qFv2Vqf)
