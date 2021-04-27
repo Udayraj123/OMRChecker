@@ -43,7 +43,7 @@ def process_dir(root_dir, subdir, template):
 
     # look for images in current dir to process
     paths = config.Paths(os.path.join(args['output_dir'], subdir))   
-    exts = ('*.png', '*.jpg')
+    exts = ('*.png', '*.jpg', '*.jpeg')
     omr_files = sorted(
         [f for ext in exts for f in glob(os.path.join(curr_dir, ext))])
 
