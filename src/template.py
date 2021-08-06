@@ -145,7 +145,7 @@ def gen_q_block(
             for (v, _) in enumerate(vals):
                 pts.append(Pt(pt.copy(), q_nos[q], q_type, vals[v]))
                 pt[_h] += gaps[_h]
-            # For diagonalal endpoint of QBlock
+            # For diagonal endpoint of QBlock
             pt[_h] += bubble_dimensions[_h] - gaps[_h]
             pt[_v] += bubble_dimensions[_v]
             # TODO- make a mini object for this
@@ -158,7 +158,7 @@ def gen_q_block(
             for (q, _) in enumerate(q_nos):
                 pts.append(Pt(pt.copy(), q_nos[q], q_type, vals[v]))
                 pt[_v] += gaps[_v]
-            # For diagonalal endpoint of QBlock
+            # For diagonal endpoint of QBlock
             pt[_v] += bubble_dimensions[_v] - gaps[_v]
             pt[_h] += bubble_dimensions[_h]
             traverse_pts.append(([o.copy(), pt.copy()], pts))
