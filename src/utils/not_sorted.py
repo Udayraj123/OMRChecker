@@ -126,20 +126,8 @@ class ImageMetrics:
 plt.rcParams["figure.figsize"] = (10.0, 8.0)
 
 # Image-processing utils
-
-
 def normalize_util(img, alpha=0, beta=255):
     return cv2.normalize(img, alpha, beta, norm_type=cv2.NORM_MINMAX)
-
-
-def normalize_hist(img):
-    hist, _ = np.histogram(img.flatten(), 256, [0, 256])
-    cdf = hist.cumsum()
-    cdf_m = np.ma.masked_equal(cdf, 0)
-    cdf_m = (cdf_m - cdf_m.min()) * 255 / (cdf_m.max() - cdf_m.min())
-    cdf = np.ma.filled(cdf_m, 0).astype("uint8")
-    return cdf[img]
-
 
 def put_label(img, label, size):
     scale = img.shape[1] / config.dimensions.display_width
@@ -222,12 +210,6 @@ def get_plot_img():
 def dist(p_1, p_2):
     return np.linalg.norm(np.array(p_1) - np.array(p_2))
 
-
-def get_reflection(pt, pt_1, pt_2):
-    pt, pt_1, pt_2 = tuple(map(lambda x: np.array(x, dtype=float), [pt, pt_1, pt_2]))
-    return (pt_1 + pt_2) - pt
-
-
 # These are used inside multiple extensions
 def order_points(pts):
     rect = np.zeros((4, 2), dtype="float32")
@@ -285,21 +267,6 @@ def four_point_transform(image, pts):
     # return the warped image
     return warped
 
-
-def get_fourth_pt(three_pts):
-    m = []
-    for i in range(3):
-        m.append(dist(three_pts[i], three_pts[(i + 1) % 3]))
-
-    v = max(m)
-    for i in range(3):
-        if v not in (m[i], m[(i + 1) % 3]):
-            refl = (i + 1) % 3
-            break
-    fourth_pt = get_reflection(
-        three_pts[refl], three_pts[(refl + 1) % 3], three_pts[(refl + 2) % 3]
-    )
-    return fourth_pt
 
 
 def auto_canny(image, sigma=0.93):
@@ -1011,3 +978,35 @@ class MainOperations:
 def printbuf(x):
     sys.stdout.write(str(x))
     sys.stdout.write("\r")
+
+
+""" unused
+def get_reflection(pt, pt_1, pt_2):
+    pt, pt_1, pt_2 = tuple(map(lambda x: np.array(x, dtype=float), [pt, pt_1, pt_2]))
+    return (pt_1 + pt_2) - pt
+
+def get_fourth_pt(three_pts):
+    m = []
+    for i in range(3):
+        m.append(dist(three_pts[i], three_pts[(i + 1) % 3]))
+
+    v = max(m)
+    for i in range(3):
+        if v not in (m[i], m[(i + 1) % 3]):
+            refl = (i + 1) % 3
+            break
+    fourth_pt = get_reflection(
+        three_pts[refl], three_pts[(refl + 1) % 3], three_pts[(refl + 2) % 3]
+    )
+    return fourth_pt
+
+
+def normalize_hist(img):
+    hist, _ = np.histogram(img.flatten(), 256, [0, 256])
+    cdf = hist.cumsum()
+    cdf_m = np.ma.masked_equal(cdf, 0)
+    cdf_m = (cdf_m - cdf_m.min()) * 255 / (cdf_m.max() - cdf_m.min())
+    cdf = np.ma.filled(cdf_m, 0).astype("uint8")
+    return cdf[img]
+
+"""
