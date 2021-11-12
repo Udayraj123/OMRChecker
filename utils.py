@@ -537,14 +537,13 @@ def handle_markers(image_norm, marker, curr_filename):
     quads[2] = image_eroded_sub[midh:h1, 0:midw]
     quads[3] = image_eroded_sub[midh:h1, midw:w1]
 
-    # Draw Quadlines
-    image_eroded_sub[:, midw:midw + 2] = 255
-    image_eroded_sub[midh:midh + 2, :] = 255
-
     best_scale, allMaxT = getBestMatch(image_eroded_sub, marker)
     if(best_scale is None):
         # TODO: Plot and see performance of marker_rescale_range
         if(config.showimglvl >= 1):
+            # Draw Quadlines
+            image_eroded_sub[:, midw:midw + 2] = 255
+            image_eroded_sub[midh:midh + 2, :] = 255
             show('Quads', image_eroded_sub)
         return None
 
@@ -601,6 +600,7 @@ def handle_markers(image_norm, marker, curr_filename):
         centres.append([pt[0] + w / 2, pt[1] + h / 2])
         sumT += maxT
     print("Optimal Scale:", best_scale)
+
     # analysis data
     thresholdCircles.append(sumT / 4)
 
