@@ -85,11 +85,11 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 **Operating system:** OSX or Linux is recommended although windows is also supported currently.
 
 ### Using Docker
-The project is compatible with [docker](https://docker.com). If you are using docker, run one of the below commands and then skip to Step `3. Run the Code`.
+The project is compatible with [docker](https://docker.com). If you are using docker for interactivity, run the first bash command below and then skip to Step `3. Run the Code`. if you want to directly run the app with no interactivity, use the second command.
 
 *NB: You MUST set `showimglvl = 0` in `config.py` or else you will receive errors.* If you do want to use GUI features, you will have to use XHost / XStock (Linux) or XQuartz (Mac) when running docker.
 
-To run using docker compose:
+To run using interactively using docker compose:
 ```bash
 docker compose run --rm omrchecker
 ```
