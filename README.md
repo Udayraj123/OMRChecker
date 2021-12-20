@@ -87,6 +87,8 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 ### Using Docker
 The project is compatible with [docker](https://docker.com). If you are using docker, run one of the below commands and then skip to Step `3. Run the Code`.
 
+*NB: You MUST set `showimglvl = 0` in `config.py` or else you will receive errors.* If you do want to use GUI features, you will have to use XHost / XStock (Linux), XQuartz (Mac) when running docker.
+
 To run using docker compose (recommended):
 ```bash
 docker compose run --rm omrchecker
@@ -95,7 +97,7 @@ docker compose run --rm omrchecker
 To run without docker compose:
 ```bash
 docker build -t omrchecker .
-docker run --name 'omrchecker' --rm  -it -v $(pwd):/ -p 3000:3000 omrchecker /bin/bash
+docker run --name 'omrchecker' --rm  -it -v $(pwd):/ omrchecker /bin/bash
 ```
 
 ### 1. Install global dependencies 

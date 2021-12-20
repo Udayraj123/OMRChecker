@@ -26,6 +26,7 @@ RUN pip3 install -r requirements.txt
 
 ## Clean up
 RUN apt-get clean
+RUN apt-get -y autoremove autoclean
 RUN pip3 cache purge
 RUN rm -rf /var/lib/apt/lists/*
 
