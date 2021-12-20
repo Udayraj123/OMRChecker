@@ -85,15 +85,15 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 **Operating system:** OSX or Linux is recommended although windows is also supported currently.
 
 ### Using Docker
-The project uses [docker](https://docker.com). If you use docker, skip to Step `3. Run the Code`.
+The project is compatible with [docker](https://docker.com). If you are using docker, run one of the below commands and then skip to Step `3. Run the Code`.
 
 To run using docker compose (recommended):
-```
+```bash
 docker compose run --rm omrchecker
 ```
 
 To run without docker compose:
-```
+```bash
 docker build -t omrchecker .
 docker run --name 'omrchecker' --rm  -it -v $(pwd):/ -p 3000:3000 omrchecker /bin/bash
 ```
