@@ -84,6 +84,20 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 
 **Operating system:** OSX or Linux is recommended although windows is also supported currently.
 
+### Using Docker
+The project uses [docker](https://docker.com). If you use docker, skip to Step `3. Run the Code`.
+
+To run using docker compose (recommended):
+```
+docker compose run --rm omrchecker
+```
+
+To run without docker compose:
+```
+docker build -t omrchecker .
+docker run --name 'omrchecker' --rm  -it -v $(pwd):/ -p 3000:3000 omrchecker /bin/bash
+```
+
 ### 1. Install global dependencies 
 ![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4+](https://img.shields.io/badge/python-3.4+-blue.svg)
 

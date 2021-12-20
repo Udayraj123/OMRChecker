@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  omrchecker:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: omrchecker
+    volumes:
+      - ./:/app
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    restart: "no"
+    entrypoint: /bin/bash
