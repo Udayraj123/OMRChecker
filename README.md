@@ -89,15 +89,14 @@ The project is compatible with [docker](https://docker.com). If you are using do
 
 *NB: You MUST set `showimglvl = 0` in `config.py` or else you will receive errors.* If you do want to use GUI features, you will have to use XHost / XStock (Linux) or XQuartz (Mac) when running docker.
 
-To run using docker compose (recommended):
+To run using docker compose:
 ```bash
 docker compose run --rm omrchecker
 ```
 
-To run without docker compose:
+To run without interactivity (e.g. to directly execute main.py and exit):
 ```bash
-docker build -t omrchecker .
-docker run --name 'omrchecker' --rm  -it -v $(pwd):/ omrchecker /bin/bash
+docker compose exec omrchecker python3 main.py
 ```
 
 ### 1. Install global dependencies 
