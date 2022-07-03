@@ -7,15 +7,25 @@
     40,
     40
   ],
-  "preProcessors": {
-    "CropPage": {
-      "morphKernel" : [10,10]
+  "preProcessors": [
+    {
+      "name": "CropPage",
+      "options": {
+        "morphKernel": [
+          10,
+          10
+        ]
+      }
     },
-    "CropOnMarkers": {
-      "relativePath": "omr_marker.jpg",
-      "sheetToMarkerWidthRatio": 17
+    {
+      "name": "CropOnMarkers",
+      "options": {
+        "relativePath": "omr_marker.jpg",
+        "sheetToMarkerWidthRatio": 17
+      }
     }
-  },
+  ],
+  
   "concatenations": {
     "Roll": [
       "Squad",

@@ -8,22 +8,30 @@
   "dimensions": [2480, 3508 ],
   "bubbleDimensions": [42, 42 ],
   
-  "preProcessors": {
-    "Levels": {
-      "Low": 0.70,
-      "High": 0.8
+  "preProcessors": [
+    {
+      "name": "Levels",
+      "options": {
+        "Low": 0.70,
+        "High": 0.8
+      }
     },
-    "FeatureBasedAlignment": {
-      "reference": "reference.png",
-      "MaxFeatures": 1000,
-      "2D": true
+    {
+      "name": "FeatureBasedAlignment",
+      "options": {
+        "reference": "reference.png",
+        "MaxFeatures": 1000,
+        "2D": true
+      }
     },
-    "GaussianBlur": {
-      "kSize": [3, 3],
-      "sigmaX": 0
+    {
+      "name": "GaussianBlur",
+      "options": {
+        "kSize": [3, 3],
+        "sigmaX": 0
+      }
     }
-  },
-
+  ],
   "concatenations" : {
     "Roll" : ["stu","roll0", "roll1", "roll2", "roll3", "roll4", "roll5", "roll6", "check"]
   },

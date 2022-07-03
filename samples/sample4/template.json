@@ -7,12 +7,15 @@
     40,
     40
   ],
-  "preProcessors": {
-    "CropOnMarkers": {
-      "relativePath": "omr_marker.jpg",
-      "sheetToMarkerWidthRatio": 17
+  "preProcessors": [
+    {
+      "name": "CropOnMarkers",
+      "options": {
+        "relativePath": "omr_marker.jpg",
+        "sheetToMarkerWidthRatio": 17
+      }
     }
-  },
+  ],
   "concatenations": {
     "Roll": [
       "Squad",

@@ -67,8 +67,8 @@ class Template:
 
         # load image pre_processors
         self.pre_processors = [
-            extensions[name](opts, template_path.parent)
-            for name, opts in json_obj.get("preProcessors", {}).items()
+            extensions[p['name']](p['options'], template_path.parent)
+            for p in json_obj.get("preProcessors", [])
         ]
 
         # Add options
