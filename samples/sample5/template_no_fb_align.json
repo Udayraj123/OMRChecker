@@ -13,19 +13,22 @@
     42,
     42
   ],
-  "preProcessors": {
-    "Levels": {
-      "Low": 0.70,
-      "High": 0.8
+  "preProcessors": [
+    {
+      "name": "Levels",
+      "options": {
+        "Low": 0.70,
+        "High": 0.8
+      }
     },
-    "GaussianBlur": {
-      "kSize": [
-        3,
-        3
-      ],
-      "sigmaX": 0
+    {
+      "name": "GaussianBlur",
+      "options": {
+        "kSize": [3, 3],
+        "sigmaX": 0
+      }
     }
-  },
+  ],
   "concatenations": {
     "Roll": [
       "stu",

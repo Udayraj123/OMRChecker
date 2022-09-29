@@ -7,14 +7,17 @@
     25,
     25
   ],
-  "preProcessors": {
-    "CropPage": {
-      "morphKernel": [
-        10,
-        10
-      ]
+  "preProcessors": [
+    {
+      "name": "CropPage",
+      "options": {
+        "morphKernel": [
+          10,
+          10
+        ]
+      }
     }
-  },
+  ],
   "concatenations": {},
   "singles": [
     "q1",
