@@ -1,26 +1,19 @@
 {
   "Globals": {
-    "window_width": 2480,
-    "window_height": 3508,
-    "display_width": 2480,
-    "display_height": 3508
+    "window_width": 1189,
+    "window_height": 1682,
+    "display_width": 1189,
+    "display_height": 1682
   },
   "dimensions": [
-    2480,
-    3508
+    1189,
+    1682
   ],
   "bubbleDimensions": [
-    42,
-    42
+    30,
+    30
   ],
   "preProcessors": [
-    {
-      "name": "Levels",
-      "options": {
-        "Low": 0.70,
-        "High": 0.8
-      }
-    },
     {
       "name": "GaussianBlur",
       "options": {
@@ -29,134 +22,72 @@
       }
     }
   ],
-  "concatenations": {
-    "Roll": [
-      "stu",
-      "roll0",
-      "roll1",
-      "roll2",
-      "roll3",
-      "roll4",
-      "roll5",
-      "roll6",
-      "check"
-    ]
-  },
-  "singles": [],
+  "concatenations": {},
+  "singles": [
+    "q1",
+    "q2",
+    "q3",
+    "q4",
+    "q5",
+    "q6",
+    "q7",
+    "q8",
+    "q9",
+    "q10",
+    "q11"
+  ],
   "qBlocks": {
-    "Check1": {
+    "MCQBlock1": {
+      "qType": "QTYPE_MCQ4",
       "orig": [
-        2033,
-        1290
-      ],
-      "gaps": [
-        50,
-        50
-      ],
-      "bigGaps": [
-        20,
-        20
+        134,
+        684
       ],
       "qNos": [
         [
           [
-            "check"
+            "q1",
+            "q2",
+            "q3",
+            "q4",
+            "q5",
+            "q6",
+            "q7",
+            "q8",
+            "q9",
+            "q10",
+            "q11"
           ]
         ]
-      ],
-      "vals": [
-        "A",
-        "B",
-        "E",
-        "H",
-        "J",
-        "L",
-        "M"
-      ],
-      "orient": "V"
-    },
-    "Check2": {
-      "orig": [
-        2083,
-        1290
       ],
       "gaps": [
-        50,
-        50
+        79,
+        62
       ],
       "bigGaps": [
-        20,
-        20
-      ],
-      "qNos": [
-        [
-          [
-            "check"
-          ]
-        ]
-      ],
-      "vals": [
-        "N",
-        "R",
-        "U",
-        "W",
-        "X",
-        "Y"
-      ],
-      "orient": "V"
+        10,
+        30
+      ]
     },
-    "Stu": {
+    "Int1": {
+      "qType": "QTYPE_INT_11",
       "orig": [
-        1636,
-        1290
-      ],
-      "gaps": [
-        50,
-        50
+        465,
+        684
       ],
       "bigGaps": [
-        20,
-        20
-      ],
-      "qNos": [
-        [
-          [
-            "stu"
-          ]
-        ]
-      ],
-      "vals": [
-        "U",
-        "A",
-        "HT",
-        "GT"
-      ],
-      "orient": "V"
-    },
-    "Roll": {
-      "qType": "QTYPE_ROLL",
-      "orig": [
-        1685,
-        1290
-      ],
-      "bigGaps": [
-        115,
+        128,
         11
       ],
       "gaps": [
-        50.5,
-        50.5
+        79,
+        62
       ],
       "qNos": [
         [
           [
-            "roll0",
-            "roll1",
-            "roll2",
-            "roll3",
-            "roll4",
-            "roll5",
-            "roll6"
+            "q5.1",
+            "q5.2"
           ]
         ]
       ]

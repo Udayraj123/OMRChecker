@@ -98,7 +98,7 @@ def process_dir(root_dir, curr_dir, args, template=None):
         print("\tUsing Template     : " + str(template))
         # Print options
         for pp in template.pre_processors:
-            print(f'\tUsing preprocessor "{pp.__class__.__name__:13}({pp})"')
+            print(f'\tUsing preprocessor: {pp.__class__.__name__:13}')
 
         print("")
 
@@ -109,7 +109,7 @@ def process_dir(root_dir, curr_dir, args, template=None):
     elif not subdirs:
         # Each subdirectory should have images or should be non-leaf
         print(
-            f"Note: No valid images or subfolders found in {curr_dir}.\
+            f"Note: No valid images or sub-folders found in {curr_dir}.\
             Empty directories not allowed."
         )
 

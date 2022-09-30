@@ -52,7 +52,7 @@ class QBlock:
 class Template:
     def __init__(self, template_path, extensions):
         json_obj = open_template_with_defaults(template_path)
-        self.path = template_path.name
+        self.path = template_path
         self.q_blocks = []
         # TODO: ajv validation - throw exception on key not exist
         # TODO: extend DotMap here and only access keys that need extra parsing
@@ -85,13 +85,14 @@ class Template:
         if "qType" in rect:
             rect.update(**QTYPE_DATA[rect["qType"]])
         else:
-            rect["qType"] = {"vals": rect["vals"], "orient": rect["orient"]}
+            rect.update(**{"vals": rect["vals"], "orient": rect["orient"]})
+
         # keyword arg unpacking followed by named args
         self.q_blocks += gen_grid(self.bubble_dimensions, key, rect)
         # self.q_blocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
 
     def __str__(self):
-        return self.path
+        return str(self.path)
 
 
 def gen_q_block(

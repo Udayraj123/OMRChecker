@@ -1,0 +1,165 @@
+{
+  "Globals": {
+    "window_width": 2480,
+    "window_height": 3508,
+    "display_width": 2480,
+    "display_height": 3508
+  },
+  "dimensions": [
+    2480,
+    3508
+  ],
+  "bubbleDimensions": [
+    42,
+    42
+  ],
+  "preProcessors": [
+    {
+      "name": "Levels",
+      "options": {
+        "Low": 0.70,
+        "High": 0.8
+      }
+    },
+    {
+      "name": "GaussianBlur",
+      "options": {
+        "kSize": [3, 3],
+        "sigmaX": 0
+      }
+    }
+  ],
+  "concatenations": {
+    "Roll": [
+      "stu",
+      "roll0",
+      "roll1",
+      "roll2",
+      "roll3",
+      "roll4",
+      "roll5",
+      "roll6",
+      "check"
+    ]
+  },
+  "singles": [],
+  "qBlocks": {
+    "Check1": {
+      "orig": [
+        2033,
+        1290
+      ],
+      "gaps": [
+        50,
+        50
+      ],
+      "bigGaps": [
+        20,
+        20
+      ],
+      "qNos": [
+        [
+          [
+            "check"
+          ]
+        ]
+      ],
+      "vals": [
+        "A",
+        "B",
+        "E",
+        "H",
+        "J",
+        "L",
+        "M"
+      ],
+      "orient": "V"
+    },
+    "Check2": {
+      "orig": [
+        2083,
+        1290
+      ],
+      "gaps": [
+        50,
+        50
+      ],
+      "bigGaps": [
+        20,
+        20
+      ],
+      "qNos": [
+        [
+          [
+            "check"
+          ]
+        ]
+      ],
+      "vals": [
+        "N",
+        "R",
+        "U",
+        "W",
+        "X",
+        "Y"
+      ],
+      "orient": "V"
+    },
+    "Stu": {
+      "orig": [
+        1636,
+        1290
+      ],
+      "gaps": [
+        50,
+        50
+      ],
+      "bigGaps": [
+        20,
+        20
+      ],
+      "qNos": [
+        [
+          [
+            "stu"
+          ]
+        ]
+      ],
+      "vals": [
+        "U",
+        "A",
+        "HT",
+        "GT"
+      ],
+      "orient": "V"
+    },
+    "Roll": {
+      "qType": "QTYPE_ROLL",
+      "orig": [
+        1685,
+        1290
+      ],
+      "bigGaps": [
+        115,
+        11
+      ],
+      "gaps": [
+        50.5,
+        50.5
+      ],
+      "qNos": [
+        [
+          [
+            "roll0",
+            "roll1",
+            "roll2",
+            "roll3",
+            "roll4",
+            "roll5",
+            "roll6"
+          ]
+        ]
+      ]
+    }
+  }
+}
