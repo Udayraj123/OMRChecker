@@ -162,7 +162,7 @@ Each example in samples folder demonstrates different ways in which OMRChecker c
 
 ### Full Usage 
 ```
-python3 main.py [--setLayout] [--noCropping] [--autoAlign] [--inputDir dir1] [--outputDir dir1] [--template path/to/template.json]
+python3 main.py [--setLayout] [--autoAlign] [--inputDir dir1] [--outputDir dir1]
 ```
 Explanation for the arguments:
 
@@ -170,13 +170,11 @@ Explanation for the arguments:
 
 `--autoAlign`: (experimental) Enables automatic template alignment - use if the scans show slight misalignments.
 
-`--noCropping`: Disables page contour detection - used when page boundary is not visible e.g. document scanner.
-
 `--inputDir`: Specify an input directory.
 
 `--outputDir`: Specify an output directory.
 
-`--template`: Specify a default template if no template file in input directories.
+**Note:** The `--noCropping` flag has been replaced with including/excluding it in "preProcessors" of the template.json(see samples).
 
 <!-- #### Testing the code
 Datasets to test on : 
@@ -201,7 +199,7 @@ OMRChecker can be forked and modified. You are encouraged to play with it and we
 
 The only requirement is **disclose usage** of this software in your code. 
 
-It is published under the GPLv3 license.
+It is published under the [GPLv3 license](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE).
 
 ## Credits 
 _A Huge thanks to :_
