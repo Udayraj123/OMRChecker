@@ -20,6 +20,15 @@
         "kSize": [3, 3],
         "sigmaX": 0
       }
+    },
+    {
+      "name": "CropPage",
+      "options": {
+        "morphKernel": [
+          10,
+          10
+        ]
+      }
     }
   ],
   "concatenations": {},

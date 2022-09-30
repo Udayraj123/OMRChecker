@@ -31,6 +31,7 @@ QTYPE_DATA = {
     "QTYPE_MED": {"vals": ["E", "H"], "orient": "V"},
     "QTYPE_ROLL": {"vals": range(10), "orient": "V"},
     "QTYPE_INT": {"vals": range(10), "orient": "V"},
+    "QTYPE_INT_11": {"vals": range(11), "orient": "V"},
     "QTYPE_MCQ4": {"vals": ["A", "B", "C", "D"], "orient": "H"},
     "QTYPE_MCQ5": {"vals": ["A", "B", "C", "D", "E"], "orient": "H"},
     #
