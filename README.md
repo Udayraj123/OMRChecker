@@ -1,9 +1,9 @@
 # Note from Maintainer
 Hello there! 👋
 
-As Octoberfest 2022 is around the corner, a call for Contributors is coming!
+There have been many updates happening in the background in OMRChecker(dev/refactor branches). They are finally ready to be the new default experience.
 
-We're preparing a list of items for beginners as well as seasoned programmers with experience in Python OpenCV. Stay tuned for updates, cheers!
+This branch maintains the legacy code which has been tried and tested. For any issues feel free to ping on Discord.
 
 # OMR Checker
 Grade exams fast and accurately using a scanner 🖨 or your phone 🤳. 
