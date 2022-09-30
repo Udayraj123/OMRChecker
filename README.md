@@ -1,9 +1,8 @@
 # Note from Maintainer
 Hello there! 👋
 
-There have been many updates happening in the background in OMRChecker(dev/refactor branches). They are finally ready to be the new default experience.
-
-This branch maintains the legacy code which has been tried and tested. For any issues feel free to ping on Discord.
+We're calling for contributions in Hacktoberfest 2022, Do check [here](https://github.com/Udayraj123/OMRChecker/issues) for issues to work on.
+For the previous version of OMRChecker, visit [legacy code](https://github.com/Udayraj123/OMRChecker/tree/master-legacy).
 
 # OMR Checker
 Grade exams fast and accurately using a scanner 🖨 or your phone 🤳. 
@@ -22,7 +21,6 @@ Grade exams fast and accurately using a scanner 🖨 or your phone 🤳.
 <!-- [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/gist/Udayraj123/a125b1531c61cceed5f06994329cba66/omrchecker-on-cloud.ipynb) -->
 
 #### **TLDR;** Jump to [Getting Started](#getting-started).
-
 
 ## 🎯 Features
 
@@ -174,7 +172,7 @@ Explanation for the arguments:
 
 `--outputDir`: Specify an output directory.
 
-**Note:** The `--noCropping` flag has been replaced with including/excluding it in "preProcessors" of the template.json(see samples).
+**Note:** The `--noCropping` flag has been replaced with including/excluding a 'CropPage' plugin in "preProcessors" of the template.json(see [samples](https://github.com/Udayraj123/OMRChecker/tree/master/samples)).
 
 <!-- #### Testing the code
 Datasets to test on : 
