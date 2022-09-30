@@ -1,19 +1,32 @@
 {
-  "Dimensions": [
+  "dimensions": [
     1846,
     1500
   ],
-  "BubbleDimensions": [
+  "bubbleDimensions": [
     40,
     40
   ],
-  "Options": {
-    "Marker": {
-      "RelativePath": "omr_marker.jpg",
-      "SheetToMarkerWidthRatio": 17
+  "preProcessors": [
+    {
+      "name": "CropPage",
+      "options": {
+        "morphKernel": [
+          10,
+          10
+        ]
+      }
+    },
+    {
+      "name": "CropOnMarkers",
+      "options": {
+        "relativePath": "omr_marker.jpg",
+        "sheetToMarkerWidthRatio": 17
+      }
     }
-  },
-  "Concatenations": {
+  ],
+  
+  "concatenations": {
     "Roll": [
       "Squad",
       "Medium",
@@ -48,7 +61,7 @@
       "q8.2"
     ]
   },
-  "Singles": [
+  "singles": [
     "q1",
     "q2",
     "q3",
@@ -65,7 +78,7 @@
     "q19",
     "q20"
   ],
-  "QBlocks": {
+  "qBlocks": {
     "Medium": {
       "qType": "QTYPE_MED",
       "orig": [

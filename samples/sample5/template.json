@@ -1,0 +1,105 @@
+{
+  "Globals": {
+    "window_width": 1189,
+    "window_height": 1682,
+    "display_width": 1189,
+    "display_height": 1682
+  },
+  "dimensions": [
+    1189,
+    1682
+  ],
+  "bubbleDimensions": [
+    30,
+    30
+  ],
+  "preProcessors": [
+    {
+      "name": "GaussianBlur",
+      "options": {
+        "kSize": [3, 3],
+        "sigmaX": 0
+      }
+    },
+    {
+      "name": "CropPage",
+      "options": {
+        "morphKernel": [
+          10,
+          10
+        ]
+      }
+    }
+  ],
+  "concatenations": {},
+  "singles": [
+    "q1",
+    "q2",
+    "q3",
+    "q4",
+    "q5",
+    "q6",
+    "q7",
+    "q8",
+    "q9",
+    "q10",
+    "q11"
+  ],
+  "qBlocks": {
+    "MCQBlock1": {
+      "qType": "QTYPE_MCQ4",
+      "orig": [
+        134,
+        684
+      ],
+      "qNos": [
+        [
+          [
+            "q1",
+            "q2",
+            "q3",
+            "q4",
+            "q5",
+            "q6",
+            "q7",
+            "q8",
+            "q9",
+            "q10",
+            "q11"
+          ]
+        ]
+      ],
+      "gaps": [
+        79,
+        62
+      ],
+      "bigGaps": [
+        10,
+        30
+      ]
+    },
+    "Int1": {
+      "qType": "QTYPE_INT_11",
+      "orig": [
+        465,
+        684
+      ],
+      "bigGaps": [
+        128,
+        11
+      ],
+      "gaps": [
+        79,
+        62
+      ],
+      "qNos": [
+        [
+          [
+            "q5.1",
+            "q5.2"
+          ]
+        ]
+      ]
+    }
+  }
+}
