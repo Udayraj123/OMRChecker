@@ -7,14 +7,12 @@
 
 """
 
-print(f"Loading OMRChecker modules...")
-# It takes a few seconds for the imports 
-
-import argparse
-from pathlib import Path
 from src.core import (
     entry_point,
 )
+from pathlib import Path
+import argparse
+
 
 # construct the argument parse and parse the arguments
 argparser = argparse.ArgumentParser()
@@ -66,7 +64,9 @@ argparser.add_argument(
     args,
     unknown,
 ) = argparser.parse_known_args()
+
 args = vars(args)
+
 if len(unknown) > 0:
     print(
         "\nError: Unknown arguments:",

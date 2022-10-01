@@ -509,7 +509,7 @@ def setup_dirs(paths):
         else:
             print("Present : " + _dir)
 
-    for _dir in [paths.multi_marked_dir, paths.errors_dir, paths.bad_rolls_dir]:
+    for _dir in [paths.multi_marked_dir, paths.errors_dir]:
         if not os.path.exists(_dir):
             print("Created : " + _dir)
             os.makedirs(_dir)
