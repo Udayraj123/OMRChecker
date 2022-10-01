@@ -103,7 +103,7 @@ More details on pip install openCV [here](https://www.pyimagesearch.com/2018/09/
 
 **Installing missing libraries(if any):** 
 
-*Windows users may skip this step.*
+*Windows and MacOS users may skip this step.*
 
 On a fresh computer, some of the libraries may get missing in event after a successful pip install. Install them using following commands[(ref)](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/):
 
@@ -120,15 +120,12 @@ sudo apt-get install -y libatlas-base-dev gfortran
 
 #### Clone the repo
 ```bash
-# Shallow clone - takes latest code with minimal size
-git clone https://github.com/Udayraj123/OMRChecker --depth=1
+git clone https://github.com/Udayraj123/OMRChecker
+cd OMRChecker/
 ```
-**Note:** Contributors should take a full clone(without the --depth flag).
 
 #### Install pip requirements 
-
 ```bash
-# cd OMRChecker/
 python3 -m pip install --user -r requirements.txt
 ```
 **Friendly Note:** If you face a distutils error in pip, use `--ignore-installed` flag in above command.
@@ -233,10 +230,10 @@ Here's a sneak peak of the [Android OMR Helper App (WIP)](https://github.com/Uda
   The Goal is to reach top position for the [OMR Topic](https://github.com/topics/omr)
 
 - If this project saved you large costs on OMR Software licenses, or saved efforts to make one. Consider donating an amount of your choice below: 
-  - [**Paypal:**](https://www.paypal.me/Udayraj123/500) 
-  	
-	[![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif)](https://www.paypal.me/Udayraj123/500)
-  - [**Buy Me A Coffee ☕**](https://www.buymeacoffee.com/Udayraj123)
+
+  [**Buy Me A Coffee ☕**](https://www.buymeacoffee.com/Udayraj123) 
+
+  [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif)](https://www.paypal.me/Udayraj123/500) 
 
 - Join the [Discord](https://discord.gg/qFv2Vqf) community to help others with using OMRChecker
 
@@ -247,11 +244,7 @@ Here's a sneak peak of the [Android OMR Helper App (WIP)](https://github.com/Uda
 
 ### License 
 [![GitHub license](https://img.shields.io/github/license/Udayraj123/OMRChecker.svg)](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE)
-```
-Copyright © 2019-2020 Udayraj Deshmukh
-OMRChecker : Grade exams fast and accurately using a scanner 🖨 or your phone 🤳
-This is free software, and you are welcome to redistribute it under certain conditions;
-```
+
 For more details see [LICENSE](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE). 
 
 *Find OMRChecker on* [***Product Hunt***](https://www.producthunt.com/posts/omr-checker/) **|** [***Reddit***](https://www.reddit.com/r/computervision/comments/ccbj6f/omrchecker_grade_exams_using_python_and_opencv/) **|** [**Discord**](https://discord.gg/qFv2Vqf)
