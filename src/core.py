@@ -387,11 +387,11 @@ def process_files(omr_files, template, args, out):
 def print_stats(start_time, files_counter):
     time_checking = round(time() - start_time, 2) if files_counter else 1
     print("")
-    print("Total files moved        : %d " % (STATS.files_moved))
-    print("Total files not moved    : %d " % (STATS.files_not_moved))
+    print("Total file(s) moved        : %d " % (STATS.files_moved))
+    print("Total file(s) not moved    : %d " % (STATS.files_not_moved))
     print("------------------------------")
     print(
-        "Total files processed    : %d (%s)"
+        "Total file(s) processed    : %d (%s)"
         % (
             files_counter,
             "Sum Tallied!"
@@ -402,7 +402,7 @@ def print_stats(start_time, files_counter):
 
     if config.outputs.show_image_level <= 0:
         print(
-            "\nFinished Checking %d files in %.1f seconds i.e. ~%.1f minutes."
+            "\nFinished Checking %d file(s) in %.1f seconds i.e. ~%.1f minute(s)."
             % (files_counter, time_checking, time_checking / 60)
         )
         print(

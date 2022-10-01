@@ -13,7 +13,7 @@ Grade exams fast and accurately using a scanner 🖨 or your phone 🤳.
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/pull/new/master) <!-- [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg)](https://github.com/Udayraj123/OMRChecker/wiki/TODOs) -->
 [![GitHub pull-requests closed](https://img.shields.io/github/issues-pr-closed/Udayraj123/OMRChecker.svg)](https://github.com/Udayraj123/OMRChecker/pulls?q=is%3Aclosed)
 [![GitHub issues-closed](https://img.shields.io/github/issues-closed/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/issues?q=is%3Aissue+is%3Aclosed)
-[![GitHub contributors](https://img.shields.io/github/contributors/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/graphs/contributors/)
+<!-- [![GitHub contributors](https://img.shields.io/github/contributors/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/graphs/contributors/) -->
 
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FUdayraj123%2FOMRChecker&count_bg=%2379C83D&title_bg=%23555555&icon=googlecast.svg&icon_color=%23E7E7E7&title=hits%28since+29+Sep+2022%29&edge_flat=false)](https://hits.seeyoufarm.com)
 [![Join](https://img.shields.io/badge/Join-Discord_group-purple.svg?style=flat-square)](https://discord.gg/qFv2Vqf)
@@ -26,18 +26,18 @@ Grade exams fast and accurately using a scanner 🖨 or your phone 🤳.
 
 A full-fledged OMR checking software that can read and evaluate OMR sheets scanned at any angle and having any color. Support is also provided for a customisable marking scheme with section-wise marking, bonus questions, etc.
 
-| Specs <img width=200/>   | ![Current_Speed](https://img.shields.io/badge/Speed-200_OMRs/m-blue.svg?style=flat-square) ![Current_Size](https://img.shields.io/badge/Code_Size-500KB-blue.svg?style=flat-square)  ![Min Resolution](https://img.shields.io/badge/Min_Resolution-640x480-blue.svg?style=flat-square) <img width=200/>    |
+| Specs <img width=200/>   | ![Current_Speed](https://img.shields.io/badge/Speed-200+_OMRs/min-blue.svg?style=flat-square)  ![Min Resolution](https://img.shields.io/badge/Min_Resolution-640x480-blue.svg?style=flat-square) <img width=200/>    |
 | :------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 💯 **Accurate**      | Currently nearly 100% accurate on good quality document scans; and about 90% accurate on mobile images.                                                                                                                                                                                |
 | 💪🏿 **Robust**        | Supports low resolution, xeroxed sheets. See [**Robustness**](https://github.com/Udayraj123/OMRChecker/wiki/Robustness) for more.                                                                                                                                                      |
 | ⏩ **Fast**          | Current processing speed without any optimization is 200 OMRs/minute.                                                                                                                                                                                                                  |
-| ✅ **Extensible**    | [Easily apply](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide) to different OMR layouts, surveys, etc.                                                                                                                                                                   |
+| ✅ **Customizable**  | [Easily apply](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide) to custom OMR layouts, surveys, etc.                                                                                                                                                                   |
 | 📊 **Visually Rich** | [Get insights](https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals) to configure and debug easily.                                                                                                                                                                              |
-| 🎈 **Lightweight**   | Core code size(excluding images) is **less than 500 KB**.                                                                                                                                                                                                                              |
+| 🎈 **Lightweight**   | Very minimal core code size.                                                                                                                                                                                                                              |
 | 🏫 **Large Scale**   | Tested on a large scale at [Technothlon](https://www.facebook.com/technothlon.techniche).                                                                                                                                                                                         |
-| 👩🏿‍💻 **Dev Friendly**  | [Pylinted](http://pylint.pycqa.org/) and [Black formatted](https://github.com/psf/black) code (check [dev branch](https://github.com/Udayraj123/OMRChecker/tree/dev) for latest code). Also has a [developer community](https://discord.gg/qFv2Vqf) on discord.                                                                             |
+| 👩🏿‍💻 **Dev Friendly**  | [Pylinted](http://pylint.pycqa.org/) and [Black formatted](https://github.com/psf/black) code. Also has a [developer community](https://discord.gg/qFv2Vqf) on discord.                                                                             |
 
-Note: For solving interesting challenges, developers can checkout [**Dev Branch**](https://github.com/Udayraj123/OMRChecker/tree/dev) and [**TODOs**](https://github.com/Udayraj123/OMRChecker/wiki/TODOs). 
+Note: For solving interesting challenges, developers can checkout [**TODOs**](https://github.com/Udayraj123/OMRChecker/wiki/TODOs). 
 
 See complete guide and details at [Project Wiki](https://github.com/Udayraj123/OMRChecker/wiki/).
 
@@ -92,8 +92,6 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 
 ### 1. Install global dependencies 
 ![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4+](https://img.shields.io/badge/python-3.4+-blue.svg)
-
-_Note: To get a copy button for below commands, use [CodeCopy Chrome](https://chrome.google.com/webstore/detail/codecopy/fkbfebkcoelajmhanocgppanfoojcdmg) | [CodeCopy Firefox](https://addons.mozilla.org/en-US/firefox/addon/codecopy/)._
 
 Install opencv (Any installation method is fine.)
 ```bash
@@ -256,4 +254,6 @@ This is free software, and you are welcome to redistribute it under certain cond
 ```
 For more details see [LICENSE](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE). 
 
-*Find OMRChecker on* [***Product Hunt***](https://www.producthunt.com/posts/omr-checker/) **|** [***Hacker News***](https://news.ycombinator.com/item?id=20420602) **|** [***Reddit***](https://www.reddit.com/r/computervision/comments/ccbj6f/omrchecker_grade_exams_using_python_and_opencv/) **|** [***Swyya***](https://www.swyya.com/projects/omrchecker) **|** [**Discord**](https://discord.gg/qFv2Vqf)
+*Find OMRChecker on* [***Product Hunt***](https://www.producthunt.com/posts/omr-checker/) **|** [***Reddit***](https://www.reddit.com/r/computervision/comments/ccbj6f/omrchecker_grade_exams_using_python_and_opencv/) **|** [**Discord**](https://discord.gg/qFv2Vqf)
+ <!-- [***Hacker News***](https://news.ycombinator.com/item?id=20420602) **|** -->
+ <!-- **|** [***Swyya***](https://www.swyya.com/projects/omrchecker) -->
