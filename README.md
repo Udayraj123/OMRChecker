@@ -103,11 +103,11 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 
 **Operating system:** OSX or Linux is recommended although windows is also supported currently.
 
-### 1. Installation procedures
+## 1. Installation procedures
 
-#### Linux Users
+### **<u>Linux Users</u>**
 
-##### 1. Install global dependencies 
+#### 1. Install global dependencies 
 ![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4+](https://img.shields.io/badge/python-3.4+-blue.svg)
 
 Install opencv (Any installation method is fine.)
@@ -138,7 +138,7 @@ cd OMRChecker/
 ```
 **Note:** Contributors should take a full clone(without the --depth flag).
 
-##### Install pip requirements 
+#### Install pip requirements 
 
 ```bash
 # cd OMRChecker/
@@ -146,11 +146,11 @@ python3 -m pip install --user -r requirements.txt
 ```
 **Friendly Note:** If you face a distutils error in pip, use `--ignore-installed` flag in above command.
 
-#### Windows Users
+### **<u>Windows Users</u>**
 
 **Note:** All commands are given in bash so make sure you're using the Git Bash applications for the given steps
 
-##### 1. Install global dependencies 
+#### 1. Install global dependencies 
 ![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4+](https://img.shields.io/badge/python-3.4+-blue.svg)
 
 Install opencv (Any installation method is fine.)
@@ -165,7 +165,7 @@ More details on pip install openCV [here](https://www.pyimagesearch.com/2018/09/
 <!-- ![imutils 0.5.2](https://img.shields.io/badge/imutils-0.5.2-blue.svg)  -->
 ![matplotlib 3.0.2](https://img.shields.io/badge/matplotlib-3.0.2-blue.svg) ![pandas 0.24.0](https://img.shields.io/badge/pandas-0.24.0-blue.svg) ![numpy 1.16.0](https://img.shields.io/badge/numpy-1.16.0-blue.svg) ![deepmerge 0.1.0](https://img.shields.io/badge/deepmerge-0.1.0-blue.svg) ![dotmap 1.3.17](https://img.shields.io/badge/dotmap-1.3.17-blue.svg)
 
-##### Clone the repo
+#### Clone the repo
 ```bash
 # Shallow clone - takes latest code with minimal size
 git clone https://github.com/Udayraj123/OMRChecker --depth=1
@@ -173,7 +173,7 @@ cd OMRChecker/
 ```
 **Note:** Contributors should take a full clone(without the --depth flag).
 
-##### Install pip requirements 
+#### Install pip requirements 
 
 ```bash
 # cd OMRChecker/
@@ -181,11 +181,11 @@ python3 -m pip install --user -r requirements.txt
 ```
 **Friendly Note:** If you face a distutils error in pip, use `--ignore-installed` flag in above command.
 
-#### MacOS Users
+### **<u>MacOS Users</u>**
 
 **Note:** All given commands are in bash
 
-##### 1. Install global dependencies 
+#### 1. Install global dependencies 
 ![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4+](https://img.shields.io/badge/python-3.4+-blue.svg)
 
 Install opencv (Any installation method is fine.)
@@ -200,7 +200,7 @@ More details on pip install openCV [here](https://www.pyimagesearch.com/2018/09/
 <!-- ![imutils 0.5.2](https://img.shields.io/badge/imutils-0.5.2-blue.svg)  -->
 ![matplotlib 3.0.2](https://img.shields.io/badge/matplotlib-3.0.2-blue.svg) ![pandas 0.24.0](https://img.shields.io/badge/pandas-0.24.0-blue.svg) ![numpy 1.16.0](https://img.shields.io/badge/numpy-1.16.0-blue.svg) ![deepmerge 0.1.0](https://img.shields.io/badge/deepmerge-0.1.0-blue.svg) ![dotmap 1.3.17](https://img.shields.io/badge/dotmap-1.3.17-blue.svg)
 
-##### Clone the repo
+#### Clone the repo
 ```bash
 # Shallow clone - takes latest code with minimal size
 git clone https://github.com/Udayraj123/OMRChecker --depth=1
@@ -208,7 +208,7 @@ cd OMRChecker/
 ```
 **Note:** Contributors should take a full clone(without the --depth flag).
 
-##### Install pip requirements 
+#### Install pip requirements 
 
 ```bash
 # cd OMRChecker/
@@ -218,7 +218,7 @@ python3 -m pip install --user -r requirements.txt
 
 <!-- Wiki should not get cloned -->
 
-### 3. Run the code
+## 2. Run the code
 
 1. First copy and examine the sample data to know how to structure your inputs:
    ```bash
