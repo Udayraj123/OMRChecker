@@ -144,7 +144,7 @@ class CropOnMarkers(ImagePreprocessor):
             res = cv2.matchTemplate(
                 quads[k], optimal_marker, cv2.TM_CCOEFF_NORMED)
             max_t = res.max()
-            print("Q" + str(k + 1) + ": max_t", round(max_t, 3), end="\t")
+            print(f"Quarter{str(k + 1)}: {str(round(max_t, 3))} ", end="\t")
             if (
                 max_t < self.min_matching_threshold
                 or abs(all_max_t - max_t) >= self.max_matching_variation
