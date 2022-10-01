@@ -7,6 +7,9 @@
 
 """
 
+print(f"Loading OMRChecker modules...")
+# It takes a few seconds for the imports 
+
 import argparse
 from pathlib import Path
 from src.core import (

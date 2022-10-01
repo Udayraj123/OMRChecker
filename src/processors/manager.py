@@ -46,13 +46,14 @@ class ProcessorManager:
     def walk_package(self, package):
         """walk the supplied package to retrieve all processors"""
         imported_package = __import__(package, fromlist=["blah"])
-        loaded_packages = [];
+        loaded_packages = []
         for _, processor_name, ispkg in pkgutil.walk_packages(
             imported_package.__path__, imported_package.__name__ + "."
         ):
             if not ispkg and processor_name != __name__:
                 # print(f"looking up '{processor_name}'")
-                processor_module = __import__(processor_name, fromlist=["blah"])
+                processor_module = __import__(
+                    processor_name, fromlist=["blah"])
                 # https://stackoverflow.com/a/46206754/6242649
                 clsmembers = inspect.getmembers(
                     processor_module,
@@ -65,4 +66,3 @@ class ProcessorManager:
                         loaded_packages.append(c.__name__)
 
         print(f"Loaded processors: {loaded_packages}")
-        

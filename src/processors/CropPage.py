@@ -5,13 +5,15 @@ https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-det
 
 import cv2
 import numpy as np
-from src.utils.not_sorted import four_point_transform, ImageUtils
+from src.utils.imgutils import four_point_transform, ImageUtils
 from .interfaces.ImagePreprocessor import ImagePreprocessor
 
 MIN_PAGE_AREA = 80000
 
 # TODO: Automate the case of close up scan(incorrect page) when page boundary is not found
 # ^Note: App rejects croppeds along with others
+
+
 def normalize(image):
     return cv2.normalize(image, 0, 255, norm_type=cv2.NORM_MINMAX)
 

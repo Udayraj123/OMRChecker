@@ -221,7 +221,8 @@ def gen_grid(bubble_dimensions, key, rectParams):
             ]
 
     """
-    rect = OVERRIDE_MERGER.merge({"orient": "V", "col_orient": "V"}, rectParams)
+    rect = OVERRIDE_MERGER.merge(
+        {"orient": "V", "col_orient": "V"}, rectParams)
     # case mapping
     (q_type, orig, big_gaps, gaps, q_nos, vals, orient, col_orient) = map(
         rect.get,
@@ -242,7 +243,8 @@ def gen_grid(bubble_dimensions, key, rectParams):
     if (
         0 and len(grid_data.shape) != 3 or grid_data.size == 0
     ):  # product of shape is zero
-        print("Error(gen_grid): Invalid q_nos array given:", grid_data.shape, grid_data)
+        print("Error(gen_grid): Invalid q_nos array given:",
+              grid_data.shape, grid_data)
         exit(32)
 
     orig = np.array(orig)

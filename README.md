@@ -50,7 +50,7 @@ See complete guide and details at [Project Wiki](https://github.com/Udayraj123/O
 
 ## 💡 What can OMRChecker do for me?
 
-Once you configure the OMR layout, just throw images of the sheets at the software; and you'll get back the graded responses in an excel sheet!
+Once you configure the OMR layout, just throw images of the sheets at the software; and you'll get back the marked responses in an excel sheet!
 
 Images can be taken from various angles as shown below-
 

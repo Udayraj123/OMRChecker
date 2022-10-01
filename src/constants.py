@@ -13,7 +13,8 @@ from dotmap import DotMap
 # Paths
 CURRENT_MODULE_DIR = os.path.dirname(__file__)
 CONFIG_DEFAULTS_PATH = os.path.join(CURRENT_MODULE_DIR, "defaults/config.json")
-TEMPLATE_DEFAULTS_PATH = os.path.join(CURRENT_MODULE_DIR, "defaults/template.json")
+TEMPLATE_DEFAULTS_PATH = os.path.join(
+    CURRENT_MODULE_DIR, "defaults/template.json")
 
 # Filenames
 TEMPLATE_FILENAME = "template.json"
@@ -49,6 +50,8 @@ CLR_GRAY = (130, 130, 130)
 CLR_DARK_GRAY = (100, 100, 100)
 
 # Filepaths - object is better
+
+
 class Paths:
     def __init__(self, output_dir):
         self.output_dir = output_dir

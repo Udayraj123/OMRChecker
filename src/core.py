@@ -20,7 +20,7 @@ import pandas as pd
 import numpy as np
 
 # TODO: further break utils down and separate the imports
-from src.utils.not_sorted import (
+from src.utils.imgutils import (
     ImageUtils,
     MainOperations,
     draw_template_layout,
@@ -61,7 +61,8 @@ def process_dir(root_dir, curr_dir, args, template=None):
     # Look for subdirectories for processing
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
 
-    paths = constants.Paths(Path(args["output_dir"], curr_dir.relative_to(root_dir)))
+    paths = constants.Paths(
+        Path(args["output_dir"], curr_dir.relative_to(root_dir)))
 
     # look for images in current dir to process
     exts = ("*.png", "*.jpg")
@@ -92,7 +93,8 @@ def process_dir(root_dir, curr_dir, args, template=None):
         print(f'Processing directory "{curr_dir}" with settings- ')
         print("\tTotal images       : %d" % (len(omr_files)))
         print(
-            "\tCropping Enabled   : " + str("CropOnMarkers" in template.pre_processors)
+            "\tCropping Enabled   : " +
+            str("CropOnMarkers" in template.pre_processors)
         )
         print("\tAuto Alignment     : " + str(args_local["autoAlign"]))
         print("\tUsing Template     : " + str(template))
@@ -148,7 +150,8 @@ def process_omr(template, omr_resp):
 
     # Multi-column/multi-row questions which need to be concatenated
     for q_no, resp_keys in template.concatenations.items():
-        csv_resp[q_no] = "".join([omr_resp.get(k, unmarked_symbol) for k in resp_keys])
+        csv_resp[q_no] = "".join(
+            [omr_resp.get(k, unmarked_symbol) for k in resp_keys])
 
     # Single-column/single-row questions
     for q_no in template.singles:
@@ -189,7 +192,8 @@ def setup_output(paths, template):
         key=lambda x: int(x[1:]) if ord(x[1]) in range(48, 58) else 0,
     )
     ns.empty_resp = [""] * len(ns.resp_cols)
-    ns.sheetCols = ["file_id", "input_path", "output_path", "score"] + ns.resp_cols
+    ns.sheetCols = ["file_id", "input_path",
+                    "output_path", "score"] + ns.resp_cols
     ns.OUTPUT_SET = []
     ns.files_obj = {}
     ns.filesMap = {
@@ -285,7 +289,8 @@ def process_files(omr_files, template, args, out):
             if check_and_move(
                 constants.ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path
             ):
-                err_line = [file_name, file_path, new_file_path, "NA"] + out.empty_resp
+                err_line = [file_name, file_path,
+                            new_file_path, "NA"] + out.empty_resp
                 pd.DataFrame(err_line, dtype=str).T.to_csv(
                     out.files_obj["Errors"],
                     mode="a",
@@ -342,7 +347,8 @@ def process_files(omr_files, template, args, out):
             STATS.files_not_moved += 1
             new_file_path = save_dir + file_id
             # Enter into Results sheet-
-            results_line = [file_name, file_path, new_file_path, score] + resp_array
+            results_line = [file_name, file_path,
+                            new_file_path, score] + resp_array
             # Write/Append to results_line file(opened in append mode)
             pd.DataFrame(results_line, dtype=str).T.to_csv(
                 out.files_obj["Results"],
@@ -351,20 +357,23 @@ def process_files(omr_files, template, args, out):
                 header=False,
                 index=False,
             )
-            print(
-                "[%d] Graded with score: %.2f" % (files_counter, score),
-                "\t file_id: ",
-                file_id,
-            )
+            # Todo: Add score calculation from template.json
+            # print(
+            #     "[%d] Graded with score: %.2f" % (files_counter, score),
+            #     "\t file_id: ",
+            #     file_id,
+            # )
             # print(files_counter,file_id,resp['Roll'],'score : ',score)
         else:
             # multi_marked file
-            print("[%d] multi_marked, moving File: %s" % (files_counter, file_id))
+            print("[%d] multi_marked, moving File: %s" %
+                  (files_counter, file_id))
             new_file_path = out.paths.multi_marked_dir + file_name
             if check_and_move(
                 constants.ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path
             ):
-                mm_line = [file_name, file_path, new_file_path, "NA"] + resp_array
+                mm_line = [file_name, file_path,
+                           new_file_path, "NA"] + resp_array
                 pd.DataFrame(mm_line, dtype=str).T.to_csv(
                     out.files_obj["MultiMarked"],
                     mode="a",
@@ -419,7 +428,7 @@ def print_stats(start_time, files_counter):
     if config.outputs.show_image_level <= 1:
         # TODO: colorama this
         print(
-            "\nTip: To see some awesome visuals, open config.py and increase 'show_image_level'"
+            "\nTip: To see some awesome visuals, open config.json and increase 'show_image_level'"
         )
 
     # evaluate_correctness(out)
