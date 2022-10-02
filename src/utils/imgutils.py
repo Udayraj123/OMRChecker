@@ -948,7 +948,7 @@ class MainOperations:
             if config.outputs.show_image_level >= 5:
                 # plt.draw()
                 f, axes = plt.subplots(len(all_c_box_vals), sharey=True)
-                f.canvas.set_window_title(name)
+                f.canvas.manager.set_window_title(name)
                 ctr = 0
                 type_name = {
                     "int": "Integer",
