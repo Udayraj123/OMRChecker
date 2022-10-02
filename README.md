@@ -48,6 +48,8 @@ See complete guide and details at [Project Wiki](https://github.com/Udayraj123/O
 
 <!-- 💁🏿‍♂️ **User Friendly** - WIP, Help by contributing! -->
 
+<hr>
+
 ## 💡 What can OMRChecker do for me?
 
 Once you configure the OMR layout, just throw images of the sheets at the software; and you'll get back the marked responses in an excel sheet!
@@ -70,6 +72,8 @@ Images can be taken from various angles as shown below-
 <p align="center">
 	<img alt="checking_xeroxed_mobile" height="300" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/mini_scripts/outputs/gif/checking_xeroxed_mobile.gif">
 </p>
+
+<hr>
 
 ## Visuals
 
@@ -97,13 +101,20 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 
 #### There are many more visuals in the wiki. Check them out [here!](https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals)
 
+<hr>
+
 ## Getting started
 
 ![Setup Time](https://img.shields.io/badge/Setup_Time-20_min-blue.svg)
 
 **Operating system:** OSX or Linux is recommended although windows is also supported currently.
 
-### 1. Install global dependencies
+### 1. Installation
+
+<details>
+<summary><b><u>Linux Users</u></b></summary>
+
+#### 1. Install global dependencies
 
 ![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4+](https://img.shields.io/badge/python-3.4+-blue.svg)
 
@@ -119,9 +130,7 @@ More details on pip install openCV [here](https://www.pyimagesearch.com/2018/09/
 
 **Installing missing libraries(if any):**
 
-_Windows and MacOS users may skip this step._
-
-On a fresh computer, some of the libraries may get missing in event after a successful pip install. Install them using following commands[(ref)](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/):
+On a fresh computer, some of the libraries may be missing in event after a successful pip install. Install them using following commands[(ref)](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/):
 
 ```bash
 sudo apt-get install -y build-essential cmake unzip pkg-config
@@ -130,20 +139,14 @@ sudo apt-get install -y libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
 sudo apt-get install -y libatlas-base-dev gfortran
 ```
 
-### 2. Install project dependencies
-
-<!-- ![imutils 0.5.2](https://img.shields.io/badge/imutils-0.5.2-blue.svg)  -->
-
-![matplotlib 3.0.2](https://img.shields.io/badge/matplotlib-3.0.2-blue.svg) ![pandas 0.24.0](https://img.shields.io/badge/pandas-0.24.0-blue.svg) ![numpy 1.16.0](https://img.shields.io/badge/numpy-1.16.0-blue.svg) ![deepmerge 0.1.0](https://img.shields.io/badge/deepmerge-0.1.0-blue.svg) ![dotmap 1.3.17](https://img.shields.io/badge/dotmap-1.3.17-blue.svg)
-
-#### Clone the repo
+#### 2. Clone the repo
 
 ```bash
 git clone https://github.com/Udayraj123/OMRChecker
 cd OMRChecker/
 ```
 
-#### Install pip requirements
+#### 3. Install pip requirements
 
 ```bash
 python3 -m pip install --user -r requirements.txt
@@ -152,8 +155,84 @@ python3 -m pip install --user -r requirements.txt
 **Friendly Note:** If you face a distutils error in pip, use `--ignore-installed` flag in above command.
 
 <!-- Wiki should not get cloned -->
+</details>
 
-### 3. Run the code
+<details>
+<summary><b><u>Windows Users</u></b></summary>
+
+**Note:** all given commands are in bash
+
+#### 1. Install global dependencies
+
+![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4+](https://img.shields.io/badge/python-3.4+-blue.svg)
+
+Install opencv (Any installation method is fine.)
+
+```bash
+python3 -m pip install --user --upgrade pip
+python3 -m pip install --user opencv-python
+python3 -m pip install --user opencv-contrib-python
+```
+
+More details on pip install openCV [here](https://www.pyimagesearch.com/2018/09/19/pip-install-opencv/).
+
+#### 2. Clone the repo
+
+```bash
+git clone https://github.com/Udayraj123/OMRChecker
+cd OMRChecker/
+```
+
+#### 3. Install pip requirements
+
+```bash
+python3 -m pip install --user -r requirements.txt
+```
+
+**Friendly Note:** If you face a distutils error in pip, use `--ignore-installed` flag in above command.
+
+<!-- Wiki should not get cloned -->
+</details>
+
+<details>
+<summary><b><u>MacOS Users</u></b></summary>
+
+**Note:** all given commands are in bash
+
+#### 1. Install global dependencies
+
+![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4+](https://img.shields.io/badge/python-3.4+-blue.svg)
+
+Install opencv (Any installation method is fine.)
+
+```bash
+python3 -m pip install --user --upgrade pip
+python3 -m pip install --user opencv-python
+python3 -m pip install --user opencv-contrib-python
+```
+
+More details on pip install openCV [here](https://www.pyimagesearch.com/2018/09/19/pip-install-opencv/).
+
+#### 2. Clone the repo
+
+```bash
+git clone https://github.com/Udayraj123/OMRChecker
+cd OMRChecker/
+```
+
+#### 3. Install pip requirements
+
+```bash
+python3 -m pip install --user -r requirements.txt
+```
+
+**Friendly Note:** If you face a distutils error in pip, use `--ignore-installed` flag in above command.
+
+<!-- Wiki should not get cloned -->
+</details>
+
+
+### 2. Run the code
 
 1. First copy and examine the sample data to know how to structure your inputs:
    ```bash
@@ -168,12 +247,16 @@ python3 -m pip install --user -r requirements.txt
 
 Each example in samples folder demonstrates different ways in which OMRChecker can be used.
 
+<hr>
+
 ## OMRChecker for custom OMR Sheets
 
 1. First [create your own template.json](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide).
 2. Configure the tuning parameters (help needed for documentation!).
 <!-- 3. Add answer key( TODO: add answer key/marking scheme guide)  -->
 3. Run OMRChecker with appropriate arguments (See full usage).
+
+<hr>
 
 ## Full Usage
 
@@ -200,6 +283,8 @@ Standard Quality Dataset(For ML Based methods) (3 GB)
 High Quality Dataset(For custom processing) (6 GB)
 -->
 
+<hr>
+
 ## FAQ
 
 ### Why is this software free?
@@ -217,6 +302,8 @@ OMRChecker can be forked and modified. You are encouraged to play with it and we
 The only requirement is **disclose usage** of this software in your code.
 
 It is published under the [GPLv3 license](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE).
+
+<hr>
 
 ## Credits
 
@@ -236,6 +323,8 @@ some SO answers from roughworks
 prof
 -->
 
+<hr>
+
 ## Related Projects
 
 Here's a sneak peak of the [Android OMR Helper App (WIP)](https://github.com/Udayraj123/AndroidOMRHelper):
@@ -246,11 +335,15 @@ Here's a sneak peak of the [Android OMR Helper App (WIP)](https://github.com/Uda
 	</a>
 </p>
 
+<hr>
+
 ## Stargazers over time
 
 [![Stargazers over time](https://starchart.cc/Udayraj123/OMRChecker.svg)](https://starchart.cc/Udayraj123/OMRChecker)
 
-### Ways to contribute:
+<hr>
+
+## Ways to contribute:
 
 - Help OMRChecker reach more people by giving a star!
 
@@ -268,7 +361,9 @@ Here's a sneak peak of the [Android OMR Helper App (WIP)](https://github.com/Uda
 <!-- [![paypal.me](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Z5BNNK7AVFVH8&source=url) -->
 <!-- https://www.amazon.in/hz/wishlist/ls/3V0TDQBI3T8IL -->
 
-### License
+<hr>
+
+## License
 
 [![GitHub license](https://img.shields.io/github/license/Udayraj123/OMRChecker.svg)](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE)
 
