@@ -171,19 +171,18 @@ Each example in samples folder demonstrates different ways in which OMRChecker c
 
 _**Issues you might face while installing :**_
 <details>
-<summary>Issues</summary>
+<summary>Common Issues</summary>
 <br>
-#1.<ERROR: Could not open requirements file: [Errno 2] No such file or directory: 'requirements.txt'> On Windows    after using the command: 
-	
-	
+	<details>
+<summary>
+	#1.<ERROR: Could not open requirements file: [Errno 2] No such file or directory: 'requirements.txt'> On Windows    after using the command: 
 	$ python3 -m pip install --user -r requirements.txt
-	
-	
-	
+	</summary>
+						
 ![P1](https://user-images.githubusercontent.com/111011580/193443625-04798d34-98ba-4d28-b3db-0975be936289.png)
 	
 	
- **Solution-->**
+ **Solution **
 	
 You can resolve it by following the steps : 
 
@@ -193,22 +192,21 @@ You can resolve it by following the steps :
  1. Navigate to the directory where you have cloned your project .
  
 Example -  I had made OMR Checker Directory to clone the project ,to navigate to the directory use cd <Name of Directory>
+	`cd <Name of Directory>`
  
-![cd](https://user-images.githubusercontent.com/111011580/193441708-b133dd86-c85b-4da0-b140-3c50a81abac8.png)
-
 
 2. To look contents inside your directory use ls 
-
-![ls](https://user-images.githubusercontent.com/111011580/193441759-024f0210-75ca-4bfd-9878-371b338c7745.png)
+	`ls`
 	
 
 3. Now navigate to this folder using cd OMRChecker
-
-![cd2](https://user-images.githubusercontent.com/111011580/193441808-9678ab0d-df51-434a-86d9-7c628c08be9e.png)
+	`cd OMRChecker`
 	
 
 4. Now use command:  python3 -m pip install --user -r requirements.txt
-
+	`python3 -m pip install --user -r requirements.txt`
+	
+	</details>
 
 </details>
 
