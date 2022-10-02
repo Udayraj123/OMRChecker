@@ -177,7 +177,7 @@ Each example in samples folder demonstrates different ways in which OMRChecker c
 	</summary>
 Command: <code>python3 -m pip install --user -r requirements.txt</code>
 <br>
-Link to Solution:  [#54](https://github.com/Udayraj123/OMRChecker/issues/54#issuecomment-1264569006)
+	Link to Solution:  <a href="https://github.com/Udayraj123/OMRChecker/issues/54#issuecomment-1264569006">#54</a>
 	
 </details>
 
