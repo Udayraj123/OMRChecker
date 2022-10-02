@@ -169,45 +169,14 @@ python3 -m pip install --user -r requirements.txt
 Each example in samples folder demonstrates different ways in which OMRChecker can be used.
 
 
-_**Issues you might face while installing :**_
+### Common Issues
+
 <details>
-<summary>Common Issues</summary>
-<br>
-	<details>
 <summary>
-	#1.<ERROR: Could not open requirements file: [Errno 2] No such file or directory: 'requirements.txt'> On Windows    after using the command: 
-	$ python3 -m pip install --user -r requirements.txt
+	1.[Windows] ERROR: Could not open requirements file
 	</summary>
-						
-![P1](https://user-images.githubusercontent.com/111011580/193443625-04798d34-98ba-4d28-b3db-0975be936289.png)
+Link to Solution: https://github.com/Udayraj123/OMRChecker/issues/54#issuecomment-1264569006 
 	
-	
- **Solution **
-	
-You can resolve it by following the steps : 
-
---> It can happen if you are not in the directory where you have cloned your project .
-	
-
- 1. Navigate to the directory where you have cloned your project .
- 
-Example -  I had made OMR Checker Directory to clone the project ,to navigate to the directory use cd <Name of Directory>
-	`cd <Name of Directory>`
- 
-
-2. To look contents inside your directory use ls 
-	`ls`
-	
-
-3. Now navigate to this folder using cd OMRChecker
-	`cd OMRChecker`
-	
-
-4. Now use command:  python3 -m pip install --user -r requirements.txt
-	`python3 -m pip install --user -r requirements.txt`
-	
-	</details>
-
 </details>
 
 
