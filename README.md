@@ -173,7 +173,8 @@ Each example in samples folder demonstrates different ways in which OMRChecker c
 
 <details>
 <summary>
-	1.[Windows] ERROR: Could not open requirements file
+	1.[Windows] ERROR: Could not open requirements file<br>
+	Command: python3 -m pip install --user -r requirements.txt
 	</summary>
 Link to Solution: https://github.com/Udayraj123/OMRChecker/issues/54#issuecomment-1264569006 
 	
