@@ -39,11 +39,12 @@ class ImageUtils:
         cv2.imwrite(path, final_marked)
 
     @staticmethod
-    def save_or_show_stacks(key, name, save_dir=None, pause=1):
+    def save_or_show_stacks(key, filename, save_dir=None, pause=1):
         if (
             ImageUtils.save_image_level >= int(key)
             and ImageUtils.save_img_list[key] != []
         ):
+            name = os.path.splitext(filename)[0]
             result = np.hstack(
                 tuple(
                     [
@@ -497,8 +498,6 @@ def setup_dirs(paths):
             os.mkdir(_dir + "/stack")
             os.mkdir(_dir + "/_MULTI_")
             os.mkdir(_dir + "/_MULTI_" + "/stack")
-            # os.mkdir(_dir+sl+'/_BADSCAN_')
-            # os.mkdir(_dir+sl+'/_BADSCAN_'+'/stack')
         else:
             print("Present : " + _dir)
 
