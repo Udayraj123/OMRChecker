@@ -185,6 +185,20 @@ python3 -m pip install --user -r requirements.txt
 
 Each example in samples folder demonstrates different ways in which OMRChecker can be used.
 
+
+### Common Issues
+
+<details>
+<summary>
+	1. [Windows] ERROR: Could not open requirements file<br>
+	</summary>
+Command: <code>python3 -m pip install --user -r requirements.txt</code>
+<br>
+	Link to Solution:  <a href="https://github.com/Udayraj123/OMRChecker/issues/54#issuecomment-1264569006">#54</a>
+	
+</details>
+
+
 ## OMRChecker for custom OMR Sheets
 
 1. First [create your own template.json](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide).
