@@ -21,7 +21,7 @@
     "thickness": 3
   },
   "outputs": {
-    "show_image_level": 5,
+    "show_image_level": 0,
     "save_image_level": 2,
     "save_detections": true,
     "explain_scoring": 0
