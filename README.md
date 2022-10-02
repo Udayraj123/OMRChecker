@@ -117,9 +117,12 @@ python3 -m pip install --user opencv-contrib-python
 
 More details on pip install openCV [here](https://www.pyimagesearch.com/2018/09/19/pip-install-opencv/).
 
-**Installing missing libraries(if any):**
+<details>
 
-_Windows and MacOS users may skip this step._
+<summary><b>For Linux Users</b></summary>  
+
+
+**Installing missing libraries(if any):**
 
 On a fresh computer, some of the libraries may get missing in event after a successful pip install. Install them using following commands[(ref)](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/):
 
@@ -129,6 +132,8 @@ sudo apt-get install -y libjpeg-dev libpng-dev libtiff-dev
 sudo apt-get install -y libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
 sudo apt-get install -y libatlas-base-dev gfortran
 ```
+
+</details>  
 
 ### 2. Install project dependencies
 
