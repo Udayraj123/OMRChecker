@@ -132,7 +132,7 @@ More details on pip install openCV [here](https://www.pyimagesearch.com/2018/09/
 
 <details>
 
-<summary></b>Installing missing libraries(if any):</b></summary>
+<summary><b>Installing missing libraries(if any):</b></summary>
 
 On a fresh computer, some of the libraries may get missing in event after a successful pip install. Install them using following commands[(ref)](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/):
 
