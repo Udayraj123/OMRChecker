@@ -107,11 +107,10 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 
 ![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4+](https://img.shields.io/badge/python-3.4+-blue.svg)
 
+<b>For OSX Users</b>
+
 <details>
-
-<summary><b>For OSX Users</b></summary>
-
-**Installing python3 using brew**
+<summary><b>Installing python3 using brew</b></summary>
 
 ```brew
 brew install python3
@@ -129,12 +128,11 @@ python3 -m pip install --user opencv-contrib-python
 
 More details on pip install openCV [here](https://www.pyimagesearch.com/2018/09/19/pip-install-opencv/).
 
+<b>For Linux Users</b> 
+
 <details>
 
-<summary><b>For Linux Users</b></summary>  
-
-
-**Installing missing libraries(if any):**
+<summary></b>Installing missing libraries(if any):</b></summary>
 
 On a fresh computer, some of the libraries may get missing in event after a successful pip install. Install them using following commands[(ref)](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/):
 
