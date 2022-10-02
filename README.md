@@ -107,6 +107,18 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 
 ![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4+](https://img.shields.io/badge/python-3.4+-blue.svg)
 
+<details>
+
+<summary><b>For OSX Users</b></summary>
+
+**Installing python3 using brew**
+
+```brew
+brew install python3
+```
+
+</details>
+
 Install opencv (Any installation method is fine.)
 
 ```bash
