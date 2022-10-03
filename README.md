@@ -101,7 +101,9 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 
 ![Setup Time](https://img.shields.io/badge/Setup_Time-20_min-blue.svg)
 
-**Operating system:** OSX or Linux is recommended although windows is also supported currently.
+**Operating system:** OSX or Linux is recommended although Windows is also supported currently.
+
+**Note:** Given commands are in bash, so make sure your preferred installation medium supports bash commands (or look for alternatives in the provided links).
 
 ### 1. Install global dependencies
 
