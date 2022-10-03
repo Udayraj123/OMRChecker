@@ -103,8 +103,6 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 
 **Operating system:** OSX or Linux is recommended although Windows is also supported currently.
 
-**Note:** Given commands are in bash, so make sure your preferred installation medium supports bash commands (or look for alternatives in the provided links).
-
 ### 1. Install global dependencies
 
 ![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4+](https://img.shields.io/badge/python-3.4+-blue.svg)
