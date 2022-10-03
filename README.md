@@ -101,14 +101,25 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 
 ![Setup Time](https://img.shields.io/badge/Setup_Time-20_min-blue.svg)
 
-**Operating system:** OSX or Linux is recommended although windows is also supported currently.
+**Operating system:** OSX or Linux is recommended although Windows is also supported currently.
 
 ### 1. Install global dependencies
 
 ![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4+](https://img.shields.io/badge/python-3.4+-blue.svg)
 
-Install opencv (Any installation method is fine.)
+<details>
+<summary><b>Installing python3</b></summary>
 
+Follow instructions [here](https://www.python.org/downloads/)
+
+</details>
+
+<details>
+<summary><b>Install opencv</b></summary>
+
+**Any installation method is fine.**
+
+Recommended:
 ```bash
 python3 -m pip install --user --upgrade pip
 python3 -m pip install --user opencv-python
@@ -116,10 +127,13 @@ python3 -m pip install --user opencv-contrib-python
 ```
 
 More details on pip install openCV [here](https://www.pyimagesearch.com/2018/09/19/pip-install-opencv/).
+</details>
 
-**Installing missing libraries(if any):**
+<details>
 
-_Windows and MacOS users may skip this step._
+<summary><b>Extra steps for Linux users only</b></summary> 
+
+<b>Installing missing libraries(if any):</b>
 
 On a fresh computer, some of the libraries may get missing in event after a successful pip install. Install them using following commands[(ref)](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/):
 
@@ -130,11 +144,9 @@ sudo apt-get install -y libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
 sudo apt-get install -y libatlas-base-dev gfortran
 ```
 
+</details>  
+
 ### 2. Install project dependencies
-
-<!-- ![imutils 0.5.2](https://img.shields.io/badge/imutils-0.5.2-blue.svg)  -->
-
-![matplotlib 3.0.2](https://img.shields.io/badge/matplotlib-3.0.2-blue.svg) ![pandas 0.24.0](https://img.shields.io/badge/pandas-0.24.0-blue.svg) ![numpy 1.16.0](https://img.shields.io/badge/numpy-1.16.0-blue.svg) ![deepmerge 0.1.0](https://img.shields.io/badge/deepmerge-0.1.0-blue.svg) ![dotmap 1.3.17](https://img.shields.io/badge/dotmap-1.3.17-blue.svg)
 
 #### Clone the repo
 
