@@ -304,5 +304,8 @@ For more details see [LICENSE](https://github.com/Udayraj123/OMRChecker/blob/mas
 
 _Find OMRChecker on_ [**_Product Hunt_**](https://www.producthunt.com/posts/omr-checker/) **|** [**_Reddit_**](https://www.reddit.com/r/computervision/comments/ccbj6f/omrchecker_grade_exams_using_python_and_opencv/) **|** [**Discord**](https://discord.gg/qFv2Vqf)
 
+***
+<h1 align="center">Made with ❤️ by Awesome Contributors</h1>
+
  <!-- [***Hacker News***](https://news.ycombinator.com/item?id=20420602) **|** -->
  <!-- **|** [***Swyya***](https://www.swyya.com/projects/omrchecker) -->
