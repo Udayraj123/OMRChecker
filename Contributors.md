@@ -13,4 +13,5 @@
 - [05Alston](https://github.com/05Alston)
 - [Antibodyy](https://github.com/Antibodyy)
 - [infinity1729](https://github.com/infinity1729)
-<!-- - [udayrajMT](https://github.com/udayrajMT) -->
+- [Rohan-G](https://github.com/Rohan-G)
+- [UjjwalMahar](https://github.com/UjjwalMahar)
