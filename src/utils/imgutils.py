@@ -12,6 +12,9 @@ import matplotlib.pyplot as plt
 import src.constants as constants
 from src.config import CONFIG_DEFAULTS as config
 
+from colorama import Fore, init 
+init(autoreset=True)
+
 
 class ImageUtils:
     """Class to hold indicators of images and save images."""
@@ -35,7 +38,7 @@ class ImageUtils:
 
     @staticmethod
     def save_img(path, final_marked):
-        print("Saving Image to " + path)
+        print(Fore.YELLOW +"Saving Image to " + path)
         cv2.imwrite(path, final_marked)
 
     @staticmethod
@@ -493,30 +496,30 @@ def get_local_threshold(
 
 
 def setup_dirs(paths):
-    print("\nChecking Directories...")
+    print(Fore.YELLOW +"\nChecking Directories...")
     for _dir in [paths.save_marked_dir]:
         if not os.path.exists(_dir):
-            print("Created : " + _dir)
+            print(Fore.YELLOW +"Created : " + _dir)
             os.makedirs(_dir)
             os.mkdir(_dir + "/stack")
             os.mkdir(_dir + "/_MULTI_")
             os.mkdir(_dir + "/_MULTI_" + "/stack")
         else:
-            print("Present : " + _dir)
+            print(Fore.YELLOW +"Present : " + _dir)
 
     for _dir in [paths.manual_dir, paths.results_dir]:
         if not os.path.exists(_dir):
-            print("Created : " + _dir)
+            print(Fore.YELLOW +"Created : " + _dir)
             os.makedirs(_dir)
         else:
-            print("Present : " + _dir)
+            print(Fore.YELLOW +"Present : " + _dir)
 
     for _dir in [paths.multi_marked_dir, paths.errors_dir, paths.bad_rolls_dir]:
         if not os.path.exists(_dir):
-            print("Created : " + _dir)
+            print(Fore.YELLOW +"Created : " + _dir)
             os.makedirs(_dir)
         else:
-            print("Present : " + _dir)
+            print(Fore.YELLOW +"Present : " + _dir)
 
 
 class MainOperations:
@@ -792,7 +795,7 @@ class MainOperations:
             global_thr, _, _ = get_global_threshold(all_q_vals, looseness=4)
 
             # TODO colorama
-            print(
+            print(Fore.YELLOW +
                 "Thresholding:\t\t global_thr: ",
                 round(global_thr, 2),
                 "\tglobal_std_THR: ",
@@ -933,7 +936,7 @@ class MainOperations:
 
             # TODO: move this validation into template.py -
             if total_q_strip_no == 0:
-                print(
+                print(Fore.RED +
                     "\n\t UNEXPECTED Template Incorrect Error: \
                     total_q_strip_no is zero! q_blocks: ",
                     template.q_blocks,

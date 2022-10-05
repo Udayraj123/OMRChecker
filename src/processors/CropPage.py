@@ -10,6 +10,9 @@ from .interfaces.ImagePreprocessor import ImagePreprocessor
 
 MIN_PAGE_AREA = 80000
 
+from colorama import init, Fore
+init(autoreset=True)
+
 # TODO: Automate the case of close up scan(incorrect page) when page boundary is not found
 # ^Note: App rejects croppeds along with others
 
@@ -131,13 +134,13 @@ class CropPage(ImagePreprocessor):
         # Resize should be done with another preprocessor is needed
         sheet = self.find_page(image)
         if sheet == []:
-            print(
+            print(Fore.RED +
                 "\tError: Paper boundary not found! \
                 Have you accidentally included CropPage preprocessor?"
             )
             return None
 
-        print("Found page corners: \t", sheet.tolist())
+        print(Fore.YELLOW +"Found page corners: \t", sheet.tolist())
 
         # Warp layer 1
         image = four_point_transform(image, sheet)

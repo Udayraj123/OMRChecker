@@ -6,6 +6,9 @@ Adapated from https://github.com/gdiepen/python_processor_example
 import inspect
 import pkgutil
 
+from colorama import Fore, init
+init(autoreset=True)
+
 
 class Processor:
     """Base class that each processor must inherit from."""
@@ -33,7 +36,7 @@ class ProcessorManager:
         self.processors = {}
         self.seen_paths = []
         print()
-        print(f'Looking for processors in "{self.processors_dir}"')
+        print(Fore.YELLOW +f'Looking for processors in "{self.processors_dir}"')
         self.walk_package(self.processors_dir)
 
     @staticmethod
@@ -65,4 +68,4 @@ class ProcessorManager:
                         self.processors[c.__name__] = c
                         loaded_packages.append(c.__name__)
 
-        print(f"Loaded processors: {loaded_packages}")
+        print(Fore.GREEN +f"Loaded processors: {loaded_packages}")

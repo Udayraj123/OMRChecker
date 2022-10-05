@@ -6,8 +6,10 @@
  Github: https://github.com/Udayraj123
 
 """
+from colorama import Fore, init
+init(autoreset=True)
 
-print(f"Loading OMRChecker modules...")
+print(Fore.GREEN + f"Loading OMRChecker modules...")
 # It takes a few seconds for the imports 
 
 import argparse
@@ -68,7 +70,7 @@ argparser.add_argument(
 ) = argparser.parse_known_args()
 args = vars(args)
 if len(unknown) > 0:
-    print(
+    print(Fore.RED +
         "\nError: Unknown arguments:",
         unknown,
     )
