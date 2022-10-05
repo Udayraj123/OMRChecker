@@ -111,11 +111,23 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 
 <details>
 <summary><b>Installing python3</b></summary>
-
+To check if python3 is already installed:
+```bash
+python3 --version
+```
 Follow instructions [here](https://www.python.org/downloads/)
+</details>
+<details>
+<summary><b>Installing pip</b></summary>
+TO check if pip is already installed:
+```bash
+python3 -m pip --version
+```
+```bash
+sudo apt install python3-pip
+```
 
 </details>
-
 <details>
 <summary><b>Install opencv</b></summary>
 
