@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 from src.utils.imgutils import four_point_transform, ImageUtils
 from .interfaces.ImagePreprocessor import ImagePreprocessor
+from src.logger import logger
 
 MIN_PAGE_AREA = 80000
 
@@ -29,7 +30,7 @@ def check_max_cosine(approx):
     # TODO add to plot dict
     # print(max_cosine)
     if max_cosine >= 0.35:
-        print("Quadrilateral is not a rectangle.")
+        logger.warning("Quadrilateral is not a rectangle.")
         return False
     return True
 
@@ -131,13 +132,13 @@ class CropPage(ImagePreprocessor):
         # Resize should be done with another preprocessor is needed
         sheet = self.find_page(image)
         if sheet == []:
-            print(
+            logger.error(
                 "\tError: Paper boundary not found! \
                 Have you accidentally included CropPage preprocessor?"
             )
             return None
 
-        print("Found page corners: \t", sheet.tolist())
+        logger.info("Found page corners: \t", sheet.tolist())
 
         # Warp layer 1
         image = four_point_transform(image, sheet)

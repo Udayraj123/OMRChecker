@@ -27,6 +27,7 @@ from src.utils.imgutils import (
     setup_dirs,
 )
 import src.constants as constants
+from src.logger import logger
 
 # TODO: use open_config_with_defaults after making a Config class.
 from src.config import CONFIG_DEFAULTS as config
@@ -78,7 +79,7 @@ def process_dir(root_dir, curr_dir, args, template=None):
 
     if omr_files:
         if not template:
-            print(
+            logger.error(
                 f'Error: Found images, but no template in the directory tree \
                 of "{curr_dir}". \nPlace {constants.TEMPLATE_FILENAME} in the \
                 directory or specify a template using -t.'
@@ -89,20 +90,20 @@ def process_dir(root_dir, curr_dir, args, template=None):
         args_local = args.copy()
         if "OverrideFlags" in template.options:
             args_local.update(template.options["OverrideFlags"])
-        print("\n------------------------------------------------------------------")
-        print(f'Processing directory "{curr_dir}" with settings- ')
-        print("\tTotal images       : %d" % (len(omr_files)))
-        print(
+        logger.info("\n------------------------------------------------------------------")
+        logger.info(f'Processing directory "{curr_dir}" with settings- ')
+        logger.info("\tTotal images       : %d" % (len(omr_files)))
+        logger.info(
             "\tCropping Enabled   : " +
             str("CropOnMarkers" in template.pre_processors)
         )
-        print("\tAuto Alignment     : " + str(args_local["autoAlign"]))
-        print("\tUsing Template     : " + str(template))
+        logger.info("\tAuto Alignment     : " + str(args_local["autoAlign"]))
+        logger.info("\tUsing Template     : " + str(template))
         # Print options
         for pp in template.pre_processors:
-            print(f'\tUsing preprocessor: {pp.__class__.__name__:13}')
+            logger.info(f'\tUsing preprocessor: {pp.__class__.__name__:13}')
 
-        print("")
+        logger.info("")
 
         setup_dirs(paths)
         out = setup_output(paths, template)
@@ -110,7 +111,7 @@ def process_dir(root_dir, curr_dir, args, template=None):
 
     elif not subdirs:
         # Each subdirectory should have images or should be non-leaf
-        print(
+        logger.warning(
             f"Note: No valid images or sub-folders found in {curr_dir}.\
             Empty directories not allowed."
         )
@@ -126,13 +127,13 @@ def check_and_move(error_code, file_path, filepath2):
     return True
 
     if not os.path.exists(file_path):
-        print(f"File already moved: {file_path}")
+        logger.warning(f"File already moved: {file_path}")
         return False
     if os.path.exists(filepath2):
-        print(f"ERROR {error_code}: Duplicate file at {filepath2}")
+        logger.error(f"ERROR {error_code}: Duplicate file at {filepath2}")
         return False
 
-    print(f"Moved: {file_path} --> {filepath2}")
+    logger.info(f"Moved: {file_path} --> {filepath2}")
     os.rename(file_path, filepath2)
     STATS.files_moved += 1
     return True
@@ -164,7 +165,7 @@ def process_omr(template, omr_resp):
 
 
 def report(status, streak, scheme, q_no, marked, ans, prev_marks, curr_marks, marks):
-    print(
+    logger.info(
         "%s \t %s \t\t %s \t %s \t %s \t %s \t %s "
         % (
             q_no,
@@ -180,7 +181,7 @@ def report(status, streak, scheme, q_no, marked, ans, prev_marks, curr_marks, ma
 
 def setup_output(paths, template):
     ns = argparse.Namespace()
-    print("\nChecking Files...")
+    logger.info("\nChecking Files...")
 
     # Include current output paths
     ns.paths = paths
@@ -205,7 +206,7 @@ def setup_output(paths, template):
 
     for file_key, file_name in ns.filesMap.items():
         if not os.path.exists(file_name):
-            print("Note: Created new file: %s" % (file_name))
+            logger.info("Note: Created new file: %s" % (file_name))
             # moved handling of files to pandas csv writer
             ns.files_obj[file_key] = file_name
             # Create Header Columns
@@ -217,7 +218,7 @@ def setup_output(paths, template):
                 index=False,
             )
         else:
-            print("Present : appending to %s" % (file_name))
+            logger.info("Present : appending to %s" % (file_name))
             ns.files_obj[file_key] = open(file_name, "a")
 
     return ns
@@ -261,7 +262,7 @@ def process_files(omr_files, template, args, out):
         args["current_file"] = file_path
 
         in_omr = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
-        print(
+        logger.info(
             f"\n({files_counter}) Opening image: \t{file_path}\tResolution: {in_omr.shape}"
         )
 
@@ -320,7 +321,7 @@ def process_files(omr_files, template, args, out):
 
         # concatenate roll nos, set unmarked responses, etc
         resp = process_omr(template, response_dict)
-        print("\nRead Response: \t", resp, "\n")
+        logger.info("\nRead Response: \t", resp, "\n")
         if config.outputs.show_image_level >= 2:
             MainOperations.show(
                 "Final Marked Bubbles : " + file_id,
@@ -366,7 +367,7 @@ def process_files(omr_files, template, args, out):
             # print(files_counter,file_id,resp['Roll'],'score : ',score)
         else:
             # multi_marked file
-            print("[%d] multi_marked, moving File: %s" %
+            logger.info("[%d] multi_marked, moving File: %s" %
                   (files_counter, file_id))
             new_file_path = out.paths.multi_marked_dir + file_name
             if check_and_move(
@@ -395,11 +396,12 @@ def process_files(omr_files, template, args, out):
 
 def print_stats(start_time, files_counter):
     time_checking = round(time() - start_time, 2) if files_counter else 1
-    print("")
-    print("Total file(s) moved        : %d " % (STATS.files_moved))
-    print("Total file(s) not moved    : %d " % (STATS.files_not_moved))
-    print("------------------------------")
-    print(
+    log = logger.info
+    log("")
+    log("Total file(s) moved        : %d " % (STATS.files_moved))
+    log("Total file(s) not moved    : %d " % (STATS.files_not_moved))
+    log("------------------------------")
+    log(
         "Total file(s) processed    : %d (%s)"
         % (
             files_counter,
@@ -410,24 +412,24 @@ def print_stats(start_time, files_counter):
     )
 
     if config.outputs.show_image_level <= 0:
-        print(
+        log(
             "\nFinished Checking %d file(s) in %.1f seconds i.e. ~%.1f minute(s)."
             % (files_counter, time_checking, time_checking / 60)
         )
-        print(
+        log(
             "OMR Processing Rate  :\t ~ %.2f seconds/OMR"
             % (time_checking / files_counter)
         )
-        print(
+        log(
             "OMR Processing Speed :\t ~ %.2f OMRs/minute"
             % ((files_counter * 60) / time_checking)
         )
     else:
-        print("\nTotal script time :", time_checking, "seconds")
+        log("\nTotal script time :", time_checking, "seconds")
 
     if config.outputs.show_image_level <= 1:
         # TODO: colorama this
-        print(
+        log(
             "\nTip: To see some awesome visuals, open config.json and increase 'show_image_level'"
         )
 
@@ -452,7 +454,7 @@ def evaluate_correctness(out):
     # TODO: test_file WOULD BE RELATIVE TO INPUT SUBDIRECTORY NOW-
     test_file = "inputs/OMRDataset.csv"
     if os.path.exists(test_file):
-        print("\nStarting evaluation for: " + test_file)
+        logger.info("\nStarting evaluation for: " + test_file)
 
         test_cols = ["file_id"] + out.resp_cols
         y_df = (
@@ -463,7 +465,7 @@ def evaluate_correctness(out):
 
         if np.any(y_df.index.duplicated):
             y_df_filtered = y_df.loc[~y_df.index.duplicated(keep="first")]
-            print(
+            logger.warning(
                 "WARNING: Found duplicate File-ids in file %s. \
                 Removed %d rows from testing data. Rows remaining: %d"
                 % (
@@ -485,16 +487,16 @@ def evaluate_correctness(out):
         if intersection.size == x_df.index.size:
             y_df = y_df.loc[intersection]
             x_df["TestResult"] = (x_df == y_df).all(axis=1).astype(int)
-            print(x_df.head())
-            print(
+            logger.info(x_df.head())
+            logger.info(
                 "\n\t Accuracy on the %s Dataset: %.6f"
                 % (test_file, (x_df["TestResult"].sum() / x_df.shape[0]))
             )
         else:
-            print(
+            logger.error(
                 "\nERROR: Insufficient Testing Data: Have you appended MultiMarked data yet?"
             )
-            print("Missing File-ids: ", list(x_df.index.difference(intersection)))
+            logger.error("Missing File-ids: ", list(x_df.index.difference(intersection)))
 
 
 TIME_NOW_HRS = strftime("%I%p", localtime())

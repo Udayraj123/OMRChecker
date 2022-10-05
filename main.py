@@ -7,7 +7,9 @@
 
 """
 
-print(f"Loading OMRChecker modules...")
+from src.logger import logger
+
+logger.info(f"Loading OMRChecker modules...")
 # It takes a few seconds for the imports 
 
 import argparse
@@ -67,10 +69,12 @@ argparser.add_argument(
     unknown,
 ) = argparser.parse_known_args()
 args = vars(args)
+
+# FIX: remove join
 if len(unknown) > 0:
-    print(
-        "\nError: Unknown arguments:",
-        unknown,
+    logger.warning(
+        "".join(["\nError: Unknown arguments: ",
+        unknown])
     )
     argparser.print_help()
     exit(11)

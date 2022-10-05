@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 # TODO: pass config in runtime later
 import src.constants as constants
 from src.config import CONFIG_DEFAULTS as config
+from src.logger import logger
 
 
 class ImageUtils:
@@ -35,7 +36,7 @@ class ImageUtils:
 
     @staticmethod
     def save_img(path, final_marked):
-        print("Saving Image to " + path)
+        logger.info("Saving Image to " + path)
         cv2.imwrite(path, final_marked)
 
     @staticmethod
@@ -490,30 +491,30 @@ def get_local_threshold(
 
 
 def setup_dirs(paths):
-    print("\nChecking Directories...")
+    logger.info("\nChecking Directories...")
     for _dir in [paths.save_marked_dir]:
         if not os.path.exists(_dir):
-            print("Created : " + _dir)
+            logger.info("Created : " + _dir)
             os.makedirs(_dir)
             os.mkdir(_dir + "/stack")
             os.mkdir(_dir + "/_MULTI_")
             os.mkdir(_dir + "/_MULTI_" + "/stack")
         else:
-            print("Present : " + _dir)
+            logger.info("Present : " + _dir)
 
     for _dir in [paths.manual_dir, paths.results_dir]:
         if not os.path.exists(_dir):
-            print("Created : " + _dir)
+            logger.info("Created : " + _dir)
             os.makedirs(_dir)
         else:
-            print("Present : " + _dir)
+            logger.info("Present : " + _dir)
 
     for _dir in [paths.multi_marked_dir, paths.errors_dir, paths.bad_rolls_dir]:
         if not os.path.exists(_dir):
-            print("Created : " + _dir)
+            logger.info("Created : " + _dir)
             os.makedirs(_dir)
         else:
-            print("Present : " + _dir)
+            logger.info("Present : " + _dir)
 
 
 class MainOperations:
@@ -537,7 +538,7 @@ class MainOperations:
     @staticmethod
     def show(name, orig, pause=1, resize=False, resetpos=None):
         if orig is None:
-            print(name, " NoneType image to show!")
+            logger.info(name, " NoneType image to show!")
             if pause:
                 cv2.destroyAllWindows()
             return
@@ -576,7 +577,7 @@ class MainOperations:
             MainOperations.image_metrics.window_x += w
 
         if pause:
-            print(
+            logger.info(
                 "Showing '"
                 + name
                 + "'\n\tPress Q on image to continue Press Ctrl + C in terminal to exit"
@@ -789,7 +790,7 @@ class MainOperations:
             global_thr, _, _ = get_global_threshold(all_q_vals, looseness=4)
 
             # TODO colorama
-            print(
+            logger.info(
                 "Thresholding:\t\t global_thr: ",
                 round(global_thr, 2),
                 "\tglobal_std_THR: ",
@@ -930,7 +931,7 @@ class MainOperations:
 
             # TODO: move this validation into template.py -
             if total_q_strip_no == 0:
-                print(
+                logger.error(
                     "\n\t UNEXPECTED Template Incorrect Error: \
                     total_q_strip_no is zero! q_blocks: ",
                     template.q_blocks,

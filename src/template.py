@@ -12,6 +12,8 @@ from .constants import TEMPLATE_DEFAULTS_PATH, QTYPE_DATA
 from .utils.file import load_json
 from .utils.object import OVERRIDE_MERGER
 
+from src.logger import logger
+
 TEMPLATE_DEFAULTS = load_json(TEMPLATE_DEFAULTS_PATH)
 
 
@@ -243,7 +245,7 @@ def gen_grid(bubble_dimensions, key, rectParams):
     if (
         0 and len(grid_data.shape) != 3 or grid_data.size == 0
     ):  # product of shape is zero
-        print("Error(gen_grid): Invalid q_nos array given:",
+        logger.error("Error(gen_grid): Invalid q_nos array given:",
               grid_data.shape, grid_data)
         exit(32)
 

@@ -10,6 +10,7 @@ from src.utils.imgutils import (
     four_point_transform,
 )
 from src.config import CONFIG_DEFAULTS as config
+from src.logger import logger
 
 
 class CropOnMarkers(ImagePreprocessor):
@@ -30,7 +31,7 @@ class CropOnMarkers(ImagePreprocessor):
         self.marker_rescale_steps = marker_ops.get("marker_rescale_steps", 10)
         self.apply_erode_subtract = marker_ops.get("apply_erode_subtract", 1)
         if not os.path.exists(self.marker_path):
-            print(
+            logger.error(
                 "Error: Marker not found at path provided in template:",
                 self.marker_path,
             )
@@ -95,14 +96,14 @@ class CropOnMarkers(ImagePreprocessor):
                 best_scale, all_max_t = s, max_t
 
         if all_max_t < self.min_matching_threshold:
-            print(
+            logger.warning(
                 "\tWarning: Template matching too low! Consider rechecking preProcessors applied before this."
             )
             if config.outputs.show_image_level >= 1:
                 show("res", res, 1, 0)
 
         if best_scale is None:
-            print("No matchings for given scaleRange:",
+            logger.warning("No matchings for given scaleRange:",
                   self.marker_rescale_range)
         return best_scale, all_max_t
 
@@ -139,19 +140,19 @@ class CropOnMarkers(ImagePreprocessor):
         _h, w = optimal_marker.shape[:2]
         centres = []
         sum_t, max_t = 0, 0
-        print("Matching Marker:\t", end=" ")
+        logger.info("Matching Marker:\t", end=" ")
         for k in range(0, 4):
             res = cv2.matchTemplate(
                 quads[k], optimal_marker, cv2.TM_CCOEFF_NORMED)
             max_t = res.max()
-            print(f"Quarter{str(k + 1)}: {str(round(max_t, 3))} ", end="\t")
+            logger.info(f"Quarter{str(k + 1)}: {str(round(max_t, 3))} ", end="\t")
             if (
                 max_t < self.min_matching_threshold
                 or abs(all_max_t - max_t) >= self.max_matching_variation
             ):
                 # Warning - code will stop in the middle. Keep Threshold low to
                 # avoid.
-                print(
+                logger.error(
                     args["current_file"].name,
                     "\nError: No circle found in Quad",
                     k + 1,
@@ -192,7 +193,7 @@ class CropOnMarkers(ImagePreprocessor):
             )
             centres.append([pt[0] + w / 2, pt[1] + _h / 2])
             sum_t += max_t
-        print("Optimal Scale:", best_scale)
+        logger.info("Optimal Scale:", best_scale)
         # analysis data
         self.threshold_circles.append(sum_t / 4)
 
