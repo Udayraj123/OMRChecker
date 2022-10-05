@@ -19,11 +19,11 @@ def open_template_with_defaults(template_path):
     user_template = load_json(template_path)
     user_template = OVERRIDE_MERGER.merge(TEMPLATE_DEFAULTS, user_template)
     is_valid, msg = validate_json(user_template)
+    print(msg)
     
     if is_valid:
       return user_template
     else:
-      print(msg)
       exit()
 
 ### Coordinates Part ###
