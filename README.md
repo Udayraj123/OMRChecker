@@ -328,6 +328,14 @@ Here's a sneak peak of the [Android OMR Helper App (WIP)](https://github.com/Uda
 
 [![Stargazers over time](https://starchart.cc/Udayraj123/OMRChecker.svg)](https://starchart.cc/Udayraj123/OMRChecker)
 
+***
+<h2 align="center">Made with ❤️ by Awesome Contributors</h2>
+
+<a href="https://github.com/Udayraj123/OMRChecker/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Udayraj123/OMRChecker" />
+</a>
+
+***
 ### License
 
 [![GitHub license](https://img.shields.io/github/license/Udayraj123/OMRChecker.svg)](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE)

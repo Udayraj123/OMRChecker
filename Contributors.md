@@ -6,4 +6,12 @@
 - [apurva91](https://github.com/apurva91)
 - [sparsh2706](https://github.com/sparsh2706)
 - [namit2saxena](https://github.com/namit2saxena)
-<!-- - [udayrajMT](https://github.com/udayrajMT) -->
+- [Harsh-Kapoorr](https://github.com/Harsh-Kapoorr)
+- [Sandeep-1507](https://github.com/Sandeep-1507)
+- [SpyzzVVarun](https://github.com/SpyzzVVarun)
+- [asc249](https://github.com/asc249)
+- [05Alston](https://github.com/05Alston)
+- [Antibodyy](https://github.com/Antibodyy)
+- [infinity1729](https://github.com/infinity1729)
+- [Rohan-G](https://github.com/Rohan-G)
+- [UjjwalMahar](https://github.com/UjjwalMahar)
