@@ -192,7 +192,17 @@ Each example in samples folder demonstrates different ways in which OMRChecker c
 Command: <code>python3 -m pip install --user -r requirements.txt</code>
 <br>
 	Link to Solution:  <a href="https://github.com/Udayraj123/OMRChecker/issues/54#issuecomment-1264569006">#54</a>
-	
+</details>
+<details>
+<summary>
+2. [Linux] ERROR: No module named pip<br>
+	</summary>
+Command: <code>python3 -m pip install --user --upgrade pip</code>
+<br>
+	Solution:
+	<code>
+	sudo apt install python3-pip
+	</code>
 </details>
 
 
