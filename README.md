@@ -199,10 +199,7 @@ Command: <code>python3 -m pip install --user -r requirements.txt</code>
 	</summary>
 Command: <code>python3 -m pip install --user --upgrade pip</code>
 <br>
-	Solution:
-	<code>
-	sudo apt install python3-pip
-	</code>
+	Link to Solution: <a href="https://github.com/Udayraj123/OMRChecker/issues/70#issuecomment-1268094136">#70</a>
 </details>
 
 
