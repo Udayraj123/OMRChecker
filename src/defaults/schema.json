@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://udayraj123.github.io/omrchecker/src/defaults/schema.json",
+  "title": "Template Validation Schema",
+  "description": "OMRChecker input image schema",
+  "type": "object",
+  "properties": {
+    "dimensions": {
+      "description": "The dimensions to which each input image will be resized to before processing",
+      "type": "array",
+      "items": {
+        "type": "integer"
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "bubbleDimensions": {
+      "description": "The dimensions of the overlay bubble area",
+      "type": "array",
+      "items": {
+        "type": "integer"
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "preProcessors": {
+      "description": "Custom configuration values to use in the template's directory",
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "concatenations": {
+      "description": "The Concatenations parameter is a way to tell OMRChecker which fields need to be joined together before outputting into the csv"
+    },
+    "singles": {
+      "description": "The remaining fields(in order) whose readings shall be forwarded directly in the output csv",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "dimensions",
+    "bubbleDimensions",
+    "concatenations",
+    "singles",
+    "preProcessors"
+  ]
+}
