@@ -103,7 +103,7 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 
 ![Setup Time](https://img.shields.io/badge/Setup_Time-20_min-blue.svg)
 
-**Operating system:** OSX or Linux is recommended although Windows is also supported currently.
+**Operating system:** OSX or Linux is recommended although Windows is also supported.
 
 ### 1. Install global dependencies
 
@@ -249,7 +249,7 @@ High Quality Dataset(For custom processing) (6 GB)
 
 <details>
 <summary>
-Why is this software free?
+<b>Why is this software free?</b>
 </summary>
 
 This project was born out of a student-led organization called as [Technothlon](https://technothlon.techniche.org.in). It is a logic-based international school championship organized by students of IIT Guwahati. Being a non-profit organization, and after seeing it work fabulously at such a large scale we decided to share this tool with the world. The OMR checking processes still involves so much tediousness which we aim to reduce dramatically.
@@ -262,7 +262,7 @@ We believe in the power of open source! Currently, OMRChecker is in an intermedi
 
 <details>
 <summary>
-Can I use this code in my work?
+<b>Can I use this code in my work?</b>
 </summary>
 
 OMRChecker can be forked and modified. You are encouraged to play with it and we would love to see your own projects in action!
@@ -275,20 +275,18 @@ It is published under the [GPLv3 license](https://github.com/Udayraj123/OMRCheck
 
 <details>
 <summary>
-Ways to contribute:
+<b>What are the ways to contribute?</b>
 </summary>
 
-- Help OMRChecker reach more people by giving a star!
+- Help OMRChecker reach more people by giving a star! The Goal is to reach top position for the [OMR Topic](https://github.com/topics/omr)
 
-  The Goal is to reach top position for the [OMR Topic](https://github.com/topics/omr)
+- Join the developer community on [Discord](https://discord.gg/qFv2Vqf) to fix [issues](https://github.com/Udayraj123/OMRChecker/issues) with OMRChecker.
 
 - If this project saved you large costs on OMR Software licenses, or saved efforts to make one. Consider donating an amount of your choice below:
 
   [**Buy Me A Coffee ☕**](https://www.buymeacoffee.com/Udayraj123)
 
   [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif)](https://www.paypal.me/Udayraj123/500)
-
-- Join the [Discord](https://discord.gg/qFv2Vqf) community to help others with using OMRChecker
 
 <!-- ![☕](https://miro.medium.com/fit/c/256/256/1*br7aoq_JVfxeg73x5tF_Sw.png) -->
 <!-- [![paypal.me](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Z5BNNK7AVFVH8&source=url) -->
