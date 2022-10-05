@@ -17,8 +17,7 @@ TEMPLATE_DEFAULTS = load_json(TEMPLATE_DEFAULTS_PATH)
 
 def open_template_with_defaults(template_path):
     user_template = load_json(template_path)
-    return user_template
-    # return OVERRIDE_MERGER.merge(TEMPLATE_DEFAULTS, user_template)
+    return OVERRIDE_MERGER.merge(TEMPLATE_DEFAULTS, user_template)
 
 
 ### Coordinates Part ###
