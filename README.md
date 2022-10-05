@@ -109,15 +109,26 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 
 ![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4+](https://img.shields.io/badge/python-3.4+-blue.svg)
 
+To check if python3 is already installed:
+	
+```bash
+python3 --version
+python3 -m pip --version
+```
 <details>
-<summary><b>Installing python3</b></summary>
+	<summary><b>Install Python3</b></summary>
 
-Follow instructions [here](https://www.python.org/downloads/)
+	
+To install python3 follow instructions [here](https://www.python.org/downloads/)
 
+To install pip:
+	
+```bash
+sudo apt install python3-pip
+```
 </details>
-
 <details>
-<summary><b>Install opencv</b></summary>
+<summary><b>Install OpenCV</b></summary>
 
 **Any installation method is fine.**
 
@@ -192,7 +203,14 @@ Each example in samples folder demonstrates different ways in which OMRChecker c
 Command: <code>python3 -m pip install --user -r requirements.txt</code>
 <br>
 	Link to Solution:  <a href="https://github.com/Udayraj123/OMRChecker/issues/54#issuecomment-1264569006">#54</a>
-	
+</details>
+<details>
+<summary>
+2. [Linux] ERROR: No module named pip<br>
+	</summary>
+Command: <code>python3 -m pip install --user --upgrade pip</code>
+<br>
+	Link to Solution: <a href="https://github.com/Udayraj123/OMRChecker/issues/70#issuecomment-1268094136">#70</a>
 </details>
 
 

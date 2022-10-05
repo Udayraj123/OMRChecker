@@ -193,10 +193,13 @@ def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-
                         2,
                     )
         if shifted:
+            text_in_px = cv2.getTextSize(
+                q_block.key, cv2.FONT_HERSHEY_SIMPLEX,
+                constants.TEXT_SIZE, 4)
             cv2.putText(
                 final_align,
-                "s%s" % (shift),
-                tuple(s - [template.dimensions[0] // 20, -d[1] // 2]),
+                "%s" % (q_block.key),
+                (int(s[0] + d[0] - text_in_px[0][0]), int(s[1] - text_in_px[0][1])),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 constants.TEXT_SIZE,
                 constants.CLR_BLACK,
