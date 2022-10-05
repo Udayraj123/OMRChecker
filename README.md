@@ -16,6 +16,7 @@ Grade exams fast and accurately using a scanner 🖨 or your phone 🤳.
 [![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/pull/new/master) <!-- [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg)](https://github.com/Udayraj123/OMRChecker/wiki/TODOs) -->
+![Visitor Badge](https://visitor-badge.laobi.icu/badge?page_id=Udayraj123.OMRChecker)
 [![GitHub pull-requests closed](https://img.shields.io/github/issues-pr-closed/Udayraj123/OMRChecker.svg)](https://github.com/Udayraj123/OMRChecker/pulls?q=is%3Aclosed)
 [![GitHub issues-closed](https://img.shields.io/github/issues-closed/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/issues?q=is%3Aissue+is%3Aclosed)
 
@@ -321,6 +322,14 @@ Here's a sneak peak of the [Android OMR Helper App (WIP)](https://github.com/Uda
 For more details see [LICENSE](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE).
 
 _Find OMRChecker on_ [**_Product Hunt_**](https://www.producthunt.com/posts/omr-checker/) **|** [**_Reddit_**](https://www.reddit.com/r/computervision/comments/ccbj6f/omrchecker_grade_exams_using_python_and_opencv/) **|** [**Discord**](https://discord.gg/qFv2Vqf)
+
+***
+<h1 align="center">Made with ❤️ by Awesome Contributors</h1>
+
+<a href="https://github.com/Udayraj123/OMRChecker/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Udayraj123/OMRChecker" />
+</a>
+
 
  <!-- [***Hacker News***](https://news.ycombinator.com/item?id=20420602) **|** -->
  <!-- **|** [***Swyya***](https://www.swyya.com/projects/omrchecker) -->
