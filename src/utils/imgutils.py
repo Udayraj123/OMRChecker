@@ -748,9 +748,10 @@ class MainOperations:
                 # appendSaveImg(4,mean_vals)
                 ImageUtils.append_save_img(2, initial_align)
                 ImageUtils.append_save_img(2, final_align)
-                ImageUtils.append_save_img(5, img)
+                
                 if auto_align:
                     final_align = np.hstack((initial_align, final_align))
+            ImageUtils.append_save_img(5, img)
 
             # Get mean vals n other stats
             all_q_vals, all_q_strip_arrs, all_q_std_vals = [], [], []
