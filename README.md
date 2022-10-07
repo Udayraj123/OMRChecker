@@ -9,7 +9,7 @@ P.S. Good news! We're now featured on [up-for-grabs](https://up-for-grabs.net) a
 
 # OMR Checker
 
-Grade exams fast and accurately using a scanner 🖨 or your phone 🤳.
+Read OMRs fast and accurately using a scanner 🖨 or your phone 🤳.
 
 <!-- [![HitCount](http://hits.dwyl.io/udayraj123/OMRchecker.svg)](http://hits.dwyl.io/udayraj123/OMRchecker) -->
 
