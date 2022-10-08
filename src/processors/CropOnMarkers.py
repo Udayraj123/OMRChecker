@@ -1,7 +1,6 @@
 import os
 import cv2
 import numpy as np
-from .interfaces.ImagePreprocessor import ImagePreprocessor
 
 from src.utils.imgutils import (
     ImageUtils,
@@ -11,6 +10,8 @@ from src.utils.imgutils import (
 )
 from src.config import CONFIG_DEFAULTS as config
 from src.logger import logger
+
+from .interfaces.ImagePreprocessor import ImagePreprocessor
 
 
 class CropOnMarkers(ImagePreprocessor):
@@ -32,7 +33,7 @@ class CropOnMarkers(ImagePreprocessor):
         self.apply_erode_subtract = marker_ops.get("apply_erode_subtract", 1)
         if not os.path.exists(self.marker_path):
             logger.error(
-                "Error: Marker not found at path provided in template:",
+                "Marker not found at path provided in template:",
                 self.marker_path,
             )
             exit(31)
@@ -97,7 +98,7 @@ class CropOnMarkers(ImagePreprocessor):
 
         if all_max_t < self.min_matching_threshold:
             logger.warning(
-                "\tWarning: Template matching too low! Consider rechecking preProcessors applied before this."
+                "\tTemplate matching too low! Consider rechecking preProcessors applied before this."
             )
             if config.outputs.show_image_level >= 1:
                 show("res", res, 1, 0)
