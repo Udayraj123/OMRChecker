@@ -31,7 +31,7 @@ Read OMRs fast and accurately using a scanner 🖨 or your phone 🤳.
 
 ## 🎯 Features
 
-A full-fledged OMR checking software that can read and evaluate OMR sheets scanned at any angle and having any color. Support is also provided for a customisable marking scheme with section-wise marking, bonus questions, etc.
+A full-fledged OMR checking software that can read and evaluate OMR sheets scanned at any angle and having any color.
 
 | Specs <img width=200/> | ![Current_Speed](https://img.shields.io/badge/Speed-200+_OMRs/min-blue.svg?style=flat-square) ![Min Resolution](https://img.shields.io/badge/Min_Resolution-640x480-blue.svg?style=flat-square) <img width=200/> |
 | :--------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
