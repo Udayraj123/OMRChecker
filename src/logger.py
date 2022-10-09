@@ -15,37 +15,40 @@ class Logger:
         self.log.setLevel(level)
         self.log.__format__ = message_format
         self.log.__date_format__ = date_format
-        print(self.log.name)
         
     
     def stringify(func):
-        def inner(self, *msg, sep=' ', end='\n'):
+        def inner(self, method_type, *msg, sep=' '):
             nmsg = []
             for v in msg:
                 if not isinstance(v, str):
                     v = str(v)
                 nmsg.append(v)
-            func(self, *nmsg, sep=sep, end=end)
+            func(self, method_type, *nmsg, sep=sep)
         return inner
-                
-    @stringify
-    def debug(self, *msg, sep=' ', end='\n'):
-        self.log.debug(sep.join(msg), stacklevel=3)  # set stack level to 3 so that the caller of this function is logged, not this function itself. stack-frame - self.log.debug - stringify:28 - caller
-        
-    @stringify
-    def info(self, *msg, sep=' ', end='\n'):
-        self.log.info(sep.join(msg), stacklevel=3)
-        
-    @stringify
-    def warning(self, *msg, sep=' ', end='\n'):
-        self.log.warning(sep.join(msg), stacklevel=3)
-        
-    @stringify
-    def error(self, *msg, sep=' ', end='\n'):
-        self.log.error(sep.join(msg), stacklevel=3)
     
-    @stringify
+    # set stack level to 3 so that the caller of this function is logged, not this function itself.
+    # stack-frame - self.log.debug - logutil - stringify - log method - caller
+    @stringify 
+    def logutil(self, method_type, *msg, sep):
+        func = getattr(self.log, method_type, __default = None)
+        if not func:
+            return
+        func(sep.join(msg), stacklevel=4)
+    
+    def debug(self, *msg, sep=' ', end='\n'):
+        self.logutil('debug', *msg, sep=sep)
+        
+    def info(self, *msg, sep=' ', end='\n'):
+        self.logutil('info', *msg, sep=sep)
+        
+    def warning(self, *msg, sep=' ', end='\n'):
+        self.logutil('warning', *msg, sep=sep)
+        
+    def error(self, *msg, sep=' ', end='\n'):
+        self.logutil('error', *msg, sep=sep)
+    
     def critical(self, *msg, sep=' ', end='\n'):
-        self.log.critical(sep.join(msg), stacklevel=3)
+        self.logutil('critical', *msg, sep=sep)
         
 logger = Logger(__name__)
