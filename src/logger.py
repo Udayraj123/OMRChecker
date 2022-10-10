@@ -1,5 +1,5 @@
 import logging
-from typing import Union
+from typing import Iterable, Union, List, Any, Callable, Tuple
 from rich.logging import RichHandler
 from .config import CONFIG_DEFAULTS as config
 
@@ -16,39 +16,42 @@ class Logger:
         self.log.__format__ = message_format
         self.log.__date_format__ = date_format
         
-    
     def stringify(func):
-        def inner(self, method_type, *msg, sep=' '):
+        def inner(self, method_type: str, *msg: object, sep=' '):
             nmsg = []
             for v in msg:
                 if not isinstance(v, str):
                     v = str(v)
                 nmsg.append(v)
-            func(self, method_type, *nmsg, sep=sep)
+            return func(self, method_type, *nmsg, sep=sep)
         return inner
     
     # set stack level to 3 so that the caller of this function is logged, not this function itself.
     # stack-frame - self.log.debug - logutil - stringify - log method - caller
     @stringify 
-    def logutil(self, method_type, *msg, sep):
-        func = getattr(self.log, method_type, __default = None)
+    def logutil(self, method_type: str, *msg: object, sep=' ') -> None:
+        func = getattr(self.log, method_type, None)
         if not func:
-            return
-        func(sep.join(msg), stacklevel=4)
+            raise AttributeError(f"Logger has no method {method_type}")
+        return func(sep.join(msg), stacklevel=4)
     
-    def debug(self, *msg, sep=' ', end='\n'):
-        self.logutil('debug', *msg, sep=sep)
+    def debug(self, *msg: object, sep=' ', end='\n') -> None:
+        return self.logutil('debug', *msg, sep=sep)
         
-    def info(self, *msg, sep=' ', end='\n'):
-        self.logutil('info', *msg, sep=sep)
+    def info(self, *msg: object, sep=' ', end='\n') -> None:
+        return self.logutil('info', *msg, sep=sep)
         
-    def warning(self, *msg, sep=' ', end='\n'):
-        self.logutil('warning', *msg, sep=sep)
+    def warning(self, *msg: object, sep=' ', end='\n') -> None:
+        return self.logutil('warning', *msg, sep=sep)
         
-    def error(self, *msg, sep=' ', end='\n'):
-        self.logutil('error', *msg, sep=sep)
+    def error(self, *msg: object, sep=' ', end='\n') -> None:
+        return self.logutil('error', *msg, sep=sep)
     
-    def critical(self, *msg, sep=' ', end='\n'):
-        self.logutil('critical', *msg, sep=sep)
-        
+    def critical(self, *msg: object, sep=' ', end='\n') -> None:
+        return self.logutil('critical', *msg, sep=sep)
+
+
+
 logger = Logger(__name__)
+
+
