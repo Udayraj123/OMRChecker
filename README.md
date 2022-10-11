@@ -3,7 +3,7 @@
 Hello there! 👋
 
 We're calling for contributions in Hacktoberfest 2022, Do check [here](https://github.com/Udayraj123/OMRChecker/issues) for issues to work on.
-For the previous version of OMRChecker, visit [legacy code](https://github.com/Udayraj123/OMRChecker/tree/master-legacy).
+For the previous version of OMRChecker, visit the [legacy code](https://github.com/Udayraj123/OMRChecker/tree/master-legacy).
 
 P.S. Good news! We're now featured on [up-for-grabs](https://up-for-grabs.net) and [awesome-hacktoberfest-2022](https://github.com/OtacilioN/awesome-hacktoberfest-2022)! Have applied on [good-first-issue](https://github.com/deepsourcelabs/good-first-issue/pull/470) as well.
 
@@ -44,9 +44,9 @@ A full-fledged OMR checking software that can read and evaluate OMR sheets scann
 | 🏫 **Large Scale**     | Tested on a large scale at [Technothlon](https://en.wikipedia.org/wiki/Technothlon).                                                                                                                             |
 | 👩🏿‍💻 **Dev Friendly**    | [Pylinted](http://pylint.pycqa.org/) and [Black formatted](https://github.com/psf/black) code. Also has a [developer community](https://discord.gg/qFv2Vqf) on discord.                                          |
 
-Note: For solving interesting challenges, developers can checkout [**TODOs**](https://github.com/Udayraj123/OMRChecker/wiki/TODOs).
+Note: For solving interesting challenges, developers can check out [**TODOs**](https://github.com/Udayraj123/OMRChecker/wiki/TODOs).
 
-See complete guide and details at [Project Wiki](https://github.com/Udayraj123/OMRChecker/wiki/).
+See the complete guide and details at [Project Wiki](https://github.com/Udayraj123/OMRChecker/wiki/).
 
 <!-- 💁🏿‍♂️ **User Friendly** - WIP, Help by contributing! -->
 
@@ -77,7 +77,7 @@ Images can be taken from various angles as shown below-
 
 ### Processing steps
 
-See step by step processing of any OMR sheet:
+See step-by-step processing of any OMR sheet:
 
 <p align="center">
 	<a href="https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals">
@@ -192,7 +192,7 @@ _**Note:** If you face a distutils error in pip, use `--ignore-installed` flag i
 
 Alternatively you can also use `python3 main.py -i ./samples/sample1`.
 
-Each example in samples folder demonstrates different ways in which OMRChecker can be used.
+Each example in the samples folder demonstrates different ways in which OMRChecker can be used.
 
 ### Common Issues
 
@@ -215,7 +215,7 @@ Command: <code>python3 -m pip install --user --upgrade pip</code>
 
 ## OMRChecker for custom OMR Sheets
 
-1. First [create your own template.json](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide).
+1. First, [create your own template.json](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide).
 2. Configure the tuning parameters.
 3. Run OMRChecker with appropriate arguments (See full usage).
 <!-- 3. Add answer key( TODO: add answer key/marking scheme guide)  -->
@@ -296,8 +296,8 @@ It is published under the [GPLv3 license](https://github.com/Udayraj123/OMRCheck
 
 ## Credits
 
-_A Huge thanks to :_
-_**Adrian Rosebrock** for his exemplary blog :_ https://pyimagesearch.com
+_A Huge thanks to:_
+_**Adrian Rosebrock** for his exemplary blog:_ https://pyimagesearch.com
 
 _**Harrison Kinsley** aka sentdex for his [video tutorials](https://www.youtube.com/watch?v=Z78zbnLlPUA&list=PLQVvvaa0QuDdttJXlLtAJxJetJcqmqlQq) and many other resources._
 
