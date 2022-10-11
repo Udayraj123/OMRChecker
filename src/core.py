@@ -79,9 +79,9 @@ def process_dir(root_dir, curr_dir, args, template=None):
     if omr_files:
         if not template:
             print(
-                f'Error: Found images, but no template in the directory tree \
-                of "{curr_dir}". \nPlace {constants.TEMPLATE_FILENAME} in the \
-                directory or specify a template using -t.'
+                "Error: Found images, but no template in the directory tree " +
+                f"of \"{curr_dir}\". \nPlace {constants.TEMPLATE_FILENAME} in the " +
+                "directory or specify a template using -t."
             )
             return
 
@@ -90,7 +90,7 @@ def process_dir(root_dir, curr_dir, args, template=None):
         if "OverrideFlags" in template.options:
             args_local.update(template.options["OverrideFlags"])
         print("\n------------------------------------------------------------------")
-        print(f'Processing directory "{curr_dir}" with settings- ')
+        print(f"Processing directory \"{curr_dir}\" with settings- ")
         print("\tTotal images       : %d" % (len(omr_files)))
         print(
             "\tCropping Enabled   : " +
@@ -100,7 +100,7 @@ def process_dir(root_dir, curr_dir, args, template=None):
         print("\tUsing Template     : " + str(template))
         # Print options
         for pp in template.pre_processors:
-            print(f'\tUsing preprocessor: {pp.__class__.__name__:13}')
+            print(f"\tUsing preprocessor: {pp.__class__.__name__:13}")
 
         print("")
 
@@ -111,8 +111,8 @@ def process_dir(root_dir, curr_dir, args, template=None):
     elif not subdirs:
         # Each subdirectory should have images or should be non-leaf
         print(
-            f"Note: No valid images or sub-folders found in {curr_dir}.\
-            Empty directories not allowed."
+            f"Note: No valid images or sub-folders found in {curr_dir}." +
+            "Empty directories not allowed."
         )
 
     # recursively process subfolders
