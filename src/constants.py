@@ -14,8 +14,7 @@ from dotmap import DotMap
 CURRENT_MODULE_DIR = os.path.dirname(__file__)
 CONFIG_DEFAULTS_PATH = os.path.join(CURRENT_MODULE_DIR, "defaults/config.json")
 SCHEMA_DEFAULTS_PATH = os.path.join(CURRENT_MODULE_DIR, "defaults/schema.json")
-TEMPLATE_DEFAULTS_PATH = os.path.join(
-    CURRENT_MODULE_DIR, "defaults/template.json")
+TEMPLATE_DEFAULTS_PATH = os.path.join(CURRENT_MODULE_DIR, "defaults/template.json")
 
 # Filenames
 TEMPLATE_FILENAME = "template.json"
@@ -50,6 +49,9 @@ CLR_WHITE = (250, 250, 250)
 CLR_GRAY = (130, 130, 130)
 # CLR_DARK_GRAY = (190,190,190)
 CLR_DARK_GRAY = (100, 100, 100)
+
+GLOBAL_PAGE_THRESHOLD_WHITE = 200
+GLOBAL_PAGE_THRESHOLD_BLACK = 100
 
 # Filepaths - object is better
 

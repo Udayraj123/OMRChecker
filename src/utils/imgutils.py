@@ -1,6 +1,7 @@
 # TODO: refactor this file.
 # Use all imports relative to root directory
 # (https://chrisyeh96.github.io/2017/08/08/definitive-guide-python-imports.html)
+from operator import is_
 import sys
 import os
 from dataclasses import dataclass
@@ -337,13 +338,24 @@ def get_global_threshold(
         gives the smaller one
 
     """
+    PAGE_TYPE_FOR_THRESHOLD, MIN_JUMP, JUMP_DELTA = map(
+                        config.threshold_params.get,
+                        [
+                            "PAGE_TYPE_FOR_THRESHOLD",
+                            "MIN_JUMP",
+                            "JUMP_DELTA",
+                        ],
+                    )
+
+    global_default_threshold = constants.GLOBAL_PAGE_THRESHOLD_WHITE if PAGE_TYPE_FOR_THRESHOLD == "white" else constants.GLOBAL_PAGE_THRESHOLD_BLACK
+
     # Sort the Q vals
     # Change var name of q_vals
     q_vals = sorted(q_vals_orig)
     # Find the FIRST LARGE GAP and set it as threshold:
     ls = (looseness + 1) // 2
     l = len(q_vals) - ls
-    max1, thr1 = config.threshold_params.MIN_JUMP, 255
+    max1, thr1 = MIN_JUMP, global_default_threshold
     for i in range(ls, l):
         jump = q_vals[i + ls] - q_vals[i - ls]
         if jump > max1:
@@ -353,12 +365,12 @@ def get_global_threshold(
     # NOTE: thr2 is deprecated, thus is JUMP_DELTA
     # Make use of the fact that the JUMP_DELTA(Vertical gap ofc) between
     # values at detected jumps would be atleast 20
-    max2, thr2 = config.threshold_params.MIN_JUMP, 255
+    max2, thr2 = MIN_JUMP, global_default_threshold
     # Requires atleast 1 gray box to be present (Roll field will ensure this)
     for i in range(ls, l):
         jump = q_vals[i + ls] - q_vals[i - ls]
         new_thr = q_vals[i - ls] + jump / 2
-        if jump > max2 and abs(thr1 - new_thr) > config.threshold_params.JUMP_DELTA:
+        if jump > max2 and abs(thr1 - new_thr) > JUMP_DELTA:
             max2 = jump
             thr2 = new_thr
     # global_thr = min(thr1,thr2)
@@ -782,7 +794,7 @@ class MainOperations:
 
             global_std_thresh, _, _ = get_global_threshold(
                 all_q_std_vals
-            )  # , "Q-wise Std-dev Plot", plot_show=True, sort_in_plot=True)
+            ) # , "Q-wise Std-dev Plot", plot_show=True, sort_in_plot=True)
             # plt.show()
             # hist = getPlotImg()
             # MainOperations.show("StdHist", hist, 0, 1)
@@ -812,6 +824,7 @@ class MainOperations:
             #     appendSaveImg(2,hist)
 
             per_omr_threshold_avg, total_q_strip_no, total_q_box_no = 0, 0, 0
+            non_empty_qnos = set()
             for q_block in template.q_blocks:
                 block_q_strip_no = 1
                 shift = q_block.shift
@@ -911,10 +924,11 @@ class MainOperations:
                                 (omr_response[q] +
                                  val) if multi_marked_l else val
                             )
+                            non_empty_qnos.add(q)
                             multi_roll = multi_marked_l and "Roll" in str(q)
                             # blackVals.append(boxval0)
                         # else:
-                        # whiteVals.append(boxval0)
+                            # whiteVals.append(boxval0)
 
                         total_q_box_no += 1
                         # /for qbox_pts
@@ -931,6 +945,21 @@ class MainOperations:
                     block_q_strip_no += 1
                     total_q_strip_no += 1
                 # /for q_block
+
+            
+            # Populate empty responses
+            
+            # loop over qNos in concatentations
+            for concatQ in template.concatenations:
+                for q in concatQ:
+                    if q not in non_empty_qnos:
+                        omr_response[q] = q_block.empty_val
+            
+            # loop over qNos in singles
+            for q in template.singles:
+                if q not in non_empty_qnos:
+                    omr_response[q] = q_block.empty_val
+                    
 
             # TODO: move this validation into template.py -
             if total_q_strip_no == 0:

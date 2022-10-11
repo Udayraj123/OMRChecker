@@ -39,6 +39,10 @@
       "items": {
         "type": "string"
       }
+    },
+    "emptyVal": {
+      "description": "The value to be used in case of empty bubble detected at global level.",
+      "type": "string"
     }
   },
   "required": [
