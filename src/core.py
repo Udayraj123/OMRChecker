@@ -197,10 +197,9 @@ def setup_output(paths, template):
     ns.OUTPUT_SET = []
     ns.files_obj = {}
     ns.filesMap = {
-        "Results": paths.results_dir + "Results_" + TIME_NOW_HRS + ".csv",
-        "MultiMarked": paths.manual_dir + "MultiMarkedFiles_.csv",
-        "Errors": paths.manual_dir + "ErrorFiles_.csv",
-        "BadRollNos": paths.manual_dir + "BadRollNoFiles_.csv",
+        "Results": f"{paths.results_dir}Results_{TIME_NOW_HRS}.csv",
+        "MultiMarked": f"{paths.manual_dir}MultiMarkedFiles.csv",
+        "Errors": f"{paths.manual_dir}ErrorFiles.csv",
     }
 
     for file_key, file_name in ns.filesMap.items():
