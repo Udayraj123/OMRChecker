@@ -33,7 +33,7 @@ class ProcessorManager:
         self.processors = {}
         self.seen_paths = []
         print()
-        print(f'Looking for processors in "{self.processors_dir}"')
+        print(f"Looking for processors in \"{self.processors_dir}\"")
         self.walk_package(self.processors_dir)
 
     @staticmethod
