@@ -16,3 +16,4 @@
 - [Rohan-G](https://github.com/Rohan-G)
 - [UjjwalMahar](https://github.com/UjjwalMahar)
 - [Kurtsley](https://github.com/Kurtsley)
+- [theranjitraut](https://github.com/theranjitraut)
