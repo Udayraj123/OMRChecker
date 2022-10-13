@@ -217,7 +217,7 @@ class CropOnMarkers(ImagePreprocessor):
             MainOperations.show(
                 "Warped: " + args["current_file"].name,
                 ImageUtils.resize_util(
-                    h_stack, int(config.display_width * 1.6)),
+                    h_stack, int(config.dimensions.display_width * 1.6)),
                 0,
                 0,
                 [0, 0],

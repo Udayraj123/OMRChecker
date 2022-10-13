@@ -80,9 +80,9 @@ def process_dir(root_dir, curr_dir, args, template=None):
     if omr_files:
         if not template:
             logger.error(
-                f'Error: Found images, but no template in the directory tree \
-                of "{curr_dir}". \nPlace {constants.TEMPLATE_FILENAME} in the \
-                directory or specify a template using -t.'
+                "Found images, but no template in the directory tree " +
+                f"of \"{curr_dir}\". \nPlace {constants.TEMPLATE_FILENAME} in the " +
+                "directory or specify a template using -t."
             )
             return
 
@@ -91,7 +91,7 @@ def process_dir(root_dir, curr_dir, args, template=None):
         if "OverrideFlags" in template.options:
             args_local.update(template.options["OverrideFlags"])
         logger.info("\n------------------------------------------------------------------")
-        logger.info(f'Processing directory "{curr_dir}" with settings- ')
+        logger.info(f"Processing directory \"{curr_dir}\" with settings- ")
         logger.info("\tTotal images       : %d" % (len(omr_files)))
         logger.info(
             "\tCropping Enabled   : " +
@@ -101,7 +101,7 @@ def process_dir(root_dir, curr_dir, args, template=None):
         logger.info("\tUsing Template     : " + str(template))
         # Print options
         for pp in template.pre_processors:
-            logger.info(f'\tUsing preprocessor: {pp.__class__.__name__:13}')
+            logger.info(f"\tUsing preprocessor: {pp.__class__.__name__:13}")
 
         logger.info("")
 
@@ -112,8 +112,8 @@ def process_dir(root_dir, curr_dir, args, template=None):
     elif not subdirs:
         # Each subdirectory should have images or should be non-leaf
         logger.warning(
-            f"Note: No valid images or sub-folders found in {curr_dir}.\
-            Empty directories not allowed."
+            f"Note: No valid images or sub-folders found in {curr_dir}." +
+            "Empty directories not allowed."
         )
 
     # recursively process subfolders

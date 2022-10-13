@@ -12,7 +12,8 @@
     "MIN_GAP": 30,
     "MIN_JUMP": 25,
     "CONFIDENT_SURPLUS": 5,
-    "JUMP_DELTA": 30
+    "JUMP_DELTA": 30,
+    "PAGE_TYPE_FOR_THRESHOLD": "white"
   },
   "alignment_params": {
     "match_col": 5,

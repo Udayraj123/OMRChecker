@@ -35,7 +35,7 @@ class ProcessorManager:
         self.processors = {}
         self.seen_paths = []
         
-        logger.info(f'Looking for processors in "{self.processors_dir}"')
+        logger.info(f"Looking for processors in \"{self.processors_dir}\"")
         self.walk_package(self.processors_dir)
 
     @staticmethod
