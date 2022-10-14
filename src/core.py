@@ -26,7 +26,7 @@ from src.utils.imgutils import (
     draw_template_layout,
     setup_dirs,
 )
-import src.constants as constants
+from src import constants
 from src.logger import logger
 
 # TODO: use open_config_with_defaults after making a Config class.
