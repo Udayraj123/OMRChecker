@@ -197,6 +197,7 @@ def setup_output(paths, template):
     ns.OUTPUT_SET = []
     ns.files_obj = {}
     ns.filesMap = {
+        # todo: use os.path.join(paths.results_dir, f"Results_{TIME_NOW_HRS}.csv") etc
         "Results": f"{paths.results_dir}Results_{TIME_NOW_HRS}.csv",
         "MultiMarked": f"{paths.manual_dir}MultiMarkedFiles.csv",
         "Errors": f"{paths.manual_dir}ErrorFiles.csv",
