@@ -513,22 +513,22 @@ def setup_dirs(paths):
             os.mkdir(_dir + "/stack")
             os.mkdir(_dir + "/_MULTI_")
             os.mkdir(_dir + "/_MULTI_" + "/stack")
-        else:
-            print("Present : " + _dir)
+        # else:
+        #     print("Present : " + _dir)
 
     for _dir in [paths.manual_dir, paths.results_dir]:
         if not os.path.exists(_dir):
             print("Created : " + _dir)
             os.makedirs(_dir)
-        else:
-            print("Present : " + _dir)
+        # else:
+        #     print("Present : " + _dir)
 
     for _dir in [paths.multi_marked_dir, paths.errors_dir]:
         if not os.path.exists(_dir):
             print("Created : " + _dir)
             os.makedirs(_dir)
-        else:
-            print("Present : " + _dir)
+        # else:
+        #     print("Present : " + _dir)
 
 
 class MainOperations:
