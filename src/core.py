@@ -78,8 +78,8 @@ def process_dir(root_dir, curr_dir, args, template=None):
 
     if omr_files:
         if not template:
-            print(
-                f'Error: Found images, but no template in the directory tree \
+            logger.error(
+                f'Found images, but no template in the directory tree \
                 of "{curr_dir}". \nPlace {constants.TEMPLATE_FILENAME} in the \
                 directory or specify a template using -t.'
             )
@@ -89,17 +89,19 @@ def process_dir(root_dir, curr_dir, args, template=None):
         args_local = args.copy()
         if "OverrideFlags" in template.options:
             args_local.update(template.options["OverrideFlags"])
-        print("\n------------------------------------------------------------------")
-        print(f'Processing directory "{curr_dir}" with settings- ')
-        print("\tTotal images       : %d" % (len(omr_files)))
-        print(
+        logger.info(
+            "\n------------------------------------------------------------------"
+        )
+        logger.info(f'Processing directory "{curr_dir}" with settings- ')
+        logger.info("\tTotal images       : %d" % (len(omr_files)))
+        logger.info(
             "\tCropping Enabled   : " + str("CropOnMarkers" in template.pre_processors)
         )
-        print("\tAuto Alignment     : " + str(args_local["autoAlign"]))
-        print("\tUsing Template     : " + str(template))
+        logger.info("\tAuto Alignment     : " + str(args_local["autoAlign"]))
+        logger.info("\tUsing Template     : " + str(template))
         # Print options
         for pp in template.pre_processors:
-            print(f"\tUsing preprocessor: {pp.__class__.__name__:13}")
+            logger.info(f"\tUsing preprocessor: {pp.__class__.__name__:13}")
 
         logger.info("")
 
@@ -109,7 +111,7 @@ def process_dir(root_dir, curr_dir, args, template=None):
 
     elif not subdirs:
         # Each subdirectory should have images or should be non-leaf
-        print(
+        logger.info(
             f"Note: No valid images or sub-folders found in {curr_dir}.\
             Empty directories not allowed."
         )
