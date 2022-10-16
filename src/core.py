@@ -62,8 +62,7 @@ def process_dir(root_dir, curr_dir, args, template=None):
     # Look for subdirectories for processing
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
 
-    paths = constants.Paths(
-        Path(args["output_dir"], curr_dir.relative_to(root_dir)))
+    paths = constants.Paths(Path(args["output_dir"], curr_dir.relative_to(root_dir)))
 
     # look for images in current dir to process
     exts = ("*.png", "*.jpg")
@@ -79,7 +78,7 @@ def process_dir(root_dir, curr_dir, args, template=None):
 
     if omr_files:
         if not template:
-            logger.error(
+            print(
                 f'Error: Found images, but no template in the directory tree \
                 of "{curr_dir}". \nPlace {constants.TEMPLATE_FILENAME} in the \
                 directory or specify a template using -t.'
@@ -90,18 +89,17 @@ def process_dir(root_dir, curr_dir, args, template=None):
         args_local = args.copy()
         if "OverrideFlags" in template.options:
             args_local.update(template.options["OverrideFlags"])
-        logger.info("\n------------------------------------------------------------------")
-        logger.info(f'Processing directory "{curr_dir}" with settings- ')
-        logger.info("\tTotal images       : %d" % (len(omr_files)))
-        logger.info(
-            "\tCropping Enabled   : " +
-            str("CropOnMarkers" in template.pre_processors)
+        print("\n------------------------------------------------------------------")
+        print(f'Processing directory "{curr_dir}" with settings- ')
+        print("\tTotal images       : %d" % (len(omr_files)))
+        print(
+            "\tCropping Enabled   : " + str("CropOnMarkers" in template.pre_processors)
         )
-        logger.info("\tAuto Alignment     : " + str(args_local["autoAlign"]))
-        logger.info("\tUsing Template     : " + str(template))
+        print("\tAuto Alignment     : " + str(args_local["autoAlign"]))
+        print("\tUsing Template     : " + str(template))
         # Print options
         for pp in template.pre_processors:
-            logger.info(f'\tUsing preprocessor: {pp.__class__.__name__:13}')
+            print(f"\tUsing preprocessor: {pp.__class__.__name__:13}")
 
         logger.info("")
 
@@ -111,7 +109,7 @@ def process_dir(root_dir, curr_dir, args, template=None):
 
     elif not subdirs:
         # Each subdirectory should have images or should be non-leaf
-        logger.warning(
+        print(
             f"Note: No valid images or sub-folders found in {curr_dir}.\
             Empty directories not allowed."
         )
@@ -151,8 +149,7 @@ def process_omr(template, omr_resp):
 
     # Multi-column/multi-row questions which need to be concatenated
     for q_no, resp_keys in template.concatenations.items():
-        csv_resp[q_no] = "".join(
-            [omr_resp.get(k, unmarked_symbol) for k in resp_keys])
+        csv_resp[q_no] = "".join([omr_resp.get(k, unmarked_symbol) for k in resp_keys])
 
     # Single-column/single-row questions
     for q_no in template.singles:
@@ -193,8 +190,7 @@ def setup_output(paths, template):
         key=lambda x: int(x[1:]) if ord(x[1]) in range(48, 58) else 0,
     )
     ns.empty_resp = [""] * len(ns.resp_cols)
-    ns.sheetCols = ["file_id", "input_path",
-                    "output_path", "score"] + ns.resp_cols
+    ns.sheetCols = ["file_id", "input_path", "output_path", "score"] + ns.resp_cols
     ns.OUTPUT_SET = []
     ns.files_obj = {}
     ns.filesMap = {
@@ -290,8 +286,7 @@ def process_files(omr_files, template, args, out):
             if check_and_move(
                 constants.ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path
             ):
-                err_line = [file_name, file_path,
-                            new_file_path, "NA"] + out.empty_resp
+                err_line = [file_name, file_path, new_file_path, "NA"] + out.empty_resp
                 pd.DataFrame(err_line, dtype=str).T.to_csv(
                     out.files_obj["Errors"],
                     mode="a",
@@ -348,8 +343,7 @@ def process_files(omr_files, template, args, out):
             STATS.files_not_moved += 1
             new_file_path = save_dir + file_id
             # Enter into Results sheet-
-            results_line = [file_name, file_path,
-                            new_file_path, score] + resp_array
+            results_line = [file_name, file_path, new_file_path, score] + resp_array
             # Write/Append to results_line file(opened in append mode)
             pd.DataFrame(results_line, dtype=str).T.to_csv(
                 out.files_obj["Results"],
@@ -367,14 +361,12 @@ def process_files(omr_files, template, args, out):
             # print(files_counter,file_id,resp['Roll'],'score : ',score)
         else:
             # multi_marked file
-            logger.info("[%d] multi_marked, moving File: %s" %
-                  (files_counter, file_id))
+            logger.info("[%d] multi_marked, moving File: %s" % (files_counter, file_id))
             new_file_path = out.paths.multi_marked_dir + file_name
             if check_and_move(
                 constants.ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path
             ):
-                mm_line = [file_name, file_path,
-                           new_file_path, "NA"] + resp_array
+                mm_line = [file_name, file_path, new_file_path, "NA"] + resp_array
                 pd.DataFrame(mm_line, dtype=str).T.to_csv(
                     out.files_obj["MultiMarked"],
                     mode="a",
@@ -496,7 +488,9 @@ def evaluate_correctness(out):
             logger.error(
                 "\nERROR: Insufficient Testing Data: Have you appended MultiMarked data yet?"
             )
-            logger.error("Missing File-ids: ", list(x_df.index.difference(intersection)))
+            logger.error(
+                "Missing File-ids: ", list(x_df.index.difference(intersection))
+            )
 
 
 TIME_NOW_HRS = strftime("%I%p", localtime())

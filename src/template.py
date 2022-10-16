@@ -8,9 +8,10 @@
 """
 
 import numpy as np
-from .constants import TEMPLATE_DEFAULTS_PATH, QTYPE_DATA
-from .utils.file import load_json
+from .constants import TEMPLATE_DEFAULTS_PATH, QTYPE_DATA, SCHEMA_DEFAULTS_PATH
+from .utils.file import load_json, validate_json
 from .utils.object import OVERRIDE_MERGER
+from copy import deepcopy
 
 from src.logger import logger
 
@@ -19,8 +20,14 @@ TEMPLATE_DEFAULTS = load_json(TEMPLATE_DEFAULTS_PATH)
 
 def open_template_with_defaults(template_path):
     user_template = load_json(template_path)
-    return OVERRIDE_MERGER.merge(TEMPLATE_DEFAULTS, user_template)
-
+    user_template = OVERRIDE_MERGER.merge(deepcopy(TEMPLATE_DEFAULTS), user_template)
+    is_valid, msg = validate_json(user_template)
+    print(msg)
+    
+    if is_valid:
+      return user_template
+    else:
+      exit()
 
 ### Coordinates Part ###
 class Pt:
@@ -41,12 +48,13 @@ class Pt:
 
 
 class QBlock:
-    def __init__(self, dimensions, key, orig, traverse_pts):
+    def __init__(self, dimensions, key, orig, traverse_pts, empty_val):
         # dimensions = (width, height)
         self.dimensions = tuple(round(x) for x in dimensions)
         self.key = key
         self.orig = orig
         self.traverse_pts = traverse_pts
+        self.empty_val = empty_val
         # will be set when using
         self.shift = 0
 
@@ -59,6 +67,7 @@ class Template:
         # TODO: ajv validation - throw exception on key not exist
         # TODO: extend DotMap here and only access keys that need extra parsing
         self.dimensions = json_obj["dimensions"]
+        self.global_empty_val = json_obj["emptyVal"]
         self.bubble_dimensions = json_obj["bubbleDimensions"]
         self.concatenations = json_obj["concatenations"]
         self.singles = json_obj["singles"]
@@ -90,7 +99,7 @@ class Template:
             rect.update(**{"vals": rect["vals"], "orient": rect["orient"]})
 
         # keyword arg unpacking followed by named args
-        self.q_blocks += gen_grid(self.bubble_dimensions, key, rect)
+        self.q_blocks += gen_grid(self.bubble_dimensions, self.global_empty_val, key, rect)
         # self.q_blocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
 
     def __str__(self):
@@ -108,6 +117,7 @@ def gen_q_block(
     q_type,
     orient,
     col_orient,
+    empty_val
 ):
     """
     Input:
@@ -167,10 +177,10 @@ def gen_q_block(
             traverse_pts.append(([o.copy(), pt.copy()], pts))
             o[_h] += gaps[_h]
     # Pass first three args as is. only append 'traverse_pts'
-    return QBlock(q_block_dims, key, orig, traverse_pts)
+    return QBlock(q_block_dims, key, orig, traverse_pts, empty_val)
 
 
-def gen_grid(bubble_dimensions, key, rectParams):
+def gen_grid(bubble_dimensions, global_empty_val, key, rectParams):
     """
         Input(Directly passable from JSON parameters):
         bubble_dimensions - dimesions of single QBox
@@ -224,9 +234,10 @@ def gen_grid(bubble_dimensions, key, rectParams):
 
     """
     rect = OVERRIDE_MERGER.merge(
-        {"orient": "V", "col_orient": "V"}, rectParams)
+        {"orient": "V", "col_orient": "V", "emptyVal": global_empty_val}, rectParams)
+    
     # case mapping
-    (q_type, orig, big_gaps, gaps, q_nos, vals, orient, col_orient) = map(
+    (q_type, orig, big_gaps, gaps, q_nos, vals, orient, col_orient, empty_val) = map(
         rect.get,
         [
             "qType",
@@ -236,7 +247,8 @@ def gen_grid(bubble_dimensions, key, rectParams):
             "qNos",
             "vals",
             "orient",
-            "col_orient",
+            "col_orient", # todo: consume this 
+            "emptyVal"
         ],
     )
 
@@ -250,6 +262,7 @@ def gen_grid(bubble_dimensions, key, rectParams):
         exit(32)
 
     orig = np.array(orig)
+    
     num_qs_max = max([max([len(qb) for qb in row]) for row in grid_data])
 
     num_dims = [num_qs_max, len(vals)]
@@ -300,6 +313,7 @@ def gen_grid(bubble_dimensions, key, rectParams):
                     q_type,
                     orient,
                     col_orient,
+                    empty_val
                 )
             )
             # Goes vertically down first

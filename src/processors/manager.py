@@ -34,7 +34,7 @@ class ProcessorManager:
         """
         self.processors = {}
         self.seen_paths = []
-        
+
         logger.info(f'Looking for processors in "{self.processors_dir}"')
         self.walk_package(self.processors_dir)
 
@@ -54,8 +54,7 @@ class ProcessorManager:
         ):
             if not ispkg and processor_name != __name__:
                 # print(f"looking up '{processor_name}'")
-                processor_module = __import__(
-                    processor_name, fromlist=["blah"])
+                processor_module = __import__(processor_name, fromlist=["blah"])
                 # https://stackoverflow.com/a/46206754/6242649
                 clsmembers = inspect.getmembers(
                     processor_module,

@@ -1,0 +1,20 @@
+{
+  "dimensions": [ 299, 328 ],
+  "bubbleDimensions": [ 20, 20 ],
+  "concatenations": {},
+  "singles": [ "q1", "q2", "q3", "q4", "q5" ],
+  "emptyVal": "no",
+  "qBlocks": {
+    "YesNoBlock1": {
+      "orient": "H",
+      "vals": ["yes"],
+      "orig": [ 15, 55 ],
+      "emptyVal": "no",
+      "qNos": [ [ [ "q1", "q2", "q3", "q4", "q5"] ] ],
+      "gaps": [ 48, 48 ],
+      "bigGaps": [ 48, 48 ]
+    }
+  },
+  "preProcessors": [
+  ]
+}
