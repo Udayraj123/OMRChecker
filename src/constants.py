@@ -63,7 +63,6 @@ class Paths:
         self.results_dir = f"{self.output_dir}/Results/"
         self.manual_dir = f"{self.output_dir}/Manual/"
         self.errors_dir = f"{self.manual_dir}ErrorFiles/"
-        self.bad_rolls_dir = f"{self.manual_dir}BadRollNosFiles/"
         self.multi_marked_dir = f"{self.manual_dir}MultiMarkedFiles/"
 
 
