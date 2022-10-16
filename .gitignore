@@ -3,6 +3,8 @@
 **/ignore
 **/.DS_Store
 **/.vscode
+venv/
+.idea/
 OMRChecker.wiki/
 # Everything in inputs/ and outputs/
 inputs/*

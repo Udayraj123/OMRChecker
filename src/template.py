@@ -13,6 +13,8 @@ from .utils.file import load_json, validate_json
 from .utils.object import OVERRIDE_MERGER
 from copy import deepcopy
 
+from src.logger import logger
+
 TEMPLATE_DEFAULTS = load_json(TEMPLATE_DEFAULTS_PATH)
 
 
@@ -20,12 +22,14 @@ def open_template_with_defaults(template_path):
     user_template = load_json(template_path)
     user_template = OVERRIDE_MERGER.merge(deepcopy(TEMPLATE_DEFAULTS), user_template)
     is_valid, msg = validate_json(user_template)
-    print(msg)
-    
+
     if is_valid:
-      return user_template
+        logger.info(msg)
+        return user_template
     else:
-      exit()
+        logger.critical(msg, "exiting program")
+        exit()
+
 
 ### Coordinates Part ###
 class Pt:
@@ -76,7 +80,7 @@ class Template:
 
         # load image pre_processors
         self.pre_processors = [
-            extensions[p['name']](p['options'], template_path.parent)
+            extensions[p["name"]](p["options"], template_path.parent)
             for p in json_obj.get("preProcessors", [])
         ]
 
@@ -97,7 +101,9 @@ class Template:
             rect.update(**{"vals": rect["vals"], "orient": rect["orient"]})
 
         # keyword arg unpacking followed by named args
-        self.q_blocks += gen_grid(self.bubble_dimensions, self.global_empty_val, key, rect)
+        self.q_blocks += gen_grid(
+            self.bubble_dimensions, self.global_empty_val, key, rect
+        )
         # self.q_blocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
 
     def __str__(self):
@@ -115,7 +121,7 @@ def gen_q_block(
     q_type,
     orient,
     col_orient,
-    empty_val
+    empty_val,
 ):
     """
     Input:
@@ -232,8 +238,9 @@ def gen_grid(bubble_dimensions, global_empty_val, key, rectParams):
 
     """
     rect = OVERRIDE_MERGER.merge(
-        {"orient": "V", "col_orient": "V", "emptyVal": global_empty_val}, rectParams)
-    
+        {"orient": "V", "col_orient": "V", "emptyVal": global_empty_val}, rectParams
+    )
+
     # case mapping
     (q_type, orig, big_gaps, gaps, q_nos, vals, orient, col_orient, empty_val) = map(
         rect.get,
@@ -245,8 +252,8 @@ def gen_grid(bubble_dimensions, global_empty_val, key, rectParams):
             "qNos",
             "vals",
             "orient",
-            "col_orient", # todo: consume this 
-            "emptyVal"
+            "col_orient",  # todo: consume this
+            "emptyVal",
         ],
     )
 
@@ -255,12 +262,13 @@ def gen_grid(bubble_dimensions, global_empty_val, key, rectParams):
     if (
         0 and len(grid_data.shape) != 3 or grid_data.size == 0
     ):  # product of shape is zero
-        print("Error(gen_grid): Invalid q_nos array given:",
-              grid_data.shape, grid_data)
+        logger.error(
+            "Error(gen_grid): Invalid q_nos array given:", grid_data.shape, grid_data
+        )
         exit(32)
 
     orig = np.array(orig)
-    
+
     num_qs_max = max([max([len(qb) for qb in row]) for row in grid_data])
 
     num_dims = [num_qs_max, len(vals)]
@@ -311,7 +319,7 @@ def gen_grid(bubble_dimensions, global_empty_val, key, rectParams):
                     q_type,
                     orient,
                     col_orient,
-                    empty_val
+                    empty_val,
                 )
             )
             # Goes vertically down first

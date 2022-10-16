@@ -6,6 +6,8 @@ Adapated from https://github.com/gdiepen/python_processor_example
 import inspect
 import pkgutil
 
+from src.logger import logger
+
 
 class Processor:
     """Base class that each processor must inherit from."""
@@ -32,8 +34,8 @@ class ProcessorManager:
         """
         self.processors = {}
         self.seen_paths = []
-        print()
-        print(f"Looking for processors in \"{self.processors_dir}\"")
+
+        logger.info(f'Looking for processors in "{self.processors_dir}"')
         self.walk_package(self.processors_dir)
 
     @staticmethod
@@ -52,8 +54,7 @@ class ProcessorManager:
         ):
             if not ispkg and processor_name != __name__:
                 # print(f"looking up '{processor_name}'")
-                processor_module = __import__(
-                    processor_name, fromlist=["blah"])
+                processor_module = __import__(processor_name, fromlist=["blah"])
                 # https://stackoverflow.com/a/46206754/6242649
                 clsmembers = inspect.getmembers(
                     processor_module,
@@ -65,4 +66,4 @@ class ProcessorManager:
                         self.processors[c.__name__] = c
                         loaded_packages.append(c.__name__)
 
-        print(f"Loaded processors: {loaded_packages}")
+        logger.info(f"Loaded processors: {loaded_packages}")
