@@ -1,0 +1,23 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+    -   id: check-yaml
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+-   repo: https://github.com/pycqa/isort
+    rev: 5.5.4
+    hooks:
+    -   id: isort
+        args: ["--profile", "black"]
+-   repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+    -   id: black
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.9
+    hooks:
+    -   id: flake8
+        args:
+            - "F401,F841"   # unused imports, unused variables
+            - "--ignore=E501,W503,E203"     # Line too long, Line break occurred before a binary operator, Whitespace before ':'
