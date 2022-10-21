@@ -11,4 +11,17 @@ and you can update each one for the latest changes on the upstream master indivi
 # Writing Code
 For writing the code just follow the [Pep8 Python style](https://peps.python.org/pep-0008/) guide, If there is something unclear about the style, just look at existing code which might help you to understand it better.
 
-Also, try to use commits with [conventional messages](https://www.conventionalcommits.org/en/v1.0.0/#summary). 
+Also, try to use commits with [conventional messages](https://www.conventionalcommits.org/en/v1.0.0/#summary).
+
+
+# Code Formatting
+Before committing your code, make sure to run the following command to format your code according to the PEP8 style guide:
+```.sh
+pip install -r requirements.dev.txt && pre-commit install
+```
+
+Run `pre-commit` before committing your changes:
+```.sh
+git add .
+pre-commit run -a
+```
