@@ -7,13 +7,15 @@
 
 """
 
-import numpy as np
-from .constants import TEMPLATE_DEFAULTS_PATH, QTYPE_DATA, SCHEMA_DEFAULTS_PATH
-from .utils.file import load_json, validate_json
-from .utils.object import OVERRIDE_MERGER
 from copy import deepcopy
 
+import numpy as np
+
 from src.logger import logger
+
+from .constants import QTYPE_DATA, SCHEMA_DEFAULTS_PATH, TEMPLATE_DEFAULTS_PATH
+from .utils.file import load_json, validate_json
+from .utils.object import OVERRIDE_MERGER
 
 TEMPLATE_DEFAULTS = load_json(TEMPLATE_DEFAULTS_PATH)
 

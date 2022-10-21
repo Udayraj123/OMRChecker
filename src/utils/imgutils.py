@@ -1,13 +1,14 @@
 # TODO: refactor this file.
 # Use all imports relative to root directory
 # (https://chrisyeh96.github.io/2017/08/08/definitive-guide-python-imports.html)
-from operator import is_
-import sys
 import os
+import sys
 from dataclasses import dataclass
+from operator import is_
+
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 # TODO: pass config in runtime later
 import src.constants as constants
@@ -50,8 +51,7 @@ class ImageUtils:
             result = np.hstack(
                 tuple(
                     [
-                        ImageUtils.resize_util_h(
-                            img, config.dimensions.display_height)
+                        ImageUtils.resize_util_h(img, config.dimensions.display_height)
                         for img in ImageUtils.save_img_list[key]
                     ]
                 )
@@ -67,8 +67,7 @@ class ImageUtils:
             )
             if save_dir is not None:
                 ImageUtils.save_img(
-                    save_dir + "stack/" + name + "_" +
-                    str(key) + "_stack.jpg", result
+                    save_dir + "stack/" + name + "_" + str(key) + "_stack.jpg", result
                 )
             else:
                 MainOperations.show(name + "_" + str(key), result, pause, 0)
@@ -143,13 +142,12 @@ def put_label(img, label, size):
     bg_val = int(np.mean(img))
     pos = (int(scale * 80), int(scale * 30))
     clr = (255 - bg_val,) * 3
-    img[(pos[1] - size * 30): (pos[1] + size * 2), :] = bg_val
+    img[(pos[1] - size * 30) : (pos[1] + size * 2), :] = bg_val
     cv2.putText(img, label, pos, cv2.FONT_HERSHEY_SIMPLEX, size, clr, 3)
 
 
 def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-1):
-    img = ImageUtils.resize_util(
-        img, template.dimensions[0], template.dimensions[1])
+    img = ImageUtils.resize_util(img, template.dimensions[0], template.dimensions[1])
     final_align = img.copy()
     box_w, box_h = template.bubble_dimensions
     for q_block in template.q_blocks:
@@ -173,8 +171,7 @@ def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-
             )
         for _, qbox_pts in q_block.traverse_pts:
             for pt in qbox_pts:
-                x, y = (pt.x + q_block.shift,
-                        pt.y) if shifted else (pt.x, pt.y)
+                x, y = (pt.x + q_block.shift, pt.y) if shifted else (pt.x, pt.y)
                 cv2.rectangle(
                     final_align,
                     (int(x + box_w / 10), int(y + box_h / 10)),
@@ -186,8 +183,7 @@ def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-
                     rect = [y, y + box_h, x, x + box_w]
                     cv2.putText(
                         final_align,
-                        "%d" % (
-                            cv2.mean(img[rect[0]: rect[1], rect[2]: rect[3]])[0]),
+                        "%d" % (cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]),
                         (rect[2] + 2, rect[0] + (box_h * 2) // 3),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.6,
@@ -196,8 +192,8 @@ def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-
                     )
         if shifted:
             text_in_px = cv2.getTextSize(
-                q_block.key, cv2.FONT_HERSHEY_SIMPLEX,
-                constants.TEXT_SIZE, 4)
+                q_block.key, cv2.FONT_HERSHEY_SIMPLEX, constants.TEXT_SIZE, 4
+            )
             cv2.putText(
                 final_align,
                 "%s" % (q_block.key),
@@ -224,6 +220,7 @@ def get_plot_img():
 
 def dist(p_1, p_2):
     return np.linalg.norm(np.array(p_1) - np.array(p_2))
+
 
 # These are used inside multiple extensions
 
@@ -279,8 +276,7 @@ def four_point_transform(image, pts):
     )
 
     transform_matrix = cv2.getPerspectiveTransform(rect, dst)
-    warped = cv2.warpPerspective(
-        image, transform_matrix, (max_width, max_height))
+    warped = cv2.warpPerspective(image, transform_matrix, (max_width, max_height))
 
     # return the warped image
     return warped
@@ -340,15 +336,19 @@ def get_global_threshold(
 
     """
     PAGE_TYPE_FOR_THRESHOLD, MIN_JUMP, JUMP_DELTA = map(
-                        config.threshold_params.get,
-                        [
-                            "PAGE_TYPE_FOR_THRESHOLD",
-                            "MIN_JUMP",
-                            "JUMP_DELTA",
-                        ],
-                    )
+        config.threshold_params.get,
+        [
+            "PAGE_TYPE_FOR_THRESHOLD",
+            "MIN_JUMP",
+            "JUMP_DELTA",
+        ],
+    )
 
-    global_default_threshold = constants.GLOBAL_PAGE_THRESHOLD_WHITE if PAGE_TYPE_FOR_THRESHOLD == "white" else constants.GLOBAL_PAGE_THRESHOLD_BLACK
+    global_default_threshold = (
+        constants.GLOBAL_PAGE_THRESHOLD_WHITE
+        if PAGE_TYPE_FOR_THRESHOLD == "white"
+        else constants.GLOBAL_PAGE_THRESHOLD_BLACK
+    )
 
     # Sort the Q vals
     # Change var name of q_vals
@@ -531,6 +531,7 @@ def setup_dirs(paths):
         # else:
         #     logger.info("Present : " + _dir)
 
+
 class MainOperations:
     """Perform primary functions such as displaying images and reading responses"""
 
@@ -666,11 +667,9 @@ class MainOperations:
                 ImageUtils.append_save_img(3, morph_v)
 
                 morph_thr = 60  # for Mobile images, 40 for scanned Images
-                _, morph_v = cv2.threshold(
-                    morph_v, morph_thr, 255, cv2.THRESH_BINARY)
+                _, morph_v = cv2.threshold(morph_v, morph_thr, 255, cv2.THRESH_BINARY)
                 # kernel best tuned to 5x5 now
-                morph_v = cv2.erode(morph_v, np.ones(
-                    (5, 5), np.uint8), iterations=2)
+                morph_v = cv2.erode(morph_v, np.ones((5, 5), np.uint8), iterations=2)
 
                 ImageUtils.append_save_img(3, morph_v)
                 # h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 2))
@@ -703,18 +702,18 @@ class MainOperations:
                     while steps < max_steps:
                         left_mean = np.mean(
                             morph_v[
-                                s[1]: s[1] + d[1],
-                                s[0] + shift - thk: -thk + s[0] + shift + match_col,
+                                s[1] : s[1] + d[1],
+                                s[0] + shift - thk : -thk + s[0] + shift + match_col,
                             ]
                         )
                         right_mean = np.mean(
                             morph_v[
-                                s[1]: s[1] + d[1],
+                                s[1] : s[1] + d[1],
                                 s[0]
                                 + shift
                                 - match_col
                                 + d[0]
-                                + thk: thk
+                                + thk : thk
                                 + s[0]
                                 + shift
                                 + d[0],
@@ -752,15 +751,14 @@ class MainOperations:
 
             final_align = None
             if config.outputs.show_image_level >= 2:
-                initial_align = draw_template_layout(
-                    img, template, shifted=False)
+                initial_align = draw_template_layout(img, template, shifted=False)
                 final_align = draw_template_layout(
                     img, template, shifted=True, draw_qvals=True
                 )
                 # appendSaveImg(4,mean_vals)
                 ImageUtils.append_save_img(2, initial_align)
                 ImageUtils.append_save_img(2, final_align)
-                
+
                 if auto_align:
                     final_align = np.hstack((initial_align, final_align))
             ImageUtils.append_save_img(5, img)
@@ -777,8 +775,7 @@ class MainOperations:
                         x, y = (pt.x + q_block.shift, pt.y)
                         rect = [y, y + box_h, x, x + box_w]
                         q_strip_vals.append(
-                            cv2.mean(
-                                img[rect[0]: rect[1], rect[2]: rect[3]])[0]
+                            cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]
                             # detectCross(img, rect) ? 100 : 0
                         )
                     q_std_vals.append(round(np.std(q_strip_vals), 2))
@@ -794,7 +791,7 @@ class MainOperations:
 
             global_std_thresh, _, _ = get_global_threshold(
                 all_q_std_vals
-            ) # , "Q-wise Std-dev Plot", plot_show=True, sort_in_plot=True)
+            )  # , "Q-wise Std-dev Plot", plot_show=True, sort_in_plot=True)
             # plt.show()
             # hist = getPlotImg()
             # MainOperations.show("StdHist", hist, 0, 1)
@@ -921,14 +918,13 @@ class MainOperations:
                             multi_marked_l = q in omr_response
                             multi_marked = multi_marked_l or multi_marked
                             omr_response[q] = (
-                                (omr_response[q] +
-                                 val) if multi_marked_l else val
+                                (omr_response[q] + val) if multi_marked_l else val
                             )
                             non_empty_qnos.add(q)
                             multi_roll = multi_marked_l and "Roll" in str(q)
                             # blackVals.append(boxval0)
                         # else:
-                            # whiteVals.append(boxval0)
+                        # whiteVals.append(boxval0)
 
                         total_q_box_no += 1
                         # /for qbox_pts
@@ -936,8 +932,7 @@ class MainOperations:
 
                     if config.outputs.show_image_level >= 5:
                         if key in all_c_box_vals:
-                            q_nums[key].append(
-                                key[:2] + "_c" + str(block_q_strip_no))
+                            q_nums[key].append(key[:2] + "_c" + str(block_q_strip_no))
                             all_c_box_vals[key].append(
                                 all_q_strip_arrs[total_q_strip_no]
                             )
@@ -946,20 +941,18 @@ class MainOperations:
                     total_q_strip_no += 1
                 # /for q_block
 
-            
             # Populate empty responses
-            
+
             # loop over qNos in concatentations
             for concatQ in template.concatenations:
                 for q in concatQ:
                     if q not in non_empty_qnos:
                         omr_response[q] = q_block.empty_val
-            
+
             # loop over qNos in singles
             for q in template.singles:
                 if q not in non_empty_qnos:
                     omr_response[q] = q_block.empty_val
-                    
 
             # TODO: move this validation into template.py -
             if total_q_strip_no == 0:
@@ -1006,8 +999,7 @@ class MainOperations:
                     final_align, int(config.dimensions.display_height)
                 )
                 # [final_align.shape[1],0])
-                MainOperations.show(
-                    "Template Alignment Adjustment", final_align, 0, 0)
+                MainOperations.show("Template Alignment Adjustment", final_align, 0, 0)
 
             if config.outputs.save_detections and save_dir is not None:
                 if multi_roll:

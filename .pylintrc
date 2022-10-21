@@ -1,6 +1,6 @@
 [BASIC]
 # Regular expression matching correct variable names. Overrides variable-naming-style.
-# snake_case with single letter regex - 
+# snake_case with single letter regex -
 variable-rgx=[a-z0-9_]{1,30}$
 
 # Good variable names which should always be accepted, separated by a comma.

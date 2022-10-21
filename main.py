@@ -10,13 +10,12 @@
 from src.logger import logger
 
 logger.info(f"Loading OMRChecker modules...")
-# It takes a few seconds for the imports 
+# It takes a few seconds for the imports
 
 import argparse
 from pathlib import Path
-from src.core import (
-    entry_point,
-)
+
+from src.core import entry_point
 
 # construct the argument parse and parse the arguments
 argparser = argparse.ArgumentParser()
@@ -72,10 +71,7 @@ args = vars(args)
 
 # FIX: remove join
 if len(unknown) > 0:
-    logger.warning(
-        "".join(["\nError: Unknown arguments: ",
-        unknown])
-    )
+    logger.warning("".join(["\nError: Unknown arguments: ", unknown]))
     argparser.print_help()
     exit(11)
 

@@ -7,17 +7,21 @@
 
 """
 
-from csv import QUOTE_NONNUMERIC
-from time import localtime, strftime, time
-from pathlib import Path
-import os
 import argparse
+import os
+from csv import QUOTE_NONNUMERIC
+from pathlib import Path
+from time import localtime, strftime, time
+
 import cv2
-
-# import matplotlib.pyplot as plt
-
-import pandas as pd
 import numpy as np
+import pandas as pd
+
+from src import constants
+
+# TODO: use open_config_with_defaults after making a Config class.
+from src.config import CONFIG_DEFAULTS as config
+from src.logger import logger
 
 # TODO: further break utils down and separate the imports
 from src.utils.imgutils import (
@@ -26,15 +30,12 @@ from src.utils.imgutils import (
     draw_template_layout,
     setup_dirs,
 )
-from src import constants
-from src.logger import logger
-
-# TODO: use open_config_with_defaults after making a Config class.
-from src.config import CONFIG_DEFAULTS as config
 
 # Note: dot-imported paths are relative to current directory
 from .processors.manager import ProcessorManager
 from .template import Template
+
+# import matplotlib.pyplot as plt
 
 
 # Load processors

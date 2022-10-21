@@ -8,6 +8,7 @@
 """
 
 from dotmap import DotMap
+
 from .constants import CONFIG_DEFAULTS_PATH
 from .utils.file import load_json
 from .utils.object import OVERRIDE_MERGER
