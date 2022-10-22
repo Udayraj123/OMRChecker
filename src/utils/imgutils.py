@@ -182,8 +182,8 @@ def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-
                     constants.CLR_GRAY,
                     border,
                 )
+                rect = [y, y + box_h, x, x + box_w]
                 if draw_qvals:
-                    rect = [y, y + box_h, x, x + box_w]
                     cv2.putText(
                         final_align,
                         "%d" % (
@@ -193,6 +193,17 @@ def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-
                         0.6,
                         constants.CLR_BLACK,
                         2,
+                    )
+                if config.template_layout.display_q_labels:
+                    cv2.putText(
+                        final_align,
+                        "%s" % (
+                            pt.q_no),
+                        (s[0]-2*box_w, rect[0] + (box_h * 2) // 3),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        constants.TEXT_SIZE,
+                        constants.CLR_BLACK,
+                        4,
                     )
         if shifted:
             text_in_px = cv2.getTextSize(

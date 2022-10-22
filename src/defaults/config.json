@@ -22,10 +22,14 @@
     "thickness": 3
   },
   "outputs": {
-    "show_image_level": 0,
+    "show_image_level": 5,
     "save_image_level": 2,
     "save_detections": true,
     "explain_scoring": 0,
     "rich_tracebacks": true
+  },
+  "template_layout": {
+    "display_q_labels": false
   }
 }
+
