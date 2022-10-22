@@ -5,8 +5,10 @@ Credits: https://www.learnopencv.com/image-alignment-feature-based-using-opencv-
 
 import cv2
 import numpy as np
-from src.utils.imgutils import MainOperations
+
 from src.config import CONFIG_DEFAULTS as config
+from src.utils.imgutils import MainOperations
+
 from .interfaces.ImagePreprocessor import ImagePreprocessor
 
 

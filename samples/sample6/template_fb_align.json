@@ -7,7 +7,7 @@
   },
   "dimensions": [2480, 3508 ],
   "bubbleDimensions": [42, 42 ],
-  
+
   "preProcessors": [
     {
       "name": "Levels",
@@ -35,7 +35,7 @@
   "concatenations" : {
     "Roll" : ["stu","roll0", "roll1", "roll2", "roll3", "roll4", "roll5", "roll6", "check"]
   },
-  "singles":[      
+  "singles":[
   ],
   "qBlocks": {
     "Check1": {

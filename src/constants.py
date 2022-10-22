@@ -8,6 +8,7 @@
 """
 
 import os
+
 from dotmap import DotMap
 
 # Paths

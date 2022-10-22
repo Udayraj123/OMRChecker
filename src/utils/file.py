@@ -1,10 +1,12 @@
-from asyncio.log import logger
 import json
+import re
+from asyncio.log import logger
+
 import jsonschema
-from jsonschema import validate, Draft202012Validator
+from jsonschema import Draft202012Validator, validate
 from rich.console import Console
 from rich.table import Table
-import re
+
 from src.constants import SCHEMA_DEFAULTS_PATH
 
 

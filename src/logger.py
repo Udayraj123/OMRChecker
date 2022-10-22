@@ -1,6 +1,8 @@
 import logging
 from typing import Union
+
 from rich.logging import RichHandler
+
 from .config import CONFIG_DEFAULTS as config
 
 FORMAT = "%(message)s"

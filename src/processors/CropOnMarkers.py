@@ -1,15 +1,16 @@
 import os
+
 import cv2
 import numpy as np
 
+from src.config import CONFIG_DEFAULTS as config
+from src.logger import logger
 from src.utils.imgutils import (
     ImageUtils,
     MainOperations,
-    normalize_util,
     four_point_transform,
+    normalize_util,
 )
-from src.config import CONFIG_DEFAULTS as config
-from src.logger import logger
 
 from .interfaces.ImagePreprocessor import ImagePreprocessor
 
@@ -23,12 +24,9 @@ class CropOnMarkers(ImagePreprocessor):
         self.marker_path = os.path.join(
             cwd, marker_ops.get("relativePath", "omr_marker.jpg")
         )
-        self.min_matching_threshold = marker_ops.get(
-            "min_matching_threshold", 0.3)
-        self.max_matching_variation = marker_ops.get(
-            "max_matching_variation", 0.41)
-        self.marker_rescale_range = marker_ops.get(
-            "marker_rescale_range", (35, 100))
+        self.min_matching_threshold = marker_ops.get("min_matching_threshold", 0.3)
+        self.max_matching_variation = marker_ops.get("max_matching_variation", 0.41)
+        self.marker_rescale_range = marker_ops.get("marker_rescale_range", (35, 100))
         self.marker_rescale_steps = marker_ops.get("marker_rescale_steps", 10)
         self.apply_erode_subtract = marker_ops.get("apply_erode_subtract", 1)
         if not os.path.exists(self.marker_path):
@@ -104,8 +102,9 @@ class CropOnMarkers(ImagePreprocessor):
                 show("res", res, 1, 0)
 
         if best_scale is None:
-            logger.warning("No matchings for given scaleRange:",
-                  self.marker_rescale_range)
+            logger.warning(
+                "No matchings for given scaleRange:", self.marker_rescale_range
+            )
         return best_scale, all_max_t
 
     def apply_filter(self, image, args):
@@ -125,8 +124,8 @@ class CropOnMarkers(ImagePreprocessor):
         quads[3] = image_eroded_sub[midh:h1, midw:w1]
 
         # Draw Quadlines
-        image_eroded_sub[:, midw: midw + 2] = 255
-        image_eroded_sub[midh: midh + 2, :] = 255
+        image_eroded_sub[:, midw : midw + 2] = 255
+        image_eroded_sub[midh : midh + 2, :] = 255
 
         best_scale, all_max_t = self.getBestMatch(image_eroded_sub)
         if best_scale is None:
@@ -143,8 +142,7 @@ class CropOnMarkers(ImagePreprocessor):
         sum_t, max_t = 0, 0
         logger.info("Matching Marker:\t", end=" ")
         for k in range(0, 4):
-            res = cv2.matchTemplate(
-                quads[k], optimal_marker, cv2.TM_CCOEFF_NORMED)
+            res = cv2.matchTemplate(quads[k], optimal_marker, cv2.TM_CCOEFF_NORMED)
             max_t = res.max()
             logger.info(f"Quarter{str(k + 1)}: {str(round(max_t, 3))} ", end="\t")
             if (
@@ -168,8 +166,7 @@ class CropOnMarkers(ImagePreprocessor):
                 )
                 if config.outputs.show_image_level >= 1:
                     MainOperations.show(
-                        "no_pts_" +
-                        args["current_file"].name, image_eroded_sub, 0
+                        "no_pts_" + args["current_file"].name, image_eroded_sub, 0
                     )
                     MainOperations.show(
                         "res_Q" + str(k + 1) + " (" + str(max_t) + ")", res, 1
@@ -217,7 +214,8 @@ class CropOnMarkers(ImagePreprocessor):
             MainOperations.show(
                 "Warped: " + args["current_file"].name,
                 ImageUtils.resize_util(
-                    h_stack, int(config.dimensions.display_width * 1.6)),
+                    h_stack, int(config.dimensions.display_width * 1.6)
+                ),
                 0,
                 0,
                 [0, 0],
