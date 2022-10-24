@@ -916,13 +916,16 @@ class MainOperations:
                         # TODO Make this part useful! (Abstract visualizer to check status)
                         if detected:
                             q, val = pt.q_no, str(pt.val)
+                            final_marked=cv2.merge([final_marked,final_marked,final_marked])
+                            final_marked=cv2.cvtColor(final_marked,cv2.COLOR_GRAY2RGB)
+
                             cv2.putText(
                                 final_marked,
                                 val,
                                 (x, y),
                                 cv2.FONT_HERSHEY_SIMPLEX,
                                 constants.TEXT_SIZE,
-                                (20, 20, 10),
+                                (250, 0, 0), #trying red
                                 int(1 + 3.5 * constants.TEXT_SIZE),
                             )
                             # Only send rolls multi-marked in the directory
