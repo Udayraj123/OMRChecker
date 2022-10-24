@@ -48,21 +48,10 @@ class ImageUtils:
             and ImageUtils.save_img_list[key] != []
         ):
             name = os.path.splitext(filename)[0]
-
-            def process_image_for_stack(img):
-                img = ImageUtils.resize_util_h(img, config.dimensions.display_height)
-
-                # Note: grayscale images return only height and widthqq
-                if len(img.shape) > 2:
-                    print(img.shape)
-                    # todo: check whether current type is BGR or RGB
-                    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                return img
-
             result = np.hstack(
                 tuple(
                     [
-                        process_image_for_stack(img)
+                        ImageUtils.resize_util_h(img, config.dimensions.display_height)
                         for img in ImageUtils.save_img_list[key]
                     ]
                 )
@@ -190,8 +179,8 @@ def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-
                     constants.CLR_GRAY,
                     border,
                 )
-                rect = [y, y + box_h, x, x + box_w]
                 if draw_qvals:
+                    rect = [y, y + box_h, x, x + box_w]
                     cv2.putText(
                         final_align,
                         "%d" % (cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]),
@@ -200,16 +189,6 @@ def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-
                         0.6,
                         constants.CLR_BLACK,
                         2,
-                    )
-                if config.template_layout.display_q_labels:
-                    cv2.putText(
-                        final_align,
-                        "%s" % (pt.q_no),
-                        (s[0] - 2 * box_w, rect[0] + (box_h * 2) // 3),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        constants.TEXT_SIZE,
-                        constants.CLR_BLACK,
-                        4,
                     )
         if shifted:
             text_in_px = cv2.getTextSize(
@@ -584,7 +563,7 @@ class MainOperations:
             if resize
             else orig
         )
-
+        cv2.imshow(name, img)
         if resetpos:
             MainOperations.image_metrics.window_x = resetpos[0]
             MainOperations.image_metrics.window_y = resetpos[1]
@@ -612,15 +591,6 @@ class MainOperations:
         else:
             MainOperations.image_metrics.window_x += w
 
-        # Normalize the image if it is not 0-255
-        if img.dtype != "uint8":
-            logger.info(
-                f"Note: '{img.dtype}' image will be normalized into 'uint8' for display. Name: {name}"
-            )
-            img = cv2.normalize(img, None, 255, 0, cv2.NORM_MINMAX, cv2.CV_8UC1)
-
-        cv2.imshow(name, img)
-
         if pause:
             logger.info(
                 "Showing '"
@@ -640,13 +610,8 @@ class MainOperations:
             if img.max() > img.min():
                 img = normalize_util(img)
             # Processing copies
-            final_marked = np.array(img, dtype=np.float32)
-
-            final_marked = cv2.cvtColor(final_marked, cv2.COLOR_GRAY2RGB)
-            MainOperations.show("final_marked", final_marked, 1, 1)
-
-            transp_layer = final_marked.copy()
-
+            transp_layer = img.copy()
+            final_marked = img.copy()
             # put_label(final_marked,"Crop Size: " +
             #   str(origDim[0])+"x"+str(origDim[1]) + " "+name, size=1)
 
@@ -946,7 +911,7 @@ class MainOperations:
                                 (x, y),
                                 cv2.FONT_HERSHEY_SIMPLEX,
                                 constants.TEXT_SIZE,
-                                (0, 0, 250),  # trying red
+                                (20, 20, 10),
                                 int(1 + 3.5 * constants.TEXT_SIZE),
                             )
                             # Only send rolls multi-marked in the directory
