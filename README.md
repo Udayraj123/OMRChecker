@@ -1,12 +1,3 @@
-# Note from Maintainer
-
-Hello there! 👋
-
-We're calling for contributions in Hacktoberfest 2022, Do check [here](https://github.com/Udayraj123/OMRChecker/issues) for issues to work on.
-For the previous version of OMRChecker, visit the [legacy code](https://github.com/Udayraj123/OMRChecker/tree/master-legacy).
-
-P.S. Good news! We're now featured on [up-for-grabs](https://up-for-grabs.net) and [awesome-hacktoberfest-2022](https://github.com/OtacilioN/awesome-hacktoberfest-2022)! Have applied on [good-first-issue](https://github.com/deepsourcelabs/good-first-issue/pull/470) as well.
-
 # OMR Checker
 
 Read OMRs fast and accurately using a scanner 🖨 or your phone 🤳.
