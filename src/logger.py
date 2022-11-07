@@ -46,7 +46,8 @@ class Logger:
         func = getattr(self.log, method_type, None)
         if not func:
             raise AttributeError(f"Logger has no method {method_type}")
-        return func(sep.join(msg), stacklevel=4)
+        # return func(sep.join(msg), stacklevel=4)
+        return func(sep.join(msg))
 
     def debug(self, *msg: object, sep=" ", end="\n") -> None:
         return self.logutil("debug", *msg, sep=sep)
