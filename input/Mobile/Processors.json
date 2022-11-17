@@ -1,6 +1,6 @@
 {
   "preProcessors": [
-    "CropPage", 
-    "CropOnMarkers"
+    "Croppage", 
+    "Cropbasedmarker"
            ]
  }

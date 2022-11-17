@@ -1,5 +1,5 @@
 {
   "preProcessors": [
-    "CropOnMarkers"
+    "Cropbasedmarker"
   ]
 }
