@@ -37,3 +37,11 @@ class GaussianBlur(ImagePreprocessor):
             tuple(self.options.get("kSize", (3, 3))),
             self.options.get("sigmax", 0),
         )
+    
+    
+class MedianBlur(ImagePreprocessor):
+    
+    def apply_filter(self, image, _args):
+        return cv2.medianBlur(
+                            image,
+                            self.options.get("kSize", 5))
