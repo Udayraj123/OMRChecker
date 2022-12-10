@@ -22,10 +22,9 @@
       }
     },
     {
-      "name": "GaussianBlur",
+      "name": "MedianBlur",
       "options": {
-        "kSize": [3, 3],
-        "sigmaX": 0
+        "kSize": 5
       }
     }
   ],
@@ -46,8 +45,8 @@
   "qBlocks": {
     "Check1": {
       "orig": [
-        2033,
-        1290
+        2025,
+        1280
       ],
       "gaps": [
         50,
@@ -78,7 +77,7 @@
     "Check2": {
       "orig": [
         2083,
-        1290
+        1280
       ],
       "gaps": [
         50,
@@ -108,7 +107,7 @@
     "Stu": {
       "orig": [
         1636,
-        1290
+        1280
       ],
       "gaps": [
         50,
@@ -136,8 +135,8 @@
     "Roll": {
       "qType": "QTYPE_ROLL",
       "orig": [
-        1685,
-        1290
+        1680,
+        1280
       ],
       "bigGaps": [
         115,
