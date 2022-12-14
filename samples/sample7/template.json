@@ -1,0 +1,78 @@
+{
+    "dimensions": [
+      450,
+      450
+    ],
+    "bubbleDimensions": [
+      15,
+      15
+    ],
+    "preProcessors": [
+      {
+        "name": "CropPage",
+        "options": {
+          "morphKernel": [
+            10,
+            10
+          ]
+        }
+      }
+    ],
+    "concatenations": {},
+    "singles": [
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "q5",
+        "q6",
+        "q7",
+        "q8",
+        "q9",
+        "q10",
+        "q11",
+        "q12",
+        "q13",
+        "q14",
+        "q15"
+    ],
+    "qBlocks": {
+      "MCQBlock1": {
+        "qType": "QTYPE_MCQ4",
+        "orig": [
+          63,
+          172
+        ],
+        "qNos": [
+          [
+            [
+                "q1",
+                "q2",
+                "q3",
+                "q4",
+                "q5",
+                "q6",
+                "q7",
+                "q8",
+                "q9",
+                "q10",
+                "q11",
+                "q12",
+                "q13",
+                "q14",
+                "q15"
+            ]
+          ]
+        ],
+        "gaps": [
+          16,
+          17
+        ],
+        "bigGaps": [
+          10,
+          10
+        ]
+      }
+    }
+  }
+  
