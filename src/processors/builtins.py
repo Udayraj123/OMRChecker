@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 
 from .interfaces.ImagePreprocessor import ImagePreprocessor
-from src.logger import logger
 
 class Levels(ImagePreprocessor):
     def __init__(self, options, _args):
@@ -30,7 +29,6 @@ class Levels(ImagePreprocessor):
 
 
 class MedianBlur(ImagePreprocessor):
-
     def __init__(self, options, _args):
         self.kSize = options.get("kSize", 5)
 
@@ -38,7 +36,6 @@ class MedianBlur(ImagePreprocessor):
         return cv2.medianBlur(
                             image,
                             self.kSize)
-
 
 class GaussianBlur(ImagePreprocessor):
     def apply_filter(self, image, _args):
