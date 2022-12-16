@@ -3,6 +3,7 @@ import numpy as np
 
 from .interfaces.ImagePreprocessor import ImagePreprocessor
 
+
 class Levels(ImagePreprocessor):
     def __init__(self, options, _args):
         def output_level(value, low, high, gamma):
@@ -12,6 +13,7 @@ class Levels(ImagePreprocessor):
                 return 255
             inv_gamma = 1.0 / gamma
             return (((value - low) / (high - low)) ** inv_gamma) * 255
+            
         self.gamma = np.array(
             [
                 output_level(
@@ -36,6 +38,7 @@ class MedianBlur(ImagePreprocessor):
         return cv2.medianBlur(
                             image,
                             self.kSize)
+
 
 class GaussianBlur(ImagePreprocessor):
     def apply_filter(self, image, _args):
