@@ -1,0 +1,31 @@
+
+{
+    "dimensions": [ 349,316 ],
+    "bubbleDimensions": [ 16, 16 ],
+    "concatenations": {"Roll":["0","1","2","3","4","5","6","7","8","9"]},
+    "singles": [],
+    "qBlocks": {
+      "Roll": {
+        "qType": "QTYPE_ROLL",
+        "orig": [ 53, 91 ],
+        "qNos": [
+          [
+            "0","1","2","3","4","5","6","7","8","9"
+          ]
+        ],
+        "gaps": [ 27, 21 ],
+        "bigGaps": [ 27,21]
+      }
+    }, "preProcessors": [
+        {
+          "name": "GaussianBlur",
+          "options": {
+            "kSize": [
+              3,
+              3
+            ],
+            "sigmaX": 0
+          }
+        }
+      ]
+  }
