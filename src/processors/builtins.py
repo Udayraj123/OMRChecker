@@ -13,7 +13,7 @@ class Levels(ImagePreprocessor):
                 return 255
             inv_gamma = 1.0 / gamma
             return (((value - low) / (high - low)) ** inv_gamma) * 255
-
+            
         self.gamma = np.array(
             [
                 output_level(
@@ -28,6 +28,16 @@ class Levels(ImagePreprocessor):
 
     def apply_filter(self, image, _args):
         return cv2.LUT(image, self.gamma)
+
+
+class MedianBlur(ImagePreprocessor):
+    def __init__(self, options, _args):
+        self.kSize = options.get("kSize", 5)
+
+    def apply_filter(self, image, _args):
+        return cv2.medianBlur(
+                            image,
+                            self.kSize)
 
 
 class GaussianBlur(ImagePreprocessor):
