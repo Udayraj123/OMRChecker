@@ -27,7 +27,42 @@
       "description": "Custom configuration values to use in the template's directory",
       "type": "array",
       "items": {
-        "type": "object"
+        "type": "object",
+        "properties": {
+        "name": {
+          "type": "string"
+        },
+        "options": {
+          "type": "object"
+        }
+      },
+
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "CropOnMarkers"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "options": {
+                  "type": "object",
+                  "properties": {
+                    "relativePath": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "relativePath"
+                  ]
+                }
+              }
+            },
+        "required": [
+          "name",
+          "options"
+        ]
       }
     },
     "concatenations": {
