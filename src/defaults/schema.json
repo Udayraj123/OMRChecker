@@ -30,13 +30,15 @@
         "type": "object",
         "properties": {
         "name": {
+          "enum": ["CropOnMarkers","CropPage","FeatureBasedAlignment","ReadBarcode","GaussianBlur","Levels","MedianBlur"],
           "type": "string"
         },
         "options": {
           "type": "object"
         }
       },
-
+        "allOf": [
+          {
             "if": {
               "properties": {
                 "name": {
@@ -48,6 +50,7 @@
               "properties": {
                 "options": {
                   "type": "object",
+                  "enum": ["relativePath","sheetToMarkerWidthRatio"],
                   "properties": {
                     "relativePath": {
                       "type": "string"
@@ -58,13 +61,39 @@
                   ]
                 }
               }
-            },
+            }
+          },
+          {
+             "if": {
+               "properties": {
+                 "name": {
+                   "const": "FeatureBasedAlignment"
+                 }
+               }
+             },
+             "then": {
+               "properties": {
+                 "options": {
+                   "type": "object",
+                   "properties": {
+                     "reference": {
+                       "type": "string"
+                     }
+                   },
+                   "required": [
+                     "reference"
+                   ]
+                 }
+               }
+             }
+          }
+          ],
         "required": [
           "name",
           "options"
         ]
-      }
-    },
+    }
+         },
     "concatenations": {
       "description": "The Concatenations parameter is a way to tell OMRChecker which fields need to be joined together before outputting into the csv"
     },
