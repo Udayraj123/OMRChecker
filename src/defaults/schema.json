@@ -50,7 +50,10 @@
               "properties": {
                 "options": {
                   "type": "object",
-                  "enum": ["relativePath","sheetToMarkerWidthRatio"],
+                  "propertyNames": {
+                  "enum": ["relativePath","min_matching_threshold","max_matching_variation","marker_rescale_range",
+                    "marker_rescale_steps","apply_erode_subtract","sheetToMarkerWidthRatio"]
+                  },
                   "properties": {
                     "relativePath": {
                       "type": "string"
@@ -75,6 +78,9 @@
                "properties": {
                  "options": {
                    "type": "object",
+                   "propertyNames": {
+                  "enum": ["reference","maxFeatures","goodMatchPercent","2d"]
+                   },
                    "properties": {
                      "reference": {
                        "type": "string"
@@ -83,6 +89,91 @@
                    "required": [
                      "reference"
                    ]
+                 }
+               }
+             }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "Levels"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "options": {
+                  "type": "object",
+                  "propertyNames": {
+                    "enum": [
+                      "low",
+                      "high",
+                      "gamma"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "MedianBlur"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "options": {
+                  "type": "object",
+                  "propertyNames": {
+                    "enum": [
+                      "kSize"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "GaussianBlur"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "options": {
+                  "type": "object",
+                  "propertyNames": {
+                    "enum": [
+                      "kSize",
+                      "sigmax"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+             "if": {
+               "properties": {
+                 "name": {
+                   "const": "CropPage"
+                 }
+               }
+             },
+             "then": {
+               "properties": {
+                 "options": {
+                   "type": "object",
+                   "propertyNames": {
+                  "enum": ["morphKernel"]
+                   }
                  }
                }
              }
