@@ -29,14 +29,22 @@
       "items": {
         "type": "object",
         "properties": {
-        "name": {
-          "enum": ["CropOnMarkers","CropPage","FeatureBasedAlignment","ReadBarcode","GaussianBlur","Levels","MedianBlur"],
-          "type": "string"
+          "name": {
+            "enum": [
+              "CropOnMarkers",
+              "CropPage",
+              "FeatureBasedAlignment",
+              "ReadBarcode",
+              "GaussianBlur",
+              "Levels",
+              "MedianBlur"
+            ],
+            "type": "string"
+          },
+          "options": {
+            "type": "object"
+          }
         },
-        "options": {
-          "type": "object"
-        }
-      },
         "allOf": [
           {
             "if": {
@@ -51,12 +59,46 @@
                 "options": {
                   "type": "object",
                   "propertyNames": {
-                  "enum": ["relativePath","min_matching_threshold","max_matching_variation","marker_rescale_range",
-                    "marker_rescale_steps","apply_erode_subtract","sheetToMarkerWidthRatio"]
+                    "enum": [
+                      "relativePath",
+                      "min_matching_threshold",
+                      "max_matching_variation",
+                      "marker_rescale_range",
+                      "marker_rescale_steps",
+                      "apply_erode_subtract",
+                      "sheetToMarkerWidthRatio"
+                    ]
                   },
                   "properties": {
                     "relativePath": {
                       "type": "string"
+                    },
+                    "min_matching_threshold": {
+                      "type": "number"
+                    },
+                    "max_matching_variation": {
+                      "type": "number"
+                    },
+                    "marker_rescale_range": {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ],
+                      "maxItems": 2
+                    },
+                    "marker_rescale_steps": {
+                      "type": "integer"
+                    },
+                    "apply_erode_subtract": {
+                      "type": "integer"
+                    },
+                    "sheetToMarkerWidthRatio": {
+                      "type": "number"
                     }
                   },
                   "required": [
@@ -67,31 +109,45 @@
             }
           },
           {
-             "if": {
-               "properties": {
-                 "name": {
-                   "const": "FeatureBasedAlignment"
-                 }
-               }
-             },
-             "then": {
-               "properties": {
-                 "options": {
-                   "type": "object",
-                   "propertyNames": {
-                  "enum": ["reference","maxFeatures","goodMatchPercent","2d"]
-                   },
-                   "properties": {
-                     "reference": {
-                       "type": "string"
-                     }
-                   },
-                   "required": [
-                     "reference"
-                   ]
-                 }
-               }
-             }
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "FeatureBasedAlignment"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "options": {
+                  "type": "object",
+                  "propertyNames": {
+                    "enum": [
+                      "reference",
+                      "maxFeatures",
+                      "goodMatchPercent",
+                      "2d"
+                    ]
+                  },
+                  "properties": {
+                    "reference": {
+                      "type": "string"
+                    },
+                    "maxFeatures": {
+                      "type": "integer"
+                    },
+                    "goodMatchPercent": {
+                      "type": "number"
+                    },
+                    "2d": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "reference"
+                  ]
+                }
+              }
+            }
           },
           {
             "if": {
@@ -111,6 +167,23 @@
                       "high",
                       "gamma"
                     ]
+                  },
+                  "properties": {
+                    "low": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "high": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "gamma": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
                   }
                 }
               }
@@ -132,6 +205,11 @@
                     "enum": [
                       "kSize"
                     ]
+                  },
+                  "properties": {
+                    "kSize": {
+                      "type": "integer"
+                    }
                   }
                 }
               }
@@ -154,37 +232,70 @@
                       "kSize",
                       "sigmax"
                     ]
+                  },
+                  "properties": {
+                    "kSize": {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ],
+                      "maxItems": 2
+                    },
+                    "sigmax": {
+                      "type": "number"
+                    }
                   }
                 }
               }
             }
           },
           {
-             "if": {
-               "properties": {
-                 "name": {
-                   "const": "CropPage"
-                 }
-               }
-             },
-             "then": {
-               "properties": {
-                 "options": {
-                   "type": "object",
-                   "propertyNames": {
-                  "enum": ["morphKernel"]
-                   }
-                 }
-               }
-             }
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "CropPage"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "options": {
+                  "type": "object",
+                  "propertyNames": {
+                    "enum": [
+                      "morphKernel"
+                    ]
+                  },
+                  "properties": {
+                    "morphKernel": {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ],
+                      "maxItems": 2
+                    }
+                  }
+                }
+              }
+            }
           }
-          ],
+        ],
         "required": [
           "name",
           "options"
         ]
-    }
-         },
+      }
+    },
     "concatenations": {
       "description": "The Concatenations parameter is a way to tell OMRChecker which fields need to be joined together before outputting into the csv"
     },
