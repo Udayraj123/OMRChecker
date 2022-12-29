@@ -33,16 +33,21 @@ def validate_json(json_data):
 
         errors = sorted(VALIDATOR.iter_errors(json_data), key=lambda e: e.path)
         for error in errors:
-            key, validator, msg = error.path, error.validator, error.message
+            key, validator, msg = error.path[0], error.validator, error.message
 
-            if validator == "required":
+            # Print preProcessor name in case of options error
+            if key == "preProcessors":
+                preProcessorName = json_data["preProcessors"][error.path[1]]["name"]
+                preProcessorKey = error.path[2]
+                table.add_row(f"{key}.{preProcessorName}.{preProcessorKey}", msg)
+            elif validator == "required":
                 table.add_row(
                     re.findall(r"'(.*?)'", msg)[0],
                     msg
                     + ". Make sure the spelling of the key is correct and it is in camelCase",
                 )
             else:
-                table.add_row(key[0], msg)
+                table.add_row(key, msg)
         console = Console()
         console.print(table)
         err = "Provided Template JSON is Invalid"
