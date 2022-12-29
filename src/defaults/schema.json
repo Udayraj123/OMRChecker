@@ -235,7 +235,7 @@
                   "propertyNames": {
                     "enum": [
                       "kSize",
-                      "sigmax"
+                      "sigmaX"
                     ]
                   },
                   "properties": {
@@ -252,7 +252,7 @@
                       "maxItems": 2,
                       "minItems": 2
                     },
-                    "sigmax": {
+                    "sigmaX": {
                       "type": "number"
                     }
                   }
