@@ -55,7 +55,9 @@ def angle(p_1, p_2, p_0):
 class CropPage(ImagePreprocessor):
     def __init__(self, cropping_ops, args):
         self.args = args
-        self.morph_kernel = tuple(cropping_ops.get("morphKernel", [10, 10]))
+        self.morph_kernel = tuple(
+            int(x) for x in cropping_ops.get("morphKernel", [10, 10])
+        )
         # TODO: Rest of config defaults here
 
     def find_page(self, image):

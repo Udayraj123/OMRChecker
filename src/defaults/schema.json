@@ -100,7 +100,7 @@
                       "type": "integer"
                     },
                     "apply_erode_subtract": {
-                      "type": "integer"
+                      "type": "boolean"
                     },
                     "sheetToMarkerWidthRatio": {
                       "type": "number"

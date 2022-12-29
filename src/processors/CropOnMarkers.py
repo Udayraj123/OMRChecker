@@ -26,9 +26,11 @@ class CropOnMarkers(ImagePreprocessor):
         )
         self.min_matching_threshold = marker_ops.get("min_matching_threshold", 0.3)
         self.max_matching_variation = marker_ops.get("max_matching_variation", 0.41)
-        self.marker_rescale_range = marker_ops.get("marker_rescale_range", (35, 100))
-        self.marker_rescale_steps = marker_ops.get("marker_rescale_steps", 10)
-        self.apply_erode_subtract = marker_ops.get("apply_erode_subtract", 1)
+        self.marker_rescale_range = tuple(
+            int(r) for r in marker_ops.get("marker_rescale_range", (35, 100))
+        )
+        self.marker_rescale_steps = int(marker_ops.get("marker_rescale_steps", 10))
+        self.apply_erode_subtract = marker_ops.get("apply_erode_subtract", True)
         if not os.path.exists(self.marker_path):
             logger.error(
                 "Marker not found at path provided in template:",
@@ -99,7 +101,7 @@ class CropOnMarkers(ImagePreprocessor):
                 "\tTemplate matching too low! Consider rechecking preProcessors applied before this."
             )
             if config.outputs.show_image_level >= 1:
-                show("res", res, 1, 0)
+                MainOperations.show("res", res, 1, 0)
 
         if best_scale is None:
             logger.warning(
