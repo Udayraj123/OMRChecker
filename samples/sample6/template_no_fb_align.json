@@ -17,8 +17,8 @@
     {
       "name": "Levels",
       "options": {
-        "Low": 0.70,
-        "High": 0.8
+        "low": 0.70,
+        "high": 0.8
       }
     },
     {

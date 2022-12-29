@@ -20,7 +20,7 @@ execute_api_schema = load_json(SCHEMA_DEFAULTS_PATH)
 VALIDATOR = Draft202012Validator(execute_api_schema)
 
 
-def validate_json(json_data):
+def validate_json(json_data, template_path):
 
     logger.info("Validating template.json ...")
     try:
@@ -50,7 +50,7 @@ def validate_json(json_data):
                 table.add_row(key, msg)
         console = Console()
         console.print(table)
-        err = "Provided Template JSON is Invalid"
+        err = f"Provided Template JSON is Invalid: {template_path}"
         return False, err
 
     message = "Template JSON validated successfully..."

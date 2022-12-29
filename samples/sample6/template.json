@@ -17,14 +17,15 @@
     {
       "name": "Levels",
       "options": {
-        "Low": 0.70,
-        "High": 0.8
+        "low": 0.70,
+        "high": 0.8
       }
     },
     {
-      "name": "MedianBlur",
+      "name": "GaussianBlur",
       "options": {
-        "kSize": 5
+        "kSize": [3, 3],
+        "sigmaX": 0
       }
     }
   ],
@@ -45,8 +46,8 @@
   "qBlocks": {
     "Check1": {
       "orig": [
-        2025,
-        1280
+        2033,
+        1290
       ],
       "gaps": [
         50,
@@ -77,7 +78,7 @@
     "Check2": {
       "orig": [
         2083,
-        1280
+        1290
       ],
       "gaps": [
         50,
@@ -107,7 +108,7 @@
     "Stu": {
       "orig": [
         1636,
-        1280
+        1290
       ],
       "gaps": [
         50,
@@ -135,8 +136,8 @@
     "Roll": {
       "qType": "QTYPE_ROLL",
       "orig": [
-        1680,
-        1280
+        1685,
+        1290
       ],
       "bigGaps": [
         115,

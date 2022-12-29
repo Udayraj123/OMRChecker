@@ -12,16 +12,16 @@
     {
       "name": "Levels",
       "options": {
-        "Low": 0.70,
-        "High": 0.8
+        "low": 0.70,
+        "high": 0.8
       }
     },
     {
       "name": "FeatureBasedAlignment",
       "options": {
         "reference": "reference.png",
-        "MaxFeatures": 1000,
-        "2D": true
+        "maxFeatures": 1000,
+        "2d": true
       }
     },
     {

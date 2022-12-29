@@ -48,7 +48,7 @@ class FeatureBasedAlignment(ImagePreprocessor):
         matcher = cv2.DescriptorMatcher_create(
             cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING
         )
-        matches = matcher.match(from_descriptors, self.to_descriptors, None)
+        matches = np.array(matcher.match(from_descriptors, self.to_descriptors, None))
 
         # Sort matches by score
         matches.sort(key=lambda x: x.distance, reverse=False)
