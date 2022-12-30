@@ -1,0 +1,24 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://udayraj123.github.io/omrchecker/src/schemas/evaluation-schema.json",
+    "title": "Evaluation Schema",
+    "description": "OMRChecker evaluation schema i.e. the marking scheme",
+    "type": "object",
+    "// rules": {
+        "// 1": "sections should be mutually exclusive",
+        "// 2": "all keys of sections should be present in keys of marking",
+        "// note 1": "sections may not be exhaustive, as defaults is there"
+    },
+    "after-parsing validations": {
+        "//1": "all mentioned qNos in sections should be present in template.json",
+        "//2": "CSV parsing - each row should contain a (qNo, <ans string/>) pair, ans can be any string",
+        "//3": "Fix this on the way too - TODO: ^add a warning if omr_resp has unused keys remaining"
+    },
+    "extras": {
+        "//1": "add options for letting user control how to handle multi-marked and error OMRs",
+        "//2": "we can also let users define an identifier response key like Roll number, where \\",
+        "//2+": "we can print scores corresponding to the keys and warn in case of repeated keys - TODO: Add roll number validation here",
+        "//3": "support section wise scoring",
+        "//4": "that follows with relative scoring features like - min score, percentile, etc from End User Requirements doc"
+    }
+}

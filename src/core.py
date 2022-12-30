@@ -23,6 +23,10 @@ from src import constants
 from src.config import CONFIG_DEFAULTS as config
 from src.logger import logger
 
+# Note: dot-imported paths are relative to current directory
+from src.processors.manager import ProcessorManager
+from src.template import Template
+
 # TODO: further break utils down and separate the imports
 from src.utils.imgutils import (
     ImageUtils,
@@ -30,10 +34,7 @@ from src.utils.imgutils import (
     draw_template_layout,
     setup_dirs,
 )
-
-# Note: dot-imported paths are relative to current directory
-from .processors.manager import ProcessorManager
-from .template import Template
+from src.utils.parsing import evaluate_concatenated_response, get_concatenated_response
 
 # import matplotlib.pyplot as plt
 
@@ -41,11 +42,6 @@ from .template import Template
 # Load processors
 PROCESSOR_MANAGER = ProcessorManager()
 STATS = constants.Stats()
-
-# TODO(beginner task) :-
-# from colorama import init
-# init()
-# from colorama import Fore, Back, Style
 
 
 def entry_point(root_dir, curr_dir, args):
@@ -108,7 +104,10 @@ def process_dir(root_dir, curr_dir, args, template=None):
 
         setup_dirs(paths)
         out = setup_output(paths, template)
-        process_files(omr_files, template, args_local, out)
+
+        # todo: get evaluation_config from hierarchy
+        evaluation_config = {}
+        process_files(omr_files, template, evaluation_config, args_local, out)
 
     elif not subdirs:
         # Each subdirectory should have images or should be non-leaf
@@ -140,30 +139,6 @@ def check_and_move(error_code, file_path, filepath2):
     return True
 
 
-def process_omr(template, omr_resp):
-    # Note: This is a reference function. It is not part of the OMR checker
-    # So its implementation is completely subjective to user's requirements.
-    csv_resp = {}
-
-    # symbol for absent response
-    unmarked_symbol = ""
-
-    # print("omr_resp",omr_resp)
-
-    # Multi-column/multi-row questions which need to be concatenated
-    for q_no, resp_keys in template.concatenations.items():
-        csv_resp[q_no] = "".join([omr_resp.get(k, unmarked_symbol) for k in resp_keys])
-
-    # Single-column/single-row questions
-    for q_no in template.singles:
-        csv_resp[q_no] = omr_resp.get(q_no, unmarked_symbol)
-
-    # Note: concatenations and singles together should be mutually exclusive
-    # and should cover all questions in the template(exhaustive)
-    # TODO: ^add a warning if omr_resp has unused keys remaining
-    return csv_resp
-
-
 def report(status, streak, scheme, q_no, marked, ans, prev_marks, curr_marks, marks):
     logger.info(
         "%s \t %s \t\t %s \t %s \t %s \t %s \t %s "
@@ -192,6 +167,7 @@ def setup_output(paths, template):
         list(template.concatenations.keys()) + template.singles,
         key=lambda x: int(x[1:]) if ord(x[1]) in range(48, 58) else 0,
     )
+    # todo: consider using emptyVal for empty_resp
     ns.empty_resp = [""] * len(ns.resp_cols)
     ns.sheetCols = ["file_id", "input_path", "output_path", "score"] + ns.resp_cols
     ns.OUTPUT_SET = []
@@ -249,7 +225,7 @@ def preliminary_check():
 
 
 # TODO: take a look at 'out.paths'
-def process_files(omr_files, template, args, out):
+def process_files(omr_files, template, evaluation_config, args, out):
     start_time = int(time())
     files_counter = 0
     STATS.files_not_moved = 0
@@ -318,8 +294,8 @@ def process_files(omr_files, template, args, out):
         )
 
         # concatenate roll nos, set unmarked responses, etc
-        resp = process_omr(template, response_dict)
-        logger.info("\nRead Response: \t", resp, "\n")
+        omr_response = get_concatenated_response(response_dict, template)
+        logger.info("\nRead Response: \t", omr_response, "\n")
         if config.outputs.show_image_level >= 2:
             MainOperations.show(
                 "Final Marked Bubbles : " + file_id,
@@ -331,13 +307,11 @@ def process_files(omr_files, template, args, out):
             )
 
         # This evaluates and returns the score attribute
-        # TODO: Automatic scoring
-        # score = evaluate(resp, explain_scoring=config.outputs.explain_scoring)
-        score = 0
+        score = evaluate_concatenated_response(omr_response, evaluation_config)
 
         resp_array = []
         for k in out.resp_cols:
-            resp_array.append(resp[k])
+            resp_array.append(omr_response[k])
 
         out.OUTPUT_SET.append([file_name] + resp_array)
 
@@ -361,7 +335,7 @@ def process_files(omr_files, template, args, out):
             #     "\t file_id: ",
             #     file_id,
             # )
-            # print(files_counter,file_id,resp['Roll'],'score : ',score)
+            # print(files_counter,file_id,omr_response['Roll'],'score : ',score)
         else:
             # multi_marked file
             logger.info("[%d] multi_marked, moving File: %s" % (files_counter, file_id))
@@ -423,7 +397,6 @@ def print_stats(start_time, files_counter):
         log("\nTotal script time :", time_checking, "seconds")
 
     if config.outputs.show_image_level <= 1:
-        # TODO: colorama this
         log(
             "\nTip: To see some awesome visuals, open config.json and increase 'show_image_level'"
         )

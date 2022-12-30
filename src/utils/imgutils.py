@@ -1,10 +1,18 @@
+"""
+
+ OMRChecker
+
+ Author: Udayraj Deshmukh
+ Github: https://github.com/Udayraj123
+
+"""
+
 # TODO: refactor this file.
 # Use all imports relative to root directory
 # (https://chrisyeh96.github.io/2017/08/08/definitive-guide-python-imports.html)
 import os
 import sys
 from dataclasses import dataclass
-from operator import is_
 
 import cv2
 import matplotlib.pyplot as plt
@@ -801,7 +809,6 @@ class MainOperations:
             # , "Mean Intensity Histogram",plot_show=True, sort_in_plot=True)
             global_thr, _, _ = get_global_threshold(all_q_vals, looseness=4)
 
-            # TODO colorama
             logger.info(
                 "Thresholding:\t\t global_thr: ",
                 round(global_thr, 2),

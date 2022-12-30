@@ -14,13 +14,17 @@ from dotmap import DotMap
 # Paths
 CURRENT_MODULE_DIR = os.path.dirname(__file__)
 CONFIG_DEFAULTS_PATH = os.path.join(CURRENT_MODULE_DIR, "defaults", "config.json")
-SCHEMA_DEFAULTS_PATH = os.path.join(CURRENT_MODULE_DIR, "defaults", "schema.json")
+SCHEMAS_PATH = os.path.join(CURRENT_MODULE_DIR, "schemas")
 TEMPLATE_DEFAULTS_PATH = os.path.join(CURRENT_MODULE_DIR, "defaults", "template.json")
 
 # Filenames
 TEMPLATE_FILENAME = "template.json"
-SCHEMA_FILENAME = "schema.json"
 CONFIG_FILENAME = "config.json"
+
+SCHEMA_NAMES = {
+    "template": "template",
+    "evaluation": "evaluation",
+}
 
 #
 ERROR_CODES = DotMap(
@@ -31,7 +35,6 @@ ERROR_CODES = DotMap(
 )
 
 QTYPE_DATA = {
-    "QTYPE_MED": {"vals": ["E", "H"], "orient": "V"},
     "QTYPE_ROLL": {"vals": range(10), "orient": "V"},
     "QTYPE_INT": {"vals": range(10), "orient": "V"},
     "QTYPE_INT_11": {"vals": range(11), "orient": "V"},

@@ -9,9 +9,9 @@
 
 from dotmap import DotMap
 
-from .constants import CONFIG_DEFAULTS_PATH
-from .utils.file import load_json
-from .utils.object import OVERRIDE_MERGER
+from src.constants import CONFIG_DEFAULTS_PATH
+from src.utils.parsing import OVERRIDE_MERGER
+from src.utils.validations import load_json
 
 CONFIG_DEFAULTS = DotMap(load_json(CONFIG_DEFAULTS_PATH))
 

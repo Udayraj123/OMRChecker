@@ -1,9 +1,16 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://udayraj123.github.io/omrchecker/src/defaults/schema.json",
+  "$id": "https://udayraj123.github.io/omrchecker/src/schemas/template-schema.json",
   "title": "Template Validation Schema",
-  "description": "OMRChecker input image schema",
+  "description": "OMRChecker input template schema",
   "type": "object",
+  "required": [
+    "dimensions",
+    "bubbleDimensions",
+    "concatenations",
+    "singles",
+    "preProcessors"
+  ],
   "properties": {
     "dimensions": {
       "description": "The dimensions to which each input image will be resized to before processing",
@@ -313,12 +320,5 @@
       "description": "The value to be used in case of empty bubble detected at global level.",
       "type": "string"
     }
-  },
-  "required": [
-    "dimensions",
-    "bubbleDimensions",
-    "concatenations",
-    "singles",
-    "preProcessors"
-  ]
+  }
 }

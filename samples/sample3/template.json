@@ -72,7 +72,8 @@
   ],
   "qBlocks": {
     "Medium": {
-      "qType": "QTYPE_MED",
+      "vals": ["E", "H"],
+      "orient": "V",
       "orig": [
         208,
         205

@@ -1,0 +1,15 @@
+{
+  "type": "custom",
+  "sections": {
+    "section1": ["q1...3"],
+    "section2": ["q8..100", "q111"],
+    "section3" : ["q6", "q7"],
+    "BONUS_ATTEMPTED": ["q4"],
+    "BONUS_ALL": ["q5"]
+  },
+  "marking": {
+    "default": { "correct": "2", "incorrect": "-1/3", "unmarked": "0" },
+    "BONUS_ATTEMPTED": { "unmarked": "0", "correct": "2", "incorrect": "2" },
+    "BONUS_ALL": { "unmarked": "2", "correct": "2", "incorrect": "2" }
+  }
+}

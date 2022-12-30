@@ -4,6 +4,7 @@ repos:
     hooks:
     -   id: check-yaml
     -   id: end-of-file-fixer
+        exclude_types: ["csv"]
     -   id: trailing-whitespace
 -   repo: https://github.com/pycqa/isort
     rev: 5.5.4
@@ -20,4 +21,4 @@ repos:
     -   id: flake8
         args:
             - "F401,F841"   # unused imports, unused variables
-            - "--ignore=E501,W503,E203"     # Line too long, Line break occurred before a binary operator, Whitespace before ':'
+            - "--ignore=E501,W503,E203,E741"     # Line too long, Line break occurred before a binary operator, Whitespace before ':'

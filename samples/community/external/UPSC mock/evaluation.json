@@ -1,0 +1,6 @@
+{
+  "type": "csv",
+  "options": {
+    "answerKeyPath": "answer_key.csv"
+  }
+}
