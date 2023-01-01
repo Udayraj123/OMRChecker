@@ -53,7 +53,9 @@ def angle(p_1, p_2, p_0):
 
 
 class CropPage(ImagePreprocessor):
-    def __init__(self, cropping_ops, args):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        cropping_ops = self.options
         self.args = args
         self.morph_kernel = tuple(
             int(x) for x in cropping_ops.get("morphKernel", [10, 10])

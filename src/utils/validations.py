@@ -8,7 +8,6 @@
 """
 import os
 import re
-from asyncio.log import logger
 
 import jsonschema
 from jsonschema import Draft202012Validator, validate
@@ -16,6 +15,7 @@ from rich.console import Console
 from rich.table import Table
 
 from src.constants import SCHEMA_NAMES, SCHEMAS_PATH
+from src.logger import logger
 from src.utils.parsing import load_json
 
 # Load schema files from src/schemas folder
@@ -28,17 +28,17 @@ for schema_name in SCHEMA_NAMES:
 
 
 def validate_evaluation_json(json_data, evaluation_path):
-    logger.info("Validating evaluation.json ...")
+    logger.info("Validating evaluation.json...")
     try:
-        validate(instance=json_data, schema=SCHEMA_JSONS[SCHEMA_NAMES.evaluation])
-    except jsonschema.exceptions.ValidationError as err:
+        validate(instance=json_data, schema=SCHEMA_JSONS[SCHEMA_NAMES["evaluation"]])
+    except jsonschema.exceptions.ValidationError as _err:  # NOQA
 
         table = Table(show_lines=True)
         table.add_column("Key", style="cyan", no_wrap=True)
         table.add_column("Error", style="magenta")
 
         errors = sorted(
-            SCHEMA_VALIDATORS[SCHEMA_NAMES.evaluation].iter_errors(json_data),
+            SCHEMA_VALIDATORS[SCHEMA_NAMES["evaluation"]].iter_errors(json_data),
             key=lambda e: e.path,
         )
         for error in errors:
@@ -53,26 +53,26 @@ def validate_evaluation_json(json_data, evaluation_path):
                 table.add_row(key, msg)
         console = Console()
         console.print(table)
-        err = f"Provided Evaluation JSON is Invalid: {evaluation_path}"
-        return False, err
+        logger.critical(f"Provided Evaluation JSON is Invalid: {evaluation_path}")
+        return False
 
-    message = "Evaluation JSON validated successfully..."
-    return True, message
+    logger.info("Evaluation JSON validated successfully")
+    return True
 
 
 def validate_template_json(json_data, template_path):
-
-    logger.info("Validating template.json ...")
+    logger.info("Validating template.json...")
     try:
-        validate(instance=json_data, schema=SCHEMA_JSONS["template"])
-    except jsonschema.exceptions.ValidationError as err:
+        validate(instance=json_data, schema=SCHEMA_JSONS[SCHEMA_NAMES["template"]])
+    except jsonschema.exceptions.ValidationError as _err:  # NOQA
 
         table = Table(show_lines=True)
         table.add_column("Key", style="cyan", no_wrap=True)
         table.add_column("Error", style="magenta")
 
         errors = sorted(
-            SCHEMA_VALIDATORS["template"].iter_errors(json_data), key=lambda e: e.path
+            SCHEMA_VALIDATORS[SCHEMA_NAMES["template"]].iter_errors(json_data),
+            key=lambda e: e.path,
         )
         for error in errors:
             key, validator, msg = error.path[0], error.validator, error.message
@@ -92,8 +92,39 @@ def validate_template_json(json_data, template_path):
                 table.add_row(key, msg)
         console = Console()
         console.print(table)
-        err = f"Provided Template JSON is Invalid: {template_path}"
-        return False, err
+        logger.critical(f"Provided Template JSON is Invalid: {template_path}")
+        return False
 
-    message = "Template JSON validated successfully..."
-    return True, message
+    logger.info("Template JSON validated successfully")
+    return True
+
+
+def validate_config_json(json_data, config_path):
+    logger.info("Validating config.json...")
+    try:
+        validate(instance=json_data, schema=SCHEMA_JSONS[SCHEMA_NAMES["config"]])
+    except jsonschema.exceptions.ValidationError as _err:  # NOQA
+        table = Table(show_lines=True)
+        table.add_column("Key", style="cyan", no_wrap=True)
+        table.add_column("Error", style="magenta")
+        errors = sorted(
+            SCHEMA_VALIDATORS[SCHEMA_NAMES["config"]].iter_errors(json_data),
+            key=lambda e: e.path,
+        )
+        for error in errors:
+            key, validator, msg = error.path[0], error.validator, error.message
+
+            if validator == "required":
+                table.add_row(
+                    re.findall(r"'(.*?)'", msg)[0],
+                    msg
+                    + ". Make sure the spelling of the key is correct and it is in camelCase",
+                )
+            else:
+                table.add_row(key, msg)
+        console = Console()
+        console.print(table)
+        logger.critical(f"Provided config JSON is Invalid: {config_path}")
+        return False
+    logger.info("Config JSON validated successfully")
+    return True

@@ -3,7 +3,6 @@ import os
 import cv2
 import numpy as np
 
-from src.config import CONFIG_DEFAULTS as config
 from src.logger import logger
 from src.utils.imgutils import (
     ImageUtils,
@@ -16,13 +15,15 @@ from .interfaces.ImagePreprocessor import ImagePreprocessor
 
 
 class CropOnMarkers(ImagePreprocessor):
-    def __init__(self, marker_ops, cwd):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        marker_ops = self.options
         self.threshold_circles = []
         # img_utils = ImageUtils()
 
         # options with defaults
         self.marker_path = os.path.join(
-            cwd, marker_ops.get("relativePath", "omr_marker.jpg")
+            self.relative_dir, marker_ops.get("relativePath", "omr_marker.jpg")
         )
         self.min_matching_threshold = marker_ops.get("min_matching_threshold", 0.3)
         self.max_matching_variation = marker_ops.get("max_matching_variation", 0.41)
@@ -44,7 +45,7 @@ class CropOnMarkers(ImagePreprocessor):
             # TODO: processing_width should come through proper channel
             marker = ImageUtils.resize_util(
                 marker,
-                config.dimensions.processing_width
+                self.tuning_config.dimensions.processing_width
                 / int(marker_ops["sheetToMarkerWidthRatio"]),
             )
         marker = cv2.GaussianBlur(marker, (5, 5), 0)
@@ -100,7 +101,7 @@ class CropOnMarkers(ImagePreprocessor):
             logger.warning(
                 "\tTemplate matching too low! Consider rechecking preProcessors applied before this."
             )
-            if config.outputs.show_image_level >= 1:
+            if self.tuning_config.outputs.show_image_level >= 1:
                 MainOperations.show("res", res, 1, 0)
 
         if best_scale is None:
@@ -132,7 +133,7 @@ class CropOnMarkers(ImagePreprocessor):
         best_scale, all_max_t = self.getBestMatch(image_eroded_sub)
         if best_scale is None:
             # TODO: Plot and see performance of marker_rescale_range
-            if config.outputs.show_image_level >= 1:
+            if self.tuning_config.outputs.show_image_level >= 1:
                 MainOperations.show("Quads", image_eroded_sub)
             return None
 
@@ -166,7 +167,7 @@ class CropOnMarkers(ImagePreprocessor):
                     "\t all_max_t",
                     all_max_t,
                 )
-                if config.outputs.show_image_level >= 1:
+                if self.tuning_config.outputs.show_image_level >= 1:
                     MainOperations.show(
                         "no_pts_" + args["current_file"].name, image_eroded_sub, 0
                     )
@@ -207,7 +208,10 @@ class CropOnMarkers(ImagePreprocessor):
         # res[ : , midw:midw+2] = 255
         # res[ midh:midh+2, : ] = 255
         # show("Markers Matching",res)
-        if config.outputs.show_image_level >= 2 and config.outputs.show_image_level < 4:
+        if (
+            self.tuning_config.outputs.show_image_level >= 2
+            and self.tuning_config.outputs.show_image_level < 4
+        ):
             image_eroded_sub = ImageUtils.resize_util_h(
                 image_eroded_sub, image.shape[0]
             )
@@ -216,7 +220,7 @@ class CropOnMarkers(ImagePreprocessor):
             MainOperations.show(
                 "Warped: " + args["current_file"].name,
                 ImageUtils.resize_util(
-                    h_stack, int(config.dimensions.display_width * 1.6)
+                    h_stack, int(self.tuning_config.dimensions.display_width * 1.6)
                 ),
                 0,
                 0,

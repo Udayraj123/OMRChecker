@@ -3,15 +3,13 @@ from typing import Union
 
 from rich.logging import RichHandler
 
-from .config import CONFIG_DEFAULTS as config
-
 FORMAT = "%(message)s"
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(message)s",
     datefmt="[%X]",
-    handlers=[RichHandler(rich_tracebacks=config.outputs.rich_tracebacks)],
+    handlers=[RichHandler(rich_tracebacks=True)],
 )
 
 

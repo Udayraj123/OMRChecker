@@ -7,28 +7,27 @@
 
 """
 
+
 from copy import deepcopy
 
 import numpy as np
 
-from src.constants import QTYPE_DATA, TEMPLATE_DEFAULTS_PATH
+from src.constants import QTYPE_DATA
+from src.defaults.template import TEMPLATE_DEFAULTS
 from src.logger import logger
-from src.utils.parsing import OVERRIDE_MERGER
-from src.utils.validations import load_json, validate_template_json
-
-TEMPLATE_DEFAULTS = load_json(TEMPLATE_DEFAULTS_PATH)
+from src.utils.parsing import OVERRIDE_MERGER, load_json
+from src.utils.validations import validate_template_json
 
 
 def open_template_with_defaults(template_path):
     user_template = load_json(template_path)
     user_template = OVERRIDE_MERGER.merge(deepcopy(TEMPLATE_DEFAULTS), user_template)
-    is_valid, msg = validate_template_json(user_template, template_path)
+    is_valid = validate_template_json(user_template, template_path)
 
     if is_valid:
-        logger.info(msg)
         return user_template
     else:
-        logger.critical(msg, "\nExiting program")
+        logger.critical("\nExiting program")
         exit()
 
 
@@ -63,7 +62,7 @@ class QBlock:
 
 
 class Template:
-    def __init__(self, template_path, extensions):
+    def __init__(self, template_path, tuning_config, extensions):
         json_obj = open_template_with_defaults(template_path)
         self.path = template_path
         self.q_blocks = []
@@ -81,8 +80,12 @@ class Template:
 
         # load image pre_processors
         self.pre_processors = [
-            extensions[p["name"]](p["options"], template_path.parent)
-            for p in json_obj.get("preProcessors", [])
+            extensions[pre_processor["name"]](
+                options=pre_processor["options"],
+                relative_dir=template_path.parent,
+                tuning_config=tuning_config,
+            )
+            for pre_processor in json_obj.get("preProcessors", [])
         ]
 
         # Add options

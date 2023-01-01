@@ -12,7 +12,10 @@ from src.logger import logger
 class Processor:
     """Base class that each processor must inherit from."""
 
-    def __init__(self):
+    def __init__(self, options=None, relative_dir=None, tuning_config=None):
+        self.options = options
+        self.relative_dir = relative_dir
+        self.tuning_config = tuning_config
         self.description = "UNKNOWN"
 
 
@@ -35,7 +38,7 @@ class ProcessorManager:
         self.processors = {}
         self.seen_paths = []
 
-        logger.info(f'Looking for processors in "{self.processors_dir}"')
+        logger.info(f'Loading processors from "{self.processors_dir}"...')
         self.walk_package(self.processors_dir)
 
     @staticmethod

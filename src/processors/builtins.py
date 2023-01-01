@@ -5,7 +5,10 @@ from .interfaces.ImagePreprocessor import ImagePreprocessor
 
 
 class Levels(ImagePreprocessor):
-    def __init__(self, options, _args):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        options = self.options
+
         def output_level(value, low, high, gamma):
             if value <= low:
                 return 0
@@ -31,7 +34,9 @@ class Levels(ImagePreprocessor):
 
 
 class MedianBlur(ImagePreprocessor):
-    def __init__(self, options, _args):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        options = self.options
         self.kSize = int(options.get("kSize", 5))
 
     def apply_filter(self, image, _args):
@@ -39,7 +44,9 @@ class MedianBlur(ImagePreprocessor):
 
 
 class GaussianBlur(ImagePreprocessor):
-    def __init__(self, options, _args):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        options = self.options
         self.kSize = tuple(int(x) for x in options.get("kSize", (3, 3)))
         self.sigmaX = int(options.get("sigmaX", 0))
 

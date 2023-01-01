@@ -2,8 +2,6 @@ import json
 
 from deepmerge import Merger
 
-from src.config import CONFIG_DEFAULTS as config
-
 OVERRIDE_MERGER = Merger(
     # pass in a list of tuples,with the
     # strategies you are looking to apply
@@ -50,8 +48,9 @@ def get_concatenated_response(omr_response, template):
     return concatenated_response
 
 
-def evaluate_concatenated_response(concatenated_response, evaluation_config):
-    should_explain_scoring = config.outputs.should_explain_scoring
+def evaluate_concatenated_response(
+    concatenated_response, evaluation_config, should_explain_scoring=False
+):
     if should_explain_scoring:
         pass
     # todo: code for evaluation

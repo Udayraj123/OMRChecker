@@ -6,16 +6,17 @@ Credits: https://www.learnopencv.com/image-alignment-feature-based-using-opencv-
 import cv2
 import numpy as np
 
-from src.config import CONFIG_DEFAULTS as config
 from src.utils.imgutils import MainOperations
 
 from .interfaces.ImagePreprocessor import ImagePreprocessor
 
 
 class FeatureBasedAlignment(ImagePreprocessor):
-    def __init__(self, options, path):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        options = self.options
         # process reference image
-        self.ref_path = path.joinpath(options["reference"])
+        self.ref_path = self.relative_dir.joinpath(options["reference"])
         self.ref_img = cv2.imread(str(self.ref_path), cv2.IMREAD_GRAYSCALE)
         # get options with defaults
         self.max_features = int(options.get("maxFeatures", 500))
@@ -58,7 +59,7 @@ class FeatureBasedAlignment(ImagePreprocessor):
         matches = matches[:num_good_matches]
 
         # Draw top matches
-        if config.outputs.show_image_level > 2:
+        if self.tuning_config.outputs.show_image_level > 2:
             im_matches = cv2.drawMatches(
                 img, from_keypoints, self.ref_img, self.to_keypoints, matches, None
             )

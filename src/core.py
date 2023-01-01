@@ -18,9 +18,8 @@ import numpy as np
 import pandas as pd
 
 from src import constants
-
-# TODO: use open_config_with_defaults after making a Config class.
-from src.config import CONFIG_DEFAULTS as config
+from src.config import open_config_with_defaults
+from src.defaults.config import CONFIG_DEFAULTS
 from src.logger import logger
 
 # Note: dot-imported paths are relative to current directory
@@ -49,12 +48,22 @@ def entry_point(root_dir, curr_dir, args):
 
 
 # TODO: make this function pure
-def process_dir(root_dir, curr_dir, args, template=None):
+def process_dir(root_dir, curr_dir, args, template=None, tuning_config=CONFIG_DEFAULTS):
+
+    # Update local tuning_config (in current recursion stack)
+    local_config_path = curr_dir.joinpath(constants.CONFIG_FILENAME)
+    if os.path.exists(local_config_path):
+        tuning_config = open_config_with_defaults(local_config_path)
 
     # Update local template (in current recursion stack)
     local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
     if os.path.exists(local_template_path):
-        template = Template(local_template_path, PROCESSOR_MANAGER.processors)
+        template = Template(
+            local_template_path, tuning_config, PROCESSOR_MANAGER.processors
+        )
+
+    # todo: get evaluation_config from hierarchy
+    evaluation_config = {}
 
     # Look for subdirectories for processing
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
@@ -87,27 +96,27 @@ def process_dir(root_dir, curr_dir, args, template=None):
         if "OverrideFlags" in template.options:
             args_local.update(template.options["OverrideFlags"])
         logger.info(
-            "\n------------------------------------------------------------------"
+            "------------------------------------------------------------------"
         )
         logger.info(f'Processing directory "{curr_dir}" with settings- ')
-        logger.info("\tTotal images       : %d" % (len(omr_files)))
+        logger.info("\tTotal images        : %d" % (len(omr_files)))
         logger.info(
-            "\tCropping Enabled   : " + str("CropOnMarkers" in template.pre_processors)
+            "\tCropping Enabled    : " + str("CropOnMarkers" in template.pre_processors)
         )
-        logger.info("\tAuto Alignment     : " + str(args_local["autoAlign"]))
-        logger.info("\tUsing Template     : " + str(template))
+        logger.info("\tAuto Alignment      : " + str(args_local["autoAlign"]))
+        logger.info("\tUsing Template      : " + str(template))
         # Print options
         for pp in template.pre_processors:
-            logger.info(f"\tUsing preprocessor: {pp.__class__.__name__:13}")
+            logger.info(f"\tUsing pre-processor : {pp.__class__.__name__:13}")
 
         logger.info("")
 
         setup_dirs(paths)
         out = setup_output(paths, template)
 
-        # todo: get evaluation_config from hierarchy
-        evaluation_config = {}
-        process_files(omr_files, template, evaluation_config, args_local, out)
+        process_files(
+            omr_files, template, tuning_config, evaluation_config, args_local, out
+        )
 
     elif not subdirs:
         # Each subdirectory should have images or should be non-leaf
@@ -116,9 +125,9 @@ def process_dir(root_dir, curr_dir, args, template=None):
             Empty directories not allowed."
         )
 
-    # recursively process subfolders
+    # recursively process sub-folders
     for d in subdirs:
-        process_dir(root_dir, d, args, template)
+        process_dir(root_dir, d, args, template, tuning_config, evaluation_config)
 
 
 def check_and_move(error_code, file_path, filepath2):
@@ -156,7 +165,7 @@ def report(status, streak, scheme, q_no, marked, ans, prev_marks, curr_marks, ma
 
 def setup_output(paths, template):
     ns = argparse.Namespace()
-    logger.info("\nChecking Files...")
+    logger.info("Checking Files...")
 
     # Include current output paths
     ns.paths = paths
@@ -225,7 +234,7 @@ def preliminary_check():
 
 
 # TODO: take a look at 'out.paths'
-def process_files(omr_files, template, evaluation_config, args, out):
+def process_files(omr_files, template, tuning_config, evaluation_config, args, out):
     start_time = int(time())
     files_counter = 0
     STATS.files_not_moved = 0
@@ -237,8 +246,9 @@ def process_files(omr_files, template, evaluation_config, args, out):
         args["current_file"] = file_path
 
         in_omr = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
+        logger.info("")
         logger.info(
-            f"\n({files_counter}) Opening image: \t{file_path}\tResolution: {in_omr.shape}"
+            f"({files_counter}) Opening image: \t{file_path}\tResolution: {in_omr.shape}"
         )
 
         # TODO: Get rid of saveImgList
@@ -250,8 +260,8 @@ def process_files(omr_files, template, evaluation_config, args, out):
         # resize to conform to template
         in_omr = ImageUtils.resize_util(
             in_omr,
-            config.dimensions.processing_width,
-            config.dimensions.processing_height,
+            tuning_config.dimensions.processing_width,
+            tuning_config.dimensions.processing_height,
         )
 
         # run pre_processors in sequence
@@ -295,19 +305,23 @@ def process_files(omr_files, template, evaluation_config, args, out):
 
         # concatenate roll nos, set unmarked responses, etc
         omr_response = get_concatenated_response(response_dict, template)
-        logger.info("\nRead Response: \t", omr_response, "\n")
-        if config.outputs.show_image_level >= 2:
+        logger.info(f"Read Response: \n{omr_response}")
+        if tuning_config.outputs.show_image_level >= 2:
             MainOperations.show(
                 "Final Marked Bubbles : " + file_id,
                 ImageUtils.resize_util_h(
-                    final_marked, int(config.dimensions.display_height * 1.3)
+                    final_marked, int(tuning_config.dimensions.display_height * 1.3)
                 ),
                 1,
                 1,
             )
 
         # This evaluates and returns the score attribute
-        score = evaluate_concatenated_response(omr_response, evaluation_config)
+        score = evaluate_concatenated_response(
+            omr_response,
+            evaluation_config,
+            tuning_config.outputs.should_explain_scoring,
+        )
 
         resp_array = []
         for k in out.resp_cols:
@@ -331,14 +345,14 @@ def process_files(omr_files, template, evaluation_config, args, out):
             )
             # Todo: Add score calculation from template.json
             # print(
-            #     "[%d] Graded with score: %.2f" % (files_counter, score),
+            #     "[/%d] Graded with score: %.2f" % (files_counter, score),
             #     "\t file_id: ",
             #     file_id,
             # )
             # print(files_counter,file_id,omr_response['Roll'],'score : ',score)
         else:
             # multi_marked file
-            logger.info("[%d] multi_marked, moving File: %s" % (files_counter, file_id))
+            logger.info("[%d] Found multi-marked file: %s" % (files_counter, file_id))
             new_file_path = out.paths.multi_marked_dir + file_name
             if check_and_move(
                 constants.ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path
@@ -355,7 +369,7 @@ def process_files(omr_files, template, evaluation_config, args, out):
             #     TODO:  Add appropriate record handling here
             #     pass
 
-    print_stats(start_time, files_counter)
+    print_stats(start_time, files_counter, tuning_config)
 
     # flush after every 20 files for a live view
     # if(files_counter % 20 == 0 or files_counter == len(omr_files)):
@@ -363,13 +377,13 @@ def process_files(omr_files, template, evaluation_config, args, out):
     #         out.files_obj[file_key].flush()
 
 
-def print_stats(start_time, files_counter):
+def print_stats(start_time, files_counter, tuning_config):
     time_checking = round(time() - start_time, 2) if files_counter else 1
     log = logger.info
     log("")
     log("Total file(s) moved        : %d " % (STATS.files_moved))
     log("Total file(s) not moved    : %d " % (STATS.files_not_moved))
-    log("------------------------------")
+    log("--------------------------------")
     log(
         "Total file(s) processed    : %d (%s)"
         % (
@@ -380,7 +394,7 @@ def print_stats(start_time, files_counter):
         )
     )
 
-    if config.outputs.show_image_level <= 0:
+    if tuning_config.outputs.show_image_level <= 0:
         log(
             "\nFinished Checking %d file(s) in %.1f seconds i.e. ~%.1f minute(s)."
             % (files_counter, time_checking, time_checking / 60)
@@ -396,7 +410,7 @@ def print_stats(start_time, files_counter):
     else:
         log("\nTotal script time :", time_checking, "seconds")
 
-    if config.outputs.show_image_level <= 1:
+    if tuning_config.outputs.show_image_level <= 1:
         log(
             "\nTip: To see some awesome visuals, open config.json and increase 'show_image_level'"
         )
@@ -416,13 +430,13 @@ def print_stats(start_time, files_counter):
     #             print(x)
 
 
-# Evaluate accuracy based on OMRDataset file generated through moderation
+# Evaluate accuracy based on OMRDataset file generated through review
 # portal on the same set of images
 def evaluate_correctness(out):
     # TODO: test_file WOULD BE RELATIVE TO INPUT SUBDIRECTORY NOW-
     test_file = "inputs/OMRDataset.csv"
     if os.path.exists(test_file):
-        logger.info("\nStarting evaluation for: " + test_file)
+        logger.info("Starting evaluation for: " + test_file)
 
         test_cols = ["file_id"] + out.resp_cols
         y_df = (

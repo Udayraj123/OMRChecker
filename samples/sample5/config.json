@@ -1,0 +1,5 @@
+{
+    "threshold_params": {
+        "MIN_JUMP": 200
+    }
+}

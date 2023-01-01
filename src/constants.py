@@ -13,9 +13,7 @@ from dotmap import DotMap
 
 # Paths
 CURRENT_MODULE_DIR = os.path.dirname(__file__)
-CONFIG_DEFAULTS_PATH = os.path.join(CURRENT_MODULE_DIR, "defaults", "config.json")
 SCHEMAS_PATH = os.path.join(CURRENT_MODULE_DIR, "schemas")
-TEMPLATE_DEFAULTS_PATH = os.path.join(CURRENT_MODULE_DIR, "defaults", "template.json")
 
 # Filenames
 TEMPLATE_FILENAME = "template.json"
@@ -24,6 +22,7 @@ CONFIG_FILENAME = "config.json"
 SCHEMA_NAMES = {
     "template": "template",
     "evaluation": "evaluation",
+    "config": "config",
 }
 
 #

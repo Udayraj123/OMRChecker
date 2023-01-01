@@ -20,17 +20,14 @@ import numpy as np
 
 # TODO: pass config in runtime later
 import src.constants as constants
-from src.config import CONFIG_DEFAULTS as config
 from src.logger import logger
 
 
 class ImageUtils:
     """Class to hold indicators of images and save images."""
 
-    save_image_level = config.outputs.save_image_level
+    save_image_level = self.tuning_config.outputs.save_image_level
     save_img_list = {}
-    # def __init__(self):
-    #     """Constructor for class ImageUtils"""
 
     @staticmethod
     def reset_save_img(key):
@@ -351,6 +348,7 @@ def get_global_threshold(
             "JUMP_DELTA",
         ],
     )
+    print(MIN_JUMP)
 
     global_default_threshold = (
         constants.GLOBAL_PAGE_THRESHOLD_WHITE
@@ -514,7 +512,7 @@ def get_local_threshold(
 
 
 def setup_dirs(paths):
-    logger.info("\nChecking Directories...")
+    logger.info("Checking Directories...")
     for _dir in [paths.save_marked_dir]:
         if not os.path.exists(_dir):
             logger.info("Created : " + _dir)
@@ -545,8 +543,8 @@ class MainOperations:
 
     image_metrics = ImageMetrics()
 
-    def __init__(self):
-        self.image_utils = ImageUtils()
+    def __init__(self, tuning_config=None):
+        self.tuning_config = tuning_config
 
     @staticmethod
     def wait_q():
@@ -609,6 +607,7 @@ class MainOperations:
 
     @staticmethod
     def read_response(template, image, name, save_dir=None, auto_align=False):
+        config = self.tuning_config
         try:
             img = image.copy()
             # origDim = img.shape[:2]
