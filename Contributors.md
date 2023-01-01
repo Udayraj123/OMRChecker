@@ -16,3 +16,7 @@
 - [Rohan-G](https://github.com/Rohan-G)
 - [UjjwalMahar](https://github.com/UjjwalMahar)
 - [Kurtsley](https://github.com/Kurtsley)
+- [gaursagar21](https://github.com/gaursagar21)
+- [aayushibansal2001](https://github.com/aayushibansal2001)
+- [ShamanthVallem](https://github.com/ShamanthVallem)
+- [rudrapsc](https://github.com/rudrapsc)
