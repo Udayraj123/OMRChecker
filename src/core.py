@@ -56,6 +56,7 @@ def entry_point(root_dir, curr_dir, args):
 def process_dir(root_dir, curr_dir, args, template=None):
 
     # Update local template (in current recursion stack)
+
     local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
     if os.path.exists(local_template_path):
         template = Template(local_template_path, PROCESSOR_MANAGER.processors)
@@ -68,6 +69,7 @@ def process_dir(root_dir, curr_dir, args, template=None):
     # look for images in current dir to process
     exts = ("*.png", "*.jpg")
     omr_files = sorted([f for ext in exts for f in curr_dir.glob(ext)])
+    logger.info("path =", paths)
 
     # Exclude images (take union over all pre_processors)
     excluded_files = []
@@ -108,7 +110,8 @@ def process_dir(root_dir, curr_dir, args, template=None):
 
         setup_dirs(paths)
         out = setup_output(paths, template)
-        process_files(omr_files, template, args_local, out)
+        # logger.info(out)
+        process_files(omr_files, template, args_local, out,curr_dir,root_dir)
 
     elif not subdirs:
         # Each subdirectory should have images or should be non-leaf
@@ -154,9 +157,11 @@ def process_omr(template, omr_resp):
     for q_no, resp_keys in template.concatenations.items():
         csv_resp[q_no] = "".join([omr_resp.get(k, unmarked_symbol) for k in resp_keys])
 
+
     # Single-column/single-row questions
     for q_no in template.singles:
         csv_resp[q_no] = omr_resp.get(q_no, unmarked_symbol)
+        # logger.info(csv_resp)
 
     # Note: concatenations and singles together should be mutually exclusive
     # and should cover all questions in the template(exhaustive)
@@ -192,6 +197,8 @@ def setup_output(paths, template):
         list(template.concatenations.keys()) + template.singles,
         key=lambda x: int(x[1:]) if ord(x[1]) in range(48, 58) else 0,
     )
+
+    logger.info(ns.resp_cols)
     ns.empty_resp = [""] * len(ns.resp_cols)
     ns.sheetCols = ["file_id", "input_path", "output_path", "score"] + ns.resp_cols
     ns.OUTPUT_SET = []
@@ -203,6 +210,7 @@ def setup_output(paths, template):
         "Errors": f"{paths.manual_dir}ErrorFiles.csv",
     }
 
+    logger.info(ns.filesMap)
     for file_key, file_name in ns.filesMap.items():
         if not os.path.exists(file_name):
             logger.info("Note: Created new file: %s" % (file_name))
@@ -249,7 +257,7 @@ def preliminary_check():
 
 
 # TODO: take a look at 'out.paths'
-def process_files(omr_files, template, args, out):
+def process_files(omr_files, template, args, out,curr_dir,root_dir):
     start_time = int(time())
     files_counter = 0
     STATS.files_not_moved = 0
@@ -261,6 +269,9 @@ def process_files(omr_files, template, args, out):
         args["current_file"] = file_path
 
         in_omr = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
+        # cv2.imshow("bla",in_omr)
+        # cv2.waitKey(0)
+        logger.info(file_path)
         logger.info(
             f"\n({files_counter}) Opening image: \t{file_path}\tResolution: {in_omr.shape}"
         )
@@ -277,10 +288,32 @@ def process_files(omr_files, template, args, out):
             config.dimensions.processing_width,
             config.dimensions.processing_height,
         )
+        logger.info(template)
+        data=''
+        for i,pre_processor in enumerate(template.pre_processors):
+            logger.info(template.name)
+            if template.name[i]=='ReadBarcode':
+                save_dir = out.paths.save_marked_dir
+                data = pre_processor.apply_filter(in_omr, args, save_dir)
+                path=data
+                data_name=str(data[:-1]) + '.json'
+                local_template_path = curr_dir.joinpath(data_name)
+                if os.path.exists(local_template_path):
+                    template = Template(local_template_path, PROCESSOR_MANAGER.processors)
+                    paths = constants.Paths(Path(args["output_dir"]+"/CheckedOMRs/"+ path, curr_dir.relative_to(root_dir)))
+                    setup_dirs(paths)
+                    out=setup_output(paths,template)
+                break
+
+
 
         # run pre_processors in sequence
-        for pre_processor in template.pre_processors:
-            in_omr = pre_processor.apply_filter(in_omr, args)
+        for i,pre_processor in enumerate(template.pre_processors):
+            logger.info(template.name)
+            if template.name[i]!='ReadBarcode':
+                logger.info(pre_processor)
+                in_omr = pre_processor.apply_filter(in_omr, args)
+
 
         if in_omr is None:
             # Error OMR case
@@ -313,13 +346,15 @@ def process_files(omr_files, template, args, out):
             template,
             image=in_omr,
             name=file_id,
-            save_dir=save_dir,
+            save_dir=save_dir+data,
             auto_align=args["autoAlign"],
         )
 
         # concatenate roll nos, set unmarked responses, etc
+        logger.info(template)
         resp = process_omr(template, response_dict)
         logger.info("\nRead Response: \t", resp, "\n")
+        logger.info(" f " , multi_marked)
         if config.outputs.show_image_level >= 2:
             MainOperations.show(
                 "Final Marked Bubbles : " + file_id,
@@ -336,11 +371,14 @@ def process_files(omr_files, template, args, out):
         score = 0
 
         resp_array = []
+        # logger.info(out.resp_cols)
         for k in out.resp_cols:
             resp_array.append(resp[k])
 
         out.OUTPUT_SET.append([file_name] + resp_array)
+        # logger.info([file_name] + resp_array)
 
+        # template = temp_template
         # TODO: Add roll number validation here
         if multi_marked == 0:
             STATS.files_not_moved += 1
