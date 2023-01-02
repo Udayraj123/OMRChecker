@@ -7,15 +7,11 @@
 
 """
 
-from src.logger import logger
-
-logger.info(f"Loading OMRChecker modules...")
-# It takes a few seconds for the imports
-
 import argparse
 from pathlib import Path
 
 from src.core import entry_point
+from src.logger import logger
 
 # construct the argument parse and parse the arguments
 argparser = argparse.ArgumentParser()

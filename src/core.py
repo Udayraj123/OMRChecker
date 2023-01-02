@@ -18,8 +18,7 @@ import numpy as np
 import pandas as pd
 
 from src import constants
-from src.config import open_config_with_defaults
-from src.defaults.config import CONFIG_DEFAULTS
+from src.defaults import CONFIG_DEFAULTS, EVALUATION_DEFAULTS
 from src.logger import logger
 
 # Note: dot-imported paths are relative to current directory
@@ -33,7 +32,12 @@ from src.utils.imgutils import (
     draw_template_layout,
     setup_dirs,
 )
-from src.utils.parsing import evaluate_concatenated_response, get_concatenated_response
+from src.utils.parsing import (
+    evaluate_concatenated_response,
+    get_concatenated_response,
+    open_config_with_defaults,
+    open_evaluation_with_defaults,
+)
 
 # import matplotlib.pyplot as plt
 
@@ -48,7 +52,14 @@ def entry_point(root_dir, curr_dir, args):
 
 
 # TODO: make this function pure
-def process_dir(root_dir, curr_dir, args, template=None, tuning_config=CONFIG_DEFAULTS):
+def process_dir(
+    root_dir,
+    curr_dir,
+    args,
+    template=None,
+    tuning_config=CONFIG_DEFAULTS,
+    evaluation_config=EVALUATION_DEFAULTS,
+):
 
     # Update local tuning_config (in current recursion stack)
     local_config_path = curr_dir.joinpath(constants.CONFIG_FILENAME)
@@ -62,8 +73,10 @@ def process_dir(root_dir, curr_dir, args, template=None, tuning_config=CONFIG_DE
             local_template_path, tuning_config, PROCESSOR_MANAGER.processors
         )
 
-    # todo: get evaluation_config from hierarchy
     evaluation_config = {}
+    local_evaluation_path = curr_dir.joinpath(constants.EVALUATION_FILENAME)
+    if os.path.exists(local_evaluation_path):
+        evaluation_config = open_evaluation_with_defaults(local_evaluation_path)
 
     # Look for subdirectories for processing
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
@@ -317,11 +330,7 @@ def process_files(omr_files, template, tuning_config, evaluation_config, args, o
             )
 
         # This evaluates and returns the score attribute
-        score = evaluate_concatenated_response(
-            omr_response,
-            evaluation_config,
-            tuning_config.outputs.should_explain_scoring,
-        )
+        score = evaluate_concatenated_response(omr_response, evaluation_config)
 
         resp_array = []
         for k in out.resp_cols:

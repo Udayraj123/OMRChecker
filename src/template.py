@@ -7,28 +7,11 @@
 
 """
 
-
-from copy import deepcopy
-
 import numpy as np
 
 from src.constants import QTYPE_DATA
-from src.defaults.template import TEMPLATE_DEFAULTS
 from src.logger import logger
-from src.utils.parsing import OVERRIDE_MERGER, load_json
-from src.utils.validations import validate_template_json
-
-
-def open_template_with_defaults(template_path):
-    user_template = load_json(template_path)
-    user_template = OVERRIDE_MERGER.merge(deepcopy(TEMPLATE_DEFAULTS), user_template)
-    is_valid = validate_template_json(user_template, template_path)
-
-    if is_valid:
-        return user_template
-    else:
-        logger.critical("\nExiting program")
-        exit()
+from src.utils.parsing import OVERRIDE_MERGER, open_template_with_defaults
 
 
 # Coordinates Part

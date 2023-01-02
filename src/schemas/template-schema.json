@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://udayraj123.github.io/omrchecker/src/schemas/template-schema.json",
+  "$id": "https://github.com/Udayraj123/OMRChecker/tree/master/src/schemas/template-schema.json",
   "title": "Template Validation Schema",
   "description": "OMRChecker input template schema",
   "type": "object",

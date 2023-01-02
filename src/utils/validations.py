@@ -16,7 +16,7 @@ from rich.table import Table
 
 from src.constants import SCHEMA_NAMES, SCHEMAS_PATH
 from src.logger import logger
-from src.utils.parsing import load_json
+from src.utils.file import load_json
 
 # Load schema files from src/schemas folder
 SCHEMA_VALIDATORS, SCHEMA_JSONS = {}, {}
@@ -25,6 +25,14 @@ for schema_name in SCHEMA_NAMES:
     execute_api_schema = load_json(schema_path)
     SCHEMA_JSONS[schema_name] = execute_api_schema
     SCHEMA_VALIDATORS[schema_name] = Draft202012Validator(execute_api_schema)
+
+
+def parse_validation_error(error):
+    return (
+        (error.path[0] if len(error.path) > 0 else "root"),
+        error.validator,
+        error.message,
+    )
 
 
 def validate_evaluation_json(json_data, evaluation_path):
@@ -42,8 +50,7 @@ def validate_evaluation_json(json_data, evaluation_path):
             key=lambda e: e.path,
         )
         for error in errors:
-            key, validator, msg = error.path[0], error.validator, error.message
-
+            key, validator, msg = parse_validation_error(error)
             if validator == "required":
                 table.add_row(
                     re.findall(r"'(.*?)'", msg)[0],
@@ -75,7 +82,7 @@ def validate_template_json(json_data, template_path):
             key=lambda e: e.path,
         )
         for error in errors:
-            key, validator, msg = error.path[0], error.validator, error.message
+            key, validator, msg = parse_validation_error(error)
 
             # Print preProcessor name in case of options error
             if key == "preProcessors":
@@ -112,7 +119,7 @@ def validate_config_json(json_data, config_path):
             key=lambda e: e.path,
         )
         for error in errors:
-            key, validator, msg = error.path[0], error.validator, error.message
+            key, validator, msg = parse_validation_error(error)
 
             if validator == "required":
                 table.add_row(

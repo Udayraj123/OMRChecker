@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://udayraj123.github.io/omrchecker/src/schemas/evaluation-schema.json",
+  "$id": "https://github.com/Udayraj123/OMRChecker/tree/master/src/schemas/config-schema.json",
   "title": "Evaluation Schema",
   "description": "OMRChecker evaluation schema i.e. the marking scheme",
   "type": "object",
@@ -33,8 +33,7 @@
     "outputs": {
       "show_image_level": { "type": "integer", "minimum": 0, "maximum": 6 },
       "save_image_level": { "type": "integer", "minimum": 0, "maximum": 6 },
-      "save_detections": { "type": "boolean" },
-      "should_explain_scoring": { "type": "boolean" }
+      "save_detections": { "type": "boolean" }
     }
   }
 }

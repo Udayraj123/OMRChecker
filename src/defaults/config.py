@@ -1,7 +1,5 @@
 from dotmap import DotMap
 
-from src.utils.validations import validate_config_json
-
 CONFIG_DEFAULTS = DotMap(
     {
         "dimensions": {
@@ -30,9 +28,6 @@ CONFIG_DEFAULTS = DotMap(
             "show_image_level": 0,
             "save_image_level": 2,
             "save_detections": True,
-            "should_explain_scoring": True,
         },
     }
 )
-
-validate_config_json(CONFIG_DEFAULTS, "src/defaults/config.py")

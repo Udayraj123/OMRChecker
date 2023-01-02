@@ -17,6 +17,7 @@ SCHEMAS_PATH = os.path.join(CURRENT_MODULE_DIR, "schemas")
 
 # Filenames
 TEMPLATE_FILENAME = "template.json"
+EVALUATION_FILENAME = "evaluation.json"
 CONFIG_FILENAME = "config.json"
 
 SCHEMA_NAMES = {
