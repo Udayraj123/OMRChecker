@@ -1,0 +1,88 @@
+from dataclasses import dataclass
+
+import cv2
+from screeninfo import get_monitors
+
+from src.logger import logger
+from src.utils.image import ImageUtils
+
+monitor_window = get_monitors()[0]
+
+
+@dataclass
+class ImageMetrics:
+    window_width, window_height = monitor_window.width, monitor_window.height
+    # for positioning image windows
+    window_x, window_y = 0, 0
+    reset_pos = [0, 0]
+
+
+@dataclass
+class Stats:
+    # TODO Fill these for stats
+    # Move qbox_vals here?
+    # badThresholds = []
+    # veryBadPoints = []
+    files_moved = 0
+    files_not_moved = 0
+
+
+def wait_q():
+    esc_key = 27
+    while cv2.waitKey(1) & 0xFF not in [ord("q"), esc_key]:
+        pass
+    cv2.destroyAllWindows()
+
+
+class InteractionUtils:
+    """Perform primary functions such as displaying images and reading responses"""
+
+    image_metrics = ImageMetrics()
+
+    def __init__(self, tuning_config=None):
+        self.tuning_config = tuning_config
+
+    def show(self, name, orig, pause=1, resize=False, reset_pos=None):
+        image_metrics = InteractionUtils.image_metrics
+        config = self.tuning_config
+        if orig is None:
+            logger.info(name, " NoneType image to show!")
+            if pause:
+                cv2.destroyAllWindows()
+            return
+        # origDim = orig.shape[:2]
+        img = ImageUtils.resize_util(orig, config.display_width) if resize else orig
+        cv2.imshow(name, img)
+        if reset_pos:
+            image_metrics.window_x = reset_pos[0]
+            image_metrics.window_y = reset_pos[1]
+        cv2.moveWindow(
+            name,
+            image_metrics.window_x,
+            image_metrics.window_y,
+        )
+
+        h, w = img.shape[:2]
+
+        # Set next window position
+        margin = 25
+        w += margin
+        h += margin
+        if image_metrics.window_x + w > image_metrics.window_width:
+            image_metrics.window_x = 0
+            if image_metrics.window_y + h > image_metrics.window_height:
+                image_metrics.window_y = 0
+            else:
+                image_metrics.window_y += h
+        else:
+            image_metrics.window_x += w
+
+        if pause:
+            logger.info(
+                "Showing '"
+                + name
+                + "'\n\tPress Q on image to continue Press Ctrl + C in terminal to exit"
+            )
+            wait_q()
+            InteractionUtils.image_metrics.window_x = 0
+            InteractionUtils.image_metrics.window_y = 0

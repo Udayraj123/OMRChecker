@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from .interfaces.ImagePreprocessor import ImagePreprocessor
+from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
 
 
 class Levels(ImagePreprocessor):

@@ -9,9 +9,7 @@
       "display_height": { "type": "integer" },
       "display_width": { "type": "integer" },
       "processing_height": { "type": "integer" },
-      "processing_width": { "type": "integer" },
-      "window_width": { "type": "integer" },
-      "window_height": { "type": "integer" }
+      "processing_width": { "type": "integer" }
     },
     "threshold_params": {
       "GAMMA_LOW": { "type": "number", "minimum": 0, "maximum": 1 },

@@ -12,10 +12,16 @@ from src.logger import logger
 class Processor:
     """Base class that each processor must inherit from."""
 
-    def __init__(self, options=None, relative_dir=None, tuning_config=None):
+    def __init__(
+        self,
+        options=None,
+        relative_dir=None,
+        image_instance_ops=None,
+    ):
         self.options = options
         self.relative_dir = relative_dir
-        self.tuning_config = tuning_config
+        self.image_instance_ops = image_instance_ops
+        self.tuning_config = image_instance_ops.tuning_config
         self.description = "UNKNOWN"
 
 

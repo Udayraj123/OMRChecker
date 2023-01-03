@@ -10,7 +10,7 @@
 import argparse
 from pathlib import Path
 
-from src.core import entry_point
+from src.entry import entry_point
 from src.logger import logger
 
 # construct the argument parse and parse the arguments

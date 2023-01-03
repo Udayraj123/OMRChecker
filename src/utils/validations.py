@@ -38,7 +38,7 @@ def parse_validation_error(error):
 def validate_evaluation_json(json_data, evaluation_path):
     logger.info("Validating evaluation.json...")
     try:
-        validate(instance=json_data, schema=SCHEMA_JSONS[SCHEMA_NAMES["evaluation"]])
+        validate(instance=json_data, schema=SCHEMA_JSONS[SCHEMA_NAMES.evaluation])
     except jsonschema.exceptions.ValidationError as _err:  # NOQA
 
         table = Table(show_lines=True)
@@ -46,7 +46,7 @@ def validate_evaluation_json(json_data, evaluation_path):
         table.add_column("Error", style="magenta")
 
         errors = sorted(
-            SCHEMA_VALIDATORS[SCHEMA_NAMES["evaluation"]].iter_errors(json_data),
+            SCHEMA_VALIDATORS[SCHEMA_NAMES.evaluation].iter_errors(json_data),
             key=lambda e: e.path,
         )
         for error in errors:
@@ -70,7 +70,7 @@ def validate_evaluation_json(json_data, evaluation_path):
 def validate_template_json(json_data, template_path):
     logger.info("Validating template.json...")
     try:
-        validate(instance=json_data, schema=SCHEMA_JSONS[SCHEMA_NAMES["template"]])
+        validate(instance=json_data, schema=SCHEMA_JSONS[SCHEMA_NAMES.template])
     except jsonschema.exceptions.ValidationError as _err:  # NOQA
 
         table = Table(show_lines=True)
@@ -78,7 +78,7 @@ def validate_template_json(json_data, template_path):
         table.add_column("Error", style="magenta")
 
         errors = sorted(
-            SCHEMA_VALIDATORS[SCHEMA_NAMES["template"]].iter_errors(json_data),
+            SCHEMA_VALIDATORS[SCHEMA_NAMES.template].iter_errors(json_data),
             key=lambda e: e.path,
         )
         for error in errors:
@@ -109,13 +109,13 @@ def validate_template_json(json_data, template_path):
 def validate_config_json(json_data, config_path):
     logger.info("Validating config.json...")
     try:
-        validate(instance=json_data, schema=SCHEMA_JSONS[SCHEMA_NAMES["config"]])
+        validate(instance=json_data, schema=SCHEMA_JSONS[SCHEMA_NAMES.config])
     except jsonschema.exceptions.ValidationError as _err:  # NOQA
         table = Table(show_lines=True)
         table.add_column("Key", style="cyan", no_wrap=True)
         table.add_column("Error", style="magenta")
         errors = sorted(
-            SCHEMA_VALIDATORS[SCHEMA_NAMES["config"]].iter_errors(json_data),
+            SCHEMA_VALIDATORS[SCHEMA_NAMES.config].iter_errors(json_data),
             key=lambda e: e.path,
         )
         for error in errors:

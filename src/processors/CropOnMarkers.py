@@ -4,19 +4,15 @@ import cv2
 import numpy as np
 
 from src.logger import logger
-from src.utils.imgutils import (
-    ImageUtils,
-    MainOperations,
-    four_point_transform,
-    normalize_util,
-)
-
-from .interfaces.ImagePreprocessor import ImagePreprocessor
+from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
+from src.utils.image import ImageUtils
+from src.utils.interaction import InteractionUtils
 
 
 class CropOnMarkers(ImagePreprocessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        config = self.tuning_config
         marker_ops = self.options
         self.threshold_circles = []
         # img_utils = ImageUtils()
@@ -45,7 +41,7 @@ class CropOnMarkers(ImagePreprocessor):
             # TODO: processing_width should come through proper channel
             marker = ImageUtils.resize_util(
                 marker,
-                self.tuning_config.dimensions.processing_width
+                config.dimensions.processing_width
                 / int(marker_ops["sheetToMarkerWidthRatio"]),
             )
         marker = cv2.GaussianBlur(marker, (5, 5), 0)
@@ -68,7 +64,7 @@ class CropOnMarkers(ImagePreprocessor):
     # Resizing the marker within scaleRange at rate of descent_per_step to
     # find the best match.
     def getBestMatch(self, image_eroded_sub):
-
+        config = self.tuning_config
         descent_per_step = (
             self.marker_rescale_range[1] - self.marker_rescale_range[0]
         ) // self.marker_rescale_steps
@@ -101,8 +97,8 @@ class CropOnMarkers(ImagePreprocessor):
             logger.warning(
                 "\tTemplate matching too low! Consider rechecking preProcessors applied before this."
             )
-            if self.tuning_config.outputs.show_image_level >= 1:
-                MainOperations.show("res", res, 1, 0)
+            if config.outputs.show_image_level >= 1:
+                InteractionUtils.show("res", res, 1, 0)
 
         if best_scale is None:
             logger.warning(
@@ -111,7 +107,9 @@ class CropOnMarkers(ImagePreprocessor):
         return best_scale, all_max_t
 
     def apply_filter(self, image, args):
-        image_eroded_sub = normalize_util(
+        config = self.tuning_config
+        image_instance_ops = self.image_instance_ops
+        image_eroded_sub = ImageUtils.normalize_util(
             image
             if self.apply_erode_subtract
             else (image - cv2.erode(image, kernel=np.ones((5, 5)), iterations=5))
@@ -133,8 +131,8 @@ class CropOnMarkers(ImagePreprocessor):
         best_scale, all_max_t = self.getBestMatch(image_eroded_sub)
         if best_scale is None:
             # TODO: Plot and see performance of marker_rescale_range
-            if self.tuning_config.outputs.show_image_level >= 1:
-                MainOperations.show("Quads", image_eroded_sub)
+            if config.outputs.show_image_level >= 1:
+                InteractionUtils.show("Quads", image_eroded_sub)
             return None
 
         optimal_marker = ImageUtils.resize_util_h(
@@ -167,11 +165,11 @@ class CropOnMarkers(ImagePreprocessor):
                     "\t all_max_t",
                     all_max_t,
                 )
-                if self.tuning_config.outputs.show_image_level >= 1:
-                    MainOperations.show(
+                if config.outputs.show_image_level >= 1:
+                    InteractionUtils.show(
                         "no_pts_" + args["current_file"].name, image_eroded_sub, 0
                     )
-                    MainOperations.show(
+                    InteractionUtils.show(
                         "res_Q" + str(k + 1) + " (" + str(max_t) + ")", res, 1
                     )
                 return None
@@ -198,29 +196,26 @@ class CropOnMarkers(ImagePreprocessor):
         # analysis data
         self.threshold_circles.append(sum_t / 4)
 
-        image = four_point_transform(image, np.array(centres))
+        image = ImageUtils.four_point_transform(image, np.array(centres))
         # appendSaveImg(1,image_eroded_sub)
         # appendSaveImg(1,image_norm)
 
-        ImageUtils.append_save_img(2, image_eroded_sub)
+        image_instance_ops.append_save_img(2, image_eroded_sub)
         # Debugging image -
         # res = cv2.matchTemplate(image_eroded_sub,optimal_marker,cv2.TM_CCOEFF_NORMED)
         # res[ : , midw:midw+2] = 255
         # res[ midh:midh+2, : ] = 255
         # show("Markers Matching",res)
-        if (
-            self.tuning_config.outputs.show_image_level >= 2
-            and self.tuning_config.outputs.show_image_level < 4
-        ):
+        if config.outputs.show_image_level >= 2 and config.outputs.show_image_level < 4:
             image_eroded_sub = ImageUtils.resize_util_h(
                 image_eroded_sub, image.shape[0]
             )
             image_eroded_sub[:, -5:] = 0
             h_stack = np.hstack((image_eroded_sub, image))
-            MainOperations.show(
+            InteractionUtils.show(
                 "Warped: " + args["current_file"].name,
                 ImageUtils.resize_util(
-                    h_stack, int(self.tuning_config.dimensions.display_width * 1.6)
+                    h_stack, int(config.dimensions.display_width * 1.6)
                 ),
                 0,
                 0,

@@ -7,8 +7,6 @@ CONFIG_DEFAULTS = DotMap(
             "display_width": 640,
             "processing_height": 820,
             "processing_width": 666,
-            "window_width": 1280,
-            "window_height": 720,
         },
         "threshold_params": {
             "GAMMA_LOW": 0.7,
@@ -16,7 +14,7 @@ CONFIG_DEFAULTS = DotMap(
             "MIN_JUMP": 25,
             "CONFIDENT_SURPLUS": 5,
             "JUMP_DELTA": 30,
-            "PAGE_TYPE_FOR_THRESHOLD": "whitek",
+            "PAGE_TYPE_FOR_THRESHOLD": "white",
         },
         "alignment_params": {
             "match_col": 5,

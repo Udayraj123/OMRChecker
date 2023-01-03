@@ -20,11 +20,13 @@ TEMPLATE_FILENAME = "template.json"
 EVALUATION_FILENAME = "evaluation.json"
 CONFIG_FILENAME = "config.json"
 
-SCHEMA_NAMES = {
-    "template": "template",
-    "evaluation": "evaluation",
-    "config": "config",
-}
+SCHEMA_NAMES = DotMap(
+    {
+        "template": "template",
+        "evaluation": "evaluation",
+        "config": "config",
+    }
+)
 
 #
 ERROR_CODES = DotMap(
@@ -45,6 +47,7 @@ QTYPE_DATA = {
     #
 }
 
+# TODO: move to interaction.py
 # Rather these are internal constants & not configs
 # CLR_BLACK = rgb2tuple(CLR_BLACK)
 TEXT_SIZE = 0.95
@@ -54,23 +57,6 @@ CLR_GRAY = (130, 130, 130)
 # CLR_DARK_GRAY = (190,190,190)
 CLR_DARK_GRAY = (100, 100, 100)
 
+# todo: move to config.json
 GLOBAL_PAGE_THRESHOLD_WHITE = 200
 GLOBAL_PAGE_THRESHOLD_BLACK = 100
-
-# Filepaths - object is better
-
-
-class Paths:
-    def __init__(self, output_dir):
-        self.output_dir = output_dir
-        self.save_marked_dir = f"{self.output_dir}/CheckedOMRs/"
-        self.results_dir = f"{self.output_dir}/Results/"
-        self.manual_dir = f"{self.output_dir}/Manual/"
-        self.errors_dir = f"{self.manual_dir}ErrorFiles/"
-        self.multi_marked_dir = f"{self.manual_dir}MultiMarkedFiles/"
-
-
-class Stats:
-    def __init__(self):
-        self.files_moved = 0
-        self.files_not_moved = 0

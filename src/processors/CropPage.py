@@ -7,9 +7,8 @@ import cv2
 import numpy as np
 
 from src.logger import logger
-from src.utils.imgutils import ImageUtils, four_point_transform
-
-from .interfaces.ImagePreprocessor import ImagePreprocessor
+from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
+from src.utils.image import ImageUtils
 
 MIN_PAGE_AREA = 80000
 
@@ -108,12 +107,12 @@ class CropPage(ImagePreprocessor):
                 cv2.drawContours(image, [approx], -1, (0, 255, 0), 2)
                 cv2.drawContours(edge, [approx], -1, (255, 255, 255), 10)
                 break
-            # box = perspective.order_points(box)
+
         # sobel = cv2.addWeighted(cv2.Sobel(edge, cv2.CV_64F, 1, 0, ksize=3),
         #           0.5,cv2.Sobel(edge, cv2.CV_64F, 0, 1, ksize=3),0.5,0,edge)
 
         # ExcessDo : make it work on killer images
-        # edge2 = auto_canny(image_norm)
+        # edge2 = ImageUtils.auto_canny(image_norm)
         # show('Morphed Edges',np.hstack((closed,edge)),1,1)
 
         return sheet
@@ -147,7 +146,7 @@ class CropPage(ImagePreprocessor):
         logger.info("Found page corners: \t", sheet.tolist())
 
         # Warp layer 1
-        image = four_point_transform(image, sheet)
+        image = ImageUtils.four_point_transform(image, sheet)
 
         # Return preprocessed image
         return image

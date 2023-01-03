@@ -45,7 +45,7 @@ class QBlock:
 
 
 class Template:
-    def __init__(self, template_path, tuning_config, extensions):
+    def __init__(self, template_path, image_instance_ops, extensions):
         json_obj = open_template_with_defaults(template_path)
         self.path = template_path
         self.q_blocks = []
@@ -66,7 +66,7 @@ class Template:
             extensions[pre_processor["name"]](
                 options=pre_processor["options"],
                 relative_dir=template_path.parent,
-                tuning_config=tuning_config,
+                image_instance_ops=image_instance_ops,
             )
             for pre_processor in json_obj.get("preProcessors", [])
         ]
