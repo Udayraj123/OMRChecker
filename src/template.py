@@ -76,6 +76,8 @@ class Template:
         self.bubble_dimensions = json_obj["bubbleDimensions"]
         self.concatenations = json_obj["concatenations"]
         self.singles = json_obj["singles"]
+        # self.Templatebarcode=json_obj["Templatebarcode"]
+        # logger.info(Templatebarcode)
 
         # Add new qTypes from template
         if "qTypes" in json_obj:
@@ -85,6 +87,11 @@ class Template:
         self.pre_processors = [
             extensions[p["name"]](p["options"], template_path.parent)
             for p in json_obj.get("preProcessors", [])
+        ]
+        #load the barcode reader info
+        self.TemplateByBarcode = [
+            extensions[p["name"]](p["options"], template_path.parent)
+            for p in json_obj.get("TemplateByBarcode", [])
         ]
         self.name=[]
         for p in json_obj.get("preProcessors", []):
