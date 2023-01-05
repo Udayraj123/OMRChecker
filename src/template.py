@@ -7,335 +7,553 @@
 
 """
 
-from copy import deepcopy
+import argparse
+import os
+from csv import QUOTE_NONNUMERIC
+from pathlib import Path
+from time import localtime, strftime, time
 
+import cv2
 import numpy as np
+import pandas as pd
 
+from src import constants
+
+# TODO: use open_config_with_defaults after making a Config class.
+from src.config import CONFIG_DEFAULTS as config
 from src.logger import logger
 
-from .constants import QTYPE_DATA, SCHEMA_DEFAULTS_PATH, TEMPLATE_DEFAULTS_PATH
-from .utils.file import load_json, validate_json
-from .utils.object import OVERRIDE_MERGER
+# TODO: further break utils down and separate the imports
+from src.utils.imgutils import (
+    ImageUtils,
+    MainOperations,
+    draw_template_layout,
+    setup_dirs,
+)
 
-TEMPLATE_DEFAULTS = load_json(TEMPLATE_DEFAULTS_PATH)
+# Note: dot-imported paths are relative to current directory
+from .processors.manager import ProcessorManager
+from .template import Template
 
-
-def open_template_with_defaults(template_path):
-    user_template = load_json(template_path)
-    user_template = OVERRIDE_MERGER.merge(deepcopy(TEMPLATE_DEFAULTS), user_template)
-    is_valid, msg = validate_json(user_template)
-
-    if is_valid:
-        logger.info(msg)
-        return user_template
-    else:
-        logger.critical(msg, "exiting program")
-        exit()
+# import matplotlib.pyplot as plt
 
 
-### Coordinates Part ###
-class Pt:
-    """
-    Container for a Point Box on the OMR
+# Load processors
+PROCESSOR_MANAGER = ProcessorManager()
+STATS = constants.Stats()
 
-    q_no is the point's property- question to which this point belongs to
-    It can be used as a roll number column as well. (eg roll1)
-    It can also correspond to a single digit of integer type Q (eg q5d1)
-    """
-
-    def __init__(self, pt, q_no, q_type, val):
-        self.x = round(pt[0])
-        self.y = round(pt[1])
-        self.q_no = q_no
-        self.q_type = q_type
-        self.val = val
+# TODO(beginner task) :-
+# from colorama import init
+# init()
+# from colorama import Fore, Back, Style
 
 
-class QBlock:
-    def __init__(self, dimensions, key, orig, traverse_pts, empty_val):
-        # dimensions = (width, height)
-        self.dimensions = tuple(round(x) for x in dimensions)
-        self.key = key
-        self.orig = orig
-        self.traverse_pts = traverse_pts
-        self.empty_val = empty_val
-        # will be set when using
-        self.shift = 0
+def entry_point(root_dir, curr_dir, args):
+    return process_dir(root_dir, curr_dir, args)
 
 
-class Template:
-    def __init__(self, template_path, extensions):
-        json_obj = open_template_with_defaults(template_path)
-        logger.info(template_path)
-        self.path = template_path
-        self.q_blocks = []
-        # TODO: ajv validation - throw exception on key not exist
-        # TODO: extend DotMap here and only access keys that need extra parsing
-        self.dimensions = json_obj["dimensions"]
-        self.global_empty_val = json_obj["emptyVal"]
-        self.bubble_dimensions = json_obj["bubbleDimensions"]
-        self.concatenations = json_obj["concatenations"]
-        self.singles = json_obj["singles"]
-        # self.Templatebarcode=json_obj["Templatebarcode"]
-        # logger.info(Templatebarcode)
+# TODO: make this function pure
+def process_dir(root_dir, curr_dir, args, template=None):
 
-        # Add new qTypes from template
-        if "qTypes" in json_obj:
-            QTYPE_DATA.update(json_obj["qTypes"])
+    # Update local template (in current recursion stack)
 
-        # load image pre_processors
-        self.pre_processors = [
-            extensions[p["name"]](p["options"], template_path.parent)
-            for p in json_obj.get("preProcessors", [])
-        ]
-        #load the barcode reader info
-        self.TemplateByBarcode = [
-            extensions[p["name"]](p["options"], template_path.parent)
-            for p in json_obj.get("TemplateByBarcode", [])
-        ]
-        self.name=[]
-        for p in json_obj.get("preProcessors", []):
-            self.name.append(p["name"])
+    local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
+    if os.path.exists(local_template_path):
+        template = Template(local_template_path, PROCESSOR_MANAGER.processors)
 
-        # Add options
-        self.options = json_obj.get("options", {})
+    # Look for subdirectories for processing
+    subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
 
-        # Add q_blocks
-        for name, block in json_obj["qBlocks"].items():
-            self.add_q_blocks(name, block)
+    paths = constants.Paths(Path(args["output_dir"], curr_dir.relative_to(root_dir)))
 
-    # Expects bubble_dimensions to be set already
-    def add_q_blocks(self, key, rect):
-        assert self.bubble_dimensions != [-1, -1]
-        # For q_type defined in q_blocks
-        if "qType" in rect:
-            rect.update(**QTYPE_DATA[rect["qType"]])
+    # look for images in current dir to process
+    exts = ("*.png", "*.jpg")
+    omr_files = sorted([f for ext in exts for f in curr_dir.glob(ext)])
+    logger.info("path =", paths)
+
+    # Exclude images (take union over all pre_processors)
+    excluded_files = []
+    if template:
+        for pp in template.pre_processors:
+            excluded_files.extend(Path(p) for p in pp.exclude_files())
+
+    omr_files = [f for f in omr_files if f not in excluded_files]
+
+    if omr_files:
+        if not template:
+            logger.error(
+                f'Found images, but no template in the directory tree \
+                of "{curr_dir}". \nPlace {constants.TEMPLATE_FILENAME} in the \
+                directory or specify a template using -t.'
+            )
+            return
+
+        # TODO: get rid of args here
+        args_local = args.copy()
+        if "OverrideFlags" in template.options:
+            args_local.update(template.options["OverrideFlags"])
+        logger.info(
+            "\n------------------------------------------------------------------"
+        )
+        logger.info(f'Processing directory "{curr_dir}" with settings- ')
+        logger.info("\tTotal images       : %d" % (len(omr_files)))
+        logger.info(
+            "\tCropping Enabled   : " + str("CropOnMarkers" in template.pre_processors)
+        )
+        logger.info("\tAuto Alignment     : " + str(args_local["autoAlign"]))
+        logger.info("\tUsing Template     : " + str(template))
+        # Print options
+        for pp in template.pre_processors:
+            logger.info(f"\tUsing preprocessor: {pp.__class__.__name__:13}")
+
+        logger.info("")
+
+        setup_dirs(paths)
+        out = setup_output(paths, template)
+        # logger.info(out)
+        process_files(omr_files, template, args_local, out,curr_dir,root_dir)
+
+    elif not subdirs:
+        # Each subdirectory should have images or should be non-leaf
+        logger.info(
+            f"Note: No valid images or sub-folders found in {curr_dir}.\
+            Empty directories not allowed."
+        )
+
+    # recursively process subfolders
+    for d in subdirs:
+        process_dir(root_dir, d, args, template)
+
+
+def check_and_move(error_code, file_path, filepath2):
+    # print("Dummy Move:  "+file_path, " --> ",filepath2)
+    STATS.files_not_moved += 1
+    return True
+
+    if not os.path.exists(file_path):
+        logger.warning(f"File already moved: {file_path}")
+        return False
+    if os.path.exists(filepath2):
+        logger.error(f"ERROR {error_code}: Duplicate file at {filepath2}")
+        return False
+
+    logger.info(f"Moved: {file_path} --> {filepath2}")
+    os.rename(file_path, filepath2)
+    STATS.files_moved += 1
+    return True
+
+
+def process_omr(template, omr_resp):
+    # Note: This is a reference function. It is not part of the OMR checker
+    # So its implementation is completely subjective to user's requirements.
+    csv_resp = {}
+
+    # symbol for absent response
+    unmarked_symbol = ""
+
+    # print("omr_resp",omr_resp)
+
+    # Multi-column/multi-row questions which need to be concatenated
+    for q_no, resp_keys in template.concatenations.items():
+        csv_resp[q_no] = "".join([omr_resp.get(k, unmarked_symbol) for k in resp_keys])
+
+
+    # Single-column/single-row questions
+    for q_no in template.singles:
+        csv_resp[q_no] = omr_resp.get(q_no, unmarked_symbol)
+        # logger.info(csv_resp)
+
+    # Note: concatenations and singles together should be mutually exclusive
+    # and should cover all questions in the template(exhaustive)
+    # TODO: ^add a warning if omr_resp has unused keys remaining
+    return csv_resp
+
+
+def report(status, streak, scheme, q_no, marked, ans, prev_marks, curr_marks, marks):
+    logger.info(
+        "%s \t %s \t\t %s \t %s \t %s \t %s \t %s "
+        % (
+            q_no,
+            status,
+            str(streak),
+            "[" + scheme + "] ",
+            (str(prev_marks) + " + " + str(curr_marks) + " =" + str(marks)),
+            str(marked),
+            str(ans),
+        )
+    )
+
+
+def setup_output(paths, template):
+    ns = argparse.Namespace()
+    logger.info("\nChecking Files...")
+
+    # Include current output paths
+    ns.paths = paths
+
+    # custom sort: To use integer order in question names instead of
+    # alphabetical - avoids q1, q10, q2 and orders them q1, q2, ..., q10
+    ns.resp_cols = sorted(
+        list(template.concatenations.keys()) + template.singles,
+        key=lambda x: int(x[1:]) if ord(x[1]) in range(48, 58) else 0,
+    )
+
+    logger.info(ns.resp_cols)
+    ns.empty_resp = [""] * len(ns.resp_cols)
+    ns.sheetCols = ["file_id", "input_path", "output_path", "score"] + ns.resp_cols
+    ns.OUTPUT_SET = []
+    ns.files_obj = {}
+    ns.filesMap = {
+        # todo: use os.path.join(paths.results_dir, f"Results_{TIME_NOW_HRS}.csv") etc
+        "Results": f"{paths.results_dir}Results_{TIME_NOW_HRS}.csv",
+        "MultiMarked": f"{paths.manual_dir}MultiMarkedFiles.csv",
+        "Errors": f"{paths.manual_dir}ErrorFiles.csv",
+    }
+
+    logger.info(ns.filesMap)
+    for file_key, file_name in ns.filesMap.items():
+        if not os.path.exists(file_name):
+            logger.info("Note: Created new file: %s" % (file_name))
+            # moved handling of files to pandas csv writer
+            ns.files_obj[file_key] = file_name
+            # Create Header Columns
+            pd.DataFrame([ns.sheetCols], dtype=str).to_csv(
+                ns.files_obj[file_key],
+                mode="a",
+                quoting=QUOTE_NONNUMERIC,
+                header=False,
+                index=False,
+            )
         else:
-            rect.update(**{"vals": rect["vals"], "orient": rect["orient"]})
+            logger.info("Present : appending to %s" % (file_name))
+            ns.files_obj[file_key] = open(file_name, "a")
 
-        # keyword arg unpacking followed by named args
-        self.q_blocks += gen_grid(
-            self.bubble_dimensions, self.global_empty_val, key, rect
+    return ns
+
+
+# TODO: Refactor into new process flow.
+def preliminary_check():
+    pass
+    # filesCounter=0
+    # mws, mbs = [],[]
+    # # PRELIM_CHECKS for thresholding
+    # if(config.PRELIM_CHECKS):
+    #     # TODO: add more using unit testing
+    #     TEMPLATE = TEMPLATES["H"]
+    #     ALL_WHITE = 255 * np.ones((TEMPLATE.dimensions[1],TEMPLATE.dimensions[0]), dtype='uint8')
+    #     response_dict, final_marked, multi_marked, multiroll = read_response(
+    #         "H", ALL_WHITE, name="ALL_WHITE", save_dir=None, autoAlign=True
+    #     )
+    #     print("ALL_WHITE",response_dict)
+    #     if(response_dict!={}):
+    #         print("Preliminary Checks Failed.")
+    #         exit(2)
+    #     ALL_BLACK = np.zeros((TEMPLATE.dimensions[1],TEMPLATE.dimensions[0]), dtype='uint8')
+    #     response_dict, final_marked, multi_marked, multiroll = read_response(
+    #      "H", ALL_BLACK, name="ALL_BLACK", save_dir=None, autoAlign=True
+    #     )
+    #     print("ALL_BLACK",response_dict)
+    #     show("Confirm : All bubbles are black",final_marked,1,1)
+
+def update_template(local_template_path,path,args,curr_dir,root_dir):
+    template = Template(local_template_path, PROCESSOR_MANAGER.processors)
+    paths = constants.Paths(Path(args["output_dir"] + "/CheckedOMRs/" + path, curr_dir.relative_to(root_dir)))
+    setup_dirs(paths)
+    out = setup_output(paths, template)
+    return template,out
+
+
+def TemplateBarcode(in_omr, template,out,args,curr_dir,root_dir):
+    for pre_processor in template.TemplateByBarcode:
+        save_dir = out.paths.save_marked_dir
+        logger.info(pre_processor)
+        data,output_sorting = pre_processor.apply_filter(in_omr, args, save_dir)
+        path = data
+        data_name = 'configs/'+str(data[:-1]) + '.json'
+        local_template_path = root_dir.joinpath(data_name)
+        logger.info(local_template_path)
+        if os.path.exists(local_template_path):
+            template,out_updated=update_template(local_template_path,path,args,curr_dir,root_dir)
+            if output_sorting:
+                return template,out_updated
+    return template,out
+
+
+# TODO: take a look at 'out.paths'
+def process_files(omr_files, template, args, out,curr_dir,root_dir):
+    start_time = int(time())
+    files_counter = 0
+    STATS.files_not_moved = 0
+    temp_template=template
+    for file_path in omr_files:
+        files_counter += 1
+
+        file_name = file_path.name
+        args["current_file"] = file_path
+
+        in_omr = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
+        # cv2.imshow("bla",in_omr)
+        # cv2.waitKey(0)
+        logger.info(file_path)
+        logger.info(
+            f"\n({files_counter}) Opening image: \t{file_path}\tResolution: {in_omr.shape}"
         )
-        # self.q_blocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
 
-    def __str__(self):
-        return str(self.path)
+        # TODO: Get rid of saveImgList
+        for i in range(ImageUtils.save_image_level):
+            ImageUtils.reset_save_img(i + 1)
+
+        ImageUtils.append_save_img(1, in_omr)
+
+        # resize to conform to template
+        in_omr = ImageUtils.resize_util(
+            in_omr,
+            config.dimensions.processing_width,
+            config.dimensions.processing_height,
+        )
+        if template.TemplateByBarcode!=[]:
+            template,out    =TemplateBarcode(in_omr, template,out,args,curr_dir,root_dir)
+        # for pre_processor in template.TemplateByBarcode:
+        #     save_dir = out.paths.save_marked_dir
+        #     logger.info(pre_processor)
+        #     data = pre_processor.apply_filter(in_omr, args, save_dir)
+        #     path=data
+        #     data_name=str(data[:-1]) + '.json'
+        #     local_template_path = curr_dir.joinpath(data_name)
+        #     if os.path.exists(local_template_path):
+        #         template = Template(local_template_path, PROCESSOR_MANAGER.processors)
+        #         paths = constants.Paths(Path(args["output_dir"]+"/CheckedOMRs/"+ path, curr_dir.relative_to(root_dir)))
+        #         setup_dirs(paths)
+        #         out=setup_output(paths,template)
+        #         logger.info(template)
+
+        # run pre_processors in sequence
+        for i,pre_processor in enumerate(template.pre_processors):
+                logger.info(pre_processor)
+                in_omr = pre_processor.apply_filter(in_omr, args)
 
 
-def gen_q_block(
-    bubble_dimensions,
-    q_block_dims,
-    key,
-    orig,
-    q_nos,
-    gaps,
-    vals,
-    q_type,
-    orient,
-    col_orient,
-    empty_val,
-):
-    """
-    Input:
-    orig - start point
-    q_nos  - a tuple of q_nos
-    gaps - (gapX,gapY) are the gaps between rows and cols in a block
-    vals - a 1D array of values of each alternative for a question
+        if in_omr is None:
+            # Error OMR case
+            new_file_path = out.paths.errors_dir + file_name
+            out.OUTPUT_SET.append([file_name] + out.empty_resp)
+            if check_and_move(
+                constants.ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path
+            ):
+                err_line = [file_name, file_path, new_file_path, "NA"] + out.empty_resp
+                pd.DataFrame(err_line, dtype=str).T.to_csv(
+                    out.files_obj["Errors"],
+                    mode="a",
+                    quoting=QUOTE_NONNUMERIC,
+                    header=False,
+                    index=False,
+                )
+            continue
 
-    Output:
-    // Returns set of coordinates of a rectangular grid of points
-    Returns a QBlock containing array of Qs and some metadata?!
+        if args["setLayout"]:
+            template_layout = draw_template_layout(
+                in_omr, template, shifted=False, border=2
+            )
+            MainOperations.show("Template Layout", template_layout, 1, 1)
+            continue
 
-    Ref:
-        1 2 3 4
-        1 2 3 4
-        1 2 3 4
+        # uniquify
+        file_id = str(file_name)
+        save_dir = out.paths.save_marked_dir
 
-        (q1, q2, q3)
+        logger.info(save_dir)
+        response_dict, final_marked, multi_marked, _ = MainOperations.read_response(
+            template,
+            image=in_omr,
+            name=file_id,
+            save_dir=save_dir,
+            auto_align=args["autoAlign"],
+        )
 
-        00
-        11
-        22
-        33
-        44
+        # concatenate roll nos, set unmarked responses, etc
+        logger.info(template)
+        resp = process_omr(template, response_dict)
+        logger.info("\nRead Response: \t", resp, "\n")
+        logger.info(" f " , multi_marked)
+        if config.outputs.show_image_level >= 2:
+            MainOperations.show(
+                "Final Marked Bubbles : " + file_id,
+                ImageUtils.resize_util_h(
+                    final_marked, int(config.dimensions.display_height * 1.3)
+                ),
+                1,
+                1,
+            )
 
-        (q1.1,q1.2)
+        # This evaluates and returns the score attribute
+        # TODO: Automatic scoring
+        # score = evaluate(resp, explain_scoring=config.outputs.explain_scoring)
+        score = 0
 
-    """
-    _h, _v = (0, 1) if (orient == "H") else (1, 0)
-    # orig[0] += np.random.randint(-6,6)*2 # test random shift
-    traverse_pts = []
-    o = [float(i) for i in orig]
+        resp_array = []
+        # logger.info(out.resp_cols)
+        for k in out.resp_cols:
+            resp_array.append(resp[k])
 
-    if col_orient == orient:
-        for (q, _) in enumerate(q_nos):
-            pt = o.copy()
-            pts = []
-            for (v, _) in enumerate(vals):
-                pts.append(Pt(pt.copy(), q_nos[q], q_type, vals[v]))
-                pt[_h] += gaps[_h]
-            # For diagonal endpoint of QBlock
-            pt[_h] += bubble_dimensions[_h] - gaps[_h]
-            pt[_v] += bubble_dimensions[_v]
-            # TODO- make a mini object for this
-            traverse_pts.append(([o.copy(), pt.copy()], pts))
-            o[_v] += gaps[_v]
+
+
+        out.OUTPUT_SET.append([file_name] + resp_array)
+        # logger.info([file_name] + resp_array)
+
+        template = temp_template
+        # TODO: Add roll number validation here
+        if multi_marked == 0:
+            STATS.files_not_moved += 1
+            new_file_path = save_dir + file_id
+            # Enter into Results sheet-
+            results_line = [file_name, file_path, new_file_path, score] + resp_array
+            # Write/Append to results_line file(opened in append mode)
+            pd.DataFrame(results_line, dtype=str).T.to_csv(
+                out.files_obj["Results"],
+                mode="a",
+                quoting=QUOTE_NONNUMERIC,
+                header=False,
+                index=False,
+            )
+            # Todo: Add score calculation from template.json
+            # print(
+            #     "[%d] Graded with score: %.2f" % (files_counter, score),
+            #     "\t file_id: ",
+            #     file_id,
+            # )
+            # print(files_counter,file_id,resp['Roll'],'score : ',score)
+        else:
+            # multi_marked file
+            logger.info("[%d] multi_marked, moving File: %s" % (files_counter, file_id))
+            new_file_path = out.paths.multi_marked_dir + file_name
+            if check_and_move(
+                constants.ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path
+            ):
+                mm_line = [file_name, file_path, new_file_path, "NA"] + resp_array
+                pd.DataFrame(mm_line, dtype=str).T.to_csv(
+                    out.files_obj["MultiMarked"],
+                    mode="a",
+                    quoting=QUOTE_NONNUMERIC,
+                    header=False,
+                    index=False,
+                )
+            # else:
+            #     TODO:  Add appropriate record handling here
+            #     pass
+
+    print_stats(start_time, files_counter)
+
+    # flush after every 20 files for a live view
+    # if(files_counter % 20 == 0 or files_counter == len(omr_files)):
+    #     for file_key in out.filesMap.keys():
+    #         out.files_obj[file_key].flush()
+
+
+def print_stats(start_time, files_counter):
+    time_checking = round(time() - start_time, 2) if files_counter else 1
+    log = logger.info
+    log("")
+    log("Total file(s) moved        : %d " % (STATS.files_moved))
+    log("Total file(s) not moved    : %d " % (STATS.files_not_moved))
+    log("------------------------------")
+    log(
+        "Total file(s) processed    : %d (%s)"
+        % (
+            files_counter,
+            "Sum Tallied!"
+            if files_counter == (STATS.files_moved + STATS.files_not_moved)
+            else "Not Tallying!",
+        )
+    )
+
+    if config.outputs.show_image_level <= 0:
+        log(
+            "\nFinished Checking %d file(s) in %.1f seconds i.e. ~%.1f minute(s)."
+            % (files_counter, time_checking, time_checking / 60)
+        )
+        log(
+            "OMR Processing Rate  :\t ~ %.2f seconds/OMR"
+            % (time_checking / files_counter)
+        )
+        log(
+            "OMR Processing Speed :\t ~ %.2f OMRs/minute"
+            % ((files_counter * 60) / time_checking)
+        )
     else:
-        for (v, _) in enumerate(vals):
-            pt = o.copy()
-            pts = []
-            for (q, _) in enumerate(q_nos):
-                pts.append(Pt(pt.copy(), q_nos[q], q_type, vals[v]))
-                pt[_v] += gaps[_v]
-            # For diagonal endpoint of QBlock
-            pt[_v] += bubble_dimensions[_v] - gaps[_v]
-            pt[_h] += bubble_dimensions[_h]
-            traverse_pts.append(([o.copy(), pt.copy()], pts))
-            o[_h] += gaps[_h]
-    # Pass first three args as is. only append 'traverse_pts'
-    return QBlock(q_block_dims, key, orig, traverse_pts, empty_val)
+        log("\nTotal script time :", time_checking, "seconds")
 
-
-def gen_grid(bubble_dimensions, global_empty_val, key, rectParams):
-    """
-        Input(Directly passable from JSON parameters):
-        bubble_dimensions - dimesions of single QBox
-        orig- start point
-        q_nos - an array of q_nos tuples(see below) that align with dimension
-               of the big grid (gridDims extracted from here)
-        big_gaps - (bigGapX,bigGapY) are the gaps between blocks
-        gaps - (gapX,gapY) are the gaps between rows and cols in a block
-        vals - a 1D array of values of each alternative for a question
-        orient - The way of arranging the vals (vertical or horizontal)
-
-        Output:
-        // Returns an array of Q objects (having their points) arranged in a rectangular grid
-        Returns grid of QBlock objects
-
-                                    00    00    00    00
-       Q1   1 2 3 4    1 2 3 4      11    11    11    11
-       Q2   1 2 3 4    1 2 3 4      22    22    22    22         1234567
-       Q3   1 2 3 4    1 2 3 4      33    33    33    33         1234567
-                                    44    44    44    44
-                                ,   55    55    55    55    ,    1234567
-       Q7   1 2 3 4    1 2 3 4      66    66    66    66         1234567
-       Q8   1 2 3 4    1 2 3 4      77    77    77    77
-       Q9   1 2 3 4    1 2 3 4      88    88    88    88
-                                    99    99    99    99
-
-    TODO: Update this part, add more examples like-
-        Q1  1 2 3 4
-
-        Q2  1 2 3 4
-        Q3  1 2 3 4
-
-        Q4  1 2 3 4
-        Q5  1 2 3 4
-
-        MCQ type (orient="H")-
-            [
-                [(q1,q2,q3),(q4,q5,q6)]
-                [(q7,q8,q9),(q10,q11,q12)]
-            ]
-
-        INT type (orient="V")-
-            [
-                [(q1d1,q1d2),(q2d1,q2d2),(q3d1,q3d2),(q4d1,q4d2)]
-            ]
-
-        ROLL type-
-            [
-                [(roll1,roll2,roll3,...,roll10)]
-            ]
-
-    """
-    rect = OVERRIDE_MERGER.merge(
-        {"orient": "V", "col_orient": "V", "emptyVal": global_empty_val}, rectParams
-    )
-
-    # case mapping
-    (q_type, orig, big_gaps, gaps, q_nos, vals, orient, col_orient, empty_val) = map(
-        rect.get,
-        [
-            "qType",
-            "orig",
-            "bigGaps",
-            "gaps",
-            "qNos",
-            "vals",
-            "orient",
-            "col_orient",  # todo: consume this
-            "emptyVal",
-        ],
-    )
-
-    grid_data = np.array(q_nos)
-    # print(grid_data.shape, grid_data)
-    if (
-        0 and len(grid_data.shape) != 3 or grid_data.size == 0
-    ):  # product of shape is zero
-        logger.error(
-            "Error(gen_grid): Invalid q_nos array given:", grid_data.shape, grid_data
+    if config.outputs.show_image_level <= 1:
+        # TODO: colorama this
+        log(
+            "\nTip: To see some awesome visuals, open config.json and increase 'show_image_level'"
         )
-        exit(32)
 
-    orig = np.array(orig)
+    # evaluate_correctness(out)
 
-    num_qs_max = max([max([len(qb) for qb in row]) for row in grid_data])
+    # Use this data to train as +ve feedback
+    # if config.outputs.show_image_level >= 0 and files_counter > 10:
+    #     for x in [thresholdCircles]:#,badThresholds,veryBadPoints, mws, mbs]:
+    #         if(x != []):
+    #             x = pd.DataFrame(x)
+    #             print(x.describe())
+    #             plt.plot(range(len(x)), x)
+    #             plt.title("Mystery Plot")
+    #             plt.show()
+    #         else:
+    #             print(x)
 
-    num_dims = [num_qs_max, len(vals)]
 
-    q_blocks = []
+# Evaluate accuracy based on OMRDataset file generated through moderation
+# portal on the same set of images
+def evaluate_correctness(out):
+    # TODO: test_file WOULD BE RELATIVE TO INPUT SUBDIRECTORY NOW-
+    test_file = "inputs/OMRDataset.csv"
+    if os.path.exists(test_file):
+        logger.info("\nStarting evaluation for: " + test_file)
 
-    # **Simple is powerful**
-    # _h and _v are named with respect to orient == "H", reverse their meaning
-    # when orient = "V"
-    _h, _v = (0, 1) if (orient == "H") else (1, 0)
+        test_cols = ["file_id"] + out.resp_cols
+        y_df = (
+            pd.read_csv(test_file, dtype=str)[test_cols]
+            .replace(np.nan, "", regex=True)
+            .set_index("file_id")
+        )
 
-    # print(orig, num_dims, grid_data.shape, grid_data)
-    # orient is also the direction of making q_blocks
-
-    # print(key, num_dims, orig, gaps, big_gaps, orig_gap )
-    q_start = orig.copy()
-
-    orig_gap = [0, 0]
-
-    # Usually single row
-    for row in grid_data:
-        q_start[_v] = orig[_v]
-
-        # Usually multiple qTuples
-        for q_tuple in row:
-            # Update num_dims and origGaps
-            num_dims[0] = len(q_tuple)
-            # big_gaps is indep of orientation
-            orig_gap[0] = big_gaps[0] + (num_dims[_v] - 1) * gaps[_h]
-            orig_gap[1] = big_gaps[1] + (num_dims[_h] - 1) * gaps[_v]
-            # each q_tuple will have q_nos
-            q_block_dims = [
-                # width x height in pixels
-                gaps[0] * (num_dims[_v] - 1) + bubble_dimensions[_h],
-                gaps[1] * (num_dims[_h] - 1) + bubble_dimensions[_v],
-            ]
-            # WATCH FOR BLUNDER(use .copy()) - q_start was getting passed by
-            # reference! (others args read-only)
-            q_blocks.append(
-                gen_q_block(
-                    bubble_dimensions,
-                    q_block_dims,
-                    key,
-                    q_start.copy(),
-                    q_tuple,
-                    gaps,
-                    vals,
-                    q_type,
-                    orient,
-                    col_orient,
-                    empty_val,
+        if np.any(y_df.index.duplicated):
+            y_df_filtered = y_df.loc[~y_df.index.duplicated(keep="first")]
+            logger.warning(
+                "WARNING: Found duplicate File-ids in file %s. \
+                Removed %d rows from testing data. Rows remaining: %d"
+                % (
+                    test_file,
+                    y_df.shape[0] - y_df_filtered.shape[0],
+                    y_df_filtered.shape[0],
                 )
             )
-            # Goes vertically down first
-            q_start[_v] += orig_gap[_v]
-        q_start[_h] += orig_gap[_h]
-    return q_blocks
+            y_df = y_df_filtered
+
+        x_df = pd.DataFrame(out.OUTPUT_SET, dtype=str, columns=test_cols).set_index(
+            "file_id"
+        )
+        # print("x_df",x_df.head())
+        # print("\ny_df",y_df.head())
+        intersection = y_df.index.intersection(x_df.index)
+
+        # Checking if the merge is okay
+        if intersection.size == x_df.index.size:
+            y_df = y_df.loc[intersection]
+            x_df["TestResult"] = (x_df == y_df).all(axis=1).astype(int)
+            logger.info(x_df.head())
+            logger.info(
+                "\n\t Accuracy on the %s Dataset: %.6f"
+                % (test_file, (x_df["TestResult"].sum() / x_df.shape[0]))
+            )
+        else:
+            logger.error(
+                "\nERROR: Insufficient Testing Data: Have you appended MultiMarked data yet?"
+            )
+            logger.error(
+                "Missing File-ids: ", list(x_df.index.difference(intersection))
+            )
+
+
+TIME_NOW_HRS = strftime("%I%p", localtime())
