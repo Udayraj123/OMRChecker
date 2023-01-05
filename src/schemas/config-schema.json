@@ -4,34 +4,51 @@
   "title": "Evaluation Schema",
   "description": "OMRChecker evaluation schema i.e. the marking scheme",
   "type": "object",
+  "additionalProperties": false,
   "properties": {
     "dimensions": {
-      "display_height": { "type": "integer" },
-      "display_width": { "type": "integer" },
-      "processing_height": { "type": "integer" },
-      "processing_width": { "type": "integer" }
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "display_height": { "type": "integer" },
+        "display_width": { "type": "integer" },
+        "processing_height": { "type": "integer" },
+        "processing_width": { "type": "integer" }
+      }
     },
     "threshold_params": {
-      "GAMMA_LOW": { "type": "number", "minimum": 0, "maximum": 1 },
-      "MIN_GAP": { "type": "integer", "minimum": 10, "maximum": 100 },
-      "MIN_JUMP": { "type": "integer", "minimum": 10, "maximum": 100 },
-      "CONFIDENT_SURPLUS": { "type": "integer", "minimum": 0, "maximum": 20 },
-      "JUMP_DELTA": { "type": "integer", "minimum": 10, "maximum": 100 },
-      "PAGE_TYPE_FOR_THRESHOLD": {
-        "enum": ["white", "black"],
-        "type": "string"
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "GAMMA_LOW": { "type": "number", "minimum": 0, "maximum": 1 },
+        "MIN_GAP": { "type": "integer", "minimum": 10, "maximum": 100 },
+        "MIN_JUMP": { "type": "integer", "minimum": 10, "maximum": 100 },
+        "CONFIDENT_SURPLUS": { "type": "integer", "minimum": 0, "maximum": 20 },
+        "JUMP_DELTA": { "type": "integer", "minimum": 10, "maximum": 100 },
+        "PAGE_TYPE_FOR_THRESHOLD": {
+          "enum": ["white", "black"],
+          "type": "string"
+        }
       }
     },
     "alignment_params": {
-      "match_col": { "type": "integer", "minimum": 0, "maximum": 1 },
-      "max_steps": { "type": "integer", "minimum": 1, "maximum": 100 },
-      "stride": { "type": "integer", "minimum": 1, "maximum": 10 },
-      "thickness": { "type": "integer", "minimum": 1, "maximum": 10 }
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "match_col": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "max_steps": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "stride": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "thickness": { "type": "integer", "minimum": 1, "maximum": 10 }
+      }
     },
     "outputs": {
-      "show_image_level": { "type": "integer", "minimum": 0, "maximum": 6 },
-      "save_image_level": { "type": "integer", "minimum": 0, "maximum": 6 },
-      "save_detections": { "type": "boolean" }
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "show_image_level": { "type": "integer", "minimum": 0, "maximum": 6 },
+        "save_image_level": { "type": "integer", "minimum": 0, "maximum": 6 },
+        "save_detections": { "type": "boolean" }
+      }
     }
   }
 }

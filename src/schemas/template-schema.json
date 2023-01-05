@@ -52,10 +52,7 @@
             "type": "object"
           }
         },
-        "required": [
-          "name",
-          "options"
-        ],
+        "required": ["name", "options"],
         "allOf": [
           {
             "if": {
@@ -69,17 +66,8 @@
               "properties": {
                 "options": {
                   "type": "object",
-                  "propertyNames": {
-                    "enum": [
-                      "relativePath",
-                      "min_matching_threshold",
-                      "max_matching_variation",
-                      "marker_rescale_range",
-                      "marker_rescale_steps",
-                      "apply_erode_subtract",
-                      "sheetToMarkerWidthRatio"
-                    ]
-                  },
+                  "additionalProperties": false,
+
                   "properties": {
                     "relativePath": {
                       "type": "string"
@@ -101,7 +89,7 @@
                         }
                       ],
                       "maxItems": 2,
-                      "minItems":2
+                      "minItems": 2
                     },
                     "marker_rescale_steps": {
                       "type": "integer"
@@ -113,9 +101,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "relativePath"
-                  ]
+                  "required": ["relativePath"]
                 }
               }
             }
@@ -132,14 +118,8 @@
               "properties": {
                 "options": {
                   "type": "object",
-                  "propertyNames": {
-                    "enum": [
-                      "reference",
-                      "maxFeatures",
-                      "goodMatchPercent",
-                      "2d"
-                    ]
-                  },
+                  "additionalProperties": false,
+
                   "properties": {
                     "reference": {
                       "type": "string"
@@ -154,9 +134,7 @@
                       "type": "boolean"
                     }
                   },
-                  "required": [
-                    "reference"
-                  ]
+                  "required": ["reference"]
                 }
               }
             }
@@ -173,13 +151,8 @@
               "properties": {
                 "options": {
                   "type": "object",
-                  "propertyNames": {
-                    "enum": [
-                      "low",
-                      "high",
-                      "gamma"
-                    ]
-                  },
+                  "additionalProperties": false,
+
                   "properties": {
                     "low": {
                       "type": "number",
@@ -213,11 +186,8 @@
               "properties": {
                 "options": {
                   "type": "object",
-                  "propertyNames": {
-                    "enum": [
-                      "kSize"
-                    ]
-                  },
+                  "additionalProperties": false,
+
                   "properties": {
                     "kSize": {
                       "type": "integer"
@@ -239,12 +209,8 @@
               "properties": {
                 "options": {
                   "type": "object",
-                  "propertyNames": {
-                    "enum": [
-                      "kSize",
-                      "sigmaX"
-                    ]
-                  },
+                  "additionalProperties": false,
+
                   "properties": {
                     "kSize": {
                       "type": "array",
@@ -279,11 +245,8 @@
               "properties": {
                 "options": {
                   "type": "object",
-                  "propertyNames": {
-                    "enum": [
-                      "morphKernel"
-                    ]
-                  },
+                  "additionalProperties": false,
+
                   "properties": {
                     "morphKernel": {
                       "type": "array",

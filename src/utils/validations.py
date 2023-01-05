@@ -29,7 +29,7 @@ for schema_name in SCHEMA_NAMES:
 
 def parse_validation_error(error):
     return (
-        (error.path[0] if len(error.path) > 0 else "root"),
+        (error.path[0] if len(error.path) > 0 else "root key"),
         error.validator,
         error.message,
     )

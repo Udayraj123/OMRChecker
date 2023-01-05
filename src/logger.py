@@ -5,6 +5,7 @@ from rich.logging import RichHandler
 
 FORMAT = "%(message)s"
 
+# todo: pickup logging level from config.json
 logging.basicConfig(
     level=logging.INFO,
     format="%(message)s",
