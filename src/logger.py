@@ -1,6 +1,7 @@
 import logging
 from typing import Union
 
+from rich.console import Console
 from rich.logging import RichHandler
 
 FORMAT = "%(message)s"
@@ -64,3 +65,4 @@ class Logger:
 
 
 logger = Logger(__name__)
+console = Console()

@@ -3,7 +3,7 @@ from copy import deepcopy
 from deepmerge import Merger
 from dotmap import DotMap
 
-from src.defaults import CONFIG_DEFAULTS, EVALUATION_DEFAULTS, TEMPLATE_DEFAULTS
+from src.defaults import CONFIG_DEFAULTS, TEMPLATE_DEFAULTS
 from src.logger import logger
 from src.utils.file import load_json
 from src.utils.validations import (
@@ -52,16 +52,6 @@ def get_concatenated_response(omr_response, template):
     return concatenated_response
 
 
-def evaluate_concatenated_response(
-    concatenated_response, evaluation_config, should_explain_scoring=False
-):
-    if should_explain_scoring:
-        pass
-    # todo: code for evaluation
-
-    return 0
-
-
 def open_config_with_defaults(config_path):
     user_tuning_config = load_json(config_path)
     user_tuning_config = OVERRIDE_MERGER.merge(
@@ -81,7 +71,9 @@ def open_template_with_defaults(template_path):
     user_template = load_json(template_path)
     user_template = OVERRIDE_MERGER.merge(deepcopy(TEMPLATE_DEFAULTS), user_template)
     is_valid = validate_template_json(user_template, template_path)
-
+    # TODO: also validate these
+    # - All qNos in template are unique
+    # - template bubbles don't overflow the image (already in instance)
     if is_valid:
         return user_template
     else:
@@ -89,12 +81,11 @@ def open_template_with_defaults(template_path):
         exit()
 
 
-def open_evaluation_with_defaults(evaluation_path):
+def open_evaluation_with_validation(evaluation_path, template, curr_dir):
     user_evaluation_config = load_json(evaluation_path)
-    user_evaluation_config = OVERRIDE_MERGER.merge(
-        deepcopy(EVALUATION_DEFAULTS), user_evaluation_config
+    is_valid = validate_evaluation_json(
+        user_evaluation_config, evaluation_path, template, curr_dir
     )
-    is_valid = validate_evaluation_json(user_evaluation_config, evaluation_path)
 
     if is_valid:
         return user_evaluation_config

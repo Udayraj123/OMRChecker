@@ -13,24 +13,19 @@ from pathlib import Path
 from time import time
 
 import cv2
-import numpy as np
 import pandas as pd
 
 from src import constants
 from src.core import ImageInstanceOps
-from src.defaults import CONFIG_DEFAULTS, EVALUATION_DEFAULTS
+from src.defaults import CONFIG_DEFAULTS
+from src.evaluation import EvaluationConfig, evaluate_concatenated_response
 from src.logger import logger
 from src.processors.manager import ProcessorManager
 from src.template import Template
 from src.utils.file import Paths, setup_dirs_for_paths, setup_outputs_for_template
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils, Stats
-from src.utils.parsing import (
-    evaluate_concatenated_response,
-    get_concatenated_response,
-    open_config_with_defaults,
-    open_evaluation_with_defaults,
-)
+from src.utils.parsing import get_concatenated_response, open_config_with_defaults
 
 # Load processors
 PROCESSOR_MANAGER = ProcessorManager()
@@ -48,7 +43,7 @@ def process_dir(
     args,
     template=None,
     tuning_config=CONFIG_DEFAULTS,
-    evaluation_config=EVALUATION_DEFAULTS,
+    evaluation_config=None,
     image_instance_ops=None,
 ):
     # Update local tuning_config (in current recursion stack)
@@ -67,10 +62,9 @@ def process_dir(
             PROCESSOR_MANAGER.processors,
         )
 
-    evaluation_config = {}
     local_evaluation_path = curr_dir.joinpath(constants.EVALUATION_FILENAME)
     if os.path.exists(local_evaluation_path):
-        evaluation_config = open_evaluation_with_defaults(local_evaluation_path)
+        evaluation_config = EvaluationConfig(local_evaluation_path, template, curr_dir)
 
     # Look for subdirectories for processing
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
@@ -244,7 +238,15 @@ def process_files(
 
         # concatenate roll nos, set unmarked responses, etc
         omr_response = get_concatenated_response(response_dict, template)
-        logger.info(f"Read Response: \n{omr_response}")
+
+        if evaluation_config is None or not evaluation_config.should_explain_scoring:
+            logger.info(f"Read Response: \n{omr_response}")
+
+        score = 0
+        if evaluation_config is not None:
+            score = evaluate_concatenated_response(omr_response, evaluation_config)
+            logger.info(f"Final score: {round(score, 2)} ")
+
         if tuning_config.outputs.show_image_level >= 2:
             InteractionUtils.show(
                 f"Final Marked Bubbles : {file_id}",
@@ -255,9 +257,6 @@ def process_files(
                 1,
                 config=tuning_config,
             )
-
-        # This evaluates and returns the score attribute
-        score = evaluate_concatenated_response(omr_response, evaluation_config)
 
         resp_array = []
         for k in outputs_namespace.resp_cols:
@@ -353,78 +352,6 @@ def print_stats(start_time, files_counter, tuning_config):
     #             print(x)
 
 
-# Evaluate accuracy based on OMRDataset file generated through review
-# portal on the same set of images
-def evaluate_correctness(outputs_namespace):
-    # TODO: test_file WOULD BE RELATIVE TO INPUT SUBDIRECTORY NOW-
-    test_file = "inputs/OMRDataset.csv"
-    if os.path.exists(test_file):
-        logger.info(f"Starting evaluation for: '{test_file}'")
-
-        test_cols = ["file_id"] + outputs_namespace.resp_cols
-        y_df = (
-            pd.read_csv(test_file, dtype=str)[test_cols]
-            .replace(np.nan, "", regex=True)
-            .set_index("file_id")
-        )
-
-        if np.any(y_df.index.duplicated):
-            y_df_filtered = y_df.loc[~y_df.index.duplicated(keep="first")]
-            logger.warning(
-                f"WARNING: Found duplicate File-ids in file '{test_file}'. Removed {y_df.shape[0] - y_df_filtered.shape[0]} rows from testing data. Rows remaining: {y_df_filtered.shape[0]}"
-            )
-            y_df = y_df_filtered
-
-        x_df = pd.DataFrame(
-            outputs_namespace.OUTPUT_SET, dtype=str, columns=test_cols
-        ).set_index("file_id")
-        # print("x_df",x_df.head())
-        # print("\ny_df",y_df.head())
-        intersection = y_df.index.intersection(x_df.index)
-
-        # Checking if the merge is okay
-        if intersection.size == x_df.index.size:
-            y_df = y_df.loc[intersection]
-            x_df["TestResult"] = (x_df == y_df).all(axis=1).astype(int)
-            logger.info(x_df.head())
-            logger.info(
-                f"\n\t Accuracy on the {test_file} Dataset: {round((x_df['TestResult'].sum() / x_df.shape[0]),6)}"
-            )
-        else:
-            logger.error(
-                "\nERROR: Insufficient Testing Data: Have you appended MultiMarked data yet?"
-            )
-            logger.error(
-                f"Missing File-ids: {list(x_df.index.difference(intersection))}"
-            )
-
-
-def check_and_move(error_code, file_path, filepath2):
-    # print("Dummy Move:  "+file_path, " --> ",filepath2)
-
-    # TODO: fix file movement into error/multimarked/invalid etc again
-    STATS.files_not_moved += 1
-    return True
-
-    if not os.path.exists(file_path):
-        logger.warning(f"File already moved: {file_path}")
-        return False
-    if os.path.exists(filepath2):
-        logger.error(f"ERROR {error_code}: Duplicate file at {filepath2}")
-        return False
-
-    logger.info(f"Moved: {file_path} --> {filepath2}")
-    os.rename(file_path, filepath2)
-    STATS.files_moved += 1
-    return True
-
-
-def report(status, streak, scheme, q_no, marked, ans, prev_marks, curr_marks, marks):
-    logger.info(
-        f"{q_no}\t {status}\t {str(streak)}\t [{scheme}] \t {str(prev_marks)} + {str(curr_marks)} = {str(marks)}\t {str(marked)}\t {str(ans)}"
-    )
-
-
 # TODO: Refactor into new process flow.
 def preliminary_check():
     # filesCounter=0
@@ -448,3 +375,23 @@ def preliminary_check():
     #     print("ALL_BLACK",response_dict)
     #     show("Confirm : All bubbles are black",final_marked,1,1)
     pass
+
+
+def check_and_move(error_code, file_path, filepath2):
+    # print("Dummy Move:  "+file_path, " --> ",filepath2)
+
+    # TODO: fix file movement into error/multimarked/invalid etc again
+    STATS.files_not_moved += 1
+    return True
+
+    if not os.path.exists(file_path):
+        logger.warning(f"File already moved: {file_path}")
+        return False
+    if os.path.exists(filepath2):
+        logger.error(f"ERROR {error_code}: Duplicate file at {filepath2}")
+        return False
+
+    logger.info(f"Moved: {file_path} --> {filepath2}")
+    os.rename(file_path, filepath2)
+    STATS.files_moved += 1
+    return True

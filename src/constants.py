@@ -7,27 +7,12 @@
 
 """
 
-import os
-
 from dotmap import DotMap
-
-# Paths
-CURRENT_MODULE_DIR = os.path.dirname(__file__)
-SCHEMAS_PATH = os.path.join(CURRENT_MODULE_DIR, "schemas")
 
 # Filenames
 TEMPLATE_FILENAME = "template.json"
 EVALUATION_FILENAME = "evaluation.json"
 CONFIG_FILENAME = "config.json"
-
-SCHEMA_NAMES = DotMap(
-    {
-        "template": "template",
-        "evaluation": "evaluation",
-        "config": "config",
-    },
-    _dynamic=False,
-)
 
 #
 ERROR_CODES = DotMap(

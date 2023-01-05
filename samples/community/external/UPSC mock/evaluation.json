@@ -1,9 +1,0 @@
-{
-  "source_type": "csv",
-  "options": {
-    "answer_key_path": "answer_key.csv"
-  },
-  "marking_scheme": {
-    "default": { "correct": "2", "incorrect": "-1/3", "unmarked": "0" }
-  }
-}
