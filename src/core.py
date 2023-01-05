@@ -255,13 +255,36 @@ def preliminary_check():
     #     print("ALL_BLACK",response_dict)
     #     show("Confirm : All bubbles are black",final_marked,1,1)
 
+def update_template(local_template_path,path,args,curr_dir,root_dir):
+    template = Template(local_template_path, PROCESSOR_MANAGER.processors)
+    paths = constants.Paths(Path(args["output_dir"] + "/CheckedOMRs/" + path, curr_dir.relative_to(root_dir)))
+    setup_dirs(paths)
+    out = setup_output(paths, template)
+    return template,out
+
+
+def TemplateBarcode(in_omr, template,out,args,curr_dir,root_dir):
+    for pre_processor in template.TemplateByBarcode:
+        save_dir = out.paths.save_marked_dir
+        logger.info(pre_processor)
+        data,output_sorting = pre_processor.apply_filter(in_omr, args, save_dir)
+        path = data
+        data_name = 'template/'+str(data[:-1]) + '.json'
+        local_template_path = root_dir.joinpath(data_name)
+        logger.info(local_template_path)
+        if os.path.exists(local_template_path):
+            template,out_updated=update_template(local_template_path,path,args,curr_dir,root_dir)
+            if output_sorting:
+                return template,out_updated
+    return template,out
+
 
 # TODO: take a look at 'out.paths'
 def process_files(omr_files, template, args, out,curr_dir,root_dir):
     start_time = int(time())
     files_counter = 0
     STATS.files_not_moved = 0
-
+    temp_template=template
     for file_path in omr_files:
         files_counter += 1
 
@@ -288,29 +311,24 @@ def process_files(omr_files, template, args, out,curr_dir,root_dir):
             config.dimensions.processing_width,
             config.dimensions.processing_height,
         )
-        logger.info(template)
-        data=''
-        for i,pre_processor in enumerate(template.pre_processors):
-            logger.info(template.name)
-            if template.name[i]=='ReadBarcode':
-                save_dir = out.paths.save_marked_dir
-                data = pre_processor.apply_filter(in_omr, args, save_dir)
-                path=data
-                data_name=str(data[:-1]) + '.json'
-                local_template_path = curr_dir.joinpath(data_name)
-                if os.path.exists(local_template_path):
-                    template = Template(local_template_path, PROCESSOR_MANAGER.processors)
-                    paths = constants.Paths(Path(args["output_dir"]+"/CheckedOMRs/"+ path, curr_dir.relative_to(root_dir)))
-                    setup_dirs(paths)
-                    out=setup_output(paths,template)
-                break
-
-
+        if template.TemplateByBarcode!=[]:
+            template,out    =TemplateBarcode(in_omr, template,out,args,curr_dir,root_dir)
+        # for pre_processor in template.TemplateByBarcode:
+        #     save_dir = out.paths.save_marked_dir
+        #     logger.info(pre_processor)
+        #     data = pre_processor.apply_filter(in_omr, args, save_dir)
+        #     path=data
+        #     data_name=str(data[:-1]) + '.json'
+        #     local_template_path = curr_dir.joinpath(data_name)
+        #     if os.path.exists(local_template_path):
+        #         template = Template(local_template_path, PROCESSOR_MANAGER.processors)
+        #         paths = constants.Paths(Path(args["output_dir"]+"/CheckedOMRs/"+ path, curr_dir.relative_to(root_dir)))
+        #         setup_dirs(paths)
+        #         out=setup_output(paths,template)
+        #         logger.info(template)
 
         # run pre_processors in sequence
         for i,pre_processor in enumerate(template.pre_processors):
-            logger.info(template.name)
-            if template.name[i]!='ReadBarcode':
                 logger.info(pre_processor)
                 in_omr = pre_processor.apply_filter(in_omr, args)
 
@@ -342,11 +360,13 @@ def process_files(omr_files, template, args, out,curr_dir,root_dir):
         # uniquify
         file_id = str(file_name)
         save_dir = out.paths.save_marked_dir
+
+        logger.info(save_dir)
         response_dict, final_marked, multi_marked, _ = MainOperations.read_response(
             template,
             image=in_omr,
             name=file_id,
-            save_dir=save_dir+data,
+            save_dir=save_dir,
             auto_align=args["autoAlign"],
         )
 
@@ -375,10 +395,12 @@ def process_files(omr_files, template, args, out,curr_dir,root_dir):
         for k in out.resp_cols:
             resp_array.append(resp[k])
 
+
+
         out.OUTPUT_SET.append([file_name] + resp_array)
         # logger.info([file_name] + resp_array)
 
-        # template = temp_template
+        template = temp_template
         # TODO: Add roll number validation here
         if multi_marked == 0:
             STATS.files_not_moved += 1
