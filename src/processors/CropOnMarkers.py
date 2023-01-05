@@ -167,13 +167,13 @@ class CropOnMarkers(ImagePreprocessor):
                 )
                 if config.outputs.show_image_level >= 1:
                     InteractionUtils.show(
-                        "no_pts_" + args["current_file"].name,
+                        f"no_pts_{args['current_file'].name}",
                         image_eroded_sub,
                         0,
                         config=config,
                     )
                     InteractionUtils.show(
-                        "res_Q" + str(k + 1) + " (" + str(max_t) + ")",
+                        f"res_Q{str(k + 1)} ({str(max_t)})",
                         res,
                         1,
                         config=config,
@@ -198,7 +198,7 @@ class CropOnMarkers(ImagePreprocessor):
             )
             centres.append([pt[0] + w / 2, pt[1] + _h / 2])
             sum_t += max_t
-        logger.info("Optimal Scale:", best_scale)
+        logger.info(f"Optimal Scale: {best_scale}")
         # analysis data
         self.threshold_circles.append(sum_t / 4)
 
@@ -219,7 +219,7 @@ class CropOnMarkers(ImagePreprocessor):
             image_eroded_sub[:, -5:] = 0
             h_stack = np.hstack((image_eroded_sub, image))
             InteractionUtils.show(
-                "Warped: " + args["current_file"].name,
+                f"Warped: {args['current_file'].name}",
                 ImageUtils.resize_util(
                     h_stack, int(config.dimensions.display_width * 1.6)
                 ),

@@ -59,6 +59,7 @@ def process_dir(
     # Update local template (in current recursion stack)
     local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
     if os.path.exists(local_template_path):
+        # todo: consider moving template inside image_instance_ops as an attribute
         image_instance_ops = ImageInstanceOps(tuning_config)
         template = Template(
             local_template_path,
@@ -105,16 +106,15 @@ def process_dir(
             "------------------------------------------------------------------"
         )
         logger.info(f'Processing directory "{curr_dir}" with settings- ')
-        logger.info("\tTotal images        : %d" % (len(omr_files)))
+        logger.info(f"\t{'Total images':<22}: {len(omr_files)}")
         logger.info(
-            "\tCropping Enabled    : " + str("CropOnMarkers" in template.pre_processors)
+            f"\t{'Cropping Enabled':<22}: {str('CropOnMarkers' in template.pre_processors)}"
         )
-        logger.info("\tAuto Alignment      : " + str(args_local["autoAlign"]))
-        logger.info("\tUsing Template      : " + str(template))
-        # Print options
-        for pp in template.pre_processors:
-            logger.info(f"\tUsing pre-processor : {pp.__class__.__name__:13}")
-
+        logger.info(f"\t{'Auto Alignment':<22}: {str(args_local['autoAlign'])}")
+        logger.info(f"\t{'Using Template':<22}: { str(template)}")
+        logger.info(
+            f"\t{'Using pre-processors':<22}: {[pp.__class__.__name__ for pp in template.pre_processors]}"
+        )
         logger.info("")
 
         setup_dirs_for_paths(paths)
@@ -247,7 +247,7 @@ def process_files(
         logger.info(f"Read Response: \n{omr_response}")
         if tuning_config.outputs.show_image_level >= 2:
             InteractionUtils.show(
-                "Final Marked Bubbles : " + file_id,
+                f"Final Marked Bubbles : {file_id}",
                 ImageUtils.resize_util_h(
                     final_marked, int(tuning_config.dimensions.display_height * 1.3)
                 ),
@@ -279,16 +279,12 @@ def process_files(
                 header=False,
                 index=False,
             )
-            # Todo: Add score calculation from template.json
-            # print(
-            #     "[/%d] Graded with score: %.2f" % (files_counter, score),
-            #     "\t file_id: ",
-            #     file_id,
-            # )
+            # Todo: Add score calculation/explanations
+            # print(f"[/{files_counter}] Graded with score: {round(score, 2)}\t file_id: {file_id}")
             # print(files_counter,file_id,omr_response['Roll'],'score : ',score)
         else:
             # multi_marked file
-            logger.info("[%d] Found multi-marked file: %s" % (files_counter, file_id))
+            logger.info(f"[{files_counter}] Found multi-marked file: {file_id}")
             new_file_path = outputs_namespace.paths.multi_marked_dir + file_name
             if check_and_move(
                 constants.ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path
@@ -317,34 +313,25 @@ def print_stats(start_time, files_counter, tuning_config):
     time_checking = round(time() - start_time, 2) if files_counter else 1
     log = logger.info
     log("")
-    log("Total file(s) moved        : %d " % (STATS.files_moved))
-    log("Total file(s) not moved    : %d " % (STATS.files_not_moved))
+    log(f"{'Total file(s) moved':<27}: {STATS.files_moved}")
+    log(f"{'Total file(s) not moved':<27}: {STATS.files_not_moved}")
     log("--------------------------------")
     log(
-        "Total file(s) processed    : %d (%s)"
-        % (
-            files_counter,
-            "Sum Tallied!"
-            if files_counter == (STATS.files_moved + STATS.files_not_moved)
-            else "Not Tallying!",
-        )
+        f"{'Total file(s) processed':<27}: {files_counter} ({'Sum Tallied!' if files_counter == (STATS.files_moved + STATS.files_not_moved) else 'Not Tallying!'})"
     )
 
     if tuning_config.outputs.show_image_level <= 0:
         log(
-            "\nFinished Checking %d file(s) in %.1f seconds i.e. ~%.1f minute(s)."
-            % (files_counter, time_checking, time_checking / 60)
+            f"\nFinished Checking {files_counter} file(s) in {round(time_checking, 1)} seconds i.e. ~{round(time_checking/60, 1)} minute(s)."
         )
         log(
-            "OMR Processing Rate  :\t ~ %.2f seconds/OMR"
-            % (time_checking / files_counter)
+            f"{'OMR Processing Rate':<27}:\t ~ {round(time_checking/files_counter,2)} seconds/OMR"
         )
         log(
-            "OMR Processing Speed :\t ~ %.2f OMRs/minute"
-            % ((files_counter * 60) / time_checking)
+            f"{'OMR Processing Speed':<27}:\t ~ {round((files_counter * 60) / time_checking, 2)} OMRs/minute"
         )
     else:
-        log("\nTotal script time :", time_checking, "seconds")
+        log(f"\n{'Total script time':<27}: {time_checking} seconds")
 
     if tuning_config.outputs.show_image_level <= 1:
         log(
@@ -372,7 +359,7 @@ def evaluate_correctness(outputs_namespace):
     # TODO: test_file WOULD BE RELATIVE TO INPUT SUBDIRECTORY NOW-
     test_file = "inputs/OMRDataset.csv"
     if os.path.exists(test_file):
-        logger.info("Starting evaluation for: " + test_file)
+        logger.info(f"Starting evaluation for: '{test_file}'")
 
         test_cols = ["file_id"] + outputs_namespace.resp_cols
         y_df = (
@@ -384,13 +371,7 @@ def evaluate_correctness(outputs_namespace):
         if np.any(y_df.index.duplicated):
             y_df_filtered = y_df.loc[~y_df.index.duplicated(keep="first")]
             logger.warning(
-                "WARNING: Found duplicate File-ids in file %s. \
-                Removed %d rows from testing data. Rows remaining: %d"
-                % (
-                    test_file,
-                    y_df.shape[0] - y_df_filtered.shape[0],
-                    y_df_filtered.shape[0],
-                )
+                f"WARNING: Found duplicate File-ids in file '{test_file}'. Removed {y_df.shape[0] - y_df_filtered.shape[0]} rows from testing data. Rows remaining: {y_df_filtered.shape[0]}"
             )
             y_df = y_df_filtered
 
@@ -407,15 +388,14 @@ def evaluate_correctness(outputs_namespace):
             x_df["TestResult"] = (x_df == y_df).all(axis=1).astype(int)
             logger.info(x_df.head())
             logger.info(
-                "\n\t Accuracy on the %s Dataset: %.6f"
-                % (test_file, (x_df["TestResult"].sum() / x_df.shape[0]))
+                f"\n\t Accuracy on the {test_file} Dataset: {round((x_df['TestResult'].sum() / x_df.shape[0]),6)}"
             )
         else:
             logger.error(
                 "\nERROR: Insufficient Testing Data: Have you appended MultiMarked data yet?"
             )
             logger.error(
-                "Missing File-ids: ", list(x_df.index.difference(intersection))
+                f"Missing File-ids: {list(x_df.index.difference(intersection))}"
             )
 
 
@@ -441,16 +421,7 @@ def check_and_move(error_code, file_path, filepath2):
 
 def report(status, streak, scheme, q_no, marked, ans, prev_marks, curr_marks, marks):
     logger.info(
-        "%s \t %s \t\t %s \t %s \t %s \t %s \t %s "
-        % (
-            q_no,
-            status,
-            str(streak),
-            "[" + scheme + "] ",
-            (str(prev_marks) + " + " + str(curr_marks) + " =" + str(marks)),
-            str(marked),
-            str(ans),
-        )
+        f"{q_no}\t {status}\t {str(streak)}\t [{scheme}] \t {str(prev_marks)} + {str(curr_marks)} = {str(marks)}\t {str(marked)}\t {str(ans)}"
     )
 
 

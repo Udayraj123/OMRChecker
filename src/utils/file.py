@@ -47,7 +47,7 @@ def setup_outputs_for_template(paths, template):
 
     for file_key, file_name in ns.filesMap.items():
         if not os.path.exists(file_name):
-            logger.info("Note: Created new file: %s" % (file_name))
+            logger.info(f"Note: Created new file: '{file_name}'")
             # moved handling of files to pandas csv writer
             ns.files_obj[file_key] = file_name
             # Create Header Columns
@@ -59,7 +59,7 @@ def setup_outputs_for_template(paths, template):
                 index=False,
             )
         else:
-            logger.info("Present : appending to %s" % (file_name))
+            logger.info(f"Present : appending to '{file_name}'")
             ns.files_obj[file_key] = open(file_name, "a")
 
     return ns
@@ -79,22 +79,22 @@ def setup_dirs_for_paths(paths):
     logger.info("Checking Directories...")
     for _dir in [paths.save_marked_dir]:
         if not os.path.exists(_dir):
-            logger.info("Created : " + _dir)
+            logger.info(f"Created : {_dir}")
             os.makedirs(_dir)
-            os.mkdir(_dir + "/stack")
-            os.mkdir(_dir + "/_MULTI_")
-            os.mkdir(_dir + "/_MULTI_" + "/stack")
+            os.mkdir(f"{_dir}/stack")
+            os.mkdir(f"{_dir}/_MULTI_")
+            os.mkdir(f"{_dir}/_MULTI_/stack")
         # else:
-        #     logger.info("Present : " + _dir)
+        #     logger.info(f"Present : {_dir}")
 
     for _dir in [paths.manual_dir, paths.results_dir]:
         if not os.path.exists(_dir):
-            logger.info("Created : " + _dir)
+            logger.info(f"Created : {_dir}")
             os.makedirs(_dir)
         # else:
-        #     logger.info("Present : " + _dir)
+        #     logger.info(f"Present :{_dir}")
 
     for _dir in [paths.multi_marked_dir, paths.errors_dir]:
         if not os.path.exists(_dir):
-            logger.info("Created : " + _dir)
+            logger.info(f"Created : {_dir}")
             os.makedirs(_dir)

@@ -50,11 +50,11 @@ class ImageInstanceOps:
             )
             if save_dir is not None:
                 ImageUtils.save_img(
-                    save_dir + "stack/" + name + "_" + str(key) + "_stack.jpg", result
+                    f"{save_dir}stack/{name}_{str(key)}_stack.jpg", result
                 )
             else:
                 InteractionUtils.show(
-                    name + "_" + str(key), result, pause, 0, config=config
+                    f"{name}_{str(key)}", result, pause, 0, config=config
                 )
 
     def put_label(self, img, label, size):
@@ -106,8 +106,7 @@ class ImageInstanceOps:
                         rect = [y, y + box_h, x, x + box_w]
                         cv2.putText(
                             final_align,
-                            "%d"
-                            % (cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]),
+                            f"{cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]}",
                             (rect[2] + 2, rect[0] + (box_h * 2) // 3),
                             cv2.FONT_HERSHEY_SIMPLEX,
                             0.6,
@@ -120,7 +119,7 @@ class ImageInstanceOps:
                 )
                 cv2.putText(
                     final_align,
-                    "%s" % (q_block.key),
+                    f"{q_block.key}",
                     (int(s[0] + d[0] - text_in_px[0][0]), int(s[1] - text_in_px[0][1])),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     constants.TEXT_SIZE,
@@ -346,8 +345,7 @@ class ImageInstanceOps:
             # Processing copies
             transp_layer = img.copy()
             final_marked = img.copy()
-            # put_label(final_marked,"Crop Size: " +
-            #   str(origDim[0])+"x"+str(origDim[1]) + " "+name, size=1)
+            # put_label(final_marked, f"Crop Size: {str(origDim[0])}x{str(origDim[1])} {name}", size=1)
 
             morph = img.copy()
             self.append_save_img(3, morph)
@@ -542,11 +540,7 @@ class ImageInstanceOps:
             global_thr, _, _ = self.get_global_threshold(all_q_vals, looseness=4)
 
             logger.info(
-                "Thresholding:\t\t global_thr: ",
-                round(global_thr, 2),
-                "\tglobal_std_THR: ",
-                round(global_std_thresh, 2),
-                "\t(Looks like a Xeroxed OMR)" if (global_thr == 255) else "",
+                f"Thresholding:\t\t global_thr: {round(global_thr, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_thr == 255) else ''}"
             )
             # plt.show()
             # hist = getPlotImg()
@@ -671,7 +665,7 @@ class ImageInstanceOps:
 
                     if config.outputs.show_image_level >= 5:
                         if key in all_c_box_vals:
-                            q_nums[key].append(key[:2] + "_c" + str(block_q_strip_no))
+                            q_nums[key].append(f"{key[:2]}_c{str(block_q_strip_no)}")
                             all_c_box_vals[key].append(
                                 all_q_strip_arrs[total_q_strip_no]
                             )

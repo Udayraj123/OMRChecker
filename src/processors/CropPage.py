@@ -143,7 +143,7 @@ class CropPage(ImagePreprocessor):
             )
             return None
 
-        logger.info("Found page corners: \t", sheet.tolist())
+        logger.info(f"Found page corners: \t {sheet.tolist()}")
 
         # Warp layer 1
         image = ImageUtils.four_point_transform(image, sheet)

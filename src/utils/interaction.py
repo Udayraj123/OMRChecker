@@ -43,7 +43,7 @@ class InteractionUtils:
     def show(name, orig, pause=1, resize=False, reset_pos=None, config=None):
         image_metrics = InteractionUtils.image_metrics
         if orig is None:
-            logger.info(name, " NoneType image to show!")
+            logger.info(f"{name} - NoneType image to show!")
             if pause:
                 cv2.destroyAllWindows()
             return
@@ -81,9 +81,7 @@ class InteractionUtils:
 
         if pause:
             logger.info(
-                "Showing '"
-                + name
-                + "'\n\tPress Q on image to continue Press Ctrl + C in terminal to exit"
+                f"Showing '{name}'\n\tPress Q on image to continue Press Ctrl + C in terminal to exit"
             )
             wait_q()
             InteractionUtils.image_metrics.window_x = 0
