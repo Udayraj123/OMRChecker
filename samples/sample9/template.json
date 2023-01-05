@@ -1,0 +1,156 @@
+{
+    "Globals": {
+      "window_width": 2480,
+      "window_height": 3508,
+      "display_width": 2480,
+      "display_height": 3508
+    },
+    "dimensions": [
+      2480,
+      3508
+    ],
+    "bubbleDimensions": [
+      42,
+      42
+    ],
+    "TemplateByBarcode":[
+      {
+        "name": "ReadBarcode",
+        "options": {
+          "x1":680,
+          "x2":880,
+          "y1":90,
+          "y2":230,
+          "qr_to_output_directory":{
+            "this will contain papercode": "12345",
+            "error":"default"
+          },
+          "output_sorting":true
+        }
+      }
+    ],
+    "preProcessors": [
+      {
+        "name": "Levels",
+        "options": {
+          "low": 0.70,
+          "high": 0.8
+        }
+      },
+      {
+        "name": "CropPage",
+        "options": {
+          "morphKernel": [
+            10,
+            10
+          ]
+        }
+      }
+    ],
+    "concatenations": {
+    },
+    "singles": [],
+    "qBlocks": {
+      "Check1": {
+        "orig": [
+          2025,
+          1280
+        ],
+        "gaps": [
+          50,
+          50
+        ],
+        "bigGaps": [
+          20,
+          20
+        ],
+        "qNos": [
+          [
+            [
+              "check"
+            ]
+          ]
+        ],
+        "vals": [
+          "A"
+        ],
+        "orient": "V"
+      },
+      "Check2": {
+        "orig": [
+          283,
+          1280
+        ],
+        "gaps": [
+          50,
+          50
+        ],
+        "bigGaps": [
+          20,
+          20
+        ],
+        "qNos": [
+          [
+            [
+              "check"
+            ]
+          ]
+        ],
+        "vals": [
+          "N"
+        ],
+        "orient": "V"
+      },
+      "Stu": {
+        "orig": [
+          1636,
+          1280
+        ],
+        "gaps": [
+          50,
+          50
+        ],
+        "bigGaps": [
+          20,
+          20
+        ],
+        "qNos": [
+          [
+            [
+              "stu"
+            ]
+          ]
+        ],
+        "vals": [
+          "U",
+          "A",
+          "HT",
+          "GT"
+        ],
+        "orient": "V"
+      },
+      "Roll": {
+        "qType": "QTYPE_ROLL",
+        "orig": [
+          180,
+          1280
+        ],
+        "bigGaps": [
+          1105,
+          11
+        ],
+        "gaps": [
+          50.5,
+          50.5
+        ],
+        "qNos": [
+          [
+            [
+              "roll0"
+              
+            ]
+          ]
+        ]
+      }
+    }
+  }
