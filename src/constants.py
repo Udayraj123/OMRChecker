@@ -25,7 +25,8 @@ SCHEMA_NAMES = DotMap(
         "template": "template",
         "evaluation": "evaluation",
         "config": "config",
-    }
+    },
+    _dynamic=False,
 )
 
 #
@@ -33,7 +34,8 @@ ERROR_CODES = DotMap(
     {
         "MULTI_BUBBLE_WARN": 1,
         "NO_MARKER_ERR": 2,
-    }
+    },
+    _dynamic=False,
 )
 
 QTYPE_DATA = {

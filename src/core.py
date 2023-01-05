@@ -44,9 +44,7 @@ class ImageInstanceOps:
             result = ImageUtils.resize_util(
                 result,
                 min(
-                    len(ImageUtils.save_img_list[key])
-                    * config.dimensions.display_width
-                    // 3,
+                    len(self.save_img_list[key]) * config.dimensions.display_width // 3,
                     int(config.dimensions.display_width * 2.5),
                 ),
             )
@@ -55,7 +53,9 @@ class ImageInstanceOps:
                     save_dir + "stack/" + name + "_" + str(key) + "_stack.jpg", result
                 )
             else:
-                InteractionUtils.show(name + "_" + str(key), result, pause, 0)
+                InteractionUtils.show(
+                    name + "_" + str(key), result, pause, 0, config=config
+                )
 
     def put_label(self, img, label, size):
         config = self.tuning_config
@@ -66,9 +66,8 @@ class ImageInstanceOps:
         img[(pos[1] - size * 30) : (pos[1] + size * 2), :] = bg_val
         cv2.putText(img, label, pos, cv2.FONT_HERSHEY_SIMPLEX, size, clr, 3)
 
-    def draw_template_layout(
-        self, img, template, shifted=True, draw_qvals=False, border=-1
-    ):
+    @staticmethod
+    def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-1):
         img = ImageUtils.resize_util(
             img, template.dimensions[0], template.dimensions[1]
         )
@@ -172,7 +171,6 @@ class ImageInstanceOps:
                 "JUMP_DELTA",
             ],
         )
-        print(MIN_JUMP)
 
         global_default_threshold = (
             constants.GLOBAL_PAGE_THRESHOLD_WHITE
@@ -335,7 +333,7 @@ class ImageInstanceOps:
                 plt.show()
         return thr1
 
-    def read_response(self, template, image, name, save_dir=None, auto_align=False):
+    def read_omr_response(self, template, image, name, save_dir=None, auto_align=False):
         config = self.tuning_config
         try:
             img = image.copy()
@@ -368,7 +366,7 @@ class ImageInstanceOps:
                 morph = ImageUtils.normalize_util(morph)
                 self.append_save_img(3, morph)
                 if config.outputs.show_image_level >= 4:
-                    InteractionUtils.show("morph1", morph, 0, 1)
+                    InteractionUtils.show("morph1", morph, 0, 1, config)
 
             # Move them to data class if needed
             # Overlay Transparencies
@@ -397,10 +395,12 @@ class ImageInstanceOps:
                 morph_v = 255 - ImageUtils.normalize_util(morph_v)
 
                 if config.outputs.show_image_level >= 3:
-                    InteractionUtils.show("morphed_vertical", morph_v, 0, 1)
+                    InteractionUtils.show(
+                        "morphed_vertical", morph_v, 0, 1, config=config
+                    )
 
-                # InteractionUtils.show("morph1",morph,0,1)
-                # InteractionUtils.show("morphed_vertical",morph_v,0,1)
+                # InteractionUtils.show("morph1",morph,0,1,config=config)
+                # InteractionUtils.show("morphed_vertical",morph_v,0,1,config=config)
 
                 self.append_save_img(3, morph_v)
 
@@ -414,11 +414,13 @@ class ImageInstanceOps:
                 # morph_h = cv2.morphologyEx(morph, cv2.MORPH_OPEN, h_kernel, iterations=3)
                 # ret, morph_h = cv2.threshold(morph_h,200,200,cv2.THRESH_TRUNC)
                 # morph_h = 255 - normalize_util(morph_h)
-                # InteractionUtils.show("morph_h",morph_h,0,1)
+                # InteractionUtils.show("morph_h",morph_h,0,1,config=config)
                 # _, morph_h = cv2.threshold(morph_h,morph_thr,255,cv2.THRESH_BINARY)
                 # morph_h = cv2.erode(morph_h,  np.ones((5,5),np.uint8), iterations = 2)
                 if config.outputs.show_image_level >= 3:
-                    InteractionUtils.show("morph_thr_eroded", morph_v, 0, 1)
+                    InteractionUtils.show(
+                        "morph_thr_eroded", morph_v, 0, 1, config=config
+                    )
 
                 self.append_save_img(6, morph_v)
 
@@ -521,7 +523,7 @@ class ImageInstanceOps:
                     # _, _, _ = get_global_threshold(q_strip_vals, "QStrip Plot",
                     #   plot_show=False, sort_in_plot=True)
                     # hist = getPlotImg()
-                    # InteractionUtils.show("QStrip "+qbox_pts[0].q_no, hist, 0, 1)
+                    # InteractionUtils.show("QStrip "+qbox_pts[0].q_no, hist, 0, 1,config=config)
                     all_q_vals.extend(q_strip_vals)
                     # print(total_q_strip_no, qbox_pts[0].q_no, q_std_vals[len(q_std_vals)-1])
                     total_q_strip_no += 1
@@ -532,7 +534,7 @@ class ImageInstanceOps:
             )  # , "Q-wise Std-dev Plot", plot_show=True, sort_in_plot=True)
             # plt.show()
             # hist = getPlotImg()
-            # InteractionUtils.show("StdHist", hist, 0, 1)
+            # InteractionUtils.show("StdHist", hist, 0, 1,config=config)
 
             # Note: Plotting takes Significant times here --> Change Plotting args
             # to support show_image_level
@@ -548,11 +550,11 @@ class ImageInstanceOps:
             )
             # plt.show()
             # hist = getPlotImg()
-            # InteractionUtils.show("StdHist", hist, 0, 1)
+            # InteractionUtils.show("StdHist", hist, 0, 1,config=config)
 
             # if(config.outputs.show_image_level>=1):
             #     hist = getPlotImg()
-            #     InteractionUtils.show("Hist", hist, 0, 1)
+            #     InteractionUtils.show("Hist", hist, 0, 1,config=config)
             #     appendSaveImg(4,hist)
             #     appendSaveImg(5,hist)
             #     appendSaveImg(2,hist)
@@ -595,7 +597,7 @@ class ImageInstanceOps:
                     #  ):
                     #     st, end = qStrip
                     #     InteractionUtils.show("QStrip: "+key+"-"+str(block_q_strip_no),
-                    #     img[st[1] : end[1], st[0]+shift : end[0]+shift],0)
+                    #     img[st[1] : end[1], st[0]+shift : end[0]+shift],0,config=config)
 
                     for pt in qbox_pts:
                         # shifted
@@ -737,13 +739,13 @@ class ImageInstanceOps:
                 )
                 # [final_align.shape[1],0])
                 InteractionUtils.show(
-                    "Template Alignment Adjustment", final_align, 0, 0
+                    "Template Alignment Adjustment", final_align, 0, 0, config=config
                 )
 
             if config.outputs.save_detections and save_dir is not None:
                 if multi_roll:
                     save_dir = save_dir + "_MULTI_/"
-                self.save_img(save_dir + name, final_marked)
+                ImageUtils.save_img(save_dir + name, final_marked)
 
             self.append_save_img(2, final_marked)
 

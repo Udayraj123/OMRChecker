@@ -27,5 +27,6 @@ CONFIG_DEFAULTS = DotMap(
             "save_image_level": 2,
             "save_detections": True,
         },
-    }
+    },
+    _dynamic=False,
 )

@@ -23,13 +23,8 @@ from src.logger import logger
 from src.processors.manager import ProcessorManager
 from src.template import Template
 from src.utils.file import Paths, setup_dirs_for_paths, setup_outputs_for_template
-from src.utils.image import (
-    ImageUtils,
-    InteractionUtils,
-    draw_template_layout,
-    read_response,
-)
-from src.utils.interaction import Stats
+from src.utils.image import ImageUtils
+from src.utils.interaction import InteractionUtils, Stats
 from src.utils.parsing import (
     evaluate_concatenated_response,
     get_concatenated_response,
@@ -223,16 +218,23 @@ def process_files(
             continue
 
         if args["setLayout"]:
-            template_layout = draw_template_layout(
+            template_layout = image_instance_ops.draw_template_layout(
                 in_omr, template, shifted=False, border=2
             )
-            InteractionUtils.show("Template Layout", template_layout, 1, 1)
+            InteractionUtils.show(
+                "Template Layout", template_layout, 1, 1, config=tuning_config
+            )
             continue
 
         # uniquify
         file_id = str(file_name)
         save_dir = outputs_namespace.paths.save_marked_dir
-        response_dict, final_marked, multi_marked, _ = read_response(
+        (
+            response_dict,
+            final_marked,
+            multi_marked,
+            _,
+        ) = image_instance_ops.read_omr_response(
             template,
             image=in_omr,
             name=file_id,
@@ -251,6 +253,7 @@ def process_files(
                 ),
                 1,
                 1,
+                config=tuning_config,
             )
 
         # This evaluates and returns the score attribute

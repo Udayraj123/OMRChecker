@@ -98,7 +98,7 @@ class CropOnMarkers(ImagePreprocessor):
                 "\tTemplate matching too low! Consider rechecking preProcessors applied before this."
             )
             if config.outputs.show_image_level >= 1:
-                InteractionUtils.show("res", res, 1, 0)
+                InteractionUtils.show("res", res, 1, 0, config=config)
 
         if best_scale is None:
             logger.warning(
@@ -132,7 +132,7 @@ class CropOnMarkers(ImagePreprocessor):
         if best_scale is None:
             # TODO: Plot and see performance of marker_rescale_range
             if config.outputs.show_image_level >= 1:
-                InteractionUtils.show("Quads", image_eroded_sub)
+                InteractionUtils.show("Quads", image_eroded_sub, config=config)
             return None
 
         optimal_marker = ImageUtils.resize_util_h(
@@ -167,10 +167,16 @@ class CropOnMarkers(ImagePreprocessor):
                 )
                 if config.outputs.show_image_level >= 1:
                     InteractionUtils.show(
-                        "no_pts_" + args["current_file"].name, image_eroded_sub, 0
+                        "no_pts_" + args["current_file"].name,
+                        image_eroded_sub,
+                        0,
+                        config=config,
                     )
                     InteractionUtils.show(
-                        "res_Q" + str(k + 1) + " (" + str(max_t) + ")", res, 1
+                        "res_Q" + str(k + 1) + " (" + str(max_t) + ")",
+                        res,
+                        1,
+                        config=config,
                     )
                 return None
 
@@ -220,6 +226,7 @@ class CropOnMarkers(ImagePreprocessor):
                 0,
                 0,
                 [0, 0],
+                config=config,
             )
         # iterations : Tuned to 2.
         # image_eroded_sub = image_norm - cv2.erode(image_norm, kernel=np.ones((5,5)),iterations=2)

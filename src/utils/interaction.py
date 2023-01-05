@@ -39,19 +39,21 @@ class InteractionUtils:
 
     image_metrics = ImageMetrics()
 
-    def __init__(self, tuning_config=None):
-        self.tuning_config = tuning_config
-
-    def show(self, name, orig, pause=1, resize=False, reset_pos=None):
+    @staticmethod
+    def show(name, orig, pause=1, resize=False, reset_pos=None, config=None):
         image_metrics = InteractionUtils.image_metrics
-        config = self.tuning_config
         if orig is None:
             logger.info(name, " NoneType image to show!")
             if pause:
                 cv2.destroyAllWindows()
             return
         # origDim = orig.shape[:2]
-        img = ImageUtils.resize_util(orig, config.display_width) if resize else orig
+        if resize:
+            if not config:
+                raise Exception("config not provided for resizing the image to show")
+            img = ImageUtils.resize_util(orig, config.dimensions.display_width)
+        else:
+            img = orig
         cv2.imshow(name, img)
         if reset_pos:
             image_metrics.window_x = reset_pos[0]

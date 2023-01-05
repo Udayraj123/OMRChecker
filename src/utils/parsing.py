@@ -70,7 +70,8 @@ def open_config_with_defaults(config_path):
     is_valid = validate_config_json(user_tuning_config, config_path)
 
     if is_valid:
-        return DotMap(user_tuning_config)
+        # https://github.com/drgrib/dotmap/issues/74
+        return DotMap(user_tuning_config, _dynamic=False)
     else:
         logger.critical("\nExiting program")
         exit()

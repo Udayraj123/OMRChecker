@@ -34,7 +34,7 @@ class FeatureBasedAlignment(ImagePreprocessor):
         return [self.ref_path]
 
     def apply_filter(self, img, _args):
-
+        config = self.tuning_config
         # Convert images to grayscale
         # im1Gray = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
         # im2Gray = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
@@ -58,11 +58,11 @@ class FeatureBasedAlignment(ImagePreprocessor):
         matches = matches[:num_good_matches]
 
         # Draw top matches
-        if self.tuning_config.outputs.show_image_level > 2:
+        if config.outputs.show_image_level > 2:
             im_matches = cv2.drawMatches(
                 img, from_keypoints, self.ref_img, self.to_keypoints, matches, None
             )
-            InteractionUtils.show("Aligning", im_matches, resize=True)
+            InteractionUtils.show("Aligning", im_matches, resize=True, config=config)
 
         # Extract location of good matches
         points1 = np.zeros((len(matches), 2), dtype=np.float32)
