@@ -100,7 +100,7 @@
                       "type": "integer"
                     },
                     "apply_erode_subtract": {
-                      "type": "boolean"
+                      "type": "integer"
                     },
                     "sheetToMarkerWidthRatio": {
                       "type": "number"
@@ -274,7 +274,8 @@
                   "type": "object",
                   "propertyNames": {
                     "enum": [
-                      "morphKernel"
+                      "morphKernel",
+                      "is_ReadBarcode"
                     ]
                   },
                   "properties": {
