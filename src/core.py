@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 
 from src import constants
+from src.utils.imgutils import ImageUtils
 
 # TODO: use open_config_with_defaults after making a Config class.
 from src.config import CONFIG_DEFAULTS as config
@@ -69,7 +70,6 @@ def process_dir(root_dir, curr_dir, args, template=None):
     # look for images in current dir to process
     exts = ("*.png", "*.jpg")
     omr_files = sorted([f for ext in exts for f in curr_dir.glob(ext)])
-    logger.info("path =", paths)
 
     # Exclude images (take union over all pre_processors)
     excluded_files = []
@@ -257,25 +257,26 @@ def preliminary_check():
 
 def update_template(local_template_path,path,args,curr_dir,root_dir):
     template = Template(local_template_path, PROCESSOR_MANAGER.processors)
-    paths = constants.Paths(Path(args["output_dir"] + "/CheckedOMRs/" + path, curr_dir.relative_to(root_dir)))
+    paths = constants.Paths(Path(args["output_dir"] + "/CheckedOMRs/" + path, root_dir.relative_to(root_dir)))
     setup_dirs(paths)
-    out = setup_output(paths, template)
+    out=setup_output(paths, template)
     return template,out
 
 
-def TemplateBarcode(in_omr, template,out,args,curr_dir,root_dir):
+def TemplateBarcode(in_omr, template,out,file_name,args,curr_dir,root_dir):
     for pre_processor in template.TemplateByBarcode:
         save_dir = out.paths.save_marked_dir
-        logger.info(pre_processor)
-        data,output_sorting = pre_processor.apply_filter(in_omr, args, save_dir)
+        data,input_sorting = pre_processor.apply_filter(in_omr, args, save_dir)
         path = data
-        data_name = 'template/'+str(data[:-1]) + '.json'
+        data_name = 'configs/'+str(data[:-1]) + '.json'
         local_template_path = root_dir.joinpath(data_name)
-        logger.info(local_template_path)
         if os.path.exists(local_template_path):
-            template,out_updated=update_template(local_template_path,path,args,curr_dir,root_dir)
-            if output_sorting:
-                return template,out_updated
+            template,out=update_template(local_template_path,path,args,curr_dir,root_dir)
+        if input_sorting:
+            save=data[:-1]+'_save/'
+            path_1 = save_dir + save + str(file_name)
+            ImageUtils.save_img(path_1,in_omr)
+
     return template,out
 
 
@@ -311,25 +312,15 @@ def process_files(omr_files, template, args, out,curr_dir,root_dir):
             config.dimensions.processing_width,
             config.dimensions.processing_height,
         )
+        out_1=out
+        for i,pre_processor in enumerate(template.pre_processors):
+            if template.name[i]=='CropPage':
+                in_omr = pre_processor.apply_filter(in_omr, args)
         if template.TemplateByBarcode!=[]:
-            template,out    =TemplateBarcode(in_omr, template,out,args,curr_dir,root_dir)
-        # for pre_processor in template.TemplateByBarcode:
-        #     save_dir = out.paths.save_marked_dir
-        #     logger.info(pre_processor)
-        #     data = pre_processor.apply_filter(in_omr, args, save_dir)
-        #     path=data
-        #     data_name=str(data[:-1]) + '.json'
-        #     local_template_path = curr_dir.joinpath(data_name)
-        #     if os.path.exists(local_template_path):
-        #         template = Template(local_template_path, PROCESSOR_MANAGER.processors)
-        #         paths = constants.Paths(Path(args["output_dir"]+"/CheckedOMRs/"+ path, curr_dir.relative_to(root_dir)))
-        #         setup_dirs(paths)
-        #         out=setup_output(paths,template)
-        #         logger.info(template)
+            template,out    =TemplateBarcode(in_omr, template,out,file_name,args,curr_dir,root_dir)
 
         # run pre_processors in sequence
         for i,pre_processor in enumerate(template.pre_processors):
-                logger.info(pre_processor)
                 in_omr = pre_processor.apply_filter(in_omr, args)
 
 
@@ -360,8 +351,6 @@ def process_files(omr_files, template, args, out,curr_dir,root_dir):
         # uniquify
         file_id = str(file_name)
         save_dir = out.paths.save_marked_dir
-
-        logger.info(save_dir)
         response_dict, final_marked, multi_marked, _ = MainOperations.read_response(
             template,
             image=in_omr,
@@ -371,7 +360,6 @@ def process_files(omr_files, template, args, out,curr_dir,root_dir):
         )
 
         # concatenate roll nos, set unmarked responses, etc
-        logger.info(template)
         resp = process_omr(template, response_dict)
         logger.info("\nRead Response: \t", resp, "\n")
         logger.info(" f " , multi_marked)
@@ -401,6 +389,7 @@ def process_files(omr_files, template, args, out,curr_dir,root_dir):
         # logger.info([file_name] + resp_array)
 
         template = temp_template
+        out=out_1
         # TODO: Add roll number validation here
         if multi_marked == 0:
             STATS.files_not_moved += 1
