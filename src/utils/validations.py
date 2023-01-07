@@ -24,7 +24,7 @@ def parse_validation_error(error):
     )
 
 
-def validate_evaluation_json(json_data, evaluation_path, template, curr_dir):
+def validate_evaluation_json(json_data, evaluation_path):
     logger.info("Validating evaluation.json...")
     try:
         validate(instance=json_data, schema=SCHEMA_JSONS["evaluation"])
@@ -50,12 +50,6 @@ def validate_evaluation_json(json_data, evaluation_path, template, curr_dir):
         console.print(table, justify="center")
         logger.critical(f"Provided Evaluation JSON is Invalid: '{evaluation_path}'")
         return False
-
-    # TODO: also validate these
-    # - All mentioned qNos in sections should be present in template.json
-    # - All ranges in questions_order should be exhaustive too
-    # - All keys of sections should be present in keys of marking
-    # - Sections should be mutually exclusive
 
     logger.info("Evaluation JSON validated successfully")
     return True

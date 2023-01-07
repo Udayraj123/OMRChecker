@@ -1,4 +1,5 @@
 import os
+import re
 from fractions import Fraction
 
 import numpy as np
@@ -6,6 +7,11 @@ import pandas as pd
 from rich.table import Table
 
 from src.logger import console, logger
+from src.schemas.evaluation_schema import (
+    BONUS_SECTION_PREFIX,
+    DEFAULT_SECTION_KEY,
+    MARKING_VERDICT_TYPES,
+)
 from src.utils.parsing import open_evaluation_with_validation
 
 
@@ -18,9 +24,6 @@ def parse_float_or_fraction(result):
 
 
 class SectionMarkingScheme:
-    DEFAULT_MARKING_SCHEME = "DEFAULT"
-    MARKING_VERDICT_TYPES = ["correct", "incorrect", "unmarked"]
-
     def __init__(self, section_key, section_scheme, empty_val):
         # todo: get local empty_val from qblock
         self.empty_val = empty_val
@@ -32,23 +35,29 @@ class SectionMarkingScheme:
         }
 
         # DEFAULT marking scheme follows a shorthand
-        if section_key == self.DEFAULT_MARKING_SCHEME:
+        if section_key == DEFAULT_SECTION_KEY:
             self.questions = None
             self.marking = self.parse_scheme_marking(section_scheme)
         else:
-            self.questions = self.parse_scheme_questions(section_scheme["questions"])
+            self.questions = self.parse_questions(
+                section_key, section_scheme["questions"]
+            )
             self.marking = self.parse_scheme_marking(section_scheme["marking"])
 
     def parse_scheme_marking(self, marking):
         parsed_marking = {}
-        for verdict_type in self.MARKING_VERDICT_TYPES:
+        for verdict_type in MARKING_VERDICT_TYPES:
             result = marking[verdict_type]
             if type(result) == str:
                 result = parse_float_or_fraction(result)
-
-                if result > 0 and verdict_type == "incorrect":
+                section_key = self.section_key
+                if (
+                    result > 0
+                    and verdict_type == "incorrect"
+                    and not section_key.startswith(BONUS_SECTION_PREFIX)
+                ):
                     logger.warning(
-                        f"Found positive marks({round(result, 2)}) for incorrect answer in the schema '{self.section_key}'. Is this a Bonus Question?"
+                        f"Found positive marks({round(result, 2)}) for incorrect answer in the schema '{section_key}'. For Bonus sections, add a prefix 'BONUS_' to them."
                     )
             elif type(result) == list:
                 result = map(parse_float_or_fraction, result)
@@ -57,12 +66,38 @@ class SectionMarkingScheme:
 
         return parsed_marking
 
-    def parse_scheme_questions(self, questions):
-        # TODO: simplify this in schema itself
-        # if(questions === "all"): <- handle this case in top parsing + validation
+    @staticmethod
+    def parse_question_string(question_string):
+        if "." in question_string:
+            question_prefix, start, end = re.findall(
+                r"([^\.\d]+)(\d+)\.{2,3}(\d+)", question_string
+            )[0]
+            start, end = int(start), int(end)
+            if start >= end:
+                raise Exception(
+                    f"Invalid range in question string: {question_string}, start: {start} is not less than end: {end}"
+                )
+            return [
+                f"{question_prefix}{question_number}"
+                for question_number in range(start, end + 1)
+            ]
+        else:
+            return [question_string]
 
-        # TODO: parse the range operator regex here
-        parsed_questions = questions
+    @staticmethod
+    def parse_questions(key, questions):
+        parsed_questions = []
+        questions_set = set()
+        for question_string in questions:
+            questions_array = SectionMarkingScheme.parse_question_string(
+                question_string
+            )
+            current_set = set(questions_array)
+            if not questions_set.isdisjoint(current_set):
+                raise Exception(
+                    f"Given question string '{question_string}' has overlapping question(s) with other questions in '{key}': {questions}"
+                )
+            parsed_questions.extend(questions_array)
         return parsed_questions
 
     def get_question_verdict(self, marked_answer, correct_answer):
@@ -76,7 +111,7 @@ class SectionMarkingScheme:
 
     def update_streaks_for_verdict(self, question_verdict):
         current_streak = self.streaks[question_verdict]
-        for verdict_type in self.MARKING_VERDICT_TYPES:
+        for verdict_type in MARKING_VERDICT_TYPES:
             if question_verdict == verdict_type:
                 # increase current streak
                 self.streaks[verdict_type] = current_streak + 1
@@ -99,13 +134,12 @@ class SectionMarkingScheme:
 
 class EvaluationConfig:
     def __init__(self, local_evaluation_path, template, curr_dir):
-        evaluation_json = open_evaluation_with_validation(
-            local_evaluation_path, template, curr_dir
-        )
+        evaluation_json = open_evaluation_with_validation(local_evaluation_path)
         options = evaluation_json["options"]
         self.should_explain_scoring = options.get("should_explain_scoring", False)
         if self.should_explain_scoring:
             self.prepare_explanation_table()
+
         marking_scheme = evaluation_json["marking_scheme"]
         if evaluation_json["source_type"] == "csv":
             csv_path = curr_dir.joinpath(options["answer_key_path"])
@@ -113,17 +147,18 @@ class EvaluationConfig:
                 raise Exception(f"Answer key not found at {csv_path}")
 
             # TODO: CSV parsing
-            answer_key = pd.read_csv(csv_path, dtype=str)
+            answer_key = pd.read_csv(csv_path, dtype=str, header=None)
+
             self.questions_in_order = answer_key[0].to_list()
             self.answers_in_order = answer_key[1].to_list()
             # TODO: later parse complex answer schemes from csv itself (ans strings)
             # TODO: validate each row to contain a (qNo, <ans string/>) pair
         else:
-            # - if source_type = custom, template should have all valid qNos (in instance?)
             self.questions_in_order = self.parse_questions_in_order(
                 options["questions_in_order"]
             )
             self.answers_in_order = options["answers_in_order"]
+
         self.marking_scheme = {}
         for (section_key, section_scheme) in marking_scheme.items():
             # instance will allow easy readability, extensibility as well as streak sample
@@ -131,9 +166,55 @@ class EvaluationConfig:
                 section_key, section_scheme, template.global_empty_val
             )
 
+    def validate_all(self, omr_response):
+        questions_in_order, answers_in_order = (
+            self.questions_in_order,
+            self.answers_in_order,
+        )
+        if len(questions_in_order) != len(answers_in_order):
+            logger.critical(
+                f"questions_in_order: {questions_in_order}\nanswers_in_order: {answers_in_order}"
+            )
+            raise Exception(
+                f"Unequal lengths for questions_in_order and answers_in_order"
+            )
+
+        section_questions = set()
+        for (section_key, section_scheme) in self.marking_scheme.items():
+            if section_key == DEFAULT_SECTION_KEY:
+                continue
+            current_set = set(section_scheme.questions)
+            if not section_questions.isdisjoint(current_set):
+                raise Exception(
+                    f"Section '{section_key}' has overlapping question(s) with other sections"
+                )
+            section_questions = section_questions.union(current_set)
+
+        answer_key_questions = set(questions_in_order)
+        if section_questions.issuperset(answer_key_questions):
+            missing_questions = sorted(
+                section_questions.difference(answer_key_questions)
+            )
+            logger.critical(f"Missing answer key for: {missing_questions}")
+            raise Exception(
+                f"Some questions are missing in the answer key for the given marking scheme"
+            )
+
+        omr_response_questions = set(omr_response.keys())
+        if answer_key_questions.issuperset(omr_response_questions):
+            missing_questions = sorted(
+                answer_key_questions.difference(omr_response_questions)
+            )
+            logger.critical(f"Missing OMR response for: {missing_questions}")
+            # TODO: support for extra checks for skipping non-scored columns
+            raise Exception(
+                f"Some questions are missing in the OMR response for the given answer key"
+            )
+
     def parse_questions_in_order(self, questions_in_order):
-        # TODO: parse range operators here as well
-        return questions_in_order
+        return SectionMarkingScheme.parse_questions(
+            "questions_in_order", questions_in_order
+        )
 
     def prepare_explanation_table(self):
         table = Table(show_lines=True)
@@ -176,23 +257,21 @@ class EvaluationConfig:
 
 
 def evaluate_concatenated_response(concatenated_response, evaluation_config):
-    # first go with answers_in_order object, later just export it as csv to get csv format for docs.
+    evaluation_config.validate_all(concatenated_response)
     questions_in_order, answers_in_order, marking_scheme = map(
         evaluation_config.__dict__.get,
         ["questions_in_order", "answers_in_order", "marking_scheme"],
     )
     QUESTION_WISE_SCHEMES = {}
     for (section_key, section_marking_scheme) in marking_scheme.items():
-        if section_key == SectionMarkingScheme.DEFAULT_MARKING_SCHEME:
+        if section_key == DEFAULT_SECTION_KEY:
             default_marking_scheme = marking_scheme[section_key]
         else:
             for q in section_marking_scheme.questions:
                 QUESTION_WISE_SCHEMES[q] = section_marking_scheme
-
     score = 0.0
     for q_index, question in enumerate(questions_in_order):
         correct_answer = answers_in_order[q_index]
-        # TODO: add validation for existence of each question in response keys
         marked_answer = concatenated_response[question]
         question_marking_scheme = QUESTION_WISE_SCHEMES.get(
             question, default_marking_scheme

@@ -245,7 +245,7 @@ def process_files(
         score = 0
         if evaluation_config is not None:
             score = evaluate_concatenated_response(omr_response, evaluation_config)
-            logger.info(f"Final score: {round(score, 2)} ")
+            logger.info(f"(/{files_counter}) Final score: {round(score, 2)} ")
 
         if tuning_config.outputs.show_image_level >= 2:
             InteractionUtils.show(

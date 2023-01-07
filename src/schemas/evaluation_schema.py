@@ -1,3 +1,6 @@
+DEFAULT_SECTION_KEY = "DEFAULT"
+BONUS_SECTION_PREFIX = "BONUS"
+MARKING_VERDICT_TYPES = ["correct", "incorrect", "unmarked"]
 marking_object_properties = {
     "additionalProperties": False,
     "required": ["correct", "incorrect", "unmarked"],
@@ -40,8 +43,9 @@ EVALUATION_SCHEMA = {
         "options": {"type": "object"},
         "marking_scheme": {
             "type": "object",
+            "required": [DEFAULT_SECTION_KEY],
             "patternProperties": {
-                "DEFAULT": marking_object_properties,
+                DEFAULT_SECTION_KEY: marking_object_properties,
                 "^(?!DEFAULT$).*": {
                     "additionalProperties": False,
                     "required": ["marking", "questions"],

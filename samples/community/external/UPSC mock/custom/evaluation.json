@@ -1,14 +1,13 @@
 {
   "source_type": "custom",
   "options": {
-    "questions_in_order": ["q1","q2","q3","q4"],
-    "answers_in_order": ["C", "B", "A", "D"],
-    "should_explain_scoring": true
+    "questions_in_order": ["q1..5"],
+    "answers_in_order": ["C", "B", "A", "D", "E"]
   },
   "marking_scheme": {
     "DEFAULT": {"correct": "2", "incorrect": "-1/3", "unmarked": "0" },
     "NO_NEGATIVES": {
-      "questions": ["q1..3", "q6..100"],
+      "questions": ["q1..3"],
       "marking": { "correct": "2", "incorrect": "0", "unmarked": "0" }
     },
     "BONUS_ATTEMPTED": {

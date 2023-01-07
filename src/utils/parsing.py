@@ -81,11 +81,9 @@ def open_template_with_defaults(template_path):
         exit()
 
 
-def open_evaluation_with_validation(evaluation_path, template, curr_dir):
+def open_evaluation_with_validation(evaluation_path):
     user_evaluation_config = load_json(evaluation_path)
-    is_valid = validate_evaluation_json(
-        user_evaluation_config, evaluation_path, template, curr_dir
-    )
+    is_valid = validate_evaluation_json(user_evaluation_config, evaluation_path)
 
     if is_valid:
         return user_evaluation_config
