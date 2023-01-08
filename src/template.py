@@ -76,8 +76,6 @@ class Template:
         self.bubble_dimensions = json_obj["bubbleDimensions"]
         self.concatenations = json_obj["concatenations"]
         self.singles = json_obj["singles"]
-        # self.Templatebarcode=json_obj["Templatebarcode"]
-        # logger.info(Templatebarcode)
 
         # Add new qTypes from template
         if "qTypes" in json_obj:
