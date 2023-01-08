@@ -56,7 +56,6 @@ class CropPage(ImagePreprocessor):
     def __init__(self, cropping_ops, args):
         self.args = args
         self.morph_kernel = tuple(cropping_ops.get("morphKernel", [10, 10]))
-        self.is_ReadBarcode=cropping_ops.get("is_ReadBarcode",False)
         # TODO: Rest of config defaults here
 
     def find_page(self, image):
@@ -130,14 +129,12 @@ class CropPage(ImagePreprocessor):
         """
 
         # TODO: Take this out into separate preprocessor
-        img=image.copy()
+        img = image.copy()
         image = normalize(cv2.GaussianBlur(image, (3, 3), 0))
 
         # Resize should be done with another preprocessor is needed
         sheet = self.find_page(image)
         if sheet == []:
-            if self.is_ReadBarcode:
-                return img
             logger.error(
                 "\tError: Paper boundary not found! \
                 Have you accidentally included CropPage preprocessor?"
@@ -148,8 +145,5 @@ class CropPage(ImagePreprocessor):
 
         # Warp layer 1
         img = four_point_transform(img, sheet)
-        w=image.shape[0]
-        h=image.shape[1]
-        img=cv2.resize(img,(h,w))
         # Return preprocessed image
         return img
