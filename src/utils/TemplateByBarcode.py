@@ -27,8 +27,6 @@ class TemplateByBarcode:
 
     def make_folders(path, data):
         for file in os.listdir(path):
-            logger.info(file)
-            logger.info(data)
             if file == str(data):
                 break
         else:
@@ -58,9 +56,11 @@ class TemplateByBarcode:
                 template, out = TemplateByBarcode.update_template(
                     local_template_path, path, args, curr_dir, root_dir
                 )
+            else:
+                logger.error(f"Unable to find the path {local_template_path}")
+                return None, None
             if input_sorting:
                 data_2 = f"{data[:-1]}_inputs"
-                logger.info(path_input)
                 TemplateByBarcode.make_folders(path_input, data_2)
                 path_input = f"{path_input}/{data_2}/{file_name}"
                 ImageUtils.save_img(path_input, in_omr)
