@@ -32,8 +32,10 @@ PROCESSOR_MANAGER = ProcessorManager()
 STATS = Stats()
 
 
-def entry_point(root_dir, curr_dir, args):
-    return process_dir(root_dir, curr_dir, args)
+def entry_point(input_dir, curr_dir, args):
+    if not os.path.exists(input_dir):
+        raise Exception(f"Given input directory does not exist: {input_dir}")
+    return process_dir(input_dir, curr_dir, args)
 
 
 # TODO: make this function pure
