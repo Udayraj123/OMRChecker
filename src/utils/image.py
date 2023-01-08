@@ -21,7 +21,7 @@ class ImageUtils:
 
     @staticmethod
     def save_img(path, final_marked):
-        logger.info(f"Saving Image to {path}")
+        logger.info(f"Saving Image to '{path}'")
         cv2.imwrite(path, final_marked)
 
     @staticmethod

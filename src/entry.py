@@ -34,7 +34,7 @@ STATS = Stats()
 
 def entry_point(input_dir, curr_dir, args):
     if not os.path.exists(input_dir):
-        raise Exception(f"Given input directory does not exist: {input_dir}")
+        raise Exception(f"Given input directory does not exist: '{input_dir}'")
     return process_dir(input_dir, curr_dir, args)
 
 
@@ -91,9 +91,9 @@ def process_dir(
     if omr_files:
         if not template:
             logger.error(
-                f'Found images, but no template in the directory tree \
-                of "{curr_dir}". \nPlace {constants.TEMPLATE_FILENAME} in the \
-                directory or specify a template using -t.'
+                f"Found images, but no template in the directory tree \
+                of '{curr_dir}'. \nPlace {constants.TEMPLATE_FILENAME} in the \
+                appropriate directory or specify a template using -t."
             )
             return
 
@@ -170,7 +170,7 @@ def process_files(
         in_omr = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
         logger.info("")
         logger.info(
-            f"({files_counter}) Opening image: \t{file_path}\tResolution: {in_omr.shape}"
+            f"({files_counter}) Opening image: \t'{file_path}'\tResolution: {in_omr.shape}"
         )
 
         for i in range(image_instance_ops.save_image_level):
@@ -251,14 +251,14 @@ def process_files(
         if evaluation_config is not None:
             score = evaluate_concatenated_response(omr_response, evaluation_config)
             logger.info(
-                f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: {file_id} "
+                f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: '{file_id}'"
             )
         else:
-            logger.info(f"(/{files_counter}) Processed file: {file_id} ")
+            logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
 
         if tuning_config.outputs.show_image_level >= 2:
             InteractionUtils.show(
-                f"Final Marked Bubbles : {file_id}",
+                f"Final Marked Bubbles : '{file_id}'",
                 ImageUtils.resize_util_h(
                     final_marked, int(tuning_config.dimensions.display_height * 1.3)
                 ),
@@ -288,7 +288,7 @@ def process_files(
             )
         else:
             # multi_marked file
-            logger.info(f"[{files_counter}] Found multi-marked file: {file_id}")
+            logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
             new_file_path = outputs_namespace.paths.multi_marked_dir + file_name
             if check_and_move(
                 constants.ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path

@@ -1,9 +1,9 @@
 {
-  "source_type": "omr_image",
+  "source_type": "csv",
   "options": {
     "answer_key_image_path": "./answer_key.jpg",
-    "should_explain_scoring": true,
-    "evaluation_columns": ["q1..200"]
+    "evaluation_columns": ["q1..200"],
+    "should_explain_scoring": true
   },
   "marking_scheme": {
     "DEFAULT": { "correct": "1", "incorrect": "0", "unmarked": "0" }

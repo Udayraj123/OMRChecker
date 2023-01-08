@@ -62,7 +62,6 @@ class ProcessorManager:
             imported_package.__path__, imported_package.__name__ + "."
         ):
             if not ispkg and processor_name != __name__:
-                # print(f"looking up '{processor_name}'")
                 processor_module = __import__(processor_name, fromlist=["blah"])
                 # https://stackoverflow.com/a/46206754/6242649
                 clsmembers = inspect.getmembers(

@@ -43,7 +43,7 @@ EVALUATION_SCHEMA = {
     "required": ["source_type", "options", "marking_scheme"],
     "properties": {
         "additionalProperties": False,
-        "source_type": {"type": "string", "enum": ["csv", "custom", "omr_image"]},
+        "source_type": {"type": "string", "enum": ["csv", "custom"]},
         "options": {"type": "object"},
         "marking_scheme": {
             "type": "object",

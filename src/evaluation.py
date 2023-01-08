@@ -74,7 +74,7 @@ class SectionMarkingScheme:
             start, end = int(start), int(end)
             if start >= end:
                 raise Exception(
-                    f"Invalid range in question string: {question_string}, start: {start} is not less than end: {end}"
+                    f"Invalid range in question string: '{question_string}', start: {start} is not less than end: {end}"
                 )
             return [
                 f"{question_prefix}{question_number}"
@@ -146,13 +146,21 @@ class EvaluationConfig:
             csv_path = curr_dir.joinpath(options["answer_key_csv_path"])
 
             if not os.path.exists(csv_path):
-                raise Exception(f"Answer key not found at {csv_path}")
+                logger.warning(f"Note: Answer key csv does not exist at: '{csv_path}'.")
 
-            answer_key_image_path = options.get("answer_key_image_path", None)
-            if answer_key_image_path:
-                # image_path = curr_dir.joinpath(answer_key_image_path)
-                # TODO: trigger parent's omr reading for 'image_path' with evaluation_columns, so that we generate the csv
-                self.exclude_files.extend(answer_key_image_path)
+                answer_key_image_path = options.get("answer_key_image_path", None)
+                if not answer_key_image_path:
+                    raise Exception(f"Answer key csv not found at '{csv_path}'")
+                image_path = curr_dir.joinpath(answer_key_image_path)
+
+                if os.path.exists(image_path):
+                    raise Exception(f"Answer key image not found at '{image_path}'")
+
+                # TODO: trigger parent's omr reading for 'image_path' with evaluation_columns
+                # TODO: think about upcoming plugins as we'd be going out of the execution flow
+                logger.debug(f"Attempting to generate csv from image: '{image_path}'")
+
+                self.exclude_files.extend(image_path)
 
             # TODO: CSV parsing/validation for each row with a (qNo, <ans string/>) pair
             # TODO: later parse complex answer schemes from csv itself (ans strings)

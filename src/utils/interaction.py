@@ -44,7 +44,7 @@ class InteractionUtils:
     def show(name, orig, pause=1, resize=False, reset_pos=None, config=None):
         image_metrics = InteractionUtils.image_metrics
         if orig is None:
-            logger.info(f"{name} - NoneType image to show!")
+            logger.info(f"'{name}' - NoneType image to show!")
             if pause:
                 cv2.destroyAllWindows()
             return
