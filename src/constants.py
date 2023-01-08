@@ -59,7 +59,7 @@ GLOBAL_PAGE_THRESHOLD_BLACK = 100
 
 class Paths:
     def __init__(self, output_dir):
-        self.output_dir = output_dir
+        self.output_dir = str(output_dir)
         self.save_marked_dir = f"{self.output_dir}/CheckedOMRs/"
         self.results_dir = f"{self.output_dir}/Results/"
         self.manual_dir = f"{self.output_dir}/Manual/"
