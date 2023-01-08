@@ -82,7 +82,10 @@ def process_dir(
     if template:
         for pp in template.pre_processors:
             excluded_files.extend(Path(p) for p in pp.exclude_files())
-
+    if evaluation_config:
+        excluded_files.extend(
+            Path(exclude_file) for exclude_file in evaluation_config.get_exclude_files()
+        )
     omr_files = [f for f in omr_files if f not in excluded_files]
 
     if omr_files:
@@ -241,7 +244,10 @@ def process_files(
         # concatenate roll nos, set unmarked responses, etc
         omr_response = get_concatenated_response(response_dict, template)
 
-        if evaluation_config is None or not evaluation_config.should_explain_scoring:
+        if (
+            evaluation_config is None
+            or not evaluation_config.get_should_explain_scoring()
+        ):
             logger.info(f"Read Response: \n{omr_response}")
 
         score = 0

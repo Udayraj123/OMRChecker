@@ -124,7 +124,6 @@ class SectionMarkingScheme:
         current_streak = self.streaks[question_verdict]
         marking = self.marking[question_verdict]
         if type(marking) == list:
-            # TODO: add validation for max questions in streak scheme (len(questions) < len(marking))
             delta = marking[min(current_streak, len(marking) - 1)]
         else:
             delta = marking
@@ -135,24 +134,34 @@ class SectionMarkingScheme:
 class EvaluationConfig:
     def __init__(self, local_evaluation_path, template, curr_dir):
         evaluation_json = open_evaluation_with_validation(local_evaluation_path)
-        options = evaluation_json["options"]
+        options, marking_scheme, source_type = map(
+            evaluation_json.get, ["options", "marking_scheme", "source_type"]
+        )
         self.should_explain_scoring = options.get("should_explain_scoring", False)
+        self.exclude_files = []
         if self.should_explain_scoring:
             self.prepare_explanation_table()
 
-        marking_scheme = evaluation_json["marking_scheme"]
-        if evaluation_json["source_type"] == "csv":
-            csv_path = curr_dir.joinpath(options["answer_key_path"])
+        marking_scheme = marking_scheme
+        if source_type == "csv":
+            csv_path = curr_dir.joinpath(options["answer_key_csv_path"])
+
             if not os.path.exists(csv_path):
                 raise Exception(f"Answer key not found at {csv_path}")
 
-            # TODO: CSV parsing
+            answer_key_image_path = options.get("answer_key_image_path", None)
+            if answer_key_image_path:
+                # image_path = curr_dir.joinpath(answer_key_image_path)
+                # TODO: trigger parent's omr reading for 'image_path' with evaluation_columns, so that we generate the csv
+                self.exclude_files.extend(answer_key_image_path)
+
+            # TODO: CSV parsing/validation for each row with a (qNo, <ans string/>) pair
+            # TODO: later parse complex answer schemes from csv itself (ans strings)
             answer_key = pd.read_csv(csv_path, dtype=str, header=None)
 
             self.questions_in_order = answer_key[0].to_list()
             self.answers_in_order = answer_key[1].to_list()
-            # TODO: later parse complex answer schemes from csv itself (ans strings)
-            # TODO: validate each row to contain a (qNo, <ans string/>) pair
+
         else:
             self.questions_in_order = self.parse_questions_in_order(
                 options["questions_in_order"]
@@ -165,6 +174,12 @@ class EvaluationConfig:
             self.marking_scheme[section_key] = SectionMarkingScheme(
                 section_key, section_scheme, template.global_empty_val
             )
+
+    def get_should_explain_scoring(self):
+        return self.should_explain_scoring
+
+    def get_exclude_files(self):
+        return self.exclude_files
 
     def validate_all(self, omr_response):
         questions_in_order, answers_in_order = (
@@ -189,6 +204,16 @@ class EvaluationConfig:
                     f"Section '{section_key}' has overlapping question(s) with other sections"
                 )
             section_questions = section_questions.union(current_set)
+            questions_count = len(section_scheme.questions)
+            for verdict_type in MARKING_VERDICT_TYPES:
+                marking = section_scheme.marking[verdict_type]
+                if type(marking) == list and questions_count > len(marking):
+                    logger.critical(
+                        f"Section '{section_key}' with {questions_count} questions is more than the capacity for '{verdict_type}' marking with {len(marking)} scores."
+                    )
+                    raise Exception(
+                        f"Section '{section_key}' has more questions than streak for '{verdict_type}' type"
+                    )
 
         answer_key_questions = set(questions_in_order)
         if section_questions.issuperset(answer_key_questions):
@@ -206,7 +231,7 @@ class EvaluationConfig:
                 answer_key_questions.difference(omr_response_questions)
             )
             logger.critical(f"Missing OMR response for: {missing_questions}")
-            # TODO: support for extra checks for skipping non-scored columns
+            # TODO: support for else case after skipping non-scored columns when evaluation_columns is provided
             raise Exception(
                 f"Some questions are missing in the OMR response for the given answer key"
             )

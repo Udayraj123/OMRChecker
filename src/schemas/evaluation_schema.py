@@ -1,6 +1,10 @@
 DEFAULT_SECTION_KEY = "DEFAULT"
 BONUS_SECTION_PREFIX = "BONUS"
 MARKING_VERDICT_TYPES = ["correct", "incorrect", "unmarked"]
+array_of_strings = {
+    "type": "array",
+    "items": {"type": "string"},
+}
 marking_object_properties = {
     "additionalProperties": False,
     "required": ["correct", "incorrect", "unmarked"],
@@ -39,7 +43,7 @@ EVALUATION_SCHEMA = {
     "required": ["source_type", "options", "marking_scheme"],
     "properties": {
         "additionalProperties": False,
-        "source_type": {"type": "string", "enum": ["csv", "custom"]},
+        "source_type": {"type": "string", "enum": ["csv", "custom", "omr_image"]},
         "options": {"type": "object"},
         "marking_scheme": {
             "type": "object",
@@ -76,11 +80,19 @@ EVALUATION_SCHEMA = {
                 "properties": {
                     "options": {
                         "additionalProperties": False,
-                        "required": ["answer_key_path"],
+                        "required": ["answer_key_csv_path"],
+                        "dependentRequired": {
+                            "answer_key_image_path": [
+                                "answer_key_csv_path",
+                                "evaluation_columns",
+                            ]
+                        },
                         "type": "object",
                         "properties": {
                             "should_explain_scoring": {"type": "boolean"},
-                            "answer_key_path": {"type": "string"},
+                            "answer_key_csv_path": {"type": "string"},
+                            "answer_key_image_path": {"type": "string"},
+                            "evaluation_columns": array_of_strings,
                         },
                     }
                 }
@@ -96,14 +108,8 @@ EVALUATION_SCHEMA = {
                         "type": "object",
                         "properties": {
                             "should_explain_scoring": {"type": "boolean"},
-                            "answers_in_order": {
-                                "type": "array",
-                                "items": {"type": "string"},
-                            },
-                            "questions_in_order": {
-                                "type": "array",
-                                "items": {"type": "string"},
-                            },
+                            "answers_in_order": array_of_strings,
+                            "questions_in_order": array_of_strings,
                         },
                     }
                 }
