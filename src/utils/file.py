@@ -26,23 +26,21 @@ def setup_outputs_for_template(paths, template):
     # Include current output paths
     ns.paths = paths
 
-    # custom sort: To use integer order in question names instead of
-    # alphabetical - avoids q1, q10, q2 and orders them q1, q2, ..., q10
+    # Custom sort: avoids q1, q10, q2, ... and orders them q1, q2, ..., q10
     ns.resp_cols = sorted(
         list(template.concatenations.keys()) + template.singles,
         key=lambda x: int(x[1:]) if ord(x[1]) in range(48, 58) else 0,
     )
-    # todo: consider using emptyVal for empty_resp
+    # TODO: consider using emptyVal for empty_resp
     ns.empty_resp = [""] * len(ns.resp_cols)
     ns.sheetCols = ["file_id", "input_path", "output_path", "score"] + ns.resp_cols
     ns.OUTPUT_SET = []
     ns.files_obj = {}
     TIME_NOW_HRS = strftime("%I%p", localtime())
     ns.filesMap = {
-        # todo: use os.path.join(paths.results_dir, f"Results_{TIME_NOW_HRS}.csv") etc
-        "Results": f"{paths.results_dir}Results_{TIME_NOW_HRS}.csv",
-        "MultiMarked": f"{paths.manual_dir}MultiMarkedFiles.csv",
-        "Errors": f"{paths.manual_dir}ErrorFiles.csv",
+        "Results": os.path.join(paths.results_dir, f"Results_{TIME_NOW_HRS}.csv"),
+        "MultiMarked": os.path.join(paths.manual_dir, "MultiMarkedFiles.csv"),
+        "Errors": os.path.join(paths.manual_dir, "ErrorFiles.csv"),
     }
 
     for file_key, file_name in ns.filesMap.items():
@@ -68,33 +66,29 @@ def setup_outputs_for_template(paths, template):
 class Paths:
     def __init__(self, output_dir):
         self.output_dir = output_dir
-        self.save_marked_dir = f"{self.output_dir}/CheckedOMRs/"
-        self.results_dir = f"{self.output_dir}/Results/"
-        self.manual_dir = f"{self.output_dir}/Manual/"
-        self.errors_dir = f"{self.manual_dir}ErrorFiles/"
-        self.multi_marked_dir = f"{self.manual_dir}MultiMarkedFiles/"
+        self.save_marked_dir = output_dir.joinpath("CheckedOMRs")
+        self.results_dir = output_dir.joinpath("Results")
+        self.manual_dir = output_dir.joinpath("Manual")
+        self.errors_dir = self.manual_dir.joinpath("ErrorFiles")
+        self.multi_marked_dir = self.manual_dir.joinpath("MultiMarkedFiles")
 
 
 def setup_dirs_for_paths(paths):
     logger.info("Checking Directories...")
-    for _dir in [paths.save_marked_dir]:
-        if not os.path.exists(_dir):
-            logger.info(f"Created : {_dir}")
-            os.makedirs(_dir)
-            os.mkdir(f"{_dir}/stack")
-            os.mkdir(f"{_dir}/_MULTI_")
-            os.mkdir(f"{_dir}/_MULTI_/stack")
-        # else:
-        #     logger.info(f"Present : {_dir}")
+    for save_output_dir in [paths.save_marked_dir]:
+        if not os.path.exists(save_output_dir):
+            logger.info(f"Created : {save_output_dir}")
+            os.makedirs(save_output_dir)
+            os.mkdir(save_output_dir.joinpath("stack"))
+            os.mkdir(save_output_dir.joinpath("_MULTI_"))
+            os.mkdir(save_output_dir.joinpath("_MULTI_", "stack"))
 
-    for _dir in [paths.manual_dir, paths.results_dir]:
-        if not os.path.exists(_dir):
-            logger.info(f"Created : {_dir}")
-            os.makedirs(_dir)
-        # else:
-        #     logger.info(f"Present :{_dir}")
+    for save_output_dir in [paths.manual_dir, paths.results_dir]:
+        if not os.path.exists(save_output_dir):
+            logger.info(f"Created : {save_output_dir}")
+            os.makedirs(save_output_dir)
 
-    for _dir in [paths.multi_marked_dir, paths.errors_dir]:
-        if not os.path.exists(_dir):
-            logger.info(f"Created : {_dir}")
-            os.makedirs(_dir)
+    for save_output_dir in [paths.multi_marked_dir, paths.errors_dir]:
+        if not os.path.exists(save_output_dir):
+            logger.info(f"Created : {save_output_dir}")
+            os.makedirs(save_output_dir)

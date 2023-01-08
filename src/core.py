@@ -350,7 +350,6 @@ class ImageInstanceOps:
             morph = img.copy()
             self.append_save_img(3, morph)
 
-            # TODO: evaluate if CLAHE is really req
             if auto_align:
                 # Note: clahe is good for morphology, bad for thresholding
                 morph = CLAHE_HELPER.apply(morph)
@@ -372,6 +371,7 @@ class ImageInstanceOps:
             box_w, box_h = template.bubble_dimensions
             omr_response = {}
             multi_marked, multi_roll = 0, 0
+
             # TODO Make this part useful for visualizing status checks
             # blackVals=[0]
             # whiteVals=[255]
@@ -426,7 +426,6 @@ class ImageInstanceOps:
                 for q_block in template.q_blocks:
                     s, d = q_block.orig, q_block.dimensions
 
-                    # TODO - align_stride would depend on template's dimensions
                     match_col, max_steps, align_stride, thk = map(
                         config.alignment_params.get,
                         [
@@ -599,19 +598,6 @@ class ImageInstanceOps:
                         boxval0 = all_q_vals[total_q_box_no]
                         detected = per_q_strip_threshold > boxval0
 
-                        # TODO: add an option to select PLUS SIGN RESPONSE READING
-                        # extra_check_rects = []
-                        # # [y,y+box_h,x,x+box_w]
-                        # for rect in extra_check_rects:
-                        #     # Note: This is NOT pixel-based thresholding,
-                        #     # It is boxed mean-thresholding
-                        #     boxval = cv2.mean(img[  rect[0]:rect[1] , rect[2]:rect[3] ])[0]
-                        #     if(per_q_strip_threshold > boxval):
-                        #         # for critical analysis
-                        #         boxval0 = max(boxval,boxval0)
-                        #         detected=True
-                        #         break
-
                         if detected:
                             cv2.rectangle(
                                 final_marked,
@@ -635,7 +621,6 @@ class ImageInstanceOps:
                                 -1,
                             )
 
-                        # TODO Make this part useful! (Abstract visualizer to check status)
                         if detected:
                             q, val = pt.q_no, str(pt.val)
                             cv2.putText(
@@ -686,15 +671,6 @@ class ImageInstanceOps:
             for q in template.singles:
                 if q not in non_empty_qnos:
                     omr_response[q] = q_block.empty_val
-
-            # TODO: move this validation into template.py -
-            if total_q_strip_no == 0:
-                logger.error(
-                    "\n\t UNEXPECTED Template Incorrect Error: \
-                    total_q_strip_no is zero! q_blocks: ",
-                    template.q_blocks,
-                )
-                exit(21)
 
             per_omr_threshold_avg /= total_q_strip_no
             per_omr_threshold_avg = round(per_omr_threshold_avg, 2)

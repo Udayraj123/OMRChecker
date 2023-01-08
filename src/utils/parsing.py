@@ -33,7 +33,6 @@ def get_concatenated_response(omr_response, template):
     concatenated_response = {}
 
     # TODO: get correct local/global emptyVal here for each question
-    # symbol for absent response
     unmarked_symbol = ""
 
     # Multi-column/multi-row questions which need to be concatenated
@@ -46,9 +45,6 @@ def get_concatenated_response(omr_response, template):
     for q_no in template.singles:
         concatenated_response[q_no] = omr_response.get(q_no, unmarked_symbol)
 
-    # Note: concatenations and singles together should be mutually exclusive
-    # and should cover all questions in the template(exhaustive)
-    # TODO: ^add a warning if omr_response has unused keys remaining
     return concatenated_response
 
 
@@ -71,9 +67,6 @@ def open_template_with_defaults(template_path):
     user_template = load_json(template_path)
     user_template = OVERRIDE_MERGER.merge(deepcopy(TEMPLATE_DEFAULTS), user_template)
     is_valid = validate_template_json(user_template, template_path)
-    # TODO: also validate these
-    # - All qNos in template are unique
-    # - template bubbles don't overflow the image (already in instance)
     if is_valid:
         return user_template
     else:

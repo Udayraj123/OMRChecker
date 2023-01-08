@@ -2,7 +2,6 @@ import os
 import re
 from fractions import Fraction
 
-import numpy as np
 import pandas as pd
 from rich.table import Table
 
@@ -25,7 +24,7 @@ def parse_float_or_fraction(result):
 
 class SectionMarkingScheme:
     def __init__(self, section_key, section_scheme, empty_val):
-        # todo: get local empty_val from qblock
+        # TODO: get local empty_val from qblock
         self.empty_val = empty_val
         self.section_key = section_key
         self.streaks = {
@@ -318,49 +317,3 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
     evaluation_config.conditionally_print_explanation()
 
     return score
-
-
-# Evaluate accuracy based on OMRDataset file generated through review
-# portal on the same set of images
-def evaluate_correctness(outputs_namespace):
-    # TODO: test_file WOULD BE RELATIVE TO INPUT SUBDIRECTORY NOW-
-    test_file = "inputs/OMRDataset.csv"
-    if os.path.exists(test_file):
-        logger.info(f"Starting evaluation for: '{test_file}'")
-
-        test_cols = ["file_id"] + outputs_namespace.resp_cols
-        y_df = (
-            pd.read_csv(test_file, dtype=str)[test_cols]
-            .replace(np.nan, "", regex=True)
-            .set_index("file_id")
-        )
-
-        if np.any(y_df.index.duplicated):
-            y_df_filtered = y_df.loc[~y_df.index.duplicated(keep="first")]
-            logger.warning(
-                f"WARNING: Found duplicate File-ids in file '{test_file}'. Removed {y_df.shape[0] - y_df_filtered.shape[0]} rows from testing data. Rows remaining: {y_df_filtered.shape[0]}"
-            )
-            y_df = y_df_filtered
-
-        x_df = pd.DataFrame(
-            outputs_namespace.OUTPUT_SET, dtype=str, columns=test_cols
-        ).set_index("file_id")
-        # print("x_df",x_df.head())
-        # print("\ny_df",y_df.head())
-        intersection = y_df.index.intersection(x_df.index)
-
-        # Checking if the merge is okay
-        if intersection.size == x_df.index.size:
-            y_df = y_df.loc[intersection]
-            x_df["TestResult"] = (x_df == y_df).all(axis=1).astype(int)
-            logger.info(x_df.head())
-            logger.info(
-                f"\n\t Accuracy on the {test_file} Dataset: {round((x_df['TestResult'].sum() / x_df.shape[0]),6)}"
-            )
-        else:
-            logger.error(
-                "\nERROR: Insufficient Testing Data: Have you appended MultiMarked data yet?"
-            )
-            logger.error(
-                f"Missing File-ids: {list(x_df.index.difference(intersection))}"
-            )

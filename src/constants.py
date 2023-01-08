@@ -35,15 +35,12 @@ QTYPE_DATA = {
 }
 
 # TODO: move to interaction.py
-# Rather these are internal constants & not configs
-# CLR_BLACK = rgb2tuple(CLR_BLACK)
 TEXT_SIZE = 0.95
 CLR_BLACK = (50, 150, 150)
 CLR_WHITE = (250, 250, 250)
 CLR_GRAY = (130, 130, 130)
-# CLR_DARK_GRAY = (190,190,190)
 CLR_DARK_GRAY = (100, 100, 100)
 
-# todo: move to config.json
+# TODO: move to config.json
 GLOBAL_PAGE_THRESHOLD_WHITE = 200
 GLOBAL_PAGE_THRESHOLD_BLACK = 100

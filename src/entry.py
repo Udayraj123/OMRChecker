@@ -38,7 +38,6 @@ def entry_point(input_dir, curr_dir, args):
     return process_dir(input_dir, curr_dir, args)
 
 
-# TODO: make this function pure
 def process_dir(
     root_dir,
     curr_dir,
@@ -56,7 +55,7 @@ def process_dir(
     # Update local template (in current recursion stack)
     local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
     if os.path.exists(local_template_path):
-        # todo: consider moving template inside image_instance_ops as an attribute
+        # TODO: consider moving template inside image_instance_ops as an attribute
         image_instance_ops = ImageInstanceOps(tuning_config)
         template = Template(
             local_template_path,
@@ -71,7 +70,8 @@ def process_dir(
     # Look for subdirectories for processing
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
 
-    paths = Paths(Path(args["output_dir"], curr_dir.relative_to(root_dir)))
+    output_dir = Path(args["output_dir"], curr_dir.relative_to(root_dir))
+    paths = Paths(output_dir)
 
     # look for images in current dir to process
     exts = ("*.png", "*.jpg")
@@ -97,7 +97,6 @@ def process_dir(
             )
             return
 
-        # TODO: get rid of args here
         args_local = args.copy()
         if "OverrideFlags" in template.options:
             args_local.update(template.options["OverrideFlags"])
@@ -149,7 +148,6 @@ def process_dir(
         )
 
 
-# TODO: take a look at 'outputs_namespace.paths'
 def process_files(
     omr_files,
     template,
@@ -175,7 +173,6 @@ def process_files(
             f"({files_counter}) Opening image: \t{file_path}\tResolution: {in_omr.shape}"
         )
 
-        # TODO: Get rid of saveImgList
         for i in range(image_instance_ops.save_image_level):
             image_instance_ops.reset_save_img(i + 1)
 
@@ -253,7 +250,11 @@ def process_files(
         score = 0
         if evaluation_config is not None:
             score = evaluate_concatenated_response(omr_response, evaluation_config)
-            logger.info(f"(/{files_counter}) Final score: {round(score, 2)} ")
+            logger.info(
+                f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: {file_id} "
+            )
+        else:
+            logger.info(f"(/{files_counter}) Processed file: {file_id} ")
 
         if tuning_config.outputs.show_image_level >= 2:
             InteractionUtils.show(
@@ -272,7 +273,6 @@ def process_files(
 
         outputs_namespace.OUTPUT_SET.append([file_name] + resp_array)
 
-        # TODO: Add roll number validation here
         if multi_marked == 0:
             STATS.files_not_moved += 1
             new_file_path = save_dir + file_id
@@ -286,9 +286,6 @@ def process_files(
                 header=False,
                 index=False,
             )
-            # Todo: Add score calculation/explanations
-            # print(f"[/{files_counter}] Graded with score: {round(score, 2)}\t file_id: {file_id}")
-            # print(files_counter,file_id,omr_response['Roll'],'score : ',score)
         else:
             # multi_marked file
             logger.info(f"[{files_counter}] Found multi-marked file: {file_id}")
@@ -309,11 +306,6 @@ def process_files(
             #     pass
 
     print_stats(start_time, files_counter, tuning_config)
-
-    # flush after every 20 files for a live view
-    # if(files_counter % 20 == 0 or files_counter == len(omr_files)):
-    #     for file_key in outputs_namespace.filesMap.keys():
-    #         outputs_namespace.files_obj[file_key].flush()
 
 
 def print_stats(start_time, files_counter, tuning_config):
@@ -345,61 +337,8 @@ def print_stats(start_time, files_counter, tuning_config):
             "\nTip: To see some awesome visuals, open config.json and increase 'show_image_level'"
         )
 
-    # evaluate_correctness(outputs_namespace)
-
-    # Use this data to train as +ve feedback
-    # if config.outputs.show_image_level >= 0 and files_counter > 10:
-    #     for x in [thresholdCircles]:#,badThresholds,veryBadPoints, mws, mbs]:
-    #         if(x != []):
-    #             x = pd.DataFrame(x)
-    #             print(x.describe())
-    #             plt.plot(range(len(x)), x)
-    #             plt.title("Mystery Plot")
-    #             plt.show()
-    #         else:
-    #             print(x)
-
-
-# TODO: Refactor into new process flow.
-def preliminary_check():
-    # filesCounter=0
-    # mws, mbs = [],[]
-    # # PRELIM_CHECKS for thresholding
-    # if(config.PRELIM_CHECKS):
-    #     # TODO: add more using unit testing
-    #     TEMPLATE = TEMPLATES["H"]
-    #     ALL_WHITE = 255 * np.ones((TEMPLATE.dimensions[1],TEMPLATE.dimensions[0]), dtype='uint8')
-    #     response_dict, final_marked, multi_marked, multiroll = read_response(
-    #         "H", ALL_WHITE, name="ALL_WHITE", save_dir=None, autoAlign=True
-    #     )
-    #     print("ALL_WHITE",response_dict)
-    #     if(response_dict!={}):
-    #         print("Preliminary Checks Failed.")
-    #         exit(2)
-    #     ALL_BLACK = np.zeros((TEMPLATE.dimensions[1],TEMPLATE.dimensions[0]), dtype='uint8')
-    #     response_dict, final_marked, multi_marked, multiroll = read_response(
-    #      "H", ALL_BLACK, name="ALL_BLACK", save_dir=None, autoAlign=True
-    #     )
-    #     print("ALL_BLACK",response_dict)
-    #     show("Confirm : All bubbles are black",final_marked,1,1)
-    pass
-
 
 def check_and_move(error_code, file_path, filepath2):
-    # print("Dummy Move:  "+file_path, " --> ",filepath2)
-
     # TODO: fix file movement into error/multimarked/invalid etc again
     STATS.files_not_moved += 1
-    return True
-
-    if not os.path.exists(file_path):
-        logger.warning(f"File already moved: {file_path}")
-        return False
-    if os.path.exists(filepath2):
-        logger.error(f"ERROR {error_code}: Duplicate file at {filepath2}")
-        return False
-
-    logger.info(f"Moved: {file_path} --> {filepath2}")
-    os.rename(file_path, filepath2)
-    STATS.files_moved += 1
     return True

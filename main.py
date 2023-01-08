@@ -37,7 +37,6 @@ argparser.add_argument(
     help="Specify an output directory.",
 )
 
-# TODO: separate the interactive modes from main code
 argparser.add_argument(
     "-a",
     "--autoAlign",

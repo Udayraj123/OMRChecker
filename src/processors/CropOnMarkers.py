@@ -38,7 +38,6 @@ class CropOnMarkers(ImagePreprocessor):
         marker = cv2.imread(self.marker_path, cv2.IMREAD_GRAYSCALE)
 
         if "sheetToMarkerWidthRatio" in marker_ops:
-            # TODO: processing_width should come through proper channel
             marker = ImageUtils.resize_util(
                 marker,
                 config.dimensions.processing_width
@@ -50,7 +49,6 @@ class CropOnMarkers(ImagePreprocessor):
         )
 
         if self.apply_erode_subtract:
-            # TODO: verify its effectiveness in practical cases
             marker -= cv2.erode(marker, kernel=np.ones((5, 5)), iterations=5)
 
         self.marker = marker
@@ -130,7 +128,6 @@ class CropOnMarkers(ImagePreprocessor):
 
         best_scale, all_max_t = self.getBestMatch(image_eroded_sub)
         if best_scale is None:
-            # TODO: Plot and see performance of marker_rescale_range
             if config.outputs.show_image_level >= 1:
                 InteractionUtils.show("Quads", image_eroded_sub, config=config)
             return None
