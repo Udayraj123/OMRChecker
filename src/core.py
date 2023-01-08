@@ -22,15 +22,15 @@ from src import constants
 # TODO: use open_config_with_defaults after making a Config class.
 from src.config import CONFIG_DEFAULTS as config
 from src.logger import logger
-
-# TODO: further break utils down and separate the imports
-from src.utils.TemplateByBarcode import TemplateByBarcode
 from src.utils.imgutils import (
     ImageUtils,
     MainOperations,
     draw_template_layout,
     setup_dirs,
 )
+
+# TODO: further break utils down and separate the imports
+from src.utils.TemplateByBarcode import TemplateByBarcode
 
 # Note: dot-imported paths are relative to current directory
 from .processors.manager import ProcessorManager
@@ -318,7 +318,7 @@ def process_files(omr_files, template, args, out, curr_dir, root_dir):
             config.dimensions.processing_width,
             config.dimensions.processing_height,
         )
-        out_1=out
+        out_1 = out
         if template.TemplateByBarcode != []:
             template, out = TemplateByBarcode.TemplateBarcode(
                 in_omr, template, out, file_name, args, curr_dir, root_dir
