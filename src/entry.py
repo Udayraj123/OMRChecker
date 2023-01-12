@@ -191,7 +191,7 @@ def process_files(
 
         if in_omr is None:
             # Error OMR case
-            new_file_path = outputs_namespace.paths.errors_dir + file_name
+            new_file_path = outputs_namespace.paths.errors_dir.joinpath(file_name)
             outputs_namespace.OUTPUT_SET.append(
                 [file_name] + outputs_namespace.empty_resp
             )
@@ -275,7 +275,7 @@ def process_files(
 
         if multi_marked == 0:
             STATS.files_not_moved += 1
-            new_file_path = save_dir + file_id
+            new_file_path = save_dir.joinpath(file_id)
             # Enter into Results sheet-
             results_line = [file_name, file_path, new_file_path, score] + resp_array
             # Write/Append to results_line file(opened in append mode)
@@ -289,7 +289,7 @@ def process_files(
         else:
             # multi_marked file
             logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
-            new_file_path = outputs_namespace.paths.multi_marked_dir + file_name
+            new_file_path = outputs_namespace.paths.multi_marked_dir.joinpath(file_name)
             if check_and_move(
                 constants.ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path
             ):

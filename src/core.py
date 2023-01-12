@@ -714,8 +714,9 @@ class ImageInstanceOps:
 
             if config.outputs.save_detections and save_dir is not None:
                 if multi_roll:
-                    save_dir = save_dir + "_MULTI_/"
-                ImageUtils.save_img(save_dir + name, final_marked)
+                    save_dir = save_dir.joinpath("_MULTI_")
+                image_path = str(save_dir.joinpath(name))
+                ImageUtils.save_img(image_path, final_marked)
 
             self.append_save_img(2, final_marked)
 

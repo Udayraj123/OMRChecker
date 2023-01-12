@@ -5,29 +5,24 @@ array_of_strings = {
     "type": "array",
     "items": {"type": "string"},
 }
+marking_item = {
+    "oneOf": [
+        {"type": "string", "pattern": "-?(\\d+)(/(\\d+))?"},
+        {"type": "number"},
+    ]
+}
+marking_item_or_array = {
+    "anyOf": [marking_item, {"type": "array", "items": marking_item}]
+}
+
 marking_object_properties = {
     "additionalProperties": False,
     "required": ["correct", "incorrect", "unmarked"],
     "type": "object",
     "properties": {
-        "correct": {
-            "oneOf": [
-                {"type": "string", "pattern": "-?(\\d+)(/(\\d+))?"},
-                {"type": "number", "minimum": 0},
-            ]
-        },
-        "incorrect": {
-            "oneOf": [
-                {"type": "string", "pattern": "-?(\\d+)(/(\\d+))?"},
-                {"type": "number"},
-            ]
-        },
-        "unmarked": {
-            "oneOf": [
-                {"type": "string", "pattern": "-?(\\d+)(/(\\d+))?"},
-                {"type": "number", "minimum": 0},
-            ]
-        },
+        "correct": marking_item_or_array,
+        "incorrect": marking_item_or_array,
+        "unmarked": marking_item_or_array,
     },
 }
 
@@ -49,8 +44,8 @@ EVALUATION_SCHEMA = {
             "type": "object",
             "required": [DEFAULT_SECTION_KEY],
             "patternProperties": {
-                DEFAULT_SECTION_KEY: marking_object_properties,
-                "^(?!DEFAULT$).*": {
+                f"^{DEFAULT_SECTION_KEY}$": marking_object_properties,
+                f"^(?!{DEFAULT_SECTION_KEY}$).*": {
                     "additionalProperties": False,
                     "required": ["marking", "questions"],
                     "type": "object",
@@ -108,7 +103,27 @@ EVALUATION_SCHEMA = {
                         "type": "object",
                         "properties": {
                             "should_explain_scoring": {"type": "boolean"},
-                            "answers_in_order": array_of_strings,
+                            "answers_in_order": {
+                                "type": "array",
+                                "items": {
+                                    "oneOf": [
+                                        {"type": "string"},
+                                        {
+                                            "type": "array",
+                                            "items": False,
+                                            "prefixItems": [
+                                                {"type": "string"},
+                                                {
+                                                    "oneOf": [
+                                                        {"type": "string"},
+                                                        {"type": "number"},
+                                                    ]
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            },
                             "questions_in_order": array_of_strings,
                         },
                     }

@@ -15,7 +15,7 @@ from src.utils.parsing import open_evaluation_with_validation
 
 
 def parse_float_or_fraction(result):
-    if "/" in result:
+    if type(result) == str and "/" in result:
         result = float(Fraction(result))
     else:
         result = float(result)
@@ -27,6 +27,7 @@ class SectionMarkingScheme:
         # TODO: get local empty_val from qblock
         self.empty_val = empty_val
         self.section_key = section_key
+        self.is_streak_scheme_present = False
         self.streaks = {
             "correct": 0,
             "incorrect": 0,
@@ -37,6 +38,11 @@ class SectionMarkingScheme:
         if section_key == DEFAULT_SECTION_KEY:
             self.questions = None
             self.marking = self.parse_scheme_marking(section_scheme)
+            if self.is_streak_scheme_present:
+                raise Exception(
+                    f"Default schema '{DEFAULT_SECTION_KEY}' cannot have streak marking. Create a new section and specify questions range in it."
+                )
+
         else:
             self.questions = self.parse_questions(
                 section_key, section_scheme["questions"]
@@ -59,11 +65,15 @@ class SectionMarkingScheme:
                         f"Found positive marks({round(result, 2)}) for incorrect answer in the schema '{section_key}'. For Bonus sections, add a prefix 'BONUS_' to them."
                     )
             elif type(result) == list:
-                result = map(parse_float_or_fraction, result)
+                self.is_streak_scheme_present = True
+                result = list(map(parse_float_or_fraction, result))
 
             parsed_marking[verdict_type] = result
 
         return parsed_marking
+
+    def has_streak_scheme(self):
+        return self.is_streak_scheme_present
 
     @staticmethod
     def parse_question_string(question_string):
@@ -137,9 +147,10 @@ class EvaluationConfig:
             evaluation_json.get, ["options", "marking_scheme", "source_type"]
         )
         self.should_explain_scoring = options.get("should_explain_scoring", False)
+        self.is_streak_scheme_present = False
         self.exclude_files = []
-        if self.should_explain_scoring:
-            self.prepare_explanation_table()
+
+        self.prepare_explanation_table()
 
         marking_scheme = marking_scheme
         if source_type == "csv":
@@ -178,9 +189,12 @@ class EvaluationConfig:
         self.marking_scheme = {}
         for (section_key, section_scheme) in marking_scheme.items():
             # instance will allow easy readability, extensibility as well as streak sample
-            self.marking_scheme[section_key] = SectionMarkingScheme(
+            section_marking_scheme = SectionMarkingScheme(
                 section_key, section_scheme, template.global_empty_val
             )
+            self.marking_scheme[section_key] = section_marking_scheme
+            if section_marking_scheme.has_streak_scheme():
+                self.is_streak_scheme_present = True
 
     def get_should_explain_scoring(self):
         return self.should_explain_scoring
@@ -249,6 +263,8 @@ class EvaluationConfig:
         )
 
     def prepare_explanation_table(self):
+        if not self.should_explain_scoring:
+            return
         table = Table(show_lines=True)
         table.add_column("Question")
         table.add_column("Marked")
@@ -257,7 +273,8 @@ class EvaluationConfig:
         table.add_column("Delta")
         table.add_column("Score")
         table.add_column("Section")
-        table.add_column("Section Streak", justify="right")
+        if self.is_streak_scheme_present:
+            table.add_column("Section Streak", justify="right")
         self.explanation_table = table
 
     def conditionally_add_explanation(
@@ -272,16 +289,25 @@ class EvaluationConfig:
     ):
         if self.should_explain_scoring:
             next_score = score + delta
-            self.explanation_table.add_row(
-                question,
-                marked_answer,
-                correct_answer,
-                str.title(question_verdict),
-                str(round(delta, 2)),
-                str(round(next_score, 2)),
-                question_marking_scheme.section_key,
-                str(question_marking_scheme.streaks[question_verdict]),
-            )
+
+            # Conditionally add cells
+            row = [
+                item
+                for item in [
+                    question,
+                    marked_answer,
+                    correct_answer,
+                    str.title(question_verdict),
+                    str(round(delta, 2)),
+                    str(round(next_score, 2)),
+                    question_marking_scheme.section_key,
+                    str(question_marking_scheme.streaks[question_verdict])
+                    if self.is_streak_scheme_present
+                    else None,
+                ]
+                if item is not None
+            ]
+            self.explanation_table.add_row(*row)
 
     def conditionally_print_explanation(self):
         if self.should_explain_scoring:
@@ -311,6 +337,7 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
         delta, question_verdict = question_marking_scheme.match_answer(
             marked_answer, correct_answer
         )
+        print(delta, q_index, question)
         evaluation_config.conditionally_add_explanation(
             correct_answer,
             delta,
