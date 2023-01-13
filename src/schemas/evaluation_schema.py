@@ -26,7 +26,8 @@ marking_object_properties = {
     },
 }
 
-question_string_regex = "^([^\\.]+)*?([^\\.\\d]+(\\d+)\\.{2,3}(\\d+))*?$"
+question_string_pattern = "^([^\\.]+)*?([^\\.\\d]+(\\d+)\\.{2,3}(\\d+))*?$"
+QUESTION_STRING_REGEX_GROUPS = r"([^\.\d]+)(\d+)\.{2,3}(\d+)"
 
 EVALUATION_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -56,10 +57,10 @@ EVALUATION_SCHEMA = {
                                     "type": "array",
                                     "items": {
                                         "type": "string",
-                                        "pattern": question_string_regex,
+                                        "pattern": question_string_pattern,
                                     },
                                 },
-                                {"type": "string", "pattern": question_string_regex},
+                                {"type": "string", "pattern": question_string_pattern},
                             ]
                         },
                         "marking": marking_object_properties,

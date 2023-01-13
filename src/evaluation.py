@@ -1,3 +1,4 @@
+import ast
 import os
 import re
 from copy import deepcopy
@@ -11,6 +12,7 @@ from src.schemas.evaluation_schema import (
     BONUS_SECTION_PREFIX,
     DEFAULT_SECTION_KEY,
     MARKING_VERDICT_TYPES,
+    QUESTION_STRING_REGEX_GROUPS,
 )
 from src.utils.parsing import open_evaluation_with_validation
 
@@ -38,7 +40,7 @@ class AnswerMatcher:
         if answer_type in ["standard", "multiple-correct"]:
             return self.marking_scheme.section_key
         elif answer_type == "multi-weighted":
-            return f"Custom\n{self.marking}"
+            return f"Custom: {self.marking}"
 
     def get_answer_type(self, answer_item):
         item_type = type(answer_item)
@@ -57,6 +59,7 @@ class AnswerMatcher:
                 and type(answer_item[1]) == list
             ):
                 return "multi-weighted"
+            # TODO: add more conditions here
             # elif (
             #     len(answer_item) == 3
             #     and type(answer_item[0]) == list
@@ -220,7 +223,7 @@ class SectionMarkingScheme:
     def parse_question_string(question_string):
         if "." in question_string:
             question_prefix, start, end = re.findall(
-                r"([^\.\d]+)(\d+)\.{2,3}(\d+)", question_string
+                QUESTION_STRING_REGEX_GROUPS, question_string
             )[0]
             start, end = int(start), int(end)
             if start >= end:
@@ -281,12 +284,10 @@ class EvaluationConfig:
                 logger.warning(f"Note: Answer key csv does not exist at: '{csv_path}'.")
 
                 answer_key_image_path = options.get("answer_key_image_path", None)
+                image_path = curr_dir.joinpath(answer_key_image_path)
                 if not answer_key_image_path:
                     raise Exception(f"Answer key csv not found at '{csv_path}'")
-
-                image_path = curr_dir.joinpath(answer_key_image_path)
-
-                if os.path.exists(image_path):
+                if not os.path.exists(image_path):
                     raise Exception(f"Answer key image not found at '{image_path}'")
 
                 # TODO: trigger parent's omr reading for 'image_path' with evaluation_columns (only for regenerate)
@@ -296,11 +297,15 @@ class EvaluationConfig:
                 self.exclude_files.extend(image_path)
 
             # TODO: CSV parsing/validation for each row with a (qNo, <ans string/>) pair
-            answer_key = pd.read_csv(csv_path, dtype=str, header=None)
+            answer_key = pd.read_csv(
+                csv_path,
+                header=None,
+                names=["question", "answer"],
+                converters={"question": str, "answer": self.parse_answer_column},
+            )
 
-            self.questions_in_order = answer_key[0].to_list()
-            # TODO: parse array syntax here -
-            answers_in_order = answer_key[1].to_list()
+            self.questions_in_order = answer_key["question"].to_list()
+            answers_in_order = answer_key["answer"].to_list()
             self.validate_questions(answers_in_order)
         else:
             self.questions_in_order = self.parse_questions_in_order(
@@ -330,6 +335,16 @@ class EvaluationConfig:
         self.question_to_answer_matcher = self.parse_answers_and_map_questions(
             answers_in_order
         )
+
+    @staticmethod
+    def parse_answer_column(answer_column):
+        if answer_column[0] == "[":
+            parsed_answer = ast.literal_eval(answer_column)
+        elif "," in answer_column:
+            parsed_answer = answer_column.split(",")
+        else:
+            parsed_answer = answer_column
+        return parsed_answer
 
     def get_marking_scheme_for_question(self, question):
         return self.question_to_scheme.get(question, self.default_marking_scheme)
@@ -401,14 +416,25 @@ class EvaluationConfig:
     def prepare_and_validate_omr_response(self, omr_response):
         self.reset_explanation_table()
         self.reset_sections()
+
         omr_response_questions = set(omr_response.keys())
         all_questions = set(self.questions_in_order)
         missing_questions = sorted(all_questions.difference(omr_response_questions))
         if len(missing_questions) > 0:
             logger.critical(f"Missing OMR response for: {missing_questions}")
-            # TODO: support for else case after skipping non-scored columns when evaluation_columns is provided
             raise Exception(
                 f"Some questions are missing in the OMR response for the given answer key"
+            )
+
+        prefixed_omr_response_questions = set(
+            [k for k in omr_response.keys() if k.startswith("q")]
+        )
+        missing_prefixed_questions = sorted(
+            prefixed_omr_response_questions.difference(all_questions)
+        )
+        if len(missing_prefixed_questions) > 0:
+            logger.warning(
+                f"Some potential questions without answer in OMR response: {missing_prefixed_questions}"
             )
 
     def parse_answers_and_map_questions(self, answers_in_order):

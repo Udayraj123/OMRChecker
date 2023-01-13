@@ -25,7 +25,7 @@ def parse_validation_error(error):
 
 
 def validate_evaluation_json(json_data, evaluation_path):
-    logger.info("Validating evaluation.json...")
+    logger.info(f"Validating evaluation.json: {evaluation_path}")
     try:
         validate(instance=json_data, schema=SCHEMA_JSONS["evaluation"])
     except jsonschema.exceptions.ValidationError as _err:  # NOQA
@@ -56,7 +56,7 @@ def validate_evaluation_json(json_data, evaluation_path):
 
 
 def validate_template_json(json_data, template_path):
-    logger.info("Validating template.json...")
+    logger.info(f"Validating template.json: {template_path}")
     try:
         validate(instance=json_data, schema=SCHEMA_JSONS["template"])
     except jsonschema.exceptions.ValidationError as _err:  # NOQA
@@ -94,7 +94,7 @@ def validate_template_json(json_data, template_path):
 
 
 def validate_config_json(json_data, config_path):
-    logger.info("Validating config.json...")
+    logger.info(f"Validating config.json: {config_path}")
     try:
         validate(instance=json_data, schema=SCHEMA_JSONS["config"])
     except jsonschema.exceptions.ValidationError as _err:  # NOQA
