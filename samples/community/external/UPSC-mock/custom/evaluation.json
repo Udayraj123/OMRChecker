@@ -2,16 +2,8 @@
   "source_type": "custom",
   "options": {
     "questions_in_order": ["q1..5"],
-    "answers_in_order": [
-      [["A",2], [ "C", 2]],
-      [["B", 4]],
-      [
-        ["A", 4],
-        ["AB", 4]
-      ],
-      [["D", 2, "-2/3", 0]],
-      "E"
-    ]
+    "answers_in_order": ["A", "AC", ["A", "AC"], ["A", ["1", "-2/3", "0"]], ["A", ["2"]]],
+    "should_explain_scoring": true
   },
   "marking_scheme": {
     "DEFAULT": { "correct": "2", "incorrect": "-1/3", "unmarked": "0" },

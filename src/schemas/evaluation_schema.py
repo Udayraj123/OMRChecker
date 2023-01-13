@@ -5,14 +5,14 @@ array_of_strings = {
     "type": "array",
     "items": {"type": "string"},
 }
-marking_item = {
+marking_score = {
     "oneOf": [
         {"type": "string", "pattern": "-?(\\d+)(/(\\d+))?"},
         {"type": "number"},
     ]
 }
-marking_item_or_array = {
-    "anyOf": [marking_item, {"type": "array", "items": marking_item}]
+marking_score_or_streak_array = {
+    "oneOf": [marking_score, {"type": "array", "items": marking_score}]
 }
 
 marking_object_properties = {
@@ -20,9 +20,9 @@ marking_object_properties = {
     "required": ["correct", "incorrect", "unmarked"],
     "type": "object",
     "properties": {
-        "correct": marking_item_or_array,
-        "incorrect": marking_item_or_array,
-        "unmarked": marking_item_or_array,
+        "correct": marking_score_or_streak_array,
+        "incorrect": marking_score_or_streak_array,
+        "unmarked": marking_score_or_streak_array,
     },
 }
 
@@ -104,25 +104,60 @@ EVALUATION_SCHEMA = {
                         "properties": {
                             "should_explain_scoring": {"type": "boolean"},
                             "answers_in_order": {
-                                "type": "array",
-                                "items": {
-                                    "oneOf": [
-                                        {"type": "string"},
-                                        {
-                                            "type": "array",
-                                            "items": False,
-                                            "prefixItems": [
+                                "oneOf": [
+                                    {
+                                        "type": "array",
+                                        "items": {
+                                            "oneOf": [
+                                                # standard: single correct, multimarked correct
                                                 {"type": "string"},
+                                                # multiple correct
                                                 {
-                                                    "oneOf": [
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                    "minItems": 2,
+                                                },
+                                                {
+                                                    "type": "array",  # two column array for weights
+                                                    "items": False,
+                                                    "maxItems": 2,
+                                                    "minItems": 2,
+                                                    "prefixItems": [
+                                                        # first item is string of correct answer
                                                         {"type": "string"},
-                                                        {"type": "number"},
-                                                    ]
+                                                        {
+                                                            "type": "array",
+                                                            "items": marking_score_or_streak_array,
+                                                            "minItems": 1,
+                                                            "maxItems": 3,
+                                                        },
+                                                    ],
                                                 },
                                             ],
                                         },
-                                    ],
-                                },
+                                    },
+                                    {
+                                        # TODO: answer_weight format
+                                        "type": "array",  # two column array for weights
+                                        "items": False,
+                                        "maxItems": 2,
+                                        "minItems": 2,
+                                        "prefixItems": [
+                                            {
+                                                "type": "array",
+                                                "items": {"type": "string"},
+                                                "minItems": 2,
+                                                "maxItems": 2,
+                                            },
+                                            {
+                                                "type": "array",
+                                                "items": marking_score_or_streak_array,
+                                                "minItems": 1,
+                                                "maxItems": 3,
+                                            },
+                                        ],
+                                    },
+                                ]
                             },
                             "questions_in_order": array_of_strings,
                         },
