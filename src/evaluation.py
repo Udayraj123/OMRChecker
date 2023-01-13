@@ -153,13 +153,13 @@ class SectionMarkingScheme:
         # TODO: get local empty_val from qblock
         self.empty_val = empty_val
         self.section_key = section_key
-        self.is_streak_scheme_present = False
+        self.has_streak_scheme = False
         self.reset_side_effects()
         # DEFAULT marking scheme follows a shorthand
         if section_key == DEFAULT_SECTION_KEY:
             self.questions = None
             self.marking = self.parse_scheme_marking(section_scheme)
-            if self.is_streak_scheme_present:
+            if self.has_streak_scheme:
                 raise Exception(
                     f"Default schema '{DEFAULT_SECTION_KEY}' cannot have streak marking. Create a new section and specify questions range in it."
                 )
@@ -193,15 +193,15 @@ class SectionMarkingScheme:
                         f"Found positive marks({round(verdict_marking, 2)}) for incorrect answer in the schema '{section_key}'. For Bonus sections, add a prefix 'BONUS_' to them."
                     )
             elif type(verdict_marking) == list:
-                self.is_streak_scheme_present = True
+                self.has_streak_scheme = True
                 verdict_marking = list(map(parse_float_or_fraction, verdict_marking))
 
             parsed_marking[verdict_type] = verdict_marking
 
         return parsed_marking
 
-    def has_streak_scheme(self):
-        return self.is_streak_scheme_present
+    def get_has_streak_scheme(self):
+        return self.has_streak_scheme
 
     @staticmethod
     def parse_questions(key, questions):
@@ -273,7 +273,8 @@ class EvaluationConfig:
             evaluation_json.get, ["options", "marking_scheme", "source_type"]
         )
         self.should_explain_scoring = options.get("should_explain_scoring", False)
-        self.is_streak_scheme_present = False
+        self.has_non_default_section = False
+        self.has_streak_scheme = False
         self.exclude_files = []
 
         marking_scheme = marking_scheme
@@ -294,7 +295,7 @@ class EvaluationConfig:
                 # TODO: think about upcoming plugins as we'd be going out of the execution flow
                 logger.debug(f"Attempting to generate csv from image: '{image_path}'")
 
-                self.exclude_files.extend(image_path)
+                self.exclude_files.append(image_path)
 
             # TODO: CSV parsing/validation for each row with a (qNo, <ans string/>) pair
             answer_key = pd.read_csv(
@@ -324,11 +325,12 @@ class EvaluationConfig:
                 for q in section_marking_scheme.questions:
                     # check the answer key for custom scheme here?
                     self.question_to_scheme[q] = section_marking_scheme
+                self.has_non_default_section = True
             else:
                 self.default_marking_scheme = section_marking_scheme
 
-            if section_marking_scheme.has_streak_scheme():
-                self.is_streak_scheme_present = True
+            if section_marking_scheme.get_has_streak_scheme():
+                self.has_streak_scheme = True
 
         self.validate_marking_scheme()
 
@@ -374,12 +376,15 @@ class EvaluationConfig:
 
     def validate_questions(self, answers_in_order):
         questions_in_order = self.questions_in_order
-        if len(questions_in_order) != len(answers_in_order):
+        len_questions_in_order, len_answers_in_order = len(questions_in_order), len(
+            answers_in_order
+        )
+        if len_questions_in_order != len_answers_in_order:
             logger.critical(
-                f"questions_in_order: {questions_in_order}\nanswers_in_order: {answers_in_order}"
+                f"questions_in_order({len_questions_in_order}): {questions_in_order}\nanswers_in_order({len_answers_in_order}): {answers_in_order}"
             )
             raise Exception(
-                f"Unequal lengths for questions_in_order and answers_in_order"
+                f"Unequal lengths for questions_in_order and answers_in_order ({len_questions_in_order} != {len_answers_in_order})"
             )
 
     def validate_marking_scheme(self):
@@ -434,7 +439,7 @@ class EvaluationConfig:
         )
         if len(missing_prefixed_questions) > 0:
             logger.warning(
-                f"Some potential questions without answer in OMR response: {missing_prefixed_questions}"
+                f"No answer given for potential questions in OMR response: {missing_prefixed_questions}"
             )
 
     def parse_answers_and_map_questions(self, answers_in_order):
@@ -463,8 +468,9 @@ class EvaluationConfig:
         table.add_column("Verdict")
         table.add_column("Delta")
         table.add_column("Score")
-        table.add_column("Section")
-        if self.is_streak_scheme_present:
+        if self.has_non_default_section:
+            table.add_column("Section")
+        if self.has_streak_scheme:
             table.add_column("Section Streak", justify="right")
         self.explanation_table = table
 
@@ -490,9 +496,15 @@ class EvaluationConfig:
                     str.title(question_verdict),
                     str(round(delta, 2)),
                     str(round(next_score, 2)),
-                    answer_matcher.get_section_explanation(),
-                    str(question_marking_scheme.streaks[question_verdict])
-                    if self.is_streak_scheme_present
+                    answer_matcher.get_section_explanation()
+                    if self.has_non_default_section
+                    else None,
+                    (
+                        str(question_marking_scheme.streaks[question_verdict])
+                        if question_verdict in question_marking_scheme.streaks
+                        else "custom"
+                    )
+                    if self.has_streak_scheme
                     else None,
                 ]
                 if item is not None

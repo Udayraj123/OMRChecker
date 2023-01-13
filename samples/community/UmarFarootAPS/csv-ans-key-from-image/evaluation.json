@@ -1,7 +1,8 @@
 {
   "source_type": "csv",
   "options": {
-    "answer_key_image_path": "./answer_key.jpg",
+    "answer_key_image_path": "answer_key.jpg",
+    "answer_key_csv_path": "answer_key.csv",
     "evaluation_columns": ["q1..200"],
     "should_explain_scoring": true
   },

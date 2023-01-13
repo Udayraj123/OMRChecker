@@ -25,7 +25,7 @@ def parse_validation_error(error):
 
 
 def validate_evaluation_json(json_data, evaluation_path):
-    logger.info(f"Validating evaluation.json: {evaluation_path}")
+    logger.info(f"Loading evaluation.json: {evaluation_path}")
     try:
         validate(instance=json_data, schema=SCHEMA_JSONS["evaluation"])
     except jsonschema.exceptions.ValidationError as _err:  # NOQA
@@ -51,12 +51,11 @@ def validate_evaluation_json(json_data, evaluation_path):
         logger.critical(f"Provided Evaluation JSON is Invalid: '{evaluation_path}'")
         return False
 
-    logger.info("Evaluation JSON validated successfully")
     return True
 
 
 def validate_template_json(json_data, template_path):
-    logger.info(f"Validating template.json: {template_path}")
+    logger.info(f"Loading template.json: {template_path}")
     try:
         validate(instance=json_data, schema=SCHEMA_JSONS["template"])
     except jsonschema.exceptions.ValidationError as _err:  # NOQA
@@ -89,12 +88,11 @@ def validate_template_json(json_data, template_path):
         logger.critical(f"Provided Template JSON is Invalid: '{template_path}'")
         return False
 
-    logger.info("Template JSON validated successfully")
     return True
 
 
 def validate_config_json(json_data, config_path):
-    logger.info(f"Validating config.json: {config_path}")
+    logger.info(f"Loading config.json: {config_path}")
     try:
         validate(instance=json_data, schema=SCHEMA_JSONS["config"])
     except jsonschema.exceptions.ValidationError as _err:  # NOQA
@@ -119,5 +117,4 @@ def validate_config_json(json_data, config_path):
         console.print(table, justify="center")
         logger.critical(f"Provided config JSON is Invalid: '{config_path}'")
         return False
-    logger.info("Config JSON validated successfully")
     return True

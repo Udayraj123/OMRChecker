@@ -1,0 +1,17 @@
+{
+  "source_type": "csv",
+  "options": {
+      "answer_key_csv_path": "answer_key.csv"
+  },
+  "marking_scheme": {
+    "DEFAULT": {"correct": "2", "incorrect": "-1/3", "unmarked": "0" },
+    "NON_NEGATIVE": {
+      "questions": ["q1..3"],
+      "marking": { "correct": "2", "incorrect": "0", "unmarked": "0" }
+    },
+    "BONUS_QUESTIONS": {
+      "questions": ["q5", "q6"],
+      "marking": { "unmarked": "2", "correct": "2", "incorrect": "2" }
+    }
+  }
+}
