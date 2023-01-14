@@ -17,7 +17,7 @@ class TemplateByBarcode:
         template = Template(local_template_path, PROCESSOR_MANAGER.processors)
         paths = constants.Paths(
             Path(
-                args["output_dir"] + "/CheckedOMRs/" + path,
+                os.path.join(args["output_dir"],"CheckedOMRs",path),
                 root_dir.relative_to(root_dir),
             )
         )
@@ -30,7 +30,8 @@ class TemplateByBarcode:
             if file == str(data):
                 break
         else:
-            os.mkdir(f"{path}/{str(data)}")
+            path=os.path.join(path,data)
+            os.mkdir(path)
 
     def TemplateBarcode(in_omr, template, out, file_name, args, curr_dir, root_dir):
         save_dir = out.paths.save_marked_dir
@@ -42,8 +43,7 @@ class TemplateByBarcode:
                     config.dimensions.processing_width,
                     config.dimensions.processing_height,
                 )
-            # cv2.imshow("kk", in_omr)
-            # cv2.waitKey(0)
+
         for pre_processor in template.TemplateByBarcode:
             data, input_sorting = pre_processor.apply_filter(in_omr, args)
             path = data
@@ -62,7 +62,7 @@ class TemplateByBarcode:
             if input_sorting:
                 data_2 = f"{data[:-1]}_inputs"
                 TemplateByBarcode.make_folders(path_input, data_2)
-                path_input = f"{path_input}/{data_2}/{file_name}"
+                path_input = os.path.join(path_input,data_2,file_name)
                 ImageUtils.save_img(path_input, in_omr)
 
         return template, out
