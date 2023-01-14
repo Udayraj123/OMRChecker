@@ -254,36 +254,6 @@ def preliminary_check():
     #     show("Confirm : All bubbles are black",final_marked,1,1)
 
 
-# def update_template(local_template_path, path, args, curr_dir, root_dir):
-#     template = Template(local_template_path, PROCESSOR_MANAGER.processors)
-#     paths = constants.Paths(
-#         Path(
-#             args["output_dir"],"/CheckedOMRs/",path, root_dir.relative_to(root_dir)
-#         )
-#     )
-#     setup_dirs(paths)
-#     out = setup_output(paths, template)
-#     return template, out
-#
-#
-# def TemplateBarcode(in_omr, template, save_dir, file_name, args, curr_dir, root_dir):
-#     for pre_processor in template.TemplateByBarcode:
-#         data, input_sorting = pre_processor.apply_filter(in_omr, args, save_dir)
-#         path = data
-#         data_name = f"configs/{str(data[:-1])}.json"
-#         local_template_path = root_dir.joinpath(data_name)
-#         if os.path.exists(local_template_path):
-#             template, out = update_template(
-#                 local_template_path, path, args, curr_dir, root_dir
-#             )
-#         logger.info(save_dir)
-#         if input_sorting:
-#             save = f"{data[:-1]}_save/"
-#             path_1 = f"{save_dir}{save}{str(file_name)}"
-#             ImageUtils.save_img(path_1, in_omr)
-#
-#
-#     return template, out
 
 
 # TODO: take a look at 'out.paths'
@@ -299,9 +269,6 @@ def process_files(omr_files, template, args, out, curr_dir, root_dir):
         args["current_file"] = file_path
 
         in_omr = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
-        # cv2.imshow("bla",in_omr)
-        # cv2.waitKey(0)
-        logger.info(file_path)
         logger.info(
             f"\n({files_counter}) Opening image: \t{file_path}\tResolution: {in_omr.shape}"
         )
