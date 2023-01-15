@@ -197,9 +197,9 @@ def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-
             cv2.putText(
                 final_align,
                 "%s" % (q_block.key),
-                (int(s[0] + d[0] - text_in_px[0][0]), int(s[1] - text_in_px[0][1])),
+                (int(s[0] + d[0] - text_in_px[0][0]), int(s[1] - text_in_px[0][1]) + 7), # random offset of 7 by hit and trial
                 cv2.FONT_HERSHEY_SIMPLEX,
-                constants.TEXT_SIZE,
+                constants.TEXT_SIZE * 0.7, # reduce text size
                 constants.CLR_BLACK,
                 4,
             )
