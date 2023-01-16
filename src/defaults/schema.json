@@ -296,7 +296,7 @@
                   "propertyNames": {
                     "enum": [
                       "morphKernel",
-                      "Use_Read_Barcode"
+                      "use_read_barcode"
                     ]
                   },
                   "properties": {
