@@ -56,7 +56,7 @@ class CropPage(ImagePreprocessor):
     def __init__(self, cropping_ops, args):
         self.args = args
         self.morph_kernel = tuple(cropping_ops.get("morphKernel", [10, 10]))
-        self.Use_Read_Barcode=cropping_ops.get("Use_Read_Barcode",False)
+        self.use_read_barcode = cropping_ops.get("use_read_barcode", False)
         # TODO: Rest of config defaults here
 
     def find_page(self, image):
@@ -136,7 +136,7 @@ class CropPage(ImagePreprocessor):
         # Resize should be done with another preprocessor is needed
         sheet = self.find_page(image)
         if sheet == []:
-            if self.Use_Read_Barcode:
+            if self.use_read_barcode:
                 return original_image
             logger.error(
                 "\tError: Paper boundary not found! \
