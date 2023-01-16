@@ -55,7 +55,8 @@ def angle(p_1, p_2, p_0):
 class CropPage(ImagePreprocessor):
     def __init__(self, cropping_ops, args):
         self.args = args
-        self.morph_kernel = tuple(cropping_ops.get("morphKernel", [10, 10]))
+         self.morph_kernel = tuple(
+            int(x) for x in cropping_ops.get("morphKernel", [10, 10])
         self.use_read_barcode = cropping_ops.get("use_read_barcode", False)
         # TODO: Rest of config defaults here
 
