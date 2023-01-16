@@ -66,7 +66,6 @@ class QBlock:
 class Template:
     def __init__(self, template_path, extensions):
         json_obj = open_template_with_defaults(template_path)
-        logger.info(template_path)
         self.path = template_path
         self.q_blocks = []
         # TODO: ajv validation - throw exception on key not exist
