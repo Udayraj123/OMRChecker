@@ -159,7 +159,6 @@ def process_omr(template, omr_resp):
     # Single-column/single-row questions
     for q_no in template.singles:
         csv_resp[q_no] = omr_resp.get(q_no, unmarked_symbol)
-        # logger.info(csv_resp)
 
     # Note: concatenations and singles together should be mutually exclusive
     # and should cover all questions in the template(exhaustive)
@@ -196,7 +195,6 @@ def setup_output(paths, template):
         key=lambda x: int(x[1:]) if ord(x[1]) in range(48, 58) else 0,
     )
 
-    # logger.info(ns.resp_cols)
     ns.empty_resp = [""] * len(ns.resp_cols)
     ns.sheetCols = ["file_id", "input_path", "output_path", "score"] + ns.resp_cols
     ns.OUTPUT_SET = []
@@ -208,7 +206,6 @@ def setup_output(paths, template):
         "Errors": f"{paths.manual_dir}ErrorFiles.csv",
     }
 
-    # logger.info(ns.filesMap)
     for file_key, file_name in ns.filesMap.items():
         if not os.path.exists(file_name):
             logger.info("Note: Created new file: %s" % (file_name))
@@ -262,6 +259,7 @@ def process_files(omr_files, template, args, out, curr_dir, root_dir):
     files_counter = 0
     STATS.files_not_moved = 0
     temp_template = template
+    PROCESSOR_MANAGER = ProcessorManager()
     for file_path in omr_files:
         files_counter += 1
 
@@ -288,7 +286,7 @@ def process_files(omr_files, template, args, out, curr_dir, root_dir):
         out_1 = out
         if template.TemplateByBarcode != []:
             template, out = TemplateByBarcode.TemplateBarcode(
-                in_omr, template, out, file_name, args, curr_dir, root_dir
+                in_omr, template, out, file_name, args, PROCESSOR_MANAGER,curr_dir, root_dir
             )
 
         # run pre_processors in sequence
@@ -350,12 +348,10 @@ def process_files(omr_files, template, args, out, curr_dir, root_dir):
         score = 0
 
         resp_array = []
-        # logger.info(out.resp_cols)
         for k in out.resp_cols:
             resp_array.append(resp[k])
 
         out.OUTPUT_SET.append([file_name] + resp_array)
-        # logger.info([file_name] + resp_array)
         template = temp_template
         # TODO: Add roll number validation here
         if multi_marked == 0:
