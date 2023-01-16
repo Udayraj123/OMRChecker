@@ -12,8 +12,7 @@ from src.utils.imgutils import ImageUtils
 
 
 class TemplateByBarcode:
-    def update_template(local_template_path, path, args, curr_dir, root_dir):
-        PROCESSOR_MANAGER = ProcessorManager()
+    def update_template(local_template_path, path, args, PROCESSOR_MANAGER,curr_dir,root_dir):
         template = Template(local_template_path, PROCESSOR_MANAGER.processors)
         paths = constants.Paths(
             Path(
@@ -33,7 +32,7 @@ class TemplateByBarcode:
             path=os.path.join(path,data)
             os.mkdir(path)
 
-    def TemplateBarcode(in_omr, template, out, file_name, args, curr_dir, root_dir):
+    def TemplateBarcode(in_omr, template, out, file_name, args, PROCESSOR_MANAGER,curr_dir, root_dir):
         save_dir = out.paths.save_marked_dir
         for i, pre_processor in enumerate(template.pre_processors):
             if template.name[i] == "CropPage":
@@ -50,11 +49,11 @@ class TemplateByBarcode:
             path_input = out.paths.output_dir
             path_1 = str(save_dir[:-1])
             TemplateByBarcode.make_folders(path_1, data[:-1])
-            data_name = f"configs/{str(data[:-1])}.json"
+            data_name = f"configs/{str(data[:-1])}-Template.json"
             local_template_path = root_dir.joinpath(data_name)
             if os.path.exists(local_template_path):
                 template, out = TemplateByBarcode.update_template(
-                    local_template_path, path, args, curr_dir, root_dir
+                    local_template_path, path, args, PROCESSOR_MANAGER,curr_dir,root_dir
                 )
             else:
                 logger.error(f"Unable to find the path {local_template_path}")
