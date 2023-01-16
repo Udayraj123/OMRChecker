@@ -1,4 +1,3 @@
-import cv2
 from pyzbar.pyzbar import decode
 
 from src.logger import logger
@@ -17,7 +16,7 @@ class ReadBarcode(ImagePreprocessor):
         self.x1 = self.top_left[0]
         self.x2 = self.top_right[1]
 
-
+    @staticmethod
     def detect(image):
         size = 0
         data = None
@@ -37,7 +36,7 @@ class ReadBarcode(ImagePreprocessor):
         img1 = img[self.y1 : self.y2, self.x1 : self.x2]
 
         data = ReadBarcode.detect(img1)
-        if self.qr_to_output !={}:
+        if self.qr_to_output is not None:
             data_1 = self.qr_to_output[data]
         else:
             data_1 = data
