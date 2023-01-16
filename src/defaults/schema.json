@@ -4,6 +4,7 @@
   "title": "Template Validation Schema",
   "description": "OMRChecker input image schema",
   "type": "object",
+
   "properties": {
     "dimensions": {
       "description": "The dimensions to which each input image will be resized to before processing",
@@ -22,6 +23,24 @@
       },
       "minItems": 2,
       "maxItems": 2
+    },
+    "TemplateByBarcode": {
+      "description": "Custom configuration values to use in evaluating the QRcode",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "enum": [
+              "ReadBarcode"
+            ],
+            "type": "string"
+          },
+          "options": {
+            "type": "object"
+          }
+        }
+      }
     },
     "preProcessors": {
       "description": "Custom configuration values to use in the template's directory",
@@ -100,7 +119,7 @@
                       "type": "integer"
                     },
                     "apply_erode_subtract": {
-                      "type": "integer"
+                      "type": "boolean"
                     },
                     "sheetToMarkerWidthRatio": {
                       "type": "number"
@@ -130,7 +149,9 @@
                       "reference",
                       "maxFeatures",
                       "goodMatchPercent",
-                      "2d"
+                      "2d",
+                      "width",
+                      "height"
                     ]
                   },
                   "properties": {
@@ -275,7 +296,7 @@
                   "propertyNames": {
                     "enum": [
                       "morphKernel",
-                      "is_ReadBarcode"
+                      "Use_Read_Barcode"
                     ]
                   },
                   "properties": {
