@@ -1,0 +1,36 @@
+{
+    "Globals": {
+      "window_width": 2480,
+      "window_height": 3508,
+      "display_width": 2480,
+      "display_height": 3508
+    },
+    "dimensions": [
+      2480,
+      3508
+    ],
+    "bubbleDimensions": [
+      42,
+      42
+    ],
+    "TemplateByBarcode":[
+      {
+        "name": "ReadBarcode",
+        "options": {
+          "top_left":[90,680],
+          "top_right":[230,880],
+          "qr_to_output_directory":{
+            "this will contain papercode": "subsample1"
+          },
+          "input_sorting":true
+        }
+      }
+    ],
+    "preProcessors": [
+    ],
+    "concatenations": {
+    },
+    "singles": [],
+    "qBlocks": {
+    }
+  }
