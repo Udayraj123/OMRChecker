@@ -4,7 +4,6 @@ from pathlib import Path
 from src import constants, core
 from src.config import CONFIG_DEFAULTS as config
 from src.logger import logger
-from src.processors.manager import ProcessorManager
 from src.template import Template
 from src.utils.imgutils import ImageUtils
 
@@ -12,11 +11,14 @@ from src.utils.imgutils import ImageUtils
 
 
 class TemplateByBarcode:
-    def update_template(local_template_path, path, args, PROCESSOR_MANAGER,curr_dir,root_dir):
+    @staticmethod
+    def update_template(
+        local_template_path, path, args, PROCESSOR_MANAGER, curr_dir, root_dir
+    ):
         template = Template(local_template_path, PROCESSOR_MANAGER.processors)
         paths = constants.Paths(
             Path(
-                os.path.join(args["output_dir"],"CheckedOMRs",path),
+                os.path.join(args["output_dir"], "CheckedOMRs", path),
                 root_dir.relative_to(root_dir),
             )
         )
@@ -24,15 +26,19 @@ class TemplateByBarcode:
         out = core.setup_output(paths, template)
         return template, out
 
+    @staticmethod
     def make_folders(path, data):
         for file in os.listdir(path):
             if file == str(data):
                 break
         else:
-            path=os.path.join(path,data)
+            path = os.path.join(path, data)
             os.mkdir(path)
 
-    def TemplateBarcode(in_omr, template, out, file_name, args, PROCESSOR_MANAGER,curr_dir, root_dir):
+    @staticmethod
+    def TemplateBarcode(
+        in_omr, template, out, file_name, args, PROCESSOR_MANAGER, curr_dir, root_dir
+    ):
         save_dir = out.paths.save_marked_dir
         for i, pre_processor in enumerate(template.pre_processors):
             if template.name[i] == "CropPage":
@@ -49,19 +55,24 @@ class TemplateByBarcode:
             path_input = out.paths.output_dir
             path_1 = str(save_dir[:-1])
             TemplateByBarcode.make_folders(path_1, data[:-1])
-            data_name = f"configs/{str(data[:-1])}-Template.json"
+            data_name = f"configs/{str(data[:-1])}-template.json"
             local_template_path = root_dir.joinpath(data_name)
             if os.path.exists(local_template_path):
                 template, out = TemplateByBarcode.update_template(
-                    local_template_path, path, args, PROCESSOR_MANAGER,curr_dir,root_dir
+                    local_template_path,
+                    path,
+                    args,
+                    PROCESSOR_MANAGER,
+                    curr_dir,
+                    root_dir,
                 )
             else:
                 logger.error(f"Unable to find the path {local_template_path}")
                 return None, None
             if input_sorting:
-                data_2 = f"{data[:-1]}_inputs"
-                TemplateByBarcode.make_folders(path_input, data_2)
-                path_input = os.path.join(path_input,data_2,file_name)
+                data_input = f"{data[:-1]}_inputs"
+                TemplateByBarcode.make_folders(path_input, data_input)
+                path_input = os.path.join(path_input, data_input, file_name)
                 ImageUtils.save_img(path_input, in_omr)
 
         return template, out
