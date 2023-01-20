@@ -16,7 +16,6 @@ from time import localtime, strftime, time
 import cv2
 import numpy as np
 import pandas as pd
-from pdf2image import convert_from_path
 import pypdfium2 as pdfium
 
 from src import constants
@@ -62,9 +61,9 @@ def process_dir(root_dir, curr_dir, args, template=None):
     if os.path.exists(local_template_path):
         template = Template(local_template_path, PROCESSOR_MANAGER.processors)
 
-    #looking for pdf files in current dir and saving them as into a new folder named the same as pdf file and saving individual pages as images
+    # looking for pdf files in current dir and saving them as into a new folder named the same as pdf file and saving individual pages as images
     pdf_files = [f for f in curr_dir.glob("*.pdf")]
-    
+
     if pdf_files:
         for pdf in pdf_files:
             path = str(pdf)
@@ -72,32 +71,30 @@ def process_dir(root_dir, curr_dir, args, template=None):
             path = path[:-4]
             try:
                 os.mkdir(path)
-            except:
-                pass
+            except FileExistsError:
+                print(f"Warning, folder with name {path} already exists")
 
             for page_num in range(len(obj)):
                 page = obj.get_page(page_num)
                 pil_image = page.render_topil(
-                        scale=1,
-                        rotation=0,
-                        crop=(0, 0, 0, 0),
-                        greyscale=False,
-                        optimise_mode=pdfium.OptimiseMode.NONE,
+                    scale=1,
+                    rotation=0,
+                    crop=(0, 0, 0, 0),
+                    greyscale=False,
+                    optimise_mode=pdfium.OptimiseMode.NONE,
                 )
                 pil_image.save(f"{path}/{page_num}.png")
-    
+
     # Look for subdirectories for processing
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
 
     paths = constants.Paths(Path(args["output_dir"], curr_dir.relative_to(root_dir)))
 
-
     # look for images in current dir to process
     exts = ("*.png", "*.jpg")
     omr_files = sorted([f for ext in exts for f in curr_dir.glob(ext)])
-   
 
-   # Exclude images (take union over all pre_processors)
+    # Exclude images (take union over all pre_processors)
     excluded_files = []
     if template:
         for pp in template.pre_processors:
