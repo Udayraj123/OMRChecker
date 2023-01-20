@@ -48,17 +48,19 @@ class InteractionUtils:
             if pause:
                 cv2.destroyAllWindows()
             return
-        # origDim = orig.shape[:2]
         if resize:
             if not config:
                 raise Exception("config not provided for resizing the image to show")
             img = ImageUtils.resize_util(orig, config.dimensions.display_width)
         else:
             img = orig
+
         cv2.imshow(name, img)
+
         if reset_pos:
             image_metrics.window_x = reset_pos[0]
             image_metrics.window_y = reset_pos[1]
+
         cv2.moveWindow(
             name,
             image_metrics.window_x,

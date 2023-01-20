@@ -32,9 +32,10 @@ PROCESSOR_MANAGER = ProcessorManager()
 STATS = Stats()
 
 
-def entry_point(input_dir, curr_dir, args):
+def entry_point(input_dir, args):
     if not os.path.exists(input_dir):
         raise Exception(f"Given input directory does not exist: '{input_dir}'")
+    curr_dir = input_dir
     return process_dir(input_dir, curr_dir, args)
 
 
@@ -96,12 +97,12 @@ def process_dir(
         logger.info(f'Processing directory "{curr_dir}" with settings- ')
         logger.info(f"\t{'Total images':<22}: {len(omr_files)}")
         logger.info(
-            f"\t{'Cropping Enabled':<22}: {str('CropOnMarkers' in template.pre_processors)}"
+            f"\t{'Cropping Enabled':<22}: {'CropOnMarkers' in template.pre_processors}"
         )
         logger.info(
             f"\t{'Auto Alignment':<22}: {tuning_config.alignment_params.auto_align}"
         )
-        logger.info(f"\t{'Using Template':<22}: { str(template)}")
+        logger.info(f"\t{'Using Template':<22}: {template}")
         logger.info(
             f"\t{'Using pre-processors':<22}: {[pp.__class__.__name__ for pp in template.pre_processors]}"
         )
@@ -311,7 +312,7 @@ def process_files(
 
 
 def print_stats(start_time, files_counter, tuning_config):
-    time_checking = round(time() - start_time, 2) if files_counter else 1
+    time_checking = max(1, round(time() - start_time, 2))
     log = logger.info
     log("")
     log(f"{'Total file(s) moved':<27}: {STATS.files_moved}")

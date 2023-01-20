@@ -100,7 +100,7 @@ class CropPage(ImagePreprocessor):
 
         # Resize should be done with another preprocessor is needed
         sheet = self.find_page(image, file_path)
-        if sheet == []:
+        if len(sheet) == 0:
             logger.error(
                 f"\tError: Paper boundary not found for: '{file_path}'\nHave you accidentally included CropPage preprocessor?"
             )
