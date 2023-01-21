@@ -1,25 +1,52 @@
-exclude: '__snapshots__/.*$'
+exclude: "__snapshots__/.*$"
+default_install_hook_types: [pre-commit, pre-push]
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.3.0
     hooks:
-    -   id: check-yaml
-    -   id: end-of-file-fixer
+      - id: check-yaml
+        stages: [commit]
+      - id: end-of-file-fixer
         exclude_types: ["csv", "json"]
-    -   id: trailing-whitespace
--   repo: https://github.com/pycqa/isort
+        stages: [commit]
+      - id: trailing-whitespace
+        stages: [commit]
+  - repo: https://github.com/pycqa/isort
     rev: 5.5.4
     hooks:
-    -   id: isort
+      - id: isort
         args: ["--profile", "black"]
--   repo: https://github.com/psf/black
+        stages: [commit]
+  - repo: https://github.com/psf/black
     rev: 22.3.0
     hooks:
-    -   id: black
--   repo: https://github.com/pycqa/flake8
+      - id: black
+        stages: [commit]
+  - repo: https://github.com/pycqa/flake8
     rev: 3.7.9
     hooks:
-    -   id: flake8
+      - id: flake8
         args:
-            - "F401,F841"   # unused imports, unused variables
-            - "--ignore=E501,W503,E203,E741"     # Line too long, Line break occurred before a binary operator, Whitespace before ':'
+          - "F401,F841" # unused imports, unused variables
+          - "--ignore=E501,W503,E203,E741" # Line too long, Line break occurred before a binary operator, Whitespace before ':'
+        stages: [commit]
+  - repo: local
+    hooks:
+      - id: pytest-on-commit
+        name: test run
+        entry: pytest -k sample1
+        language: system
+        pass_filenames: false
+        always_run: true
+        fail_fast: true
+        stages: [commit]
+  - repo: local
+    hooks:
+      - id: pytest-on-push
+        name: pytest-on-push
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+        fail_fast: true
+        stages: [push]
