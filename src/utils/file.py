@@ -45,7 +45,7 @@ def setup_outputs_for_template(paths, template):
 
     for file_key, file_name in ns.filesMap.items():
         if not os.path.exists(file_name):
-            logger.info(f"Note: Created new file: '{file_name}'")
+            logger.info(f"Created new file: '{file_name}'")
             # moved handling of files to pandas csv writer
             ns.files_obj[file_key] = file_name
             # Create Header Columns

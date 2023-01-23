@@ -35,6 +35,7 @@ CONFIG_SCHEMA = {
             "type": "object",
             "additionalProperties": False,
             "properties": {
+                "auto_align": {"type": "boolean"},
                 "match_col": {"type": "integer", "minimum": 0, "maximum": 10},
                 "max_steps": {"type": "integer", "minimum": 1, "maximum": 100},
                 "stride": {"type": "integer", "minimum": 1, "maximum": 10},
