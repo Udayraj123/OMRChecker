@@ -54,7 +54,8 @@ def process_dir(
 
     # Update local template (in current recursion stack)
     local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
-    if os.path.exists(local_template_path):
+    local_template_exists = os.path.exists(local_template_path)
+    if local_template_exists:
         # TODO: consider moving template inside image_instance_ops as an attribute
         image_instance_ops = ImageInstanceOps(tuning_config)
         template = Template(
@@ -62,11 +63,6 @@ def process_dir(
             image_instance_ops,
             PROCESSOR_MANAGER.processors,
         )
-
-    local_evaluation_path = curr_dir.joinpath(constants.EVALUATION_FILENAME)
-    if os.path.exists(local_evaluation_path):
-        evaluation_config = EvaluationConfig(local_evaluation_path, template, curr_dir)
-
     # Look for subdirectories for processing
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
 
@@ -74,7 +70,7 @@ def process_dir(
     paths = Paths(output_dir)
 
     # look for images in current dir to process
-    exts = ("*.png", "*.jpg")
+    exts = ("*.png", "*.jpg", "*.jpeg", "*.PNG", "*.JPG", "*.JPEG")
     omr_files = sorted([f for ext in exts for f in curr_dir.glob(ext)])
 
     # Exclude images (take union over all pre_processors)
@@ -82,10 +78,7 @@ def process_dir(
     if template:
         for pp in template.pre_processors:
             excluded_files.extend(Path(p) for p in pp.exclude_files())
-    if evaluation_config:
-        excluded_files.extend(
-            Path(exclude_file) for exclude_file in evaluation_config.get_exclude_files()
-        )
+
     omr_files = [f for f in omr_files if f not in excluded_files]
 
     if omr_files:
@@ -97,9 +90,6 @@ def process_dir(
             )
             return
 
-        args_local = args.copy()
-        if "OverrideFlags" in template.options:
-            args_local.update(template.options["OverrideFlags"])
         logger.info(
             "------------------------------------------------------------------"
         )
@@ -108,7 +98,9 @@ def process_dir(
         logger.info(
             f"\t{'Cropping Enabled':<22}: {str('CropOnMarkers' in template.pre_processors)}"
         )
-        logger.info(f"\t{'Auto Alignment':<22}: {str(args_local['autoAlign'])}")
+        logger.info(
+            f"\t{'Auto Alignment':<22}: {tuning_config.alignment_params.auto_align}"
+        )
         logger.info(f"\t{'Using Template':<22}: { str(template)}")
         logger.info(
             f"\t{'Using pre-processors':<22}: {[pp.__class__.__name__ for pp in template.pre_processors]}"
@@ -118,20 +110,40 @@ def process_dir(
         setup_dirs_for_paths(paths)
         outputs_namespace = setup_outputs_for_template(paths, template)
 
-        process_files(
-            omr_files,
-            template,
-            tuning_config,
-            evaluation_config,
-            args_local,
-            outputs_namespace,
-            image_instance_ops,
-        )
+        if args["setLayout"]:
+            show_template_layouts(
+                omr_files, image_instance_ops, template, tuning_config
+            )
+        else:
+            local_evaluation_path = curr_dir.joinpath(constants.EVALUATION_FILENAME)
+            if os.path.exists(local_evaluation_path):
+                if not local_template_exists:
+                    logger.warning(
+                        f"Found an evaluation file without a parent template file: {local_evaluation_path}"
+                    )
+                evaluation_config = EvaluationConfig(
+                    local_evaluation_path, template, image_instance_ops, curr_dir
+                )
+
+                excluded_files.extend(
+                    Path(exclude_file)
+                    for exclude_file in evaluation_config.get_exclude_files()
+                )
+
+            omr_files = [f for f in omr_files if f not in excluded_files]
+            process_files(
+                omr_files,
+                template,
+                tuning_config,
+                evaluation_config,
+                outputs_namespace,
+                image_instance_ops,
+            )
 
     elif not subdirs:
         # Each subdirectory should have images or should be non-leaf
         logger.info(
-            f"Note: No valid images or sub-folders found in {curr_dir}.\
+            f"No valid images or sub-folders found in {curr_dir}.\
             Empty directories not allowed."
         )
 
@@ -148,12 +160,25 @@ def process_dir(
         )
 
 
+def show_template_layouts(omr_files, image_instance_ops, template, tuning_config):
+    for file_path in omr_files:
+        file_name = file_path.name
+        file_path = str(file_path)
+        in_omr = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+        in_omr = image_instance_ops.apply_preprocessors(file_path, in_omr, template)
+        template_layout = image_instance_ops.draw_template_layout(
+            in_omr, template, shifted=False, border=2
+        )
+        InteractionUtils.show(
+            f"Template Layout: {file_name}", template_layout, 1, 1, config=tuning_config
+        )
+
+
 def process_files(
     omr_files,
     template,
     tuning_config,
     evaluation_config,
-    args,
     outputs_namespace,
     image_instance_ops,
 ):
@@ -163,31 +188,20 @@ def process_files(
 
     for file_path in omr_files:
         files_counter += 1
-
         file_name = file_path.name
-        args["current_file"] = file_path
 
         in_omr = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
+
         logger.info("")
         logger.info(
             f"({files_counter}) Opening image: \t'{file_path}'\tResolution: {in_omr.shape}"
         )
 
-        for i in range(image_instance_ops.save_image_level):
-            image_instance_ops.reset_save_img(i + 1)
+        image_instance_ops.reset_all_save_img()
 
         image_instance_ops.append_save_img(1, in_omr)
 
-        # resize to conform to template
-        in_omr = ImageUtils.resize_util(
-            in_omr,
-            tuning_config.dimensions.processing_width,
-            tuning_config.dimensions.processing_height,
-        )
-
-        # run pre_processors in sequence
-        for pre_processor in template.pre_processors:
-            in_omr = pre_processor.apply_filter(in_omr, args)
+        in_omr = image_instance_ops.apply_preprocessors(file_path, in_omr, template)
 
         if in_omr is None:
             # Error OMR case
@@ -213,15 +227,6 @@ def process_files(
                 )
             continue
 
-        if args["setLayout"]:
-            template_layout = image_instance_ops.draw_template_layout(
-                in_omr, template, shifted=False, border=2
-            )
-            InteractionUtils.show(
-                "Template Layout", template_layout, 1, 1, config=tuning_config
-            )
-            continue
-
         # uniquify
         file_id = str(file_name)
         save_dir = outputs_namespace.paths.save_marked_dir
@@ -231,13 +236,10 @@ def process_files(
             multi_marked,
             _,
         ) = image_instance_ops.read_omr_response(
-            template,
-            image=in_omr,
-            name=file_id,
-            save_dir=save_dir,
-            auto_align=args["autoAlign"],
+            template, image=in_omr, name=file_id, save_dir=save_dir
         )
 
+        # TODO: move inner try catch here
         # concatenate roll nos, set unmarked responses, etc
         omr_response = get_concatenated_response(response_dict, template)
 

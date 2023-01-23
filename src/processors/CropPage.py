@@ -9,6 +9,7 @@ import numpy as np
 from src.logger import logger
 from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
 from src.utils.image import ImageUtils
+from src.utils.interaction import InteractionUtils
 
 MIN_PAGE_AREA = 80000
 
@@ -50,12 +51,12 @@ class CropPage(ImagePreprocessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         cropping_ops = self.options
-        self.args = args
         self.morph_kernel = tuple(
             int(x) for x in cropping_ops.get("morphKernel", [10, 10])
         )
 
-    def find_page(self, image):
+    def find_page(self, image, file_path):
+        config = self.tuning_config
 
         image = normalize(image)
 
@@ -68,6 +69,9 @@ class CropPage(ImagePreprocessor):
         closed = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
 
         edge = cv2.Canny(closed, 185, 55)
+
+        if config.outputs.show_image_level >= 5:
+            InteractionUtils.show("edge", edge, config=config)
 
         # findContours returns outer boundaries in CW and inner ones, ACW.
         cnts = ImageUtils.grab_contours(
@@ -90,16 +94,15 @@ class CropPage(ImagePreprocessor):
 
         return sheet
 
-    def apply_filter(self, image, _args):
+    def apply_filter(self, image, file_path):
         # TODO: Take this out into separate preprocessor
         image = normalize(cv2.GaussianBlur(image, (3, 3), 0))
 
         # Resize should be done with another preprocessor is needed
-        sheet = self.find_page(image)
+        sheet = self.find_page(image, file_path)
         if sheet == []:
             logger.error(
-                "\tError: Paper boundary not found! \
-                Have you accidentally included CropPage preprocessor?"
+                f"\tError: Paper boundary not found for: '{file_path}'\nHave you accidentally included CropPage preprocessor?"
             )
             return None
 

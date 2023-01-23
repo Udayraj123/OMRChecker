@@ -33,16 +33,16 @@ class FeatureBasedAlignment(ImagePreprocessor):
     def exclude_files(self):
         return [self.ref_path]
 
-    def apply_filter(self, img, _args):
+    def apply_filter(self, image, _file_path):
         config = self.tuning_config
         # Convert images to grayscale
         # im1Gray = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
         # im2Gray = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
 
-        img = cv2.normalize(img, 0, 255, norm_type=cv2.NORM_MINMAX)
+        image = cv2.normalize(image, 0, 255, norm_type=cv2.NORM_MINMAX)
 
         # Detect ORB features and compute descriptors.
-        from_keypoints, from_descriptors = self.orb.detectAndCompute(img, None)
+        from_keypoints, from_descriptors = self.orb.detectAndCompute(image, None)
 
         # Match features.
         matcher = cv2.DescriptorMatcher_create(
@@ -60,7 +60,7 @@ class FeatureBasedAlignment(ImagePreprocessor):
         # Draw top matches
         if config.outputs.show_image_level > 2:
             im_matches = cv2.drawMatches(
-                img, from_keypoints, self.ref_img, self.to_keypoints, matches, None
+                image, from_keypoints, self.ref_img, self.to_keypoints, matches, None
             )
             InteractionUtils.show("Aligning", im_matches, resize=True, config=config)
 
@@ -76,8 +76,8 @@ class FeatureBasedAlignment(ImagePreprocessor):
         height, width = self.ref_img.shape
         if self.transform_2_d:
             m, _inliers = cv2.estimateAffine2D(points1, points2)
-            return cv2.warpAffine(img, m, (width, height))
+            return cv2.warpAffine(image, m, (width, height))
 
         # Use homography
         h, _mask = cv2.findHomography(points1, points2, cv2.RANSAC)
-        return cv2.warpPerspective(img, h, (width, height))
+        return cv2.warpPerspective(image, h, (width, height))

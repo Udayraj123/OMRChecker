@@ -22,14 +22,11 @@ class ImageInstanceOps:
         self.tuning_config = tuning_config
         self.save_image_level = tuning_config.outputs.save_image_level
 
-    def reset_save_img(self, key):
-        self.save_img_list[key] = []
-
     def append_save_img(self, key, img):
         if self.save_image_level >= int(key):
             self.save_img_list[key].append(img.copy())
 
-    def save_or_show_stacks(self, key, filename, save_dir=None, pause=1):
+    def save_image_stacks(self, key, filename, save_dir):
         config = self.tuning_config
         if self.save_image_level >= int(key) and self.save_img_list[key] != []:
             name = os.path.splitext(filename)[0]
@@ -48,14 +45,7 @@ class ImageInstanceOps:
                     int(config.dimensions.display_width * 2.5),
                 ),
             )
-            if save_dir is not None:
-                ImageUtils.save_img(
-                    f"{save_dir}stack/{name}_{str(key)}_stack.jpg", result
-                )
-            else:
-                InteractionUtils.show(
-                    f"{name}_{str(key)}", result, pause, 0, config=config
-                )
+            ImageUtils.save_img(f"{save_dir}stack/{name}_{str(key)}_stack.jpg", result)
 
     def put_label(self, img, label, size):
         config = self.tuning_config
@@ -65,6 +55,24 @@ class ImageInstanceOps:
         clr = (255 - bg_val,) * 3
         img[(pos[1] - size * 30) : (pos[1] + size * 2), :] = bg_val
         cv2.putText(img, label, pos, cv2.FONT_HERSHEY_SIMPLEX, size, clr, 3)
+
+    def reset_all_save_img(self):
+        for i in range(self.save_image_level):
+            self.save_img_list[i + 1] = []
+
+    def apply_preprocessors(self, file_path, in_omr, template):
+        tuning_config = self.tuning_config
+        # resize to conform to template
+        in_omr = ImageUtils.resize_util(
+            in_omr,
+            tuning_config.dimensions.processing_width,
+            tuning_config.dimensions.processing_height,
+        )
+
+        # run pre_processors in sequence
+        for pre_processor in template.pre_processors:
+            in_omr = pre_processor.apply_filter(in_omr, file_path)
+        return in_omr
 
     @staticmethod
     def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-1):
@@ -332,8 +340,9 @@ class ImageInstanceOps:
                 plt.show()
         return thr1
 
-    def read_omr_response(self, template, image, name, save_dir=None, auto_align=False):
+    def read_omr_response(self, template, image, name, save_dir=None):
         config = self.tuning_config
+        auto_align = config.alignment_params.auto_align
         try:
             img = image.copy()
             # origDim = img.shape[:2]
@@ -539,7 +548,7 @@ class ImageInstanceOps:
             global_thr, _, _ = self.get_global_threshold(all_q_vals, looseness=4)
 
             logger.info(
-                f"Thresholding:\t\t global_thr: {round(global_thr, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_thr == 255) else ''}"
+                f"Thresholding:\tglobal_thr: {round(global_thr, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_thr == 255) else ''}"
             )
             # plt.show()
             # hist = getPlotImg()
@@ -720,8 +729,9 @@ class ImageInstanceOps:
 
             self.append_save_img(2, final_marked)
 
-            for i in range(config.outputs.save_image_level):
-                self.save_or_show_stacks(i + 1, name, save_dir)
+            if save_dir is not None:
+                for i in range(config.outputs.save_image_level):
+                    self.save_image_stacks(i + 1, name, save_dir)
 
             return omr_response, final_marked, multi_marked, multi_roll
 

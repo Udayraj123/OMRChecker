@@ -38,16 +38,6 @@ argparser.add_argument(
 )
 
 argparser.add_argument(
-    "-a",
-    "--autoAlign",
-    required=False,
-    dest="autoAlign",
-    action="store_true",
-    help="(experimental) Enables automatic template alignment - \
-    use if the scans show slight misalignments.",
-)
-
-argparser.add_argument(
     "-l",
     "--setLayout",
     required=False,

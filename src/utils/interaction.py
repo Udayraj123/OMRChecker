@@ -82,8 +82,9 @@ class InteractionUtils:
 
         if pause:
             logger.info(
-                f"Showing '{name}'\n\tPress Q on image to continue Press Ctrl + C in terminal to exit"
+                f"Showing '{name}'\n\t Press Q on image to continue. Press Ctrl + C in terminal to exit"
             )
+
             wait_q()
             InteractionUtils.image_metrics.window_x = 0
             InteractionUtils.image_metrics.window_y = 0

@@ -80,7 +80,7 @@ EVALUATION_SCHEMA = {
                         "dependentRequired": {
                             "answer_key_image_path": [
                                 "answer_key_csv_path",
-                                "evaluation_columns",
+                                "questions_in_order",
                             ]
                         },
                         "type": "object",
@@ -88,7 +88,7 @@ EVALUATION_SCHEMA = {
                             "should_explain_scoring": {"type": "boolean"},
                             "answer_key_csv_path": {"type": "string"},
                             "answer_key_image_path": {"type": "string"},
-                            "evaluation_columns": array_of_strings,
+                            "questions_in_order": array_of_strings,
                         },
                     }
                 }

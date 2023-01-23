@@ -104,7 +104,7 @@ class CropOnMarkers(ImagePreprocessor):
             )
         return best_scale, all_max_t
 
-    def apply_filter(self, image, args):
+    def apply_filter(self, image, file_path):
         config = self.tuning_config
         image_instance_ops = self.image_instance_ops
         image_eroded_sub = ImageUtils.normalize_util(
@@ -147,10 +147,8 @@ class CropOnMarkers(ImagePreprocessor):
                 max_t < self.min_matching_threshold
                 or abs(all_max_t - max_t) >= self.max_matching_variation
             ):
-                # Warning - code will stop in the middle. Keep Threshold low to
-                # avoid.
                 logger.error(
-                    args["current_file"].name,
+                    file_path,
                     "\nError: No circle found in Quad",
                     k + 1,
                     "\n\t min_matching_threshold",
@@ -164,7 +162,7 @@ class CropOnMarkers(ImagePreprocessor):
                 )
                 if config.outputs.show_image_level >= 1:
                     InteractionUtils.show(
-                        f"no_pts_{args['current_file'].name}",
+                        f"No markers: {file_path}",
                         image_eroded_sub,
                         0,
                         config=config,
@@ -216,7 +214,7 @@ class CropOnMarkers(ImagePreprocessor):
             image_eroded_sub[:, -5:] = 0
             h_stack = np.hstack((image_eroded_sub, image))
             InteractionUtils.show(
-                f"Warped: {args['current_file'].name}",
+                f"Warped: {file_path}",
                 ImageUtils.resize_util(
                     h_stack, int(config.dimensions.display_width * 1.6)
                 ),

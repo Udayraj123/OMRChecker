@@ -214,20 +214,21 @@ Command: <code>python3 -m pip install --user --upgrade pip</code>
 ## Full Usage
 
 ```
-python3 main.py [--setLayout] [--autoAlign] [--inputDir dir1] [--outputDir dir1]
+python3 main.py [--setLayout] [--inputDir dir1] [--outputDir dir1]
 ```
 
 Explanation for the arguments:
 
 `--setLayout`: Set up OMR template layout - modify your json file and run again until the template is set.
 
-`--autoAlign`: (experimental) Enables automatic template alignment - use if the scans show slight misalignments.
-
 `--inputDir`: Specify an input directory.
 
 `--outputDir`: Specify an output directory.
 
-**Note:** The `--noCropping` flag has been replaced with including/excluding a 'CropPage' plugin in "preProcessors" of the template.json(see [samples](https://github.com/Udayraj123/OMRChecker/tree/master/samples)).
+**Notes:**
+
+- The old `--noCropping` flag has been replaced with the 'CropPage' plugin in "preProcessors" of the template.json(see [samples](https://github.com/Udayraj123/OMRChecker/tree/master/samples)).
+- The old `--autoAlign` flag can now be toggled from config.json
 
 <!-- #### Testing the code
 Datasets to test on :
