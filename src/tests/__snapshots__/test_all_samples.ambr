@@ -63,8 +63,25 @@
     ''',
     'Results/Results_05AM.csv': '''
       "file_id","input_path","output_path","score","Subject Code","Roll","bookletNo","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
-      "IMG_8441-min.jpg","samples/community/UPSC-mock/IMG_8441-min.jpg","outputs/community/UPSC-mock/CheckedOMRs/IMG_8441-min.jpg","101.33333333333334","01","8329563794","A","C","A","","A","C","D","B","B","B","C","B","D","","B","C","C","C","A","D","A","C","D","","A","","","C","B","D","","D","B","B","A","A","B","A","D","A","B","D","B","A","B","A","B","D","C","C","B","B","A","D","C","","","A","D","","D","B","D","B","","D","D","A","B","B","C","B","D","C","A","D","B","B","A","C","A","","","","A","D","C","","","A","D","","","B","C","","A","","D","A","D"
-      "IMG_8446-min.jpg","samples/community/UPSC-mock/IMG_8446-min.jpg","outputs/community/UPSC-mock/CheckedOMRs/IMG_8446-min.jpg","101.33333333333334","01","8329563794","A","C","A","","A","C","D","B","B","B","C","B","D","","B","C","C","C","A","D","A","C","D","","A","","","C","B","D","","D","B","B","A","A","B","A","D","A","B","D","B","A","B","A","B","D","C","C","B","B","A","D","C","","","A","D","","D","B","D","B","","D","D","A","B","B","C","B","D","C","A","D","B","B","A","C","A","","","","A","D","C","","","A","D","","","B","C","","A","","D","A","D"
+      "answer_key.jpg","samples/community/UPSC-mock/answer_key.jpg","outputs/community/UPSC-mock/CheckedOMRs/answer_key.jpg","200.0","","","","C","D","A","C","C","C","B","A","C","C","B","D","B","D","C","C","B","D","B","D","C","C","C","B","D","D","D","B","A","D","D","C","A","B","C","A","D","A","A","A","D","D","B","A","B","C","B","A","C","D","C","D","A","B","C","A","C","C","C","D","B","C","C","C","C","A","D","A","D","A","D","C","C","D","C","D","A","A","C","B","C","D","C","A","B","C","B","D","A","A","C","A","B","D","C","D","A","C","B","A"
+  
+    ''',
+    'scan-angles/Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","Subject Code","Roll","bookletNo","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+  
+    ''',
+    'scan-angles/Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","Subject Code","Roll","bookletNo","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+  
+    ''',
+    'scan-angles/Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","Subject Code","Roll","bookletNo","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+      "angle-1.jpg","samples/community/UPSC-mock/scan-angles/angle-1.jpg","outputs/community/UPSC-mock/scan-angles/CheckedOMRs/angle-1.jpg","70.66666666666669","","","","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
+      "angle-2.jpg","samples/community/UPSC-mock/scan-angles/angle-2.jpg","outputs/community/UPSC-mock/scan-angles/CheckedOMRs/angle-2.jpg","70.66666666666669","","","","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
+      "angle-3.jpg","samples/community/UPSC-mock/scan-angles/angle-3.jpg","outputs/community/UPSC-mock/scan-angles/CheckedOMRs/angle-3.jpg","70.66666666666669","","","","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
+      "angle-4.jpg","samples/community/UPSC-mock/scan-angles/angle-4.jpg","outputs/community/UPSC-mock/scan-angles/CheckedOMRs/angle-4.jpg","70.66666666666669","","","","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
+      "angle-5.jpg","samples/community/UPSC-mock/scan-angles/angle-5.jpg","outputs/community/UPSC-mock/scan-angles/CheckedOMRs/angle-5.jpg","70.66666666666669","","","","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
+      "angle-6.jpg","samples/community/UPSC-mock/scan-angles/angle-6.jpg","outputs/community/UPSC-mock/scan-angles/CheckedOMRs/angle-6.jpg","70.66666666666669","","","","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
   
     ''',
   })
@@ -115,8 +132,8 @@
     ''',
     'AdrianSample/Results/Results_05AM.csv': '''
       "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
-      "adrian_omr.png","samples/sample2/AdrianSample/adrian_omr.png","outputs/sample2/AdrianSample/CheckedOMRs/adrian_omr.png","5.0","B","E","A","C","B"
-      "adrian_omr_2.png","samples/sample2/AdrianSample/adrian_omr_2.png","outputs/sample2/AdrianSample/CheckedOMRs/adrian_omr_2.png","3.0","C","E","A","B","B"
+      "adrian_omr.png","samples/sample2/AdrianSample/adrian_omr.png","outputs/sample2/AdrianSample/CheckedOMRs/adrian_omr.png","0","B","E","A","C","B"
+      "adrian_omr_2.png","samples/sample2/AdrianSample/adrian_omr_2.png","outputs/sample2/AdrianSample/CheckedOMRs/adrian_omr_2.png","0","C","E","A","B","B"
   
     ''',
   })
@@ -182,7 +199,7 @@
     ''',
     'ScanBatch2/Results/Results_05AM.csv': '''
       "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22"
-      "camscanner-2.jpg","samples/sample5/ScanBatch2/camscanner-2.jpg","outputs/sample5/ScanBatch2/CheckedOMRs/camscanner-2.jpg","86.0","E204420109","C","C","B","C","C","01","19","10","10","18","D","A","D","D","D","C","C","C","C","D","B","A"
+      "camscanner-2.jpg","samples/sample5/ScanBatch2/camscanner-2.jpg","outputs/sample5/ScanBatch2/CheckedOMRs/camscanner-2.jpg","0","E204420109","C","C","B","C","C","01","19","10","10","18","D","A","D","D","D","C","C","C","C","D","B","A"
   
     ''',
   })
