@@ -86,7 +86,7 @@ def process_dir(
             logger.error(
                 f"Found images, but no template in the directory tree \
                 of '{curr_dir}'. \nPlace {constants.TEMPLATE_FILENAME} in the \
-                appropriate directory or specify a template using -t."
+                appropriate directory."
             )
             return
 

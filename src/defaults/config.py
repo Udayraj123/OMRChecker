@@ -3,8 +3,8 @@ from dotmap import DotMap
 CONFIG_DEFAULTS = DotMap(
     {
         "dimensions": {
-            "display_height": 480,
-            "display_width": 640,
+            "display_height": 2480,
+            "display_width": 1640,
             "processing_height": 820,
             "processing_width": 666,
         },
@@ -25,7 +25,7 @@ CONFIG_DEFAULTS = DotMap(
             "thickness": 3,
         },
         "outputs": {
-            "show_image_level": 0,
+            "show_image_level": 4,
             "save_image_level": 0,
             "save_detections": True,
         },
