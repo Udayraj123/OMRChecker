@@ -3,7 +3,7 @@
 Read OMRs fast and accurately using a scanner 🖨 or your phone 🤳.
 
 #### **Quick Links** 
-- [Installation](#getting-started).
+- [Installation](#getting-started)
 - [User Guide](https://github.com/Udayraj123/OMRChecker/wiki)
 - [Project Ideas List](https://github.com/users/Udayraj123/projects/2/views/1)
 
