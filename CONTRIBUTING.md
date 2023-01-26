@@ -25,3 +25,8 @@ Run `pre-commit` before committing your changes:
 git add .
 pre-commit run -a
 ```
+
+# Where to contribute from
+
+- You can pickup any open [issues](https://github.com/Udayraj123/OMRChecker/issues) to solve.
+- You can also check out the [ideas list](https://github.com/users/Udayraj123/projects/2/views/1)
