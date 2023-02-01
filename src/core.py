@@ -77,13 +77,13 @@ class ImageInstanceOps:
     @staticmethod
     def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-1):
         img = ImageUtils.resize_util(
-            img, template.dimensions[0], template.dimensions[1]
+            img, template.page_dimensions[0], template.page_dimensions[1]
         )
         final_align = img.copy()
         box_w, box_h = template.bubble_dimensions
-        for q_block in template.q_blocks:
-            s, d = q_block.orig, q_block.dimensions
-            shift = q_block.shift
+        for field_block in template.field_blocks:
+            s, d = field_block.origin, field_block.dimensions
+            shift = field_block.shift
             if shifted:
                 cv2.rectangle(
                     final_align,
@@ -100,9 +100,9 @@ class ImageInstanceOps:
                     constants.CLR_BLACK,
                     3,
                 )
-            for _, qbox_pts in q_block.traverse_pts:
-                for pt in qbox_pts:
-                    x, y = (pt.x + q_block.shift, pt.y) if shifted else (pt.x, pt.y)
+            for _, field_block_bubbles in field_block.traverse_bubbles:
+                for pt in field_block_bubbles:
+                    x, y = (pt.x + field_block.shift, pt.y) if shifted else (pt.x, pt.y)
                     cv2.rectangle(
                         final_align,
                         (int(x + box_w / 10), int(y + box_h / 10)),
@@ -123,11 +123,11 @@ class ImageInstanceOps:
                         )
             if shifted:
                 text_in_px = cv2.getTextSize(
-                    q_block.key, cv2.FONT_HERSHEY_SIMPLEX, constants.TEXT_SIZE, 4
+                    field_block.name, cv2.FONT_HERSHEY_SIMPLEX, constants.TEXT_SIZE, 4
                 )
                 cv2.putText(
                     final_align,
-                    f"{q_block.key}",
+                    field_block.name,
                     (int(s[0] + d[0] - text_in_px[0][0]), int(s[1] - text_in_px[0][1])),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     constants.TEXT_SIZE,
@@ -185,8 +185,8 @@ class ImageInstanceOps:
             else constants.GLOBAL_PAGE_THRESHOLD_BLACK
         )
 
-        # Sort the Q vals
-        # Change var name of q_vals
+        # Sort the Q bubbleValues
+        # TODO: Change var name of q_vals
         q_vals = sorted(q_vals_orig)
         # Find the FIRST LARGE GAP and set it as threshold:
         ls = (looseness + 1) // 2
@@ -267,7 +267,7 @@ class ImageInstanceOps:
 
         """
         config = self.tuning_config
-        # Sort the Q vals
+        # Sort the Q bubbleValues
         q_vals = sorted(q_vals)
 
         # Small no of pts cases:
@@ -291,7 +291,7 @@ class ImageInstanceOps:
             #     no_outliers = False
 
             # # ^Stackoverflow method
-            # print(q_no, no_outliers,"qstd",round(np.std(q_vals),2), "gstd", gstd,
+            # print(field_label, no_outliers,"qstd",round(np.std(q_vals),2), "gstd", gstd,
             #   "Gaps in gvals",sorted([round(abs(g-gmean),2) for g in GVals],reverse=True),
             #   '\t',round(DISCRETION*gstd,2), L2MaxGap)
 
@@ -304,7 +304,7 @@ class ImageInstanceOps:
                 if jump > max1:
                     max1 = jump
                     thr1 = q_vals[i - 1] + jump / 2
-            # print(q_no,q_vals,max1)
+            # print(field_label,q_vals,max1)
 
             confident_jump = (
                 config.threshold_params.MIN_JUMP
@@ -347,7 +347,7 @@ class ImageInstanceOps:
             img = image.copy()
             # origDim = img.shape[:2]
             img = ImageUtils.resize_util(
-                img, template.dimensions[0], template.dimensions[1]
+                img, template.page_dimensions[0], template.page_dimensions[1]
             )
             if img.max() > img.min():
                 img = ImageUtils.normalize_util(img)
@@ -387,10 +387,10 @@ class ImageInstanceOps:
 
             if config.outputs.show_image_level >= 5:
                 all_c_box_vals = {"int": [], "mcq": []}
-                # ,"QTYPE_ROLL":[]}#,"QTYPE_MED":[]}
+                # TODO: simplify this logic
                 q_nums = {"int": [], "mcq": []}
 
-            # Find Shifts for the q_blocks --> Before calculating threshold!
+            # Find Shifts for the field_blocks --> Before calculating threshold!
             if auto_align:
                 # print("Begin Alignment")
                 # Open : erode then dilate
@@ -432,8 +432,8 @@ class ImageInstanceOps:
                 self.append_save_img(6, morph_v)
 
                 # template relative alignment code
-                for q_block in template.q_blocks:
-                    s, d = q_block.orig, q_block.dimensions
+                for field_block in template.field_blocks:
+                    s, d = field_block.origin, field_block.dimensions
 
                     match_col, max_steps, align_stride, thk = map(
                         config.alignment_params.get,
@@ -467,7 +467,7 @@ class ImageInstanceOps:
                         )
 
                         # For demonstration purposes-
-                        # if(q_block.key == "int1"):
+                        # if(field_block.name == "int1"):
                         #     ret = morph_v.copy()
                         #     cv2.rectangle(ret,
                         #                   (s[0]+shift-thk,s[1]),
@@ -489,10 +489,10 @@ class ImageInstanceOps:
                                 break
                         steps += 1
 
-                    q_block.shift = shift
-                    # print("Aligned q_block: ",q_block.key,"Corrected Shift:",
-                    #   q_block.shift,", dimensions:", q_block.dimensions,
-                    #   "orig:", q_block.orig,'\n')
+                    field_block.shift = shift
+                    # print("Aligned field_block: ",field_block.name,"Corrected Shift:",
+                    #   field_block.shift,", dimensions:", field_block.dimensions,
+                    #   "origin:", field_block.origin,'\n')
                 # print("End Alignment")
 
             final_align = None
@@ -509,16 +509,16 @@ class ImageInstanceOps:
                     final_align = np.hstack((initial_align, final_align))
             self.append_save_img(5, img)
 
-            # Get mean vals n other stats
+            # Get mean bubbleValues n other stats
             all_q_vals, all_q_strip_arrs, all_q_std_vals = [], [], []
             total_q_strip_no = 0
-            for q_block in template.q_blocks:
+            for field_block in template.field_blocks:
                 q_std_vals = []
-                for _, qbox_pts in q_block.traverse_pts:
+                for _, field_block_bubbles in field_block.traverse_bubbles:
                     q_strip_vals = []
-                    for pt in qbox_pts:
+                    for pt in field_block_bubbles:
                         # shifted
-                        x, y = (pt.x + q_block.shift, pt.y)
+                        x, y = (pt.x + field_block.shift, pt.y)
                         rect = [y, y + box_h, x, x + box_w]
                         q_strip_vals.append(
                             cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]
@@ -529,9 +529,9 @@ class ImageInstanceOps:
                     # _, _, _ = get_global_threshold(q_strip_vals, "QStrip Plot",
                     #   plot_show=False, sort_in_plot=True)
                     # hist = getPlotImg()
-                    # InteractionUtils.show("QStrip "+qbox_pts[0].q_no, hist, 0, 1,config=config)
+                    # InteractionUtils.show("QStrip "+field_block_bubbles[0].field_label, hist, 0, 1,config=config)
                     all_q_vals.extend(q_strip_vals)
-                    # print(total_q_strip_no, qbox_pts[0].q_no, q_std_vals[len(q_std_vals)-1])
+                    # print(total_q_strip_no, field_block_bubbles[0].field_label, q_std_vals[len(q_std_vals)-1])
                     total_q_strip_no += 1
                 all_q_std_vals.extend(q_std_vals)
 
@@ -562,52 +562,53 @@ class ImageInstanceOps:
             #     appendSaveImg(2,hist)
 
             per_omr_threshold_avg, total_q_strip_no, total_q_box_no = 0, 0, 0
-            non_empty_qnos = set()
-            for q_block in template.q_blocks:
+            for field_block in template.field_blocks:
                 block_q_strip_no = 1
-                shift = q_block.shift
-                s, d = q_block.orig, q_block.dimensions
-                key = q_block.key[:3]
+                shift = field_block.shift
+                s, d = field_block.origin, field_block.dimensions
+                key = field_block.name[:3]
                 # cv2.rectangle(final_marked,(s[0]+shift,s[1]),(s[0]+shift+d[0],
                 #   s[1]+d[1]),CLR_BLACK,3)
-                for _, qbox_pts in q_block.traverse_pts:
+                for _bounding_box, field_block_bubbles in field_block.traverse_bubbles:
                     # All Black or All White case
                     no_outliers = all_q_std_vals[total_q_strip_no] < global_std_thresh
-                    # print(total_q_strip_no, qbox_pts[0].q_no,
+                    # print(total_q_strip_no, field_block_bubbles[0].field_label,
                     #   all_q_std_vals[total_q_strip_no], "no_outliers:", no_outliers)
                     per_q_strip_threshold = self.get_local_threshold(
                         all_q_strip_arrs[total_q_strip_no],
                         global_thr,
                         no_outliers,
-                        "Mean Intensity Histogram for "
-                        + key
-                        + "."
-                        + qbox_pts[0].q_no
-                        + "."
-                        + str(block_q_strip_no),
+                        f"Mean Intensity Histogram for {key}.{field_block_bubbles[0].field_label}.{block_q_strip_no}",
                         config.outputs.show_image_level >= 6,
                     )
-                    # print(qbox_pts[0].q_no,key,block_q_strip_no, "THR: ",
+                    # print(field_block_bubbles[0].field_label,key,block_q_strip_no, "THR: ",
                     #   round(per_q_strip_threshold,2))
                     per_omr_threshold_avg += per_q_strip_threshold
 
                     # Note: Little debugging visualization - view the particular Qstrip
                     # if(
                     #     0
-                    #     # or "q17" in (qbox_pts[0].q_no)
-                    #     # or (qbox_pts[0].q_no+str(block_q_strip_no))=="q15"
+                    #     # or "q17" in (field_block_bubbles[0].field_label)
+                    #     # or (field_block_bubbles[0].field_label+str(block_q_strip_no))=="q15"
                     #  ):
                     #     st, end = qStrip
                     #     InteractionUtils.show("QStrip: "+key+"-"+str(block_q_strip_no),
                     #     img[st[1] : end[1], st[0]+shift : end[0]+shift],0,config=config)
 
-                    for pt in qbox_pts:
-                        # shifted
-                        x, y = (pt.x + q_block.shift, pt.y)
-                        boxval0 = all_q_vals[total_q_box_no]
-                        detected = per_q_strip_threshold > boxval0
-
-                        if detected:
+                    # TODO: get rid of total_q_box_no
+                    detected_bubbles = []
+                    for bubble in field_block_bubbles:
+                        bubble_is_marked = (
+                            per_q_strip_threshold > all_q_vals[total_q_box_no]
+                        )
+                        total_q_box_no += 1
+                        if bubble_is_marked:
+                            detected_bubbles.append(bubble)
+                            x, y, field_value = (
+                                bubble.x + field_block.shift,
+                                bubble.y,
+                                bubble.field_value,
+                            )
                             cv2.rectangle(
                                 final_marked,
                                 (int(x + box_w / 12), int(y + box_h / 12)),
@@ -617,6 +618,16 @@ class ImageInstanceOps:
                                 ),
                                 constants.CLR_DARK_GRAY,
                                 3,
+                            )
+
+                            cv2.putText(
+                                final_marked,
+                                str(field_value),
+                                (x, y),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                constants.TEXT_SIZE,
+                                (20, 20, 10),
+                                int(1 + 3.5 * constants.TEXT_SIZE),
                             )
                         else:
                             cv2.rectangle(
@@ -630,32 +641,25 @@ class ImageInstanceOps:
                                 -1,
                             )
 
-                        if detected:
-                            q, val = pt.q_no, str(pt.val)
-                            cv2.putText(
-                                final_marked,
-                                val,
-                                (x, y),
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                constants.TEXT_SIZE,
-                                (20, 20, 10),
-                                int(1 + 3.5 * constants.TEXT_SIZE),
-                            )
-                            # Only send rolls multi-marked in the directory
-                            multi_marked_l = q in omr_response
-                            multi_marked = multi_marked_l or multi_marked
-                            omr_response[q] = (
-                                (omr_response[q] + val) if multi_marked_l else val
-                            )
-                            non_empty_qnos.add(q)
-                            multi_roll = multi_marked_l and "Roll" in str(q)
-                            # blackVals.append(boxval0)
-                        # else:
-                        # whiteVals.append(boxval0)
+                    for bubble in detected_bubbles:
+                        field_label, field_value = (
+                            bubble.field_label,
+                            bubble.field_value,
+                        )
+                        # Only send rolls multi-marked in the directory
+                        multi_marked_local = field_label in omr_response
+                        omr_response[field_label] = (
+                            (omr_response[field_label] + field_value)
+                            if multi_marked_local
+                            else field_value
+                        )
+                        # TODO: generalize this into identifier
+                        # multi_roll = multi_marked_local and "Roll" in str(q)
+                        multi_marked = multi_marked or multi_marked_local
 
-                        total_q_box_no += 1
-                        # /for qbox_pts
-                    # /for qStrip
+                    if len(detected_bubbles) == 0:
+                        field_label = field_block_bubbles[0].field_label
+                        omr_response[field_label] = field_block.empty_val
 
                     if config.outputs.show_image_level >= 5:
                         if key in all_c_box_vals:
@@ -666,20 +670,7 @@ class ImageInstanceOps:
 
                     block_q_strip_no += 1
                     total_q_strip_no += 1
-                # /for q_block
-
-            # Populate empty responses
-
-            # loop over qNos in concatentations
-            for concatQ in template.concatenations:
-                for q in concatQ:
-                    if q not in non_empty_qnos:
-                        omr_response[q] = q_block.empty_val
-
-            # loop over qNos in singles
-            for q in template.singles:
-                if q not in non_empty_qnos:
-                    omr_response[q] = q_block.empty_val
+                # /for field_block
 
             per_omr_threshold_avg /= total_q_strip_no
             per_omr_threshold_avg = round(per_omr_threshold_avg, 2)

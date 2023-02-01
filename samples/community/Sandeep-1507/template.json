@@ -1,810 +1,138 @@
 {
-  "Globals": {
-    "display_width": 1189,
-    "display_height": 1682
-  },
-  "dimensions": [
-    1189,
-    1682
-  ],
-  "bubbleDimensions": [
-    15,
-    15
-  ],
+  "pageDimensions": [1189, 1682],
+  "bubbleDimensions": [15, 15],
   "preProcessors": [
     {
       "name": "GaussianBlur",
       "options": {
-        "kSize": [
-          3,
-          3
-        ],
+        "kSize": [3, 3],
         "sigmaX": 0
       }
     }
   ],
-  "concatenations": {
-    "Booklet_no": [
-      "b1",
-      "b2",
-      "b3",
-      "b4",
-      "b5",
-      "b6",
-      "b7"
-    ]
+  "customLabels": {
+    "Booklet_No": ["b1..7"]
   },
-  "singles": [
-    "q1",
-    "q2",
-    "q3",
-    "q4",
-    "q5",
-    "q6",
-    "q7",
-    "q8",
-    "q9",
-    "q10",
-    "q11",
-    "q12",
-    "q13",
-    "q14",
-    "q15",
-    "q16",
-    "q17",
-    "q18",
-    "q19",
-    "q20",
-    "q21",
-    "q22",
-    "q23",
-    "q24",
-    "q25",
-    "q26",
-    "q27",
-    "q28",
-    "q29",
-    "q30",
-    "q31",
-    "q32",
-    "q33",
-    "q34",
-    "q35",
-    "q36",
-    "q37",
-    "q38",
-    "q39",
-    "q40",
-    "q41",
-    "q42",
-    "q43",
-    "q44",
-    "q45",
-    "q46",
-    "q47",
-    "q48",
-    "q49",
-    "q50",
-    "q51",
-    "q52",
-    "q53",
-    "q54",
-    "q55",
-    "q56",
-    "q57",
-    "q58",
-    "q59",
-    "q60",
-    "q61",
-    "q62",
-    "q63",
-    "q64",
-    "q65",
-    "q66",
-    "q67",
-    "q68",
-    "q69",
-    "q70",
-    "q71",
-    "q72",
-    "q73",
-    "q74",
-    "q75",
-    "q76",
-    "q77",
-    "q78",
-    "q79",
-    "q80",
-    "q81",
-    "q82",
-    "q83",
-    "q84",
-    "q85",
-    "q86",
-    "q87",
-    "q88",
-    "q89",
-    "q90",
-    "q91",
-    "q92",
-    "q93",
-    "q94",
-    "q95",
-    "q96",
-    "q97",
-    "q98",
-    "q99",
-    "q100",
-    "q101",
-    "q102",
-    "q103",
-    "q104",
-    "q105",
-    "q106",
-    "q107",
-    "q108",
-    "q109",
-    "q110",
-    "q111",
-    "q112",
-    "q113",
-    "q114",
-    "q115",
-    "q116",
-    "q117",
-    "q118",
-    "q119",
-    "q120",
-    "q121",
-    "q122",
-    "q123",
-    "q124",
-    "q125",
-    "q126",
-    "q127",
-    "q128",
-    "q129",
-    "q130",
-    "q131",
-    "q132",
-    "q133",
-    "q134",
-    "q135",
-    "q136",
-    "q137",
-    "q138",
-    "q139",
-    "q140",
-    "q141",
-    "q142",
-    "q143",
-    "q144",
-    "q145",
-    "q146",
-    "q147",
-    "q148",
-    "q149",
-    "q150",
-    "q151",
-    "q152",
-    "q153",
-    "q154",
-    "q155",
-    "q156",
-    "q157",
-    "q158",
-    "q159",
-    "q160",
-    "q161",
-    "q162",
-    "q163",
-    "q164",
-    "q165",
-    "q166",
-    "q167",
-    "q168",
-    "q169",
-    "q170",
-    "q171",
-    "q172",
-    "q173",
-    "q174",
-    "q175",
-    "q176",
-    "q177",
-    "q178",
-    "q179",
-    "q180",
-    "q181",
-    "q182",
-    "q183",
-    "q184",
-    "q185",
-    "q186",
-    "q187",
-    "q188",
-    "q189",
-    "q190",
-    "q191",
-    "q192",
-    "q193",
-    "q194",
-    "q195",
-    "q196",
-    "q197",
-    "q198",
-    "q199",
-    "q200"
-  ],
-  "qBlocks": {
-    "Booklet_no": {
-      "qType": "QTYPE_ROLL",
-      "orig": [
-        112,
-        530
-      ],
-      "qNos": [
-        [
-          [
-            "b1",
-            "b2",
-            "b3",
-            "b4",
-            "b5",
-            "b6",
-            "b7"
-          ]
-        ]
-      ],
-      "gaps": [
-        28,
-        26.5
-      ],
-      "bigGaps": [
-        10,
-        20
-      ]
+  "fieldBlocks": {
+    "Booklet_No": {
+      "fieldType": "QTYPE_INT",
+      "origin": [112, 530],
+      "fieldLabels": ["b1..7"],
+      "emptyVal": "no",
+      "bubblesGap": 28,
+      "labelsGap": 26.5
     },
     "MCQBlock1a1": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        476,
-        100
-      ],
-      "gaps": [
-        28.7,
-        26.7
-      ],
-      "bigGaps": [
-        10,
-        20
-      ],
-      "qNos": [
-        [
-          [
-            "q1",
-            "q2",
-            "q3",
-            "q4",
-            "q5",
-            "q6",
-            "q7",
-            "q8",
-            "q9",
-            "q10"
-          ]
-        ]
-      ]
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q1..10"],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [476, 100]
     },
     "MCQBlock1a2": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        476,
-        370
-      ],
-      "gaps": [
-        28.7,
-        26.7
-      ],
-      "bigGaps": [
-        10,
-        20
-      ],
-      "qNos": [
-        [
-          [
-            "q11",
-            "q12",
-            "q13",
-            "q14",
-            "q15",
-            "q16",
-            "q17",
-            "q18",
-            "q19",
-            "q20"
-          ]
-        ]
-      ]
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q11..20"],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [476, 370]
     },
     "MCQBlock1a3": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        476,
-        638
-      ],
-      "gaps": [
-        28.7,
-        26.7
-      ],
-      "bigGaps": [
-        10,
-        20
-      ],
-      "qNos": [
-        [
-          [
-
-            "q21",
-            "q22",
-            "q23",
-            "q24",
-            "q25",
-            "q26",
-            "q27",
-            "q28",
-            "q29",
-            "q30",
-            "q31",
-            "q32",
-            "q33",
-            "q34",
-            "q35"
-          ]
-        ]
-      ]
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q21..35"],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [476, 638]
     },
     "MCQBlock2a1": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        645,
-        100
-      ],
-      "gaps": [
-        28.7,
-        26.7
-      ],
-      "bigGaps": [
-        10,
-        20
-      ],
-      "qNos": [
-        [
-          [
-            "q51",
-            "q52",
-            "q53",
-            "q54",
-            "q55",
-            "q56",
-            "q57",
-            "q58",
-            "q59",
-            "q60"
-
-          ]
-        ]
-      ]
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q51..60"],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [645, 100]
     },
     "MCQBlock2a2": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        645,
-        370
-      ],
-      "gaps": [
-        28.7,
-        26.7
-      ],
-      "bigGaps": [
-        10,
-        20
-      ],
-      "qNos": [
-        [
-          [
-            "q61",
-            "q62",
-            "q63",
-            "q64",
-            "q65",
-            "q66",
-            "q67",
-            "q68",
-            "q69",
-            "q70"
-
-          ]
-        ]
-      ]
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q61..70"],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [645, 370]
     },
     "MCQBlock2a3": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        645,
-        638
-      ],
-      "gaps": [
-        28.7,
-        26.7
-      ],
-      "bigGaps": [
-        10,
-        20
-      ],
-      "qNos": [
-        [
-          [
-            "q71",
-            "q72",
-            "q73",
-            "q74",
-            "q75",
-            "q76",
-            "q77",
-            "q78",
-            "q79",
-            "q80",
-            "q81",
-            "q82",
-            "q83",
-            "q84",
-            "q85"
-          ]
-        ]
-      ]
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q71..85"],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [645, 638]
     },
     "MCQBlock3a1": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        815,
-        100
-      ],
-      "gaps": [
-        28.7,
-        26.7
-      ],
-      "bigGaps": [
-        10,
-        20
-      ],
-      "qNos": [
-        [
-          [
-            "q101",
-            "q102",
-            "q103",
-            "q104",
-            "q105",
-            "q106",
-            "q107",
-            "q108",
-            "q109",
-            "q110"
-
-          ]
-        ]
-      ]
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q101..110"],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [815, 100]
     },
     "MCQBlock3a2": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        815,
-        370
-      ],
-      "gaps": [
-        28.7,
-        26.7
-      ],
-      "bigGaps": [
-        10,
-        20
-      ],
-      "qNos": [
-        [
-          [
-            "q111",
-            "q112",
-            "q113",
-            "q114",
-            "q115",
-            "q116",
-            "q117",
-            "q118",
-            "q119",
-            "q120"
-          ]
-        ]
-      ]
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q111..120"],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [815, 370]
     },
     "MCQBlock3a3": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        815,
-        638
-      ],
-      "gaps": [
-        28.7,
-        26.7
-      ],
-      "bigGaps": [
-        10,
-        20
-      ],
-      "qNos": [
-        [
-          [
-            "q121",
-            "q122",
-            "q123",
-            "q124",
-            "q125",
-            "q126",
-            "q127",
-            "q128",
-            "q129",
-            "q130",
-            "q131",
-            "q132",
-            "q133",
-            "q134",
-            "q135"
-          ]
-        ]
-      ]
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q121..135"],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [815, 638]
     },
     "MCQBlock4a1": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        983,
-        100
-      ],
-      "gaps": [
-        28.7,
-        26.7
-      ],
-      "bigGaps": [
-        10,
-        20
-      ],
-      "qNos": [
-        [
-          [
-            "q151",
-            "q152",
-            "q153",
-            "q154",
-            "q155",
-            "q156",
-            "q157",
-            "q158",
-            "q159",
-            "q160"
-
-          ]
-        ]
-      ]
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q151..160"],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [983, 100]
     },
     "MCQBlock4a2": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        983,
-        370
-      ],
-      "gaps": [
-        28.7,
-        26.7
-      ],
-      "bigGaps": [
-        10,
-        20
-      ],
-      "qNos": [
-        [
-          [
-            "q161",
-            "q162",
-            "q163",
-            "q164",
-            "q165",
-            "q166",
-            "q167",
-            "q168",
-            "q169",
-            "q170"
-          ]
-        ]
-      ]
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q161..170"],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [983, 370]
     },
     "MCQBlock4a3": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        983,
-        638
-      ],
-      "gaps": [
-        28.7,
-        26.7
-      ],
-      "bigGaps": [
-        10,
-        20
-      ],
-      "qNos": [
-        [
-          [
-            "q171",
-            "q172",
-            "q173",
-            "q174",
-            "q175",
-            "q176",
-            "q177",
-            "q178",
-            "q179",
-            "q180",
-            "q181",
-            "q182",
-            "q183",
-            "q184",
-            "q185"
-          ]
-        ]
-      ]
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q171..185"],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [983, 638]
     },
     "MCQBlock1a": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        480,
-        1061
-      ],
-      "qNos": [
-        [
-          [
-            "q36",
-            "q37",
-            "q38",
-            "q39",
-            "q40",
-            "q41",
-            "q42",
-            "q43",
-            "q44",
-            "q45",
-            "q46",
-            "q47",
-            "q48",
-            "q49",
-            "q50"
-          ]
-        ]
-      ],
-      "gaps": [
-        28.7,
-        26.7
-      ],
-      "bigGaps": [
-        10,
-        20
-      ]
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q36..50"],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [480, 1061]
     },
     "MCQBlock2a": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        648,
-        1061
-      ],
-      "qNos": [
-        [
-          [
-            "q86",
-            "q87",
-            "q88",
-            "q89",
-            "q90",
-            "q91",
-            "q92",
-            "q93",
-            "q94",
-            "q95",
-            "q96",
-            "q97",
-            "q98",
-            "q99",
-            "q100"
-          ]
-        ]
-      ],
-      "gaps": [
-        28.7,
-        26.7
-      ],
-      "bigGaps": [
-        10,
-        20
-      ]
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q86..100"],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [648, 1061]
     },
     "MCQBlock3a": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        815,
-        1061
-      ],
-      "qNos": [
-        [
-          [
-            "q136",
-            "q137",
-            "q138",
-            "q139",
-            "q140",
-            "q141",
-            "q142",
-            "q143",
-            "q144",
-            "q145",
-            "q146",
-            "q147",
-            "q148",
-            "q149",
-            "q150"
-          ]
-        ]
-      ],
-      "gaps": [
-        28.7,
-        26.7
-      ],
-      "bigGaps": [
-        10,
-        20
-      ]
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q136..150"],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [815, 1061]
     },
     "MCQBlock4a": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        986,
-        1061
-      ],
-      "qNos": [
-        [
-          [
-            "q186",
-            "q187",
-            "q188",
-            "q189",
-            "q190",
-            "q191",
-            "q192",
-            "q193",
-            "q194",
-            "q195",
-            "q196",
-            "q197",
-            "q198",
-            "q199",
-            "q200"
-          ]
-        ]
-      ],
-      "gaps": [
-        28.7,
-        26.6
-      ],
-      "bigGaps": [
-        10,
-        20
-      ]
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q186..200"],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.6,
+      "origin": [986, 1061]
     }
   }
 }

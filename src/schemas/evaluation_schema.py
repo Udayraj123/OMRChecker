@@ -1,10 +1,9 @@
-DEFAULT_SECTION_KEY = "DEFAULT"
-BONUS_SECTION_PREFIX = "BONUS"
-MARKING_VERDICT_TYPES = ["correct", "incorrect", "unmarked"]
-array_of_strings = {
-    "type": "array",
-    "items": {"type": "string"},
-}
+from src.schemas.constants import (
+    ARRAY_OF_STRINGS,
+    DEFAULT_SECTION_KEY,
+    FIELD_STRING_TYPE,
+)
+
 marking_score = {
     "oneOf": [
         {"type": "string", "pattern": "-?(\\d+)(/(\\d+))?"},
@@ -25,9 +24,6 @@ marking_object_properties = {
         "unmarked": marking_score_or_streak_array,
     },
 }
-
-question_string_pattern = "^([^\\.]+)*?([^\\.\\d]+(\\d+)\\.{2,3}(\\d+))*?$"
-QUESTION_STRING_REGEX_GROUPS = r"([^\.\d]+)(\d+)\.{2,3}(\d+)"
 
 EVALUATION_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -53,14 +49,11 @@ EVALUATION_SCHEMA = {
                     "properties": {
                         "questions": {
                             "oneOf": [
+                                FIELD_STRING_TYPE,
                                 {
                                     "type": "array",
-                                    "items": {
-                                        "type": "string",
-                                        "pattern": question_string_pattern,
-                                    },
+                                    "items": FIELD_STRING_TYPE,
                                 },
-                                {"type": "string", "pattern": question_string_pattern},
                             ]
                         },
                         "marking": marking_object_properties,
@@ -88,7 +81,7 @@ EVALUATION_SCHEMA = {
                             "should_explain_scoring": {"type": "boolean"},
                             "answer_key_csv_path": {"type": "string"},
                             "answer_key_image_path": {"type": "string"},
-                            "questions_in_order": array_of_strings,
+                            "questions_in_order": ARRAY_OF_STRINGS,
                         },
                     }
                 }
@@ -160,7 +153,7 @@ EVALUATION_SCHEMA = {
                                     },
                                 ]
                             },
-                            "questions_in_order": array_of_strings,
+                            "questions_in_order": ARRAY_OF_STRINGS,
                         },
                     }
                 }

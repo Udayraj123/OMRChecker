@@ -18,7 +18,7 @@ from src.schemas import SCHEMA_JSONS, SCHEMA_VALIDATORS
 
 def parse_validation_error(error):
     return (
-        (error.path[0] if len(error.path) > 0 else "root key"),
+        (error.path[0] if len(error.path) > 0 else "$root"),
         error.validator,
         error.message,
     )
@@ -41,8 +41,9 @@ def validate_evaluation_json(json_data, evaluation_path):
         for error in errors:
             key, validator, msg = parse_validation_error(error)
             if validator == "required":
+                requiredProperty = re.findall(r"'(.*?)'", msg)[0]
                 table.add_row(
-                    re.findall(r"'(.*?)'", msg)[0],
+                    f"{key}.{requiredProperty}",
                     msg + ". Make sure the spelling of the key is correct",
                 )
             else:
@@ -77,10 +78,10 @@ def validate_template_json(json_data, template_path):
                 preProcessorKey = error.path[2]
                 table.add_row(f"{key}.{preProcessorName}.{preProcessorKey}", msg)
             elif validator == "required":
+                requiredProperty = re.findall(r"'(.*?)'", msg)[0]
                 table.add_row(
-                    re.findall(r"'(.*?)'", msg)[0],
-                    msg
-                    + ". Make sure the spelling of the key is correct and it is in camelCase",
+                    f"{key}.{requiredProperty}",
+                    f"{msg}. Check for spelling errors and make sure it is in camelCase",
                 )
             else:
                 table.add_row(key, msg)
@@ -107,10 +108,10 @@ def validate_config_json(json_data, config_path):
             key, validator, msg = parse_validation_error(error)
 
             if validator == "required":
+                requiredProperty = re.findall(r"'(.*?)'", msg)[0]
                 table.add_row(
-                    re.findall(r"'(.*?)'", msg)[0],
-                    msg
-                    + ". Make sure the spelling of the key is correct and it is in camelCase",
+                    f"{key}.{requiredProperty}",
+                    f"{msg}. Check for spelling errors and make sure it is in camelCase",
                 )
             else:
                 table.add_row(key, msg)

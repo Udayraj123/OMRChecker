@@ -9,13 +9,16 @@ import pandas as pd
 from rich.table import Table
 
 from src.logger import console, logger
-from src.schemas.evaluation_schema import (
+from src.schemas.constants import (
     BONUS_SECTION_PREFIX,
     DEFAULT_SECTION_KEY,
     MARKING_VERDICT_TYPES,
-    QUESTION_STRING_REGEX_GROUPS,
 )
-from src.utils.parsing import get_concatenated_response, open_evaluation_with_validation
+from src.utils.parsing import (
+    get_concatenated_response,
+    open_evaluation_with_validation,
+    parse_fields,
+)
 
 
 def parse_float_or_fraction(result):
@@ -166,9 +169,7 @@ class SectionMarkingScheme:
                 )
 
         else:
-            self.questions = self.parse_questions(
-                section_key, section_scheme["questions"]
-            )
+            self.questions = parse_fields(section_key, section_scheme["questions"])
             self.marking = self.parse_scheme_marking(section_scheme["marking"])
 
     def reset_side_effects(self):
@@ -204,40 +205,6 @@ class SectionMarkingScheme:
     def get_has_streak_scheme(self):
         return self.has_streak_scheme
 
-    @staticmethod
-    def parse_questions(key, questions):
-        parsed_questions = []
-        questions_set = set()
-        for question_string in questions:
-            questions_array = SectionMarkingScheme.parse_question_string(
-                question_string
-            )
-            current_set = set(questions_array)
-            if not questions_set.isdisjoint(current_set):
-                raise Exception(
-                    f"Given question string '{question_string}' has overlapping question(s) with other questions in '{key}': {questions}"
-                )
-            parsed_questions.extend(questions_array)
-        return parsed_questions
-
-    @staticmethod
-    def parse_question_string(question_string):
-        if "." in question_string:
-            question_prefix, start, end = re.findall(
-                QUESTION_STRING_REGEX_GROUPS, question_string
-            )[0]
-            start, end = int(start), int(end)
-            if start >= end:
-                raise Exception(
-                    f"Invalid range in question string: '{question_string}', start: {start} is not less than end: {end}"
-                )
-            return [
-                f"{question_prefix}{question_number}"
-                for question_number in range(start, end + 1)
-            ]
-        else:
-            return [question_string]
-
     def match_answer(self, marked_answer, answer_matcher):
         question_verdict, verdict_marking = answer_matcher.get_verdict_marking(
             marked_answer
@@ -268,7 +235,7 @@ class SectionMarkingScheme:
 class EvaluationConfig:
     """Note: this instance will be reused for multiple omr sheets"""
 
-    def __init__(self, local_evaluation_path, template, image_instance_ops, curr_dir):
+    def __init__(self, local_evaluation_path, template, curr_dir):
         evaluation_json = open_evaluation_with_validation(local_evaluation_path)
         options, marking_scheme, source_type = map(
             evaluation_json.get, ["options", "marking_scheme", "source_type"]
@@ -311,7 +278,7 @@ class EvaluationConfig:
                 )
                 # TODO: use a common function for below changes?
                 in_omr = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-                in_omr = image_instance_ops.apply_preprocessors(
+                in_omr = template.image_instance_ops.apply_preprocessors(
                     image_path, in_omr, template
                 )
                 if in_omr is None:
@@ -323,7 +290,7 @@ class EvaluationConfig:
                     _final_marked,
                     _multi_marked,
                     _multi_roll,
-                ) = image_instance_ops.read_omr_response(
+                ) = template.image_instance_ops.read_omr_response(
                     template,
                     image=in_omr,
                     name=image_path,
@@ -374,7 +341,7 @@ class EvaluationConfig:
         self.validate_questions(answers_in_order)
 
         self.marking_scheme, self.question_to_scheme = {}, {}
-        for (section_key, section_scheme) in marking_scheme.items():
+        for section_key, section_scheme in marking_scheme.items():
             section_marking_scheme = SectionMarkingScheme(
                 section_key, section_scheme, template.global_empty_val
             )
@@ -448,7 +415,7 @@ class EvaluationConfig:
     def validate_marking_scheme(self):
         marking_scheme = self.marking_scheme
         section_questions = set()
-        for (section_key, section_scheme) in marking_scheme.items():
+        for section_key, section_scheme in marking_scheme.items():
             if section_key == DEFAULT_SECTION_KEY:
                 continue
             current_set = set(section_scheme.questions)
@@ -502,7 +469,7 @@ class EvaluationConfig:
 
     def parse_answers_and_map_questions(self, answers_in_order):
         question_to_answer_matcher = {}
-        for (question, answer_item) in zip(self.questions_in_order, answers_in_order):
+        for question, answer_item in zip(self.questions_in_order, answers_in_order):
             section_marking_scheme = self.get_marking_scheme_for_question(question)
             question_to_answer_matcher[question] = AnswerMatcher(
                 answer_item, section_marking_scheme
@@ -510,16 +477,14 @@ class EvaluationConfig:
         return question_to_answer_matcher
 
     def parse_questions_in_order(self, questions_in_order):
-        return SectionMarkingScheme.parse_questions(
-            "questions_in_order", questions_in_order
-        )
+        return parse_fields("questions_in_order", questions_in_order)
 
     def prepare_explanation_table(self):
         # TODO: provide a way to export this as csv
 
         if not self.should_explain_scoring:
             return
-        table = Table(show_lines=True)
+        table = Table(title="Evaluation Explanation Table", show_lines=True)
         table.add_column("Question")
         table.add_column("Marked")
         table.add_column("Answer(s)")

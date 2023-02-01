@@ -138,11 +138,11 @@ class CropOnMarkers(ImagePreprocessor):
         _h, w = optimal_marker.shape[:2]
         centres = []
         sum_t, max_t = 0, 0
-        logger.info("Matching Marker:\t", end=" ")
+        quarter_match_log = "Matching Marker:\t"
         for k in range(0, 4):
             res = cv2.matchTemplate(quads[k], optimal_marker, cv2.TM_CCOEFF_NORMED)
             max_t = res.max()
-            logger.info(f"Quarter{str(k + 1)}: {str(round(max_t, 3))} ", end="\t")
+            quarter_match_log += f"Quarter{str(k + 1)}: {str(round(max_t, 3))}\t"
             if (
                 max_t < self.min_matching_threshold
                 or abs(all_max_t - max_t) >= self.max_matching_variation
@@ -193,6 +193,8 @@ class CropOnMarkers(ImagePreprocessor):
             )
             centres.append([pt[0] + w / 2, pt[1] + _h / 2])
             sum_t += max_t
+
+        logger.info(quarter_match_log)
         logger.info(f"Optimal Scale: {best_scale}")
         # analysis data
         self.threshold_circles.append(sum_t / 4)

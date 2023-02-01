@@ -1,16 +1,11 @@
 {
-  "Globals": {
-    "display_width": 2480 ,
-    "display_height": 3508
-  },
-  "dimensions": [2480, 3508 ],
-  "bubbleDimensions": [42, 42 ],
-
+  "pageDimensions": [2480, 3508],
+  "bubbleDimensions": [42, 42],
   "preProcessors": [
     {
       "name": "Levels",
       "options": {
-        "low": 0.70,
+        "low": 0.7,
         "high": 0.8
       }
     },
@@ -30,57 +25,41 @@
       }
     }
   ],
-  "concatenations" : {
-    "Roll" : ["stu","roll0", "roll1", "roll2", "roll3", "roll4", "roll5", "roll6", "check"]
+  "customLabels": {
+    "Roll": ["stu", "roll1..7", "check_1", "check_2"]
   },
-  "singles":[
-  ],
-  "qBlocks": {
+  "fieldBlocks": {
     "Check1": {
-      "orig": [2033, 1290],
-      "gaps": [ 50, 50],
-      "bigGaps": [20, 20],
-      "qNos": [[["check"]]],
-      "vals": ["A","B","E","H","J","L","M"],
-      "orient": "V"
+      "origin": [2033, 1290],
+      "bubblesGap": 50,
+      "labelsGap": 50,
+      "fieldLabels": ["check_1"],
+      "bubbleValues": ["A", "B", "E", "H", "J", "L", "M"],
+      "direction": "vertical"
     },
     "Check2": {
-      "orig": [2083, 1290],
-      "gaps": [ 50, 50],
-      "bigGaps": [20, 20],
-      "qNos": [[["check"]]],
-      "vals":  ["N","R","U","W", "X","Y"],
-      "orient": "V"
+      "origin": [2083, 1290],
+      "gaps": [50, 50],
+      "bubblesGap": 50,
+      "labelsGap": 50,
+      "fieldLabels": ["check_2"],
+      "bubbleValues": ["N", "R", "U", "W", "X", "Y"],
+      "direction": "vertical"
     },
-  "Stu": {
-      "orig": [1636, 1290],
-      "gaps": [ 50, 50],
-      "bigGaps": [20, 20],
-      "qNos": [[["stu"]]],
-      "vals": ["U", "A", "HT", "GT"],
-      "orient": "V"
+    "Stu": {
+      "origin": [1636, 1290],
+      "bubblesGap": 50,
+      "labelsGap": 50,
+      "fieldLabels": ["stu"],
+      "bubbleValues": ["U", "A", "HT", "GT"],
+      "direction": "vertical"
     },
     "Roll": {
-      "qType": "QTYPE_ROLL",
-      "orig": [1685, 1290],
-      "bigGaps": [
-        115,
-        11
-      ],
-      "gaps": [50.5, 50.5],
-      "qNos": [
-        [
-          [
-            "roll0",
-            "roll1",
-            "roll2",
-            "roll3",
-            "roll4",
-            "roll5",
-            "roll6"
-          ]
-        ]
-      ]
+      "fieldType": "QTYPE_INT",
+      "origin": [1685, 1290],
+      "bubblesGap": 50.5,
+      "labelsGap": 50.5,
+      "fieldLabels": ["roll1..7"]
     }
   }
 }

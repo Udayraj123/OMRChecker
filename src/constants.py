@@ -14,6 +14,7 @@ TEMPLATE_FILENAME = "template.json"
 EVALUATION_FILENAME = "evaluation.json"
 CONFIG_FILENAME = "config.json"
 
+FIELD_LABEL_NUMBER_REGEX = r"([^\d]+)(\d*)"
 #
 ERROR_CODES = DotMap(
     {
@@ -23,12 +24,20 @@ ERROR_CODES = DotMap(
     _dynamic=False,
 )
 
-QTYPE_DATA = {
-    "QTYPE_ROLL": {"vals": range(10), "orient": "V"},
-    "QTYPE_INT": {"vals": range(10), "orient": "V"},
-    "QTYPE_INT_11": {"vals": range(11), "orient": "V"},
-    "QTYPE_MCQ4": {"vals": ["A", "B", "C", "D"], "orient": "H"},
-    "QTYPE_MCQ5": {"vals": ["A", "B", "C", "D", "E"], "orient": "H"},
+FIELD_TYPES = {
+    "QTYPE_INT": {
+        "bubbleValues": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+        "direction": "vertical",
+    },
+    "QTYPE_INT_START_1": {
+        "bubbleValues": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+        "direction": "vertical",
+    },
+    "QTYPE_MCQ4": {"bubbleValues": ["A", "B", "C", "D"], "direction": "horizontal"},
+    "QTYPE_MCQ5": {
+        "bubbleValues": ["A", "B", "C", "D", "E"],
+        "direction": "horizontal",
+    },
     #
     # You can create and append custom question types here-
     #

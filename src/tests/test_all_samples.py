@@ -110,9 +110,9 @@ def test_run_community_Shamanth(mocker, snapshot):
     assert snapshot == sample_outputs
 
 
-# def test_run_community_UmarFarootAPS(mocker, snapshot):
-#     sample_outputs = run_sample("community/UmarFarootAPS", mocker)
-#     assert snapshot == sample_outputs
+def test_run_community_UmarFarootAPS(mocker, snapshot):
+    sample_outputs = run_sample("community/UmarFarootAPS", mocker)
+    assert snapshot == sample_outputs
 
 
 def test_run_community_UPSC_mock(mocker, snapshot):

@@ -1,20 +1,99 @@
 {
-  "dimensions": [
-    1846,
-    1500
-  ],
-  "bubbleDimensions": [
-    40,
-    40
-  ],
+  "pageDimensions": [1846, 1500],
+  "bubbleDimensions": [40, 40],
+  "customLabels": {
+    "Roll": ["Medium", "roll1..9"],
+    "q5": ["q5_1", "q5_2"],
+    "q6": ["q6_1", "q6_2"],
+    "q7": ["q7_1", "q7_2"],
+    "q8": ["q8_1", "q8_2"],
+    "q9": ["q9_1", "q9_2"]
+  },
+  "fieldBlocks": {
+    "Medium": {
+      "bubblesGap": 41,
+      "bubbleValues": ["E", "H"],
+      "direction": "vertical",
+      "fieldLabels": ["Medium"],
+      "labelsGap": 0,
+      "origin": [170, 282]
+    },
+    "Roll": {
+      "fieldType": "QTYPE_INT",
+      "fieldLabels": ["roll1..9"],
+      "bubblesGap": 46,
+      "labelsGap": 58,
+      "origin": [225, 282]
+    },
+    "Int_Block_Q5": {
+      "fieldType": "QTYPE_INT",
+      "fieldLabels": ["q5_1", "q5_2"],
+      "bubblesGap": 46,
+      "labelsGap": 60,
+      "origin": [903, 282]
+    },
+    "Int_Block_Q6": {
+      "fieldType": "QTYPE_INT",
+      "fieldLabels": ["q6_1", "q6_2"],
+      "bubblesGap": 46,
+      "labelsGap": 60,
+      "origin": [1077, 282]
+    },
+    "Int_Block_Q7": {
+      "fieldType": "QTYPE_INT",
+      "fieldLabels": ["q7_1", "q7_2"],
+      "bubblesGap": 46,
+      "labelsGap": 60,
+      "origin": [1240, 282]
+    },
+    "Int_Block_Q8": {
+      "fieldType": "QTYPE_INT",
+      "fieldLabels": ["q8_1", "q8_2"],
+      "bubblesGap": 46,
+      "labelsGap": 57,
+      "origin": [1410, 282]
+    },
+    "Int_Block_Q9": {
+      "fieldType": "QTYPE_INT",
+      "fieldLabels": ["q9_1", "q9_2"],
+      "bubblesGap": 46,
+      "labelsGap": 57,
+      "origin": [1580, 282]
+    },
+    "MCQ_Block_Q1": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q1..4"],
+      "bubblesGap": 59,
+      "labelsGap": 50,
+      "origin": [121, 860]
+    },
+    "MCQ_Block_Q10": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q10..13"],
+      "bubblesGap": 59,
+      "labelsGap": 50,
+      "origin": [121, 1195]
+    },
+    "MCQ_Block_Q14": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q14..16"],
+      "bubblesGap": 57,
+      "labelsGap": 50,
+      "origin": [905, 860]
+    },
+    "MCQ_Block_Q17": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": ["q17..20"],
+      "bubblesGap": 57,
+      "labelsGap": 50,
+      "origin": [905, 1195]
+    }
+  },
   "preProcessors": [
     {
       "name": "CropPage",
       "options": {
-        "morphKernel": [
-          10,
-          10
-        ]
+        "morphKernel": [10, 10]
       }
     },
     {
@@ -24,251 +103,5 @@
         "sheetToMarkerWidthRatio": 17
       }
     }
-  ],
-
-  "concatenations": {
-    "Roll": [
-      "Squad",
-      "Medium",
-      "roll0",
-      "roll1",
-      "roll2",
-      "roll3",
-      "roll4",
-      "roll5",
-      "roll6",
-      "roll7",
-      "roll8"
-    ],
-    "q5": [
-      "q5.1",
-      "q5.2"
-    ],
-    "q6": [
-      "q6.1",
-      "q6.2"
-    ],
-    "q7": [
-      "q7.1",
-      "q7.2"
-    ],
-    "q8": [
-      "q8.1",
-      "q8.2"
-    ],
-    "q9": [
-      "q9.1",
-      "q9.2"
-    ]
-  },
-  "singles": [
-    "q1",
-    "q2",
-    "q3",
-    "q4",
-    "q10",
-    "q11",
-    "q12",
-    "q13",
-    "q14",
-    "q15",
-    "q16",
-    "q17",
-    "q18",
-    "q19",
-    "q20"
-  ],
-  "qBlocks": {
-    "Medium": {
-      "vals": ["E", "H"],
-      "orient": "V",
-      "orig": [
-        160,
-        285
-      ],
-      "bigGaps": [
-        115,
-        11
-      ],
-      "gaps": [
-        59,
-        46
-      ],
-      "qNos": [
-        [
-          [
-            "Medium"
-          ]
-        ]
-      ]
-    },
-    "Roll": {
-      "qType": "QTYPE_ROLL",
-      "orig": [
-        218,
-        285
-      ],
-      "bigGaps": [
-        115,
-        11
-      ],
-      "gaps": [
-        58,
-        46
-      ],
-      "qNos": [
-        [
-          [
-            "roll0",
-            "roll1",
-            "roll2",
-            "roll3",
-            "roll4",
-            "roll5",
-            "roll6",
-            "roll7",
-            "roll8"
-          ]
-        ]
-      ]
-    },
-    "Int1": {
-      "qType": "QTYPE_INT",
-      "orig": [
-        903,
-        285
-      ],
-      "bigGaps": [
-        128,
-        11
-      ],
-      "gaps": [
-        59,
-        46
-      ],
-      "qNos": [
-        [
-          [
-            "q5.1",
-            "q5.2"
-          ],
-          [
-            "q6.1",
-            "q6.2"
-          ],
-          [
-            "q7.1",
-            "q7.2"
-          ]
-        ]
-      ]
-    },
-    "Int2": {
-      "qType": "QTYPE_INT",
-      "orig": [
-        1418,
-        285
-      ],
-      "bigGaps": [
-        128,
-        11
-      ],
-      "gaps": [
-        59,
-        46
-      ],
-      "qNos": [
-        [
-          [
-            "q8.1",
-            "q8.2"
-          ],
-          [
-            "q9.1",
-            "q9.2"
-          ]
-        ]
-      ]
-    },
-    "Mcq1": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        118,
-        857
-      ],
-      "bigGaps": [
-        115,
-        181
-      ],
-      "gaps": [
-        59,
-        53
-      ],
-      "qNos": [
-        [
-          [
-            "q1",
-            "q2",
-            "q3",
-            "q4"
-          ],
-          [
-            "q10",
-            "q11",
-            "q12",
-            "q13"
-          ]
-        ]
-      ]
-    },
-    "Mcq2": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        905,
-        860
-      ],
-      "bigGaps": [
-        115,
-        180
-      ],
-      "gaps": [
-        59,
-        53
-      ],
-      "qNos": [
-        [
-          [
-            "q14",
-            "q15",
-            "q16"
-          ]
-        ]
-      ]
-    },
-    "Mcq3": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [
-        905,
-        1198
-      ],
-      "bigGaps": [
-        115,
-        180
-      ],
-      "gaps": [
-        59,
-        53
-      ],
-      "qNos": [
-        [
-          [
-            "q17",
-            "q18",
-            "q19",
-            "q20"
-          ]
-        ]
-      ]
-    }
-  }
+  ]
 }
