@@ -114,7 +114,7 @@ class ImageInstanceOps:
                         rect = [y, y + box_h, x, x + box_w]
                         cv2.putText(
                             final_align,
-                            f"{cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]}",
+                            f"{int(cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0])}",
                             (rect[2] + 2, rect[0] + (box_h * 2) // 3),
                             cv2.FONT_HERSHEY_SIMPLEX,
                             0.6,
