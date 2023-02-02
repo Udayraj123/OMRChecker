@@ -79,9 +79,6 @@
       "angle-1.jpg","samples/community/UPSC-mock/scan-angles/angle-1.jpg","outputs/community/UPSC-mock/scan-angles/CheckedOMRs/angle-1.jpg","70.66666666666669","","","","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
       "angle-2.jpg","samples/community/UPSC-mock/scan-angles/angle-2.jpg","outputs/community/UPSC-mock/scan-angles/CheckedOMRs/angle-2.jpg","70.66666666666669","","","","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
       "angle-3.jpg","samples/community/UPSC-mock/scan-angles/angle-3.jpg","outputs/community/UPSC-mock/scan-angles/CheckedOMRs/angle-3.jpg","70.66666666666669","","","","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
-      "angle-4.jpg","samples/community/UPSC-mock/scan-angles/angle-4.jpg","outputs/community/UPSC-mock/scan-angles/CheckedOMRs/angle-4.jpg","70.66666666666669","","","","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
-      "angle-5.jpg","samples/community/UPSC-mock/scan-angles/angle-5.jpg","outputs/community/UPSC-mock/scan-angles/CheckedOMRs/angle-5.jpg","70.66666666666669","","","","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
-      "angle-6.jpg","samples/community/UPSC-mock/scan-angles/angle-6.jpg","outputs/community/UPSC-mock/scan-angles/CheckedOMRs/angle-6.jpg","70.66666666666669","","","","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
   
     ''',
   })
@@ -140,17 +137,30 @@
 # ---
 # name: test_run_sample3
   dict({
-    'Manual/ErrorFiles.csv': '''
-      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
+    'colored-thick-sheet/Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","Subject Code","Roll","bookletNo","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
   
     ''',
-    'Manual/MultiMarkedFiles.csv': '''
-      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
+    'colored-thick-sheet/Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","Subject Code","Roll","bookletNo","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
   
     ''',
-    'Results/Results_05AM.csv': '''
-      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
-      "scanned-omr.jpg","samples/sample3/scanned-omr.jpg","outputs/sample3/CheckedOMRs/scanned-omr.jpg","0","E413720010","C","D","D","C","08","39","02","09","14","B","B","B","B","C","C","C","D","D","",""
+    'colored-thick-sheet/Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","Subject Code","Roll","bookletNo","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+      "rgb-100-gsm.jpg","samples/sample3/colored-thick-sheet/rgb-100-gsm.jpg","outputs/sample3/colored-thick-sheet/CheckedOMRs/rgb-100-gsm.jpg","0","","","","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
+  
+    ''',
+    'xeroxed-thin-sheet/Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","Subject Code","Roll","bookletNo","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+  
+    ''',
+    'xeroxed-thin-sheet/Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","Subject Code","Roll","bookletNo","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+  
+    ''',
+    'xeroxed-thin-sheet/Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","Subject Code","Roll","bookletNo","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+      "grayscale-80-gsm.jpg","samples/sample3/xeroxed-thin-sheet/grayscale-80-gsm.jpg","outputs/sample3/xeroxed-thin-sheet/CheckedOMRs/grayscale-80-gsm.jpg","0","","","","C","D","A","C","C","C","B","A","C","C","B","D","B","D","C","C","B","D","B","D","C","C","C","B","D","D","D","B","A","D","D","C","A","B","C","A","D","A","A","A","D","D","B","A","B","C","B","A","C","D","C","D","A","B","C","A","C","C","C","D","B","C","C","C","C","A","D","A","D","A","D","C","C","D","C","D","A","A","C","B","C","D","C","A","B","C","B","D","A","A","C","A","B","D","C","D","A","C","B","A"
   
     ''',
   })
@@ -219,27 +229,19 @@
       "reference.png","samples/sample6/reference.png","outputs/sample6/CheckedOMRs/reference.png","0","A"
   
     ''',
-    'jpg/Manual/ErrorFiles.csv': '''
+    'doc-scans/Manual/ErrorFiles.csv': '''
       "file_id","input_path","output_path","score","Roll"
   
     ''',
-    'jpg/Manual/MultiMarkedFiles.csv': '''
+    'doc-scans/Manual/MultiMarkedFiles.csv': '''
       "file_id","input_path","output_path","score","Roll"
-      "sample_roll_03.jpg","samples/sample6/jpg/sample_roll_03.jpg","outputs/sample6/jpg/Manual/MultiMarkedFiles/sample_roll_03.jpg","NA","A020189496J"
-      "sample_roll_06.jpg","samples/sample6/jpg/sample_roll_06.jpg","outputs/sample6/jpg/Manual/MultiMarkedFiles/sample_roll_06.jpg","NA","A0012345678901234567890123456789012345678901234567890123456789ABEHJLNRUWXY"
-      "sample_roll_08.jpg","samples/sample6/jpg/sample_roll_08.jpg","outputs/sample6/jpg/Manual/MultiMarkedFiles/sample_roll_08.jpg","NA","A020367A"
-      "sample_roll_09.jpg","samples/sample6/jpg/sample_roll_09.jpg","outputs/sample6/jpg/Manual/MultiMarkedFiles/sample_roll_09.jpg","NA","A0156NRUW"
-      "sample_roll_10.jpg","samples/sample6/jpg/sample_roll_10.jpg","outputs/sample6/jpg/Manual/MultiMarkedFiles/sample_roll_10.jpg","NA","A01890012567890256780123456789ABELNRUWXY"
-      "sample_roll_11.jpg","samples/sample6/jpg/sample_roll_11.jpg","outputs/sample6/jpg/Manual/MultiMarkedFiles/sample_roll_11.jpg","NA","A0202384MNRUWX"
   
     ''',
-    'jpg/Results/Results_05AM.csv': '''
+    'doc-scans/Results/Results_05AM.csv': '''
       "file_id","input_path","output_path","score","Roll"
-      "sample_roll_01.jpg","samples/sample6/jpg/sample_roll_01.jpg","outputs/sample6/jpg/CheckedOMRs/sample_roll_01.jpg","0","A0188877Y"
-      "sample_roll_02.jpg","samples/sample6/jpg/sample_roll_02.jpg","outputs/sample6/jpg/CheckedOMRs/sample_roll_02.jpg","0","A020395W"
-      "sample_roll_04.jpg","samples/sample6/jpg/sample_roll_04.jpg","outputs/sample6/jpg/CheckedOMRs/sample_roll_04.jpg","0","A0204729A"
-      "sample_roll_05.jpg","samples/sample6/jpg/sample_roll_05.jpg","outputs/sample6/jpg/CheckedOMRs/sample_roll_05.jpg","0","A014U"
-      "sample_roll_07.jpg","samples/sample6/jpg/sample_roll_07.jpg","outputs/sample6/jpg/CheckedOMRs/sample_roll_07.jpg","0","A0201B"
+      "sample_roll_01.jpg","samples/sample6/doc-scans/sample_roll_01.jpg","outputs/sample6/doc-scans/CheckedOMRs/sample_roll_01.jpg","0","A0188877Y"
+      "sample_roll_02.jpg","samples/sample6/doc-scans/sample_roll_02.jpg","outputs/sample6/doc-scans/CheckedOMRs/sample_roll_02.jpg","0","A020395W"
+      "sample_roll_03.jpg","samples/sample6/doc-scans/sample_roll_03.jpg","outputs/sample6/doc-scans/CheckedOMRs/sample_roll_03.jpg","0","A0204729A"
   
     ''',
   })
