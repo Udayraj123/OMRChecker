@@ -138,7 +138,7 @@ class CropOnMarkers(ImagePreprocessor):
         _h, w = optimal_marker.shape[:2]
         centres = []
         sum_t, max_t = 0, 0
-        quarter_match_log = "Matching Marker:\t"
+        quarter_match_log = "Matching Marker:  "
         for k in range(0, 4):
             res = cv2.matchTemplate(quads[k], optimal_marker, cv2.TM_CCOEFF_NORMED)
             max_t = res.max()

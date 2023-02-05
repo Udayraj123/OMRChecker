@@ -100,7 +100,7 @@ class ImageInstanceOps:
                     constants.CLR_BLACK,
                     3,
                 )
-            for _, field_block_bubbles in field_block.traverse_bubbles:
+            for field_block_bubbles in field_block.traverse_bubbles:
                 for pt in field_block_bubbles:
                     x, y = (pt.x + field_block.shift, pt.y) if shifted else (pt.x, pt.y)
                     cv2.rectangle(
@@ -514,7 +514,7 @@ class ImageInstanceOps:
             total_q_strip_no = 0
             for field_block in template.field_blocks:
                 q_std_vals = []
-                for _, field_block_bubbles in field_block.traverse_bubbles:
+                for field_block_bubbles in field_block.traverse_bubbles:
                     q_strip_vals = []
                     for pt in field_block_bubbles:
                         # shifted
@@ -569,7 +569,7 @@ class ImageInstanceOps:
                 key = field_block.name[:3]
                 # cv2.rectangle(final_marked,(s[0]+shift,s[1]),(s[0]+shift+d[0],
                 #   s[1]+d[1]),CLR_BLACK,3)
-                for _bounding_box, field_block_bubbles in field_block.traverse_bubbles:
+                for field_block_bubbles in field_block.traverse_bubbles:
                     # All Black or All White case
                     no_outliers = all_q_std_vals[total_q_strip_no] < global_std_thresh
                     # print(total_q_strip_no, field_block_bubbles[0].field_label,

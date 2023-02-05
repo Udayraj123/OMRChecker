@@ -31,7 +31,6 @@
     },
     "Check2": {
       "origin": [2083, 1290],
-      "gaps": [50, 50],
       "bubblesGap": 50,
       "labelsGap": 50,
       "fieldLabels": ["check_2"],
