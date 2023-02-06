@@ -29,7 +29,7 @@ FIELD_TYPES = {
         "bubbleValues": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
         "direction": "vertical",
     },
-    "QTYPE_INT_START_1": {
+    "QTYPE_INT_FROM_1": {
         "bubbleValues": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
         "direction": "vertical",
     },

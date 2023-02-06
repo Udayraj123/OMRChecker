@@ -127,7 +127,6 @@ class FieldBlock:
             bubble_point = lead_point.copy()
             field_bubbles = []
             for bubble_value in bubble_values:
-                print(bubble_point)
                 field_bubbles.append(
                     Bubble(bubble_point.copy(), field_label, field_type, bubble_value)
                 )
@@ -143,28 +142,29 @@ class Template:
 
         json_object = open_template_with_defaults(template_path)
         (
-            self.bubble_dimensions,
             custom_labels_object,
-            self.global_empty_val,
             field_blocks_object,
-            self.options,
-            self.output_columns,
-            self.page_dimensions,
+            output_columns_array,
             pre_processors_object,
+            self.bubble_dimensions,
+            self.global_empty_val,
+            self.options,
+            self.page_dimensions,
         ) = map(
             json_object.get,
             [
-                "bubbleDimensions",
                 "customLabels",
-                "emptyValue",
                 "fieldBlocks",
-                "options",
                 "outputColumns",
-                "pageDimensions",
                 "preProcessors",
+                "bubbleDimensions",
+                "emptyValue",
+                "options",
+                "pageDimensions",
             ],
         )
 
+        self.parse_output_columns(output_columns_array)
         self.setup_pre_processors(pre_processors_object, template_path.parent)
         self.setup_field_blocks(field_blocks_object)
         self.parse_custom_labels(custom_labels_object)
@@ -175,7 +175,7 @@ class Template:
         )
 
         if len(self.output_columns) == 0:
-            self.setup_output_columns(non_custom_columns, all_custom_columns)
+            self.fill_output_columns(non_custom_columns, all_custom_columns)
 
         self.validate_template_columns(non_custom_columns, all_custom_columns)
 
@@ -211,6 +211,7 @@ class Template:
         )
         field_labels_set = set(parsed_field_labels)
         if not self.all_parsed_labels.isdisjoint(field_labels_set):
+            # Note: in case of two fields pointing to same column, use a custom column instead of same field labels.
             logger.critical(
                 f"An overlap found between field string: {field_labels} in block '{block_name}' and existing labels: {self.all_parsed_labels}"
             )
@@ -235,7 +236,7 @@ class Template:
             or block_start_y <= 0
         ):
             raise Exception(
-                f"Field block '{block_name}' with origin {block_instance.origin} and dimensions {block_instance.dimensions} overflows the template dimensions {self.page_dimensions}"
+                f"Overflowing field block '{block_name}' with origin {block_instance.origin} and dimensions {block_instance.dimensions} in template with dimensions {self.page_dimensions}"
             )
 
     def pre_fill_field_block(self, field_block_object):
@@ -254,6 +255,9 @@ class Template:
             **field_block_object,
         }
 
+    def parse_output_columns(self, output_columns_array):
+        self.output_columns = parse_fields(f"Output Columns", output_columns_array)
+
     def parse_custom_labels(self, custom_labels_object):
         all_parsed_custom_labels = set()
         self.custom_labels = {}
@@ -262,7 +266,9 @@ class Template:
             parsed_labels_set = set(parsed_labels)
             self.custom_labels[custom_label] = parsed_labels
 
-            missing_custom_labels = parsed_labels_set.difference(self.all_parsed_labels)
+            missing_custom_labels = sorted(
+                parsed_labels_set.difference(self.all_parsed_labels)
+            )
             if len(missing_custom_labels) > 0:
                 logger.critical(
                     f"For '{custom_label}', Missing labels - {missing_custom_labels}"
@@ -277,7 +283,7 @@ class Template:
                     f"field strings overlap for labels: {label_strings} and existing custom labels: {all_parsed_custom_labels}"
                 )
                 raise Exception(
-                    f"The field strings for custom label {custom_label} overlap with other existing custom labels"
+                    f"The field strings for custom label '{custom_label}' overlap with other existing custom labels"
                 )
 
             all_parsed_custom_labels.update(parsed_labels)
@@ -286,7 +292,7 @@ class Template:
             all_parsed_custom_labels
         )
 
-    def setup_output_columns(self, non_custom_columns, all_custom_columns):
+    def fill_output_columns(self, non_custom_columns, all_custom_columns):
         all_template_columns = non_custom_columns + all_custom_columns
         # Typical case: sort alpha-numerical (natural sort)
         self.output_columns = sorted(

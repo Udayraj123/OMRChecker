@@ -1,3 +1,4 @@
+from src.constants import FIELD_TYPES
 from src.schemas.constants import ARRAY_OF_STRINGS, FIELD_STRING_TYPE
 
 positive_number = {"type": "number", "minimum": 0}
@@ -209,7 +210,10 @@ TEMPLATE_SCHEMA = {
                         "fieldLabels": {"type": "array", "items": FIELD_STRING_TYPE},
                         "labelsGap": positive_number,
                         "origin": two_positive_integers,
-                        "fieldType": {"type": "string"},
+                        "fieldType": {
+                            "type": "string",
+                            "enum": list(FIELD_TYPES.keys()),
+                        },
                     },
                 }
             },

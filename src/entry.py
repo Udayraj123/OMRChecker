@@ -84,7 +84,9 @@ def process_dir(
                 of '{curr_dir}'. \nPlace {constants.TEMPLATE_FILENAME} in the \
                 appropriate directory."
             )
-            return
+            raise Exception(
+                f"No template file found in the directory tree of {curr_dir}"
+            )
         logger.info("")
         table = Table(
             title="Current Configurations", show_header=False, show_lines=False
