@@ -95,7 +95,6 @@ class CropPage(ImagePreprocessor):
         return sheet
 
     def apply_filter(self, image, file_path):
-        # TODO: Take this out into separate preprocessor
         image = normalize(cv2.GaussianBlur(image, (3, 3), 0))
 
         # Resize should be done with another preprocessor is needed

@@ -67,7 +67,7 @@ class FieldBlock:
                 "fieldType",
                 "labelsGap",
                 "origin",
-                "emptyVal",
+                "emptyValue",
             ],
         )
         self.parsed_field_labels = parse_fields(
@@ -156,7 +156,7 @@ class Template:
             [
                 "bubbleDimensions",
                 "customLabels",
-                "emptyVal",
+                "emptyValue",
                 "fieldBlocks",
                 "options",
                 "outputColumns",
@@ -249,7 +249,7 @@ class Template:
 
         return {
             "direction": "vertical",
-            "emptyVal": self.global_empty_val,
+            "emptyValue": self.global_empty_val,
             "bubbleDimensions": self.bubble_dimensions,
             **field_block_object,
         }

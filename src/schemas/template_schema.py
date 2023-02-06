@@ -45,7 +45,7 @@ TEMPLATE_SCHEMA = {
             "description": "The dimensions of the overlay bubble area: [width, height]",
         },
         "customLabels": {
-            "description": "The customLabels contain fields that need to be joined together before outputting into the csv",
+            "description": "The customLabels contain fields that need to be joined together before generating the results sheet",
             "type": "object",
             "patternProperties": {
                 "^.*$": {"type": "array", "items": FIELD_STRING_TYPE}
@@ -58,7 +58,7 @@ TEMPLATE_SCHEMA = {
         },
         "pageDimensions": {
             **two_positive_integers,
-            "description": "The dimensions to which the page will be resized to before applying template: [width, height]",
+            "description": "The dimensions(width, height) to which the page will be resized to before applying template",
         },
         "preProcessors": {
             "description": "Custom configuration values to use in the template's directory",
@@ -205,7 +205,7 @@ TEMPLATE_SCHEMA = {
                             "type": "string",
                             "enum": ["horizontal", "vertical"],
                         },
-                        "emptyVal": {"type": "string"},
+                        "emptyValue": {"type": "string"},
                         "fieldLabels": {"type": "array", "items": FIELD_STRING_TYPE},
                         "labelsGap": positive_number,
                         "origin": two_positive_integers,
@@ -214,7 +214,7 @@ TEMPLATE_SCHEMA = {
                 }
             },
         },
-        "emptyVal": {
+        "emptyValue": {
             "description": "The value to be used in case of empty bubble detected at global level.",
             "type": "string",
         },

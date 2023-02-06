@@ -215,7 +215,7 @@ Command: <code>python3 -m pip install --user --upgrade pip</code>
 1. First, [create your own template.json](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide).
 2. Configure the tuning parameters.
 3. Run OMRChecker with appropriate arguments (See full usage).
-<!-- 3. Add answer key( TODO: add answer key/marking scheme guide)  -->
+<!-- 4. Add answer key( TODO: add answer key/marking scheme guide)  -->
 
 ## Full Usage
 
@@ -231,10 +231,14 @@ Explanation for the arguments:
 
 `--outputDir`: Specify an output directory.
 
-**Notes:**
+<details>
+<summary>
+ <b>Deprecation logs</b>
+</summary>
 
 - The old `--noCropping` flag has been replaced with the 'CropPage' plugin in "preProcessors" of the template.json(see [samples](https://github.com/Udayraj123/OMRChecker/tree/master/samples)).
 - The old `--autoAlign` flag can now be toggled from config.json
+</details>
 
 <!-- #### Testing the code
 Datasets to test on :
@@ -242,6 +246,7 @@ Low Quality Dataset(For CV Based methods)) (1.5 GB)
 Standard Quality Dataset(For ML Based methods) (3 GB)
 High Quality Dataset(For custom processing) (6 GB)
 -->
+
 
 ## FAQ
 
@@ -314,7 +319,7 @@ Here's a snapshot of the [Android OMR Helper App (archived)](https://github.com/
 
 <p align="center">
 	<a href="https://github.com/Udayraj123/AndroidOMRHelper">
-		<img height="350" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/Progress/2019-04-26/images/app_flow.PNG">
+		<img height="300" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/Progress/2019-04-26/images/app_flow.PNG">
 	</a>
 </p>
 

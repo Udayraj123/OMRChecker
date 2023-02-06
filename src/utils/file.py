@@ -20,13 +20,13 @@ def load_json(path, **rest):
 
 
 def setup_outputs_for_template(paths, template):
+    # TODO: consider moving this into a class instance
     ns = argparse.Namespace()
     logger.info("Checking Files...")
 
     # Include current output paths
     ns.paths = paths
 
-    # TODO: consider using emptyVal for empty_resp
     ns.empty_resp = [""] * len(template.output_columns)
     ns.sheetCols = [
         "file_id",

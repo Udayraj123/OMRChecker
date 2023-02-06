@@ -18,7 +18,7 @@
       "fieldType": "QTYPE_INT",
       "origin": [112, 530],
       "fieldLabels": ["b1..7"],
-      "emptyVal": "no",
+      "emptyValue": "no",
       "bubblesGap": 28,
       "labelsGap": 26.5
     },

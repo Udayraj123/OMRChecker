@@ -480,7 +480,7 @@ class EvaluationConfig:
         return parse_fields("questions_in_order", questions_in_order)
 
     def prepare_explanation_table(self):
-        # TODO: provide a way to export this as csv
+        # TODO: provide a way to export this as csv/pdf
 
         if not self.should_explain_scoring:
             return
