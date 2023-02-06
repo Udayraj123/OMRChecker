@@ -1,129 +1,90 @@
-import json
 import os
-from copy import deepcopy
 from pathlib import Path
 
-from freezegun import freeze_time
-
-from main import entry_point_for_args
+from src.tests.test_samples.sample1.boilerplate import TEMPLATE_BOILERPLATE
+from src.tests.utils import (
+    generate_write_jsons_and_run,
+    run_entry_point,
+    setup_mocker_patches,
+)
 
 FROZEN_TIMESTAMP = "1970-01-01"
 CURRENT_DIR = Path("src/tests")
-BASE_SAMPLE_PATH = CURRENT_DIR.joinpath("test_samples", "base")
-BASE_SAMPLE_TEMPALTE_PATH = BASE_SAMPLE_PATH.joinpath("template.json")
+BASE_SAMPLE_PATH = CURRENT_DIR.joinpath("test_samples", "sample1")
+BASE_SAMPLE_TEMPLATE_PATH = BASE_SAMPLE_PATH.joinpath("template.json")
 
 
-def load_json(path, **rest):
-    with open(path, "r") as f:
-        loaded = json.load(f, **rest)
-    return loaded
+def run_sample(mocker, input_path):
+    setup_mocker_patches(mocker)
+    output_dir = os.path.join("outputs", input_path)
+    run_entry_point(input_path, output_dir)
 
 
-TEMPLATE_BOILERPLATE = load_json(BASE_SAMPLE_PATH.joinpath("template-boilerplate.json"))
-
-
-def read_file(path):
-    with open(path) as file:
-        return file.read()
-
-
-def run_sample(sample_path, mocker):
-    mock_imshow = mocker.patch("cv2.imshow")
-    mock_imshow.return_value = True
-
-    mock_destroy_all_windows = mocker.patch("cv2.destroyAllWindows")
-    mock_destroy_all_windows.return_value = True
-
-    mock_wait_key = mocker.patch("cv2.waitKey")
-    mock_wait_key.return_value = ord("q")
-
-    input_path = os.path.join(f"{CURRENT_DIR}/test_samples", sample_path)
-    output_dir = os.path.join("outputs", sample_path)
-
-    args = {
-        "input_paths": [input_path],
-        "output_dir": output_dir,
-        "autoAlign": False,
-        "setLayout": False,
-        "silent": True,
-    }
-    with freeze_time(FROZEN_TIMESTAMP):
-        entry_point_for_args(args)
+write_jsons_and_run = generate_write_jsons_and_run(
+    run_sample,
+    sample_path=BASE_SAMPLE_PATH,
+    template_boilerplate=TEMPLATE_BOILERPLATE,
+)
 
 
 def test_no_input_dir(mocker):
     try:
-        run_sample("X", mocker)
+        run_sample(mocker, "X")
     except Exception as e:
-        assert (
-            str(e) == "Given input directory does not exist: 'src/tests/test_samples/X'"
-        )
+        assert str(e) == "Given input directory does not exist: 'X'"
 
 
 def test_no_template(mocker):
-    if os.path.exists(BASE_SAMPLE_TEMPALTE_PATH):
-        os.remove(BASE_SAMPLE_TEMPALTE_PATH)
+    if os.path.exists(BASE_SAMPLE_TEMPLATE_PATH):
+        os.remove(BASE_SAMPLE_TEMPLATE_PATH)
     try:
-        run_sample("base", mocker)
+        run_sample(mocker, BASE_SAMPLE_PATH)
     except Exception as e:
         assert (
             str(e)
-            == "No template file found in the directory tree of src/tests/test_samples/base"
+            == "No template file found in the directory tree of src/tests/test_samples/sample1"
         )
-
-
-def run_template_modification(mocker, modify_template, error_message):
-    template = deepcopy(TEMPLATE_BOILERPLATE)
-
-    returned_value = modify_template(template)
-    if returned_value is not None:
-        template = returned_value
-
-    with open(BASE_SAMPLE_TEMPALTE_PATH, "w") as f:
-        json.dump(template, f)
-
-    exception = "No Error"
-    try:
-        run_sample("base", mocker)
-    except Exception as e:
-        exception = e
-    assert str(exception) == error_message
-
-    os.remove(BASE_SAMPLE_TEMPALTE_PATH)
-
-    return exception
 
 
 def test_empty_template(mocker):
     def modify_template(_):
         return {}
 
-    error_message = f"Provided Template JSON is Invalid: '{BASE_SAMPLE_TEMPALTE_PATH}'"
-    run_template_modification(mocker, modify_template, error_message)
+    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    assert (
+        str(exception)
+        == f"Provided Template JSON is Invalid: '{BASE_SAMPLE_TEMPLATE_PATH}'"
+    )
 
 
 def test_invalid_field_type(mocker):
     def modify_template(template):
         template["fieldBlocks"]["MCQ_Block_1"]["fieldType"] = "X"
 
-    error_message = f"Provided Template JSON is Invalid: '{BASE_SAMPLE_TEMPALTE_PATH}'"
-    run_template_modification(mocker, modify_template, error_message)
+    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    assert (
+        str(exception)
+        == f"Provided Template JSON is Invalid: '{BASE_SAMPLE_TEMPLATE_PATH}'"
+    )
 
 
 def test_overflow_labels(mocker):
     def modify_template(template):
         template["fieldBlocks"]["MCQ_Block_1"]["fieldLabels"] = ["q1..100"]
 
-    error_message = "Overflowing field block 'MCQ_Block_1' with origin [65, 60] and dimensions [189, 5173] in template with dimensions [300, 400]"
-    run_template_modification(mocker, modify_template, error_message)
+    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    assert (
+        str(exception)
+        == "Overflowing field block 'MCQ_Block_1' with origin [65, 60] and dimensions [189, 5173] in template with dimensions [300, 400]"
+    )
 
 
 def test_overflow_safe_dimensions(mocker):
     def modify_template(template):
         template["pageDimensions"] = [255, 400]
 
-    error_message = "No Error"
-    run_template_modification(mocker, modify_template, error_message)
+    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    assert str(exception) == "No Error"
 
 
 def test_field_strings_overlap(mocker):
@@ -136,10 +97,10 @@ def test_field_strings_overlap(mocker):
             },
         }
 
-    error_message = (
+    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    assert str(exception) == (
         "The field strings for field block New_Block overlap with other existing fields"
     )
-    run_template_modification(mocker, modify_template, error_message)
 
 
 def test_custom_label_strings_overlap_single(mocker):
@@ -148,8 +109,11 @@ def test_custom_label_strings_overlap_single(mocker):
             "label1": ["q1..2", "q2..3"],
         }
 
-    error_message = "Given field string 'q2..3' has overlapping field(s) with other fields in 'Custom Label: label1': ['q1..2', 'q2..3']"
-    run_template_modification(mocker, modify_template, error_message)
+    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    assert (
+        str(exception)
+        == "Given field string 'q2..3' has overlapping field(s) with other fields in 'Custom Label: label1': ['q1..2', 'q2..3']"
+    )
 
 
 def test_custom_label_strings_overlap_multiple(mocker):
@@ -159,37 +123,37 @@ def test_custom_label_strings_overlap_multiple(mocker):
             "label2": ["q2..3"],
         }
 
-    error_message = "The field strings for custom label 'label2' overlap with other existing custom labels"
-    run_template_modification(mocker, modify_template, error_message)
+    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    assert (
+        str(exception)
+        == "The field strings for custom label 'label2' overlap with other existing custom labels"
+    )
 
 
 def test_missing_field_block_labels(mocker):
     def modify_template(template):
         template["customLabels"] = {"Combined": ["qX", "qY"]}
 
-    error_message = "Missing field block label(s) in the given template for ['qX', 'qY'] from 'Combined'"
-    run_template_modification(mocker, modify_template, error_message)
+    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    assert (
+        str(exception)
+        == "Missing field block label(s) in the given template for ['qX', 'qY'] from 'Combined'"
+    )
 
 
 def test_missing_output_columns(mocker):
     def modify_template(template):
         template["outputColumns"] = ["qX", "q1..5"]
 
-    error_message = (
+    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    assert str(exception) == (
         "Some columns are missing in the field blocks for the given output columns"
     )
-    run_template_modification(mocker, modify_template, error_message)
 
 
 def test_safe_missing_label_columns(mocker):
     def modify_template(template):
         template["outputColumns"] = ["q1..4"]
 
-    error_message = "No Error"
-    run_template_modification(mocker, modify_template, error_message)
-
-
-"""
-
-Evaluation tests
-"""
+    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    assert str(exception) == "No Error"
