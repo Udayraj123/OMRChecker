@@ -6,7 +6,6 @@
  Github: https://github.com/Udayraj123
 
 """
-
 from dotmap import DotMap
 
 # Filenames
@@ -39,7 +38,7 @@ FIELD_TYPES = {
         "direction": "horizontal",
     },
     #
-    # You can create and append custom question types here-
+    # You can create and append custom field types here-
     #
 }
 

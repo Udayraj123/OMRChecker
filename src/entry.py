@@ -6,8 +6,6 @@
  Github: https://github.com/Udayraj123
 
 """
-
-
 import os
 from csv import QUOTE_NONNUMERIC
 from pathlib import Path

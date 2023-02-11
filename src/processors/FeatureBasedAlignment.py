@@ -2,7 +2,6 @@
 Image based feature alignment
 Credits: https://www.learnopencv.com/image-alignment-feature-based-using-opencv-c-python/
 """
-
 import cv2
 import numpy as np
 

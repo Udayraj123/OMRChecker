@@ -183,7 +183,7 @@ TEMPLATE_SCHEMA = {
             },
         },
         "fieldBlocks": {
-            "description": "The fieldBlocks denote small groups of adjacent questions",
+            "description": "The fieldBlocks denote small groups of adjacent fields",
             "type": "object",
             "patternProperties": {
                 "^.*$": {

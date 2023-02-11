@@ -6,7 +6,6 @@
  Github: https://github.com/Udayraj123
 
 """
-
 from src.constants import FIELD_TYPES
 from src.core import ImageInstanceOps
 from src.logger import logger
@@ -22,7 +21,7 @@ class Bubble:
     """
     Container for a Point Box on the OMR
 
-    field_label is the point's property- question to which this point belongs to
+    field_label is the point's property- field to which this point belongs to
     It can be used as a roll number column as well. (eg roll1)
     It can also correspond to a single digit of integer type Q (eg q5d1)
     """

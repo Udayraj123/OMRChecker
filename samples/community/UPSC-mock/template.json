@@ -48,7 +48,6 @@
       "bubblesGap": 58.75,
       "labelsGap": 32.65,
       "fieldLabels": ["q21..30"],
-      "numQuestions": 10,
       "fieldType": "QTYPE_MCQ4"
     },
     "q31block": {

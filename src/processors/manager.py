@@ -2,7 +2,6 @@
 Processor/Extension framework
 Adapated from https://github.com/gdiepen/python_processor_example
 """
-
 import inspect
 import pkgutil
 
