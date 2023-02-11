@@ -1,6 +1,6 @@
 {
   "pageDimensions": [1800, 2400],
-  "bubbleDimensions": [23, 20],
+  "bubbleDimensions": [30, 25],
   "customLabels": {
     "Subject Code": ["subjectCode1", "subjectCode2"],
     "Roll": ["roll1..10"]
@@ -9,23 +9,23 @@
   "fieldBlocks": {
     "bookletNo": {
       "origin": [595, 545],
-      "bubblesGap": 75,
-      "labelsGap": 68,
+      "bubblesGap": 68,
+      "labelsGap": 0,
       "fieldLabels": ["bookletNo"],
       "bubbleValues": ["A", "B", "C", "D"],
       "direction": "vertical"
     },
     "subjectCode": {
-      "origin": [914, 510],
-      "bubblesGap": 43.0,
-      "labelsGap": 32.65,
+      "origin": [912, 512],
+      "bubblesGap": 33,
+      "labelsGap": 42.5,
       "fieldLabels": ["subjectCode1", "subjectCode2"],
       "fieldType": "QTYPE_INT"
     },
     "roll": {
       "origin": [1200, 510],
-      "bubblesGap": 43,
-      "labelsGap": 32.65,
+      "bubblesGap": 33,
+      "labelsGap": 42.8,
       "fieldLabels": ["roll1..10"],
       "fieldType": "QTYPE_INT"
     },
@@ -44,7 +44,7 @@
       "fieldType": "QTYPE_MCQ4"
     },
     "q21block": {
-      "origin": [495, 1589],
+      "origin": [500, 1589],
       "bubblesGap": 58.75,
       "labelsGap": 32.65,
       "fieldLabels": ["q21..30"],
