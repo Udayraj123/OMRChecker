@@ -10,18 +10,15 @@ marking_score = {
         {"type": "number"},
     ]
 }
-marking_score_or_streak_array = {
-    "oneOf": [marking_score, {"type": "array", "items": marking_score}]
-}
 
 marking_object_properties = {
     "additionalProperties": False,
     "required": ["correct", "incorrect", "unmarked"],
     "type": "object",
     "properties": {
-        "correct": marking_score_or_streak_array,
-        "incorrect": marking_score_or_streak_array,
-        "unmarked": marking_score_or_streak_array,
+        "correct": marking_score,
+        "incorrect": marking_score,
+        "unmarked": marking_score,
     },
 }
 
@@ -121,7 +118,7 @@ EVALUATION_SCHEMA = {
                                                         {"type": "string"},
                                                         {
                                                             "type": "array",
-                                                            "items": marking_score_or_streak_array,
+                                                            "items": marking_score,
                                                             "minItems": 1,
                                                             "maxItems": 3,
                                                         },
@@ -145,7 +142,7 @@ EVALUATION_SCHEMA = {
                                             },
                                             {
                                                 "type": "array",
-                                                "items": marking_score_or_streak_array,
+                                                "items": marking_score,
                                                 "minItems": 1,
                                                 "maxItems": 3,
                                             },
