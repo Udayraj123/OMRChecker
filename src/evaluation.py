@@ -2,7 +2,6 @@ import ast
 import os
 import re
 from copy import deepcopy
-from fractions import Fraction
 
 import cv2
 import pandas as pd
@@ -18,15 +17,8 @@ from src.utils.parsing import (
     get_concatenated_response,
     open_evaluation_with_validation,
     parse_fields,
+    parse_float_or_fraction,
 )
-
-
-def parse_float_or_fraction(result):
-    if type(result) == str and "/" in result:
-        result = float(Fraction(result))
-    else:
-        result = float(result)
-    return result
 
 
 class AnswerMatcher:
