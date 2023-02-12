@@ -2,7 +2,7 @@
 
 Read OMRs fast and accurately using a scanner 🖨 or your phone 🤳.
 
-#### **Quick Links** 
+#### **Quick Links**
 - [Installation](#getting-started)
 - [User Guide](https://github.com/Udayraj123/OMRChecker/wiki)
 - [Contributor Guide](https://github.com/Udayraj123/OMRChecker/blob/master/CONTRIBUTING.md)
@@ -104,7 +104,7 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 
 ### 1. Install global dependencies
 
-![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.4+](https://img.shields.io/badge/python-3.4+-blue.svg)
+![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.5+](https://img.shields.io/badge/python-3.5+-blue.svg)
 
 To check if python3 and pip is already installed:
 
@@ -215,7 +215,7 @@ Command: <code>python3 -m pip install --user --upgrade pip</code>
 1. First, [create your own template.json](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide).
 2. Configure the tuning parameters.
 3. Run OMRChecker with appropriate arguments (See full usage).
-<!-- 3. Add answer key( TODO: add answer key/marking scheme guide)  -->
+<!-- 4. Add answer key( TODO: add answer key/marking scheme guide)  -->
 
 ## Full Usage
 
@@ -231,10 +231,14 @@ Explanation for the arguments:
 
 `--outputDir`: Specify an output directory.
 
-**Notes:**
+<details>
+<summary>
+ <b>Deprecation logs</b>
+</summary>
 
 - The old `--noCropping` flag has been replaced with the 'CropPage' plugin in "preProcessors" of the template.json(see [samples](https://github.com/Udayraj123/OMRChecker/tree/master/samples)).
 - The old `--autoAlign` flag can now be toggled from config.json
+</details>
 
 <!-- #### Testing the code
 Datasets to test on :
@@ -242,6 +246,7 @@ Low Quality Dataset(For CV Based methods)) (1.5 GB)
 Standard Quality Dataset(For ML Based methods) (3 GB)
 High Quality Dataset(For custom processing) (6 GB)
 -->
+
 
 ## FAQ
 
@@ -314,7 +319,7 @@ Here's a snapshot of the [Android OMR Helper App (archived)](https://github.com/
 
 <p align="center">
 	<a href="https://github.com/Udayraj123/AndroidOMRHelper">
-		<img height="350" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/Progress/2019-04-26/images/app_flow.PNG">
+		<img height="300" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/Progress/2019-04-26/images/app_flow.PNG">
 	</a>
 </p>
 
@@ -340,7 +345,7 @@ For more details see [LICENSE](https://github.com/Udayraj123/OMRChecker/blob/mas
 <a href="https://www.buymeacoffee.com/Udayraj123" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a> [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_LG.gif)](https://www.paypal.me/Udayraj123/500)
 
 
-_Find OMRChecker on_ [**_Product Hunt_**](https://www.producthunt.com/posts/omr-checker/) **|** [**_Reddit_**](https://www.reddit.com/r/computervision/comments/ccbj6f/omrchecker_grade_exams_using_python_and_opencv/) **|** [**Discord**](https://discord.gg/qFv2Vqf) **|** [**Linkedin**](https://www.linkedin.com/pulse/open-source-talks-udayraj-udayraj-deshmukh/) **|** [**goodfirstissue.dev**](https://goodfirstissue.dev/language/python) **|** [**codepeak.tech**](https://www.codepeak.tech/) **|** [**fossoverflow.dev**](https://fossoverflow.dev/projects) **|** [**Interview on Console by CodeSee**](https://console.substack.com/p/console-140) **|** [**Open Source Hub**](https://opensourcehub.io/udayraj123/omrchecker) 
+_Find OMRChecker on_ [**_Product Hunt_**](https://www.producthunt.com/posts/omr-checker/) **|** [**_Reddit_**](https://www.reddit.com/r/computervision/comments/ccbj6f/omrchecker_grade_exams_using_python_and_opencv/) **|** [**Discord**](https://discord.gg/qFv2Vqf) **|** [**Linkedin**](https://www.linkedin.com/pulse/open-source-talks-udayraj-udayraj-deshmukh/) **|** [**goodfirstissue.dev**](https://goodfirstissue.dev/language/python) **|** [**codepeak.tech**](https://www.codepeak.tech/) **|** [**fossoverflow.dev**](https://fossoverflow.dev/projects) **|** [**Interview on Console by CodeSee**](https://console.substack.com/p/console-140) **|** [**Open Source Hub**](https://opensourcehub.io/udayraj123/omrchecker)
 
  <!-- [***Hacker News***](https://news.ycombinator.com/item?id=20420602) **|** -->
  <!-- **|** [***Swyya***](https://www.swyya.com/projects/omrchecker) -->

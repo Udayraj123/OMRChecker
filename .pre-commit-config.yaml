@@ -33,7 +33,7 @@ repos:
   - repo: local
     hooks:
       - id: pytest-on-commit
-        name: test run
+        name: Running single sample test
         entry: pytest -k sample1
         language: system
         pass_filenames: false
@@ -43,7 +43,7 @@ repos:
   - repo: local
     hooks:
       - id: pytest-on-push
-        name: pytest-on-push
+        name: Running all tests before push...
         entry: pytest
         language: system
         pass_filenames: false

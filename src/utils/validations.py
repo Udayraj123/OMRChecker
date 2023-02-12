@@ -18,7 +18,7 @@ from src.schemas import SCHEMA_JSONS, SCHEMA_VALIDATORS
 
 def parse_validation_error(error):
     return (
-        (error.path[0] if len(error.path) > 0 else "root key"),
+        (error.path[0] if len(error.path) > 0 else "$root"),
         error.validator,
         error.message,
     )
@@ -29,7 +29,6 @@ def validate_evaluation_json(json_data, evaluation_path):
     try:
         validate(instance=json_data, schema=SCHEMA_JSONS["evaluation"])
     except jsonschema.exceptions.ValidationError as _err:  # NOQA
-
         table = Table(show_lines=True)
         table.add_column("Key", style="cyan", no_wrap=True)
         table.add_column("Error", style="magenta")
@@ -41,17 +40,15 @@ def validate_evaluation_json(json_data, evaluation_path):
         for error in errors:
             key, validator, msg = parse_validation_error(error)
             if validator == "required":
+                requiredProperty = re.findall(r"'(.*?)'", msg)[0]
                 table.add_row(
-                    re.findall(r"'(.*?)'", msg)[0],
+                    f"{key}.{requiredProperty}",
                     msg + ". Make sure the spelling of the key is correct",
                 )
             else:
                 table.add_row(key, msg)
         console.print(table, justify="center")
-        logger.critical(f"Provided Evaluation JSON is Invalid: '{evaluation_path}'")
-        return False
-
-    return True
+        raise Exception(f"Provided Evaluation JSON is Invalid: '{evaluation_path}'")
 
 
 def validate_template_json(json_data, template_path):
@@ -59,7 +56,6 @@ def validate_template_json(json_data, template_path):
     try:
         validate(instance=json_data, schema=SCHEMA_JSONS["template"])
     except jsonschema.exceptions.ValidationError as _err:  # NOQA
-
         table = Table(show_lines=True)
         table.add_column("Key", style="cyan", no_wrap=True)
         table.add_column("Error", style="magenta")
@@ -77,18 +73,15 @@ def validate_template_json(json_data, template_path):
                 preProcessorKey = error.path[2]
                 table.add_row(f"{key}.{preProcessorName}.{preProcessorKey}", msg)
             elif validator == "required":
+                requiredProperty = re.findall(r"'(.*?)'", msg)[0]
                 table.add_row(
-                    re.findall(r"'(.*?)'", msg)[0],
-                    msg
-                    + ". Make sure the spelling of the key is correct and it is in camelCase",
+                    f"{key}.{requiredProperty}",
+                    f"{msg}. Check for spelling errors and make sure it is in camelCase",
                 )
             else:
                 table.add_row(key, msg)
         console.print(table, justify="center")
-        logger.critical(f"Provided Template JSON is Invalid: '{template_path}'")
-        return False
-
-    return True
+        raise Exception(f"Provided Template JSON is Invalid: '{template_path}'")
 
 
 def validate_config_json(json_data, config_path):
@@ -107,14 +100,12 @@ def validate_config_json(json_data, config_path):
             key, validator, msg = parse_validation_error(error)
 
             if validator == "required":
+                requiredProperty = re.findall(r"'(.*?)'", msg)[0]
                 table.add_row(
-                    re.findall(r"'(.*?)'", msg)[0],
-                    msg
-                    + ". Make sure the spelling of the key is correct and it is in camelCase",
+                    f"{key}.{requiredProperty}",
+                    f"{msg}. Check for spelling errors and make sure it is in camelCase",
                 )
             else:
                 table.add_row(key, msg)
         console.print(table, justify="center")
-        logger.critical(f"Provided config JSON is Invalid: '{config_path}'")
-        return False
-    return True
+        raise Exception(f"Provided config JSON is Invalid: '{config_path}'")

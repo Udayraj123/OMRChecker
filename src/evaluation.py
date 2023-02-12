@@ -2,28 +2,23 @@ import ast
 import os
 import re
 from copy import deepcopy
-from fractions import Fraction
 
 import cv2
 import pandas as pd
 from rich.table import Table
 
 from src.logger import console, logger
-from src.schemas.evaluation_schema import (
+from src.schemas.constants import (
     BONUS_SECTION_PREFIX,
     DEFAULT_SECTION_KEY,
     MARKING_VERDICT_TYPES,
-    QUESTION_STRING_REGEX_GROUPS,
 )
-from src.utils.parsing import get_concatenated_response, open_evaluation_with_validation
-
-
-def parse_float_or_fraction(result):
-    if type(result) == str and "/" in result:
-        result = float(Fraction(result))
-    else:
-        result = float(result)
-    return result
+from src.utils.parsing import (
+    get_concatenated_response,
+    open_evaluation_with_validation,
+    parse_fields,
+    parse_float_or_fraction,
+)
 
 
 class AnswerMatcher:
@@ -60,13 +55,6 @@ class AnswerMatcher:
                 and type(answer_item[1]) == list
             ):
                 return "multi-weighted"
-            # TODO: add more conditions here
-            # elif (
-            #     len(answer_item) == 3
-            #     and type(answer_item[0]) == list
-            #     and type(answer_item[1]) == list
-            # ):
-            #     return "multi-weighted"
             else:
                 logger.critical(
                     f"Unable to determine answer type for answer item: {answer_item}"
@@ -90,13 +78,11 @@ class AnswerMatcher:
             for allowed_answer in parsed_answer:
                 self.marking[f"correct-{allowed_answer}"] = self.marking["correct"]
         elif answer_type == "multi-weighted":
-            # TODO: think about streaks in multi-weighted scenario (or invalidate such cases)
             custom_marking = list(map(parse_float_or_fraction, parsed_answer[1]))
             verdict_types_length = min(len(MARKING_VERDICT_TYPES), len(custom_marking))
             # override the given marking
             for i in range(verdict_types_length):
                 verdict_type = MARKING_VERDICT_TYPES[i]
-                # Note: copies over the marking regardless of streak or not -
                 self.marking[verdict_type] = custom_marking[i]
 
             if type(parsed_answer[0] == str):
@@ -154,128 +140,48 @@ class SectionMarkingScheme:
         # TODO: get local empty_val from qblock
         self.empty_val = empty_val
         self.section_key = section_key
-        self.has_streak_scheme = False
-        self.reset_side_effects()
         # DEFAULT marking scheme follows a shorthand
         if section_key == DEFAULT_SECTION_KEY:
             self.questions = None
             self.marking = self.parse_scheme_marking(section_scheme)
-            if self.has_streak_scheme:
-                raise Exception(
-                    f"Default schema '{DEFAULT_SECTION_KEY}' cannot have streak marking. Create a new section and specify questions range in it."
-                )
-
         else:
-            self.questions = self.parse_questions(
-                section_key, section_scheme["questions"]
-            )
+            self.questions = parse_fields(section_key, section_scheme["questions"])
             self.marking = self.parse_scheme_marking(section_scheme["marking"])
-
-    def reset_side_effects(self):
-        self.streaks = {
-            "correct": 0,
-            "incorrect": 0,
-            "unmarked": 0,
-        }
 
     def parse_scheme_marking(self, marking):
         parsed_marking = {}
         for verdict_type in MARKING_VERDICT_TYPES:
-            verdict_marking = marking[verdict_type]
-            if type(verdict_marking) == str:
-                verdict_marking = parse_float_or_fraction(verdict_marking)
-                section_key = self.section_key
-                if (
-                    verdict_marking > 0
-                    and verdict_type == "incorrect"
-                    and not section_key.startswith(BONUS_SECTION_PREFIX)
-                ):
-                    logger.warning(
-                        f"Found positive marks({round(verdict_marking, 2)}) for incorrect answer in the schema '{section_key}'. For Bonus sections, add a prefix 'BONUS_' to them."
-                    )
-            elif type(verdict_marking) == list:
-                self.has_streak_scheme = True
-                verdict_marking = list(map(parse_float_or_fraction, verdict_marking))
-
+            verdict_marking = parse_float_or_fraction(marking[verdict_type])
+            if (
+                verdict_marking > 0
+                and verdict_type == "incorrect"
+                and not self.section_key.startswith(BONUS_SECTION_PREFIX)
+            ):
+                logger.warning(
+                    f"Found positive marks({round(verdict_marking, 2)}) for incorrect answer in the schema '{self.section_key}'. For Bonus sections, add a prefix 'BONUS_' to them."
+                )
             parsed_marking[verdict_type] = verdict_marking
 
         return parsed_marking
-
-    def get_has_streak_scheme(self):
-        return self.has_streak_scheme
-
-    @staticmethod
-    def parse_questions(key, questions):
-        parsed_questions = []
-        questions_set = set()
-        for question_string in questions:
-            questions_array = SectionMarkingScheme.parse_question_string(
-                question_string
-            )
-            current_set = set(questions_array)
-            if not questions_set.isdisjoint(current_set):
-                raise Exception(
-                    f"Given question string '{question_string}' has overlapping question(s) with other questions in '{key}': {questions}"
-                )
-            parsed_questions.extend(questions_array)
-        return parsed_questions
-
-    @staticmethod
-    def parse_question_string(question_string):
-        if "." in question_string:
-            question_prefix, start, end = re.findall(
-                QUESTION_STRING_REGEX_GROUPS, question_string
-            )[0]
-            start, end = int(start), int(end)
-            if start >= end:
-                raise Exception(
-                    f"Invalid range in question string: '{question_string}', start: {start} is not less than end: {end}"
-                )
-            return [
-                f"{question_prefix}{question_number}"
-                for question_number in range(start, end + 1)
-            ]
-        else:
-            return [question_string]
 
     def match_answer(self, marked_answer, answer_matcher):
         question_verdict, verdict_marking = answer_matcher.get_verdict_marking(
             marked_answer
         )
 
-        if type(verdict_marking) == list:
-            current_streak = self.streaks[question_verdict]
-            delta = verdict_marking[min(current_streak, len(verdict_marking) - 1)]
-        else:
-            delta = verdict_marking
-
-        if question_verdict in MARKING_VERDICT_TYPES:  # TODO: refine this check
-            self.update_streaks_for_verdict(question_verdict)
-
-        return delta, question_verdict
-
-    def update_streaks_for_verdict(self, question_verdict):
-        current_streak = self.streaks[question_verdict]
-        for verdict_type in MARKING_VERDICT_TYPES:
-            if question_verdict == verdict_type:
-                # increase current streak
-                self.streaks[verdict_type] = current_streak + 1
-            else:
-                # reset other streaks
-                self.streaks[verdict_type] = 0
+        return verdict_marking, question_verdict
 
 
 class EvaluationConfig:
     """Note: this instance will be reused for multiple omr sheets"""
 
-    def __init__(self, local_evaluation_path, template, image_instance_ops, curr_dir):
+    def __init__(self, local_evaluation_path, template, curr_dir):
         evaluation_json = open_evaluation_with_validation(local_evaluation_path)
         options, marking_scheme, source_type = map(
             evaluation_json.get, ["options", "marking_scheme", "source_type"]
         )
         self.should_explain_scoring = options.get("should_explain_scoring", False)
         self.has_non_default_section = False
-        self.has_streak_scheme = False
         self.exclude_files = []
 
         marking_scheme = marking_scheme
@@ -311,7 +217,7 @@ class EvaluationConfig:
                 )
                 # TODO: use a common function for below changes?
                 in_omr = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-                in_omr = image_instance_ops.apply_preprocessors(
+                in_omr = template.image_instance_ops.apply_preprocessors(
                     image_path, in_omr, template
                 )
                 if in_omr is None:
@@ -323,7 +229,7 @@ class EvaluationConfig:
                     _final_marked,
                     _multi_marked,
                     _multi_roll,
-                ) = image_instance_ops.read_omr_response(
+                ) = template.image_instance_ops.read_omr_response(
                     template,
                     image=in_omr,
                     name=image_path,
@@ -374,7 +280,7 @@ class EvaluationConfig:
         self.validate_questions(answers_in_order)
 
         self.marking_scheme, self.question_to_scheme = {}, {}
-        for (section_key, section_scheme) in marking_scheme.items():
+        for section_key, section_scheme in marking_scheme.items():
             section_marking_scheme = SectionMarkingScheme(
                 section_key, section_scheme, template.global_empty_val
             )
@@ -386,9 +292,6 @@ class EvaluationConfig:
                 self.has_non_default_section = True
             else:
                 self.default_marking_scheme = section_marking_scheme
-
-            if section_marking_scheme.get_has_streak_scheme():
-                self.has_streak_scheme = True
 
         self.validate_marking_scheme()
 
@@ -411,15 +314,11 @@ class EvaluationConfig:
 
     def match_answer_for_question(self, current_score, question, marked_answer):
         answer_matcher = self.question_to_answer_matcher[question]
-        question_marking_scheme = answer_matcher.get_marking_scheme()
-        delta, question_verdict = question_marking_scheme.match_answer(
-            marked_answer, answer_matcher
-        )
+        question_verdict, delta = answer_matcher.get_verdict_marking(marked_answer)
         self.conditionally_add_explanation(
             answer_matcher,
             delta,
             marked_answer,
-            question_marking_scheme,
             question_verdict,
             question,
             current_score,
@@ -448,7 +347,7 @@ class EvaluationConfig:
     def validate_marking_scheme(self):
         marking_scheme = self.marking_scheme
         section_questions = set()
-        for (section_key, section_scheme) in marking_scheme.items():
+        for section_key, section_scheme in marking_scheme.items():
             if section_key == DEFAULT_SECTION_KEY:
                 continue
             current_set = set(section_scheme.questions)
@@ -457,16 +356,6 @@ class EvaluationConfig:
                     f"Section '{section_key}' has overlapping question(s) with other sections"
                 )
             section_questions = section_questions.union(current_set)
-            questions_count = len(section_scheme.questions)
-            for verdict_type in MARKING_VERDICT_TYPES:
-                marking = section_scheme.marking[verdict_type]
-                if type(marking) == list and questions_count > len(marking):
-                    logger.critical(
-                        f"Section '{section_key}' with {questions_count} questions is more than the capacity for '{verdict_type}' marking with {len(marking)} scores."
-                    )
-                    raise Exception(
-                        f"Section '{section_key}' has more questions than streak for '{verdict_type}' type"
-                    )
 
         all_questions = set(self.questions_in_order)
         missing_questions = sorted(section_questions.difference(all_questions))
@@ -478,7 +367,6 @@ class EvaluationConfig:
 
     def prepare_and_validate_omr_response(self, omr_response):
         self.reset_explanation_table()
-        self.reset_sections()
 
         omr_response_questions = set(omr_response.keys())
         all_questions = set(self.questions_in_order)
@@ -502,7 +390,7 @@ class EvaluationConfig:
 
     def parse_answers_and_map_questions(self, answers_in_order):
         question_to_answer_matcher = {}
-        for (question, answer_item) in zip(self.questions_in_order, answers_in_order):
+        for question, answer_item in zip(self.questions_in_order, answers_in_order):
             section_marking_scheme = self.get_marking_scheme_for_question(question)
             question_to_answer_matcher[question] = AnswerMatcher(
                 answer_item, section_marking_scheme
@@ -510,16 +398,13 @@ class EvaluationConfig:
         return question_to_answer_matcher
 
     def parse_questions_in_order(self, questions_in_order):
-        return SectionMarkingScheme.parse_questions(
-            "questions_in_order", questions_in_order
-        )
+        return parse_fields("questions_in_order", questions_in_order)
 
     def prepare_explanation_table(self):
-        # TODO: provide a way to export this as csv
-
+        # TODO: provide a way to export this as csv/pdf
         if not self.should_explain_scoring:
             return
-        table = Table(show_lines=True)
+        table = Table(title="Evaluation Explanation Table", show_lines=True)
         table.add_column("Question")
         table.add_column("Marked")
         table.add_column("Answer(s)")
@@ -529,8 +414,6 @@ class EvaluationConfig:
         # TODO: Add max and min score in explanation (row-wise and total)
         if self.has_non_default_section:
             table.add_column("Section")
-        if self.has_streak_scheme:
-            table.add_column("Section Streak", justify="right")
         self.explanation_table = table
 
     def conditionally_add_explanation(
@@ -538,7 +421,6 @@ class EvaluationConfig:
         answer_matcher,
         delta,
         marked_answer,
-        question_marking_scheme,
         question_verdict,
         question,
         current_score,
@@ -558,13 +440,6 @@ class EvaluationConfig:
                     answer_matcher.get_section_explanation()
                     if self.has_non_default_section
                     else None,
-                    (
-                        str(question_marking_scheme.streaks[question_verdict])
-                        if question_verdict in question_marking_scheme.streaks
-                        else "custom"
-                    )
-                    if self.has_streak_scheme
-                    else None,
                 ]
                 if item is not None
             ]
@@ -577,10 +452,6 @@ class EvaluationConfig:
     def reset_explanation_table(self):
         self.explanation_table = None
         self.prepare_explanation_table()
-
-    def reset_sections(self):
-        for section_scheme in self.marking_scheme.values():
-            section_scheme.reset_side_effects()
 
 
 def evaluate_concatenated_response(concatenated_response, evaluation_config):

@@ -2,11 +2,7 @@ import os
 import shutil
 from glob import glob
 
-from freezegun import freeze_time
-
-from main import entry_point_for_args
-
-FROZEN_TIMESTAMP = "1970-01-01"
+from src.tests.utils import run_entry_point, setup_mocker_patches
 
 
 def read_file(path):
@@ -14,15 +10,8 @@ def read_file(path):
         return file.read()
 
 
-def run_sample(sample_path, mocker):
-    mock_imshow = mocker.patch("cv2.imshow")
-    mock_imshow.return_value = True
-
-    mock_destroy_all_windows = mocker.patch("cv2.destroyAllWindows")
-    mock_destroy_all_windows.return_value = True
-
-    mock_wait_key = mocker.patch("cv2.waitKey")
-    mock_wait_key.return_value = ord("q")
+def run_sample(mocker, sample_path):
+    setup_mocker_patches(mocker)
 
     input_path = os.path.join("samples", sample_path)
     output_dir = os.path.join("outputs", sample_path)
@@ -30,15 +19,8 @@ def run_sample(sample_path, mocker):
         print(
             f"Warning: output directory already exists: {output_dir}. This may affect the test execution."
         )
-    args = {
-        "input_paths": [input_path],
-        "output_dir": output_dir,
-        "autoAlign": False,
-        "setLayout": False,
-        "silent": True,
-    }
-    with freeze_time(FROZEN_TIMESTAMP):
-        entry_point_for_args(args)
+
+    run_entry_point(input_path, output_dir)
 
     sample_outputs = extract_sample_outputs(output_dir)
 
@@ -61,60 +43,60 @@ def extract_sample_outputs(output_dir):
 
 
 def test_run_sample1(mocker, snapshot):
-    sample_outputs = run_sample("sample1", mocker)
+    sample_outputs = run_sample(mocker, "sample1")
     assert snapshot == sample_outputs
 
 
 def test_run_sample2(mocker, snapshot):
-    sample_outputs = run_sample("sample2", mocker)
+    sample_outputs = run_sample(mocker, "sample2")
     assert snapshot == sample_outputs
 
 
 def test_run_sample3(mocker, snapshot):
-    sample_outputs = run_sample("sample3", mocker)
+    sample_outputs = run_sample(mocker, "sample3")
     assert snapshot == sample_outputs
 
 
 def test_run_sample4(mocker, snapshot):
-    sample_outputs = run_sample("sample4", mocker)
+    sample_outputs = run_sample(mocker, "sample4")
     assert snapshot == sample_outputs
 
 
 def test_run_sample5(mocker, snapshot):
-    sample_outputs = run_sample("sample5", mocker)
+    sample_outputs = run_sample(mocker, "sample5")
     assert snapshot == sample_outputs
 
 
 def test_run_sample6(mocker, snapshot):
-    sample_outputs = run_sample("sample6", mocker)
+    sample_outputs = run_sample(mocker, "sample6")
     assert snapshot == sample_outputs
 
 
 def test_run_community_Antibodyy(mocker, snapshot):
-    sample_outputs = run_sample("community/Antibodyy", mocker)
+    sample_outputs = run_sample(mocker, "community/Antibodyy")
     assert snapshot == sample_outputs
 
 
 def test_run_community_ibrahimkilic(mocker, snapshot):
-    sample_outputs = run_sample("community/ibrahimkilic", mocker)
+    sample_outputs = run_sample(mocker, "community/ibrahimkilic")
     assert snapshot == sample_outputs
 
 
 def test_run_community_Sandeep_1507(mocker, snapshot):
-    sample_outputs = run_sample("community/Sandeep-1507", mocker)
+    sample_outputs = run_sample(mocker, "community/Sandeep-1507")
     assert snapshot == sample_outputs
 
 
 def test_run_community_Shamanth(mocker, snapshot):
-    sample_outputs = run_sample("community/Shamanth", mocker)
+    sample_outputs = run_sample(mocker, "community/Shamanth")
     assert snapshot == sample_outputs
 
 
-# def test_run_community_UmarFarootAPS(mocker, snapshot):
-#     sample_outputs = run_sample("community/UmarFarootAPS", mocker)
-#     assert snapshot == sample_outputs
+def test_run_community_UmarFarootAPS(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "community/UmarFarootAPS")
+    assert snapshot == sample_outputs
 
 
 def test_run_community_UPSC_mock(mocker, snapshot):
-    sample_outputs = run_sample("community/UPSC-mock", mocker)
+    sample_outputs = run_sample(mocker, "community/UPSC-mock")
     assert snapshot == sample_outputs
