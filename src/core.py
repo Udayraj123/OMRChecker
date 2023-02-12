@@ -1,499 +1,730 @@
-"""
-
- OMRChecker
-
- Author: Udayraj Deshmukh
- Github: https://github.com/Udayraj123
-
-"""
-
-import argparse
 import os
-from csv import QUOTE_NONNUMERIC
-from pathlib import Path
-from time import localtime, strftime, time
+from collections import defaultdict
+from typing import Any
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
-from src import constants
-
-# TODO: use open_config_with_defaults after making a Config class.
-from src.config import CONFIG_DEFAULTS as config
+import src.constants as constants
 from src.logger import logger
-
-# TODO: further break utils down and separate the imports
-from src.utils.imgutils import (
-    ImageUtils,
-    MainOperations,
-    draw_template_layout,
-    setup_dirs,
-)
-
-# Note: dot-imported paths are relative to current directory
-from .processors.manager import ProcessorManager
-from .template import Template
-
-# import matplotlib.pyplot as plt
+from src.utils.image import CLAHE_HELPER, ImageUtils
+from src.utils.interaction import InteractionUtils
 
 
-# Load processors
-PROCESSOR_MANAGER = ProcessorManager()
-STATS = constants.Stats()
+class ImageInstanceOps:
+    """Class to hold fine-tuned utilities for a group of images. One instance for each processing directory."""
 
-# TODO(beginner task) :-
-# from colorama import init
-# init()
-# from colorama import Fore, Back, Style
+    save_img_list: Any = defaultdict(list)
 
+    def __init__(self, tuning_config):
+        super().__init__()
+        self.tuning_config = tuning_config
+        self.save_image_level = tuning_config.outputs.save_image_level
 
-def entry_point(root_dir, curr_dir, args):
-    return process_dir(root_dir, curr_dir, args)
+    def append_save_img(self, key, img):
+        if self.save_image_level >= int(key):
+            self.save_img_list[key].append(img.copy())
 
-
-# TODO: make this function pure
-def process_dir(root_dir, curr_dir, args, template=None):
-
-    # Update local template (in current recursion stack)
-    local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
-    if os.path.exists(local_template_path):
-        template = Template(local_template_path, PROCESSOR_MANAGER.processors)
-
-    # Look for subdirectories for processing
-    subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
-
-    paths = constants.Paths(Path(args["output_dir"], curr_dir.relative_to(root_dir)))
-
-    # look for images in current dir to process
-    exts = ("*.png", "*.jpg")
-    omr_files = sorted([f for ext in exts for f in curr_dir.glob(ext)])
-
-    # Exclude images (take union over all pre_processors)
-    excluded_files = []
-    if template:
-        for pp in template.pre_processors:
-            excluded_files.extend(Path(p) for p in pp.exclude_files())
-
-    omr_files = [f for f in omr_files if f not in excluded_files]
-
-    if omr_files:
-        if not template:
-            logger.error(
-                f'Found images, but no template in the directory tree \
-                of "{curr_dir}". \nPlace {constants.TEMPLATE_FILENAME} in the \
-                directory or specify a template using -t.'
+    def save_image_stacks(self, key, filename, save_dir):
+        config = self.tuning_config
+        if self.save_image_level >= int(key) and self.save_img_list[key] != []:
+            name = os.path.splitext(filename)[0]
+            result = np.hstack(
+                tuple(
+                    [
+                        ImageUtils.resize_util_h(img, config.dimensions.display_height)
+                        for img in self.save_img_list[key]
+                    ]
+                )
             )
-            return
-
-        # TODO: get rid of args here
-        args_local = args.copy()
-        if "OverrideFlags" in template.options:
-            args_local.update(template.options["OverrideFlags"])
-        logger.info(
-            "\n------------------------------------------------------------------"
-        )
-        logger.info(f'Processing directory "{curr_dir}" with settings- ')
-        logger.info("\tTotal images       : %d" % (len(omr_files)))
-        logger.info(
-            "\tCropping Enabled   : " + str("CropOnMarkers" in template.pre_processors)
-        )
-        logger.info("\tAuto Alignment     : " + str(args_local["autoAlign"]))
-        logger.info("\tUsing Template     : " + str(template))
-        # Print options
-        for pp in template.pre_processors:
-            logger.info(f"\tUsing preprocessor: {pp.__class__.__name__:13}")
-
-        logger.info("")
-
-        setup_dirs(paths)
-        out = setup_output(paths, template)
-        process_files(omr_files, template, args_local, out)
-
-    elif not subdirs:
-        # Each subdirectory should have images or should be non-leaf
-        logger.info(
-            f"Note: No valid images or sub-folders found in {curr_dir}.\
-            Empty directories not allowed."
-        )
-
-    # recursively process subfolders
-    for d in subdirs:
-        process_dir(root_dir, d, args, template)
-
-
-def check_and_move(error_code, file_path, filepath2):
-    # print("Dummy Move:  "+file_path, " --> ",filepath2)
-    STATS.files_not_moved += 1
-    return True
-
-    if not os.path.exists(file_path):
-        logger.warning(f"File already moved: {file_path}")
-        return False
-    if os.path.exists(filepath2):
-        logger.error(f"ERROR {error_code}: Duplicate file at {filepath2}")
-        return False
-
-    logger.info(f"Moved: {file_path} --> {filepath2}")
-    os.rename(file_path, filepath2)
-    STATS.files_moved += 1
-    return True
-
-
-def process_omr(template, omr_resp):
-    # Note: This is a reference function. It is not part of the OMR checker
-    # So its implementation is completely subjective to user's requirements.
-    csv_resp = {}
-
-    # symbol for absent response
-    unmarked_symbol = ""
-
-    # print("omr_resp",omr_resp)
-
-    # Multi-column/multi-row questions which need to be concatenated
-    for q_no, resp_keys in template.concatenations.items():
-        csv_resp[q_no] = "".join([omr_resp.get(k, unmarked_symbol) for k in resp_keys])
-
-    # Single-column/single-row questions
-    for q_no in template.singles:
-        csv_resp[q_no] = omr_resp.get(q_no, unmarked_symbol)
-
-    # Note: concatenations and singles together should be mutually exclusive
-    # and should cover all questions in the template(exhaustive)
-    # TODO: ^add a warning if omr_resp has unused keys remaining
-    return csv_resp
-
-
-def report(status, streak, scheme, q_no, marked, ans, prev_marks, curr_marks, marks):
-    logger.info(
-        "%s \t %s \t\t %s \t %s \t %s \t %s \t %s "
-        % (
-            q_no,
-            status,
-            str(streak),
-            "[" + scheme + "] ",
-            (str(prev_marks) + " + " + str(curr_marks) + " =" + str(marks)),
-            str(marked),
-            str(ans),
-        )
-    )
-
-
-def setup_output(paths, template):
-    ns = argparse.Namespace()
-    logger.info("\nChecking Files...")
-
-    # Include current output paths
-    ns.paths = paths
-
-    # custom sort: To use integer order in question names instead of
-    # alphabetical - avoids q1, q10, q2 and orders them q1, q2, ..., q10
-    ns.resp_cols = sorted(
-        list(template.concatenations.keys()) + template.singles,
-        key=lambda x: int(x[1:]) if ord(x[1]) in range(48, 58) else 0,
-    )
-    ns.empty_resp = [""] * len(ns.resp_cols)
-    ns.sheetCols = ["file_id", "input_path", "output_path", "score"] + ns.resp_cols
-    ns.OUTPUT_SET = []
-    ns.files_obj = {}
-    ns.filesMap = {
-        # todo: use os.path.join(paths.results_dir, f"Results_{TIME_NOW_HRS}.csv") etc
-        "Results": f"{paths.results_dir}Results_{TIME_NOW_HRS}.csv",
-        "MultiMarked": f"{paths.manual_dir}MultiMarkedFiles.csv",
-        "Errors": f"{paths.manual_dir}ErrorFiles.csv",
-    }
-
-    for file_key, file_name in ns.filesMap.items():
-        if not os.path.exists(file_name):
-            logger.info("Note: Created new file: %s" % (file_name))
-            # moved handling of files to pandas csv writer
-            ns.files_obj[file_key] = file_name
-            # Create Header Columns
-            pd.DataFrame([ns.sheetCols], dtype=str).to_csv(
-                ns.files_obj[file_key],
-                mode="a",
-                quoting=QUOTE_NONNUMERIC,
-                header=False,
-                index=False,
+            result = ImageUtils.resize_util(
+                result,
+                min(
+                    len(self.save_img_list[key]) * config.dimensions.display_width // 3,
+                    int(config.dimensions.display_width * 2.5),
+                ),
             )
-        else:
-            logger.info("Present : appending to %s" % (file_name))
-            ns.files_obj[file_key] = open(file_name, "a")
+            ImageUtils.save_img(f"{save_dir}stack/{name}_{str(key)}_stack.jpg", result)
 
-    return ns
+    def put_label(self, img, label, size):
+        config = self.tuning_config
+        scale = img.shape[1] / config.dimensions.display_width
+        bg_val = int(np.mean(img))
+        pos = (int(scale * 80), int(scale * 30))
+        clr = (255 - bg_val,) * 3
+        img[(pos[1] - size * 30) : (pos[1] + size * 2), :] = bg_val
+        cv2.putText(img, label, pos, cv2.FONT_HERSHEY_SIMPLEX, size, clr, 3)
 
+    def reset_all_save_img(self):
+        for i in range(self.save_image_level):
+            self.save_img_list[i + 1] = []
 
-# TODO: Refactor into new process flow.
-def preliminary_check():
-    pass
-    # filesCounter=0
-    # mws, mbs = [],[]
-    # # PRELIM_CHECKS for thresholding
-    # if(config.PRELIM_CHECKS):
-    #     # TODO: add more using unit testing
-    #     TEMPLATE = TEMPLATES["H"]
-    #     ALL_WHITE = 255 * np.ones((TEMPLATE.dimensions[1],TEMPLATE.dimensions[0]), dtype='uint8')
-    #     response_dict, final_marked, multi_marked, multiroll = read_response(
-    #         "H", ALL_WHITE, name="ALL_WHITE", save_dir=None, autoAlign=True
-    #     )
-    #     print("ALL_WHITE",response_dict)
-    #     if(response_dict!={}):
-    #         print("Preliminary Checks Failed.")
-    #         exit(2)
-    #     ALL_BLACK = np.zeros((TEMPLATE.dimensions[1],TEMPLATE.dimensions[0]), dtype='uint8')
-    #     response_dict, final_marked, multi_marked, multiroll = read_response(
-    #      "H", ALL_BLACK, name="ALL_BLACK", save_dir=None, autoAlign=True
-    #     )
-    #     print("ALL_BLACK",response_dict)
-    #     show("Confirm : All bubbles are black",final_marked,1,1)
-
-
-# TODO: take a look at 'out.paths'
-def process_files(omr_files, template, args, out):
-    start_time = int(time())
-    files_counter = 0
-    STATS.files_not_moved = 0
-
-    for file_path in omr_files:
-        files_counter += 1
-
-        file_name = file_path.name
-        args["current_file"] = file_path
-
-        in_omr = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
-        logger.info(
-            f"\n({files_counter}) Opening image: \t{file_path}\tResolution: {in_omr.shape}"
-        )
-
-        # TODO: Get rid of saveImgList
-        for i in range(ImageUtils.save_image_level):
-            ImageUtils.reset_save_img(i + 1)
-
-        ImageUtils.append_save_img(1, in_omr)
-
+    def apply_preprocessors(self, file_path, in_omr, template):
+        tuning_config = self.tuning_config
         # resize to conform to template
         in_omr = ImageUtils.resize_util(
             in_omr,
-            config.dimensions.processing_width,
-            config.dimensions.processing_height,
+            tuning_config.dimensions.processing_width,
+            tuning_config.dimensions.processing_height,
         )
 
         # run pre_processors in sequence
         for pre_processor in template.pre_processors:
-            in_omr = pre_processor.apply_filter(in_omr, args)
+            in_omr = pre_processor.apply_filter(in_omr, file_path)
+        return in_omr
 
-        if in_omr is None:
-            # Error OMR case
-            new_file_path = out.paths.errors_dir + file_name
-            out.OUTPUT_SET.append([file_name] + out.empty_resp)
-            if check_and_move(
-                constants.ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path
-            ):
-                err_line = [file_name, file_path, new_file_path, "NA"] + out.empty_resp
-                pd.DataFrame(err_line, dtype=str).T.to_csv(
-                    out.files_obj["Errors"],
-                    mode="a",
-                    quoting=QUOTE_NONNUMERIC,
-                    header=False,
-                    index=False,
+    @staticmethod
+    def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-1):
+        img = ImageUtils.resize_util(
+            img, template.page_dimensions[0], template.page_dimensions[1]
+        )
+        final_align = img.copy()
+        box_w, box_h = template.bubble_dimensions
+        for field_block in template.field_blocks:
+            s, d = field_block.origin, field_block.dimensions
+            shift = field_block.shift
+            if shifted:
+                cv2.rectangle(
+                    final_align,
+                    (s[0] + shift, s[1]),
+                    (s[0] + shift + d[0], s[1] + d[1]),
+                    constants.CLR_BLACK,
+                    3,
                 )
-            continue
+            else:
+                cv2.rectangle(
+                    final_align,
+                    (s[0], s[1]),
+                    (s[0] + d[0], s[1] + d[1]),
+                    constants.CLR_BLACK,
+                    3,
+                )
+            for field_block_bubbles in field_block.traverse_bubbles:
+                for pt in field_block_bubbles:
+                    x, y = (pt.x + field_block.shift, pt.y) if shifted else (pt.x, pt.y)
+                    cv2.rectangle(
+                        final_align,
+                        (int(x + box_w / 10), int(y + box_h / 10)),
+                        (int(x + box_w - box_w / 10), int(y + box_h - box_h / 10)),
+                        constants.CLR_GRAY,
+                        border,
+                    )
+                    if draw_qvals:
+                        rect = [y, y + box_h, x, x + box_w]
+                        cv2.putText(
+                            final_align,
+                            f"{int(cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0])}",
+                            (rect[2] + 2, rect[0] + (box_h * 2) // 3),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.6,
+                            constants.CLR_BLACK,
+                            2,
+                        )
+            if shifted:
+                text_in_px = cv2.getTextSize(
+                    field_block.name, cv2.FONT_HERSHEY_SIMPLEX, constants.TEXT_SIZE, 4
+                )
+                cv2.putText(
+                    final_align,
+                    field_block.name,
+                    (int(s[0] + d[0] - text_in_px[0][0]), int(s[1] - text_in_px[0][1])),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    constants.TEXT_SIZE,
+                    constants.CLR_BLACK,
+                    4,
+                )
+        return final_align
 
-        if args["setLayout"]:
-            template_layout = draw_template_layout(
-                in_omr, template, shifted=False, border=2
-            )
-            MainOperations.show("Template Layout", template_layout, 1, 1)
-            continue
+    def get_global_threshold(
+        self,
+        q_vals_orig,
+        plot_title=None,
+        plot_show=True,
+        sort_in_plot=True,
+        looseness=1,
+    ):
+        """
+        Note: Cannot assume qStrip has only-gray or only-white bg
+            (in which case there is only one jump).
+        So there will be either 1 or 2 jumps.
+        1 Jump :
+                ......
+                ||||||
+                ||||||  <-- risky THR
+                ||||||  <-- safe THR
+            ....||||||
+            ||||||||||
 
-        # uniquify
-        file_id = str(file_name)
-        save_dir = out.paths.save_marked_dir
-        response_dict, final_marked, multi_marked, _ = MainOperations.read_response(
-            template,
-            image=in_omr,
-            name=file_id,
-            save_dir=save_dir,
-            auto_align=args["autoAlign"],
+        2 Jumps :
+                ......
+                |||||| <-- wrong THR
+            ....||||||
+            |||||||||| <-- safe THR
+            ..||||||||||
+            ||||||||||||
+
+        The abstract "First LARGE GAP" is perfect for this.
+        Current code is considering ONLY TOP 2 jumps(>= MIN_GAP) to be big,
+            gives the smaller one
+
+        """
+        config = self.tuning_config
+        PAGE_TYPE_FOR_THRESHOLD, MIN_JUMP, JUMP_DELTA = map(
+            config.threshold_params.get,
+            [
+                "PAGE_TYPE_FOR_THRESHOLD",
+                "MIN_JUMP",
+                "JUMP_DELTA",
+            ],
         )
 
-        # concatenate roll nos, set unmarked responses, etc
-        resp = process_omr(template, response_dict)
-        logger.info("\nRead Response: \t", resp, "\n")
-        if config.outputs.show_image_level >= 2:
-            MainOperations.show(
-                "Final Marked Bubbles : " + file_id,
-                ImageUtils.resize_util_h(
-                    final_marked, int(config.dimensions.display_height * 1.3)
-                ),
-                1,
-                1,
+        global_default_threshold = (
+            constants.GLOBAL_PAGE_THRESHOLD_WHITE
+            if PAGE_TYPE_FOR_THRESHOLD == "white"
+            else constants.GLOBAL_PAGE_THRESHOLD_BLACK
+        )
+
+        # Sort the Q bubbleValues
+        # TODO: Change var name of q_vals
+        q_vals = sorted(q_vals_orig)
+        # Find the FIRST LARGE GAP and set it as threshold:
+        ls = (looseness + 1) // 2
+        l = len(q_vals) - ls
+        max1, thr1 = MIN_JUMP, global_default_threshold
+        for i in range(ls, l):
+            jump = q_vals[i + ls] - q_vals[i - ls]
+            if jump > max1:
+                max1 = jump
+                thr1 = q_vals[i - ls] + jump / 2
+
+        # NOTE: thr2 is deprecated, thus is JUMP_DELTA
+        # Make use of the fact that the JUMP_DELTA(Vertical gap ofc) between
+        # values at detected jumps would be atleast 20
+        max2, thr2 = MIN_JUMP, global_default_threshold
+        # Requires atleast 1 gray box to be present (Roll field will ensure this)
+        for i in range(ls, l):
+            jump = q_vals[i + ls] - q_vals[i - ls]
+            new_thr = q_vals[i - ls] + jump / 2
+            if jump > max2 and abs(thr1 - new_thr) > JUMP_DELTA:
+                max2 = jump
+                thr2 = new_thr
+        # global_thr = min(thr1,thr2)
+        global_thr, j_low, j_high = thr1, thr1 - max1 // 2, thr1 + max1 // 2
+
+        # # For normal images
+        # thresholdRead =  116
+        # if(thr1 > thr2 and thr2 > thresholdRead):
+        #     print("Note: taking safer thr line.")
+        #     global_thr, j_low, j_high = thr2, thr2 - max2//2, thr2 + max2//2
+
+        if plot_title:
+            _, ax = plt.subplots()
+            ax.bar(range(len(q_vals_orig)), q_vals if sort_in_plot else q_vals_orig)
+            ax.set_title(plot_title)
+            thrline = ax.axhline(global_thr, color="green", ls="--", linewidth=5)
+            thrline.set_label("Global Threshold")
+            thrline = ax.axhline(thr2, color="red", ls=":", linewidth=3)
+            thrline.set_label("THR2 Line")
+            # thrline=ax.axhline(j_low,color='red',ls='-.', linewidth=3)
+            # thrline=ax.axhline(j_high,color='red',ls='-.', linewidth=3)
+            # thrline.set_label("Boundary Line")
+            # ax.set_ylabel("Mean Intensity")
+            ax.set_ylabel("Values")
+            ax.set_xlabel("Position")
+            ax.legend()
+            if plot_show:
+                plt.title(plot_title)
+                plt.show()
+
+        return global_thr, j_low, j_high
+
+    def get_local_threshold(
+        self, q_vals, global_thr, no_outliers, plot_title=None, plot_show=True
+    ):
+        """
+        TODO: Update this documentation too-
+        //No more - Assumption : Colwise background color is uniformly gray or white,
+                but not alternating. In this case there is atmost one jump.
+
+        0 Jump :
+                        <-- safe THR?
+            .......
+            ...|||||||
+            ||||||||||  <-- safe THR?
+        // How to decide given range is above or below gray?
+            -> global q_vals shall absolutely help here. Just run same function
+                on total q_vals instead of colwise _//
+        How to decide it is this case of 0 jumps
+
+        1 Jump :
+                ......
+                ||||||
+                ||||||  <-- risky THR
+                ||||||  <-- safe THR
+            ....||||||
+            ||||||||||
+
+        """
+        config = self.tuning_config
+        # Sort the Q bubbleValues
+        q_vals = sorted(q_vals)
+
+        # Small no of pts cases:
+        # base case: 1 or 2 pts
+        if len(q_vals) < 3:
+            thr1 = (
+                global_thr
+                if np.max(q_vals) - np.min(q_vals) < config.threshold_params.MIN_GAP
+                else np.mean(q_vals)
             )
-
-        # This evaluates and returns the score attribute
-        # TODO: Automatic scoring
-        # score = evaluate(resp, explain_scoring=config.outputs.explain_scoring)
-        score = 0
-
-        resp_array = []
-        for k in out.resp_cols:
-            resp_array.append(resp[k])
-
-        out.OUTPUT_SET.append([file_name] + resp_array)
-
-        # TODO: Add roll number validation here
-        if multi_marked == 0:
-            STATS.files_not_moved += 1
-            new_file_path = save_dir + file_id
-            # Enter into Results sheet-
-            results_line = [file_name, file_path, new_file_path, score] + resp_array
-            # Write/Append to results_line file(opened in append mode)
-            pd.DataFrame(results_line, dtype=str).T.to_csv(
-                out.files_obj["Results"],
-                mode="a",
-                quoting=QUOTE_NONNUMERIC,
-                header=False,
-                index=False,
-            )
-            # Todo: Add score calculation from template.json
-            # print(
-            #     "[%d] Graded with score: %.2f" % (files_counter, score),
-            #     "\t file_id: ",
-            #     file_id,
-            # )
-            # print(files_counter,file_id,resp['Roll'],'score : ',score)
         else:
-            # multi_marked file
-            logger.info("[%d] multi_marked, moving File: %s" % (files_counter, file_id))
-            new_file_path = out.paths.multi_marked_dir + file_name
-            if check_and_move(
-                constants.ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path
-            ):
-                mm_line = [file_name, file_path, new_file_path, "NA"] + resp_array
-                pd.DataFrame(mm_line, dtype=str).T.to_csv(
-                    out.files_obj["MultiMarked"],
-                    mode="a",
-                    quoting=QUOTE_NONNUMERIC,
-                    header=False,
-                    index=False,
-                )
+            # qmin, qmax, qmean, qstd = round(np.min(q_vals),2), round(np.max(q_vals),2),
+            #   round(np.mean(q_vals),2), round(np.std(q_vals),2)
+            # GVals = [round(abs(q-qmean),2) for q in q_vals]
+            # gmean, gstd = round(np.mean(GVals),2), round(np.std(GVals),2)
+            # # DISCRETION: Pretty critical factor in reading response
+            # # Doesn't work well for small number of values.
+            # DISCRETION = 2.7 # 2.59 was closest hit, 3.0 is too far
+            # L2MaxGap = round(max([abs(g-gmean) for g in GVals]),2)
+            # if(L2MaxGap > DISCRETION*gstd):
+            #     no_outliers = False
+
+            # # ^Stackoverflow method
+            # print(field_label, no_outliers,"qstd",round(np.std(q_vals),2), "gstd", gstd,
+            #   "Gaps in gvals",sorted([round(abs(g-gmean),2) for g in GVals],reverse=True),
+            #   '\t',round(DISCRETION*gstd,2), L2MaxGap)
+
             # else:
-            #     TODO:  Add appropriate record handling here
-            #     pass
+            # Find the LARGEST GAP and set it as threshold: //(FIRST LARGE GAP)
+            l = len(q_vals) - 1
+            max1, thr1 = config.threshold_params.MIN_JUMP, 255
+            for i in range(1, l):
+                jump = q_vals[i + 1] - q_vals[i - 1]
+                if jump > max1:
+                    max1 = jump
+                    thr1 = q_vals[i - 1] + jump / 2
+            # print(field_label,q_vals,max1)
 
-    print_stats(start_time, files_counter)
+            confident_jump = (
+                config.threshold_params.MIN_JUMP
+                + config.threshold_params.CONFIDENT_SURPLUS
+            )
+            # If not confident, then only take help of global_thr
+            if max1 < confident_jump:
+                if no_outliers:
+                    # All Black or All White case
+                    thr1 = global_thr
+                else:
+                    # TODO: Low confidence parameters here
+                    pass
 
-    # flush after every 20 files for a live view
-    # if(files_counter % 20 == 0 or files_counter == len(omr_files)):
-    #     for file_key in out.filesMap.keys():
-    #         out.files_obj[file_key].flush()
+            # if(thr1 == 255):
+            #     print("Warning: threshold is unexpectedly 255! (Outlier Delta issue?)",plot_title)
 
+        # Make a common plot function to show local and global thresholds
+        if plot_show and plot_title is not None:
+            _, ax = plt.subplots()
+            ax.bar(range(len(q_vals)), q_vals)
+            thrline = ax.axhline(thr1, color="green", ls=("-."), linewidth=3)
+            thrline.set_label("Local Threshold")
+            thrline = ax.axhline(global_thr, color="red", ls=":", linewidth=5)
+            thrline.set_label("Global Threshold")
+            ax.set_title(plot_title)
+            ax.set_ylabel("Bubble Mean Intensity")
+            ax.set_xlabel("Bubble Number(sorted)")
+            ax.legend()
+            # TODO append QStrip to this plot-
+            # appendSaveImg(6,getPlotImg())
+            if plot_show:
+                plt.show()
+        return thr1
 
-def print_stats(start_time, files_counter):
-    time_checking = round(time() - start_time, 2) if files_counter else 1
-    log = logger.info
-    log("")
-    log("Total file(s) moved        : %d " % (STATS.files_moved))
-    log("Total file(s) not moved    : %d " % (STATS.files_not_moved))
-    log("------------------------------")
-    log(
-        "Total file(s) processed    : %d (%s)"
-        % (
-            files_counter,
-            "Sum Tallied!"
-            if files_counter == (STATS.files_moved + STATS.files_not_moved)
-            else "Not Tallying!",
-        )
-    )
+    def read_omr_response(self, template, image, name, save_dir=None):
+        config = self.tuning_config
+        auto_align = config.alignment_params.auto_align
+        try:
+            img = image.copy()
+            # origDim = img.shape[:2]
+            img = ImageUtils.resize_util(
+                img, template.page_dimensions[0], template.page_dimensions[1]
+            )
+            if img.max() > img.min():
+                img = ImageUtils.normalize_util(img)
+            # Processing copies
+            transp_layer = img.copy()
+            final_marked = img.copy()
+            # put_label(final_marked, f"Crop Size: {str(origDim[0])}x{str(origDim[1])} {name}", size=1)
 
-    if config.outputs.show_image_level <= 0:
-        log(
-            "\nFinished Checking %d file(s) in %.1f seconds i.e. ~%.1f minute(s)."
-            % (files_counter, time_checking, time_checking / 60)
-        )
-        log(
-            "OMR Processing Rate  :\t ~ %.2f seconds/OMR"
-            % (time_checking / files_counter)
-        )
-        log(
-            "OMR Processing Speed :\t ~ %.2f OMRs/minute"
-            % ((files_counter * 60) / time_checking)
-        )
-    else:
-        log("\nTotal script time :", time_checking, "seconds")
+            morph = img.copy()
+            self.append_save_img(3, morph)
 
-    if config.outputs.show_image_level <= 1:
-        # TODO: colorama this
-        log(
-            "\nTip: To see some awesome visuals, open config.json and increase 'show_image_level'"
-        )
-
-    # evaluate_correctness(out)
-
-    # Use this data to train as +ve feedback
-    # if config.outputs.show_image_level >= 0 and files_counter > 10:
-    #     for x in [thresholdCircles]:#,badThresholds,veryBadPoints, mws, mbs]:
-    #         if(x != []):
-    #             x = pd.DataFrame(x)
-    #             print(x.describe())
-    #             plt.plot(range(len(x)), x)
-    #             plt.title("Mystery Plot")
-    #             plt.show()
-    #         else:
-    #             print(x)
-
-
-# Evaluate accuracy based on OMRDataset file generated through moderation
-# portal on the same set of images
-def evaluate_correctness(out):
-    # TODO: test_file WOULD BE RELATIVE TO INPUT SUBDIRECTORY NOW-
-    test_file = "inputs/OMRDataset.csv"
-    if os.path.exists(test_file):
-        logger.info("\nStarting evaluation for: " + test_file)
-
-        test_cols = ["file_id"] + out.resp_cols
-        y_df = (
-            pd.read_csv(test_file, dtype=str)[test_cols]
-            .replace(np.nan, "", regex=True)
-            .set_index("file_id")
-        )
-
-        if np.any(y_df.index.duplicated):
-            y_df_filtered = y_df.loc[~y_df.index.duplicated(keep="first")]
-            logger.warning(
-                "WARNING: Found duplicate File-ids in file %s. \
-                Removed %d rows from testing data. Rows remaining: %d"
-                % (
-                    test_file,
-                    y_df.shape[0] - y_df_filtered.shape[0],
-                    y_df_filtered.shape[0],
+            if auto_align:
+                # Note: clahe is good for morphology, bad for thresholding
+                morph = CLAHE_HELPER.apply(morph)
+                self.append_save_img(3, morph)
+                # Remove shadows further, make columns/boxes darker (less gamma)
+                morph = ImageUtils.adjust_gamma(
+                    morph, config.threshold_params.GAMMA_LOW
                 )
-            )
-            y_df = y_df_filtered
+                # TODO: all numbers should come from either constants or config
+                _, morph = cv2.threshold(morph, 220, 220, cv2.THRESH_TRUNC)
+                morph = ImageUtils.normalize_util(morph)
+                self.append_save_img(3, morph)
+                if config.outputs.show_image_level >= 4:
+                    InteractionUtils.show("morph1", morph, 0, 1, config)
 
-        x_df = pd.DataFrame(out.OUTPUT_SET, dtype=str, columns=test_cols).set_index(
-            "file_id"
-        )
-        # print("x_df",x_df.head())
-        # print("\ny_df",y_df.head())
-        intersection = y_df.index.intersection(x_df.index)
+            # Move them to data class if needed
+            # Overlay Transparencies
+            alpha = 0.65
+            box_w, box_h = template.bubble_dimensions
+            omr_response = {}
+            multi_marked, multi_roll = 0, 0
 
-        # Checking if the merge is okay
-        if intersection.size == x_df.index.size:
-            y_df = y_df.loc[intersection]
-            x_df["TestResult"] = (x_df == y_df).all(axis=1).astype(int)
-            logger.info(x_df.head())
+            # TODO Make this part useful for visualizing status checks
+            # blackVals=[0]
+            # whiteVals=[255]
+
+            if config.outputs.show_image_level >= 5:
+                all_c_box_vals = {"int": [], "mcq": []}
+                # TODO: simplify this logic
+                q_nums = {"int": [], "mcq": []}
+
+            # Find Shifts for the field_blocks --> Before calculating threshold!
+            if auto_align:
+                # print("Begin Alignment")
+                # Open : erode then dilate
+                v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 10))
+                morph_v = cv2.morphologyEx(
+                    morph, cv2.MORPH_OPEN, v_kernel, iterations=3
+                )
+                _, morph_v = cv2.threshold(morph_v, 200, 200, cv2.THRESH_TRUNC)
+                morph_v = 255 - ImageUtils.normalize_util(morph_v)
+
+                if config.outputs.show_image_level >= 3:
+                    InteractionUtils.show(
+                        "morphed_vertical", morph_v, 0, 1, config=config
+                    )
+
+                # InteractionUtils.show("morph1",morph,0,1,config=config)
+                # InteractionUtils.show("morphed_vertical",morph_v,0,1,config=config)
+
+                self.append_save_img(3, morph_v)
+
+                morph_thr = 60  # for Mobile images, 40 for scanned Images
+                _, morph_v = cv2.threshold(morph_v, morph_thr, 255, cv2.THRESH_BINARY)
+                # kernel best tuned to 5x5 now
+                morph_v = cv2.erode(morph_v, np.ones((5, 5), np.uint8), iterations=2)
+
+                self.append_save_img(3, morph_v)
+                # h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 2))
+                # morph_h = cv2.morphologyEx(morph, cv2.MORPH_OPEN, h_kernel, iterations=3)
+                # ret, morph_h = cv2.threshold(morph_h,200,200,cv2.THRESH_TRUNC)
+                # morph_h = 255 - normalize_util(morph_h)
+                # InteractionUtils.show("morph_h",morph_h,0,1,config=config)
+                # _, morph_h = cv2.threshold(morph_h,morph_thr,255,cv2.THRESH_BINARY)
+                # morph_h = cv2.erode(morph_h,  np.ones((5,5),np.uint8), iterations = 2)
+                if config.outputs.show_image_level >= 3:
+                    InteractionUtils.show(
+                        "morph_thr_eroded", morph_v, 0, 1, config=config
+                    )
+
+                self.append_save_img(6, morph_v)
+
+                # template relative alignment code
+                for field_block in template.field_blocks:
+                    s, d = field_block.origin, field_block.dimensions
+
+                    match_col, max_steps, align_stride, thk = map(
+                        config.alignment_params.get,
+                        [
+                            "match_col",
+                            "max_steps",
+                            "stride",
+                            "thickness",
+                        ],
+                    )
+                    shift, steps = 0, 0
+                    while steps < max_steps:
+                        left_mean = np.mean(
+                            morph_v[
+                                s[1] : s[1] + d[1],
+                                s[0] + shift - thk : -thk + s[0] + shift + match_col,
+                            ]
+                        )
+                        right_mean = np.mean(
+                            morph_v[
+                                s[1] : s[1] + d[1],
+                                s[0]
+                                + shift
+                                - match_col
+                                + d[0]
+                                + thk : thk
+                                + s[0]
+                                + shift
+                                + d[0],
+                            ]
+                        )
+
+                        # For demonstration purposes-
+                        # if(field_block.name == "int1"):
+                        #     ret = morph_v.copy()
+                        #     cv2.rectangle(ret,
+                        #                   (s[0]+shift-thk,s[1]),
+                        #                   (s[0]+shift+thk+d[0],s[1]+d[1]),
+                        #                   constants.CLR_WHITE,
+                        #                   3)
+                        #     appendSaveImg(6,ret)
+                        # print(shift, left_mean, right_mean)
+                        left_shift, right_shift = left_mean > 100, right_mean > 100
+                        if left_shift:
+                            if right_shift:
+                                break
+                            else:
+                                shift -= align_stride
+                        else:
+                            if right_shift:
+                                shift += align_stride
+                            else:
+                                break
+                        steps += 1
+
+                    field_block.shift = shift
+                    # print("Aligned field_block: ",field_block.name,"Corrected Shift:",
+                    #   field_block.shift,", dimensions:", field_block.dimensions,
+                    #   "origin:", field_block.origin,'\n')
+                # print("End Alignment")
+
+            final_align = None
+            if config.outputs.show_image_level >= 2:
+                initial_align = self.draw_template_layout(img, template, shifted=False)
+                final_align = self.draw_template_layout(
+                    img, template, shifted=True, draw_qvals=True
+                )
+                # appendSaveImg(4,mean_vals)
+                self.append_save_img(2, initial_align)
+                self.append_save_img(2, final_align)
+
+                if auto_align:
+                    final_align = np.hstack((initial_align, final_align))
+            self.append_save_img(5, img)
+
+            # Get mean bubbleValues n other stats
+            all_q_vals, all_q_strip_arrs, all_q_std_vals = [], [], []
+            total_q_strip_no = 0
+            for field_block in template.field_blocks:
+                q_std_vals = []
+                for field_block_bubbles in field_block.traverse_bubbles:
+                    q_strip_vals = []
+                    for pt in field_block_bubbles:
+                        # shifted
+                        x, y = (pt.x + field_block.shift, pt.y)
+                        rect = [y, y + box_h, x, x + box_w]
+                        q_strip_vals.append(
+                            cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]
+                            # detectCross(img, rect) ? 100 : 0
+                        )
+                    q_std_vals.append(round(np.std(q_strip_vals), 2))
+                    all_q_strip_arrs.append(q_strip_vals)
+                    # _, _, _ = get_global_threshold(q_strip_vals, "QStrip Plot",
+                    #   plot_show=False, sort_in_plot=True)
+                    # hist = getPlotImg()
+                    # InteractionUtils.show("QStrip "+field_block_bubbles[0].field_label, hist, 0, 1,config=config)
+                    all_q_vals.extend(q_strip_vals)
+                    # print(total_q_strip_no, field_block_bubbles[0].field_label, q_std_vals[len(q_std_vals)-1])
+                    total_q_strip_no += 1
+                all_q_std_vals.extend(q_std_vals)
+
+            global_std_thresh, _, _ = self.get_global_threshold(
+                all_q_std_vals
+            )  # , "Q-wise Std-dev Plot", plot_show=True, sort_in_plot=True)
+            # plt.show()
+            # hist = getPlotImg()
+            # InteractionUtils.show("StdHist", hist, 0, 1,config=config)
+
+            # Note: Plotting takes Significant times here --> Change Plotting args
+            # to support show_image_level
+            # , "Mean Intensity Histogram",plot_show=True, sort_in_plot=True)
+            global_thr, _, _ = self.get_global_threshold(all_q_vals, looseness=4)
+
             logger.info(
-                "\n\t Accuracy on the %s Dataset: %.6f"
-                % (test_file, (x_df["TestResult"].sum() / x_df.shape[0]))
+                f"Thresholding:\tglobal_thr: {round(global_thr, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_thr == 255) else ''}"
             )
-        else:
-            logger.error(
-                "\nERROR: Insufficient Testing Data: Have you appended MultiMarked data yet?"
-            )
-            logger.error(
-                "Missing File-ids: ", list(x_df.index.difference(intersection))
-            )
+            # plt.show()
+            # hist = getPlotImg()
+            # InteractionUtils.show("StdHist", hist, 0, 1,config=config)
 
+            # if(config.outputs.show_image_level>=1):
+            #     hist = getPlotImg()
+            #     InteractionUtils.show("Hist", hist, 0, 1,config=config)
+            #     appendSaveImg(4,hist)
+            #     appendSaveImg(5,hist)
+            #     appendSaveImg(2,hist)
 
-TIME_NOW_HRS = strftime("%I%p", localtime())
+            per_omr_threshold_avg, total_q_strip_no, total_q_box_no = 0, 0, 0
+            for field_block in template.field_blocks:
+                block_q_strip_no = 1
+                shift = field_block.shift
+                s, d = field_block.origin, field_block.dimensions
+                key = field_block.name[:3]
+                # cv2.rectangle(final_marked,(s[0]+shift,s[1]),(s[0]+shift+d[0],
+                #   s[1]+d[1]),CLR_BLACK,3)
+                for field_block_bubbles in field_block.traverse_bubbles:
+                    # All Black or All White case
+                    no_outliers = all_q_std_vals[total_q_strip_no] < global_std_thresh
+                    # print(total_q_strip_no, field_block_bubbles[0].field_label,
+                    #   all_q_std_vals[total_q_strip_no], "no_outliers:", no_outliers)
+                    per_q_strip_threshold = self.get_local_threshold(
+                        all_q_strip_arrs[total_q_strip_no],
+                        global_thr,
+                        no_outliers,
+                        f"Mean Intensity Histogram for {key}.{field_block_bubbles[0].field_label}.{block_q_strip_no}",
+                        config.outputs.show_image_level >= 6,
+                    )
+                    # print(field_block_bubbles[0].field_label,key,block_q_strip_no, "THR: ",
+                    #   round(per_q_strip_threshold,2))
+                    per_omr_threshold_avg += per_q_strip_threshold
+
+                    # Note: Little debugging visualization - view the particular Qstrip
+                    # if(
+                    #     0
+                    #     # or "q17" in (field_block_bubbles[0].field_label)
+                    #     # or (field_block_bubbles[0].field_label+str(block_q_strip_no))=="q15"
+                    #  ):
+                    #     st, end = qStrip
+                    #     InteractionUtils.show("QStrip: "+key+"-"+str(block_q_strip_no),
+                    #     img[st[1] : end[1], st[0]+shift : end[0]+shift],0,config=config)
+
+                    # TODO: get rid of total_q_box_no
+                    detected_bubbles = []
+                    for bubble in field_block_bubbles:
+                        bubble_is_marked = (
+                            per_q_strip_threshold > all_q_vals[total_q_box_no]
+                        )
+                        total_q_box_no += 1
+                        if bubble_is_marked:
+                            detected_bubbles.append(bubble)
+                            x, y, field_value = (
+                                bubble.x + field_block.shift,
+                                bubble.y,
+                                bubble.field_value,
+                            )
+                            cv2.rectangle(
+                                final_marked,
+                                (int(x + box_w / 12), int(y + box_h / 12)),
+                                (
+                                    int(x + box_w - box_w / 12),
+                                    int(y + box_h - box_h / 12),
+                                ),
+                                constants.CLR_DARK_GRAY,
+                                3,
+                            )
+
+                            cv2.putText(
+                                final_marked,
+                                str(field_value),
+                                (x, y),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                constants.TEXT_SIZE,
+                                (20, 20, 10),
+                                int(1 + 3.5 * constants.TEXT_SIZE),
+                            )
+                        else:
+                            cv2.rectangle(
+                                final_marked,
+                                (int(x + box_w / 10), int(y + box_h / 10)),
+                                (
+                                    int(x + box_w - box_w / 10),
+                                    int(y + box_h - box_h / 10),
+                                ),
+                                constants.CLR_GRAY,
+                                -1,
+                            )
+
+                    for bubble in detected_bubbles:
+                        field_label, field_value = (
+                            bubble.field_label,
+                            bubble.field_value,
+                        )
+                        # Only send rolls multi-marked in the directory
+                        multi_marked_local = field_label in omr_response
+                        omr_response[field_label] = (
+                            (omr_response[field_label] + field_value)
+                            if multi_marked_local
+                            else field_value
+                        )
+                        # TODO: generalize this into identifier
+                        # multi_roll = multi_marked_local and "Roll" in str(q)
+                        multi_marked = multi_marked or multi_marked_local
+
+                    if len(detected_bubbles) == 0:
+                        field_label = field_block_bubbles[0].field_label
+                        omr_response[field_label] = field_block.empty_val
+
+                    if config.outputs.show_image_level >= 5:
+                        if key in all_c_box_vals:
+                            q_nums[key].append(f"{key[:2]}_c{str(block_q_strip_no)}")
+                            all_c_box_vals[key].append(
+                                all_q_strip_arrs[total_q_strip_no]
+                            )
+
+                    block_q_strip_no += 1
+                    total_q_strip_no += 1
+                # /for field_block
+
+            per_omr_threshold_avg /= total_q_strip_no
+            per_omr_threshold_avg = round(per_omr_threshold_avg, 2)
+            # Translucent
+            cv2.addWeighted(
+                final_marked, alpha, transp_layer, 1 - alpha, 0, final_marked
+            )
+            # Box types
+            if config.outputs.show_image_level >= 5:
+                # plt.draw()
+                f, axes = plt.subplots(len(all_c_box_vals), sharey=True)
+                f.canvas.manager.set_window_title(name)
+                ctr = 0
+                type_name = {
+                    "int": "Integer",
+                    "mcq": "MCQ",
+                    "med": "MED",
+                    "rol": "Roll",
+                }
+                for k, boxvals in all_c_box_vals.items():
+                    axes[ctr].title.set_text(type_name[k] + " Type")
+                    axes[ctr].boxplot(boxvals)
+                    # thrline=axes[ctr].axhline(per_omr_threshold_avg,color='red',ls='--')
+                    # thrline.set_label("Average THR")
+                    axes[ctr].set_ylabel("Intensity")
+                    axes[ctr].set_xticklabels(q_nums[k])
+                    # axes[ctr].legend()
+                    ctr += 1
+                # imshow will do the waiting
+                plt.tight_layout(pad=0.5)
+                plt.show()
+
+            if config.outputs.show_image_level >= 3 and final_align is not None:
+                final_align = ImageUtils.resize_util_h(
+                    final_align, int(config.dimensions.display_height)
+                )
+                # [final_align.shape[1],0])
+                InteractionUtils.show(
+                    "Template Alignment Adjustment", final_align, 0, 0, config=config
+                )
+
+            if config.outputs.save_detections and save_dir is not None:
+                if multi_roll:
+                    save_dir = save_dir.joinpath("_MULTI_")
+                image_path = str(save_dir.joinpath(name))
+                ImageUtils.save_img(image_path, final_marked)
+
+            self.append_save_img(2, final_marked)
+
+            if save_dir is not None:
+                for i in range(config.outputs.save_image_level):
+                    self.save_image_stacks(i + 1, name, save_dir)
+
+            return omr_response, final_marked, multi_marked, multi_roll
+
+        except Exception as e:
+            raise e

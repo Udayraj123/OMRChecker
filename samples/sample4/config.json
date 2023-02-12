@@ -1,0 +1,12 @@
+{
+    "dimensions": {
+        "display_width": 1189,
+        "display_height": 1682
+    },
+    "threshold_params": {
+        "MIN_JUMP": 30
+    },
+    "outputs": {
+        "show_image_level": 0
+    }
+}

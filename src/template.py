@@ -6,325 +6,321 @@
  Github: https://github.com/Udayraj123
 
 """
-
-from copy import deepcopy
-
-import numpy as np
-
+from src.constants import FIELD_TYPES
+from src.core import ImageInstanceOps
 from src.logger import logger
-
-from .constants import QTYPE_DATA, TEMPLATE_DEFAULTS_PATH
-from .utils.file import load_json, validate_json
-from .utils.object import OVERRIDE_MERGER
-
-TEMPLATE_DEFAULTS = load_json(TEMPLATE_DEFAULTS_PATH)
-
-
-def open_template_with_defaults(template_path):
-    user_template = load_json(template_path)
-    user_template = OVERRIDE_MERGER.merge(deepcopy(TEMPLATE_DEFAULTS), user_template)
-    is_valid, msg = validate_json(user_template, template_path)
-
-    if is_valid:
-        logger.info(msg)
-        return user_template
-    else:
-        logger.critical(msg, "\nExiting program")
-        exit()
+from src.processors.manager import PROCESSOR_MANAGER
+from src.utils.parsing import (
+    custom_sort_output_columns,
+    open_template_with_defaults,
+    parse_fields,
+)
 
 
-# Coordinates Part
-class Pt:
+class Bubble:
     """
     Container for a Point Box on the OMR
 
-    q_no is the point's property- question to which this point belongs to
+    field_label is the point's property- field to which this point belongs to
     It can be used as a roll number column as well. (eg roll1)
     It can also correspond to a single digit of integer type Q (eg q5d1)
     """
 
-    def __init__(self, pt, q_no, q_type, val):
+    def __init__(self, pt, field_label, field_type, field_value):
         self.x = round(pt[0])
         self.y = round(pt[1])
-        self.q_no = q_no
-        self.q_type = q_type
-        self.val = val
+        self.field_label = field_label
+        self.field_type = field_type
+        self.field_value = field_value
+
+    def __str__(self):
+        return str([self.x, self.y])
 
 
-class QBlock:
-    def __init__(self, dimensions, key, orig, traverse_pts, empty_val):
-        # dimensions = (width, height)
-        self.dimensions = tuple(round(x) for x in dimensions)
-        self.key = key
-        self.orig = orig
-        self.traverse_pts = traverse_pts
-        self.empty_val = empty_val
-        # will be set when using
+class FieldBlock:
+    def __init__(self, block_name, field_block_object):
+        self.name = block_name
         self.shift = 0
+        self.setup_field_block(field_block_object)
+
+    def setup_field_block(self, field_block_object):
+        # case mapping
+        (
+            bubble_dimensions,
+            bubble_values,
+            bubbles_gap,
+            direction,
+            field_labels,
+            field_type,
+            labels_gap,
+            origin,
+            self.empty_val,
+        ) = map(
+            field_block_object.get,
+            [
+                "bubbleDimensions",
+                "bubbleValues",
+                "bubblesGap",
+                "direction",
+                "fieldLabels",
+                "fieldType",
+                "labelsGap",
+                "origin",
+                "emptyValue",
+            ],
+        )
+        self.parsed_field_labels = parse_fields(
+            f"Field Block Labels: {self.name}", field_labels
+        )
+        self.origin = origin
+        self.calculate_block_dimensions(
+            bubble_dimensions,
+            bubble_values,
+            bubbles_gap,
+            direction,
+            labels_gap,
+        )
+        self.generate_bubble_grid(
+            bubble_values,
+            bubbles_gap,
+            direction,
+            field_type,
+            labels_gap,
+        )
+
+    def calculate_block_dimensions(
+        self,
+        bubble_dimensions,
+        bubble_values,
+        bubbles_gap,
+        direction,
+        labels_gap,
+    ):
+        _h, _v = (1, 0) if (direction == "vertical") else (0, 1)
+
+        values_dimension = int(
+            bubbles_gap * (len(bubble_values) - 1) + bubble_dimensions[_h]
+        )
+        fields_dimension = int(
+            labels_gap * (len(self.parsed_field_labels) - 1) + bubble_dimensions[_v]
+        )
+        self.dimensions = (
+            [fields_dimension, values_dimension]
+            if (direction == "vertical")
+            else [values_dimension, fields_dimension]
+        )
+
+    def generate_bubble_grid(
+        self,
+        bubble_values,
+        bubbles_gap,
+        direction,
+        field_type,
+        labels_gap,
+    ):
+        _h, _v = (1, 0) if (direction == "vertical") else (0, 1)
+        self.traverse_bubbles = []
+        # Generate the bubble grid
+        lead_point = [float(self.origin[0]), float(self.origin[1])]
+        for field_label in self.parsed_field_labels:
+            bubble_point = lead_point.copy()
+            field_bubbles = []
+            for bubble_value in bubble_values:
+                field_bubbles.append(
+                    Bubble(bubble_point.copy(), field_label, field_type, bubble_value)
+                )
+                bubble_point[_h] += bubbles_gap
+            self.traverse_bubbles.append(field_bubbles)
+            lead_point[_v] += labels_gap
 
 
 class Template:
-    def __init__(self, template_path, extensions):
-        json_obj = open_template_with_defaults(template_path)
+    def __init__(self, template_path, tuning_config):
         self.path = template_path
-        self.q_blocks = []
-        # TODO: ajv validation - throw exception on key not exist
-        # TODO: extend DotMap here and only access keys that need extra parsing
-        self.dimensions = json_obj["dimensions"]
-        self.global_empty_val = json_obj["emptyVal"]
-        self.bubble_dimensions = json_obj["bubbleDimensions"]
-        self.concatenations = json_obj["concatenations"]
-        self.singles = json_obj["singles"]
+        self.image_instance_ops = ImageInstanceOps(tuning_config)
 
-        # Add new qTypes from template
-        if "qTypes" in json_obj:
-            QTYPE_DATA.update(json_obj["qTypes"])
-
-        # load image pre_processors
-        self.pre_processors = [
-            extensions[p["name"]](p["options"], template_path.parent)
-            for p in json_obj.get("preProcessors", [])
-        ]
-
-        # Add options
-        self.options = json_obj.get("options", {})
-
-        # Add q_blocks
-        for name, block in json_obj["qBlocks"].items():
-            self.add_q_blocks(name, block)
-
-    # Expects bubble_dimensions to be set already
-    def add_q_blocks(self, key, rect):
-        assert self.bubble_dimensions != [-1, -1]
-        # For q_type defined in q_blocks
-        if "qType" in rect:
-            rect.update(**QTYPE_DATA[rect["qType"]])
-        else:
-            rect.update(**{"vals": rect["vals"], "orient": rect["orient"]})
-
-        # keyword arg unpacking followed by named args
-        self.q_blocks += gen_grid(
-            self.bubble_dimensions, self.global_empty_val, key, rect
+        json_object = open_template_with_defaults(template_path)
+        (
+            custom_labels_object,
+            field_blocks_object,
+            output_columns_array,
+            pre_processors_object,
+            self.bubble_dimensions,
+            self.global_empty_val,
+            self.options,
+            self.page_dimensions,
+        ) = map(
+            json_object.get,
+            [
+                "customLabels",
+                "fieldBlocks",
+                "outputColumns",
+                "preProcessors",
+                "bubbleDimensions",
+                "emptyValue",
+                "options",
+                "pageDimensions",
+            ],
         )
-        # self.q_blocks.append(QBlock(rect.orig, calcQBlockDims(rect), maketemplate(rect)))
+
+        self.parse_output_columns(output_columns_array)
+        self.setup_pre_processors(pre_processors_object, template_path.parent)
+        self.setup_field_blocks(field_blocks_object)
+        self.parse_custom_labels(custom_labels_object)
+
+        non_custom_columns, all_custom_columns = (
+            list(self.non_custom_labels),
+            list(custom_labels_object.keys()),
+        )
+
+        if len(self.output_columns) == 0:
+            self.fill_output_columns(non_custom_columns, all_custom_columns)
+
+        self.validate_template_columns(non_custom_columns, all_custom_columns)
+
+    def setup_pre_processors(self, pre_processors_object, relative_dir):
+        # load image pre_processors
+        self.pre_processors = []
+        for pre_processor in pre_processors_object:
+            ProcessorClass = PROCESSOR_MANAGER.processors[pre_processor["name"]]
+            pre_processor_instance = ProcessorClass(
+                options=pre_processor["options"],
+                relative_dir=relative_dir,
+                image_instance_ops=self.image_instance_ops,
+            )
+            self.pre_processors.append(pre_processor_instance)
+
+    def setup_field_blocks(self, field_blocks_object):
+        # Add field_blocks
+        self.field_blocks = []
+        self.all_parsed_labels = set()
+        for block_name, field_block_object in field_blocks_object.items():
+            self.parse_and_add_field_block(block_name, field_block_object)
+
+    def parse_and_add_field_block(self, block_name, field_block_object):
+        field_block_object = self.pre_fill_field_block(field_block_object)
+        block_instance = FieldBlock(block_name, field_block_object)
+        self.field_blocks.append(block_instance)
+        self.validate_parsed_labels(field_block_object["fieldLabels"], block_instance)
+
+    def validate_parsed_labels(self, field_labels, block_instance):
+        parsed_field_labels, block_name = (
+            block_instance.parsed_field_labels,
+            block_instance.name,
+        )
+        field_labels_set = set(parsed_field_labels)
+        if not self.all_parsed_labels.isdisjoint(field_labels_set):
+            # Note: in case of two fields pointing to same column, use a custom column instead of same field labels.
+            logger.critical(
+                f"An overlap found between field string: {field_labels} in block '{block_name}' and existing labels: {self.all_parsed_labels}"
+            )
+            raise Exception(
+                f"The field strings for field block {block_name} overlap with other existing fields"
+            )
+        self.all_parsed_labels.update(field_labels_set)
+
+        page_width, page_height = self.page_dimensions
+        block_width, block_height = block_instance.dimensions
+        [block_start_x, block_start_y] = block_instance.origin
+
+        block_end_x, block_end_y = (
+            block_start_x + block_width,
+            block_start_y + block_height,
+        )
+
+        if (
+            block_end_x >= page_width
+            or block_end_y >= page_height
+            or block_start_x <= 0
+            or block_start_y <= 0
+        ):
+            raise Exception(
+                f"Overflowing field block '{block_name}' with origin {block_instance.origin} and dimensions {block_instance.dimensions} in template with dimensions {self.page_dimensions}"
+            )
+
+    def pre_fill_field_block(self, field_block_object):
+        if "fieldType" in field_block_object:
+            field_block_object = {
+                **field_block_object,
+                **FIELD_TYPES[field_block_object["fieldType"]],
+            }
+        else:
+            field_block_object = {**field_block_object, "fieldType": "__CUSTOM__"}
+
+        return {
+            "direction": "vertical",
+            "emptyValue": self.global_empty_val,
+            "bubbleDimensions": self.bubble_dimensions,
+            **field_block_object,
+        }
+
+    def parse_output_columns(self, output_columns_array):
+        self.output_columns = parse_fields(f"Output Columns", output_columns_array)
+
+    def parse_custom_labels(self, custom_labels_object):
+        all_parsed_custom_labels = set()
+        self.custom_labels = {}
+        for custom_label, label_strings in custom_labels_object.items():
+            parsed_labels = parse_fields(f"Custom Label: {custom_label}", label_strings)
+            parsed_labels_set = set(parsed_labels)
+            self.custom_labels[custom_label] = parsed_labels
+
+            missing_custom_labels = sorted(
+                parsed_labels_set.difference(self.all_parsed_labels)
+            )
+            if len(missing_custom_labels) > 0:
+                logger.critical(
+                    f"For '{custom_label}', Missing labels - {missing_custom_labels}"
+                )
+                raise Exception(
+                    f"Missing field block label(s) in the given template for {missing_custom_labels} from '{custom_label}'"
+                )
+
+            if not all_parsed_custom_labels.isdisjoint(parsed_labels_set):
+                # Note: this can be made a warning, but it's a choice
+                logger.critical(
+                    f"field strings overlap for labels: {label_strings} and existing custom labels: {all_parsed_custom_labels}"
+                )
+                raise Exception(
+                    f"The field strings for custom label '{custom_label}' overlap with other existing custom labels"
+                )
+
+            all_parsed_custom_labels.update(parsed_labels)
+
+        self.non_custom_labels = self.all_parsed_labels.difference(
+            all_parsed_custom_labels
+        )
+
+    def fill_output_columns(self, non_custom_columns, all_custom_columns):
+        all_template_columns = non_custom_columns + all_custom_columns
+        # Typical case: sort alpha-numerical (natural sort)
+        self.output_columns = sorted(
+            all_template_columns, key=custom_sort_output_columns
+        )
+
+    def validate_template_columns(self, non_custom_columns, all_custom_columns):
+        output_columns_set = set(self.output_columns)
+        all_custom_columns_set = set(all_custom_columns)
+
+        missing_output_columns = sorted(
+            output_columns_set.difference(all_custom_columns_set).difference(
+                self.all_parsed_labels
+            )
+        )
+        if len(missing_output_columns) > 0:
+            logger.critical(f"Missing output columns: {missing_output_columns}")
+            raise Exception(
+                f"Some columns are missing in the field blocks for the given output columns"
+            )
+
+        all_template_columns_set = set(non_custom_columns + all_custom_columns)
+        missing_label_columns = sorted(
+            all_template_columns_set.difference(output_columns_set)
+        )
+        if len(missing_label_columns) > 0:
+            logger.warning(
+                f"Some label columns are not covered in the given output columns: {missing_label_columns}"
+            )
 
     def __str__(self):
         return str(self.path)
-
-
-def gen_q_block(
-    bubble_dimensions,
-    q_block_dims,
-    key,
-    orig,
-    q_nos,
-    gaps,
-    vals,
-    q_type,
-    orient,
-    col_orient,
-    empty_val,
-):
-    """
-    Input:
-    orig - start point
-    q_nos  - a tuple of q_nos
-    gaps - (gapX,gapY) are the gaps between rows and cols in a block
-    vals - a 1D array of values of each alternative for a question
-
-    Output:
-    // Returns set of coordinates of a rectangular grid of points
-    Returns a QBlock containing array of Qs and some metadata?!
-
-    Ref:
-        1 2 3 4
-        1 2 3 4
-        1 2 3 4
-
-        (q1, q2, q3)
-
-        00
-        11
-        22
-        33
-        44
-
-        (q1.1,q1.2)
-
-    """
-    _h, _v = (0, 1) if (orient == "H") else (1, 0)
-    # orig[0] += np.random.randint(-6,6)*2 # test random shift
-    traverse_pts = []
-    o = [float(i) for i in orig]
-
-    if col_orient == orient:
-        for (q, _) in enumerate(q_nos):
-            pt = o.copy()
-            pts = []
-            for (v, _) in enumerate(vals):
-                pts.append(Pt(pt.copy(), q_nos[q], q_type, vals[v]))
-                pt[_h] += gaps[_h]
-            # For diagonal endpoint of QBlock
-            pt[_h] += bubble_dimensions[_h] - gaps[_h]
-            pt[_v] += bubble_dimensions[_v]
-            # TODO- make a mini object for this
-            traverse_pts.append(([o.copy(), pt.copy()], pts))
-            o[_v] += gaps[_v]
-    else:
-        for (v, _) in enumerate(vals):
-            pt = o.copy()
-            pts = []
-            for (q, _) in enumerate(q_nos):
-                pts.append(Pt(pt.copy(), q_nos[q], q_type, vals[v]))
-                pt[_v] += gaps[_v]
-            # For diagonal endpoint of QBlock
-            pt[_v] += bubble_dimensions[_v] - gaps[_v]
-            pt[_h] += bubble_dimensions[_h]
-            traverse_pts.append(([o.copy(), pt.copy()], pts))
-            o[_h] += gaps[_h]
-    # Pass first three args as is. only append 'traverse_pts'
-    return QBlock(q_block_dims, key, orig, traverse_pts, empty_val)
-
-
-def gen_grid(bubble_dimensions, global_empty_val, key, rectParams):
-    """
-        Input(Directly passable from JSON parameters):
-        bubble_dimensions - dimesions of single QBox
-        orig- start point
-        q_nos - an array of q_nos tuples(see below) that align with dimension
-               of the big grid (gridDims extracted from here)
-        big_gaps - (bigGapX,bigGapY) are the gaps between blocks
-        gaps - (gapX,gapY) are the gaps between rows and cols in a block
-        vals - a 1D array of values of each alternative for a question
-        orient - The way of arranging the vals (vertical or horizontal)
-
-        Output:
-        // Returns an array of Q objects (having their points) arranged in a rectangular grid
-        Returns grid of QBlock objects
-
-                                    00    00    00    00
-       Q1   1 2 3 4    1 2 3 4      11    11    11    11
-       Q2   1 2 3 4    1 2 3 4      22    22    22    22         1234567
-       Q3   1 2 3 4    1 2 3 4      33    33    33    33         1234567
-                                    44    44    44    44
-                                ,   55    55    55    55    ,    1234567
-       Q7   1 2 3 4    1 2 3 4      66    66    66    66         1234567
-       Q8   1 2 3 4    1 2 3 4      77    77    77    77
-       Q9   1 2 3 4    1 2 3 4      88    88    88    88
-                                    99    99    99    99
-
-    TODO: Update this part, add more examples like-
-        Q1  1 2 3 4
-
-        Q2  1 2 3 4
-        Q3  1 2 3 4
-
-        Q4  1 2 3 4
-        Q5  1 2 3 4
-
-        MCQ type (orient="H")-
-            [
-                [(q1,q2,q3),(q4,q5,q6)]
-                [(q7,q8,q9),(q10,q11,q12)]
-            ]
-
-        INT type (orient="V")-
-            [
-                [(q1d1,q1d2),(q2d1,q2d2),(q3d1,q3d2),(q4d1,q4d2)]
-            ]
-
-        ROLL type-
-            [
-                [(roll1,roll2,roll3,...,roll10)]
-            ]
-
-    """
-    rect = OVERRIDE_MERGER.merge(
-        {"orient": "V", "col_orient": "V", "emptyVal": global_empty_val}, rectParams
-    )
-
-    # case mapping
-    (q_type, orig, big_gaps, gaps, q_nos, vals, orient, col_orient, empty_val) = map(
-        rect.get,
-        [
-            "qType",
-            "orig",
-            "bigGaps",
-            "gaps",
-            "qNos",
-            "vals",
-            "orient",
-            "col_orient",  # todo: consume this
-            "emptyVal",
-        ],
-    )
-
-    grid_data = np.array(q_nos)
-    # print(grid_data.shape, grid_data)
-    if (
-        0 and len(grid_data.shape) != 3 or grid_data.size == 0
-    ):  # product of shape is zero
-        logger.error(
-            "Error(gen_grid): Invalid q_nos array given:", grid_data.shape, grid_data
-        )
-        exit(32)
-
-    orig = np.array(orig)
-
-    num_qs_max = max([max([len(qb) for qb in row]) for row in grid_data])
-
-    num_dims = [num_qs_max, len(vals)]
-
-    q_blocks = []
-
-    # **Simple is powerful**
-    # _h and _v are named with respect to orient == "H", reverse their meaning
-    # when orient = "V"
-    _h, _v = (0, 1) if (orient == "H") else (1, 0)
-
-    # print(orig, num_dims, grid_data.shape, grid_data)
-    # orient is also the direction of making q_blocks
-
-    # print(key, num_dims, orig, gaps, big_gaps, orig_gap )
-    q_start = orig.copy()
-
-    orig_gap = [0, 0]
-
-    # Usually single row
-    for row in grid_data:
-        q_start[_v] = orig[_v]
-
-        # Usually multiple qTuples
-        for q_tuple in row:
-            # Update num_dims and origGaps
-            num_dims[0] = len(q_tuple)
-            # big_gaps is indep of orientation
-            orig_gap[0] = big_gaps[0] + (num_dims[_v] - 1) * gaps[_h]
-            orig_gap[1] = big_gaps[1] + (num_dims[_h] - 1) * gaps[_v]
-            # each q_tuple will have q_nos
-            q_block_dims = [
-                # width x height in pixels
-                gaps[0] * (num_dims[_v] - 1) + bubble_dimensions[_h],
-                gaps[1] * (num_dims[_h] - 1) + bubble_dimensions[_v],
-            ]
-            # WATCH FOR BLUNDER(use .copy()) - q_start was getting passed by
-            # reference! (others args read-only)
-            q_blocks.append(
-                gen_q_block(
-                    bubble_dimensions,
-                    q_block_dims,
-                    key,
-                    q_start.copy(),
-                    q_tuple,
-                    gaps,
-                    vals,
-                    q_type,
-                    orient,
-                    col_orient,
-                    empty_val,
-                )
-            )
-            # Goes vertically down first
-            q_start[_v] += orig_gap[_v]
-        q_start[_h] += orig_gap[_h]
-    return q_blocks

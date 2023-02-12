@@ -2,7 +2,6 @@
 Processor/Extension framework
 Adapated from https://github.com/gdiepen/python_processor_example
 """
-
 import inspect
 import pkgutil
 
@@ -12,7 +11,16 @@ from src.logger import logger
 class Processor:
     """Base class that each processor must inherit from."""
 
-    def __init__(self):
+    def __init__(
+        self,
+        options=None,
+        relative_dir=None,
+        image_instance_ops=None,
+    ):
+        self.options = options
+        self.relative_dir = relative_dir
+        self.image_instance_ops = image_instance_ops
+        self.tuning_config = image_instance_ops.tuning_config
         self.description = "UNKNOWN"
 
 
@@ -35,7 +43,7 @@ class ProcessorManager:
         self.processors = {}
         self.seen_paths = []
 
-        logger.info(f'Looking for processors in "{self.processors_dir}"')
+        logger.info(f'Loading processors from "{self.processors_dir}"...')
         self.walk_package(self.processors_dir)
 
     @staticmethod
@@ -53,7 +61,6 @@ class ProcessorManager:
             imported_package.__path__, imported_package.__name__ + "."
         ):
             if not ispkg and processor_name != __name__:
-                # print(f"looking up '{processor_name}'")
                 processor_module = __import__(processor_name, fromlist=["blah"])
                 # https://stackoverflow.com/a/46206754/6242649
                 clsmembers = inspect.getmembers(
@@ -67,3 +74,7 @@ class ProcessorManager:
                         loaded_packages.append(c.__name__)
 
         logger.info(f"Loaded processors: {loaded_packages}")
+
+
+# Singleton export
+PROCESSOR_MANAGER = ProcessorManager()

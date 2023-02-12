@@ -1,17 +1,17 @@
 import logging
 from typing import Union
 
+from rich.console import Console
 from rich.logging import RichHandler
-
-from .config import CONFIG_DEFAULTS as config
 
 FORMAT = "%(message)s"
 
+# TODO: set logging level from config.json dynamically
 logging.basicConfig(
     level=logging.INFO,
     format="%(message)s",
     datefmt="[%X]",
-    handlers=[RichHandler(rich_tracebacks=config.outputs.rich_tracebacks)],
+    handlers=[RichHandler(rich_tracebacks=True)],
 )
 
 
@@ -65,3 +65,4 @@ class Logger:
 
 
 logger = Logger(__name__)
+console = Console()

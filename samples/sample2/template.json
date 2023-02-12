@@ -1,57 +1,21 @@
 {
-  "dimensions": [
-    300,
-    400
-  ],
-  "bubbleDimensions": [
-    25,
-    25
-  ],
+  "pageDimensions": [300, 400],
+  "bubbleDimensions": [25, 25],
   "preProcessors": [
     {
       "name": "CropPage",
       "options": {
-        "morphKernel": [
-          10,
-          10
-        ]
+        "morphKernel": [10, 10]
       }
     }
   ],
-  "concatenations": {},
-  "singles": [
-    "q1",
-    "q2",
-    "q3",
-    "q4",
-    "q5"
-  ],
-  "qBlocks": {
-    "MCQBlock1": {
-      "qType": "QTYPE_MCQ5",
-      "orig": [
-        65,
-        60
-      ],
-      "qNos": [
-        [
-          [
-            "q1",
-            "q2",
-            "q3",
-            "q4",
-            "q5"
-          ]
-        ]
-      ],
-      "gaps": [
-        41,
-        52
-      ],
-      "bigGaps": [
-        30,
-        30
-      ]
+  "fieldBlocks": {
+    "MCQ_Block_1": {
+      "fieldType": "QTYPE_MCQ5",
+      "origin": [65, 60],
+      "fieldLabels": ["q1..5"],
+      "labelsGap": 52,
+      "bubblesGap": 41
     }
   }
 }

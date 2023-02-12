@@ -1,15 +1,14 @@
-**/__pycache__
-**/CheckedOMRs
-**/ignore
-**/.DS_Store
-**/.vscode
-venv/
-.idea/
-OMRChecker.wiki/
+# Any directory starting with a dot
+**/\.*/
+# Except .github
+!.github/
+
 # Everything in inputs/ and outputs/
 inputs/*
 outputs/*
-# Except *.json and OMR_Files/
-# !inputs/OMR_Files/
-# !inputs/*.json
-# !inputs/omr_marker.jpg
+
+# Misc
+**/.DS_Store
+**/__pycache__
+venv/
+OMRChecker.wiki/

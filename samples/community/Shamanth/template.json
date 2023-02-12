@@ -1,19 +1,13 @@
 {
-  "dimensions": [ 300, 400 ],
+  "pageDimensions": [ 300, 400 ],
   "bubbleDimensions": [ 20, 20 ],
-  "concatenations": {},
-  "singles": ["q21", "q22", "q23", "q24", "q25" , "q26", "q27", "q28"],
-  "qBlocks": {
+  "fieldBlocks": {
     "MCQBlock1": {
-      "qType": "QTYPE_MCQ4",
-      "orig": [ 78, 41 ],
-      "qNos": [
-        [
-          ["q21", "q22", "q23", "q24", "q25" , "q26", "q27", "q28"]
-        ]
-      ],
-      "gaps": [ 56, 46 ],
-      "bigGaps": [ 40, 40 ]
+      "fieldType": "QTYPE_MCQ4",
+      "origin": [ 78, 41 ],
+      "fieldLabels": ["q21..28"],
+      "bubblesGap": 56,
+      "labelsGap": 46
     }
   },
   "preProcessors": [

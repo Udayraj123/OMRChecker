@@ -1,57 +1,94 @@
+import argparse
 import json
-import re
-from asyncio.log import logger
+import os
+from csv import QUOTE_NONNUMERIC
+from time import localtime, strftime
 
-import jsonschema
-from jsonschema import Draft202012Validator, validate
-from rich.console import Console
-from rich.table import Table
+import pandas as pd
 
-from src.constants import SCHEMA_DEFAULTS_PATH
+from src.logger import logger
 
 
 def load_json(path, **rest):
-    with open(path, "r") as f:
-        loaded = json.load(f, **rest)
+    try:
+        with open(path, "r") as f:
+            loaded = json.load(f, **rest)
+    except json.decoder.JSONDecodeError as error:
+        logger.critical(f"Error when loading json file at: '{path}'\n{error}")
+        exit(1)
     return loaded
 
 
-execute_api_schema = load_json(SCHEMA_DEFAULTS_PATH)
-VALIDATOR = Draft202012Validator(execute_api_schema)
+def setup_outputs_for_template(paths, template):
+    # TODO: consider moving this into a class instance
+    ns = argparse.Namespace()
+    logger.info("Checking Files...")
+
+    # Include current output paths
+    ns.paths = paths
+
+    ns.empty_resp = [""] * len(template.output_columns)
+    ns.sheetCols = [
+        "file_id",
+        "input_path",
+        "output_path",
+        "score",
+    ] + template.output_columns
+    ns.OUTPUT_SET = []
+    ns.files_obj = {}
+    TIME_NOW_HRS = strftime("%I%p", localtime())
+    ns.filesMap = {
+        "Results": os.path.join(paths.results_dir, f"Results_{TIME_NOW_HRS}.csv"),
+        "MultiMarked": os.path.join(paths.manual_dir, "MultiMarkedFiles.csv"),
+        "Errors": os.path.join(paths.manual_dir, "ErrorFiles.csv"),
+    }
+
+    for file_key, file_name in ns.filesMap.items():
+        if not os.path.exists(file_name):
+            logger.info(f"Created new file: '{file_name}'")
+            # moved handling of files to pandas csv writer
+            ns.files_obj[file_key] = file_name
+            # Create Header Columns
+            pd.DataFrame([ns.sheetCols], dtype=str).to_csv(
+                ns.files_obj[file_key],
+                mode="a",
+                quoting=QUOTE_NONNUMERIC,
+                header=False,
+                index=False,
+            )
+        else:
+            logger.info(f"Present : appending to '{file_name}'")
+            ns.files_obj[file_key] = open(file_name, "a")
+
+    return ns
 
 
-def validate_json(json_data, template_path):
+class Paths:
+    def __init__(self, output_dir):
+        self.output_dir = output_dir
+        self.save_marked_dir = output_dir.joinpath("CheckedOMRs")
+        self.results_dir = output_dir.joinpath("Results")
+        self.manual_dir = output_dir.joinpath("Manual")
+        self.errors_dir = self.manual_dir.joinpath("ErrorFiles")
+        self.multi_marked_dir = self.manual_dir.joinpath("MultiMarkedFiles")
 
-    logger.info("Validating template.json ...")
-    try:
-        validate(instance=json_data, schema=execute_api_schema)
-    except jsonschema.exceptions.ValidationError as err:
 
-        table = Table(show_lines=True)
-        table.add_column("Key", style="cyan", no_wrap=True)
-        table.add_column("Error", style="magenta")
+def setup_dirs_for_paths(paths):
+    logger.info("Checking Directories...")
+    for save_output_dir in [paths.save_marked_dir]:
+        if not os.path.exists(save_output_dir):
+            logger.info(f"Created : {save_output_dir}")
+            os.makedirs(save_output_dir)
+            os.mkdir(save_output_dir.joinpath("stack"))
+            os.mkdir(save_output_dir.joinpath("_MULTI_"))
+            os.mkdir(save_output_dir.joinpath("_MULTI_", "stack"))
 
-        errors = sorted(VALIDATOR.iter_errors(json_data), key=lambda e: e.path)
-        for error in errors:
-            key, validator, msg = error.path[0], error.validator, error.message
+    for save_output_dir in [paths.manual_dir, paths.results_dir]:
+        if not os.path.exists(save_output_dir):
+            logger.info(f"Created : {save_output_dir}")
+            os.makedirs(save_output_dir)
 
-            # Print preProcessor name in case of options error
-            if key == "preProcessors":
-                preProcessorName = json_data["preProcessors"][error.path[1]]["name"]
-                preProcessorKey = error.path[2]
-                table.add_row(f"{key}.{preProcessorName}.{preProcessorKey}", msg)
-            elif validator == "required":
-                table.add_row(
-                    re.findall(r"'(.*?)'", msg)[0],
-                    msg
-                    + ". Make sure the spelling of the key is correct and it is in camelCase",
-                )
-            else:
-                table.add_row(key, msg)
-        console = Console()
-        console.print(table)
-        err = f"Provided Template JSON is Invalid: {template_path}"
-        return False, err
-
-    message = "Template JSON validated successfully..."
-    return True, message
+    for save_output_dir in [paths.multi_marked_dir, paths.errors_dir]:
+        if not os.path.exists(save_output_dir):
+            logger.info(f"Created : {save_output_dir}")
+            os.makedirs(save_output_dir)

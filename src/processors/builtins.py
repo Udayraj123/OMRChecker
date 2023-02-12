@@ -1,11 +1,14 @@
 import cv2
 import numpy as np
 
-from .interfaces.ImagePreprocessor import ImagePreprocessor
+from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
 
 
 class Levels(ImagePreprocessor):
-    def __init__(self, options, _args):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        options = self.options
+
         def output_level(value, low, high, gamma):
             if value <= low:
                 return 0
@@ -26,22 +29,26 @@ class Levels(ImagePreprocessor):
             ]
         ).astype("uint8")
 
-    def apply_filter(self, image, _args):
+    def apply_filter(self, image, _file_path):
         return cv2.LUT(image, self.gamma)
 
 
 class MedianBlur(ImagePreprocessor):
-    def __init__(self, options, _args):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        options = self.options
         self.kSize = int(options.get("kSize", 5))
 
-    def apply_filter(self, image, _args):
+    def apply_filter(self, image, _file_path):
         return cv2.medianBlur(image, self.kSize)
 
 
 class GaussianBlur(ImagePreprocessor):
-    def __init__(self, options, _args):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        options = self.options
         self.kSize = tuple(int(x) for x in options.get("kSize", (3, 3)))
         self.sigmaX = int(options.get("sigmaX", 0))
 
-    def apply_filter(self, image, _args):
+    def apply_filter(self, image, _file_path):
         return cv2.GaussianBlur(image, self.kSize, self.sigmaX)

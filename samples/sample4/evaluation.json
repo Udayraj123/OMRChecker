@@ -1,0 +1,11 @@
+{
+  "source_type": "custom",
+  "options": {
+    "questions_in_order": ["q1..11"],
+    "answers_in_order": [ "B", "D", "C", "B", "D", "C", "BC", "A", "C", "D", "C" ],
+    "should_explain_scoring": true
+  },
+  "marking_scheme": {
+    "DEFAULT": { "correct": "3", "incorrect": "-1", "unmarked": "0" }
+  }
+}

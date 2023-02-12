@@ -5,10 +5,8 @@ from src.processors.manager import Processor
 class ImagePreprocessor(Processor):
     """Base class for an extension that applies some preprocessing to the input image"""
 
-    def __init__(self, options, args):
-        self.options = options
-        self.args = args
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def apply_filter(self, image, filename):
         """Apply filter to the image and returns modified image"""
