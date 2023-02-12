@@ -1,8 +1,8 @@
 CONFIG_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/Udayraj123/OMRChecker/tree/master/src/schemas/config-schema.json",
-    "title": "Evaluation Schema",
-    "description": "OMRChecker evaluation schema i.e. the marking scheme",
+    "title": "Config Schema",
+    "description": "OMRChecker config schema for custom tuning",
     "type": "object",
     "additionalProperties": False,
     "properties": {

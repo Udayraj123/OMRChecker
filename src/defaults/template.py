@@ -1,1 +1,6 @@
-TEMPLATE_DEFAULTS = {"preProcessors": [], "emptyVal": ""}
+TEMPLATE_DEFAULTS = {
+    "preProcessors": [],
+    "emptyValue": "",
+    "customLabels": {},
+    "outputColumns": [],
+}

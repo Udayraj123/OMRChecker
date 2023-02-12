@@ -6,7 +6,6 @@
  Github: https://github.com/Udayraj123
 
 """
-
 import os
 from csv import QUOTE_NONNUMERIC
 from pathlib import Path
@@ -14,13 +13,12 @@ from time import time
 
 import cv2
 import pandas as pd
+from rich.table import Table
 
 from src import constants
-from src.core import ImageInstanceOps
 from src.defaults import CONFIG_DEFAULTS
 from src.evaluation import EvaluationConfig, evaluate_concatenated_response
-from src.logger import logger
-from src.processors.manager import ProcessorManager
+from src.logger import console, logger
 from src.template import Template
 from src.utils.file import Paths, setup_dirs_for_paths, setup_outputs_for_template
 from src.utils.image import ImageUtils
@@ -28,13 +26,13 @@ from src.utils.interaction import InteractionUtils, Stats
 from src.utils.parsing import get_concatenated_response, open_config_with_defaults
 
 # Load processors
-PROCESSOR_MANAGER = ProcessorManager()
 STATS = Stats()
 
 
-def entry_point(input_dir, curr_dir, args):
+def entry_point(input_dir, args):
     if not os.path.exists(input_dir):
         raise Exception(f"Given input directory does not exist: '{input_dir}'")
+    curr_dir = input_dir
     return process_dir(input_dir, curr_dir, args)
 
 
@@ -45,7 +43,6 @@ def process_dir(
     template=None,
     tuning_config=CONFIG_DEFAULTS,
     evaluation_config=None,
-    image_instance_ops=None,
 ):
     # Update local tuning_config (in current recursion stack)
     local_config_path = curr_dir.joinpath(constants.CONFIG_FILENAME)
@@ -56,12 +53,9 @@ def process_dir(
     local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
     local_template_exists = os.path.exists(local_template_path)
     if local_template_exists:
-        # TODO: consider moving template inside image_instance_ops as an attribute
-        image_instance_ops = ImageInstanceOps(tuning_config)
         template = Template(
             local_template_path,
-            image_instance_ops,
-            PROCESSOR_MANAGER.processors,
+            tuning_config,
         )
     # Look for subdirectories for processing
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
@@ -88,32 +82,34 @@ def process_dir(
                 of '{curr_dir}'. \nPlace {constants.TEMPLATE_FILENAME} in the \
                 appropriate directory."
             )
-            return
-
-        logger.info(
-            "------------------------------------------------------------------"
-        )
-        logger.info(f'Processing directory "{curr_dir}" with settings- ')
-        logger.info(f"\t{'Total images':<22}: {len(omr_files)}")
-        logger.info(
-            f"\t{'Cropping Enabled':<22}: {str('CropOnMarkers' in template.pre_processors)}"
-        )
-        logger.info(
-            f"\t{'Auto Alignment':<22}: {tuning_config.alignment_params.auto_align}"
-        )
-        logger.info(f"\t{'Using Template':<22}: { str(template)}")
-        logger.info(
-            f"\t{'Using pre-processors':<22}: {[pp.__class__.__name__ for pp in template.pre_processors]}"
-        )
+            raise Exception(
+                f"No template file found in the directory tree of {curr_dir}"
+            )
         logger.info("")
+        table = Table(
+            title="Current Configurations", show_header=False, show_lines=False
+        )
+        table.add_column("Key", style="cyan", no_wrap=True)
+        table.add_column("Value", style="magenta")
+        table.add_row("Directory Path", f"{curr_dir}")
+        table.add_row("Count of Images", f"{len(omr_files)}")
+        table.add_row(
+            "Markers Detection",
+            "ON" if "CropOnMarkers" in template.pre_processors else "OFF",
+        )
+        table.add_row("Auto Alignment", f"{tuning_config.alignment_params.auto_align}")
+        table.add_row("Detected Template Path", f"{template}")
+        table.add_row(
+            "Detected pre-processors",
+            f"{[pp.__class__.__name__ for pp in template.pre_processors]}",
+        )
+        console.print(table, justify="center")
 
         setup_dirs_for_paths(paths)
         outputs_namespace = setup_outputs_for_template(paths, template)
 
         if args["setLayout"]:
-            show_template_layouts(
-                omr_files, image_instance_ops, template, tuning_config
-            )
+            show_template_layouts(omr_files, template, tuning_config)
         else:
             local_evaluation_path = curr_dir.joinpath(constants.EVALUATION_FILENAME)
             if os.path.exists(local_evaluation_path):
@@ -122,7 +118,7 @@ def process_dir(
                         f"Found an evaluation file without a parent template file: {local_evaluation_path}"
                     )
                 evaluation_config = EvaluationConfig(
-                    local_evaluation_path, template, image_instance_ops, curr_dir
+                    local_evaluation_path, template, curr_dir
                 )
 
                 excluded_files.extend(
@@ -137,7 +133,6 @@ def process_dir(
                 tuning_config,
                 evaluation_config,
                 outputs_namespace,
-                image_instance_ops,
             )
 
     elif not subdirs:
@@ -156,17 +151,18 @@ def process_dir(
             template,
             tuning_config,
             evaluation_config,
-            image_instance_ops,
         )
 
 
-def show_template_layouts(omr_files, image_instance_ops, template, tuning_config):
+def show_template_layouts(omr_files, template, tuning_config):
     for file_path in omr_files:
         file_name = file_path.name
         file_path = str(file_path)
         in_omr = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-        in_omr = image_instance_ops.apply_preprocessors(file_path, in_omr, template)
-        template_layout = image_instance_ops.draw_template_layout(
+        in_omr = template.image_instance_ops.apply_preprocessors(
+            file_path, in_omr, template
+        )
+        template_layout = template.image_instance_ops.draw_template_layout(
             in_omr, template, shifted=False, border=2
         )
         InteractionUtils.show(
@@ -180,7 +176,6 @@ def process_files(
     tuning_config,
     evaluation_config,
     outputs_namespace,
-    image_instance_ops,
 ):
     start_time = int(time())
     files_counter = 0
@@ -197,11 +192,13 @@ def process_files(
             f"({files_counter}) Opening image: \t'{file_path}'\tResolution: {in_omr.shape}"
         )
 
-        image_instance_ops.reset_all_save_img()
+        template.image_instance_ops.reset_all_save_img()
 
-        image_instance_ops.append_save_img(1, in_omr)
+        template.image_instance_ops.append_save_img(1, in_omr)
 
-        in_omr = image_instance_ops.apply_preprocessors(file_path, in_omr, template)
+        in_omr = template.image_instance_ops.apply_preprocessors(
+            file_path, in_omr, template
+        )
 
         if in_omr is None:
             # Error OMR case
@@ -235,7 +232,7 @@ def process_files(
             final_marked,
             multi_marked,
             _,
-        ) = image_instance_ops.read_omr_response(
+        ) = template.image_instance_ops.read_omr_response(
             template, image=in_omr, name=file_id, save_dir=save_dir
         )
 
@@ -270,7 +267,7 @@ def process_files(
             )
 
         resp_array = []
-        for k in outputs_namespace.resp_cols:
+        for k in template.output_columns:
             resp_array.append(omr_response[k])
 
         outputs_namespace.OUTPUT_SET.append([file_name] + resp_array)
@@ -311,7 +308,7 @@ def process_files(
 
 
 def print_stats(start_time, files_counter, tuning_config):
-    time_checking = round(time() - start_time, 2) if files_counter else 1
+    time_checking = max(1, round(time() - start_time, 2))
     log = logger.info
     log("")
     log(f"{'Total file(s) moved':<27}: {STATS.files_moved}")

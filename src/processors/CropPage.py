@@ -1,8 +1,6 @@
 """
 https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/
 """
-
-
 import cv2
 import numpy as np
 
@@ -95,12 +93,11 @@ class CropPage(ImagePreprocessor):
         return sheet
 
     def apply_filter(self, image, file_path):
-        # TODO: Take this out into separate preprocessor
         image = normalize(cv2.GaussianBlur(image, (3, 3), 0))
 
         # Resize should be done with another preprocessor is needed
         sheet = self.find_page(image, file_path)
-        if sheet == []:
+        if len(sheet) == 0:
             logger.error(
                 f"\tError: Paper boundary not found for: '{file_path}'\nHave you accidentally included CropPage preprocessor?"
             )

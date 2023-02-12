@@ -2,7 +2,6 @@
 Processor/Extension framework
 Adapated from https://github.com/gdiepen/python_processor_example
 """
-
 import inspect
 import pkgutil
 
@@ -75,3 +74,7 @@ class ProcessorManager:
                         loaded_packages.append(c.__name__)
 
         logger.info(f"Loaded processors: {loaded_packages}")
+
+
+# Singleton export
+PROCESSOR_MANAGER = ProcessorManager()

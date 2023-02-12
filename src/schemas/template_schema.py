@@ -1,3 +1,32 @@
+from src.constants import FIELD_TYPES
+from src.schemas.constants import ARRAY_OF_STRINGS, FIELD_STRING_TYPE
+
+positive_number = {"type": "number", "minimum": 0}
+positive_integer = {"type": "integer", "minimum": 0}
+two_positive_integers = {
+    "type": "array",
+    "prefixItems": [
+        positive_integer,
+        positive_integer,
+    ],
+    "maxItems": 2,
+    "minItems": 2,
+}
+two_positive_numbers = {
+    "type": "array",
+    "prefixItems": [
+        positive_number,
+        positive_number,
+    ],
+    "maxItems": 2,
+    "minItems": 2,
+}
+zero_to_one_number = {
+    "type": "number",
+    "minimum": 0,
+    "maximum": 1,
+}
+
 TEMPLATE_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/Udayraj123/OMRChecker/tree/master/src/schemas/template-schema.json",
@@ -5,26 +34,32 @@ TEMPLATE_SCHEMA = {
     "description": "OMRChecker input template schema",
     "type": "object",
     "required": [
-        "dimensions",
         "bubbleDimensions",
-        "concatenations",
-        "singles",
+        "pageDimensions",
         "preProcessors",
+        "fieldBlocks",
     ],
+    "additionalProperties": False,
     "properties": {
-        "dimensions": {
-            "description": "The dimensions to which each input image will be resized to before processing",
-            "type": "array",
-            "items": {"type": "integer"},
-            "minItems": 2,
-            "maxItems": 2,
-        },
         "bubbleDimensions": {
-            "description": "The dimensions of the overlay bubble area",
+            **two_positive_integers,
+            "description": "The dimensions of the overlay bubble area: [width, height]",
+        },
+        "customLabels": {
+            "description": "The customLabels contain fields that need to be joined together before generating the results sheet",
+            "type": "object",
+            "patternProperties": {
+                "^.*$": {"type": "array", "items": FIELD_STRING_TYPE}
+            },
+        },
+        "outputColumns": {
             "type": "array",
-            "items": {"type": "integer"},
-            "minItems": 2,
-            "maxItems": 2,
+            "items": FIELD_STRING_TYPE,
+            "description": "The ordered list of columns to be contained in the output csv(default order: alphabetical)",
+        },
+        "pageDimensions": {
+            **two_positive_integers,
+            "description": "The dimensions(width, height) to which the page will be resized to before applying template",
         },
         "preProcessors": {
             "description": "Custom configuration values to use in the template's directory",
@@ -33,18 +68,16 @@ TEMPLATE_SCHEMA = {
                 "type": "object",
                 "properties": {
                     "name": {
+                        "type": "string",
                         "enum": [
                             "CropOnMarkers",
                             "CropPage",
                             "FeatureBasedAlignment",
-                            "ReadBarcode",
                             "GaussianBlur",
                             "Levels",
                             "MedianBlur",
                         ],
-                        "type": "string",
                     },
-                    "options": {"type": "object"},
                 },
                 "required": ["name", "options"],
                 "allOf": [
@@ -56,20 +89,12 @@ TEMPLATE_SCHEMA = {
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {
-                                        "relativePath": {"type": "string"},
-                                        "min_matching_threshold": {"type": "number"},
-                                        "max_matching_variation": {"type": "number"},
-                                        "marker_rescale_range": {
-                                            "type": "array",
-                                            "prefixItems": [
-                                                {"type": "integer"},
-                                                {"type": "integer"},
-                                            ],
-                                            "maxItems": 2,
-                                            "minItems": 2,
-                                        },
-                                        "marker_rescale_steps": {"type": "integer"},
                                         "apply_erode_subtract": {"type": "boolean"},
+                                        "marker_rescale_range": two_positive_numbers,
+                                        "marker_rescale_steps": {"type": "number"},
+                                        "max_matching_variation": {"type": "number"},
+                                        "min_matching_threshold": {"type": "number"},
+                                        "relativePath": {"type": "string"},
                                         "sheetToMarkerWidthRatio": {"type": "number"},
                                     },
                                     "required": ["relativePath"],
@@ -87,10 +112,10 @@ TEMPLATE_SCHEMA = {
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {
-                                        "reference": {"type": "string"},
-                                        "maxFeatures": {"type": "integer"},
-                                        "goodMatchPercent": {"type": "number"},
                                         "2d": {"type": "boolean"},
+                                        "goodMatchPercent": {"type": "number"},
+                                        "maxFeatures": {"type": "integer"},
+                                        "reference": {"type": "string"},
                                     },
                                     "required": ["reference"],
                                 }
@@ -105,21 +130,9 @@ TEMPLATE_SCHEMA = {
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {
-                                        "low": {
-                                            "type": "number",
-                                            "minimum": 0,
-                                            "maximum": 1,
-                                        },
-                                        "high": {
-                                            "type": "number",
-                                            "minimum": 0,
-                                            "maximum": 1,
-                                        },
-                                        "gamma": {
-                                            "type": "number",
-                                            "minimum": 0,
-                                            "maximum": 1,
-                                        },
+                                        "gamma": zero_to_one_number,
+                                        "high": zero_to_one_number,
+                                        "low": zero_to_one_number,
                                     },
                                 }
                             }
@@ -145,15 +158,7 @@ TEMPLATE_SCHEMA = {
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {
-                                        "kSize": {
-                                            "type": "array",
-                                            "prefixItems": [
-                                                {"type": "integer"},
-                                                {"type": "integer"},
-                                            ],
-                                            "maxItems": 2,
-                                            "minItems": 2,
-                                        },
+                                        "kSize": two_positive_integers,
                                         "sigmaX": {"type": "number"},
                                     },
                                 }
@@ -168,15 +173,7 @@ TEMPLATE_SCHEMA = {
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {
-                                        "morphKernel": {
-                                            "type": "array",
-                                            "prefixItems": [
-                                                {"type": "integer"},
-                                                {"type": "integer"},
-                                            ],
-                                            "maxItems": 2,
-                                            "minItems": 2,
-                                        }
+                                        "morphKernel": two_positive_integers
                                     },
                                 }
                             }
@@ -185,15 +182,43 @@ TEMPLATE_SCHEMA = {
                 ],
             },
         },
-        "concatenations": {
-            "description": "The Concatenations parameter is a way to tell OMRChecker which fields need to be joined together before outputting into the csv"
+        "fieldBlocks": {
+            "description": "The fieldBlocks denote small groups of adjacent fields",
+            "type": "object",
+            "patternProperties": {
+                "^.*$": {
+                    "type": "object",
+                    "required": [
+                        "origin",
+                        "bubblesGap",
+                        "labelsGap",
+                        "fieldLabels",
+                    ],
+                    "oneOf": [
+                        {"required": ["fieldType"]},
+                        {"required": ["bubbleValues", "direction"]},
+                    ],
+                    "properties": {
+                        "bubbleDimensions": two_positive_numbers,
+                        "bubblesGap": positive_number,
+                        "bubbleValues": ARRAY_OF_STRINGS,
+                        "direction": {
+                            "type": "string",
+                            "enum": ["horizontal", "vertical"],
+                        },
+                        "emptyValue": {"type": "string"},
+                        "fieldLabels": {"type": "array", "items": FIELD_STRING_TYPE},
+                        "labelsGap": positive_number,
+                        "origin": two_positive_integers,
+                        "fieldType": {
+                            "type": "string",
+                            "enum": list(FIELD_TYPES.keys()),
+                        },
+                    },
+                }
+            },
         },
-        "singles": {
-            "description": "The remaining fields(in order) whose readings shall be forwarded directly in the output csv",
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "emptyVal": {
+        "emptyValue": {
             "description": "The value to be used in case of empty bubble detected at global level.",
             "type": "string",
         },

@@ -25,7 +25,7 @@ CONFIG_DEFAULTS = DotMap(
             "thickness": 3,
         },
         "outputs": {
-            "show_image_level": 4,
+            "show_image_level": 0,
             "save_image_level": 0,
             "save_detections": True,
         },

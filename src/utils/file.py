@@ -20,20 +20,20 @@ def load_json(path, **rest):
 
 
 def setup_outputs_for_template(paths, template):
+    # TODO: consider moving this into a class instance
     ns = argparse.Namespace()
     logger.info("Checking Files...")
 
     # Include current output paths
     ns.paths = paths
 
-    # Custom sort: avoids q1, q10, q2, ... and orders them q1, q2, ..., q10
-    ns.resp_cols = sorted(
-        list(template.concatenations.keys()) + template.singles,
-        key=lambda x: int(x[1:]) if ord(x[1]) in range(48, 58) else 0,
-    )
-    # TODO: consider using emptyVal for empty_resp
-    ns.empty_resp = [""] * len(ns.resp_cols)
-    ns.sheetCols = ["file_id", "input_path", "output_path", "score"] + ns.resp_cols
+    ns.empty_resp = [""] * len(template.output_columns)
+    ns.sheetCols = [
+        "file_id",
+        "input_path",
+        "output_path",
+        "score",
+    ] + template.output_columns
     ns.OUTPUT_SET = []
     ns.files_obj = {}
     TIME_NOW_HRS = strftime("%I%p", localtime())
