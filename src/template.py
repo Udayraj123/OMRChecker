@@ -231,8 +231,8 @@ class Template:
         if (
             block_end_x >= page_width
             or block_end_y >= page_height
-            or block_start_x <= 0
-            or block_start_y <= 0
+            or block_start_x < 0
+            or block_start_y < 0
         ):
             raise Exception(
                 f"Overflowing field block '{block_name}' with origin {block_instance.origin} and dimensions {block_instance.dimensions} in template with dimensions {self.page_dimensions}"
