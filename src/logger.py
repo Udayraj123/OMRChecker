@@ -28,6 +28,21 @@ class Logger:
         self.log.__format__ = message_format
         self.log.__date_format__ = date_format
 
+    def debug(self, *msg: object, sep=" ", end="\n") -> None:
+        return self.logutil("debug", *msg, sep=sep)
+
+    def info(self, *msg: object, sep=" ", end="\n") -> None:
+        return self.logutil("info", *msg, sep=sep)
+
+    def warning(self, *msg: object, sep=" ", end="\n") -> None:
+        return self.logutil("warning", *msg, sep=sep)
+
+    def error(self, *msg: object, sep=" ", end="\n") -> None:
+        return self.logutil("error", *msg, sep=sep)
+
+    def critical(self, *msg: object, sep=" ", end="\n") -> None:
+        return self.logutil("critical", *msg, sep=sep)
+
     def stringify(func):
         def inner(self, method_type: str, *msg: object, sep=" "):
             nmsg = []
@@ -47,21 +62,6 @@ class Logger:
         if not func:
             raise AttributeError(f"Logger has no method {method_type}")
         return func(sep.join(msg), stacklevel=4)
-
-    def debug(self, *msg: object, sep=" ", end="\n") -> None:
-        return self.logutil("debug", *msg, sep=sep)
-
-    def info(self, *msg: object, sep=" ", end="\n") -> None:
-        return self.logutil("info", *msg, sep=sep)
-
-    def warning(self, *msg: object, sep=" ", end="\n") -> None:
-        return self.logutil("warning", *msg, sep=sep)
-
-    def error(self, *msg: object, sep=" ", end="\n") -> None:
-        return self.logutil("error", *msg, sep=sep)
-
-    def critical(self, *msg: object, sep=" ", end="\n") -> None:
-        return self.logutil("critical", *msg, sep=sep)
 
 
 logger = Logger(__name__)

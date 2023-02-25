@@ -22,44 +22,6 @@ class ImageInstanceOps:
         self.tuning_config = tuning_config
         self.save_image_level = tuning_config.outputs.save_image_level
 
-    def append_save_img(self, key, img):
-        if self.save_image_level >= int(key):
-            self.save_img_list[key].append(img.copy())
-
-    def save_image_stacks(self, key, filename, save_dir):
-        config = self.tuning_config
-        if self.save_image_level >= int(key) and self.save_img_list[key] != []:
-            name = os.path.splitext(filename)[0]
-            result = np.hstack(
-                tuple(
-                    [
-                        ImageUtils.resize_util_h(img, config.dimensions.display_height)
-                        for img in self.save_img_list[key]
-                    ]
-                )
-            )
-            result = ImageUtils.resize_util(
-                result,
-                min(
-                    len(self.save_img_list[key]) * config.dimensions.display_width // 3,
-                    int(config.dimensions.display_width * 2.5),
-                ),
-            )
-            ImageUtils.save_img(f"{save_dir}stack/{name}_{str(key)}_stack.jpg", result)
-
-    def put_label(self, img, label, size):
-        config = self.tuning_config
-        scale = img.shape[1] / config.dimensions.display_width
-        bg_val = int(np.mean(img))
-        pos = (int(scale * 80), int(scale * 30))
-        clr = (255 - bg_val,) * 3
-        img[(pos[1] - size * 30) : (pos[1] + size * 2), :] = bg_val
-        cv2.putText(img, label, pos, cv2.FONT_HERSHEY_SIMPLEX, size, clr, 3)
-
-    def reset_all_save_img(self):
-        for i in range(self.save_image_level):
-            self.save_img_list[i + 1] = []
-
     def apply_preprocessors(self, file_path, in_omr, template):
         tuning_config = self.tuning_config
         # resize to conform to template
@@ -73,272 +35,6 @@ class ImageInstanceOps:
         for pre_processor in template.pre_processors:
             in_omr = pre_processor.apply_filter(in_omr, file_path)
         return in_omr
-
-    @staticmethod
-    def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-1):
-        img = ImageUtils.resize_util(
-            img, template.page_dimensions[0], template.page_dimensions[1]
-        )
-        final_align = img.copy()
-        box_w, box_h = template.bubble_dimensions
-        for field_block in template.field_blocks:
-            s, d = field_block.origin, field_block.dimensions
-            shift = field_block.shift
-            if shifted:
-                cv2.rectangle(
-                    final_align,
-                    (s[0] + shift, s[1]),
-                    (s[0] + shift + d[0], s[1] + d[1]),
-                    constants.CLR_BLACK,
-                    3,
-                )
-            else:
-                cv2.rectangle(
-                    final_align,
-                    (s[0], s[1]),
-                    (s[0] + d[0], s[1] + d[1]),
-                    constants.CLR_BLACK,
-                    3,
-                )
-            for field_block_bubbles in field_block.traverse_bubbles:
-                for pt in field_block_bubbles:
-                    x, y = (pt.x + field_block.shift, pt.y) if shifted else (pt.x, pt.y)
-                    cv2.rectangle(
-                        final_align,
-                        (int(x + box_w / 10), int(y + box_h / 10)),
-                        (int(x + box_w - box_w / 10), int(y + box_h - box_h / 10)),
-                        constants.CLR_GRAY,
-                        border,
-                    )
-                    if draw_qvals:
-                        rect = [y, y + box_h, x, x + box_w]
-                        cv2.putText(
-                            final_align,
-                            f"{int(cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0])}",
-                            (rect[2] + 2, rect[0] + (box_h * 2) // 3),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.6,
-                            constants.CLR_BLACK,
-                            2,
-                        )
-            if shifted:
-                text_in_px = cv2.getTextSize(
-                    field_block.name, cv2.FONT_HERSHEY_SIMPLEX, constants.TEXT_SIZE, 4
-                )
-                cv2.putText(
-                    final_align,
-                    field_block.name,
-                    (int(s[0] + d[0] - text_in_px[0][0]), int(s[1] - text_in_px[0][1])),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    constants.TEXT_SIZE,
-                    constants.CLR_BLACK,
-                    4,
-                )
-        return final_align
-
-    def get_global_threshold(
-        self,
-        q_vals_orig,
-        plot_title=None,
-        plot_show=True,
-        sort_in_plot=True,
-        looseness=1,
-    ):
-        """
-        Note: Cannot assume qStrip has only-gray or only-white bg
-            (in which case there is only one jump).
-        So there will be either 1 or 2 jumps.
-        1 Jump :
-                ......
-                ||||||
-                ||||||  <-- risky THR
-                ||||||  <-- safe THR
-            ....||||||
-            ||||||||||
-
-        2 Jumps :
-                ......
-                |||||| <-- wrong THR
-            ....||||||
-            |||||||||| <-- safe THR
-            ..||||||||||
-            ||||||||||||
-
-        The abstract "First LARGE GAP" is perfect for this.
-        Current code is considering ONLY TOP 2 jumps(>= MIN_GAP) to be big,
-            gives the smaller one
-
-        """
-        config = self.tuning_config
-        PAGE_TYPE_FOR_THRESHOLD, MIN_JUMP, JUMP_DELTA = map(
-            config.threshold_params.get,
-            [
-                "PAGE_TYPE_FOR_THRESHOLD",
-                "MIN_JUMP",
-                "JUMP_DELTA",
-            ],
-        )
-
-        global_default_threshold = (
-            constants.GLOBAL_PAGE_THRESHOLD_WHITE
-            if PAGE_TYPE_FOR_THRESHOLD == "white"
-            else constants.GLOBAL_PAGE_THRESHOLD_BLACK
-        )
-
-        # Sort the Q bubbleValues
-        # TODO: Change var name of q_vals
-        q_vals = sorted(q_vals_orig)
-        # Find the FIRST LARGE GAP and set it as threshold:
-        ls = (looseness + 1) // 2
-        l = len(q_vals) - ls
-        max1, thr1 = MIN_JUMP, global_default_threshold
-        for i in range(ls, l):
-            jump = q_vals[i + ls] - q_vals[i - ls]
-            if jump > max1:
-                max1 = jump
-                thr1 = q_vals[i - ls] + jump / 2
-
-        # NOTE: thr2 is deprecated, thus is JUMP_DELTA
-        # Make use of the fact that the JUMP_DELTA(Vertical gap ofc) between
-        # values at detected jumps would be atleast 20
-        max2, thr2 = MIN_JUMP, global_default_threshold
-        # Requires atleast 1 gray box to be present (Roll field will ensure this)
-        for i in range(ls, l):
-            jump = q_vals[i + ls] - q_vals[i - ls]
-            new_thr = q_vals[i - ls] + jump / 2
-            if jump > max2 and abs(thr1 - new_thr) > JUMP_DELTA:
-                max2 = jump
-                thr2 = new_thr
-        # global_thr = min(thr1,thr2)
-        global_thr, j_low, j_high = thr1, thr1 - max1 // 2, thr1 + max1 // 2
-
-        # # For normal images
-        # thresholdRead =  116
-        # if(thr1 > thr2 and thr2 > thresholdRead):
-        #     print("Note: taking safer thr line.")
-        #     global_thr, j_low, j_high = thr2, thr2 - max2//2, thr2 + max2//2
-
-        if plot_title:
-            _, ax = plt.subplots()
-            ax.bar(range(len(q_vals_orig)), q_vals if sort_in_plot else q_vals_orig)
-            ax.set_title(plot_title)
-            thrline = ax.axhline(global_thr, color="green", ls="--", linewidth=5)
-            thrline.set_label("Global Threshold")
-            thrline = ax.axhline(thr2, color="red", ls=":", linewidth=3)
-            thrline.set_label("THR2 Line")
-            # thrline=ax.axhline(j_low,color='red',ls='-.', linewidth=3)
-            # thrline=ax.axhline(j_high,color='red',ls='-.', linewidth=3)
-            # thrline.set_label("Boundary Line")
-            # ax.set_ylabel("Mean Intensity")
-            ax.set_ylabel("Values")
-            ax.set_xlabel("Position")
-            ax.legend()
-            if plot_show:
-                plt.title(plot_title)
-                plt.show()
-
-        return global_thr, j_low, j_high
-
-    def get_local_threshold(
-        self, q_vals, global_thr, no_outliers, plot_title=None, plot_show=True
-    ):
-        """
-        TODO: Update this documentation too-
-        //No more - Assumption : Colwise background color is uniformly gray or white,
-                but not alternating. In this case there is atmost one jump.
-
-        0 Jump :
-                        <-- safe THR?
-            .......
-            ...|||||||
-            ||||||||||  <-- safe THR?
-        // How to decide given range is above or below gray?
-            -> global q_vals shall absolutely help here. Just run same function
-                on total q_vals instead of colwise _//
-        How to decide it is this case of 0 jumps
-
-        1 Jump :
-                ......
-                ||||||
-                ||||||  <-- risky THR
-                ||||||  <-- safe THR
-            ....||||||
-            ||||||||||
-
-        """
-        config = self.tuning_config
-        # Sort the Q bubbleValues
-        q_vals = sorted(q_vals)
-
-        # Small no of pts cases:
-        # base case: 1 or 2 pts
-        if len(q_vals) < 3:
-            thr1 = (
-                global_thr
-                if np.max(q_vals) - np.min(q_vals) < config.threshold_params.MIN_GAP
-                else np.mean(q_vals)
-            )
-        else:
-            # qmin, qmax, qmean, qstd = round(np.min(q_vals),2), round(np.max(q_vals),2),
-            #   round(np.mean(q_vals),2), round(np.std(q_vals),2)
-            # GVals = [round(abs(q-qmean),2) for q in q_vals]
-            # gmean, gstd = round(np.mean(GVals),2), round(np.std(GVals),2)
-            # # DISCRETION: Pretty critical factor in reading response
-            # # Doesn't work well for small number of values.
-            # DISCRETION = 2.7 # 2.59 was closest hit, 3.0 is too far
-            # L2MaxGap = round(max([abs(g-gmean) for g in GVals]),2)
-            # if(L2MaxGap > DISCRETION*gstd):
-            #     no_outliers = False
-
-            # # ^Stackoverflow method
-            # print(field_label, no_outliers,"qstd",round(np.std(q_vals),2), "gstd", gstd,
-            #   "Gaps in gvals",sorted([round(abs(g-gmean),2) for g in GVals],reverse=True),
-            #   '\t',round(DISCRETION*gstd,2), L2MaxGap)
-
-            # else:
-            # Find the LARGEST GAP and set it as threshold: //(FIRST LARGE GAP)
-            l = len(q_vals) - 1
-            max1, thr1 = config.threshold_params.MIN_JUMP, 255
-            for i in range(1, l):
-                jump = q_vals[i + 1] - q_vals[i - 1]
-                if jump > max1:
-                    max1 = jump
-                    thr1 = q_vals[i - 1] + jump / 2
-            # print(field_label,q_vals,max1)
-
-            confident_jump = (
-                config.threshold_params.MIN_JUMP
-                + config.threshold_params.CONFIDENT_SURPLUS
-            )
-            # If not confident, then only take help of global_thr
-            if max1 < confident_jump:
-                if no_outliers:
-                    # All Black or All White case
-                    thr1 = global_thr
-                else:
-                    # TODO: Low confidence parameters here
-                    pass
-
-            # if(thr1 == 255):
-            #     print("Warning: threshold is unexpectedly 255! (Outlier Delta issue?)",plot_title)
-
-        # Make a common plot function to show local and global thresholds
-        if plot_show and plot_title is not None:
-            _, ax = plt.subplots()
-            ax.bar(range(len(q_vals)), q_vals)
-            thrline = ax.axhline(thr1, color="green", ls=("-."), linewidth=3)
-            thrline.set_label("Local Threshold")
-            thrline = ax.axhline(global_thr, color="red", ls=":", linewidth=5)
-            thrline.set_label("Global Threshold")
-            ax.set_title(plot_title)
-            ax.set_ylabel("Bubble Mean Intensity")
-            ax.set_xlabel("Bubble Number(sorted)")
-            ax.legend()
-            # TODO append QStrip to this plot-
-            # appendSaveImg(6,getPlotImg())
-            if plot_show:
-                plt.show()
-        return thr1
 
     def read_omr_response(self, template, image, name, save_dir=None):
         config = self.tuning_config
@@ -354,7 +50,6 @@ class ImageInstanceOps:
             # Processing copies
             transp_layer = img.copy()
             final_marked = img.copy()
-            # put_label(final_marked, f"Crop Size: {str(origDim[0])}x{str(origDim[1])} {name}", size=1)
 
             morph = img.copy()
             self.append_save_img(3, morph)
@@ -728,3 +423,298 @@ class ImageInstanceOps:
 
         except Exception as e:
             raise e
+
+    @staticmethod
+    def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-1):
+        img = ImageUtils.resize_util(
+            img, template.page_dimensions[0], template.page_dimensions[1]
+        )
+        final_align = img.copy()
+        box_w, box_h = template.bubble_dimensions
+        for field_block in template.field_blocks:
+            s, d = field_block.origin, field_block.dimensions
+            shift = field_block.shift
+            if shifted:
+                cv2.rectangle(
+                    final_align,
+                    (s[0] + shift, s[1]),
+                    (s[0] + shift + d[0], s[1] + d[1]),
+                    constants.CLR_BLACK,
+                    3,
+                )
+            else:
+                cv2.rectangle(
+                    final_align,
+                    (s[0], s[1]),
+                    (s[0] + d[0], s[1] + d[1]),
+                    constants.CLR_BLACK,
+                    3,
+                )
+            for field_block_bubbles in field_block.traverse_bubbles:
+                for pt in field_block_bubbles:
+                    x, y = (pt.x + field_block.shift, pt.y) if shifted else (pt.x, pt.y)
+                    cv2.rectangle(
+                        final_align,
+                        (int(x + box_w / 10), int(y + box_h / 10)),
+                        (int(x + box_w - box_w / 10), int(y + box_h - box_h / 10)),
+                        constants.CLR_GRAY,
+                        border,
+                    )
+                    if draw_qvals:
+                        rect = [y, y + box_h, x, x + box_w]
+                        cv2.putText(
+                            final_align,
+                            f"{int(cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0])}",
+                            (rect[2] + 2, rect[0] + (box_h * 2) // 3),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.6,
+                            constants.CLR_BLACK,
+                            2,
+                        )
+            if shifted:
+                text_in_px = cv2.getTextSize(
+                    field_block.name, cv2.FONT_HERSHEY_SIMPLEX, constants.TEXT_SIZE, 4
+                )
+                cv2.putText(
+                    final_align,
+                    field_block.name,
+                    (int(s[0] + d[0] - text_in_px[0][0]), int(s[1] - text_in_px[0][1])),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    constants.TEXT_SIZE,
+                    constants.CLR_BLACK,
+                    4,
+                )
+        return final_align
+
+    def get_global_threshold(
+        self,
+        q_vals_orig,
+        plot_title=None,
+        plot_show=True,
+        sort_in_plot=True,
+        looseness=1,
+    ):
+        """
+        Note: Cannot assume qStrip has only-gray or only-white bg
+            (in which case there is only one jump).
+        So there will be either 1 or 2 jumps.
+        1 Jump :
+                ......
+                ||||||
+                ||||||  <-- risky THR
+                ||||||  <-- safe THR
+            ....||||||
+            ||||||||||
+
+        2 Jumps :
+                ......
+                |||||| <-- wrong THR
+            ....||||||
+            |||||||||| <-- safe THR
+            ..||||||||||
+            ||||||||||||
+
+        The abstract "First LARGE GAP" is perfect for this.
+        Current code is considering ONLY TOP 2 jumps(>= MIN_GAP) to be big,
+            gives the smaller one
+
+        """
+        config = self.tuning_config
+        PAGE_TYPE_FOR_THRESHOLD, MIN_JUMP, JUMP_DELTA = map(
+            config.threshold_params.get,
+            [
+                "PAGE_TYPE_FOR_THRESHOLD",
+                "MIN_JUMP",
+                "JUMP_DELTA",
+            ],
+        )
+
+        global_default_threshold = (
+            constants.GLOBAL_PAGE_THRESHOLD_WHITE
+            if PAGE_TYPE_FOR_THRESHOLD == "white"
+            else constants.GLOBAL_PAGE_THRESHOLD_BLACK
+        )
+
+        # Sort the Q bubbleValues
+        # TODO: Change var name of q_vals
+        q_vals = sorted(q_vals_orig)
+        # Find the FIRST LARGE GAP and set it as threshold:
+        ls = (looseness + 1) // 2
+        l = len(q_vals) - ls
+        max1, thr1 = MIN_JUMP, global_default_threshold
+        for i in range(ls, l):
+            jump = q_vals[i + ls] - q_vals[i - ls]
+            if jump > max1:
+                max1 = jump
+                thr1 = q_vals[i - ls] + jump / 2
+
+        # NOTE: thr2 is deprecated, thus is JUMP_DELTA
+        # Make use of the fact that the JUMP_DELTA(Vertical gap ofc) between
+        # values at detected jumps would be atleast 20
+        max2, thr2 = MIN_JUMP, global_default_threshold
+        # Requires atleast 1 gray box to be present (Roll field will ensure this)
+        for i in range(ls, l):
+            jump = q_vals[i + ls] - q_vals[i - ls]
+            new_thr = q_vals[i - ls] + jump / 2
+            if jump > max2 and abs(thr1 - new_thr) > JUMP_DELTA:
+                max2 = jump
+                thr2 = new_thr
+        # global_thr = min(thr1,thr2)
+        global_thr, j_low, j_high = thr1, thr1 - max1 // 2, thr1 + max1 // 2
+
+        # # For normal images
+        # thresholdRead =  116
+        # if(thr1 > thr2 and thr2 > thresholdRead):
+        #     print("Note: taking safer thr line.")
+        #     global_thr, j_low, j_high = thr2, thr2 - max2//2, thr2 + max2//2
+
+        if plot_title:
+            _, ax = plt.subplots()
+            ax.bar(range(len(q_vals_orig)), q_vals if sort_in_plot else q_vals_orig)
+            ax.set_title(plot_title)
+            thrline = ax.axhline(global_thr, color="green", ls="--", linewidth=5)
+            thrline.set_label("Global Threshold")
+            thrline = ax.axhline(thr2, color="red", ls=":", linewidth=3)
+            thrline.set_label("THR2 Line")
+            # thrline=ax.axhline(j_low,color='red',ls='-.', linewidth=3)
+            # thrline=ax.axhline(j_high,color='red',ls='-.', linewidth=3)
+            # thrline.set_label("Boundary Line")
+            # ax.set_ylabel("Mean Intensity")
+            ax.set_ylabel("Values")
+            ax.set_xlabel("Position")
+            ax.legend()
+            if plot_show:
+                plt.title(plot_title)
+                plt.show()
+
+        return global_thr, j_low, j_high
+
+    def get_local_threshold(
+        self, q_vals, global_thr, no_outliers, plot_title=None, plot_show=True
+    ):
+        """
+        TODO: Update this documentation too-
+        //No more - Assumption : Colwise background color is uniformly gray or white,
+                but not alternating. In this case there is atmost one jump.
+
+        0 Jump :
+                        <-- safe THR?
+            .......
+            ...|||||||
+            ||||||||||  <-- safe THR?
+        // How to decide given range is above or below gray?
+            -> global q_vals shall absolutely help here. Just run same function
+                on total q_vals instead of colwise _//
+        How to decide it is this case of 0 jumps
+
+        1 Jump :
+                ......
+                ||||||
+                ||||||  <-- risky THR
+                ||||||  <-- safe THR
+            ....||||||
+            ||||||||||
+
+        """
+        config = self.tuning_config
+        # Sort the Q bubbleValues
+        q_vals = sorted(q_vals)
+
+        # Small no of pts cases:
+        # base case: 1 or 2 pts
+        if len(q_vals) < 3:
+            thr1 = (
+                global_thr
+                if np.max(q_vals) - np.min(q_vals) < config.threshold_params.MIN_GAP
+                else np.mean(q_vals)
+            )
+        else:
+            # qmin, qmax, qmean, qstd = round(np.min(q_vals),2), round(np.max(q_vals),2),
+            #   round(np.mean(q_vals),2), round(np.std(q_vals),2)
+            # GVals = [round(abs(q-qmean),2) for q in q_vals]
+            # gmean, gstd = round(np.mean(GVals),2), round(np.std(GVals),2)
+            # # DISCRETION: Pretty critical factor in reading response
+            # # Doesn't work well for small number of values.
+            # DISCRETION = 2.7 # 2.59 was closest hit, 3.0 is too far
+            # L2MaxGap = round(max([abs(g-gmean) for g in GVals]),2)
+            # if(L2MaxGap > DISCRETION*gstd):
+            #     no_outliers = False
+
+            # # ^Stackoverflow method
+            # print(field_label, no_outliers,"qstd",round(np.std(q_vals),2), "gstd", gstd,
+            #   "Gaps in gvals",sorted([round(abs(g-gmean),2) for g in GVals],reverse=True),
+            #   '\t',round(DISCRETION*gstd,2), L2MaxGap)
+
+            # else:
+            # Find the LARGEST GAP and set it as threshold: //(FIRST LARGE GAP)
+            l = len(q_vals) - 1
+            max1, thr1 = config.threshold_params.MIN_JUMP, 255
+            for i in range(1, l):
+                jump = q_vals[i + 1] - q_vals[i - 1]
+                if jump > max1:
+                    max1 = jump
+                    thr1 = q_vals[i - 1] + jump / 2
+            # print(field_label,q_vals,max1)
+
+            confident_jump = (
+                config.threshold_params.MIN_JUMP
+                + config.threshold_params.CONFIDENT_SURPLUS
+            )
+            # If not confident, then only take help of global_thr
+            if max1 < confident_jump:
+                if no_outliers:
+                    # All Black or All White case
+                    thr1 = global_thr
+                else:
+                    # TODO: Low confidence parameters here
+                    pass
+
+            # if(thr1 == 255):
+            #     print("Warning: threshold is unexpectedly 255! (Outlier Delta issue?)",plot_title)
+
+        # Make a common plot function to show local and global thresholds
+        if plot_show and plot_title is not None:
+            _, ax = plt.subplots()
+            ax.bar(range(len(q_vals)), q_vals)
+            thrline = ax.axhline(thr1, color="green", ls=("-."), linewidth=3)
+            thrline.set_label("Local Threshold")
+            thrline = ax.axhline(global_thr, color="red", ls=":", linewidth=5)
+            thrline.set_label("Global Threshold")
+            ax.set_title(plot_title)
+            ax.set_ylabel("Bubble Mean Intensity")
+            ax.set_xlabel("Bubble Number(sorted)")
+            ax.legend()
+            # TODO append QStrip to this plot-
+            # appendSaveImg(6,getPlotImg())
+            if plot_show:
+                plt.show()
+        return thr1
+
+    def append_save_img(self, key, img):
+        if self.save_image_level >= int(key):
+            self.save_img_list[key].append(img.copy())
+
+    def save_image_stacks(self, key, filename, save_dir):
+        config = self.tuning_config
+        if self.save_image_level >= int(key) and self.save_img_list[key] != []:
+            name = os.path.splitext(filename)[0]
+            result = np.hstack(
+                tuple(
+                    [
+                        ImageUtils.resize_util_h(img, config.dimensions.display_height)
+                        for img in self.save_img_list[key]
+                    ]
+                )
+            )
+            result = ImageUtils.resize_util(
+                result,
+                min(
+                    len(self.save_img_list[key]) * config.dimensions.display_width // 3,
+                    int(config.dimensions.display_width * 2.5),
+                ),
+            )
+            ImageUtils.save_img(f"{save_dir}stack/{name}_{str(key)}_stack.jpg", result)
+
+    def reset_all_save_img(self):
+        for i in range(self.save_image_level):
+            self.save_img_list[i + 1] = []

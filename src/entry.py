@@ -307,6 +307,12 @@ def process_files(
     print_stats(start_time, files_counter, tuning_config)
 
 
+def check_and_move(error_code, file_path, filepath2):
+    # TODO: fix file movement into error/multimarked/invalid etc again
+    STATS.files_not_moved += 1
+    return True
+
+
 def print_stats(start_time, files_counter, tuning_config):
     time_checking = max(1, round(time() - start_time, 2))
     log = logger.info
@@ -335,9 +341,3 @@ def print_stats(start_time, files_counter, tuning_config):
         log(
             "\nTip: To see some awesome visuals, open config.json and increase 'show_image_level'"
         )
-
-
-def check_and_move(error_code, file_path, filepath2):
-    # TODO: fix file movement into error/multimarked/invalid etc again
-    STATS.files_not_moved += 1
-    return True

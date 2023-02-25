@@ -73,20 +73,29 @@ class ImageUtils:
         return cv2.normalize(img, alpha, beta, norm_type=cv2.NORM_MINMAX)
 
     @staticmethod
-    def order_points(pts):
-        rect = np.zeros((4, 2), dtype="float32")
+    def auto_canny(image, sigma=0.93):
+        # compute the median of the single channel pixel intensities
+        v = np.median(image)
 
-        # the top-left point will have the smallest sum, whereas
-        # the bottom-right point will have the largest sum
-        s = pts.sum(axis=1)
-        rect[0] = pts[np.argmin(s)]
-        rect[2] = pts[np.argmax(s)]
-        diff = np.diff(pts, axis=1)
-        rect[1] = pts[np.argmin(diff)]
-        rect[3] = pts[np.argmax(diff)]
+        # apply automatic Canny edge detection using the computed median
+        lower = int(max(0, (1.0 - sigma) * v))
+        upper = int(min(255, (1.0 + sigma) * v))
+        edged = cv2.Canny(image, lower, upper)
 
-        # return the ordered coordinates
-        return rect
+        # return the edged image
+        return edged
+
+    @staticmethod
+    def adjust_gamma(image, gamma=1.0):
+        # build a lookup table mapping the pixel values [0, 255] to
+        # their adjusted gamma values
+        inv_gamma = 1.0 / gamma
+        table = np.array(
+            [((i / 255.0) ** inv_gamma) * 255 for i in np.arange(0, 256)]
+        ).astype("uint8")
+
+        # apply gamma correction using the lookup table
+        return cv2.LUT(image, table)
 
     @staticmethod
     def four_point_transform(image, pts):
@@ -130,26 +139,17 @@ class ImageUtils:
         return warped
 
     @staticmethod
-    def auto_canny(image, sigma=0.93):
-        # compute the median of the single channel pixel intensities
-        v = np.median(image)
+    def order_points(pts):
+        rect = np.zeros((4, 2), dtype="float32")
 
-        # apply automatic Canny edge detection using the computed median
-        lower = int(max(0, (1.0 - sigma) * v))
-        upper = int(min(255, (1.0 + sigma) * v))
-        edged = cv2.Canny(image, lower, upper)
+        # the top-left point will have the smallest sum, whereas
+        # the bottom-right point will have the largest sum
+        s = pts.sum(axis=1)
+        rect[0] = pts[np.argmin(s)]
+        rect[2] = pts[np.argmax(s)]
+        diff = np.diff(pts, axis=1)
+        rect[1] = pts[np.argmin(diff)]
+        rect[3] = pts[np.argmax(diff)]
 
-        # return the edged image
-        return edged
-
-    @staticmethod
-    def adjust_gamma(image, gamma=1.0):
-        # build a lookup table mapping the pixel values [0, 255] to
-        # their adjusted gamma values
-        inv_gamma = 1.0 / gamma
-        table = np.array(
-            [((i / 255.0) ** inv_gamma) * 255 for i in np.arange(0, 256)]
-        ).astype("uint8")
-
-        # apply gamma correction using the lookup table
-        return cv2.LUT(image, table)
+        # return the ordered coordinates
+        return rect
