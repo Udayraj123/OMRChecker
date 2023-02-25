@@ -18,23 +18,6 @@ class ImageMetrics:
     reset_pos = [0, 0]
 
 
-@dataclass
-class Stats:
-    # TODO Fill these for stats
-    # Move qbox_vals here?
-    # badThresholds = []
-    # veryBadPoints = []
-    files_moved = 0
-    files_not_moved = 0
-
-
-def wait_q():
-    esc_key = 27
-    while cv2.waitKey(1) & 0xFF not in [ord("q"), esc_key]:
-        pass
-    cv2.destroyAllWindows()
-
-
 class InteractionUtils:
     """Perform primary functions such as displaying images and reading responses"""
 
@@ -90,3 +73,20 @@ class InteractionUtils:
             wait_q()
             InteractionUtils.image_metrics.window_x = 0
             InteractionUtils.image_metrics.window_y = 0
+
+
+@dataclass
+class Stats:
+    # TODO Fill these for stats
+    # Move qbox_vals here?
+    # badThresholds = []
+    # veryBadPoints = []
+    files_moved = 0
+    files_not_moved = 0
+
+
+def wait_q():
+    esc_key = 27
+    while cv2.waitKey(1) & 0xFF not in [ord("q"), esc_key]:
+        pass
+    cv2.destroyAllWindows()

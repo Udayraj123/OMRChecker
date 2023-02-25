@@ -28,81 +28,13 @@ class CropOnMarkers(ImagePreprocessor):
         )
         self.marker_rescale_steps = int(marker_ops.get("marker_rescale_steps", 10))
         self.apply_erode_subtract = marker_ops.get("apply_erode_subtract", True)
-        if not os.path.exists(self.marker_path):
-            logger.error(
-                "Marker not found at path provided in template:",
-                self.marker_path,
-            )
-            exit(31)
-
-        marker = cv2.imread(self.marker_path, cv2.IMREAD_GRAYSCALE)
-
-        if "sheetToMarkerWidthRatio" in marker_ops:
-            marker = ImageUtils.resize_util(
-                marker,
-                config.dimensions.processing_width
-                / int(marker_ops["sheetToMarkerWidthRatio"]),
-            )
-        marker = cv2.GaussianBlur(marker, (5, 5), 0)
-        marker = cv2.normalize(
-            marker, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
-        )
-
-        if self.apply_erode_subtract:
-            marker -= cv2.erode(marker, kernel=np.ones((5, 5)), iterations=5)
-
-        self.marker = marker
+        self.marker = self.load_marker(marker_ops, config)
 
     def __str__(self):
         return self.marker_path
 
     def exclude_files(self):
         return [self.marker_path]
-
-    # Resizing the marker within scaleRange at rate of descent_per_step to
-    # find the best match.
-    def getBestMatch(self, image_eroded_sub):
-        config = self.tuning_config
-        descent_per_step = (
-            self.marker_rescale_range[1] - self.marker_rescale_range[0]
-        ) // self.marker_rescale_steps
-        _h, _w = self.marker.shape[:2]
-        res, best_scale = None, None
-        all_max_t = 0
-
-        for r0 in np.arange(
-            self.marker_rescale_range[1],
-            self.marker_rescale_range[0],
-            -1 * descent_per_step,
-        ):  # reverse order
-            s = float(r0 * 1 / 100)
-            if s == 0.0:
-                continue
-            rescaled_marker = ImageUtils.resize_util_h(
-                self.marker, u_height=int(_h * s)
-            )
-            # res is the black image with white dots
-            res = cv2.matchTemplate(
-                image_eroded_sub, rescaled_marker, cv2.TM_CCOEFF_NORMED
-            )
-
-            max_t = res.max()
-            if all_max_t < max_t:
-                # print('Scale: '+str(s)+', Circle Match: '+str(round(max_t*100,2))+'%')
-                best_scale, all_max_t = s, max_t
-
-        if all_max_t < self.min_matching_threshold:
-            logger.warning(
-                "\tTemplate matching too low! Consider rechecking preProcessors applied before this."
-            )
-            if config.outputs.show_image_level >= 1:
-                InteractionUtils.show("res", res, 1, 0, config=config)
-
-        if best_scale is None:
-            logger.warning(
-                "No matchings for given scaleRange:", self.marker_rescale_range
-            )
-        return best_scale, all_max_t
 
     def apply_filter(self, image, file_path):
         config = self.tuning_config
@@ -228,3 +160,74 @@ class CropOnMarkers(ImagePreprocessor):
         # iterations : Tuned to 2.
         # image_eroded_sub = image_norm - cv2.erode(image_norm, kernel=np.ones((5,5)),iterations=2)
         return image
+
+    def load_marker(self, marker_ops, config):
+        if not os.path.exists(self.marker_path):
+            logger.error(
+                "Marker not found at path provided in template:",
+                self.marker_path,
+            )
+            exit(31)
+
+        marker = cv2.imread(self.marker_path, cv2.IMREAD_GRAYSCALE)
+
+        if "sheetToMarkerWidthRatio" in marker_ops:
+            marker = ImageUtils.resize_util(
+                marker,
+                config.dimensions.processing_width
+                / int(marker_ops["sheetToMarkerWidthRatio"]),
+            )
+        marker = cv2.GaussianBlur(marker, (5, 5), 0)
+        marker = cv2.normalize(
+            marker, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
+        )
+
+        if self.apply_erode_subtract:
+            marker -= cv2.erode(marker, kernel=np.ones((5, 5)), iterations=5)
+
+        return marker
+
+    # Resizing the marker within scaleRange at rate of descent_per_step to
+    # find the best match.
+    def getBestMatch(self, image_eroded_sub):
+        config = self.tuning_config
+        descent_per_step = (
+            self.marker_rescale_range[1] - self.marker_rescale_range[0]
+        ) // self.marker_rescale_steps
+        _h, _w = self.marker.shape[:2]
+        res, best_scale = None, None
+        all_max_t = 0
+
+        for r0 in np.arange(
+            self.marker_rescale_range[1],
+            self.marker_rescale_range[0],
+            -1 * descent_per_step,
+        ):  # reverse order
+            s = float(r0 * 1 / 100)
+            if s == 0.0:
+                continue
+            rescaled_marker = ImageUtils.resize_util_h(
+                self.marker, u_height=int(_h * s)
+            )
+            # res is the black image with white dots
+            res = cv2.matchTemplate(
+                image_eroded_sub, rescaled_marker, cv2.TM_CCOEFF_NORMED
+            )
+
+            max_t = res.max()
+            if all_max_t < max_t:
+                # print('Scale: '+str(s)+', Circle Match: '+str(round(max_t*100,2))+'%')
+                best_scale, all_max_t = s, max_t
+
+        if all_max_t < self.min_matching_threshold:
+            logger.warning(
+                "\tTemplate matching too low! Consider rechecking preProcessors applied before this."
+            )
+            if config.outputs.show_image_level >= 1:
+                InteractionUtils.show("res", res, 1, 0, config=config)
+
+        if best_scale is None:
+            logger.warning(
+                "No matchings for given scaleRange:", self.marker_rescale_range
+            )
+        return best_scale, all_max_t

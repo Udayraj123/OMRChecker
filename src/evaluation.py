@@ -28,16 +28,6 @@ class AnswerMatcher:
         self.set_defaults_from_scheme(marking_scheme)
         self.marking_scheme = marking_scheme
 
-    def get_marking_scheme(self):
-        return self.marking_scheme
-
-    def get_section_explanation(self):
-        answer_type = self.answer_type
-        if answer_type in ["standard", "multiple-correct"]:
-            return self.marking_scheme.section_key
-        elif answer_type == "multi-weighted":
-            return f"Custom: {self.marking}"
-
     def get_answer_type(self, answer_item):
         item_type = type(answer_item)
         if item_type == str:
@@ -92,6 +82,16 @@ class AnswerMatcher:
                 for allowed_answer in parsed_answer[0]:
                     self.marking[f"correct-{allowed_answer}"] = self.marking["correct"]
 
+    def get_marking_scheme(self):
+        return self.marking_scheme
+
+    def get_section_explanation(self):
+        answer_type = self.answer_type
+        if answer_type in ["standard", "multiple-correct"]:
+            return self.marking_scheme.section_key
+        elif answer_type == "multi-weighted":
+            return f"Custom: {self.marking}"
+
     def get_verdict_marking(self, marked_answer):
         answer_type = self.answer_type
         if answer_type == "standard":
@@ -113,6 +113,9 @@ class AnswerMatcher:
         else:
             return "incorrect"
 
+    def get_multi_weighted_verdict(self, marked_answer):
+        return self.get_multiple_correct_verdict(marked_answer)
+
     def get_multiple_correct_verdict(self, marked_answer):
         parsed_answer = self.parsed_answer
         if marked_answer == self.empty_val:
@@ -121,9 +124,6 @@ class AnswerMatcher:
             return f"correct-{marked_answer}"
         else:
             return "incorrect"
-
-    def get_multi_weighted_verdict(self, marked_answer):
-        return self.get_multiple_correct_verdict(marked_answer)
 
     def __str__(self):
         answer_type, parsed_answer = self.answer_type, self.parsed_answer
@@ -299,18 +299,29 @@ class EvaluationConfig:
             answers_in_order
         )
 
-    @staticmethod
-    def parse_answer_column(answer_column):
-        if answer_column[0] == "[":
-            parsed_answer = ast.literal_eval(answer_column)
-        elif "," in answer_column:
-            parsed_answer = answer_column.split(",")
-        else:
-            parsed_answer = answer_column
-        return parsed_answer
+    # Externally called methods have higher abstraction level.
+    def prepare_and_validate_omr_response(self, omr_response):
+        self.reset_explanation_table()
 
-    def get_marking_scheme_for_question(self, question):
-        return self.question_to_scheme.get(question, self.default_marking_scheme)
+        omr_response_questions = set(omr_response.keys())
+        all_questions = set(self.questions_in_order)
+        missing_questions = sorted(all_questions.difference(omr_response_questions))
+        if len(missing_questions) > 0:
+            logger.critical(f"Missing OMR response for: {missing_questions}")
+            raise Exception(
+                f"Some questions are missing in the OMR response for the given answer key"
+            )
+
+        prefixed_omr_response_questions = set(
+            [k for k in omr_response.keys() if k.startswith("q")]
+        )
+        missing_prefixed_questions = sorted(
+            prefixed_omr_response_questions.difference(all_questions)
+        )
+        if len(missing_prefixed_questions) > 0:
+            logger.warning(
+                f"No answer given for potential questions in OMR response: {missing_prefixed_questions}"
+            )
 
     def match_answer_for_question(self, current_score, question, marked_answer):
         answer_matcher = self.question_to_answer_matcher[question]
@@ -325,11 +336,28 @@ class EvaluationConfig:
         )
         return delta
 
+    def conditionally_print_explanation(self):
+        if self.should_explain_scoring:
+            console.print(self.explanation_table, justify="center")
+
     def get_should_explain_scoring(self):
         return self.should_explain_scoring
 
     def get_exclude_files(self):
         return self.exclude_files
+
+    @staticmethod
+    def parse_answer_column(answer_column):
+        if answer_column[0] == "[":
+            parsed_answer = ast.literal_eval(answer_column)
+        elif "," in answer_column:
+            parsed_answer = answer_column.split(",")
+        else:
+            parsed_answer = answer_column
+        return parsed_answer
+
+    def parse_questions_in_order(self, questions_in_order):
+        return parse_fields("questions_in_order", questions_in_order)
 
     def validate_questions(self, answers_in_order):
         questions_in_order = self.questions_in_order
@@ -365,29 +393,6 @@ class EvaluationConfig:
                 f"Some questions are missing in the answer key for the given marking scheme"
             )
 
-    def prepare_and_validate_omr_response(self, omr_response):
-        self.reset_explanation_table()
-
-        omr_response_questions = set(omr_response.keys())
-        all_questions = set(self.questions_in_order)
-        missing_questions = sorted(all_questions.difference(omr_response_questions))
-        if len(missing_questions) > 0:
-            logger.critical(f"Missing OMR response for: {missing_questions}")
-            raise Exception(
-                f"Some questions are missing in the OMR response for the given answer key"
-            )
-
-        prefixed_omr_response_questions = set(
-            [k for k in omr_response.keys() if k.startswith("q")]
-        )
-        missing_prefixed_questions = sorted(
-            prefixed_omr_response_questions.difference(all_questions)
-        )
-        if len(missing_prefixed_questions) > 0:
-            logger.warning(
-                f"No answer given for potential questions in OMR response: {missing_prefixed_questions}"
-            )
-
     def parse_answers_and_map_questions(self, answers_in_order):
         question_to_answer_matcher = {}
         for question, answer_item in zip(self.questions_in_order, answers_in_order):
@@ -397,8 +402,10 @@ class EvaluationConfig:
             )
         return question_to_answer_matcher
 
-    def parse_questions_in_order(self, questions_in_order):
-        return parse_fields("questions_in_order", questions_in_order)
+    # Then unfolding lower abstraction levels
+    def reset_explanation_table(self):
+        self.explanation_table = None
+        self.prepare_explanation_table()
 
     def prepare_explanation_table(self):
         # TODO: provide a way to export this as csv/pdf
@@ -415,6 +422,9 @@ class EvaluationConfig:
         if self.has_non_default_section:
             table.add_column("Section")
         self.explanation_table = table
+
+    def get_marking_scheme_for_question(self, question):
+        return self.question_to_scheme.get(question, self.default_marking_scheme)
 
     def conditionally_add_explanation(
         self,
@@ -444,14 +454,6 @@ class EvaluationConfig:
                 if item is not None
             ]
             self.explanation_table.add_row(*row)
-
-    def conditionally_print_explanation(self):
-        if self.should_explain_scoring:
-            console.print(self.explanation_table, justify="center")
-
-    def reset_explanation_table(self):
-        self.explanation_table = None
-        self.prepare_explanation_table()
 
 
 def evaluate_concatenated_response(concatenated_response, evaluation_config):

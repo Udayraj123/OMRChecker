@@ -36,6 +36,13 @@ class ProcessorManager:
         self.processors_dir = processors_dir
         self.reload_processors()
 
+    @staticmethod
+    def get_name_filter(processor_name):
+        def filter_function(member):
+            return inspect.isclass(member) and member.__module__ == processor_name
+
+        return filter_function
+
     def reload_processors(self):
         """Reset the list of all processors and initiate the walk over the main
         provided processor package to load all available processors
@@ -45,13 +52,6 @@ class ProcessorManager:
 
         logger.info(f'Loading processors from "{self.processors_dir}"...')
         self.walk_package(self.processors_dir)
-
-    @staticmethod
-    def get_name_filter(processor_name):
-        def filter_function(member):
-            return inspect.isclass(member) and member.__module__ == processor_name
-
-        return filter_function
 
     def walk_package(self, package):
         """walk the supplied package to retrieve all processors"""

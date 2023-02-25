@@ -19,6 +19,37 @@ def load_json(path, **rest):
     return loaded
 
 
+class Paths:
+    def __init__(self, output_dir):
+        self.output_dir = output_dir
+        self.save_marked_dir = output_dir.joinpath("CheckedOMRs")
+        self.results_dir = output_dir.joinpath("Results")
+        self.manual_dir = output_dir.joinpath("Manual")
+        self.errors_dir = self.manual_dir.joinpath("ErrorFiles")
+        self.multi_marked_dir = self.manual_dir.joinpath("MultiMarkedFiles")
+
+
+def setup_dirs_for_paths(paths):
+    logger.info("Checking Directories...")
+    for save_output_dir in [paths.save_marked_dir]:
+        if not os.path.exists(save_output_dir):
+            logger.info(f"Created : {save_output_dir}")
+            os.makedirs(save_output_dir)
+            os.mkdir(save_output_dir.joinpath("stack"))
+            os.mkdir(save_output_dir.joinpath("_MULTI_"))
+            os.mkdir(save_output_dir.joinpath("_MULTI_", "stack"))
+
+    for save_output_dir in [paths.manual_dir, paths.results_dir]:
+        if not os.path.exists(save_output_dir):
+            logger.info(f"Created : {save_output_dir}")
+            os.makedirs(save_output_dir)
+
+    for save_output_dir in [paths.multi_marked_dir, paths.errors_dir]:
+        if not os.path.exists(save_output_dir):
+            logger.info(f"Created : {save_output_dir}")
+            os.makedirs(save_output_dir)
+
+
 def setup_outputs_for_template(paths, template):
     # TODO: consider moving this into a class instance
     ns = argparse.Namespace()
@@ -61,34 +92,3 @@ def setup_outputs_for_template(paths, template):
             ns.files_obj[file_key] = open(file_name, "a")
 
     return ns
-
-
-class Paths:
-    def __init__(self, output_dir):
-        self.output_dir = output_dir
-        self.save_marked_dir = output_dir.joinpath("CheckedOMRs")
-        self.results_dir = output_dir.joinpath("Results")
-        self.manual_dir = output_dir.joinpath("Manual")
-        self.errors_dir = self.manual_dir.joinpath("ErrorFiles")
-        self.multi_marked_dir = self.manual_dir.joinpath("MultiMarkedFiles")
-
-
-def setup_dirs_for_paths(paths):
-    logger.info("Checking Directories...")
-    for save_output_dir in [paths.save_marked_dir]:
-        if not os.path.exists(save_output_dir):
-            logger.info(f"Created : {save_output_dir}")
-            os.makedirs(save_output_dir)
-            os.mkdir(save_output_dir.joinpath("stack"))
-            os.mkdir(save_output_dir.joinpath("_MULTI_"))
-            os.mkdir(save_output_dir.joinpath("_MULTI_", "stack"))
-
-    for save_output_dir in [paths.manual_dir, paths.results_dir]:
-        if not os.path.exists(save_output_dir):
-            logger.info(f"Created : {save_output_dir}")
-            os.makedirs(save_output_dir)
-
-    for save_output_dir in [paths.multi_marked_dir, paths.errors_dir]:
-        if not os.path.exists(save_output_dir):
-            logger.info(f"Created : {save_output_dir}")
-            os.makedirs(save_output_dir)

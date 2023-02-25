@@ -16,14 +16,6 @@ from src.logger import console, logger
 from src.schemas import SCHEMA_JSONS, SCHEMA_VALIDATORS
 
 
-def parse_validation_error(error):
-    return (
-        (error.path[0] if len(error.path) > 0 else "$root"),
-        error.validator,
-        error.message,
-    )
-
-
 def validate_evaluation_json(json_data, evaluation_path):
     logger.info(f"Loading evaluation.json: {evaluation_path}")
     try:
@@ -109,3 +101,11 @@ def validate_config_json(json_data, config_path):
                 table.add_row(key, msg)
         console.print(table, justify="center")
         raise Exception(f"Provided config JSON is Invalid: '{config_path}'")
+
+
+def parse_validation_error(error):
+    return (
+        (error.path[0] if len(error.path) > 0 else "$root"),
+        error.validator,
+        error.message,
+    )
