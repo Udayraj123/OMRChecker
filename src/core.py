@@ -11,6 +11,8 @@ from src.logger import logger
 from src.utils.image import CLAHE_HELPER, ImageUtils
 from src.utils.interaction import InteractionUtils
 
+auto_align_constant_220 = 220
+auto_align_constant_200 = 200
 
 class ImageInstanceOps:
     """Class to hold fine-tuned utilities for a group of images. One instance for each processing directory."""
@@ -63,7 +65,7 @@ class ImageInstanceOps:
                     morph, config.threshold_params.GAMMA_LOW
                 )
                 # TODO: all numbers should come from either constants or config
-                _, morph = cv2.threshold(morph, 220, 220, cv2.THRESH_TRUNC)
+                _, morph = cv2.threshold(morph, auto_align_constant_220, auto_align_constant_220, cv2.THRESH_TRUNC)
                 morph = ImageUtils.normalize_util(morph)
                 self.append_save_img(3, morph)
                 if config.outputs.show_image_level >= 4:
@@ -93,7 +95,7 @@ class ImageInstanceOps:
                 morph_v = cv2.morphologyEx(
                     morph, cv2.MORPH_OPEN, v_kernel, iterations=3
                 )
-                _, morph_v = cv2.threshold(morph_v, 200, 200, cv2.THRESH_TRUNC)
+                _, morph_v = cv2.threshold(morph_v, auto_align_constant_200, auto_align_constant_200, cv2.THRESH_TRUNC)
                 morph_v = 255 - ImageUtils.normalize_util(morph_v)
 
                 if config.outputs.show_image_level >= 3:

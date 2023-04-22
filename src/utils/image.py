@@ -15,6 +15,9 @@ from src.logger import logger
 plt.rcParams["figure.figsize"] = (10.0, 8.0)
 CLAHE_HELPER = cv2.createCLAHE(clipLimit=5.0, tileGridSize=(8, 8))
 
+def calc_width_or_height(pointa, pointb):
+    width = np.sqrt(((pointa[0] - pointb[0]) ** 2) + ((pointa[1] - pointb[1]) ** 2))
+    return width
 
 class ImageUtils:
     """A Static-only Class to hold common image processing utilities & wrappers over OpenCV functions"""
@@ -105,17 +108,16 @@ class ImageUtils:
         (tl, tr, br, bl) = rect
 
         # compute the width of the new image, which will be the
-        width_a = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
-        width_b = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
+        width_a = calc_width_or_height(br , bl)
+        width_b = calc_width_or_height(tr , tl)
 
         max_width = max(int(width_a), int(width_b))
-        # max_width = max(int(np.linalg.norm(br-bl)), int(np.linalg.norm(tr-tl)))
 
         # compute the height of the new image, which will be the
-        height_a = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
-        height_b = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
+        height_a = calc_width_or_height(tr , br)
+        height_b = calc_width_or_height(tl , bl)
+        
         max_height = max(int(height_a), int(height_b))
-        # max_height = max(int(np.linalg.norm(tr-br)), int(np.linalg.norm(tl-br)))
 
         # now that we have the dimensions of the new image, construct
         # the set of destination points to obtain a "birds eye view",
