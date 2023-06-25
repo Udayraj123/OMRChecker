@@ -40,7 +40,9 @@ def validate_evaluation_json(json_data, evaluation_path):
             else:
                 table.add_row(key, msg)
         console.print(table, justify="center")
-        raise Exception(f"Provided Evaluation JSON is Invalid: '{evaluation_path}'")
+        raise Exception(
+            f"Provided Evaluation JSON is Invalid: '{evaluation_path}'"
+        ) from None
 
 
 def validate_template_json(json_data, template_path):
@@ -73,7 +75,9 @@ def validate_template_json(json_data, template_path):
             else:
                 table.add_row(key, msg)
         console.print(table, justify="center")
-        raise Exception(f"Provided Template JSON is Invalid: '{template_path}'")
+        raise Exception(
+            f"Provided Template JSON is Invalid: '{template_path}'"
+        ) from None
 
 
 def validate_config_json(json_data, config_path):
@@ -100,7 +104,7 @@ def validate_config_json(json_data, config_path):
             else:
                 table.add_row(key, msg)
         console.print(table, justify="center")
-        raise Exception(f"Provided config JSON is Invalid: '{config_path}'")
+        raise Exception(f"Provided config JSON is Invalid: '{config_path}'") from None
 
 
 def parse_validation_error(error):
