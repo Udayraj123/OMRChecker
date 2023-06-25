@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 
 from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
+from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 
 
@@ -13,9 +14,16 @@ class FeatureBasedAlignment(ImagePreprocessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         options = self.options
+        config = self.tuning_config
+
         # process reference image
         self.ref_path = self.relative_dir.joinpath(options["reference"])
-        self.ref_img = cv2.imread(str(self.ref_path), cv2.IMREAD_GRAYSCALE)
+        ref_img = cv2.imread(str(self.ref_path), cv2.IMREAD_GRAYSCALE)
+        self.ref_img = ImageUtils.resize_util(
+            ref_img,
+            config.dimensions.processing_width,
+            config.dimensions.processing_height,
+        )
         # get options with defaults
         self.max_features = int(options.get("maxFeatures", 500))
         self.good_match_percent = options.get("goodMatchPercent", 0.15)
@@ -47,10 +55,14 @@ class FeatureBasedAlignment(ImagePreprocessor):
         matcher = cv2.DescriptorMatcher_create(
             cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING
         )
+
+        # create BFMatcher object (alternate matcher)
+        # matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+
         matches = np.array(matcher.match(from_descriptors, self.to_descriptors, None))
 
         # Sort matches by score
-        matches.sort(key=lambda x: x.distance, reverse=False)
+        matches = sorted(matches, key=lambda x: x.distance, reverse=False)
 
         # Remove not so good matches
         num_good_matches = int(len(matches) * self.good_match_percent)
