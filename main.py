@@ -8,6 +8,7 @@
 """
 
 import argparse
+import sys
 from pathlib import Path
 
 from src.entry import entry_point
@@ -28,6 +29,15 @@ def parse_args():
         type=str,
         dest="input_paths",
         help="Specify an input directory.",
+    )
+
+    argparser.add_argument(
+        "-d",
+        "--debug",
+        required=False,
+        dest="debug",
+        action="store_false",
+        help="Enables debugging mode for showing detailed errors",
     )
 
     argparser.add_argument(
@@ -74,6 +84,9 @@ def parse_args():
 
 
 def entry_point_for_args(args):
+    if args["debug"] is True:
+        # Disable tracebacks
+        sys.tracebacklimit = 0
     for root in args["input_paths"]:
         entry_point(
             Path(root),

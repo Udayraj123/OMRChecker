@@ -45,7 +45,6 @@ def print_config_summary(
     evaluation_config,
     args,
 ):
-
     logger.info("")
     table = Table(title="Current Configurations", show_header=False, show_lines=False)
     table.add_column("Key", style="cyan", no_wrap=True)

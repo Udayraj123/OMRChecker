@@ -22,9 +22,10 @@ def setup_mocker_patches(mocker):
 
 def run_entry_point(input_path, output_dir):
     args = {
+        "autoAlign": False,
+        "debug": False,
         "input_paths": [input_path],
         "output_dir": output_dir,
-        "autoAlign": False,
         "setLayout": False,
         "silent": True,
     }

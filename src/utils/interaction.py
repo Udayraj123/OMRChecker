@@ -56,6 +56,8 @@ class InteractionUtils:
         margin = 25
         w += margin
         h += margin
+
+        w, h = w // 2, h // 2
         if image_metrics.window_x + w > image_metrics.window_width:
             image_metrics.window_x = 0
             if image_metrics.window_y + h > image_metrics.window_height:
