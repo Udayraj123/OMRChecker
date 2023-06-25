@@ -1,6 +1,7 @@
 import os
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
 
 from src.tests.test_samples.sample2.boilerplate import (
     CONFIG_BOILERPLATE,
@@ -76,6 +77,7 @@ def test_different_bubble_dimensions(mocker):
     assert str(exception) == "No Error"
 
     results_output_data = extract_output_data(BASE_RESULTS_CSV_PATH)
+
     assert results_output_data.empty
 
     output_data = extract_output_data(BASE_MULTIMARKED_CSV_PATH)

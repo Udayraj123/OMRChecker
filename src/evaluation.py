@@ -175,8 +175,9 @@ class SectionMarkingScheme:
 class EvaluationConfig:
     """Note: this instance will be reused for multiple omr sheets"""
 
-    def __init__(self, local_evaluation_path, template, curr_dir):
-        evaluation_json = open_evaluation_with_validation(local_evaluation_path)
+    def __init__(self, curr_dir, evaluation_path, template, tuning_config):
+        self.path = evaluation_path
+        evaluation_json = open_evaluation_with_validation(evaluation_path)
         options, marking_scheme, source_type = map(
             evaluation_json.get, ["options", "marking_scheme", "source_type"]
         )
@@ -277,6 +278,8 @@ class EvaluationConfig:
             )
             answers_in_order = options["answers_in_order"]
 
+        self.validate_answers(answers_in_order, tuning_config)
+
         self.validate_questions(answers_in_order)
 
         self.marking_scheme, self.question_to_scheme = {}, {}
@@ -298,6 +301,9 @@ class EvaluationConfig:
         self.question_to_answer_matcher = self.parse_answers_and_map_questions(
             answers_in_order
         )
+
+    def __str__(self):
+        return str(self.path)
 
     # Externally called methods have higher abstraction level.
     def prepare_and_validate_omr_response(self, omr_response):
@@ -358,6 +364,36 @@ class EvaluationConfig:
 
     def parse_questions_in_order(self, questions_in_order):
         return parse_fields("questions_in_order", questions_in_order)
+
+    def validate_answers(self, answers_in_order, tuning_config):
+        # TODO: take a answer_key_type as input and add strict validation against the given type
+        # for single correct, multiple answer, weighted answers
+        if tuning_config.outputs.filter_out_multimarked_files:
+            multi_marked_answer = False
+            for answer_item in answers_in_order:
+                if type(answer_item) == str:
+                    # Single correct or multimarked correct
+                    if len(answer_item) > 1:
+                        multi_marked_answer = True
+                if type(answer_item) == list:
+                    # Multiple correct answers
+                    if len(answer_item) > 1 and type(answer_item[1]) == str:
+                        for single_answer in answer_item:
+                            if len(single_answer) > 1:
+                                multi_marked_answer = True
+                    # Single correct weighted answers
+                    if (
+                        len(answer_item) == 2
+                        and type(answer_item[0]) == str
+                        and type(answer_item[1]) == list
+                    ):
+                        if len(answer_item[0]) > 1:
+                            multi_marked_answer = True
+
+                if multi_marked_answer:
+                    raise Exception(
+                        f"Answer key contains multiple correct answer(s), but filter_out_multimarked_files is True. Scoring will get skipped."
+                    )
 
     def validate_questions(self, answers_in_order):
         questions_in_order = self.questions_in_order

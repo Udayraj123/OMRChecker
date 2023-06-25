@@ -4,9 +4,11 @@ from src.schemas.constants import (
     FIELD_STRING_TYPE,
 )
 
+marking_score_regex = "-?(\\d+)(/(\\d+))?"
+
 marking_score = {
     "oneOf": [
-        {"type": "string", "pattern": "-?(\\d+)(/(\\d+))?"},
+        {"type": "string", "pattern": marking_score_regex},
         {"type": "number"},
     ]
 }
@@ -102,12 +104,13 @@ EVALUATION_SCHEMA = {
                                             "oneOf": [
                                                 # standard: single correct, multimarked correct
                                                 {"type": "string"},
-                                                # multiple correct
+                                                # multiple correct answers (for ambiguos/bonus questions)
                                                 {
                                                     "type": "array",
                                                     "items": {"type": "string"},
                                                     "minItems": 2,
                                                 },
+                                                # Single correct weighted answers
                                                 {
                                                     "type": "array",  # two column array for weights
                                                     "items": False,
