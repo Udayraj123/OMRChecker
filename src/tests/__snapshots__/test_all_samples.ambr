@@ -1,3 +1,4 @@
+# serializer version: 1
 # name: test_run_community_Antibodyy
   dict({
     'Manual/ErrorFiles.csv': '''

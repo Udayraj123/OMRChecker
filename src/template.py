@@ -245,6 +245,7 @@ class FieldBlock:
             f"Field Block Labels: {self.name}", field_labels
         )
         self.origin = origin
+        self.bubble_dimensions = bubble_dimensions
         self.calculate_block_dimensions(
             bubble_dimensions,
             bubble_values,
