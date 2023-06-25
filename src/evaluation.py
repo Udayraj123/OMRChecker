@@ -41,10 +41,16 @@ class AnswerMatcher:
                 return "multiple-correct"
             elif (
                 len(answer_item) == 2
-                and type(answer_item[0]) in [str, list]
+                and type(answer_item[0]) == str
                 and type(answer_item[1]) == list
             ):
-                return "multi-weighted"
+                return "multiple-correct-weighted"
+            elif (
+                len(answer_item) == 2
+                and type(answer_item[0]) in list
+                and type(answer_item[1]) == list
+            ):
+                return "answer-weights"
             else:
                 logger.critical(
                     f"Unable to determine answer type for answer item: {answer_item}"
@@ -67,7 +73,7 @@ class AnswerMatcher:
             # no local overrides
             for allowed_answer in parsed_answer:
                 self.marking[f"correct-{allowed_answer}"] = self.marking["correct"]
-        elif answer_type == "multi-weighted":
+        elif answer_type == "multiple-correct-weighted":
             custom_marking = list(map(parse_float_or_fraction, parsed_answer[1]))
             verdict_types_length = min(len(MARKING_VERDICT_TYPES), len(custom_marking))
             # override the given marking
@@ -89,7 +95,7 @@ class AnswerMatcher:
         answer_type = self.answer_type
         if answer_type in ["standard", "multiple-correct"]:
             return self.marking_scheme.section_key
-        elif answer_type == "multi-weighted":
+        elif answer_type == "multiple-correct-weighted":
             return f"Custom: {self.marking}"
 
     def get_verdict_marking(self, marked_answer):
@@ -100,7 +106,7 @@ class AnswerMatcher:
         elif answer_type == "multiple-correct":
             question_verdict = self.get_multiple_correct_verdict(marked_answer)
             return question_verdict, self.marking[question_verdict]
-        elif answer_type == "multi-weighted":
+        elif answer_type == "multiple-correct-weighted":
             question_verdict = self.get_multi_weighted_verdict(marked_answer)
             return question_verdict, self.marking[question_verdict]
 
@@ -129,7 +135,7 @@ class AnswerMatcher:
         answer_type, parsed_answer = self.answer_type, self.parsed_answer
         if answer_type == "multiple-correct":
             return str(parsed_answer)
-        elif answer_type == "multi-weighted":
+        elif answer_type == "multiple-correct-weighted":
             return f"{parsed_answer[0]}"
             # TODO: multi-lines in multi-weights
         return parsed_answer
@@ -278,8 +284,6 @@ class EvaluationConfig:
             )
             answers_in_order = options["answers_in_order"]
 
-        self.validate_answers(answers_in_order, tuning_config)
-
         self.validate_questions(answers_in_order)
 
         self.marking_scheme, self.question_to_scheme = {}, {}
@@ -301,6 +305,7 @@ class EvaluationConfig:
         self.question_to_answer_matcher = self.parse_answers_and_map_questions(
             answers_in_order
         )
+        self.validate_answers(answers_in_order, tuning_config)
 
     def __str__(self):
         return str(self.path)
@@ -366,29 +371,22 @@ class EvaluationConfig:
         return parse_fields("questions_in_order", questions_in_order)
 
     def validate_answers(self, answers_in_order, tuning_config):
-        # TODO: take a answer_key_type as input and add strict validation against the given type
-        # for single correct, multiple answer, weighted answers
+        answer_matcher_map = self.question_to_answer_matcher
         if tuning_config.outputs.filter_out_multimarked_files:
             multi_marked_answer = False
-            for answer_item in answers_in_order:
-                if type(answer_item) == str:
-                    # Single correct or multimarked correct
+            for question, answer_item in zip(self.questions_in_order, answers_in_order):
+                answer_type = answer_matcher_map[question].answer_type
+                if answer_type == "standard":
                     if len(answer_item) > 1:
                         multi_marked_answer = True
-                if type(answer_item) == list:
-                    # Multiple correct answers
-                    if len(answer_item) > 1 and type(answer_item[1]) == str:
-                        for single_answer in answer_item:
-                            if len(single_answer) > 1:
-                                multi_marked_answer = True
-                    # Single correct weighted answers
-                    if (
-                        len(answer_item) == 2
-                        and type(answer_item[0]) == str
-                        and type(answer_item[1]) == list
-                    ):
-                        if len(answer_item[0]) > 1:
+                if answer_type == "multiple-correct":
+                    for single_answer in answer_item:
+                        if len(single_answer) > 1:
                             multi_marked_answer = True
+                            break
+                if answer_type == "multiple-correct-weighted":
+                    if len(answer_item[0]) > 1:
+                        multi_marked_answer = True
 
                 if multi_marked_answer:
                     raise Exception(
