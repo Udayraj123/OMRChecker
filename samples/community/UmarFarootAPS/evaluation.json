@@ -5,6 +5,10 @@
     "should_explain_scoring": true
   },
   "marking_scheme": {
-    "DEFAULT": { "correct": "1", "incorrect": "0", "unmarked": "0" }
+    "DEFAULT": {
+      "correct": "1",
+      "incorrect": "0",
+      "unmarked": "0"
+    }
   }
 }
