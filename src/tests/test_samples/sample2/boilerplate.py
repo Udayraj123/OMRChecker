@@ -35,5 +35,5 @@ CONFIG_BOILERPLATE = {
         "processing_height": 1640,
         "processing_width": 1332,
     },
-    "outputs": {"show_image_level": 0},
+    "outputs": {"show_image_level": 0, "filter_out_multimarked_files": True},
 }

@@ -72,7 +72,6 @@ class ImageInstanceOps:
             # Move them to data class if needed
             # Overlay Transparencies
             alpha = 0.65
-            box_w, box_h = template.bubble_dimensions
             omr_response = {}
             multi_marked, multi_roll = 0, 0
 
@@ -208,6 +207,7 @@ class ImageInstanceOps:
             all_q_vals, all_q_strip_arrs, all_q_std_vals = [], [], []
             total_q_strip_no = 0
             for field_block in template.field_blocks:
+                box_w, box_h = field_block.bubble_dimensions
                 q_std_vals = []
                 for field_block_bubbles in field_block.traverse_bubbles:
                     q_strip_vals = []
@@ -259,6 +259,7 @@ class ImageInstanceOps:
             per_omr_threshold_avg, total_q_strip_no, total_q_box_no = 0, 0, 0
             for field_block in template.field_blocks:
                 block_q_strip_no = 1
+                box_w, box_h = field_block.bubble_dimensions
                 shift = field_block.shift
                 s, d = field_block.origin, field_block.dimensions
                 key = field_block.name[:3]
@@ -430,9 +431,9 @@ class ImageInstanceOps:
             img, template.page_dimensions[0], template.page_dimensions[1]
         )
         final_align = img.copy()
-        box_w, box_h = template.bubble_dimensions
         for field_block in template.field_blocks:
             s, d = field_block.origin, field_block.dimensions
+            box_w, box_h = field_block.bubble_dimensions
             shift = field_block.shift
             if shifted:
                 cv2.rectangle(

@@ -47,9 +47,9 @@ def write_modified(modify_content, boilerplate, sample_json_path):
         json.dump(content, f)
 
 
-def remove_modified(sample_json_path):
-    if os.path.exists(sample_json_path):
-        os.remove(sample_json_path)
+def remove_file(path):
+    if os.path.exists(path):
+        os.remove(path)
 
 
 def generate_write_jsons_and_run(
@@ -59,6 +59,11 @@ def generate_write_jsons_and_run(
     config_boilerplate=None,
     evaluation_boilerplate=None,
 ):
+    if (template_boilerplate or config_boilerplate or evaluation_boilerplate) is None:
+        raise Exception(
+            f"No boilerplates found. Provide atleast one boilerplate to write json."
+        )
+
     def write_jsons_and_run(
         mocker,
         modify_template=None,
@@ -82,9 +87,9 @@ def generate_write_jsons_and_run(
         except Exception as e:
             exception = e
 
-        remove_modified(sample_template_path)
-        remove_modified(sample_config_path)
-        remove_modified(sample_evaluation_path)
+        remove_file(sample_template_path)
+        remove_file(sample_config_path)
+        remove_file(sample_evaluation_path)
 
         return exception
 
