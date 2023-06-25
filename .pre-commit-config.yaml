@@ -2,10 +2,16 @@ exclude: "__snapshots__/.*$"
 default_install_hook_types: [pre-commit, pre-push]
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+    rev: v4.4.0
     hooks:
       - id: check-yaml
         stages: [commit]
+      - id: check-added-large-files
+        args: ['--maxkb=300']
+        fail_fast: false
+        stages: [commit]
+      - id: pretty-format-json
+        args: ['--autofix', '--no-sort-keys']
       - id: end-of-file-fixer
         exclude_types: ["csv", "json"]
         stages: [commit]
@@ -18,17 +24,18 @@ repos:
         args: ["--profile", "black"]
         stages: [commit]
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 23.3.0
     hooks:
       - id: black
+        fail_fast: true
         stages: [commit]
   - repo: https://github.com/pycqa/flake8
-    rev: 3.7.9
+    rev: 6.0.0
     hooks:
       - id: flake8
         args:
-          - "F401,F841" # unused imports, unused variables
-          - "--ignore=E501,W503,E203,E741" # Line too long, Line break occurred before a binary operator, Whitespace before ':'
+          - "--ignore=E501,W503,E203,E741,F541" # Line too long, Line break occurred before a binary operator, Whitespace before ':'
+        fail_fast: true
         stages: [commit]
   - repo: local
     hooks:

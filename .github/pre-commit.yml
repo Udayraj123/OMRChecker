@@ -10,4 +10,4 @@ jobs:
     - uses: actions/setup-python@v3
       with:
         python-version: '3.8'
-    - uses: pre-commit/action@v2.0.3
+    - uses: pre-commit/action@v3.0.0
