@@ -265,12 +265,12 @@ We believe in the power of open source! Currently, OMRChecker is in an intermedi
 
 <details>
 <summary>
-<b>Can I use this code in my work?</b>
+<b>Can I use this code in my (public) work?</b>
 </summary>
 
 OMRChecker can be forked and modified. You are encouraged to play with it and we would love to see your own projects in action!
 
-The only requirement is **disclose usage** of this software in your code.
+The only requirement is **disclose usage** of this software in your (public) code.
 
 It is published under the [GPLv3 license](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE).
 
@@ -281,7 +281,7 @@ It is published under the [GPLv3 license](https://github.com/Udayraj123/OMRCheck
 <b>What are the ways to contribute?</b>
 </summary>
 
-- Help OMRChecker reach more people by giving a star! The Goal is to reach top position for the [OMR Topic](https://github.com/topics/omr)
+<!-- - Help OMRChecker reach more people by giving a star! The Goal is to reach top position for the [OMR Topic](https://github.com/topics/omr) -->
 
 - Join the developer community on [Discord](https://discord.gg/qFv2Vqf) to fix [issues](https://github.com/Udayraj123/OMRChecker/issues) with OMRChecker.
 
