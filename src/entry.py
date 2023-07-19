@@ -36,6 +36,43 @@ def entry_point(input_dir, args):
     return process_dir(input_dir, curr_dir, args)
 
 
+def print_config_summary(
+    curr_dir,
+    omr_files,
+    template,
+    tuning_config,
+    local_config_path,
+    evaluation_config,
+    args,
+):
+    logger.info("")
+    table = Table(title="Current Configurations", show_header=False, show_lines=False)
+    table.add_column("Key", style="cyan", no_wrap=True)
+    table.add_column("Value", style="magenta")
+    table.add_row("Directory Path", f"{curr_dir}")
+    table.add_row("Count of Images", f"{len(omr_files)}")
+    table.add_row("Set Layout Mode ", "ON" if args["setLayout"] else "OFF")
+    table.add_row(
+        "Markers Detection",
+        "ON" if "CropOnMarkers" in template.pre_processors else "OFF",
+    )
+    table.add_row(
+        "Auto Alignment",
+        "ON" if "AutoAlignTemplate" in template.pre_processors else "OFF",
+    )
+    table.add_row("Detected Template Path", f"{template}")
+    if local_config_path:
+        table.add_row("Detected Local Config", f"{local_config_path}")
+    if evaluation_config:
+        table.add_row("Detected Evaluation Config", f"{evaluation_config}")
+
+    table.add_row(
+        "Detected pre-processors",
+        f"{[pp.__class__.__name__ for pp in template.pre_processors]}",
+    )
+    console.print(table, justify="center")
+
+
 def process_dir(
     root_dir,
     curr_dir,
@@ -64,7 +101,7 @@ def process_dir(
     paths = Paths(output_dir)
 
     # look for images in current dir to process
-    exts = ("*.png", "*.jpg", "*.jpeg", "*.PNG", "*.JPG", "*.JPEG")
+    exts = ("*.[pP][nN][gG]", "*.[jJ][pP][gG]", "*.[jJ][pP][eE][gG]")
     omr_files = sorted([f for ext in exts for f in curr_dir.glob(ext)])
 
     # Exclude images (take union over all pre_processors)
@@ -72,6 +109,23 @@ def process_dir(
     if template:
         for pp in template.pre_processors:
             excluded_files.extend(Path(p) for p in pp.exclude_files())
+
+    local_evaluation_path = curr_dir.joinpath(constants.EVALUATION_FILENAME)
+    if not args["setLayout"] and os.path.exists(local_evaluation_path):
+        if not local_template_exists:
+            logger.warning(
+                f"Found an evaluation file without a parent template file: {local_evaluation_path}"
+            )
+        evaluation_config = EvaluationConfig(
+            curr_dir,
+            local_evaluation_path,
+            template,
+            tuning_config,
+        )
+
+        excluded_files.extend(
+            Path(exclude_file) for exclude_file in evaluation_config.get_exclude_files()
+        )
 
     omr_files = [f for f in omr_files if f not in excluded_files]
 
@@ -85,48 +139,22 @@ def process_dir(
             raise Exception(
                 f"No template file found in the directory tree of {curr_dir}"
             )
-        logger.info("")
-        table = Table(
-            title="Current Configurations", show_header=False, show_lines=False
-        )
-        table.add_column("Key", style="cyan", no_wrap=True)
-        table.add_column("Value", style="magenta")
-        table.add_row("Directory Path", f"{curr_dir}")
-        table.add_row("Count of Images", f"{len(omr_files)}")
-        table.add_row(
-            "Markers Detection",
-            "ON" if "CropOnMarkers" in template.pre_processors else "OFF",
-        )
-        table.add_row("Auto Alignment", f"{tuning_config.alignment_params.auto_align}")
-        table.add_row("Detected Template Path", f"{template}")
-        table.add_row(
-            "Detected pre-processors",
-            f"{[pp.__class__.__name__ for pp in template.pre_processors]}",
-        )
-        console.print(table, justify="center")
 
         setup_dirs_for_paths(paths)
         outputs_namespace = setup_outputs_for_template(paths, template)
 
+        print_config_summary(
+            curr_dir,
+            omr_files,
+            template,
+            tuning_config,
+            local_config_path,
+            evaluation_config,
+            args,
+        )
         if args["setLayout"]:
             show_template_layouts(omr_files, template, tuning_config)
         else:
-            local_evaluation_path = curr_dir.joinpath(constants.EVALUATION_FILENAME)
-            if os.path.exists(local_evaluation_path):
-                if not local_template_exists:
-                    logger.warning(
-                        f"Found an evaluation file without a parent template file: {local_evaluation_path}"
-                    )
-                evaluation_config = EvaluationConfig(
-                    local_evaluation_path, template, curr_dir
-                )
-
-                excluded_files.extend(
-                    Path(exclude_file)
-                    for exclude_file in evaluation_config.get_exclude_files()
-                )
-
-            omr_files = [f for f in omr_files if f not in excluded_files]
             process_files(
                 omr_files,
                 template,
@@ -159,7 +187,7 @@ def show_template_layouts(omr_files, template, tuning_config):
         file_name = file_path.name
         file_path = str(file_path)
         in_omr = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-        in_omr = template.image_instance_ops.apply_preprocessors(
+        in_omr, template = template.image_instance_ops.apply_preprocessors(
             file_path, in_omr, template
         )
         template_layout = template.image_instance_ops.draw_template_layout(
@@ -196,7 +224,9 @@ def process_files(
 
         template.image_instance_ops.append_save_img(1, in_omr)
 
-        in_omr = template.image_instance_ops.apply_preprocessors(
+        # TODO: use try catch here and store paths to error files
+        # Note: the returned template is a copy
+        in_omr, template = template.image_instance_ops.apply_preprocessors(
             file_path, in_omr, template
         )
 
@@ -272,7 +302,7 @@ def process_files(
 
         outputs_namespace.OUTPUT_SET.append([file_name] + resp_array)
 
-        if multi_marked == 0:
+        if multi_marked == 0 or not tuning_config.outputs.filter_out_multimarked_files:
             STATS.files_not_moved += 1
             new_file_path = save_dir.joinpath(file_id)
             # Enter into Results sheet-

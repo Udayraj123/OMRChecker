@@ -5,8 +5,10 @@ TEMPLATE_BOILERPLATE = {
         {
             "name": "CropOnMarkers",
             "options": {
+                "type": "CUSTOM_MARKER",
                 "relativePath": "omr_marker.jpg",
-                "sheetToMarkerWidthRatio": 17,
+                "dimensions": [40, 40],
+                "tuningOptions": {"marker_rescale_range": [80, 120]},
             },
         }
     ],
@@ -35,5 +37,5 @@ CONFIG_BOILERPLATE = {
         "processing_height": 1640,
         "processing_width": 1332,
     },
-    "outputs": {"show_image_level": 0},
+    "outputs": {"show_image_level": 0, "filter_out_multimarked_files": True},
 }

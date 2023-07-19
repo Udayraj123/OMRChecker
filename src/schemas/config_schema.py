@@ -31,17 +31,6 @@ CONFIG_SCHEMA = {
                 },
             },
         },
-        "alignment_params": {
-            "type": "object",
-            "additionalProperties": False,
-            "properties": {
-                "auto_align": {"type": "boolean"},
-                "match_col": {"type": "integer", "minimum": 0, "maximum": 10},
-                "max_steps": {"type": "integer", "minimum": 1, "maximum": 100},
-                "stride": {"type": "integer", "minimum": 1, "maximum": 10},
-                "thickness": {"type": "integer", "minimum": 1, "maximum": 10},
-            },
-        },
         "outputs": {
             "type": "object",
             "additionalProperties": False,
@@ -49,6 +38,8 @@ CONFIG_SCHEMA = {
                 "show_image_level": {"type": "integer", "minimum": 0, "maximum": 6},
                 "save_image_level": {"type": "integer", "minimum": 0, "maximum": 6},
                 "save_detections": {"type": "boolean"},
+                # This option moves multimarked files into a separate folder for manual checking, skipping evaluation
+                "filter_out_multimarked_files": {"type": "boolean"},
             },
         },
     },

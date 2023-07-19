@@ -5,20 +5,41 @@ Credits: https://www.learnopencv.com/image-alignment-feature-based-using-opencv-
 import cv2
 import numpy as np
 
-from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
+from src.processors.interfaces.ImageTemplatePreprocessor import (
+    ImageTemplatePreprocessor,
+)
+from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 
 
-class FeatureBasedAlignment(ImagePreprocessor):
+class FeatureBasedAlignment(ImageTemplatePreprocessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         options = self.options
+        config = self.tuning_config
+
         # process reference image
         self.ref_path = self.relative_dir.joinpath(options["reference"])
-        self.ref_img = cv2.imread(str(self.ref_path), cv2.IMREAD_GRAYSCALE)
+        ref_img = cv2.imread(str(self.ref_path), cv2.IMREAD_GRAYSCALE)
+        self.ref_img = ImageUtils.resize_util(
+            ref_img,
+            config.dimensions.processing_width,
+            config.dimensions.processing_height,
+        )
         # get options with defaults
         self.max_features = int(options.get("maxFeatures", 500))
         self.good_match_percent = options.get("goodMatchPercent", 0.15)
+
+        matcher_type = options.get(
+            "matcherType", "DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING"
+        )
+        if matcher_type == "NORM_HAMMING":
+            self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+        elif matcher_type == "DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING":
+            self.matcher = cv2.DescriptorMatcher_create(
+                cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING
+            )
+
         self.transform_2_d = options.get("2d", False)
         # Extract keypoints and description of source image
         self.orb = cv2.ORB_create(self.max_features)
@@ -32,7 +53,7 @@ class FeatureBasedAlignment(ImagePreprocessor):
     def exclude_files(self):
         return [self.ref_path]
 
-    def apply_filter(self, image, _file_path):
+    def apply_filter(self, image, _template, _file_path):
         config = self.tuning_config
         # Convert images to grayscale
         # im1Gray = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
@@ -44,13 +65,13 @@ class FeatureBasedAlignment(ImagePreprocessor):
         from_keypoints, from_descriptors = self.orb.detectAndCompute(image, None)
 
         # Match features.
-        matcher = cv2.DescriptorMatcher_create(
-            cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING
+
+        matches = np.array(
+            self.matcher.match(from_descriptors, self.to_descriptors, None)
         )
-        matches = np.array(matcher.match(from_descriptors, self.to_descriptors, None))
 
         # Sort matches by score
-        matches.sort(key=lambda x: x.distance, reverse=False)
+        matches = sorted(matches, key=lambda x: x.distance, reverse=False)
 
         # Remove not so good matches
         num_good_matches = int(len(matches) * self.good_match_percent)

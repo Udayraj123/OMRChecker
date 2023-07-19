@@ -30,5 +30,5 @@ If applicable, add screenshots to help explain your problem.
 
 **Additional context**
 Add any other context about the problem here.
-
-Error Stack trace. Sample images used, etc
+ - Error Stack trace (using --debug flag).
+ - Sample images used, etc

@@ -4,9 +4,11 @@ from src.schemas.constants import (
     FIELD_STRING_TYPE,
 )
 
+marking_score_regex = "-?(\\d+)(/(\\d+))?"
+
 marking_score = {
     "oneOf": [
-        {"type": "string", "pattern": "-?(\\d+)(/(\\d+))?"},
+        {"type": "string", "pattern": marking_score_regex},
         {"type": "number"},
     ]
 }
@@ -100,21 +102,24 @@ EVALUATION_SCHEMA = {
                                         "type": "array",
                                         "items": {
                                             "oneOf": [
-                                                # standard: single correct, multimarked correct
+                                                # "standard": single correct, multimarked single-correct
+                                                # Example: "q1" --> 'AB'
                                                 {"type": "string"},
-                                                # multiple correct
+                                                # "multiple-correct": multiple correct answers (for ambiguos/bonus questions)
+                                                # Example: "q1" --> [ 'A', 'B' ]
                                                 {
                                                     "type": "array",
                                                     "items": {"type": "string"},
                                                     "minItems": 2,
                                                 },
+                                                # "multiple-correct-weighted": array of answer-wise weights
+                                                # Example: "q1" --> [['A', 1], ['B', 2], ['C', 3]]
                                                 {
-                                                    "type": "array",  # two column array for weights
+                                                    "type": "array",
                                                     "items": False,
                                                     "maxItems": 2,
                                                     "minItems": 2,
                                                     "prefixItems": [
-                                                        # first item is string of correct answer
                                                         {"type": "string"},
                                                         {
                                                             "type": "array",
