@@ -73,7 +73,6 @@ def test_different_bubble_dimensions(mocker):
         template["fieldBlocks"]["MCQBlock1a1"]["bubbleDimensions"] = [32, 32]
         # Incorrect bubble size for MCQBlock1a11
         template["fieldBlocks"]["MCQBlock1a11"]["bubbleDimensions"] = [5, 5]
-        print(template)
 
     remove_file(BASE_RESULTS_CSV_PATH)
     remove_file(BASE_MULTIMARKED_CSV_PATH)
