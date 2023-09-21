@@ -210,6 +210,39 @@ Command: <code>python3 -m pip install --user --upgrade pip</code>
 	Link to Solution: <a href="https://github.com/Udayraj123/OMRChecker/issues/70#issuecomment-1268094136">#70</a>
 </details>
 
+### Running in a Container Runtime (Docker or Podman)
+
+The repo contains a containerfile that can be used to run ORM checker without 
+interfering with a system python installation.
+The following instructions are based on using `docker` but can be adapted to
+`podman` by exchanging the names of the two programs.
+
+
+The container can be built by:
+
+1. Cloning the repository.
+```bash
+git clone https://github.com/Udayraj123/OMRChecker
+cd OMRChecker/
+```
+1. Building the container image.
+```bash
+docker build -f containerfile -t ormchecker:python3.11-slim
+```
+1. Creating input and output directories.
+```bash
+cd /path/to/where/you/will/grade/exams
+mkdir inputs
+mkdir outputs
+```
+1. Adding the exam images, target image, and `template.json` to the `inputs` directory as normal.
+1. Running the container, which will mark the exams automatically and place them in `./outputs/`.
+```bash
+docker run -t --rm -v ./inputs/:/app/inputs/ -v ./outputs/:/app/outputs/ ormchecker:python3.11-slim 
+```
+
+
+
 ## OMRChecker for custom OMR Sheets
 
 1. First, [create your own template.json](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide).
