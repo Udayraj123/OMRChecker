@@ -183,16 +183,38 @@ def show_template_layouts(omr_files, template, tuning_config):
     for file_path in omr_files:
         file_name = file_path.name
         file_path = str(file_path)
+
+        # Load the image
         in_omr = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-        in_omr = template.image_instance_ops.apply_preprocessors(
-            file_path, in_omr, template
-        )
-        template_layout = template.image_instance_ops.draw_template_layout(
-            in_omr, template, shifted=False, border=2
-        )
-        InteractionUtils.show(
-            f"Template Layout: {file_name}", template_layout, 1, 1, config=tuning_config
-        )
+
+        # Apply preprocessors if any
+        if hasattr(template.image_instance_ops, "apply_preprocessors"):
+            in_omr = template.image_instance_ops.apply_preprocessors(
+                file_path, in_omr, template
+            )
+
+        # Draw the layout on the image
+        if hasattr(template.image_instance_ops, "draw_template_layout"):
+            template_layout = template.image_instance_ops.draw_template_layout(
+                in_omr, template, shifted=False, border=1
+            )
+        else:
+            # Fallback if draw_template_layout is not available
+            template_layout = in_omr
+
+        # Save the layout image
+        save_path = f"inputs/{file_name}_layout.jpg"
+        success = cv2.imwrite(save_path, in_omr)
+
+        if not success:
+            print(f"Failed to save image: {save_path}")
+
+        # Display the image with the template layout
+        cv2.imshow(f"Template Layout: {file_name}", template_layout)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+
 
 
 def process_files(
