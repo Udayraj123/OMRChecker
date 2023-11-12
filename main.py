@@ -97,3 +97,4 @@ def entry_point_for_args(args):
 if __name__ == "__main__":
     args = parse_args()
     entry_point_for_args(args)
+

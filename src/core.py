@@ -426,7 +426,7 @@ class ImageInstanceOps:
             raise e
 
     @staticmethod
-    def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-1):
+    def draw_template_layout(img, template, shifted=False, draw_qvals=False, border=-1):
         img = ImageUtils.resize_util(
             img, template.page_dimensions[0], template.page_dimensions[1]
         )
