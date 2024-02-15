@@ -1,6 +1,6 @@
 # OMR Checker
 
-Read Optical Mark Recognitions (OMRs) fast and accurately using a scanner 🖨 or your phone 🤳.
+Read OMR sheets fast and accurately using a scanner 🖨 or your phone 🤳.
 
 ## What is OMR?
 
