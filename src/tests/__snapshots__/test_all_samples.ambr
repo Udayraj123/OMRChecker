@@ -1,4 +1,39 @@
 # serializer version: 1
+# name: test_run_answer_key_using_csv
+  dict({
+    'Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+  
+    ''',
+    'Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+  
+    ''',
+    'Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+      "adrian_omr.png","samples/answer-key/using-csv/adrian_omr.png","outputs/answer-key/using-csv/CheckedOMRs/adrian_omr.png","5.0","C","E","A","B","B"
+  
+    ''',
+  })
+# ---
+# name: test_run_answer_key_weighted_answers
+  dict({
+    'images/Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+  
+    ''',
+    'images/Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+  
+    ''',
+    'images/Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+      "adrian_omr.png","samples/answer-key/weighted-answers/images/adrian_omr.png","outputs/answer-key/weighted-answers/images/CheckedOMRs/adrian_omr.png","5.5","B","E","A","C","B"
+      "adrian_omr_2.png","samples/answer-key/weighted-answers/images/adrian_omr_2.png","outputs/answer-key/weighted-answers/images/CheckedOMRs/adrian_omr_2.png","10.0","C","E","A","B","B"
+  
+    ''',
+  })
+# ---
 # name: test_run_community_Antibodyy
   dict({
     'Manual/ErrorFiles.csv': '''
@@ -97,7 +132,7 @@
     'scans/Results/Results_05AM.csv': '''
       "file_id","input_path","output_path","score","Roll_no","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100","q101","q102","q103","q104","q105","q106","q107","q108","q109","q110","q111","q112","q113","q114","q115","q116","q117","q118","q119","q120","q121","q122","q123","q124","q125","q126","q127","q128","q129","q130","q131","q132","q133","q134","q135","q136","q137","q138","q139","q140","q141","q142","q143","q144","q145","q146","q147","q148","q149","q150","q151","q152","q153","q154","q155","q156","q157","q158","q159","q160","q161","q162","q163","q164","q165","q166","q167","q168","q169","q170","q171","q172","q173","q174","q175","q176","q177","q178","q179","q180","q181","q182","q183","q184","q185","q186","q187","q188","q189","q190","q191","q192","q193","q194","q195","q196","q197","q198","q199","q200"
       "scan-type-1.jpg","samples/community/UmarFarootAPS/scans/scan-type-1.jpg","outputs/community/UmarFarootAPS/scans/CheckedOMRs/scan-type-1.jpg","49.0","2468","A","C","B","C","A","D","B","C","B","D","C","A","C","D","B","C","A","B","C","A","C","B","D","C","A","B","D","C","A","C","B","D","B","A","C","D","B","C","A","C","D","A","C","D","A","B","D","C","A","C","D","B","C","A","C","D","B","C","D","A","B","C","B","C","D","B","D","A","C","B","D","A","B","C","B","A","C","D","B","A","C","B","C","B","A","D","B","A","C","D","B","D","B","C","B","D","A","C","B","C","B","C","D","B","C","A","B","C","A","D","C","B","D","B","A","B","C","D","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","B","A","C","B","A","C","A","B","C","B","C","B","A","C","A","C","B","B","C","B","A","C","A","B","A","B","A","B","C","D","B","C","A","C","D","C","A","C","B","A","C","A","B","C","B","D","A","B","C","D","C","B","B","C","A","B","C","B"
-      "scan-type-2.jpg","samples/community/UmarFarootAPS/scans/scan-type-2.jpg","outputs/community/UmarFarootAPS/scans/CheckedOMRs/scan-type-2.jpg","18.333333333333336","0234","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","A","D","","","AD","","","","A","D","","","","","","","D","A","","D","","A","","D","","","","A","","","C","","","D","","","A","","","","D","","C","","A","","C","","D","B","B","","","A","","D","","","","D","","","","","A","D","","","B","","","D","","","A","","","D","","","","","","D","","","","A","D","","","A","","B","","D","","","","C","C","D","D","A","","D","","A","D","","","D","","B","D","","","D","","D","B","","","","D","","A","","","","D","","B","","","","","","D","","","A","","","A","","D","","","D"
+      "scan-type-2.jpg","samples/community/UmarFarootAPS/scans/scan-type-2.jpg","outputs/community/UmarFarootAPS/scans/CheckedOMRs/scan-type-2.jpg","20.0","0234","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","A","D","","","AD","","","","A","D","","","","","","","D","A","","D","","A","","D","","","","A","","","C","","","D","","","A","","","","D","","C","","A","","C","","D","B","B","","","A","","D","","","","D","","","","","A","D","","","B","","","D","","","A","","","D","","","","","","D","","","","A","D","","","A","","B","","D","","","","C","C","D","D","A","","D","","A","D","","","D","","B","D","","","D","","D","B","","","","D","","A","","","","D","","B","","","","","","D","","","A","","","A","","D","","","D"
   
     ''',
   })
@@ -148,8 +183,8 @@
     ''',
     'AdrianSample/Results/Results_05AM.csv': '''
       "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
-      "adrian_omr.png","samples/sample2/AdrianSample/adrian_omr.png","outputs/sample2/AdrianSample/CheckedOMRs/adrian_omr.png","5.0","B","E","A","C","B"
-      "adrian_omr_2.png","samples/sample2/AdrianSample/adrian_omr_2.png","outputs/sample2/AdrianSample/CheckedOMRs/adrian_omr_2.png","3.0","C","E","A","B","B"
+      "adrian_omr.png","samples/sample2/AdrianSample/adrian_omr.png","outputs/sample2/AdrianSample/CheckedOMRs/adrian_omr.png","0","B","E","A","C","B"
+      "adrian_omr_2.png","samples/sample2/AdrianSample/adrian_omr_2.png","outputs/sample2/AdrianSample/CheckedOMRs/adrian_omr_2.png","0","C","E","A","B","B"
   
     ''',
   })
