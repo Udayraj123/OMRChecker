@@ -29,6 +29,16 @@ CONFIG_SCHEMA = {
                     "enum": ["white", "black"],
                     "type": "string",
                 },
+                "GLOBAL_PAGE_THRESHOLD_WHITE": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255,
+                },
+                "GLOBAL_PAGE_THRESHOLD_BLACK": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255,
+                },
             },
         },
         "outputs": {

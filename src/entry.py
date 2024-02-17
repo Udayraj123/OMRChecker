@@ -6,6 +6,7 @@
  Github: https://github.com/Udayraj123
 
 """
+
 import os
 from csv import QUOTE_NONNUMERIC
 from pathlib import Path
@@ -51,14 +52,13 @@ def print_config_summary(
     table.add_column("Value", style="magenta")
     table.add_row("Directory Path", f"{curr_dir}")
     table.add_row("Count of Images", f"{len(omr_files)}")
+    table.add_row(
+        "Debug Mode ", "ON" if args["debug"] else "OFF (use --debug to see errors)"
+    )
     table.add_row("Set Layout Mode ", "ON" if args["setLayout"] else "OFF")
     table.add_row(
         "Markers Detection",
         "ON" if "CropOnMarkers" in template.pre_processors else "OFF",
-    )
-    table.add_row(
-        "Auto Alignment",
-        "ON" if "AutoAlignTemplate" in template.pre_processors else "OFF",
     )
     table.add_row("Detected Template Path", f"{template}")
     if local_config_path:
@@ -69,6 +69,17 @@ def print_config_summary(
     table.add_row(
         "Detected pre-processors",
         f"{[pp.__class__.__name__ for pp in template.pre_processors]}",
+    )
+
+    alignment_preprocessors = list(
+        filter(
+            lambda p: p in template.pre_processors,
+            ["AutoAlignTemplate", "FeatureBasedAlignment"],
+        )
+    )
+    table.add_row(
+        "Auto Alignment",
+        (alignment_preprocessors if len(alignment_preprocessors) else "OFF"),
     )
     console.print(table, justify="center")
 

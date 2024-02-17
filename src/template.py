@@ -6,6 +6,7 @@
  Github: https://github.com/Udayraj123
 
 """
+
 from src.constants import FIELD_TYPES
 from src.core import ImageInstanceOps
 from src.logger import logger
@@ -212,6 +213,7 @@ class Template:
 class FieldBlock:
     def __init__(self, block_name, field_block_object):
         self.name = block_name
+        self.plot_bin_name = block_name
         self.shift_x, self.shift_y = 0, 0
         self.setup_field_block(field_block_object)
 
@@ -300,14 +302,16 @@ class FieldBlock:
             field_bubbles = []
             for bubble_value in bubble_values:
                 field_bubbles.append(
-                    Bubble(bubble_point.copy(), field_label, field_type, bubble_value)
+                    FieldBubble(
+                        bubble_point.copy(), field_label, field_type, bubble_value
+                    )
                 )
                 bubble_point[_h] += bubbles_gap
             self.traverse_bubbles.append(field_bubbles)
             lead_point[_v] += labels_gap
 
 
-class Bubble:
+class FieldBubble:
     """
     Container for a Point Box on the OMR
 
@@ -317,6 +321,8 @@ class Bubble:
     """
 
     def __init__(self, pt, field_label, field_type, field_value):
+        self.name = f"{field_label}_{field_value}"
+        self.plot_bin_name = field_label
         self.x = round(pt[0])
         self.y = round(pt[1])
         self.field_label = field_label

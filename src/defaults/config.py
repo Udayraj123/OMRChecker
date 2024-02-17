@@ -15,6 +15,8 @@ CONFIG_DEFAULTS = DotMap(
             "CONFIDENT_SURPLUS": 5,
             "JUMP_DELTA": 30,
             "PAGE_TYPE_FOR_THRESHOLD": "white",
+            "GLOBAL_PAGE_THRESHOLD_WHITE": 200,
+            "GLOBAL_PAGE_THRESHOLD_BLACK": 100,
         },
         "outputs": {
             "show_image_level": 0,
