@@ -13,6 +13,7 @@ from matplotlib import colormaps
 
 import src.constants as constants
 from src.logger import logger
+from src.template import BlockStdMeanValue, BubbleMeanValue
 from src.utils.image import ImageUtils
 
 
@@ -83,18 +84,22 @@ class ImageInstanceOps:
             q_nums = {"int": [], "mcq": []}
 
         # Get mean bubbleValues n other stats
-        global_bubble_means_and_refs, all_q_strip_arrs, global_std_vals_and_refs = (
+        (
+            global_bubble_means_and_refs,
+            field_number_to_block_bubble_refs,
+            global_std_vals_and_refs,
+        ) = (
             [],
             [],
             [],
         )
-        total_q_strip_no = 0
+        absolute_field_block_number = 0
         for field_block in template.field_blocks:
             field_block_std_vals_and_refs = []
             box_w, box_h = field_block.bubble_dimensions
             for field_block_bubbles in field_block.traverse_bubbles:
-                q_strip_bubbles = []
-                q_strip_bubble_means = []
+                field_bubble_means = []
+                field_bubble_means_and_refs = []
                 for field_bubble in field_block_bubbles:
                     # TODO: move this responsibility into the plugin(not pre-processor) (of shifting every point)
                     # shifted
@@ -104,22 +109,26 @@ class ImageInstanceOps:
                     )
                     rect = [y, y + box_h, x, x + box_w]
                     bubble_mean = cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]
-                    q_strip_bubble_means.append(bubble_mean)
-                    q_strip_bubbles.append(
-                        [bubble_mean, field_bubble]
+                    field_bubble_means.append(bubble_mean)
+                    field_bubble_means_and_refs.append(
+                        # TODO: create a tiny class with mean + bubble reference
+                        BubbleMeanValue(bubble_mean, field_bubble)
                         # TODO: cross/check mark detection support (#167)
                         # detectCross(img, rect) ? 0 : 255
                     )
-                field_block_std = round(np.std(q_strip_bubble_means), 2)
-                field_block_std_vals_and_refs.append([field_block_std, field_block])
-                all_q_strip_arrs.append(q_strip_bubble_means)
-                # _, _, _ = get_global_threshold(q_strip_bubbles, "QStrip Plot",
+                field_block_std = round(np.std(field_bubble_means), 2)
+                field_block_std_vals_and_refs.append(
+                    BlockStdMeanValue(field_block_std, field_block)
+                )
+
+                field_number_to_block_bubble_refs.append(field_bubble_means_and_refs)
+                # _, _, _ = get_global_threshold(field_bubble_means_and_refs, "QStrip Plot",
                 #   plot_show=False, sort_in_plot=True)
                 # hist = getPlotImg()
                 # InteractionUtils.show("QStrip "+field_block_bubbles[0].field_label, hist, 0, 1,config=config)
-                global_bubble_means_and_refs.extend(q_strip_bubbles)
-                # print(total_q_strip_no, field_block_bubbles[0].field_label, field_block_std_vals_and_refs[len(field_block_std_vals_and_refs)-1])
-                total_q_strip_no += 1
+                global_bubble_means_and_refs.extend(field_bubble_means_and_refs)
+                # print(absolute_field_block_number, field_block_bubbles[0].field_label, field_block_std_vals_and_refs[len(field_block_std_vals_and_refs)-1])
+                absolute_field_block_number += 1
             global_std_vals_and_refs.extend(field_block_std_vals_and_refs)
 
         (
@@ -163,7 +172,7 @@ class ImageInstanceOps:
 
         # Note: Plotting takes Significant times here --> Change Plotting args
         # to support show_image_level
-        global_thr, _, _ = self.get_global_threshold(
+        global_threshold_for_image, _, _ = self.get_global_threshold(
             global_bubble_means_and_refs,  # , looseness=4
             global_default_threshold,
             plot_title="Mean Intensity Histogram",
@@ -175,7 +184,7 @@ class ImageInstanceOps:
         )
 
         logger.info(
-            f"Thresholding:\tglobal_thr: {round(global_thr, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_thr == 255) else ''}"
+            f"Thresholding:\t global_threshold_for_image: {round(global_threshold_for_image, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_threshold_for_image == 255) else ''}"
         )
         # plt.show()
         # hist = getPlotImg()
@@ -188,47 +197,78 @@ class ImageInstanceOps:
         #     appendSaveImg(5,hist)
         #     appendSaveImg(2,hist)
 
-        per_omr_threshold_avg, total_q_strip_no, total_q_box_no = 0, 0, 0
+        per_omr_threshold_avg, absolute_field_block_number = 0, 0
         for field_block in template.field_blocks:
-            block_q_strip_no = 1
+            block_field_number = 1
             key = field_block.name[:3]
             box_w, box_h = field_block.bubble_dimensions
+
+            # TODO: traverse field-wise but get bubble references instead
             for field_block_bubbles in field_block.traverse_bubbles:
                 # All Black or All White case
                 no_outliers = (
-                    global_std_vals_and_refs[total_q_strip_no][0] < global_std_thresh
+                    global_std_vals_and_refs[absolute_field_block_number].mean_value
+                    < global_std_thresh
                 )
-                # print(total_q_strip_no, field_block_bubbles[0].field_label,
-                #   global_std_vals_and_refs[total_q_strip_no][0], "no_outliers:", no_outliers)
-                per_q_strip_threshold = self.get_local_threshold(
-                    all_q_strip_arrs[total_q_strip_no],
-                    global_thr,
+                # print(absolute_field_block_number, field_block_bubbles[0].field_label,
+                #   global_std_vals_and_refs[absolute_field_block_number].mean_value, "no_outliers:", no_outliers)
+
+                # Note: field_block level local threshold works better than field_level due to less chances of fully-marked block
+                field_block_bubble_refs = field_number_to_block_bubble_refs[
+                    absolute_field_block_number
+                ]
+                field_block_local_threshold = self.get_local_threshold(
+                    field_block_bubble_refs,
+                    global_threshold_for_image,
                     no_outliers,
-                    f"Mean Intensity Histogram for {key}.{field_block_bubbles[0].field_label}.{block_q_strip_no}",
-                    field_block_bubbles[0].field_label
+                    plot_title=f"Mean Intensity Histogram for {key}.{field_block_bubbles[0].field_label}.block{block_field_number}",
+                    plot_show=field_block_bubbles[0].field_label
                     in ["q72", "q52", "roll5"],  # Temp
                     # config.outputs.show_image_level >= 6,
                 )
-                # print(field_block_bubbles[0].field_label,key,block_q_strip_no, "THR: ",
-                #   round(per_q_strip_threshold,2))
-                per_omr_threshold_avg += per_q_strip_threshold
+                # print(field_block_bubbles[0].field_label,key,block_field_number, "THR: ",
+                #   round(field_block_local_threshold,2))
+                per_omr_threshold_avg += field_block_local_threshold
 
-                # TODO: get rid of total_q_box_no
-                detected_bubbles = []
-                for bubble in field_block_bubbles:
-                    bubble_is_marked = (
-                        per_q_strip_threshold
-                        > global_bubble_means_and_refs[total_q_box_no][0]
+                # TODO: move to util and pass the threshold
+
+                @staticmethod
+                def update_field_bubbles_detection(
+                    field_block_bubble_refs, field_threshold
+                ):
+                    for bubble in field_block_bubble_refs:
+                        bubble_is_marked = field_threshold > bubble.mean_value
+                        bubble.is_marked = bubble_is_marked
+
+                field_block_bubble_refs_copy = [
+                    deepcopy(bubble) for bubble in field_block_bubble_refs
+                ]
+                update_field_bubbles_detection(
+                    field_block_bubble_refs_copy, global_threshold_for_image
+                )
+                update_field_bubbles_detection(
+                    field_block_bubble_refs, field_block_local_threshold
+                )
+                if field_block_bubble_refs != field_block_bubble_refs_copy:
+                    logger.warning(
+                        "detected_bubbles_parity = False",
+                        field_block_bubble_refs_copy,
+                        field_block_bubble_refs,
                     )
-                    total_q_box_no += 1
+                else:
+                    logger.info(
+                        "detected_bubbles_parity = True",
+                        field_block_bubble_refs_copy,
+                        field_block_bubble_refs,
+                    )
 
+                for bubble in field_block_bubble_refs:
                     x, y, field_value = (
                         bubble.x + field_block.shift_x,
                         bubble.y + field_block.shift_y,
                         bubble.field_value,
                     )
-                    if bubble_is_marked:
-                        detected_bubbles.append(bubble)
+                    if bubble.is_marked:
                         # Draw the shifted box
                         cv2.rectangle(
                             final_marked,
@@ -262,6 +302,9 @@ class ImageInstanceOps:
                             -1,
                         )
 
+                detected_bubbles = [
+                    bubble for bubble in field_block_bubble_refs if bubble.is_marked
+                ]
                 for bubble in detected_bubbles:
                     field_label, field_value = (
                         bubble.field_label,
@@ -278,26 +321,31 @@ class ImageInstanceOps:
                     # multi_roll = multi_marked_local and "Roll" in str(q)
                     multi_marked = multi_marked or multi_marked_local
 
+                # Empty value logic
                 if len(detected_bubbles) == 0:
+                    # TODO: fix this hardcoding [0]
                     field_label = field_block_bubbles[0].field_label
                     omr_response[field_label] = field_block.empty_val
 
-                if config.outputs.show_image_level >= 5:
-                    if key in all_c_box_vals:
-                        q_nums[key].append(f"{key[:2]}_c{str(block_q_strip_no)}")
-                        all_c_box_vals[key].append(all_q_strip_arrs[total_q_strip_no])
+                #         # TODO: fix after all_c_box_vals is refactored
+                # if config.outputs.show_image_level >= 5:
+                #     if key in all_c_box_vals:
+                #         q_nums[key].append(f"{key[:2]}_c{str(block_field_number)}")
+                #         all_c_box_vals[key].append(field_number_to_block_bubble_refs[absolute_field_block_number])
 
-                block_q_strip_no += 1
-                total_q_strip_no += 1
+                block_field_number += 1
+                absolute_field_block_number += 1
             # /for field_block
 
         overall_confidence, fields_confidence = self.get_confidence_metrics()
 
         underconfident_fields = filter(lambda x: x.confidence < 0.8, fields_confidence)
 
+        logger.info(name, overall_confidence, underconfident_fields)
+
         # TODO: Make the plot for underconfident_fields
 
-        per_omr_threshold_avg /= total_q_strip_no
+        per_omr_threshold_avg /= absolute_field_block_number
         per_omr_threshold_avg = round(per_omr_threshold_avg, 2)
         # Translucent
         cv2.addWeighted(final_marked, alpha, transp_layer, 1 - alpha, 0, final_marked)
@@ -341,6 +389,20 @@ class ImageInstanceOps:
                 self.save_image_stacks(i + 1, name, save_dir)
 
         return omr_response, final_marked, multi_marked, multi_roll
+
+    def get_confidence_metrics(self):
+        config = self.tuning_config
+        overall_confidence, fields_confidence = 0.0, []
+        PAGE_TYPE_FOR_THRESHOLD = map(
+            config.threshold_params.get, ["PAGE_TYPE_FOR_THRESHOLD"]
+        )
+        # Note: currently building with assumptions
+        if PAGE_TYPE_FOR_THRESHOLD == "black":
+            logger.warning(f"Confidence metric not implemented for black pages yet")
+            return 0.0, []
+        # global_threshold_for_image
+        # field
+        return overall_confidence, fields_confidence
 
     @staticmethod
     def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-1):
@@ -459,10 +521,13 @@ class ImageInstanceOps:
 
         """
         # Sort the Q bubbleValues
-        sorted_bubble_means_and_refs = sorted(bubble_means_and_refs, key=lambda x: x[0])
+        sorted_bubble_means_and_refs = sorted(
+            bubble_means_and_refs, key=lambda x: x.mean_value
+        )
+        # sorted_bubble_means_and_refs = sorted(bubble_means_and_refs)
 
         # Find the FIRST LARGE GAP and set it as threshold:
-        sorted_bubble_means = [item[0] for item in sorted_bubble_means_and_refs]
+        sorted_bubble_means = [item.mean_value for item in sorted_bubble_means_and_refs]
         ls = (looseness + 1) // 2
         l = len(sorted_bubble_means) - ls
         max1, thr1 = MIN_JUMP, global_default_threshold
@@ -483,25 +548,31 @@ class ImageInstanceOps:
             if jump > max2 and abs(thr1 - new_thr) > JUMP_DELTA:
                 max2 = jump
                 thr2 = new_thr
-        # global_thr = min(thr1,thr2)
-        global_thr, j_low, j_high = thr1, thr1 - max1 // 2, thr1 + max1 // 2
+        # global_threshold_for_image = min(thr1,thr2)
+        global_threshold_for_image, j_low, j_high = (
+            thr1,
+            thr1 - max1 // 2,
+            thr1 + max1 // 2,
+        )
 
         # # For normal images
         # thresholdRead =  116
         # if(thr1 > thr2 and thr2 > thresholdRead):
         #     print("Note: taking safer thr line.")
-        #     global_thr, j_low, j_high = thr2, thr2 - max2//2, thr2 + max2//2
+        #     global_threshold_for_image, j_low, j_high = thr2, thr2 - max2//2, thr2 + max2//2
 
         if plot_title:
             _, ax = plt.subplots()
             plot_means_and_refs = (
                 sorted_bubble_means_and_refs if sort_in_plot else bubble_means_and_refs
             )
-            plot_values = list(map(lambda x: x[0], plot_means_and_refs))
+            plot_values = list(map(lambda x: x.mean_value, plot_means_and_refs))
             original_bin_names = list(
-                map(lambda x: x[1].plot_bin_name, plot_means_and_refs)
+                map(lambda x: x.item_reference.plot_bin_name, plot_means_and_refs)
             )
-            plot_labels = list(map(lambda x: x[1].name, plot_means_and_refs))
+            plot_labels = list(
+                map(lambda x: x.item_reference.name, plot_means_and_refs)
+            )
             sorted_unique_bin_names, unique_label_indices = np.unique(
                 original_bin_names, return_inverse=True
             )
@@ -550,15 +621,15 @@ class ImageInstanceOps:
                         ],
                         key=lambda s: [
                             int(t) if t.isdigit() else t.lower()
-                            for t in re.split("(\d+)", s[1])
+                            for t in re.split("(\\d+)", s[1])
                         ],
                     )
                 )
             )
             ax.set_title(plot_title)
-            ax.axhline(global_thr, color="green", ls="--", linewidth=5).set_label(
-                "Global Threshold"
-            )
+            ax.axhline(
+                global_threshold_for_image, color="green", ls="--", linewidth=5
+            ).set_label("Global Threshold")
             ax.axhline(thr2, color="red", ls=":", linewidth=3).set_label("THR2 Line")
             # ax.axhline(j_low,color='red',ls='-.', linewidth=3)
             # ax.axhline(j_high,color='red',ls='-.', linewidth=3).set_label("Boundary Line")
@@ -570,12 +641,12 @@ class ImageInstanceOps:
                 plt.title(plot_title)
                 plt.show()
 
-        return global_thr, j_low, j_high
+        return global_threshold_for_image, j_low, j_high
 
     def get_local_threshold(
         self,
         bubble_means_list,
-        global_thr,
+        global_threshold_for_image,
         no_outliers,
         plot_title=None,
         plot_show=True,
@@ -612,7 +683,7 @@ class ImageInstanceOps:
         # base case: 1 or 2 pts
         if len(sorted_bubble_means) < 3:
             thr1 = (
-                global_thr
+                global_threshold_for_image
                 if np.max(sorted_bubble_means) - np.min(sorted_bubble_means)
                 < config.threshold_params.MIN_GAP
                 else np.mean(sorted_bubble_means)
@@ -649,11 +720,11 @@ class ImageInstanceOps:
                 config.threshold_params.MIN_JUMP
                 + config.threshold_params.CONFIDENT_SURPLUS
             )
-            # If not confident, then only take help of global_thr
+            # If not confident, then only take help of global_threshold_for_image
             if max1 < confident_jump:
                 if no_outliers:
                     # All Black or All White case
-                    thr1 = global_thr
+                    thr1 = global_threshold_for_image
                 else:
                     # TODO: Low confidence parameters here
                     pass
@@ -667,7 +738,9 @@ class ImageInstanceOps:
             ax.bar(range(len(sorted_bubble_means)), sorted_bubble_means)
             thrline = ax.axhline(thr1, color="green", ls=("-."), linewidth=3)
             thrline.set_label("Local Threshold")
-            thrline = ax.axhline(global_thr, color="red", ls=":", linewidth=5)
+            thrline = ax.axhline(
+                global_threshold_for_image, color="red", ls=":", linewidth=5
+            )
             thrline.set_label("Global Threshold")
             ax.set_title(plot_title)
             ax.set_ylabel("Bubble Mean Intensity")
