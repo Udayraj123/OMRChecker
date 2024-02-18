@@ -181,6 +181,7 @@ class CropOnPatchesCommon(ImageTemplatePreprocessor):
         options = self.options
         config = self.tuning_config
 
+        # TODO: support for defaulting to using quadrants?
         patch_areas = self.patch_areas_for_type[options["type"]]
         corners = []
         for patch_type in patch_areas["DOTS"]:
@@ -217,6 +218,7 @@ class CropOnPatchesCommon(ImageTemplatePreprocessor):
         return corners
 
 
+# TODO: add support for showing patch areas during setLayout option?!
 class CropOnCustomMarkers(CropOnPatchesCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -548,6 +550,8 @@ class CropOnDotLines(CropOnPatchesCommon):
             area_start, thresholded, patch_type="dot"
         )
         if corners is None:
+            hstack = ImageUtils.get_padded_hstack([self.debug_image, area, thresholded])
+            InteractionUtils.show(f"No patch/dot found:", hstack, pause=1)
             raise Exception(
                 f"No patch/dot found at origin: {dot_options['origin']} with dimensions: { dot_options['dimensions']}"
             )
