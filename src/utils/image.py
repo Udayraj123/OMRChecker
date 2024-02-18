@@ -6,6 +6,7 @@
  Github: https://github.com/Udayraj123
 
 """
+
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -245,3 +246,22 @@ class ImageUtils:
             cv2.BORDER_CONSTANT,
             value,
         )
+
+    @staticmethod
+    def pad_image_from_center(image, padding_width, padding_height=0, value=255):
+        input_width, input_height = image.shape[:2]
+        bounding_box = [
+            padding_width,
+            padding_width + input_width,
+            padding_height,
+            padding_height + input_height,
+        ]
+        white = value * np.ones(
+            (padding_width * 2 + input_width, padding_height * 2 + input_height),
+            np.uint8,
+        )
+        white[
+            bounding_box[0] : bounding_box[1], bounding_box[2] : bounding_box[3]
+        ] = image
+
+        return white, bounding_box
