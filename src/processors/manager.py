@@ -18,6 +18,7 @@ class Processor:
         image_instance_ops=None,
     ):
         self.options = options
+        self.tuning_options = options.get("tuningOptions", {})
         self.relative_dir = relative_dir
         self.image_instance_ops = image_instance_ops
         self.tuning_config = image_instance_ops.tuning_config

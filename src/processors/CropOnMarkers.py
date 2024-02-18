@@ -3,6 +3,8 @@ import os
 import cv2
 import numpy as np
 
+from src.constants import CLR_WHITE
+from src.logger import logger
 from src.processors.interfaces.ImageTemplatePreprocessor import (
     ImageTemplatePreprocessor,
 )
@@ -190,6 +192,17 @@ class CropOnPatchesCommon(ImageTemplatePreprocessor):
         for patch_type in patch_areas["LINES"]:
             corners += self.select_points_from_line(patch_type, image)
 
+            if config.outputs.show_image_level >= 5:
+                if len(self.debug_vstack) > 0:
+                    InteractionUtils.show(
+                        f"Line Patches: {patch_type}",
+                        ImageUtils.get_vstack_image_grid(self.debug_vstack),
+                        0,
+                        0,
+                        config=config,
+                    )
+                self.debug_vstack = []
+
         if config.outputs.show_image_level >= 4:
             logger.info(f"corners={corners}")
             corners = ImageUtils.order_points(corners)
@@ -206,15 +219,6 @@ class CropOnPatchesCommon(ImageTemplatePreprocessor):
                     2,
                 )
 
-            if config.outputs.show_image_level >= 5:
-                if len(self.debug_vstack) > 0:
-                    InteractionUtils.show(
-                        "Patch areas processing",
-                        ImageUtils.get_vstack_image_grid(self.debug_vstack),
-                        0,
-                        0,
-                        config=config,
-                    )
         return corners
 
 
@@ -227,19 +231,19 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         }
 
         options = self.options
-        marker_ops = self.options.get("tuningOptions", {})
+        tuning_options = self.tuning_options
         self.threshold_circles = []
         self.marker_path = os.path.join(
             self.relative_dir, options.get("relativePath", "omr_marker.jpg")
         )
 
-        self.min_matching_threshold = marker_ops.get("min_matching_threshold", 0.3)
-        self.max_matching_variation = marker_ops.get("max_matching_variation", 0.41)
+        self.min_matching_threshold = tuning_options.get("min_matching_threshold", 0.3)
+        self.max_matching_variation = tuning_options.get("max_matching_variation", 0.41)
         self.marker_rescale_range = tuple(
-            marker_ops.get("marker_rescale_range", (85, 115))
+            tuning_options.get("marker_rescale_range", (85, 115))
         )
-        self.marker_rescale_steps = int(marker_ops.get("marker_rescale_steps", 5))
-        self.apply_erode_subtract = marker_ops.get("apply_erode_subtract", True)
+        self.marker_rescale_steps = int(tuning_options.get("marker_rescale_steps", 5))
+        self.apply_erode_subtract = tuning_options.get("apply_erode_subtract", True)
         self.init_resized_markers()
 
     def exclude_files(self):
@@ -452,8 +456,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
 class CropOnDotLines(CropOnPatchesCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        options = self.options
-        tuning_options = options.get("tuningOptions", {})
+        tuning_options = self.tuning_options
         self.patch_areas_for_type = self.get_patch_areas_for_type()
         self.line_kernel_morph = cv2.getStructuringElement(
             cv2.MORPH_RECT, tuple(tuning_options.get("lineKernel", [2, 10]))
@@ -467,7 +470,9 @@ class CropOnDotLines(CropOnPatchesCommon):
         points_selector = options[patch_type].get(
             "pointsSelector", self.default_points_selector[patch_type]
         )
-        tl, tr, br, bl = self.find_line_corners_from_options(image, options[patch_type])
+        tl, tr, br, bl = self.find_line_corners_from_options(
+            image, options[patch_type], patch_type
+        )
         if patch_type == "leftLine":
             if points_selector == "LINE_INNER_EDGE":
                 return [tr, br]
@@ -501,8 +506,9 @@ class CropOnDotLines(CropOnPatchesCommon):
             },
         }
 
-    def find_line_corners_from_options(self, image, line_options):
+    def find_line_corners_from_options(self, image, line_options, patch_type):
         config = self.tuning_config
+        tuning_options = self.tuning_options
         area, area_start = self.compute_scan_area(image, line_options)
 
         # Make boxes darker (less gamma)
@@ -510,13 +516,55 @@ class CropOnDotLines(CropOnPatchesCommon):
         _, morph = cv2.threshold(morph, 200, 255, cv2.THRESH_TRUNC)
         morph = ImageUtils.normalize_util(morph)
 
+        # morph = cv2.morphologyEx(
+        #     morph, cv2.MORPH_OPEN, cv2.getStructuringElement(
+        #     cv2.MORPH_RECT, [10, 2]
+        # ), iterations=2
+        # )
+        # InteractionUtils.show(f"morph_h_{patch_type}", morph, 0, 1, config=config)
+
+        # temp
+        kernel_width, kernel_height = tuning_options["lineKernel"]
+        input_width, input_height = morph.shape[:2]
+        rect = [
+            kernel_width,
+            kernel_width + input_width,
+            kernel_height,
+            kernel_height + input_height,
+        ]
+        white = 255 * np.ones(
+            (kernel_width * 2 + input_width, kernel_height * 2 + input_height), np.uint8
+        )
+        white[rect[0] : rect[1], rect[2] : rect[3]] = morph
+
+        morph = white
+        # add white padding
+        # morph = cv2.copyMakeBorder(
+        #     morph,
+        #     kernel_height,
+        #     kernel_height,
+        #     kernel_width,
+        #     kernel_width,
+        #     cv2.BORDER_CONSTANT,
+        #     120
+        # )
+        if config.outputs.show_image_level >= 5:
+            InteractionUtils.show(f"morph_pad_{patch_type}", morph, 0, 1, config=config)
+
         # Open : erode then dilate
         morph_v = cv2.morphologyEx(
             morph, cv2.MORPH_OPEN, self.line_kernel_morph, iterations=3
         )
+
+        # remove white padding
+
+        morph_v = morph_v[rect[0] : rect[1], rect[2] : rect[3]]
+
         if config.outputs.show_image_level >= 5:
             self.debug_hstack += [morph, morph_v]
-            # InteractionUtils.show("morph_opened", morph_v, 0, 1, config=config)
+            InteractionUtils.show(
+                f"morph_opened_{patch_type}", morph_v, 0, 1, config=config
+            )
 
         # Note: points are returned in the order of order_points: (tl, tr, br, bl)
         corners = self.find_largest_patch_area_corners(

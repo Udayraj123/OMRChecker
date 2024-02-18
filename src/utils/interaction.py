@@ -47,7 +47,7 @@ class InteractionUtils:
         cv2.moveWindow(
             name,
             image_metrics.window_x,
-            image_metrics.window_y,
+            0,  # image_metrics.window_y, # temp
         )
 
         h, w = img.shape[:2]

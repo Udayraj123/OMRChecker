@@ -227,6 +227,22 @@ class ImageUtils:
         )
 
     @staticmethod
+    def pad_image_from_center(image, max_height, value=CLR_WHITE):
+        # TODO
+        # white = 255 * np.ones( ( kernel_width*2 + input_width, kernel_height*2 + input_height), np.uint8)
+        # white[rect[0] : rect[1], rect[2] : rect[3]] = morph;
+
+        return cv2.copyMakeBorder(
+            image,
+            0,
+            max_height - image.shape[0],
+            0,
+            0,
+            cv2.BORDER_CONSTANT,
+            value,
+        )
+
+    @staticmethod
     def pad_image_to_width(image, max_width, value=CLR_WHITE):
         return cv2.copyMakeBorder(
             image,
