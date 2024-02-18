@@ -207,7 +207,10 @@ class EvaluationConfig:
                     csv_path,
                     header=None,
                     names=["question", "answer"],
-                    converters={"question": str, "answer": self.parse_answer_column},
+                    converters={
+                        "question": lambda question: question.strip(),
+                        "answer": self.parse_answer_column,
+                    },
                 )
 
                 self.questions_in_order = answer_key["question"].to_list()
@@ -361,6 +364,8 @@ class EvaluationConfig:
 
     @staticmethod
     def parse_answer_column(answer_column):
+        # Remove all whitespaces
+        answer_column = answer_column.replace(" ", "")
         if answer_column[0] == "[":
             parsed_answer = ast.literal_eval(answer_column)
         elif "," in answer_column:
