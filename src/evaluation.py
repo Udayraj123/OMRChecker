@@ -393,12 +393,13 @@ class EvaluationConfig:
                             multi_marked_answer = True
                             break
                 if answer_type == "multiple-correct-weighted":
-                    if len(answer_item[0]) > 1:
-                        multi_marked_answer = True
+                    for single_answer, _answer_score in answer_item:
+                        if len(single_answer) > 1:
+                            multi_marked_answer = True
 
                 if multi_marked_answer:
                     raise Exception(
-                        f"Answer key contains multiple correct answer(s), but filter_out_multimarked_files is True. Scoring will get skipped."
+                        f"Provided answer key contains multiple correct answer(s), but config.filter_out_multimarked_files is True. Scoring will get skipped."
                     )
 
     def validate_questions(self, answers_in_order):
