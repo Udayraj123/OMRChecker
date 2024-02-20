@@ -13,6 +13,7 @@ CONFIG_DEFAULTS = DotMap(
             "MIN_GAP": 30,
             "MIN_JUMP": 25,
             "CONFIDENT_SURPLUS": 5,
+            "GLOBAL_THRESHOLD_MARGIN": 5,
             "JUMP_DELTA": 30,
             "PAGE_TYPE_FOR_THRESHOLD": "white",
             "GLOBAL_PAGE_THRESHOLD_WHITE": 200,

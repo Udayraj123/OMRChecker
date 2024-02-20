@@ -24,6 +24,11 @@ CONFIG_SCHEMA = {
                 "MIN_GAP": {"type": "integer", "minimum": 10, "maximum": 100},
                 "MIN_JUMP": {"type": "integer", "minimum": 10, "maximum": 100},
                 "CONFIDENT_SURPLUS": {"type": "integer", "minimum": 0, "maximum": 20},
+                "GLOBAL_THRESHOLD_MARGIN": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 20,
+                },
                 "JUMP_DELTA": {"type": "integer", "minimum": 10, "maximum": 100},
                 "PAGE_TYPE_FOR_THRESHOLD": {
                     "enum": ["white", "black"],

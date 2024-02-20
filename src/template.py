@@ -215,6 +215,7 @@ class Template:
 class FieldBlock:
     def __init__(self, block_name, field_block_object):
         self.name = block_name
+        # TODO: Move plot_bin_name into child class
         self.plot_bin_name = block_name
         self.shift_x, self.shift_y = 0, 0
         self.setup_field_block(field_block_object)
@@ -296,7 +297,7 @@ class FieldBlock:
         labels_gap,
     ):
         _h, _v = (1, 0) if (direction == "vertical") else (0, 1)
-        self.traverse_bubbles = []
+        self.fields = []
         # Generate the bubble grid
         lead_point = [float(self.origin[0]), float(self.origin[1])]
         for field_label in self.parsed_field_labels:
@@ -305,12 +306,31 @@ class FieldBlock:
             for bubble_value in bubble_values:
                 field_bubbles.append(
                     FieldBubble(
-                        bubble_point.copy(), field_label, field_type, bubble_value
+                        bubble_point.copy(),
+                        # TODO: move field_label into field_label_ref
+                        field_label,
+                        field_type,
+                        bubble_value,
                     )
                 )
                 bubble_point[_h] += bubbles_gap
-            self.traverse_bubbles.append(field_bubbles)
+            self.fields.append(Field(field_label, field_type, field_bubbles))
             lead_point[_v] += labels_gap
+
+
+class Field:
+    """
+    Container for a Field on the OMR i.e. a group of FieldBubbles with a collective field_label
+
+    """
+
+    def __init__(self, field_label, field_type, field_bubbles):
+        self.field_label = field_label
+        self.field_type = field_type
+        self.field_bubbles = field_bubbles
+
+    def __str__(self):
+        return self.field_label
 
 
 class FieldBubble:
@@ -361,9 +381,16 @@ class MeanValueItem:
 class BubbleMeanValue(MeanValueItem):
     def __init__(self, mean_value, item_reference):
         super().__init__(mean_value, item_reference)
-        self.is_marked = False
+        self.is_marked = None
 
 
-class BlockStdMeanValue(MeanValueItem):
+# TODO: see if this one can be merged in above
+class FieldStdMeanValue(MeanValueItem):
     def __init__(self, mean_value, item_reference):
         super().__init__(mean_value, item_reference)
+
+
+class FieldDetection:
+    def __init__(self, field, confidence):
+        self.field = field
+        self.confidence = confidence
