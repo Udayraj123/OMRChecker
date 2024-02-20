@@ -56,7 +56,10 @@ def print_config_summary(
         "Markers Detection",
         "ON" if "CropOnMarkers" in template.pre_processors else "OFF",
     )
-    table.add_row("Auto Alignment", f"{tuning_config.alignment_params.auto_align}")
+    table.add_row(
+        "Auto Alignment",
+        "ON" if "AutoAlignTemplate" in template.pre_processors else "OFF",
+    )
     table.add_row("Detected Template Path", f"{template}")
     if local_config_path:
         table.add_row("Detected Local Config", f"{local_config_path}")
@@ -184,7 +187,7 @@ def show_template_layouts(omr_files, template, tuning_config):
         file_name = file_path.name
         file_path = str(file_path)
         in_omr = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-        in_omr = template.image_instance_ops.apply_preprocessors(
+        in_omr, template = template.image_instance_ops.apply_preprocessors(
             file_path, in_omr, template
         )
         template_layout = template.image_instance_ops.draw_template_layout(
@@ -221,7 +224,9 @@ def process_files(
 
         template.image_instance_ops.append_save_img(1, in_omr)
 
-        in_omr = template.image_instance_ops.apply_preprocessors(
+        # TODO: use try catch here and store paths to error files
+        # Note: the returned template is a copy
+        in_omr, template = template.image_instance_ops.apply_preprocessors(
             file_path, in_omr, template
         )
 

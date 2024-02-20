@@ -6,7 +6,7 @@ from rich.logging import RichHandler
 
 FORMAT = "%(message)s"
 
-# TODO: set logging level from config.json dynamically
+# TODO: set logging level from config.json + CLI args dynamically
 logging.basicConfig(
     level=logging.INFO,
     format="%(message)s",
@@ -28,19 +28,19 @@ class Logger:
         self.log.__format__ = message_format
         self.log.__date_format__ = date_format
 
-    def debug(self, *msg: object, sep=" ", end="\n") -> None:
+    def debug(self, *msg: object, sep=" "):
         return self.logutil("debug", *msg, sep=sep)
 
-    def info(self, *msg: object, sep=" ", end="\n") -> None:
+    def info(self, *msg: object, sep=" "):
         return self.logutil("info", *msg, sep=sep)
 
-    def warning(self, *msg: object, sep=" ", end="\n") -> None:
+    def warning(self, *msg: object, sep=" "):
         return self.logutil("warning", *msg, sep=sep)
 
-    def error(self, *msg: object, sep=" ", end="\n") -> None:
+    def error(self, *msg: object, sep=" "):
         return self.logutil("error", *msg, sep=sep)
 
-    def critical(self, *msg: object, sep=" ", end="\n") -> None:
+    def critical(self, *msg: object, sep=" "):
         return self.logutil("critical", *msg, sep=sep)
 
     def stringify(func):

@@ -61,7 +61,10 @@ def test_different_bubble_dimensions(mocker):
 
     exception = write_jsons_and_run(mocker)
     assert str(exception) == "No Error"
+
     original_output_data = extract_output_data(BASE_RESULTS_CSV_PATH)
+    assert not original_output_data.empty
+    assert len(original_output_data) == 1
 
     def modify_template(template):
         # Incorrect global bubble size
@@ -69,7 +72,7 @@ def test_different_bubble_dimensions(mocker):
         # Correct bubble size for MCQBlock1a1
         template["fieldBlocks"]["MCQBlock1a1"]["bubbleDimensions"] = [32, 32]
         # Incorrect bubble size for MCQBlock1a11
-        template["fieldBlocks"]["MCQBlock1a11"]["bubbleDimensions"] = [10, 10]
+        template["fieldBlocks"]["MCQBlock1a11"]["bubbleDimensions"] = [5, 5]
 
     remove_file(BASE_RESULTS_CSV_PATH)
     remove_file(BASE_MULTIMARKED_CSV_PATH)
@@ -77,7 +80,6 @@ def test_different_bubble_dimensions(mocker):
     assert str(exception) == "No Error"
 
     results_output_data = extract_output_data(BASE_RESULTS_CSV_PATH)
-
     assert results_output_data.empty
 
     output_data = extract_output_data(BASE_MULTIMARKED_CSV_PATH)

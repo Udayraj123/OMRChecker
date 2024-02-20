@@ -69,7 +69,11 @@ class ProcessorManager:
                 )
                 for _, c in clsmembers:
                     # Only add classes that are a sub class of Processor, but NOT Processor itself
-                    if issubclass(c, Processor) & (c is not Processor):
+                    if (
+                        issubclass(c, Processor)
+                        and (c is not Processor)
+                        and not getattr(c, "__is_internal_preprocessor__", None)
+                    ):
                         self.processors[c.__name__] = c
                         loaded_packages.append(c.__name__)
 

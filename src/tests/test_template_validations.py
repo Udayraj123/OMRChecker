@@ -50,6 +50,7 @@ def test_empty_template(mocker):
     def modify_template(_):
         return {}
 
+    print("\nExpecting invalid template json error logs:")
     exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert (
         str(exception)
@@ -61,6 +62,7 @@ def test_invalid_field_type(mocker):
     def modify_template(template):
         template["fieldBlocks"]["MCQ_Block_1"]["fieldType"] = "X"
 
+    print("\nExpecting invalid template json error logs:")
     exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert (
         str(exception)

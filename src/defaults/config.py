@@ -16,14 +16,6 @@ CONFIG_DEFAULTS = DotMap(
             "JUMP_DELTA": 30,
             "PAGE_TYPE_FOR_THRESHOLD": "white",
         },
-        "alignment_params": {
-            # Note: 'auto_align' enables automatic template alignment, use if the scans show slight misalignments.
-            "auto_align": False,
-            "match_col": 5,
-            "max_steps": 20,
-            "stride": 1,
-            "thickness": 3,
-        },
         "outputs": {
             "show_image_level": 0,
             "save_image_level": 0,

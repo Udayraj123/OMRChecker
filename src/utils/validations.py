@@ -62,8 +62,9 @@ def validate_template_json(json_data, template_path):
             key, validator, msg = parse_validation_error(error)
 
             # Print preProcessor name in case of options error
-            if key == "preProcessors":
-                preProcessorName = json_data["preProcessors"][error.path[1]]["name"]
+            if key == "preProcessors" and len(error.path) > 2:
+                preProcessorJson = json_data["preProcessors"][error.path[1]]
+                preProcessorName = preProcessorJson.get("name", "UNKNOWN")
                 preProcessorKey = error.path[2]
                 table.add_row(f"{key}.{preProcessorName}.{preProcessorKey}", msg)
             elif validator == "required":

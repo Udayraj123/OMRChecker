@@ -93,13 +93,14 @@ class AnswerMatcher:
 
     def get_section_explanation(self):
         answer_type = self.answer_type
-        if answer_type in ["standard", "multiple-correct"]:
+        if answer_type == "standard" or answer_type == "multiple-correct":
             return self.marking_scheme.section_key
         elif answer_type == "multiple-correct-weighted":
             return f"Custom: {self.marking}"
 
     def get_verdict_marking(self, marked_answer):
         answer_type = self.answer_type
+
         if answer_type == "standard":
             question_verdict = self.get_standard_verdict(marked_answer)
             return question_verdict, self.marking[question_verdict]
@@ -133,11 +134,12 @@ class AnswerMatcher:
 
     def __str__(self):
         answer_type, parsed_answer = self.answer_type, self.parsed_answer
+
         if answer_type == "multiple-correct":
             return str(parsed_answer)
         elif answer_type == "multiple-correct-weighted":
             return f"{parsed_answer[0]}"
-            # TODO: multi-lines in multi-weights
+            # TODO: case of multi-lines in multi-weights
         return parsed_answer
 
 
@@ -205,7 +207,10 @@ class EvaluationConfig:
                     csv_path,
                     header=None,
                     names=["question", "answer"],
-                    converters={"question": str, "answer": self.parse_answer_column},
+                    converters={
+                        "question": lambda question: question.strip(),
+                        "answer": self.parse_answer_column,
+                    },
                 )
 
                 self.questions_in_order = answer_key["question"].to_list()
@@ -224,7 +229,7 @@ class EvaluationConfig:
                 )
                 # TODO: use a common function for below changes?
                 in_omr = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-                in_omr = template.image_instance_ops.apply_preprocessors(
+                in_omr, template = template.image_instance_ops.apply_preprocessors(
                     image_path, in_omr, template
                 )
                 if in_omr is None:
@@ -359,6 +364,8 @@ class EvaluationConfig:
 
     @staticmethod
     def parse_answer_column(answer_column):
+        # Remove all whitespaces
+        answer_column = answer_column.replace(" ", "")
         if answer_column[0] == "[":
             parsed_answer = ast.literal_eval(answer_column)
         elif "," in answer_column:

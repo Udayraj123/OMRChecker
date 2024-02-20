@@ -181,16 +181,26 @@
       "name": "CropPage",
       "options": {
         "morphKernel": [
-          10,
-          10
+          15,
+          15
         ]
       }
     },
     {
       "name": "CropOnMarkers",
       "options": {
+        "type": "CUSTOM_MARKER",
         "relativePath": "omr_marker.jpg",
-        "sheetToMarkerWidthRatio": 17
+        "tuningOptions": {
+          "marker_rescale_range": [
+            80,
+            120
+          ]
+        },
+        "dimensions": [
+          35,
+          35
+        ]
       }
     }
   ]

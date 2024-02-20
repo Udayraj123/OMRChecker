@@ -26,6 +26,69 @@ zero_to_one_number = {
     "minimum": 0,
     "maximum": 1,
 }
+patch_area_description = {
+    "type": "object",
+    "required": ["origin", "dimensions", "margins"],
+    "additionalProperties": False,
+    "properties": {
+        "origin": two_positive_integers,
+        "dimensions": two_positive_integers,
+        "margins": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "vertical": positive_integer,
+                "horizontal": positive_integer,
+            },
+        },
+        "pointsSelector": {
+            "type": "string",
+            "enum": [
+                "DOT_TOP_LEFT",
+                "DOT_TOP_RIGHT",
+                "DOT_BOTTOM_RIGHT",
+                "DOT_BOTTOM_LEFT",
+                "DOT_CENTER",
+                "LINE_INNER_EDGE",
+                "LINE_OUTER_EDGE",
+            ],
+        },
+    },
+}
+
+# if_requirements help in suppressing redundant errors from 'allOf'
+pre_processor_if_requirements = {
+    "required": ["name", "options"],
+}
+crop_on_markers_if_requirements = {
+    "required": ["type"],
+}
+pre_processor_options_available_keys = {"processingDimensions": True}
+
+crop_on_markers_tuning_options_available_keys = {
+    "dotKernel": True,
+    "lineKernel": True,
+    "apply_erode_subtract": True,
+    "marker_rescale_range": True,
+    "marker_rescale_steps": True,
+    "max_matching_variation": True,
+    "min_matching_threshold": True,
+}
+crop_on_markers_options_available_keys = {
+    **pre_processor_options_available_keys,
+    "pointsSelector": True,
+    "tuningOptions": True,
+    "type": True,
+}
+
+crop_on_dot_lines_tuning_options = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "dotKernel": two_positive_integers,
+        "lineKernel": two_positive_integers,
+    },
+}
 
 TEMPLATE_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -70,6 +133,7 @@ TEMPLATE_SCHEMA = {
                     "name": {
                         "type": "string",
                         "enum": [
+                            "AutoAlignTemplate",
                             "CropOnMarkers",
                             "CropPage",
                             "FeatureBasedAlignment",
@@ -78,33 +142,77 @@ TEMPLATE_SCHEMA = {
                             "MedianBlur",
                         ],
                     },
+                    "options": {
+                        "type": "object",
+                        "properties": {
+                            "processingDimensions": two_positive_integers,
+                        },
+                    },
                 },
-                "required": ["name", "options"],
+                **pre_processor_if_requirements,
                 "allOf": [
                     {
-                        "if": {"properties": {"name": {"const": "CropOnMarkers"}}},
+                        "if": {
+                            "properties": {"name": {"const": "AutoAlignTemplate"}},
+                            **pre_processor_if_requirements,
+                        },
                         "then": {
                             "properties": {
                                 "options": {
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {
-                                        "apply_erode_subtract": {"type": "boolean"},
-                                        "marker_rescale_range": two_positive_numbers,
-                                        "marker_rescale_steps": {"type": "number"},
-                                        "max_matching_variation": {"type": "number"},
-                                        "min_matching_threshold": {"type": "number"},
-                                        "relativePath": {"type": "string"},
-                                        "sheetToMarkerWidthRatio": {"type": "number"},
+                                        "match_col": {
+                                            "type": "integer",
+                                            "minimum": 0,
+                                            "maximum": 10,
+                                        },
+                                        "max_steps": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 100,
+                                        },
+                                        "morph_threshold": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 255,
+                                        },
+                                        "stride": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 20,
+                                        },
+                                        "thickness": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 10,
+                                        },
                                     },
-                                    "required": ["relativePath"],
+                                },
+                            }
+                        },
+                    },
+                    {
+                        "if": {
+                            "properties": {"name": {"const": "CropPage"}},
+                            **pre_processor_if_requirements,
+                        },
+                        "then": {
+                            "properties": {
+                                "options": {
+                                    "type": "object",
+                                    "additionalProperties": False,
+                                    "properties": {
+                                        "morphKernel": two_positive_integers
+                                    },
                                 }
                             }
                         },
                     },
                     {
                         "if": {
-                            "properties": {"name": {"const": "FeatureBasedAlignment"}}
+                            "properties": {"name": {"const": "FeatureBasedAlignment"}},
+                            **pre_processor_if_requirements,
                         },
                         "then": {
                             "properties": {
@@ -116,6 +224,13 @@ TEMPLATE_SCHEMA = {
                                         "goodMatchPercent": {"type": "number"},
                                         "maxFeatures": {"type": "integer"},
                                         "reference": {"type": "string"},
+                                        "matcherType": {
+                                            "type": "string",
+                                            "enum": [
+                                                "DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING",
+                                                "NORM_HAMMING",
+                                            ],
+                                        },
                                     },
                                     "required": ["reference"],
                                 }
@@ -123,7 +238,28 @@ TEMPLATE_SCHEMA = {
                         },
                     },
                     {
-                        "if": {"properties": {"name": {"const": "Levels"}}},
+                        "if": {
+                            "properties": {"name": {"const": "GaussianBlur"}},
+                            **pre_processor_if_requirements,
+                        },
+                        "then": {
+                            "properties": {
+                                "options": {
+                                    "type": "object",
+                                    "additionalProperties": False,
+                                    "properties": {
+                                        "kSize": two_positive_integers,
+                                        "sigmaX": {"type": "number"},
+                                    },
+                                }
+                            }
+                        },
+                    },
+                    {
+                        "if": {
+                            "properties": {"name": {"const": "Levels"}},
+                            **pre_processor_if_requirements,
+                        },
                         "then": {
                             "properties": {
                                 "options": {
@@ -139,7 +275,10 @@ TEMPLATE_SCHEMA = {
                         },
                     },
                     {
-                        "if": {"properties": {"name": {"const": "MedianBlur"}}},
+                        "if": {
+                            "properties": {"name": {"const": "MedianBlur"}},
+                            **pre_processor_if_requirements,
+                        },
                         "then": {
                             "properties": {
                                 "options": {
@@ -151,30 +290,178 @@ TEMPLATE_SCHEMA = {
                         },
                     },
                     {
-                        "if": {"properties": {"name": {"const": "GaussianBlur"}}},
-                        "then": {
-                            "properties": {
-                                "options": {
-                                    "type": "object",
-                                    "additionalProperties": False,
-                                    "properties": {
-                                        "kSize": two_positive_integers,
-                                        "sigmaX": {"type": "number"},
-                                    },
-                                }
-                            }
+                        "if": {
+                            "properties": {"name": {"const": "CropOnMarkers"}},
+                            **pre_processor_if_requirements,
                         },
-                    },
-                    {
-                        "if": {"properties": {"name": {"const": "CropPage"}}},
                         "then": {
                             "properties": {
                                 "options": {
                                     "type": "object",
-                                    "additionalProperties": False,
+                                    # Note: "required" key is retrieved from crop_on_markers_if_requirements
                                     "properties": {
-                                        "morphKernel": two_positive_integers
+                                        # Note: the keys need to match with crop_on_markers_options_available_keys
+                                        **crop_on_markers_options_available_keys,
+                                        "pointsSelector": {
+                                            "type": "string",
+                                            "enum": [
+                                                "CENTERS",
+                                                "INNER_WIDTHS",
+                                                "INNER_HEIGHTS",
+                                                "INNER_CORNERS",
+                                                "OUTER_CORNERS",
+                                            ],
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "CUSTOM_MARKER",
+                                                "ONE_LINE_TWO_DOTS",
+                                                "ONE_LINE_TWO_DOTS_MIRROR",
+                                                "TWO_LINES",
+                                                "FOUR_DOTS",
+                                            ],
+                                        },
                                     },
+                                    **crop_on_markers_if_requirements,
+                                    "allOf": [
+                                        {
+                                            "if": {
+                                                **crop_on_markers_if_requirements,
+                                                "properties": {
+                                                    "type": {"const": "CUSTOM_MARKER"}
+                                                },
+                                            },
+                                            "then": {
+                                                "required": [
+                                                    "relativePath",
+                                                    "dimensions",
+                                                ],
+                                                "additionalProperties": False,
+                                                "properties": {
+                                                    **crop_on_markers_options_available_keys,
+                                                    "dimensions": two_positive_integers,
+                                                    "relativePath": {"type": "string"},
+                                                    "topRightDot": patch_area_description,
+                                                    "bottomRightDot": patch_area_description,
+                                                    "topLeftDot": patch_area_description,
+                                                    "bottomLeftDot": patch_area_description,
+                                                    "tuningOptions": {
+                                                        "type": "object",
+                                                        "additionalProperties": False,
+                                                        "properties": {
+                                                            "apply_erode_subtract": {
+                                                                "type": "boolean"
+                                                            },
+                                                            # Range of rescaling in percentage -
+                                                            "marker_rescale_range": two_positive_integers,
+                                                            "marker_rescale_steps": positive_integer,
+                                                            "max_matching_variation": {
+                                                                "type": "number"
+                                                            },
+                                                            "min_matching_threshold": {
+                                                                "type": "number"
+                                                            },
+                                                        },
+                                                    },
+                                                },
+                                            },
+                                        },
+                                        {
+                                            "if": {
+                                                **crop_on_markers_if_requirements,
+                                                "properties": {
+                                                    "type": {
+                                                        "const": "ONE_LINE_TWO_DOTS"
+                                                    }
+                                                },
+                                            },
+                                            "then": {
+                                                "required": [
+                                                    "leftLine",
+                                                    "topRightDot",
+                                                    "bottomRightDot",
+                                                ],
+                                                "additionalProperties": False,
+                                                "properties": {
+                                                    **crop_on_markers_options_available_keys,
+                                                    "tuningOptions": crop_on_dot_lines_tuning_options,
+                                                    "leftLine": patch_area_description,
+                                                    "topRightDot": patch_area_description,
+                                                    "bottomRightDot": patch_area_description,
+                                                    # TODO: add "topLeftDot": False, etc here?
+                                                },
+                                            },
+                                        },
+                                        {
+                                            "if": {
+                                                **crop_on_markers_if_requirements,
+                                                "properties": {
+                                                    "type": {
+                                                        "const": "ONE_LINE_TWO_DOTS_MIRROR"
+                                                    }
+                                                },
+                                            },
+                                            "then": {
+                                                "required": [
+                                                    "rightLine",
+                                                    "topLeftDot",
+                                                    "bottomLeftDot",
+                                                ],
+                                                "additionalProperties": False,
+                                                "properties": {
+                                                    **crop_on_markers_options_available_keys,
+                                                    "tuningOptions": crop_on_dot_lines_tuning_options,
+                                                    "rightLine": patch_area_description,
+                                                    "topLeftDot": patch_area_description,
+                                                    "bottomLeftDot": patch_area_description,
+                                                },
+                                            },
+                                        },
+                                        {
+                                            "if": {
+                                                **crop_on_markers_if_requirements,
+                                                "properties": {
+                                                    "type": {"const": "TWO_LINES"}
+                                                },
+                                            },
+                                            "then": {
+                                                "required": ["leftLine", "rightLine"],
+                                                "additionalProperties": False,
+                                                "properties": {
+                                                    **crop_on_markers_options_available_keys,
+                                                    "tuningOptions": crop_on_dot_lines_tuning_options,
+                                                    "leftLine": patch_area_description,
+                                                    "rightLine": patch_area_description,
+                                                },
+                                            },
+                                        },
+                                        {
+                                            "if": {
+                                                **crop_on_markers_if_requirements,
+                                                "properties": {
+                                                    "type": {"const": "FOUR_DOTS"}
+                                                },
+                                            },
+                                            "then": {
+                                                "required": [
+                                                    "topRightDot",
+                                                    "bottomRightDot",
+                                                    "topLeftDot",
+                                                    "bottomLeftDot",
+                                                ],
+                                                "additionalProperties": False,
+                                                "properties": {
+                                                    **crop_on_markers_options_available_keys,
+                                                    "tuningOptions": crop_on_dot_lines_tuning_options,
+                                                    "topRightDot": patch_area_description,
+                                                    "bottomRightDot": patch_area_description,
+                                                    "topLeftDot": patch_area_description,
+                                                    "bottomLeftDot": patch_area_description,
+                                                },
+                                            },
+                                        },
+                                    ],
                                 }
                             }
                         },

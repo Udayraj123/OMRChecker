@@ -10,6 +10,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
+from src.constants import CLR_WHITE
 from src.logger import logger
 
 plt.rcParams["figure.figsize"] = (10.0, 8.0)
@@ -101,7 +102,7 @@ class ImageUtils:
     def four_point_transform(image, pts):
         # obtain a consistent order of the points and unpack them
         # individually
-        rect = ImageUtils.order_points(pts)
+        rect = ImageUtils.order_points(pts, dtype="float32")
         (tl, tr, br, bl) = rect
 
         # compute the width of the new image, which will be the
@@ -139,8 +140,9 @@ class ImageUtils:
         return warped
 
     @staticmethod
-    def order_points(pts):
-        rect = np.zeros((4, 2), dtype="float32")
+    def order_points(pts, dtype="int"):
+        pts = np.array(pts)
+        rect = np.zeros((4, 2), dtype=dtype)
 
         # the top-left point will have the smallest sum, whereas
         # the bottom-right point will have the largest sum
@@ -151,5 +153,95 @@ class ImageUtils:
         rect[1] = pts[np.argmin(diff)]
         rect[3] = pts[np.argmax(diff)]
 
-        # return the ordered coordinates
+        # return the ordered coordinates (tl, tr, br, bl)
         return rect
+
+    @staticmethod
+    def validate_rect(approx):
+        return len(approx) == 4 and ImageUtils.check_max_cosine(approx.reshape(4, 2))
+
+    @staticmethod
+    def get_rectangle_points(x, y, w, h):
+        # order same as order_points: (tl, tr, br, bl)
+        return np.intp(
+            [
+                [x, y],
+                [x + w, y],
+                [x + w, y + h],
+                [x, y + h],
+            ]
+        )
+
+    @staticmethod
+    def check_max_cosine(approx):
+        # assumes 4 pts present
+        max_cosine = 0
+        min_cosine = 1.5
+        for i in range(2, 5):
+            cosine = abs(ImageUtils.angle(approx[i % 4], approx[i - 2], approx[i - 1]))
+            max_cosine = max(cosine, max_cosine)
+            min_cosine = min(cosine, min_cosine)
+
+        if max_cosine >= 0.35:
+            logger.warning("Quadrilateral is not a rectangle.")
+            return False
+        return True
+
+    @staticmethod
+    def angle(p_1, p_2, p_0):
+        dx1 = float(p_1[0] - p_0[0])
+        dy1 = float(p_1[1] - p_0[1])
+        dx2 = float(p_2[0] - p_0[0])
+        dy2 = float(p_2[1] - p_0[1])
+        return (dx1 * dx2 + dy1 * dy2) / np.sqrt(
+            (dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2) + 1e-10
+        )
+
+    @staticmethod
+    def get_vstack_image_grid(debug_vstack):
+        padded_hstack = [
+            ImageUtils.get_padded_hstack(hstack) for hstack in debug_vstack
+        ]
+        return ImageUtils.get_padded_vstack(padded_hstack)
+
+    @staticmethod
+    def get_padded_hstack(hstack):
+        max_height = max(image.shape[0] for image in hstack)
+        padded_hstack = [
+            ImageUtils.pad_image_to_height(image, max_height) for image in hstack
+        ]
+
+        return np.hstack(padded_hstack)
+
+    @staticmethod
+    def get_padded_vstack(vstack):
+        max_width = max(image.shape[1] for image in vstack)
+        padded_vstack = [
+            ImageUtils.pad_image_to_width(image, max_width) for image in vstack
+        ]
+
+        return np.vstack(padded_vstack)
+
+    @staticmethod
+    def pad_image_to_height(image, max_height, value=CLR_WHITE):
+        return cv2.copyMakeBorder(
+            image,
+            0,
+            max_height - image.shape[0],
+            0,
+            0,
+            cv2.BORDER_CONSTANT,
+            value,
+        )
+
+    @staticmethod
+    def pad_image_to_width(image, max_width, value=CLR_WHITE):
+        return cv2.copyMakeBorder(
+            image,
+            0,
+            0,
+            0,
+            max_width - image.shape[1],
+            cv2.BORDER_CONSTANT,
+            value,
+        )
