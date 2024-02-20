@@ -12,8 +12,8 @@ import numpy as np
 from matplotlib import colormaps
 
 import src.constants as constants
+from src.algorithm.detection import BubbleMeanValue, FieldStdMeanValue
 from src.logger import logger
-from src.template import BubbleMeanValue, FieldStdMeanValue
 from src.utils.image import ImageUtils
 
 
@@ -108,16 +108,16 @@ class ImageInstanceOps:
                         unit_bubble.y + field_block.shift_y,
                     )
                     rect = [y, y + box_h, x, x + box_w]
-                    bubble_mean = cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]
+                    mean_value = cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]
                     field_bubble_means.append(
-                        BubbleMeanValue(bubble_mean, unit_bubble)
+                        BubbleMeanValue(mean_value, unit_bubble)
                         # TODO: cross/check mark detection support (#167)
                         # detectCross(img, rect) ? 0 : 255
                     )
 
                 # TODO: move std calculation inside the class
                 field_std = round(
-                    np.std([item.bubble_mean for item in field_bubble_means]), 2
+                    np.std([item.mean_value for item in field_bubble_means]), 2
                 )
                 field_bubble_means_stds.append(
                     FieldStdMeanValue(field_std, field_block)
@@ -233,14 +233,13 @@ class ImageInstanceOps:
                 #   round(local_threshold_for_field_block,2))
                 per_omr_threshold_avg += local_threshold_for_field_block
 
-                # TODO: move to util and pass the threshold
-
-                @staticmethod
+                # TODO: @staticmethod
                 def apply_field_detection(
                     field_bubble_means,
                     local_threshold_for_field_block,
                     global_threshold_for_template,
                 ):
+                    # TODO: simplify further?
                     field_bubble_means = [
                         deepcopy(bubble) for bubble in field_bubble_means
                     ]
@@ -271,10 +270,12 @@ class ImageInstanceOps:
                         )
                         # No output disparity, but -
                         # 2.1 global threshold is "too close" to lower bubbles
-                        bubbles_in_doubt_lower = filter(
-                            lambda mean_value: GLOBAL_THRESHOLD_MARGIN
-                            > max(0, global_threshold_for_template - mean_value),
-                            field_bubble_means,
+                        bubbles_in_doubt_lower = list(
+                            filter(
+                                lambda mean_value: GLOBAL_THRESHOLD_MARGIN
+                                > max(0, global_threshold_for_template - mean_value),
+                                field_bubble_means,
+                            )
                         )
 
                         if len(bubbles_in_doubt_lower) > 0:
@@ -282,10 +283,12 @@ class ImageInstanceOps:
                                 "bubbles_in_doubt_lower", bubbles_in_doubt_lower
                             )
                         # 2.2 global threshold is "too close" to higher bubbles
-                        bubbles_in_doubt_higher = filter(
-                            lambda mean_value: GLOBAL_THRESHOLD_MARGIN
-                            > max(0, mean_value - global_threshold_for_template),
-                            field_bubble_means,
+                        bubbles_in_doubt_higher = list(
+                            filter(
+                                lambda mean_value: GLOBAL_THRESHOLD_MARGIN
+                                > max(0, mean_value - global_threshold_for_template),
+                                field_bubble_means,
+                            )
                         )
 
                         if len(bubbles_in_doubt_higher) > 0:
@@ -387,15 +390,17 @@ class ImageInstanceOps:
                         bubble.field_label,
                         bubble.field_value,
                     )
-                    # Only send rolls multi-marked in the directory
                     multi_marked_local = field_label in omr_response
+                    # Apply concatenation
                     omr_response[field_label] = (
                         (omr_response[field_label] + field_value)
                         if multi_marked_local
                         else field_value
                     )
-                    # TODO: generalize this into identifier
+                    # TODO: generalize this into rolls -> identifier
+                    # Only send rolls multi-marked in the directory ()
                     # multi_roll = multi_marked_local and "Roll" in str(q)
+
                     multi_marked = multi_marked or multi_marked_local
 
                 # Empty value logic
@@ -413,44 +418,44 @@ class ImageInstanceOps:
                 absolute_field_number += 1
             # /for field_block
 
-        overall_confidence = self.get_confidence_metrics(fields_confidence)
-
-        underconfident_fields = filter(lambda x: x.confidence < 0.8, fields_confidence)
-
-        logger.info(name, overall_confidence, underconfident_fields)
-
+        # TODO: aggregate with weightages
+        # overall_confidence = self.get_confidence_metrics(fields_confidence)
+        # underconfident_fields = filter(lambda x: x.confidence < 0.8, fields_confidence)
         # TODO: Make the plot for underconfident_fields
+        # logger.info(name, overall_confidence, underconfident_fields)
 
         per_omr_threshold_avg /= absolute_field_number
         per_omr_threshold_avg = round(per_omr_threshold_avg, 2)
         # Translucent
         cv2.addWeighted(final_marked, alpha, transp_layer, 1 - alpha, 0, final_marked)
+
+        # TODO: refactor all_c_box_vals
         # Box types
-        if config.outputs.show_image_level >= 5:
-            # plt.draw()
-            f, axes = plt.subplots(len(all_c_box_vals), sharey=True)
-            f.canvas.manager.set_window_title(
-                f"Bubble Intensity by question type for {name}"
-            )
-            ctr = 0
-            type_name = {
-                "int": "Integer",
-                "mcq": "MCQ",
-                "med": "MED",
-                "rol": "Roll",
-            }
-            for k, boxvals in all_c_box_vals.items():
-                axes[ctr].title.set_text(type_name[k] + " Type")
-                axes[ctr].boxplot(boxvals)
-                # thrline=axes[ctr].axhline(per_omr_threshold_avg,color='red',ls='--')
-                # thrline.set_label("Average THR")
-                axes[ctr].set_ylabel("Intensity")
-                axes[ctr].set_xticklabels(q_nums[k])
-                # axes[ctr].legend()
-                ctr += 1
-            # imshow will do the waiting
-            plt.tight_layout(pad=0.5)
-            plt.show()
+        # if config.outputs.show_image_level >= 5:
+        #     # plt.draw()
+        #     f, axes = plt.subplots(len(all_c_box_vals), sharey=True)
+        #     f.canvas.manager.set_window_title(
+        #         f"Bubble Intensity by question type for {name}"
+        #     )
+        #     ctr = 0
+        #     type_name = {
+        #         "int": "Integer",
+        #         "mcq": "MCQ",
+        #         "med": "MED",
+        #         "rol": "Roll",
+        #     }
+        #     for k, boxvals in all_c_box_vals.items():
+        #         axes[ctr].title.set_text(type_name[k] + " Type")
+        #         axes[ctr].boxplot(boxvals)
+        #         # thrline=axes[ctr].axhline(per_omr_threshold_avg,color='red',ls='--')
+        #         # thrline.set_label("Average THR")
+        #         axes[ctr].set_ylabel("Intensity")
+        #         axes[ctr].set_xticklabels(q_nums[k])
+        #         # axes[ctr].legend()
+        #         ctr += 1
+        #     # imshow will do the waiting
+        #     plt.tight_layout(pad=0.5)
+        #     plt.show()
 
         if config.outputs.save_detections and save_dir is not None:
             if multi_roll:
@@ -601,12 +606,13 @@ class ImageInstanceOps:
         """
         # Sort the Q bubbleValues
         sorted_bubble_means_and_refs = sorted(
-            bubble_means_and_refs, key=lambda x: x.mean_value
+            # TODO: remove the lambda and expect same results
+            bubble_means_and_refs,
+            key=lambda x: x.mean_value,
         )
-        # sorted_bubble_means_and_refs = sorted(bubble_means_and_refs)
+        sorted_bubble_means = [item.mean_value for item in sorted_bubble_means_and_refs]
 
         # Find the FIRST LARGE GAP and set it as threshold:
-        sorted_bubble_means = [item.mean_value for item in sorted_bubble_means_and_refs]
         ls = (looseness + 1) // 2
         l = len(sorted_bubble_means) - ls
         max1, thr1 = MIN_JUMP, global_default_threshold
@@ -727,7 +733,7 @@ class ImageInstanceOps:
 
     def get_local_threshold(
         self,
-        bubble_means_list,
+        bubble_means_and_refs,
         global_threshold_for_template,
         no_outliers,
         plot_title=None,
@@ -759,8 +765,12 @@ class ImageInstanceOps:
         """
         config = self.tuning_config
         # Sort the Q bubbleValues
-        sorted_bubble_means = sorted(bubble_means_list)
-
+        sorted_bubble_means_and_refs = sorted(
+            # TODO: remove the lambda and expect same results
+            bubble_means_and_refs,
+            key=lambda x: x.mean_value,
+        )
+        sorted_bubble_means = [item.mean_value for item in sorted_bubble_means_and_refs]
         # Small no of pts cases:
         # base case: 1 or 2 pts
         if len(sorted_bubble_means) < 3:
@@ -793,8 +803,9 @@ class ImageInstanceOps:
                     # TODO: Low confidence parameters here
                     pass
 
-        # TODO: Make a common plot function to show local and global thresholds
+        # TODO: Make a common plot util to show local and global thresholds
         if plot_show and plot_title is not None:
+            # TODO: add plot labels via the util
             _, ax = plt.subplots()
             ax.bar(range(len(sorted_bubble_means)), sorted_bubble_means)
             thrline = ax.axhline(thr1, color="green", ls=("-."), linewidth=3)

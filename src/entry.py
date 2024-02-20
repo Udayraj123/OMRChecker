@@ -52,9 +52,7 @@ def print_config_summary(
     table.add_column("Value", style="magenta")
     table.add_row("Directory Path", f"{curr_dir}")
     table.add_row("Count of Images", f"{len(omr_files)}")
-    table.add_row(
-        "Debug Mode ", "ON" if args["debug"] else "OFF (use --debug to see errors)"
-    )
+    table.add_row("Debug Mode ", "ON" if args["debug"] else "OFF")
     table.add_row("Set Layout Mode ", "ON" if args["setLayout"] else "OFF")
     table.add_row(
         "Markers Detection",

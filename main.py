@@ -88,12 +88,18 @@ def entry_point_for_args(args):
         # Disable tracebacks
         sys.tracebacklimit = 0
         # TODO: set log levels
-
     for root in args["input_paths"]:
-        entry_point(
-            Path(root),
-            args,
-        )
+        try:
+            entry_point(
+                Path(root),
+                args,
+            )
+        except:
+            if args["debug"] is True:
+                logger.critical(
+                    f"OMRChecker crashed. add --debug and run again to see error details"
+                )
+            raise
 
 
 if __name__ == "__main__":
