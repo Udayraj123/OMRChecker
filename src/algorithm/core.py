@@ -340,13 +340,14 @@ class ImageInstanceOps:
                     local_threshold_for_field_block,
                     global_threshold_for_template,
                 )
-                for bubble in field_bubble_means:
+                for bubble_detection in field_bubble_means:
+                    bubble = bubble_detection.item_reference
                     x, y, field_value = (
                         bubble.x + field_block.shift_x,
                         bubble.y + field_block.shift_y,
                         bubble.field_value,
                     )
-                    if bubble.is_marked:
+                    if bubble_detection.is_marked:
                         # Draw the shifted box
                         cv2.rectangle(
                             final_marked,
@@ -381,9 +382,12 @@ class ImageInstanceOps:
                         )
 
                 detected_bubbles = [
-                    bubble for bubble in field_bubble_means if bubble.is_marked
+                    bubble_detection
+                    for bubble_detection in field_bubble_means
+                    if bubble_detection.is_marked
                 ]
-                for bubble in detected_bubbles:
+                for bubble_detection in detected_bubbles:
+                    bubble = bubble_detection.item_reference
                     field_label, field_value = (
                         bubble.field_label,
                         bubble.field_value,
