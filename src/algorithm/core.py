@@ -78,10 +78,10 @@ class ImageInstanceOps:
         # blackVals=[0]
         # whiteVals=[255]
 
-        if config.outputs.show_image_level >= 5:
-            all_c_box_vals = {"int": [], "mcq": []}
-            # TODO: simplify this logic
-            q_nums = {"int": [], "mcq": []}
+        # if config.outputs.show_image_level >= 5:
+        #     all_c_box_vals = {"int": [], "mcq": []}
+        #     # TODO: simplify this logic
+        #     q_nums = {"int": [], "mcq": []}
 
         # Get mean bubbleValues n other stats
         (
@@ -270,26 +270,24 @@ class ImageInstanceOps:
                         )
                         # No output disparity, but -
                         # 2.1 global threshold is "too close" to lower bubbles
-                        bubbles_in_doubt_lower = list(
-                            filter(
-                                lambda mean_value: GLOBAL_THRESHOLD_MARGIN
-                                > max(0, global_threshold_for_template - mean_value),
-                                field_bubble_means,
-                            )
-                        )
+                        bubbles_in_doubt_lower = [
+                            bubble
+                            for bubble in field_bubble_means
+                            if GLOBAL_THRESHOLD_MARGIN
+                            > max(0, global_threshold_for_template - bubble.mean_value)
+                        ]
 
                         if len(bubbles_in_doubt_lower) > 0:
                             logger.warning(
                                 "bubbles_in_doubt_lower", bubbles_in_doubt_lower
                             )
                         # 2.2 global threshold is "too close" to higher bubbles
-                        bubbles_in_doubt_higher = list(
-                            filter(
-                                lambda mean_value: GLOBAL_THRESHOLD_MARGIN
-                                > max(0, mean_value - global_threshold_for_template),
-                                field_bubble_means,
-                            )
-                        )
+                        bubbles_in_doubt_higher = [
+                            bubble
+                            for bubble in field_bubble_means
+                            if GLOBAL_THRESHOLD_MARGIN
+                            > max(0, bubble.mean_value - global_threshold_for_template)
+                        ]
 
                         if len(bubbles_in_doubt_higher) > 0:
                             logger.warning(
@@ -653,13 +651,12 @@ class ImageInstanceOps:
             plot_means_and_refs = (
                 sorted_bubble_means_and_refs if sort_in_plot else bubble_means_and_refs
             )
-            plot_values = list(map(lambda x: x.mean_value, plot_means_and_refs))
-            original_bin_names = list(
-                map(lambda x: x.item_reference.plot_bin_name, plot_means_and_refs)
-            )
-            plot_labels = list(
-                map(lambda x: x.item_reference.name, plot_means_and_refs)
-            )
+            plot_values = [x.mean_value for x in plot_means_and_refs]
+            original_bin_names = [
+                x.item_reference.plot_bin_name for x in plot_means_and_refs
+            ]
+            plot_labels = [x.item_reference.name for x in plot_means_and_refs]
+
             # TODO: move into individual utils
             sorted_unique_bin_names, unique_label_indices = np.unique(
                 original_bin_names, return_inverse=True
