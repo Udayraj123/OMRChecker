@@ -167,7 +167,7 @@ class ImageInstanceOps:
             MIN_JUMP=MIN_JUMP_STD,
             JUMP_DELTA=JUMP_DELTA_STD,
             plot_title="Q-wise Std-dev Plot",
-            plot_show=True,
+            plot_show=config.outputs.show_image_level >= 5,
             sort_in_plot=True,
         )
         # plt.show()
@@ -182,7 +182,7 @@ class ImageInstanceOps:
             plot_title="Mean Intensity Barplot",
             MIN_JUMP=MIN_JUMP,
             JUMP_DELTA=JUMP_DELTA,
-            plot_show=True,
+            plot_show=config.outputs.show_image_level >= 5,
             sort_in_plot=True,
             looseness=4,
         )
@@ -226,8 +226,8 @@ class ImageInstanceOps:
                     global_threshold_for_template,
                     no_outliers,
                     plot_title=f"Mean Intensity Barplot for {key}.{field.field_label}.block{block_field_number}",
-                    plot_show=field.field_label in ["q72", "q52", "roll5"],  # Temp
-                    # config.outputs.show_image_level >= 6,
+                    # plot_show=field.field_label in ["q72", "q52", "roll5"],  # Temp
+                    plot_show=config.outputs.show_image_level >= 6,
                 )
                 # print(field.field_label,key,block_field_number, "THR: ",
                 #   round(local_threshold_for_field_block,2))
@@ -235,6 +235,7 @@ class ImageInstanceOps:
 
                 # TODO: @staticmethod
                 def apply_field_detection(
+                    field,
                     field_bubble_means,
                     local_threshold_for_field_block,
                     global_threshold_for_template,
@@ -260,13 +261,13 @@ class ImageInstanceOps:
 
                     if field_has_disparity:
                         logger.warning(
-                            "detected_bubbles_parity = False",
-                            field_bubble_means,
+                            f"field_has_disparity for field: ${field.field_label}",
+                            list(map(str, field_bubble_means)),
+                            f"global={global_threshold_for_template} local={local_threshold_for_field_block}",
                         )
                     else:
                         logger.info(
-                            "detected_bubbles_parity = True",
-                            field_bubble_means,
+                            f"party_matched for field: {field.field_label}",
                         )
                         # No output disparity, but -
                         # 2.1 global threshold is "too close" to lower bubbles
@@ -279,7 +280,8 @@ class ImageInstanceOps:
 
                         if len(bubbles_in_doubt_lower) > 0:
                             logger.warning(
-                                "bubbles_in_doubt_lower", bubbles_in_doubt_lower
+                                "bubbles_in_doubt_lower",
+                                list(map(str, bubbles_in_doubt_lower)),
                             )
                         # 2.2 global threshold is "too close" to higher bubbles
                         bubbles_in_doubt_higher = [
@@ -291,7 +293,8 @@ class ImageInstanceOps:
 
                         if len(bubbles_in_doubt_higher) > 0:
                             logger.warning(
-                                "bubbles_in_doubt_higher", bubbles_in_doubt_higher
+                                "bubbles_in_doubt_higher",
+                                list(map(str, bubbles_in_doubt_higher)),
                             )
 
                         # 3. local max_jump is below configured min_jump, but is an outlier compared to other jumps
@@ -330,12 +333,14 @@ class ImageInstanceOps:
 
                             if len(bubbles_in_doubt_by_jump) > 0:
                                 logger.warning(
-                                    "bubbles_in_doubt_by_jump", bubbles_in_doubt_by_jump
+                                    "bubbles_in_doubt_by_jump",
+                                    list(map(str, bubbles_in_doubt_by_jump)),
                                 )
 
                     return field_bubble_means
 
                 field_bubble_means = apply_field_detection(
+                    field,
                     field_bubble_means,
                     local_threshold_for_field_block,
                     global_threshold_for_template,

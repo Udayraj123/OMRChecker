@@ -7,8 +7,6 @@
 
 """
 
-import functools
-
 from src.algorithm.core import ImageInstanceOps
 from src.constants import FIELD_TYPES
 from src.logger import logger
@@ -303,7 +301,7 @@ class FieldBlock:
         for field_label in self.parsed_field_labels:
             bubble_point = lead_point.copy()
             field_bubbles = []
-            for bubble_value in bubble_values:
+            for bubble_index, bubble_value in enumerate(bubble_values):
                 field_bubbles.append(
                     FieldBubble(
                         bubble_point.copy(),
@@ -311,6 +309,7 @@ class FieldBlock:
                         field_label,
                         field_type,
                         bubble_value,
+                        bubble_index,
                     )
                 )
                 bubble_point[_h] += bubbles_gap
@@ -342,7 +341,7 @@ class FieldBubble:
     It can also correspond to a single digit of integer type Q (eg q5d1)
     """
 
-    def __init__(self, pt, field_label, field_type, field_value):
+    def __init__(self, pt, field_label, field_type, field_value, bubble_index):
         self.name = f"{field_label}_{field_value}"
         self.plot_bin_name = field_label
         self.x = round(pt[0])
@@ -350,6 +349,7 @@ class FieldBubble:
         self.field_label = field_label
         self.field_type = field_type
         self.field_value = field_value
+        self.bubble_index = bubble_index
 
     def __str__(self):
-        return str([self.x, self.y])
+        return self.name  # f"{self.field_label}: [{self.x}, {self.y}]"
