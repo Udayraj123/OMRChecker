@@ -258,16 +258,17 @@ class ImageInstanceOps:
                             field_has_disparity = True
 
                     # TODO: FieldDetection.bubbles = field_bubble_means
-
+                    thresholds_string = f"global={round(global_threshold_for_template,2)} local={round(local_threshold_for_field_block,2)} global_margin={GLOBAL_THRESHOLD_MARGIN}"
                     if field_has_disparity:
                         logger.warning(
                             f"field_has_disparity for field: ${field.field_label}",
                             list(map(str, field_bubble_means)),
-                            f"global={global_threshold_for_template} local={local_threshold_for_field_block}",
+                            thresholds_string,
                         )
                     else:
                         logger.info(
                             f"party_matched for field: {field.field_label}",
+                            thresholds_string,
                         )
                         # No output disparity, but -
                         # 2.1 global threshold is "too close" to lower bubbles
@@ -275,7 +276,7 @@ class ImageInstanceOps:
                             bubble
                             for bubble in field_bubble_means
                             if GLOBAL_THRESHOLD_MARGIN
-                            > max(0, global_threshold_for_template - bubble.mean_value)
+                            < max(0, global_threshold_for_template - bubble.mean_value)
                         ]
 
                         if len(bubbles_in_doubt_lower) > 0:
@@ -288,7 +289,7 @@ class ImageInstanceOps:
                             bubble
                             for bubble in field_bubble_means
                             if GLOBAL_THRESHOLD_MARGIN
-                            > max(0, bubble.mean_value - global_threshold_for_template)
+                            < max(0, bubble.mean_value - global_threshold_for_template)
                         ]
 
                         if len(bubbles_in_doubt_higher) > 0:
