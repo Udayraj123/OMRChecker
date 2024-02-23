@@ -1,6 +1,10 @@
 # OMR Checker
 
-Read OMRs fast and accurately using a scanner 🖨 or your phone 🤳.
+Read OMR sheets fast and accurately using a scanner 🖨 or your phone 🤳.
+
+## What is OMR?
+
+OMR stands for Optical Mark Recognition, used to detect and interpret human-marked data on documents. OMR refers to the process of reading and evaluating OMR sheets, commonly used in exams, surveys, and other forms.
 
 #### **Quick Links**
 - [Installation](#getting-started)
