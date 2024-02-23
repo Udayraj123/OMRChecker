@@ -140,6 +140,8 @@ class ImageInstanceOps:
             MIN_JUMP,
             JUMP_DELTA,
             GLOBAL_THRESHOLD_MARGIN,
+            MIN_JUMP_SURPLUS_FOR_GLOBAL_THR,
+            CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY,
         ) = map(
             config.threshold_params.get,
             [
@@ -149,6 +151,8 @@ class ImageInstanceOps:
                 "MIN_JUMP",
                 "JUMP_DELTA",
                 "GLOBAL_THRESHOLD_MARGIN",
+                "MIN_JUMP_SURPLUS_FOR_GLOBAL_THR",
+                "CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY",
             ],
         )
         global_default_threshold = (
@@ -176,7 +180,7 @@ class ImageInstanceOps:
 
         # Note: Plotting takes Significant times here --> Change Plotting args
         # to support show_image_level
-        global_threshold_for_template, _, _ = self.get_global_threshold(
+        global_threshold_for_template, j_low, j_high = self.get_global_threshold(
             global_bubble_means_and_refs,  # , looseness=4
             global_default_threshold,
             plot_title="Mean Intensity Barplot",
@@ -186,6 +190,7 @@ class ImageInstanceOps:
             sort_in_plot=True,
             looseness=4,
         )
+        global_max_jump = j_high - j_low
 
         logger.info(
             f"Thresholding:\t global_threshold_for_template: {round(global_threshold_for_template, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_threshold_for_template == 255) else ''}"
@@ -221,13 +226,17 @@ class ImageInstanceOps:
                 field_bubble_means = field_number_to_field_bubble_means[
                     absolute_field_number
                 ]
-                local_threshold_for_field_block = self.get_local_threshold(
+                (
+                    local_threshold_for_field_block,
+                    local_max_jump,
+                ) = self.get_local_threshold(
                     field_bubble_means,
                     global_threshold_for_template,
                     no_outliers,
                     plot_title=f"Mean Intensity Barplot for {key}.{field.field_label}.block{block_field_number}",
                     # plot_show=field.field_label in ["q72", "q52", "roll5"],  # Temp
-                    plot_show=config.outputs.show_image_level >= 6,
+                    plot_show=field.field_label in ["q70", "q69"],  # Temp
+                    # plot_show=config.outputs.show_image_level >= 6,
                 )
                 # print(field.field_label,key,block_field_number, "THR: ",
                 #   round(local_threshold_for_field_block,2))
@@ -244,7 +253,7 @@ class ImageInstanceOps:
                     field_bubble_means = [
                         deepcopy(bubble) for bubble in field_bubble_means
                     ]
-                    field_has_disparity = False
+                    bubbles_in_doubt_by_disparity = []
                     for bubble in field_bubble_means:
                         global_bubble_is_marked = (
                             global_threshold_for_template > bubble.mean_value
@@ -255,28 +264,58 @@ class ImageInstanceOps:
                         bubble.is_marked = local_bubble_is_marked
                         # 1. Disparity in global/local threshold output
                         if global_bubble_is_marked != local_bubble_is_marked:
-                            field_has_disparity = True
+                            bubbles_in_doubt_by_disparity.append(bubble)
+
+                    # High confidence if the gap is very large compared to MIN_JUMP
+                    is_global_jump_confident = (
+                        global_max_jump
+                        > MIN_JUMP + CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY
+                    )
+                    is_local_jump_confident = (
+                        local_max_jump > MIN_JUMP + CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY
+                    )
 
                     # TODO: FieldDetection.bubbles = field_bubble_means
                     thresholds_string = f"global={round(global_threshold_for_template,2)} local={round(local_threshold_for_field_block,2)} global_margin={GLOBAL_THRESHOLD_MARGIN}"
-                    if field_has_disparity:
+                    jumps_string = f"global_max_jump={round(global_max_jump,2)} local_max_jump={round(local_max_jump,2)} MIN_JUMP={MIN_JUMP} SURPLUS={CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY}"
+                    if len(bubbles_in_doubt_by_disparity) > 0:
                         logger.warning(
-                            f"field_has_disparity for field: ${field.field_label}",
-                            list(map(str, field_bubble_means)),
+                            f"found disparity in field: ${field.field_label}",
+                            list(map(str, bubbles_in_doubt_by_disparity)),
                             thresholds_string,
                         )
+                        # 5.2 if the gap is very large compared to MIN_JUMP, but still there is disparity
+                        if is_global_jump_confident:
+                            logger.warning(
+                                f"is_global_jump_confident but still has disparity",
+                                jumps_string,
+                            )
+                        elif is_local_jump_confident:
+                            logger.warning(
+                                f"is_local_jump_confident but still has disparity",
+                                jumps_string,
+                            )
                     else:
                         logger.info(
                             f"party_matched for field: {field.field_label}",
                             thresholds_string,
                         )
+                        if is_local_jump_confident:
+                            # Higher weightage for confidence
+                            logger.info(
+                                f"is_local_jump_confident = increased confidence",
+                                jumps_string,
+                            )
                         # No output disparity, but -
                         # 2.1 global threshold is "too close" to lower bubbles
                         bubbles_in_doubt_lower = [
                             bubble
                             for bubble in field_bubble_means
                             if GLOBAL_THRESHOLD_MARGIN
-                            < max(0, global_threshold_for_template - bubble.mean_value)
+                            > max(
+                                GLOBAL_THRESHOLD_MARGIN,
+                                global_threshold_for_template - bubble.mean_value,
+                            )
                         ]
 
                         if len(bubbles_in_doubt_lower) > 0:
@@ -289,7 +328,10 @@ class ImageInstanceOps:
                             bubble
                             for bubble in field_bubble_means
                             if GLOBAL_THRESHOLD_MARGIN
-                            < max(0, bubble.mean_value - global_threshold_for_template)
+                            > max(
+                                GLOBAL_THRESHOLD_MARGIN,
+                                bubble.mean_value - global_threshold_for_template,
+                            )
                         ]
 
                         if len(bubbles_in_doubt_higher) > 0:
@@ -298,44 +340,53 @@ class ImageInstanceOps:
                                 list(map(str, bubbles_in_doubt_higher)),
                             )
 
-                        # 3. local max_jump is below configured min_jump, but is an outlier compared to other jumps
-                        if len(field_bubble_means) > 2:
-                            sorted_field_bubble_means = sorted(
-                                field_bubble_means, key=lambda x: x.mean_value
-                            )
-                            # get jumps
-                            jumps_in_bubble_means = []
-                            previous_mean = sorted_field_bubble_means[0].mean_value
-                            for i in range(1, len(sorted_field_bubble_means)):
-                                current_mean = sorted_field_bubble_means[i].mean_value
-                                jumps_in_bubble_means.append(
-                                    current_mean - previous_mean
+                        # 3. local jump outliers are close to the configured min_jump but below it.
+                        # Note: This factor indicates presence of cases like partially filled bubbles,
+                        # mis-aligned box boundaries or some form of unintentional marking over the bubble
+                        if len(field_bubble_means) > 1:
+                            # TODO: move util
+                            def get_jumps_in_bubble_means(field_bubble_means):
+                                # get sorted array
+                                sorted_field_bubble_means = sorted(
+                                    field_bubble_means, key=lambda x: x.mean_value
                                 )
-                                previous_mean = current_mean
+                                # get jumps
+                                jumps_in_bubble_means = []
+                                previous_bubble = sorted_field_bubble_means[0]
+                                previous_mean = previous_bubble.mean_value
+                                for i in range(1, len(sorted_field_bubble_means)):
+                                    bubble = sorted_field_bubble_means[i]
+                                    current_mean = bubble.mean_value
+                                    jumps_in_bubble_means.append(
+                                        [
+                                            round(current_mean - previous_mean, 2),
+                                            previous_bubble,
+                                        ]
+                                    )
+                                    previous_bubble = bubble
+                                    previous_mean = current_mean
+                                return jumps_in_bubble_means
 
-                            # TODO: make sure get_indices_of_outliers() is tested to work properly on small data
-                            # Ideally outlier_jump_indices should be singleton
-                            outlier_jump_indices = get_indices_of_outliers(
-                                jumps_in_bubble_means
+                            jumps_in_bubble_means = get_jumps_in_bubble_means(
+                                field_bubble_means
                             )
-
-                            # Ideally jump_indices_in_doubt should be an empty array
-                            jump_indices_in_doubt = [
-                                i
-                                for i in outlier_jump_indices
-                                if jumps_in_bubble_means[i] < MIN_JUMP
-                            ]
-
-                            # Let's point out the options which it "thinks" could be marked
                             bubbles_in_doubt_by_jump = [
-                                sorted_field_bubble_means[i]
-                                for i in jump_indices_in_doubt
+                                bubble
+                                for jump, bubble in jumps_in_bubble_means
+                                if MIN_JUMP_SURPLUS_FOR_GLOBAL_THR
+                                > max(
+                                    MIN_JUMP_SURPLUS_FOR_GLOBAL_THR,
+                                    MIN_JUMP - jump,
+                                )
                             ]
 
                             if len(bubbles_in_doubt_by_jump) > 0:
                                 logger.warning(
                                     "bubbles_in_doubt_by_jump",
                                     list(map(str, bubbles_in_doubt_by_jump)),
+                                )
+                                logger.warning(
+                                    list(map(str, jumps_in_bubble_means)),
                                 )
 
                     return field_bubble_means
@@ -799,8 +850,11 @@ class ImageInstanceOps:
 
             confident_jump = (
                 config.threshold_params.MIN_JUMP
-                + config.threshold_params.CONFIDENT_SURPLUS
+                + config.threshold_params.MIN_JUMP_SURPLUS_FOR_GLOBAL_THR
             )
+
+            # TODO: seek improvement here because of the empty cases failing here(boundary walls)
+            # Can see erosion make a lot of sense here?
             # If not confident, then only take help of global_threshold_for_template
             if max1 < confident_jump:
                 if no_outliers:
@@ -829,7 +883,7 @@ class ImageInstanceOps:
             # appendSaveImg(6,getPlotImg())
             if plot_show:
                 plt.show()
-        return thr1
+        return thr1, max1
 
     def append_save_img(self, key, img):
         if self.save_image_level >= int(key):
@@ -859,23 +913,3 @@ class ImageInstanceOps:
     def reset_all_save_img(self):
         for i in range(self.save_image_level):
             self.save_img_list[i + 1] = []
-
-
-# TODO: common utils
-def is_outlier(value, p25, p75):
-    """Check if value is an outlier"""
-    lower = p25 - 1.5 * (p75 - p25)
-    upper = p75 + 1.5 * (p75 - p25)
-    return value <= lower or value >= upper
-
-
-def get_indices_of_outliers(values):
-    """Get outlier indices (if any)"""
-    p25 = np.percentile(values, 25)
-    p75 = np.percentile(values, 75)
-
-    indices_of_outliers = []
-    for ind, value in enumerate(values):
-        if is_outlier(value, p25, p75):
-            indices_of_outliers.append(ind)
-    return indices_of_outliers

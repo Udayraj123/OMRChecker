@@ -21,13 +21,23 @@ CONFIG_SCHEMA = {
             "additionalProperties": False,
             "properties": {
                 "GAMMA_LOW": {"type": "number", "minimum": 0, "maximum": 1},
+                # TODO: rename these variables for better usability
                 "MIN_GAP": {"type": "integer", "minimum": 10, "maximum": 100},
                 "MIN_JUMP": {"type": "integer", "minimum": 10, "maximum": 100},
-                "CONFIDENT_SURPLUS": {"type": "integer", "minimum": 0, "maximum": 20},
+                "MIN_JUMP_SURPLUS_FOR_GLOBAL_THR": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 20,
+                },
                 "GLOBAL_THRESHOLD_MARGIN": {
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 20,
+                },
+                "CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
                 },
                 "JUMP_DELTA": {"type": "integer", "minimum": 10, "maximum": 100},
                 "PAGE_TYPE_FOR_THRESHOLD": {
