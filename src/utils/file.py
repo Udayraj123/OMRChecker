@@ -6,7 +6,7 @@ from time import localtime, strftime
 
 import pandas as pd
 
-from src.logger import logger
+from src.utils.logger import logger
 
 
 def load_json(path, **rest):

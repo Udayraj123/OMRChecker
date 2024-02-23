@@ -3,12 +3,12 @@ import os
 import cv2
 import numpy as np
 
-from src.logger import logger
 from src.processors.interfaces.ImageTemplatePreprocessor import (
     ImageTemplatePreprocessor,
 )
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
+from src.utils.logger import logger
 
 
 # Internal Processor for separation of code

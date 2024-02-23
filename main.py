@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 from src.entry import entry_point
-from src.logger import logger
+from src.utils.logger import logger
 
 
 def parse_args():
@@ -94,7 +94,7 @@ def entry_point_for_args(args):
                 Path(root),
                 args,
             )
-        except:
+        except Exception:
             if args["debug"] is True:
                 logger.critical(
                     f"OMRChecker crashed. add --debug and run again to see error details"

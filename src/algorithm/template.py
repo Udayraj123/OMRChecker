@@ -8,9 +8,9 @@
 """
 
 from src.algorithm.core import ImageInstanceOps
-from src.constants import FIELD_TYPES
-from src.logger import logger
 from src.processors.manager import PROCESSOR_MANAGER
+from src.utils.constants import FIELD_TYPES
+from src.utils.logger import logger
 from src.utils.parsing import (
     custom_sort_output_columns,
     open_template_with_defaults,

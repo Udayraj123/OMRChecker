@@ -7,12 +7,12 @@ import cv2
 import pandas as pd
 from rich.table import Table
 
-from src.logger import console, logger
 from src.schemas.constants import (
     BONUS_SECTION_PREFIX,
     DEFAULT_SECTION_KEY,
     MARKING_VERDICT_TYPES,
 )
+from src.utils.logger import console, logger
 from src.utils.parsing import (
     get_concatenated_response,
     open_evaluation_with_validation,

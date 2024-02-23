@@ -5,7 +5,7 @@ Adapated from https://github.com/gdiepen/python_processor_example
 import inspect
 import pkgutil
 
-from src.logger import logger
+from src.utils.logger import logger
 
 
 class Processor:

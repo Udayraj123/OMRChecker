@@ -16,14 +16,14 @@ import cv2
 import pandas as pd
 from rich.table import Table
 
-from src import constants
+from src.algorithm.evaluation import EvaluationConfig, evaluate_concatenated_response
+from src.algorithm.template import Template
 from src.defaults import CONFIG_DEFAULTS
-from src.evaluation import EvaluationConfig, evaluate_concatenated_response
-from src.logger import console, logger
-from src.template import Template
+from src.utils import constants
 from src.utils.file import Paths, setup_dirs_for_paths, setup_outputs_for_template
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils, Stats
+from src.utils.logger import console, logger
 from src.utils.parsing import get_concatenated_response, open_config_with_defaults
 
 # Load processors

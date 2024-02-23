@@ -11,10 +11,53 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import colormaps
 
-import src.constants as constants
+import src.utils.constants as constants
 from src.algorithm.detection import BubbleMeanValue, FieldStdMeanValue
-from src.logger import logger
 from src.utils.image import ImageUtils
+from src.utils.logger import logger
+
+
+# TODO: util
+def plot_bubbles_in_3d_plot(
+    image, final_marked, template, field_number_to_field_bubble_means
+):
+    fig = plt.figure()
+    ax = fig.add_subplot(projection="3d")
+
+    absolute_field_number = 0
+    marked_bubble_color = "c"
+    for field_block in template.field_blocks:
+        for field in field_block.fields:
+            field_bubble_means = field_number_to_field_bubble_means[
+                absolute_field_number
+            ]
+
+            plot_color_sampler = colormaps["inferno"].resampled(len(field_bubble_means))
+            # Plot based on intensity
+            plot_colors = plot_color_sampler(
+                [bubble.mean_value // 255 for bubble in field_bubble_means]
+            )
+
+            xs, ys, plot_colors = [], [], []
+            for i, bubble in enumerate(field_bubble_means):
+                xs.append(bubble.item_reference.x)
+                ys.append(bubble.mean_value)
+                if bubble.is_marked:
+                    plot_colors[i] = marked_bubble_color
+
+            # Oops, we may have non-linear bubbles too possibly
+            # For now let's assume the first bubble's y coordinate is the point of plot
+            k = field_bubble_means[0].item_reference.y
+            # Plot the bar graph given by xs and ys on the plane y=k with 80% opacity.
+            ax.bar(xs, ys, zs=k, zdir="y", color=plot_colors, alpha=0.8)
+
+            logger.info(list(map(str, field_bubble_means)))
+            absolute_field_number += 1
+
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.set_zlabel("Z")
+    plt.show()
 
 
 class ImageInstanceOps:
@@ -93,7 +136,6 @@ class ImageInstanceOps:
             [],
             [],
         )
-        absolute_field_number = 0
         for field_block in template.field_blocks:
             field_bubble_means_stds = []
             box_w, box_h = field_block.bubble_dimensions
@@ -124,13 +166,7 @@ class ImageInstanceOps:
                 )
 
                 field_number_to_field_bubble_means.append(field_bubble_means)
-                # _, _, _ = get_global_threshold(field_bubble_means, "QStrip Plot",
-                #   plot_show=False, sort_in_plot=True)
-                # hist = getPlotImg()
-                # InteractionUtils.show("QStrip "+field.field_label, hist, 0, 1,config=config)
                 global_bubble_means_and_refs.extend(field_bubble_means)
-                # print(absolute_field_number, field.field_label, field_bubble_means_stds[len(field_bubble_means_stds)-1])
-                absolute_field_number += 1
             global_field_bubble_means_stds.extend(field_bubble_means_stds)
 
         (
@@ -235,8 +271,8 @@ class ImageInstanceOps:
                     no_outliers,
                     plot_title=f"Mean Intensity Barplot for {key}.{field.field_label}.block{block_field_number}",
                     # plot_show=field.field_label in ["q72", "q52", "roll5"],  # Temp
-                    plot_show=field.field_label in ["q70", "q69"],  # Temp
-                    # plot_show=config.outputs.show_image_level >= 6,
+                    # plot_show=field.field_label in ["q70", "q69"],  # Temp
+                    plot_show=config.outputs.show_image_level >= 6,
                 )
                 # print(field.field_label,key,block_field_number, "THR: ",
                 #   round(local_threshold_for_field_block,2))
@@ -266,7 +302,7 @@ class ImageInstanceOps:
                         if global_bubble_is_marked != local_bubble_is_marked:
                             bubbles_in_doubt_by_disparity.append(bubble)
 
-                    # High confidence if the gap is very large compared to MIN_JUMP
+                    # 5. High confidence if the gap is very large compared to MIN_JUMP
                     is_global_jump_confident = (
                         global_max_jump
                         > MIN_JUMP + CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY
@@ -280,7 +316,7 @@ class ImageInstanceOps:
                     jumps_string = f"global_max_jump={round(global_max_jump,2)} local_max_jump={round(local_max_jump,2)} MIN_JUMP={MIN_JUMP} SURPLUS={CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY}"
                     if len(bubbles_in_doubt_by_disparity) > 0:
                         logger.warning(
-                            f"found disparity in field: ${field.field_label}",
+                            f"found disparity in field: {field.field_label}",
                             list(map(str, bubbles_in_doubt_by_disparity)),
                             thresholds_string,
                         )
@@ -300,6 +336,7 @@ class ImageInstanceOps:
                             f"party_matched for field: {field.field_label}",
                             thresholds_string,
                         )
+                        # 5.1 High confidence if the gap is very large compared to MIN_JUMP
                         if is_local_jump_confident:
                             # Higher weightage for confidence
                             logger.info(
@@ -388,6 +425,9 @@ class ImageInstanceOps:
                                 logger.warning(
                                     list(map(str, jumps_in_bubble_means)),
                                 )
+
+                            # TODO: aggregate the bubbles
+                            # collect_bubbles_in_doubt(bubbles_in_doubt_by_disparity, bubbles_in_doubt_higher, bubbles_in_doubt_lower, bubbles_in_doubt_by_jump)
 
                     return field_bubble_means
 
@@ -480,6 +520,7 @@ class ImageInstanceOps:
         # TODO: aggregate with weightages
         # overall_confidence = self.get_confidence_metrics(fields_confidence)
         # underconfident_fields = filter(lambda x: x.confidence < 0.8, fields_confidence)
+
         # TODO: Make the plot for underconfident_fields
         # logger.info(name, overall_confidence, underconfident_fields)
 
@@ -488,6 +529,9 @@ class ImageInstanceOps:
         # Translucent
         cv2.addWeighted(final_marked, alpha, transp_layer, 1 - alpha, 0, final_marked)
 
+        plot_bubbles_in_3d_plot(
+            image, final_marked, template, field_number_to_field_bubble_means
+        )
         # TODO: refactor all_c_box_vals
         # Box types
         # if config.outputs.show_image_level >= 5:

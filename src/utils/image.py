@@ -10,8 +10,8 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from src.constants import CLR_WHITE
-from src.logger import logger
+from src.utils.constants import CLR_WHITE
+from src.utils.logger import logger
 
 plt.rcParams["figure.figsize"] = (10.0, 8.0)
 CLAHE_HELPER = cv2.createCLAHE(clipLimit=5.0, tileGridSize=(8, 8))
