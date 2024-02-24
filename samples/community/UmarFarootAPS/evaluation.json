@@ -4,7 +4,7 @@
     "answer_key_csv_path": "answer_key.csv",
     "should_explain_scoring": true
   },
-  "marking_scheme": {
+  "marking_schemes": {
     "DEFAULT": {
       "correct": "1",
       "incorrect": "0",

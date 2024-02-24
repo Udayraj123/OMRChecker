@@ -22,123 +22,127 @@ from src.utils.parsing import (
 
 
 class AnswerMatcher:
-    def __init__(self, answer_item, marking_scheme):
-        self.answer_type = self.get_answer_type(answer_item)
-        self.parsed_answer = self.parse_answer_item(answer_item)
-        self.set_defaults_from_scheme(marking_scheme)
-        self.marking_scheme = marking_scheme
+    def __init__(self, answer_item, section_marking_scheme):
+        self.section_marking_scheme = section_marking_scheme
+        self.answer_item = answer_item
+        self.answer_type = self.validate_and_get_answer_type(answer_item)
+        self.set_defaults_from_scheme(section_marking_scheme)
 
-    def get_answer_type(self, answer_item):
-        item_type = type(answer_item)
-        if item_type == str:
+    @staticmethod
+    def is_a_marking_score(answer_element):
+        # Note: strict type checking is already done at schema validation level,
+        # Here we focus on overall struct type
+        return type(answer_element) == str or type(answer_element) == int
+
+    @staticmethod
+    def is_standard_answer(answer_element):
+        return type(answer_element) == str and len(answer_element) >= 1
+
+    def validate_and_get_answer_type(self, answer_item):
+        if self.is_standard_answer(answer_item):
             return "standard"
-        elif item_type == list:
+        elif type(answer_item) == list:
             if (
+                # Array of answer elements: ['A', 'B', 'AB']
                 len(answer_item) >= 2
-                and type(answer_item[0]) == str
-                and type(answer_item[1]) == str
+                and all(
+                    self.is_standard_answer(answers_or_score)
+                    for answers_or_score in answer_item
+                )
             ):
                 return "multiple-correct"
             elif (
-                len(answer_item) == 2
-                and type(answer_item[0]) == str
-                and type(answer_item[1]) == list
+                # Array of two-tuples: [['A', 1], ['B', 1], ['C', 3], ['AB', 2]]
+                len(answer_item) >= 1
+                and all(
+                    type(answer_and_score) == list and len(answer_and_score) == 2
+                    for answer_and_score in answer_item
+                )
+                and all(
+                    self.is_standard_answer(allowed_answer)
+                    and self.is_a_marking_score(answer_score)
+                    for allowed_answer, answer_score in answer_item
+                )
             ):
                 return "multiple-correct-weighted"
-            elif (
-                len(answer_item) == 2
-                and type(answer_item[0]) in list
-                and type(answer_item[1]) == list
-            ):
-                return "answer-weights"
-            else:
-                logger.critical(
-                    f"Unable to determine answer type for answer item: {answer_item}"
-                )
-                raise Exception("Unable to determine answer type")
 
-    def parse_answer_item(self, answer_item):
-        return answer_item
+        logger.critical(
+            f"Unable to determine answer type for answer item: {answer_item}"
+        )
+        raise Exception("Unable to determine answer type")
 
-    def set_defaults_from_scheme(self, marking_scheme):
+    def set_defaults_from_scheme(self, section_marking_scheme):
         answer_type = self.answer_type
-        self.empty_val = marking_scheme.empty_val
-        parsed_answer = self.parsed_answer
-        self.marking = deepcopy(marking_scheme.marking)
+        self.empty_val = section_marking_scheme.empty_val
+        answer_item = self.answer_item
+        self.marking = deepcopy(section_marking_scheme.marking)
         # TODO: reuse part of parse_scheme_marking here -
         if answer_type == "standard":
             # no local overrides
             pass
         elif answer_type == "multiple-correct":
-            # no local overrides
-            for allowed_answer in parsed_answer:
+            # override marking scheme scores for each allowed answer
+            for allowed_answer in answer_item:
                 self.marking[f"correct-{allowed_answer}"] = self.marking["correct"]
         elif answer_type == "multiple-correct-weighted":
-            custom_marking = list(map(parse_float_or_fraction, parsed_answer[1]))
-            verdict_types_length = min(len(MARKING_VERDICT_TYPES), len(custom_marking))
-            # override the given marking
-            for i in range(verdict_types_length):
-                verdict_type = MARKING_VERDICT_TYPES[i]
-                self.marking[verdict_type] = custom_marking[i]
-
-            if type(parsed_answer[0] == str):
-                allowed_answer = parsed_answer[0]
-                self.marking[f"correct-{allowed_answer}"] = self.marking["correct"]
-            else:
-                for allowed_answer in parsed_answer[0]:
-                    self.marking[f"correct-{allowed_answer}"] = self.marking["correct"]
+            # Note: No override using marking scheme as answer scores are provided in answer_item
+            for allowed_answer, answer_score in answer_item:
+                self.marking[f"correct-{allowed_answer}"] = parse_float_or_fraction(
+                    answer_score
+                )
 
     def get_marking_scheme(self):
-        return self.marking_scheme
+        return self.section_marking_scheme
 
     def get_section_explanation(self):
         answer_type = self.answer_type
         if answer_type in ["standard", "multiple-correct"]:
-            return self.marking_scheme.section_key
+            return self.section_marking_scheme.section_key
         elif answer_type == "multiple-correct-weighted":
             return f"Custom: {self.marking}"
 
     def get_verdict_marking(self, marked_answer):
         answer_type = self.answer_type
+        question_verdict = "incorrect"
         if answer_type == "standard":
             question_verdict = self.get_standard_verdict(marked_answer)
-            return question_verdict, self.marking[question_verdict]
         elif answer_type == "multiple-correct":
             question_verdict = self.get_multiple_correct_verdict(marked_answer)
-            return question_verdict, self.marking[question_verdict]
         elif answer_type == "multiple-correct-weighted":
-            question_verdict = self.get_multi_weighted_verdict(marked_answer)
-            return question_verdict, self.marking[question_verdict]
+            question_verdict = self.get_multiple_correct_weighted_verdict(marked_answer)
+        return question_verdict, self.marking[question_verdict]
 
     def get_standard_verdict(self, marked_answer):
-        parsed_answer = self.parsed_answer
+        allowed_answer = self.answer_item
         if marked_answer == self.empty_val:
             return "unmarked"
-        elif marked_answer == parsed_answer:
+        elif marked_answer == allowed_answer:
             return "correct"
         else:
             return "incorrect"
 
-    def get_multi_weighted_verdict(self, marked_answer):
-        return self.get_multiple_correct_verdict(marked_answer)
-
     def get_multiple_correct_verdict(self, marked_answer):
-        parsed_answer = self.parsed_answer
+        allowed_answers = self.answer_item
         if marked_answer == self.empty_val:
             return "unmarked"
-        elif marked_answer in parsed_answer:
+        elif marked_answer in allowed_answers:
+            return f"correct-{marked_answer}"
+        else:
+            return "incorrect"
+
+    def get_multiple_correct_weighted_verdict(self, marked_answer):
+        allowed_answers = [
+            allowed_answer for allowed_answer, _answer_score in self.answer_item
+        ]
+        if marked_answer == self.empty_val:
+            return "unmarked"
+        elif marked_answer in allowed_answers:
             return f"correct-{marked_answer}"
         else:
             return "incorrect"
 
     def __str__(self):
-        answer_type, parsed_answer = self.answer_type, self.parsed_answer
-        if answer_type == "multiple-correct":
-            return str(parsed_answer)
-        elif answer_type == "multiple-correct-weighted":
-            return f"{parsed_answer[0]}"
-            # TODO: multi-lines in multi-weights
-        return parsed_answer
+        return f"{self.answer_item}"
 
 
 class SectionMarkingScheme:
@@ -153,6 +157,9 @@ class SectionMarkingScheme:
         else:
             self.questions = parse_fields(section_key, section_scheme["questions"])
             self.marking = self.parse_scheme_marking(section_scheme["marking"])
+
+    def __str__(self):
+        return self.section_key
 
     def parse_scheme_marking(self, marking):
         parsed_marking = {}
@@ -184,14 +191,12 @@ class EvaluationConfig:
     def __init__(self, curr_dir, evaluation_path, template, tuning_config):
         self.path = evaluation_path
         evaluation_json = open_evaluation_with_validation(evaluation_path)
-        options, marking_scheme, source_type = map(
-            evaluation_json.get, ["options", "marking_scheme", "source_type"]
+        options, marking_schemes, source_type = map(
+            evaluation_json.get, ["options", "marking_schemes", "source_type"]
         )
         self.should_explain_scoring = options.get("should_explain_scoring", False)
         self.has_non_default_section = False
         self.exclude_files = []
-
-        marking_scheme = marking_scheme
 
         if source_type == "csv":
             csv_path = curr_dir.joinpath(options["answer_key_csv_path"])
@@ -286,13 +291,13 @@ class EvaluationConfig:
 
         self.validate_questions(answers_in_order)
 
-        self.marking_scheme, self.question_to_scheme = {}, {}
-        for section_key, section_scheme in marking_scheme.items():
+        self.section_marking_schemes, self.question_to_scheme = {}, {}
+        for section_key, section_scheme in marking_schemes.items():
             section_marking_scheme = SectionMarkingScheme(
                 section_key, section_scheme, template.global_empty_val
             )
             if section_key != DEFAULT_SECTION_KEY:
-                self.marking_scheme[section_key] = section_marking_scheme
+                self.section_marking_schemes[section_key] = section_marking_scheme
                 for q in section_marking_scheme.questions:
                     # TODO: check the answer key for custom scheme here?
                     self.question_to_scheme[q] = section_marking_scheme
@@ -300,7 +305,7 @@ class EvaluationConfig:
             else:
                 self.default_marking_scheme = section_marking_scheme
 
-        self.validate_marking_scheme()
+        self.validate_marking_schemes()
 
         self.question_to_answer_matcher = self.parse_answers_and_map_questions(
             answers_in_order
@@ -360,10 +365,13 @@ class EvaluationConfig:
     @staticmethod
     def parse_answer_column(answer_column):
         if answer_column[0] == "[":
+            # multiple-correct-weighted or multiple-correct
             parsed_answer = ast.literal_eval(answer_column)
         elif "," in answer_column:
+            # multiple-correct
             parsed_answer = answer_column.split(",")
         else:
+            # single-correct
             parsed_answer = answer_column
         return parsed_answer
 
@@ -385,12 +393,13 @@ class EvaluationConfig:
                             multi_marked_answer = True
                             break
                 if answer_type == "multiple-correct-weighted":
-                    if len(answer_item[0]) > 1:
-                        multi_marked_answer = True
+                    for single_answer, _answer_score in answer_item:
+                        if len(single_answer) > 1:
+                            multi_marked_answer = True
 
                 if multi_marked_answer:
                     raise Exception(
-                        f"Answer key contains multiple correct answer(s), but filter_out_multimarked_files is True. Scoring will get skipped."
+                        f"Provided answer key contains multiple correct answer(s), but config.filter_out_multimarked_files is True. Scoring will get skipped."
                     )
 
     def validate_questions(self, answers_in_order):
@@ -406,10 +415,10 @@ class EvaluationConfig:
                 f"Unequal lengths for questions_in_order and answers_in_order ({len_questions_in_order} != {len_answers_in_order})"
             )
 
-    def validate_marking_scheme(self):
-        marking_scheme = self.marking_scheme
+    def validate_marking_schemes(self):
+        section_marking_schemes = self.section_marking_schemes
         section_questions = set()
-        for section_key, section_scheme in marking_scheme.items():
+        for section_key, section_scheme in section_marking_schemes.items():
             if section_key == DEFAULT_SECTION_KEY:
                 continue
             current_set = set(section_scheme.questions)
@@ -431,9 +440,15 @@ class EvaluationConfig:
         question_to_answer_matcher = {}
         for question, answer_item in zip(self.questions_in_order, answers_in_order):
             section_marking_scheme = self.get_marking_scheme_for_question(question)
-            question_to_answer_matcher[question] = AnswerMatcher(
-                answer_item, section_marking_scheme
-            )
+            answer_matcher = AnswerMatcher(answer_item, section_marking_scheme)
+            question_to_answer_matcher[question] = answer_matcher
+            if (
+                answer_matcher.answer_type == "multiple-correct-weighted"
+                and section_marking_scheme.section_key != DEFAULT_SECTION_KEY
+            ):
+                logger.warning(
+                    f"The custom scheme '{section_marking_scheme}' will not apply to question '{question}' as it will use the given answer weights f{answer_item}"
+                )
         return question_to_answer_matcher
 
     # Then unfolding lower abstraction levels
@@ -481,9 +496,11 @@ class EvaluationConfig:
                     str.title(question_verdict),
                     str(round(delta, 2)),
                     str(round(next_score, 2)),
-                    answer_matcher.get_section_explanation()
-                    if self.has_non_default_section
-                    else None,
+                    (
+                        answer_matcher.get_section_explanation()
+                        if self.has_non_default_section
+                        else None
+                    ),
                 ]
                 if item is not None
             ]
