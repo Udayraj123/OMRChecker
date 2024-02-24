@@ -21,6 +21,39 @@ from src.utils.logger import logger
 def plot_bubbles_in_3d_plot(
     image, final_marked, template, field_number_to_field_bubble_means
 ):
+    # Generate random data for 100 bar charts, each with 10 values
+    num_charts = 100
+    num_values = 10
+    x_start = np.random.randint(1, 1001, num_charts)
+    y_start = np.random.randint(1, 1001, num_charts)
+    z_start = np.zeros((num_charts, num_values))
+    bar_width = 5
+
+    # Create 3D plot
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+
+    # Plot bars for each chart
+    for i in range(num_charts):
+        ax.bar3d(
+            x_start[i],
+            y_start[i],
+            np.arange(num_values),
+            bar_width,
+            bar_width,
+            np.random.randint(1, 100, num_values),
+            color="b",
+        )
+
+    # Set labels and title
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.set_zlabel("Z")
+    ax.set_title("100 Bar Charts with 10 Values Each")
+
+    plt.show()
+
+    return
     fig = plt.figure()
     ax = fig.add_subplot(projection="3d")
 
@@ -28,6 +61,13 @@ def plot_bubbles_in_3d_plot(
     marked_bubble_color = "c"
     for field_block in template.field_blocks:
         for field in field_block.fields:
+            # TODO: support for vertical direction as well
+            if field.direction != "horizontal":
+                logger.info(
+                    f"skipping field {field.field_label} as the direction {field.direction} != horizontal"
+                )
+                continue
+
             field_bubble_means = field_number_to_field_bubble_means[
                 absolute_field_number
             ]
@@ -49,6 +89,12 @@ def plot_bubbles_in_3d_plot(
             # For now let's assume the first bubble's y coordinate is the point of plot
             k = field_bubble_means[0].item_reference.y
             # Plot the bar graph given by xs and ys on the plane y=k with 80% opacity.
+            # temp
+            xs = np.arange(20)
+            ys = np.random.rand(20)
+            k = absolute_field_number
+            plot_colors = "c"
+            logger.info(xs, ys, k)
             ax.bar(xs, ys, zs=k, zdir="y", color=plot_colors, alpha=0.8)
 
             logger.info(list(map(str, field_bubble_means)))
@@ -57,6 +103,9 @@ def plot_bubbles_in_3d_plot(
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
     ax.set_zlabel("Z")
+    # On the y-axis let's only label the discrete values that we have data for.
+    # ax.set_yticks(yticks)
+
     plt.show()
 
 

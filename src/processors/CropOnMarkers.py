@@ -582,6 +582,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         elif patch_type == "line":
             # Rotated rectangle can correct slight rotations better
             rotated_rect = cv2.minAreaRect(bounding_cnt)
+            # TODO: less confidence if angle = rotated_rect[2] is too skew
             rotated_rect_points = cv2.boxPoints(rotated_rect)
             patch_corners = np.intp(rotated_rect_points)
             patch_corners = ImageUtils.order_points(patch_corners)

@@ -313,7 +313,7 @@ class FieldBlock:
                     )
                 )
                 bubble_point[_h] += bubbles_gap
-            self.fields.append(Field(field_label, field_type, field_bubbles))
+            self.fields.append(Field(field_label, field_type, field_bubbles, direction))
             lead_point[_v] += labels_gap
 
 
@@ -323,10 +323,11 @@ class Field:
 
     """
 
-    def __init__(self, field_label, field_type, field_bubbles):
+    def __init__(self, field_label, field_type, field_bubbles, direction):
         self.field_label = field_label
         self.field_type = field_type
         self.field_bubbles = field_bubbles
+        self.direction = direction
 
     def __str__(self):
         return self.field_label
