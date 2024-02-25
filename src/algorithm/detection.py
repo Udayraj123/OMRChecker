@@ -29,6 +29,7 @@ class BubbleMeanValue(MeanValueItem):
     def __init__(self, mean_value, item_reference):
         super().__init__(mean_value, item_reference)
         self.is_marked = None
+        self.local_threshold = None
 
 
 # TODO: see if this one can be merged in above

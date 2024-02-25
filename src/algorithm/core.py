@@ -19,43 +19,19 @@ from src.utils.logger import logger
 
 # TODO: util
 def plot_bubbles_in_3d_plot(
-    image, final_marked, template, field_number_to_field_bubble_means
+    image,
+    final_marked,
+    template,
+    field_number_to_field_bubble_means,
+    global_threshold_for_template,
 ):
-    # Generate random data for 100 bar charts, each with 10 values
-    num_charts = 100
-    num_values = 10
-    x_start = np.random.randint(1, 1001, num_charts)
-    y_start = np.random.randint(1, 1001, num_charts)
-    z_start = np.zeros((num_charts, num_values))
-    bar_width = 5
-
-    # Create 3D plot
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection="3d")
-
-    # Plot bars for each chart
-    for i in range(num_charts):
-        ax.bar3d(
-            x_start[i],
-            y_start[i],
-            np.arange(num_values),
-            bar_width,
-            bar_width,
-            np.random.randint(1, 100, num_values),
-            color="b",
-        )
-
-    # Set labels and title
-    ax.set_xlabel("X")
-    ax.set_ylabel("Y")
-    ax.set_zlabel("Z")
-    ax.set_title("100 Bar Charts with 10 Values Each")
-
-    plt.show()
-
-    return
     fig = plt.figure()
     ax = fig.add_subplot(projection="3d")
+    global_bubble_means_and_refs = []
+    for field_bubble_means in field_number_to_field_bubble_means:
+        global_bubble_means_and_refs.extend(field_bubble_means)
+    sorted_global_bubble_means_and_refs = sorted(global_bubble_means_and_refs)
+    # TODO: show sorted_global_bubble_means_and_refs in the 3d plot too!
 
     absolute_field_number = 0
     marked_bubble_color = "c"
@@ -78,24 +54,40 @@ def plot_bubbles_in_3d_plot(
                 [bubble.mean_value // 255 for bubble in field_bubble_means]
             )
 
+            # Oops, we may have non-linear bubbles too possibly
+            # For now let's assume the first bubble's y coordinate is the point of plot (horizontal)
+            k = field_bubble_means[0].item_reference.y
+            bar_width = 20
+
             xs, ys, plot_colors = [], [], []
             for i, bubble in enumerate(field_bubble_means):
-                xs.append(bubble.item_reference.x)
-                ys.append(bubble.mean_value)
+                x, y = (
+                    bubble.item_reference.x,
+                    bubble.mean_value - global_threshold_for_template,
+                )
+                xs.append(x)
+                ys.append(y)
                 if bubble.is_marked:
                     plot_colors[i] = marked_bubble_color
 
-            # Oops, we may have non-linear bubbles too possibly
-            # For now let's assume the first bubble's y coordinate is the point of plot
-            k = field_bubble_means[0].item_reference.y
+            ax.bar3d(
+                xs,
+                k,
+                0,
+                bar_width,
+                bar_width,
+                ys,
+                color="b",  # plot_colors[i]
+            )
+
             # Plot the bar graph given by xs and ys on the plane y=k with 80% opacity.
-            # temp
-            xs = np.arange(20)
-            ys = np.random.rand(20)
-            k = absolute_field_number
-            plot_colors = "c"
-            logger.info(xs, ys, k)
-            ax.bar(xs, ys, zs=k, zdir="y", color=plot_colors, alpha=0.8)
+            # # temp
+            # xs = np.arange(20)
+            # ys = np.random.rand(20)
+            # k = absolute_field_number
+            # plot_colors = "c"
+            # logger.info(xs, ys, k)
+            # ax.bar(xs, ys, zs=k, zdir="y", color=plot_colors, alpha=0.8)
 
             logger.info(list(map(str, field_bubble_means)))
             absolute_field_number += 1
@@ -346,6 +338,7 @@ class ImageInstanceOps:
                         local_bubble_is_marked = (
                             local_threshold_for_field_block > bubble.mean_value
                         )
+                        bubble.local_threshold = local_threshold_for_field_block
                         bubble.is_marked = local_bubble_is_marked
                         # 1. Disparity in global/local threshold output
                         if global_bubble_is_marked != local_bubble_is_marked:
@@ -434,7 +427,7 @@ class ImageInstanceOps:
                             def get_jumps_in_bubble_means(field_bubble_means):
                                 # get sorted array
                                 sorted_field_bubble_means = sorted(
-                                    field_bubble_means, key=lambda x: x.mean_value
+                                    field_bubble_means,
                                 )
                                 # get jumps
                                 jumps_in_bubble_means = []
@@ -475,7 +468,7 @@ class ImageInstanceOps:
                                     list(map(str, jumps_in_bubble_means)),
                                 )
 
-                            # TODO: aggregate the bubbles
+                            # TODO: aggregate the bubble metrics into the Field objects
                             # collect_bubbles_in_doubt(bubbles_in_doubt_by_disparity, bubbles_in_doubt_higher, bubbles_in_doubt_lower, bubbles_in_doubt_by_jump)
 
                     return field_bubble_means
@@ -579,7 +572,11 @@ class ImageInstanceOps:
         cv2.addWeighted(final_marked, alpha, transp_layer, 1 - alpha, 0, final_marked)
 
         plot_bubbles_in_3d_plot(
-            image, final_marked, template, field_number_to_field_bubble_means
+            image,
+            final_marked,
+            template,
+            field_number_to_field_bubble_means,
+            global_threshold_for_template,
         )
         # TODO: refactor all_c_box_vals
         # Box types
@@ -758,9 +755,7 @@ class ImageInstanceOps:
         """
         # Sort the Q bubbleValues
         sorted_bubble_means_and_refs = sorted(
-            # TODO: remove the lambda and expect same results
             bubble_means_and_refs,
-            key=lambda x: x.mean_value,
         )
         sorted_bubble_means = [item.mean_value for item in sorted_bubble_means_and_refs]
 
@@ -917,9 +912,7 @@ class ImageInstanceOps:
         config = self.tuning_config
         # Sort the Q bubbleValues
         sorted_bubble_means_and_refs = sorted(
-            # TODO: remove the lambda and expect same results
             bubble_means_and_refs,
-            key=lambda x: x.mean_value,
         )
         sorted_bubble_means = [item.mean_value for item in sorted_bubble_means_and_refs]
         # Small no of pts cases:
