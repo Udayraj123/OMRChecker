@@ -7,6 +7,7 @@
 
 """
 
+
 from src.algorithm.core import ImageInstanceOps
 from src.processors.manager import PROCESSOR_MANAGER
 from src.utils.constants import FIELD_TYPES
@@ -16,6 +17,16 @@ from src.utils.parsing import (
     open_template_with_defaults,
     parse_fields,
 )
+
+
+def default_dump(obj):
+    return (
+        obj.to_json()
+        if hasattr(obj, "to_json")
+        else obj.__dict__
+        if hasattr(obj, "__dict__")
+        else obj
+    )
 
 
 class Template:
@@ -209,6 +220,21 @@ class Template:
     def __str__(self):
         return str(self.path)
 
+    # Make the class serializable
+    def to_json(self):
+        return (
+            {
+                key: default_dump(getattr(self, key))
+                for key in [
+                    "bubble_dimensions",
+                    "global_empty_val",
+                    "page_dimensions",
+                    # 'options',
+                    "field_blocks",
+                ]
+            },
+        )
+
 
 class FieldBlock:
     def __init__(self, block_name, field_block_object):
@@ -217,6 +243,21 @@ class FieldBlock:
         self.plot_bin_name = block_name
         self.shift_x, self.shift_y = 0, 0
         self.setup_field_block(field_block_object)
+
+    # Make the class serializable
+    def to_json(self):
+        return {
+            key: default_dump(getattr(self, key))
+            for key in [
+                "name",
+                "plot_bin_name",
+                "shift_x",
+                "shift_y",
+                "empty_val",
+                "dimensions",
+                "fields",
+            ]
+        }
 
     def setup_field_block(self, field_block_object):
         # case mapping
@@ -332,6 +373,18 @@ class Field:
     def __str__(self):
         return self.field_label
 
+    # Make the class serializable
+    def to_json(self):
+        return {
+            key: default_dump(getattr(self, key))
+            for key in [
+                "field_label",
+                "field_type",
+                "direction",
+                "field_bubbles",
+            ]
+        }
+
 
 class FieldBubble:
     """
@@ -354,3 +407,19 @@ class FieldBubble:
 
     def __str__(self):
         return self.name  # f"{self.field_label}: [{self.x}, {self.y}]"
+
+    # Make the class serializable
+    def to_json(self):
+        return {
+            key: default_dump(getattr(self, key))
+            for key in [
+                "name",
+                # "plot_bin_name",
+                "x",
+                "y",
+                "field_label",
+                "field_value",
+                # "field_type",
+                # "bubble_index",
+            ]
+        }

@@ -1,11 +1,23 @@
 import functools
 
 
+# Temp
+def default_dump(obj):
+    return (
+        obj.to_json()
+        if hasattr(obj, "to_json")
+        else obj.__dict__
+        if hasattr(obj, "__dict__")
+        else obj
+    )
+
+
 @functools.total_ordering
 class MeanValueItem:
     def __init__(self, mean_value, item_reference):
         self.mean_value = mean_value
         self.item_reference = item_reference
+        self.item_reference_name = item_reference.name
 
     def __str__(self):
         return f"{self.item_reference} : {round(self.mean_value, 2)}"
@@ -31,13 +43,35 @@ class BubbleMeanValue(MeanValueItem):
         self.is_marked = None
         self.local_threshold = None
 
+    def to_json(self):
+        # TODO: mini util for this loop
+        return {
+            key: default_dump(getattr(self, key))
+            for key in [
+                "is_marked",
+                "item_reference_name",
+                "local_threshold",
+                "mean_value",
+            ]
+        }
+
 
 # TODO: see if this one can be merged in above
 class FieldStdMeanValue(MeanValueItem):
     def __init__(self, mean_value, item_reference):
         super().__init__(mean_value, item_reference)
 
+    def to_json(self):
+        return {
+            key: default_dump(getattr(self, key))
+            for key in [
+                "item_reference_name",
+                "mean_value",
+            ]
+        }
 
+
+# TODO: use this or merge it
 class FieldDetection:
     def __init__(self, field, confidence):
         self.field = field

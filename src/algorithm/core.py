@@ -1,3 +1,4 @@
+import json
 import math
 import os
 import random
@@ -30,8 +31,22 @@ def plot_bubbles_in_3d_plot(
     global_bubble_means_and_refs = []
     for field_bubble_means in field_number_to_field_bubble_means:
         global_bubble_means_and_refs.extend(field_bubble_means)
-    sorted_global_bubble_means_and_refs = sorted(global_bubble_means_and_refs)
+    # sorted_global_bubble_means_and_refs = sorted(global_bubble_means_and_refs)
     # TODO: show sorted_global_bubble_means_and_refs in the 3d plot too!
+
+    # Temp
+    with open("outputs/image-barplot-metrics.js", "w") as f:
+        json_string = json.dumps(
+            {
+                "global_threshold_for_template": global_threshold_for_template,
+                "template": template,
+                "global_bubble_means_and_refs": global_bubble_means_and_refs,
+            },
+            default=lambda x: x.to_json(),
+            indent=4,
+        )
+        f.write(f"export default {json_string}")
+    return
 
     absolute_field_number = 0
     marked_bubble_color = "c"
