@@ -7,7 +7,6 @@
 
 """
 
-
 from src.algorithm.core import ImageInstanceOps
 from src.processors.manager import PROCESSOR_MANAGER
 from src.utils.constants import FIELD_TYPES
@@ -23,9 +22,7 @@ def default_dump(obj):
     return (
         obj.to_json()
         if hasattr(obj, "to_json")
-        else obj.__dict__
-        if hasattr(obj, "__dict__")
-        else obj
+        else obj.__dict__ if hasattr(obj, "__dict__") else obj
     )
 
 
@@ -222,18 +219,16 @@ class Template:
 
     # Make the class serializable
     def to_json(self):
-        return (
-            {
-                key: default_dump(getattr(self, key))
-                for key in [
-                    "bubble_dimensions",
-                    "global_empty_val",
-                    "page_dimensions",
-                    # 'options',
-                    "field_blocks",
-                ]
-            },
-        )
+        return {
+            key: default_dump(getattr(self, key))
+            for key in [
+                "bubble_dimensions",
+                "global_empty_val",
+                "page_dimensions",
+                # 'options',
+                "field_blocks",
+            ]
+        }
 
 
 class FieldBlock:
