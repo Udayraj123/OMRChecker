@@ -6,6 +6,7 @@
  Github: https://github.com/Udayraj123
 
 """
+
 import ast
 import os
 import re
@@ -18,7 +19,8 @@ from rich.table import Table
 from src.schemas.constants import (
     BONUS_SECTION_PREFIX,
     DEFAULT_SECTION_KEY,
-    MARKING_VERDICT_TYPES,
+    VERDICTS_IN_ORDER,
+    Verdict,
 )
 from src.utils.logger import console, logger
 from src.utils.parsing import (
@@ -82,7 +84,7 @@ class AnswerMatcher:
     def set_defaults_from_scheme(self, section_marking_scheme):
         answer_type = self.answer_type
         self.empty_val = section_marking_scheme.empty_val
-        answer_item = self.answer_item
+        allowed_answers = self.answer_item
         self.marking = deepcopy(section_marking_scheme.marking)
         # TODO: reuse part of parse_scheme_marking here -
         if answer_type == "standard":
@@ -90,14 +92,28 @@ class AnswerMatcher:
             pass
         elif answer_type == "multiple-correct":
             # override marking scheme scores for each allowed answer
-            for allowed_answer in answer_item:
-                self.marking[f"correct-{allowed_answer}"] = self.marking["correct"]
+            for allowed_answer in allowed_answers:
+                self.marking[f"{Verdict.CORRECT}-{allowed_answer}"] = self.marking[
+                    Verdict.CORRECT
+                ]
         elif answer_type == "multiple-correct-weighted":
-            # Note: No override using marking scheme as answer scores are provided in answer_item
-            for allowed_answer, answer_score in answer_item:
-                self.marking[f"correct-{allowed_answer}"] = parse_float_or_fraction(
-                    answer_score
-                )
+            custom_marking = list(map(parse_float_or_fraction, allowed_answers[1]))
+            verdict_types_length = min(len(VERDICTS_IN_ORDER), len(custom_marking))
+            # override the given marking
+            for i in range(verdict_types_length):
+                verdict_type = VERDICTS_IN_ORDER[i]
+                self.marking[verdict_type] = custom_marking[i]
+
+            if type(allowed_answers[0] == str):
+                allowed_answer = allowed_answers[0]
+                self.marking[f"{Verdict.CORRECT}-{allowed_answer}"] = self.marking[
+                    Verdict.CORRECT
+                ]
+            else:
+                for allowed_answer in allowed_answers[0]:
+                    self.marking[f"{Verdict.CORRECT}-{allowed_answer}"] = self.marking[
+                        Verdict.CORRECT
+                    ]
 
     def get_marking_scheme(self):
         return self.section_marking_scheme
@@ -123,31 +139,31 @@ class AnswerMatcher:
     def get_standard_verdict(self, marked_answer):
         allowed_answer = self.answer_item
         if marked_answer == self.empty_val:
-            return "unmarked"
+            return Verdict.UNMARKED
         elif marked_answer == allowed_answer:
-            return "correct"
+            return Verdict.CORRECT
         else:
-            return "incorrect"
+            return Verdict.INCORRECT
 
     def get_multiple_correct_verdict(self, marked_answer):
         allowed_answers = self.answer_item
         if marked_answer == self.empty_val:
-            return "unmarked"
+            return Verdict.UNMARKED
         elif marked_answer in allowed_answers:
-            return f"correct-{marked_answer}"
+            return f"{Verdict.CORRECT}-{marked_answer}"
         else:
-            return "incorrect"
+            return Verdict.INCORRECT
 
     def get_multiple_correct_weighted_verdict(self, marked_answer):
         allowed_answers = [
             allowed_answer for allowed_answer, _answer_score in self.answer_item
         ]
         if marked_answer == self.empty_val:
-            return "unmarked"
+            return Verdict.UNMARKED
         elif marked_answer in allowed_answers:
-            return f"correct-{marked_answer}"
+            return f"{Verdict.CORRECT}-{marked_answer}"
         else:
-            return "incorrect"
+            return Verdict.INCORRECT
 
     def __str__(self):
         return f"{self.answer_item}"
@@ -171,11 +187,11 @@ class SectionMarkingScheme:
 
     def parse_scheme_marking(self, marking):
         parsed_marking = {}
-        for verdict_type in MARKING_VERDICT_TYPES:
+        for verdict_type in VERDICTS_IN_ORDER:
             verdict_marking = parse_float_or_fraction(marking[verdict_type])
             if (
                 verdict_marking > 0
-                and verdict_type == "incorrect"
+                and verdict_type == Verdict.INCORRECT
                 and not self.section_key.startswith(BONUS_SECTION_PREFIX)
             ):
                 logger.warning(
@@ -349,6 +365,7 @@ class EvaluationConfig:
     def match_answer_for_question(self, current_score, question, marked_answer):
         answer_matcher = self.question_to_answer_matcher[question]
         question_verdict, delta = answer_matcher.get_verdict_marking(marked_answer)
+        self.update_verdict_mapping(question_verdict)
         self.conditionally_add_explanation(
             answer_matcher,
             delta,
@@ -366,6 +383,22 @@ class EvaluationConfig:
 
     def get_should_explain_scoring(self):
         return self.should_explain_scoring
+
+    def update_verdict_mapping(self, question_verdict):
+        for verdict in VERDICTS_IN_ORDER:
+            # using startswith to handle cases like Correct-A
+            if question_verdict.startswith(verdict):
+                self.verdict_mapping[verdict] += 1
+                return
+
+    def get_answers_summary(self):
+        answers_summary_string = " ".join(
+            [
+                f"{verdict.title()}: {self.verdict_mapping[verdict]}"
+                for verdict in VERDICTS_IN_ORDER
+            ]
+        )
+        return answers_summary_string
 
     def get_exclude_files(self):
         return self.exclude_files
@@ -464,6 +497,8 @@ class EvaluationConfig:
     # Then unfolding lower abstraction levels
     def reset_explanation_table(self):
         self.explanation_table = None
+
+        self.verdict_mapping = {verdict: 0 for verdict in VERDICTS_IN_ORDER}
         self.prepare_explanation_table()
 
     def prepare_explanation_table(self):
@@ -540,5 +575,9 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
         }
 
     evaluation_config.conditionally_print_explanation()
-    evaluation_meta = {"final_score": current_score, "question_meta": question_meta}
+    evaluation_meta = {
+        "final_score": current_score,
+        "question_meta": question_meta,
+        "answers_summary": evaluation_config.get_answers_summary(),
+    }
     return current_score, evaluation_meta
