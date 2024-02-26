@@ -130,7 +130,7 @@ class CropOnPatchesCommon(ImageTemplatePreprocessor):
         area = image[area_start[1] : area_end[1], area_start[0] : area_end[0]]
 
         config = self.tuning_config
-        if config.outputs.show_image_level >= 4:
+        if config.outputs.show_image_level >= 1:
             h, w = area.shape[:2]
             cv2.rectangle(
                 self.debug_image,
