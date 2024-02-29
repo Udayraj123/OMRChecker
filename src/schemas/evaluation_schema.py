@@ -18,6 +18,7 @@ marking_object_properties = {
     "required": ["correct", "incorrect", "unmarked"],
     "type": "object",
     "properties": {
+        # TODO: can support streak marking if we allow array of marking_scores here
         "correct": marking_score,
         "incorrect": marking_score,
         "unmarked": marking_score,
@@ -31,12 +32,12 @@ EVALUATION_SCHEMA = {
     "description": "OMRChecker evaluation schema i.e. the marking scheme",
     "type": "object",
     "additionalProperties": True,
-    "required": ["source_type", "options", "marking_scheme"],
+    "required": ["source_type", "options", "marking_schemes"],
     "properties": {
         "additionalProperties": False,
         "source_type": {"type": "string", "enum": ["csv", "custom"]},
         "options": {"type": "object"},
-        "marking_scheme": {
+        "marking_schemes": {
             "type": "object",
             "required": [DEFAULT_SECTION_KEY],
             "patternProperties": {
@@ -102,56 +103,37 @@ EVALUATION_SCHEMA = {
                                         "type": "array",
                                         "items": {
                                             "oneOf": [
-                                                # "standard": single correct, multimarked single-correct
-                                                # Example: "q1" --> 'AB'
+                                                # "standard": single correct, multi-marked single-correct
+                                                # Example: "q1" --> '67'
                                                 {"type": "string"},
-                                                # "multiple-correct": multiple correct answers (for ambiguos/bonus questions)
+                                                # "multiple-correct": multiple-correct (for ambiguous/bonus questions)
                                                 # Example: "q1" --> [ 'A', 'B' ]
                                                 {
                                                     "type": "array",
                                                     "items": {"type": "string"},
                                                     "minItems": 2,
                                                 },
-                                                # "multiple-correct-weighted": array of answer-wise weights
-                                                # Example: "q1" --> [['A', 1], ['B', 2], ['C', 3]]
+                                                # "multiple-correct-weighted": array of answer-wise weights (marking scheme not applicable)
+                                                # Example 1: "q1" --> [['A', 1], ['B', 2], ['C', 3]] or
+                                                # Example 2: "q2" --> [['A', 1], ['B', 1], ['AB', 2]]
                                                 {
                                                     "type": "array",
-                                                    "items": False,
-                                                    "maxItems": 2,
-                                                    "minItems": 2,
-                                                    "prefixItems": [
-                                                        {"type": "string"},
-                                                        {
-                                                            "type": "array",
-                                                            "items": marking_score,
-                                                            "minItems": 1,
-                                                            "maxItems": 3,
-                                                        },
-                                                    ],
+                                                    "items": {
+                                                        "type": "array",
+                                                        "items": False,
+                                                        "minItems": 2,
+                                                        "maxItems": 2,
+                                                        "prefixItems": [
+                                                            {"type": "string"},
+                                                            marking_score,
+                                                        ],
+                                                    },
                                                 },
+                                                # Multiple-correct with custom marking scheme
+                                                # ["A", ["1", "2", "3"]],
+                                                # [["A", "B", "AB"], ["1", "2", "3"]]
                                             ],
                                         },
-                                    },
-                                    {
-                                        # TODO: answer_weight format
-                                        "type": "array",  # two column array for weights
-                                        "items": False,
-                                        "maxItems": 2,
-                                        "minItems": 2,
-                                        "prefixItems": [
-                                            {
-                                                "type": "array",
-                                                "items": {"type": "string"},
-                                                "minItems": 2,
-                                                "maxItems": 2,
-                                            },
-                                            {
-                                                "type": "array",
-                                                "items": marking_score,
-                                                "minItems": 1,
-                                                "maxItems": 3,
-                                            },
-                                        ],
                                     },
                                 ]
                             },

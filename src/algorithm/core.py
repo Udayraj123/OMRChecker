@@ -836,7 +836,7 @@ class ImageInstanceOps:
         # Small no of pts cases:
         # base case: 1 or 2 pts
         if len(sorted_bubble_means) < 3:
-            thr1 = (
+            max1, thr1 = config.threshold_params.MIN_JUMP, (
                 global_threshold_for_template
                 if np.max(sorted_bubble_means) - np.min(sorted_bubble_means)
                 < config.threshold_params.MIN_GAP

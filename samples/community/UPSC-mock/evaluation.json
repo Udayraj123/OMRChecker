@@ -8,7 +8,7 @@
     ],
     "should_explain_scoring": true
   },
-  "marking_scheme": {
+  "marking_schemes": {
     "DEFAULT": {
       "correct": "2",
       "incorrect": "-2/3",
