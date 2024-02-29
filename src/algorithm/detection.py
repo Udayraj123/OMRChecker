@@ -41,7 +41,6 @@ class BubbleMeanValue(MeanValueItem):
     def __init__(self, mean_value, item_reference):
         super().__init__(mean_value, item_reference)
         self.is_marked = None
-        self.local_threshold = None
 
     def to_json(self):
         # TODO: mini util for this loop
@@ -50,7 +49,6 @@ class BubbleMeanValue(MeanValueItem):
             for key in [
                 "is_marked",
                 "item_reference_name",
-                "local_threshold",
                 "mean_value",
             ]
         }

@@ -63,6 +63,7 @@ CONFIG_SCHEMA = {
                 "show_image_level": {"type": "integer", "minimum": 0, "maximum": 6},
                 "save_image_level": {"type": "integer", "minimum": 0, "maximum": 6},
                 "save_detections": {"type": "boolean"},
+                "save_image_metrics": {"type": "boolean"},
                 # This option moves multimarked files into a separate folder for manual checking, skipping evaluation
                 "filter_out_multimarked_files": {"type": "boolean"},
             },

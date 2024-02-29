@@ -1,4 +1,3 @@
-import json
 import math
 import os
 import random
@@ -16,104 +15,6 @@ import src.utils.constants as constants
 from src.algorithm.detection import BubbleMeanValue, FieldStdMeanValue
 from src.utils.image import ImageUtils
 from src.utils.logger import logger
-
-
-# TODO: util
-def plot_bubbles_in_3d_plot(
-    image,
-    final_marked,
-    template,
-    field_number_to_field_bubble_means,
-    global_threshold_for_template,
-):
-    fig = plt.figure()
-    ax = fig.add_subplot(projection="3d")
-    global_bubble_means_and_refs = []
-    for field_bubble_means in field_number_to_field_bubble_means:
-        global_bubble_means_and_refs.extend(field_bubble_means)
-    # sorted_global_bubble_means_and_refs = sorted(global_bubble_means_and_refs)
-    # TODO: show sorted_global_bubble_means_and_refs in the 3d plot too!
-
-    # Temp
-    with open("outputs/image-barplot-metrics.js", "w") as f:
-        json_string = json.dumps(
-            {
-                "global_threshold_for_template": global_threshold_for_template,
-                "template": template,
-                "global_bubble_means_and_refs": global_bubble_means_and_refs,
-            },
-            default=lambda x: x.to_json(),
-            indent=4,
-        )
-        f.write(f"export default {json_string}")
-    return
-
-    absolute_field_number = 0
-    marked_bubble_color = "c"
-    for field_block in template.field_blocks:
-        for field in field_block.fields:
-            # TODO: support for vertical direction as well
-            if field.direction != "horizontal":
-                logger.info(
-                    f"skipping field {field.field_label} as the direction {field.direction} != horizontal"
-                )
-                continue
-
-            field_bubble_means = field_number_to_field_bubble_means[
-                absolute_field_number
-            ]
-
-            plot_color_sampler = colormaps["inferno"].resampled(len(field_bubble_means))
-            # Plot based on intensity
-            plot_colors = plot_color_sampler(
-                [bubble.mean_value // 255 for bubble in field_bubble_means]
-            )
-
-            # Oops, we may have non-linear bubbles too possibly
-            # For now let's assume the first bubble's y coordinate is the point of plot (horizontal)
-            k = field_bubble_means[0].item_reference.y
-            bar_width = 20
-
-            xs, ys, plot_colors = [], [], []
-            for i, bubble in enumerate(field_bubble_means):
-                x, y = (
-                    bubble.item_reference.x,
-                    bubble.mean_value - global_threshold_for_template,
-                )
-                xs.append(x)
-                ys.append(y)
-                if bubble.is_marked:
-                    plot_colors[i] = marked_bubble_color
-
-            ax.bar3d(
-                xs,
-                k,
-                0,
-                bar_width,
-                bar_width,
-                ys,
-                color="b",  # plot_colors[i]
-            )
-
-            # Plot the bar graph given by xs and ys on the plane y=k with 80% opacity.
-            # # temp
-            # xs = np.arange(20)
-            # ys = np.random.rand(20)
-            # k = absolute_field_number
-            # plot_colors = "c"
-            # logger.info(xs, ys, k)
-            # ax.bar(xs, ys, zs=k, zdir="y", color=plot_colors, alpha=0.8)
-
-            logger.info(list(map(str, field_bubble_means)))
-            absolute_field_number += 1
-
-    ax.set_xlabel("X")
-    ax.set_ylabel("Y")
-    ax.set_zlabel("Z")
-    # On the y-axis let's only label the discrete values that we have data for.
-    # ax.set_yticks(yticks)
-
-    plt.show()
 
 
 class ImageInstanceOps:
@@ -330,6 +231,8 @@ class ImageInstanceOps:
                     # plot_show=field.field_label in ["q70", "q69"],  # Temp
                     plot_show=config.outputs.show_image_level >= 6,
                 )
+                # TODO: move get_local_threshold into FieldBlock
+                field_block.local_threshold = local_threshold_for_field_block
                 # print(field.field_label,key,block_field_number, "THR: ",
                 #   round(local_threshold_for_field_block,2))
                 per_omr_threshold_avg += local_threshold_for_field_block
@@ -341,10 +244,11 @@ class ImageInstanceOps:
                     local_threshold_for_field_block,
                     global_threshold_for_template,
                 ):
-                    # TODO: simplify further?
-                    field_bubble_means = [
-                        deepcopy(bubble) for bubble in field_bubble_means
-                    ]
+                    # TODO: see if deepclone is really needed given parent's instance
+                    # field_bubble_means = [
+                    #     deepcopy(bubble) for bubble in field_bubble_means
+                    # ]
+
                     bubbles_in_doubt_by_disparity = []
                     for bubble in field_bubble_means:
                         global_bubble_is_marked = (
@@ -353,7 +257,6 @@ class ImageInstanceOps:
                         local_bubble_is_marked = (
                             local_threshold_for_field_block > bubble.mean_value
                         )
-                        bubble.local_threshold = local_threshold_for_field_block
                         bubble.is_marked = local_bubble_is_marked
                         # 1. Disparity in global/local threshold output
                         if global_bubble_is_marked != local_bubble_is_marked:
@@ -586,13 +489,6 @@ class ImageInstanceOps:
         # Translucent
         cv2.addWeighted(final_marked, alpha, transp_layer, 1 - alpha, 0, final_marked)
 
-        plot_bubbles_in_3d_plot(
-            image,
-            final_marked,
-            template,
-            field_number_to_field_bubble_means,
-            global_threshold_for_template,
-        )
         # TODO: refactor all_c_box_vals
         # Box types
         # if config.outputs.show_image_level >= 5:
@@ -633,7 +529,14 @@ class ImageInstanceOps:
             for i in range(config.outputs.save_image_level):
                 self.save_image_stacks(i + 1, name, save_dir)
 
-        return omr_response, final_marked, multi_marked, multi_roll
+        return (
+            omr_response,
+            final_marked,
+            multi_marked,
+            multi_roll,
+            field_number_to_field_bubble_means,
+            global_threshold_for_template,
+        )
 
     def get_confidence_metrics(self):
         config = self.tuning_config

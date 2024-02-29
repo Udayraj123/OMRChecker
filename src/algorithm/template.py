@@ -22,7 +22,9 @@ def default_dump(obj):
     return (
         obj.to_json()
         if hasattr(obj, "to_json")
-        else obj.__dict__ if hasattr(obj, "__dict__") else obj
+        else obj.__dict__
+        if hasattr(obj, "__dict__")
+        else obj
     )
 
 
@@ -222,11 +224,12 @@ class Template:
         return {
             key: default_dump(getattr(self, key))
             for key in [
-                "bubble_dimensions",
-                "global_empty_val",
                 "page_dimensions",
-                # 'options',
                 "field_blocks",
+                # Not needed as local props are overridden -
+                # "bubble_dimensions",
+                # 'options',
+                # "global_empty_val",
             ]
         }
 
@@ -234,9 +237,11 @@ class Template:
 class FieldBlock:
     def __init__(self, block_name, field_block_object):
         self.name = block_name
+        self.shift_x, self.shift_y = 0, 0
         # TODO: Move plot_bin_name into child class
         self.plot_bin_name = block_name
-        self.shift_x, self.shift_y = 0, 0
+        # TODO: move local_threshold into child detection class
+        self.local_threshold = None
         self.setup_field_block(field_block_object)
 
     # Make the class serializable
@@ -244,13 +249,16 @@ class FieldBlock:
         return {
             key: default_dump(getattr(self, key))
             for key in [
-                "name",
-                "plot_bin_name",
-                "shift_x",
-                "shift_y",
-                "empty_val",
+                "bubble_dimensions",
                 "dimensions",
+                "empty_val",
                 "fields",
+                "name",
+                "origin",
+                "local_threshold"
+                # "plot_bin_name",
+                # "shift_x",
+                # "shift_y",
             ]
         }
 
@@ -408,12 +416,13 @@ class FieldBubble:
         return {
             key: default_dump(getattr(self, key))
             for key in [
-                "name",
-                # "plot_bin_name",
-                "x",
-                "y",
                 "field_label",
                 "field_value",
+                # for item_reference_name
+                "name",
+                "x",
+                "y",
+                # "plot_bin_name",
                 # "field_type",
                 # "bubble_index",
             ]

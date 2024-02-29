@@ -347,7 +347,8 @@ class EvaluationConfig:
             question,
             current_score,
         )
-        return delta
+        expected_answer_string = str(answer_matcher)
+        return delta, question_verdict, expected_answer_string
 
     def conditionally_print_explanation(self):
         if self.should_explain_scoring:
@@ -483,9 +484,11 @@ class EvaluationConfig:
                     str.title(question_verdict),
                     str(round(delta, 2)),
                     str(round(next_score, 2)),
-                    answer_matcher.get_section_explanation()
-                    if self.has_non_default_section
-                    else None,
+                    (
+                        answer_matcher.get_section_explanation()
+                        if self.has_non_default_section
+                        else None
+                    ),
                 ]
                 if item is not None
             ]
@@ -495,13 +498,25 @@ class EvaluationConfig:
 def evaluate_concatenated_response(concatenated_response, evaluation_config):
     evaluation_config.prepare_and_validate_omr_response(concatenated_response)
     current_score = 0.0
+    evaluation_meta = {}
     for question in evaluation_config.questions_in_order:
         marked_answer = concatenated_response[question]
-        delta = evaluation_config.match_answer_for_question(
+        (
+            delta,
+            question_verdict,
+            expected_answer_string,
+        ) = evaluation_config.match_answer_for_question(
             current_score, question, marked_answer
         )
         current_score += delta
+        evaluation_meta[question] = {
+            "question_verdict": question_verdict,
+            "marked_answer": marked_answer,
+            "delta": delta,
+            "current_score": current_score,
+            "expected_answer_string": expected_answer_string,
+        }
 
     evaluation_config.conditionally_print_explanation()
 
-    return current_score
+    return current_score, evaluation_meta

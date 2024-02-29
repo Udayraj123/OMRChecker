@@ -23,6 +23,7 @@ class Paths:
     def __init__(self, output_dir):
         self.output_dir = output_dir
         self.save_marked_dir = output_dir.joinpath("CheckedOMRs")
+        self.image_metrics_dir = output_dir.joinpath("ImageMetrics")
         self.results_dir = output_dir.joinpath("Results")
         self.manual_dir = output_dir.joinpath("Manual")
         self.errors_dir = self.manual_dir.joinpath("ErrorFiles")
@@ -39,12 +40,13 @@ def setup_dirs_for_paths(paths):
             os.mkdir(save_output_dir.joinpath("_MULTI_"))
             os.mkdir(save_output_dir.joinpath("_MULTI_", "stack"))
 
-    for save_output_dir in [paths.manual_dir, paths.results_dir]:
-        if not os.path.exists(save_output_dir):
-            logger.info(f"Created : {save_output_dir}")
-            os.makedirs(save_output_dir)
-
-    for save_output_dir in [paths.multi_marked_dir, paths.errors_dir]:
+    for save_output_dir in [
+        paths.manual_dir,
+        paths.results_dir,
+        paths.image_metrics_dir,
+        paths.multi_marked_dir,
+        paths.errors_dir,
+    ]:
         if not os.path.exists(save_output_dir):
             logger.info(f"Created : {save_output_dir}")
             os.makedirs(save_output_dir)

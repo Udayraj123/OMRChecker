@@ -7,6 +7,7 @@
 
 """
 
+import json
 import os
 from csv import QUOTE_NONNUMERIC
 from pathlib import Path
@@ -35,6 +36,41 @@ def entry_point(input_dir, args):
         raise Exception(f"Given input directory does not exist: '{input_dir}'")
     curr_dir = input_dir
     return process_dir(input_dir, curr_dir, args)
+
+
+def export_omr_metrics(
+    outputs_namespace,
+    file_name,
+    image,
+    final_marked,
+    template,
+    field_number_to_field_bubble_means,
+    global_threshold_for_template,
+    evaluation_meta,
+):
+    global_bubble_means_and_refs = []
+    for field_bubble_means in field_number_to_field_bubble_means:
+        global_bubble_means_and_refs.extend(field_bubble_means)
+    # sorted_global_bubble_means_and_refs = sorted(global_bubble_means_and_refs)
+
+    # Temp
+    with open(
+        outputs_namespace.paths.image_metrics_dir.joinpath(
+            f"{os.path.splitext(file_name)[0]}.js"
+        ),
+        "w",
+    ) as f:
+        json_string = json.dumps(
+            {
+                "global_threshold_for_template": global_threshold_for_template,
+                "template": template,
+                "evaluation_meta": evaluation_meta,
+                "global_bubble_means_and_refs": global_bubble_means_and_refs,
+            },
+            default=lambda x: x.to_json(),
+            indent=4,
+        )
+        f.write(f"export default {json_string}")
 
 
 def print_config_summary(
@@ -271,6 +307,8 @@ def process_files(
             final_marked,
             multi_marked,
             _,
+            field_number_to_field_bubble_means,
+            global_threshold_for_template,
         ) = template.image_instance_ops.read_omr_response(
             template, image=in_omr, name=file_id, save_dir=save_dir
         )
@@ -285,14 +323,28 @@ def process_files(
         ):
             logger.info(f"Read Response: \n{omr_response}")
 
-        score = 0
+        score, evaluation_meta = 0, None
         if evaluation_config is not None:
-            score = evaluate_concatenated_response(omr_response, evaluation_config)
+            score, evaluation_meta = evaluate_concatenated_response(
+                omr_response, evaluation_config
+            )
             logger.info(
                 f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: '{file_id}'"
             )
         else:
             logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
+
+        if tuning_config.outputs.save_image_metrics and evaluation_meta is not None:
+            export_omr_metrics(
+                outputs_namespace,
+                file_name,
+                in_omr,
+                final_marked,
+                template,
+                field_number_to_field_bubble_means,
+                global_threshold_for_template,
+                evaluation_meta,
+            )
 
         if tuning_config.outputs.show_image_level >= 2:
             InteractionUtils.show(
