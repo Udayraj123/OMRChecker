@@ -220,7 +220,7 @@ class ImageInstanceOps:
                     absolute_field_number
                 ]
                 (
-                    local_threshold_for_field_block,
+                    local_threshold_for_field,
                     local_max_jump,
                 ) = self.get_local_threshold(
                     field_bubble_means,
@@ -231,17 +231,17 @@ class ImageInstanceOps:
                     # plot_show=field.field_label in ["q70", "q69"],  # Temp
                     plot_show=config.outputs.show_image_level >= 6,
                 )
-                # TODO: move get_local_threshold into FieldBlock
-                field_block.local_threshold = local_threshold_for_field_block
+                # TODO: move get_local_threshold into FieldDetection
+                field.local_threshold = local_threshold_for_field
                 # print(field.field_label,key,block_field_number, "THR: ",
-                #   round(local_threshold_for_field_block,2))
-                per_omr_threshold_avg += local_threshold_for_field_block
+                #   round(local_threshold_for_field,2))
+                per_omr_threshold_avg += local_threshold_for_field
 
                 # TODO: @staticmethod
                 def apply_field_detection(
                     field,
                     field_bubble_means,
-                    local_threshold_for_field_block,
+                    local_threshold_for_field,
                     global_threshold_for_template,
                 ):
                     # TODO: see if deepclone is really needed given parent's instance
@@ -255,7 +255,7 @@ class ImageInstanceOps:
                             global_threshold_for_template > bubble.mean_value
                         )
                         local_bubble_is_marked = (
-                            local_threshold_for_field_block > bubble.mean_value
+                            local_threshold_for_field > bubble.mean_value
                         )
                         bubble.is_marked = local_bubble_is_marked
                         # 1. Disparity in global/local threshold output
@@ -272,7 +272,7 @@ class ImageInstanceOps:
                     )
 
                     # TODO: FieldDetection.bubbles = field_bubble_means
-                    thresholds_string = f"global={round(global_threshold_for_template,2)} local={round(local_threshold_for_field_block,2)} global_margin={GLOBAL_THRESHOLD_MARGIN}"
+                    thresholds_string = f"global={round(global_threshold_for_template,2)} local={round(local_threshold_for_field,2)} global_margin={GLOBAL_THRESHOLD_MARGIN}"
                     jumps_string = f"global_max_jump={round(global_max_jump,2)} local_max_jump={round(local_max_jump,2)} MIN_JUMP={MIN_JUMP} SURPLUS={CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY}"
                     if len(bubbles_in_doubt_by_disparity) > 0:
                         logger.warning(
@@ -394,7 +394,7 @@ class ImageInstanceOps:
                 field_bubble_means = apply_field_detection(
                     field,
                     field_bubble_means,
-                    local_threshold_for_field_block,
+                    local_threshold_for_field,
                     global_threshold_for_template,
                 )
                 for bubble_detection in field_bubble_means:
@@ -722,7 +722,7 @@ class ImageInstanceOps:
             original_bin_names = [
                 x.item_reference.plot_bin_name for x in plot_means_and_refs
             ]
-            plot_labels = [x.item_reference.name for x in plot_means_and_refs]
+            plot_labels = [x.item_reference_name for x in plot_means_and_refs]
 
             # TODO: move into individual utils
             sorted_unique_bin_names, unique_label_indices = np.unique(

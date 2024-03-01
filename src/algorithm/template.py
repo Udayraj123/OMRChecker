@@ -240,8 +240,6 @@ class FieldBlock:
         self.shift_x, self.shift_y = 0, 0
         # TODO: Move plot_bin_name into child class
         self.plot_bin_name = block_name
-        # TODO: move local_threshold into child detection class
-        self.local_threshold = None
         self.setup_field_block(field_block_object)
 
     # Make the class serializable
@@ -255,7 +253,6 @@ class FieldBlock:
                 "fields",
                 "name",
                 "origin",
-                "local_threshold"
                 # "plot_bin_name",
                 # "shift_x",
                 # "shift_y",
@@ -372,6 +369,8 @@ class Field:
         self.field_type = field_type
         self.field_bubbles = field_bubbles
         self.direction = direction
+        # TODO: move local_threshold into child detection class
+        self.local_threshold = None
 
     def __str__(self):
         return self.field_label
@@ -385,6 +384,7 @@ class Field:
                 "field_type",
                 "direction",
                 "field_bubbles",
+                "local_threshold",
             ]
         }
 

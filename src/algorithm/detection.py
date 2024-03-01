@@ -36,7 +36,7 @@ class MeanValueItem:
         return self.mean_value < other.mean_value
 
 
-# TODO: merge with FieldDetection
+# TODO: merge with FieldBubbleDetection
 class BubbleMeanValue(MeanValueItem):
     def __init__(self, mean_value, item_reference):
         super().__init__(mean_value, item_reference)
@@ -74,3 +74,5 @@ class FieldDetection:
     def __init__(self, field, confidence):
         self.field = field
         self.confidence = confidence
+        # TODO: use local_threshold from here
+        # self.local_threshold = None

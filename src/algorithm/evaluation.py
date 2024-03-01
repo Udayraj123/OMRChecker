@@ -511,7 +511,7 @@ class EvaluationConfig:
 def evaluate_concatenated_response(concatenated_response, evaluation_config):
     evaluation_config.prepare_and_validate_omr_response(concatenated_response)
     current_score = 0.0
-    evaluation_meta = {}
+    question_meta = {}
     for question in evaluation_config.questions_in_order:
         marked_answer = concatenated_response[question]
         (
@@ -522,7 +522,7 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
             current_score, question, marked_answer
         )
         current_score += delta
-        evaluation_meta[question] = {
+        question_meta[question] = {
             "question_verdict": question_verdict,
             "marked_answer": marked_answer,
             "delta": delta,
@@ -531,5 +531,5 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
         }
 
     evaluation_config.conditionally_print_explanation()
-
+    evaluation_meta = {"final_score": current_score, "question_meta": question_meta}
     return current_score, evaluation_meta
