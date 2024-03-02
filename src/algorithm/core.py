@@ -876,7 +876,8 @@ class ImageInstanceOps:
             # Can see erosion make a lot of sense here?
             # If not confident, then only take help of global_threshold_for_template
             if max1 < confident_jump:
-                if no_outliers:
+                # Threshold hack: local can never be 255
+                if no_outliers or thr1 == 255:
                     # All Black or All White case
                     thr1 = global_threshold_for_template
                 else:
