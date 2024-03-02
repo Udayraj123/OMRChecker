@@ -236,12 +236,8 @@ class EvaluationConfig:
                     raise Exception(
                         f"Could not read answer key from image {image_path}"
                     )
-                (
-                    response_dict,
-                    _final_marked,
-                    _multi_marked,
-                    _multi_roll,
-                ) = template.image_instance_ops.read_omr_response(
+
+                (response_dict, *_) = template.image_instance_ops.read_omr_response(
                     template,
                     image=in_omr,
                     name=image_path,

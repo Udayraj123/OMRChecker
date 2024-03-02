@@ -1,15 +1,6 @@
 import functools
 
-
-# Temp
-def default_dump(obj):
-    return (
-        obj.to_json()
-        if hasattr(obj, "to_json")
-        else obj.__dict__
-        if hasattr(obj, "__dict__")
-        else obj
-    )
+from src.utils.parsing import default_dump
 
 
 @functools.total_ordering

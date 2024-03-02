@@ -13,19 +13,10 @@ from src.utils.constants import FIELD_TYPES
 from src.utils.logger import logger
 from src.utils.parsing import (
     custom_sort_output_columns,
+    default_dump,
     open_template_with_defaults,
     parse_fields,
 )
-
-
-def default_dump(obj):
-    return (
-        obj.to_json()
-        if hasattr(obj, "to_json")
-        else obj.__dict__
-        if hasattr(obj, "__dict__")
-        else obj
-    )
 
 
 class Template:

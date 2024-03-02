@@ -2,6 +2,7 @@ import re
 from copy import deepcopy
 from fractions import Fraction
 
+import numpy as np
 from deepmerge import Merger
 from dotmap import DotMap
 
@@ -111,3 +112,17 @@ def parse_float_or_fraction(result):
     else:
         result = float(result)
     return result
+
+
+def default_dump(obj):
+    return (
+        bool(obj)
+        if isinstance(obj, np.bool_)
+        else (
+            obj.to_json()
+            if hasattr(obj, "to_json")
+            else obj.__dict__
+            if hasattr(obj, "__dict__")
+            else obj
+        )
+    )

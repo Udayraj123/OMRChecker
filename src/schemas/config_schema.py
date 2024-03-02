@@ -24,7 +24,7 @@ CONFIG_SCHEMA = {
                 # TODO: rename these variables for better usability
                 "MIN_GAP": {"type": "integer", "minimum": 10, "maximum": 100},
                 "MIN_JUMP": {"type": "integer", "minimum": 10, "maximum": 100},
-                "MIN_JUMP_SURPLUS_FOR_GLOBAL_THR": {
+                "MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK": {
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 20,

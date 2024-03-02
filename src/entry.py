@@ -46,6 +46,7 @@ def export_omr_metrics(
     template,
     field_number_to_field_bubble_means,
     global_threshold_for_template,
+    global_field_confidence_metrics,
     evaluation_meta,
 ):
     global_bubble_means_and_refs = []
@@ -53,24 +54,28 @@ def export_omr_metrics(
         global_bubble_means_and_refs.extend(field_bubble_means)
     # sorted_global_bubble_means_and_refs = sorted(global_bubble_means_and_refs)
 
-    # Temp
+    image_metrics_path = outputs_namespace.paths.image_metrics_dir.joinpath(
+        f"{os.path.splitext(file_name)[0]}.js"
+    )
     with open(
-        outputs_namespace.paths.image_metrics_dir.joinpath(
-            f"{os.path.splitext(file_name)[0]}.js"
-        ),
+        image_metrics_path,
         "w",
     ) as f:
         json_string = json.dumps(
             {
                 "global_threshold_for_template": global_threshold_for_template,
                 "template": template,
-                "evaluation_meta": evaluation_meta,
+                "evaluation_meta": (
+                    evaluation_meta if evaluation_meta is not None else {}
+                ),
                 "global_bubble_means_and_refs": global_bubble_means_and_refs,
+                "global_field_confidence_metrics": global_field_confidence_metrics,
             },
             default=lambda x: x.to_json(),
             indent=4,
         )
         f.write(f"export default {json_string}")
+        logger.info(f"Exported image metrics to: {image_metrics_path}")
 
 
 def print_config_summary(
@@ -309,6 +314,7 @@ def process_files(
             _,
             field_number_to_field_bubble_means,
             global_threshold_for_template,
+            global_field_confidence_metrics,
         ) = template.image_instance_ops.read_omr_response(
             template, image=in_omr, name=file_id, save_dir=save_dir
         )
@@ -334,7 +340,7 @@ def process_files(
         else:
             logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
 
-        if tuning_config.outputs.save_image_metrics and evaluation_meta is not None:
+        if tuning_config.outputs.save_image_metrics:
             export_omr_metrics(
                 outputs_namespace,
                 file_name,
@@ -343,6 +349,7 @@ def process_files(
                 template,
                 field_number_to_field_bubble_means,
                 global_threshold_for_template,
+                global_field_confidence_metrics,
                 evaluation_meta,
             )
 

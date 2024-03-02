@@ -133,7 +133,7 @@ class ImageInstanceOps:
             MIN_JUMP,
             JUMP_DELTA,
             GLOBAL_THRESHOLD_MARGIN,
-            MIN_JUMP_SURPLUS_FOR_GLOBAL_THR,
+            MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK,
             CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY,
         ) = map(
             config.threshold_params.get,
@@ -144,7 +144,7 @@ class ImageInstanceOps:
                 "MIN_JUMP",
                 "JUMP_DELTA",
                 "GLOBAL_THRESHOLD_MARGIN",
-                "MIN_JUMP_SURPLUS_FOR_GLOBAL_THR",
+                "MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK",
                 "CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY",
             ],
         )
@@ -154,10 +154,9 @@ class ImageInstanceOps:
             else GLOBAL_PAGE_THRESHOLD_BLACK
         )
         # TODO: see if this is needed, then take from config.json
+        MIN_JUMP_STD = 15
+        JUMP_DELTA_STD = 5
         global_default_std_threshold = 10
-
-        MIN_JUMP_STD = 30
-        JUMP_DELTA_STD = 10
         global_std_thresh, _, _ = self.get_global_threshold(
             global_field_bubble_means_stds,
             global_default_std_threshold,
@@ -200,6 +199,7 @@ class ImageInstanceOps:
         #     appendSaveImg(2,hist)
 
         per_omr_threshold_avg, absolute_field_number = 0, 0
+        global_field_confidence_metrics = []
         for field_block in template.field_blocks:
             block_field_number = 1
             key = field_block.name[:3]
@@ -219,6 +219,7 @@ class ImageInstanceOps:
                 field_bubble_means = field_number_to_field_bubble_means[
                     absolute_field_number
                 ]
+
                 (
                     local_threshold_for_field,
                     local_max_jump,
@@ -249,7 +250,13 @@ class ImageInstanceOps:
                     #     deepcopy(bubble) for bubble in field_bubble_means
                     # ]
 
-                    bubbles_in_doubt_by_disparity = []
+                    bubbles_in_doubt = {
+                        "by_disparity": [],
+                        "by_jump": [],
+                        "global_higher": [],
+                        "global_lower": [],
+                    }
+
                     for bubble in field_bubble_means:
                         global_bubble_is_marked = (
                             global_threshold_for_template > bubble.mean_value
@@ -260,7 +267,7 @@ class ImageInstanceOps:
                         bubble.is_marked = local_bubble_is_marked
                         # 1. Disparity in global/local threshold output
                         if global_bubble_is_marked != local_bubble_is_marked:
-                            bubbles_in_doubt_by_disparity.append(bubble)
+                            bubbles_in_doubt["by_disparity"].append(bubble)
 
                     # 5. High confidence if the gap is very large compared to MIN_JUMP
                     is_global_jump_confident = (
@@ -274,10 +281,10 @@ class ImageInstanceOps:
                     # TODO: FieldDetection.bubbles = field_bubble_means
                     thresholds_string = f"global={round(global_threshold_for_template,2)} local={round(local_threshold_for_field,2)} global_margin={GLOBAL_THRESHOLD_MARGIN}"
                     jumps_string = f"global_max_jump={round(global_max_jump,2)} local_max_jump={round(local_max_jump,2)} MIN_JUMP={MIN_JUMP} SURPLUS={CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY}"
-                    if len(bubbles_in_doubt_by_disparity) > 0:
+                    if len(bubbles_in_doubt["by_disparity"]) > 0:
                         logger.warning(
                             f"found disparity in field: {field.field_label}",
-                            list(map(str, bubbles_in_doubt_by_disparity)),
+                            list(map(str, bubbles_in_doubt["by_disparity"])),
                             thresholds_string,
                         )
                         # 5.2 if the gap is very large compared to MIN_JUMP, but still there is disparity
@@ -305,7 +312,7 @@ class ImageInstanceOps:
                             )
                         # No output disparity, but -
                         # 2.1 global threshold is "too close" to lower bubbles
-                        bubbles_in_doubt_lower = [
+                        bubbles_in_doubt["global_lower"] = [
                             bubble
                             for bubble in field_bubble_means
                             if GLOBAL_THRESHOLD_MARGIN
@@ -315,13 +322,13 @@ class ImageInstanceOps:
                             )
                         ]
 
-                        if len(bubbles_in_doubt_lower) > 0:
+                        if len(bubbles_in_doubt["global_lower"]) > 0:
                             logger.warning(
-                                "bubbles_in_doubt_lower",
-                                list(map(str, bubbles_in_doubt_lower)),
+                                'bubbles_in_doubt["global_lower"]',
+                                list(map(str, bubbles_in_doubt["global_lower"])),
                             )
                         # 2.2 global threshold is "too close" to higher bubbles
-                        bubbles_in_doubt_higher = [
+                        bubbles_in_doubt["global_higher"] = [
                             bubble
                             for bubble in field_bubble_means
                             if GLOBAL_THRESHOLD_MARGIN
@@ -331,10 +338,10 @@ class ImageInstanceOps:
                             )
                         ]
 
-                        if len(bubbles_in_doubt_higher) > 0:
+                        if len(bubbles_in_doubt["global_higher"]) > 0:
                             logger.warning(
-                                "bubbles_in_doubt_higher",
-                                list(map(str, bubbles_in_doubt_higher)),
+                                'bubbles_in_doubt["global_higher"]',
+                                list(map(str, bubbles_in_doubt["global_higher"])),
                             )
 
                         # 3. local jump outliers are close to the configured min_jump but below it.
@@ -367,36 +374,43 @@ class ImageInstanceOps:
                             jumps_in_bubble_means = get_jumps_in_bubble_means(
                                 field_bubble_means
                             )
-                            bubbles_in_doubt_by_jump = [
+                            bubbles_in_doubt["by_jump"] = [
                                 bubble
                                 for jump, bubble in jumps_in_bubble_means
-                                if MIN_JUMP_SURPLUS_FOR_GLOBAL_THR
+                                if MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK
                                 > max(
-                                    MIN_JUMP_SURPLUS_FOR_GLOBAL_THR,
+                                    MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK,
                                     MIN_JUMP - jump,
                                 )
                             ]
 
-                            if len(bubbles_in_doubt_by_jump) > 0:
+                            if len(bubbles_in_doubt["by_jump"]) > 0:
                                 logger.warning(
-                                    "bubbles_in_doubt_by_jump",
-                                    list(map(str, bubbles_in_doubt_by_jump)),
+                                    'bubbles_in_doubt["by_jump"]',
+                                    list(map(str, bubbles_in_doubt["by_jump"])),
                                 )
                                 logger.warning(
                                     list(map(str, jumps_in_bubble_means)),
                                 )
 
                             # TODO: aggregate the bubble metrics into the Field objects
-                            # collect_bubbles_in_doubt(bubbles_in_doubt_by_disparity, bubbles_in_doubt_higher, bubbles_in_doubt_lower, bubbles_in_doubt_by_jump)
+                            # collect_bubbles_in_doubt(bubbles_in_doubt["by_disparity"], bubbles_in_doubt["global_higher"], bubbles_in_doubt["global_lower"], bubbles_in_doubt["by_jump"])
+                    confidence_metrics = {
+                        "bubbles_in_doubt": bubbles_in_doubt,
+                        "is_global_jump_confident": is_global_jump_confident,
+                        "is_local_jump_confident": is_local_jump_confident,
+                        "local_max_jump": local_max_jump,
+                        "field_label": field.field_label,
+                    }
+                    return field_bubble_means, confidence_metrics
 
-                    return field_bubble_means
-
-                field_bubble_means = apply_field_detection(
+                field_bubble_means, confidence_metrics = apply_field_detection(
                     field,
                     field_bubble_means,
                     local_threshold_for_field,
                     global_threshold_for_template,
                 )
+                global_field_confidence_metrics.append(confidence_metrics)
                 for bubble_detection in field_bubble_means:
                     bubble = bubble_detection.item_reference
                     x, y, field_value = (
@@ -536,21 +550,22 @@ class ImageInstanceOps:
             multi_roll,
             field_number_to_field_bubble_means,
             global_threshold_for_template,
+            global_field_confidence_metrics,
         )
 
-    def get_confidence_metrics(self):
-        config = self.tuning_config
-        overall_confidence, fields_confidence = 0.0, []
-        PAGE_TYPE_FOR_THRESHOLD = map(
-            config.threshold_params.get, ["PAGE_TYPE_FOR_THRESHOLD"]
-        )
-        # Note: currently building with assumptions
-        if PAGE_TYPE_FOR_THRESHOLD == "black":
-            logger.warning(f"Confidence metric not implemented for black pages yet")
-            return 0.0, []
-        # global_threshold_for_template
-        # field
-        return overall_confidence, fields_confidence
+    # def get_confidence_metrics(self):
+    #     config = self.tuning_config
+    #     overall_confidence, fields_confidence = 0.0, []
+    #     PAGE_TYPE_FOR_THRESHOLD = map(
+    #         config.threshold_params.get, ["PAGE_TYPE_FOR_THRESHOLD"]
+    #     )
+    #     # Note: currently building with assumptions
+    #     if PAGE_TYPE_FOR_THRESHOLD == "black":
+    #         logger.warning(f"Confidence metric not implemented for black pages yet")
+    #         return 0.0, []
+    #     # global_threshold_for_template
+    #     # field
+    #     return overall_confidence, fields_confidence
 
     @staticmethod
     def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-1):
@@ -736,7 +751,7 @@ class ImageInstanceOps:
             shuffled_color_indices = random.sample(
                 list(unique_label_indices), len(unique_label_indices)
             )
-            logger.info(list(zip(original_bin_names, shuffled_color_indices)))
+            # logger.info(list(zip(original_bin_names, shuffled_color_indices)))
             plot_colors = plot_color_sampler(
                 [shuffled_color_indices[i] for i in unique_label_indices]
             )
@@ -854,7 +869,7 @@ class ImageInstanceOps:
 
             confident_jump = (
                 config.threshold_params.MIN_JUMP
-                + config.threshold_params.MIN_JUMP_SURPLUS_FOR_GLOBAL_THR
+                + config.threshold_params.MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK
             )
 
             # TODO: seek improvement here because of the empty cases failing here(boundary walls)
