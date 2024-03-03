@@ -16,6 +16,7 @@ from time import time
 import cv2
 import pandas as pd
 from rich.table import Table
+from src.algorithm.accuracy import evaluate_correctness
 
 from src.algorithm.evaluation import EvaluationConfig, evaluate_concatenated_response
 from src.algorithm.template import Template
@@ -403,6 +404,7 @@ def process_files(
             #     pass
 
     print_stats(start_time, files_counter, tuning_config)
+    evaluate_correctness()
 
 
 def check_and_move(error_code, file_path, filepath2):
