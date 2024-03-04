@@ -1,16 +1,18 @@
+import os
 from dataclasses import dataclass
 
 import cv2
-import os
-from screeninfo import get_monitors, Monitor
+from screeninfo import Monitor, get_monitors
 
 from src.logger import logger
 from src.utils.image import ImageUtils
 
-#If running in a container, make a fake monitor
-monitor_window =  Monitor(0, 0, 1000, 1000, 100, 100, 'FakeMonitor', False) \
-        if os.environ.get("OMR_CHECKER_CONTAINER") \
-        else get_monitors()[0]
+# If running in a container, make a fake monitor
+monitor_window = (
+    Monitor(0, 0, 1000, 1000, 100, 100, "FakeMonitor", False)
+    if os.environ.get("OMR_CHECKER_CONTAINER")
+    else get_monitors()[0]
+)
 
 
 @dataclass
