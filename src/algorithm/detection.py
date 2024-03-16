@@ -1,3 +1,12 @@
+"""
+
+ OMRChecker
+
+ Author: Udayraj Deshmukh
+ Github: https://github.com/Udayraj123
+
+"""
+
 import functools
 
 from src.utils.parsing import default_dump

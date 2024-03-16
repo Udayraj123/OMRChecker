@@ -1,11 +1,3 @@
-"""
-
- OMRChecker
-
- Author: Udayraj Deshmukh
- Github: https://github.com/Udayraj123
-
-"""
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np

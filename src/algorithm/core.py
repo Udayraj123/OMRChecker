@@ -1,3 +1,12 @@
+"""
+
+ OMRChecker
+
+ Author: Udayraj Deshmukh
+ Github: https://github.com/Udayraj123
+
+"""
+
 import math
 import os
 import random

@@ -1,11 +1,3 @@
-"""
-
- OMRChecker
-
- Author: Udayraj Deshmukh
- Github: https://github.com/Udayraj123
-
-"""
 from dotmap import DotMap
 
 # Filenames
