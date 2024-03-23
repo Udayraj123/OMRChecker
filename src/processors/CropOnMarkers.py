@@ -3,8 +3,6 @@ import os
 import cv2
 import numpy as np
 
-from src.constants import CLR_WHITE
-from src.logger import logger
 from src.processors.interfaces.ImageTemplatePreprocessor import (
     ImageTemplatePreprocessor,
 )
@@ -523,7 +521,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         # )
         # InteractionUtils.show(f"morph_h_{patch_type}", morph, 0, 1, config=config)
 
-        # temp
+        # TODO: pad_image_from_center
         kernel_width, kernel_height = tuning_options["lineKernel"]
         input_width, input_height = morph.shape[:2]
         rect = [

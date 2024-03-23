@@ -335,7 +335,7 @@ def process_files(
                 omr_response, evaluation_config
             )
             logger.info(
-                f"(/{files_counter}) Graded with score: {round(score, 2)}\t {evaluation_meta['answers_summary']} \t file: '{file_id}'"
+                f"(/{files_counter}) Graded with score: {round(score, 2)}\t {evaluation_meta['answers_summary_string']} \t file: '{file_id}'"
             )
         else:
             logger.info(f"(/{files_counter}) Processed file: '{file_id}'")

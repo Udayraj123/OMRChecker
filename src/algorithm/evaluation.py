@@ -19,7 +19,11 @@ from rich.table import Table
 from src.schemas.constants import (
     BONUS_SECTION_PREFIX,
     DEFAULT_SECTION_KEY,
+    SCHEMA_VERDICTS_IN_ORDER,
+    VERDICT_TO_SCHEMA_VERDICT,
     VERDICTS_IN_ORDER,
+    AnswerType,
+    SchemaVerdict,
     Verdict,
 )
 from src.utils.logger import console, logger
@@ -34,9 +38,9 @@ from src.utils.parsing import (
 class AnswerMatcher:
     def __init__(self, answer_item, section_marking_scheme):
         self.section_marking_scheme = section_marking_scheme
-        self.answer_item = answer_item
-        self.answer_type = self.validate_and_get_answer_type(answer_item)
-        self.set_defaults_from_scheme(section_marking_scheme)
+        self.answer_type = self.get_answer_type(answer_item)
+        self.parse_and_set_answer_item(answer_item)
+        self.set_local_marking_defaults(section_marking_scheme)
 
     @staticmethod
     def is_a_marking_score(answer_element):
@@ -48,9 +52,9 @@ class AnswerMatcher:
     def is_standard_answer(answer_element):
         return type(answer_element) == str and len(answer_element) >= 1
 
-    def validate_and_get_answer_type(self, answer_item):
+    def get_answer_type(self, answer_item):
         if self.is_standard_answer(answer_item):
-            return "standard"
+            return AnswerType.STANDARD
         elif type(answer_item) == list:
             if (
                 # Array of answer elements: ['A', 'B', 'AB']
@@ -60,7 +64,7 @@ class AnswerMatcher:
                     for answers_or_score in answer_item
                 )
             ):
-                return "multiple-correct"
+                return AnswerType.MULTIPLE_CORRECT
             elif (
                 # Array of two-tuples: [['A', 1], ['B', 1], ['C', 3], ['AB', 2]]
                 len(answer_item) >= 1
@@ -74,65 +78,63 @@ class AnswerMatcher:
                     for allowed_answer, answer_score in answer_item
                 )
             ):
-                return "multiple-correct-weighted"
+                return AnswerType.MULTIPLE_CORRECT_WEIGHTED
 
         logger.critical(
             f"Unable to determine answer type for answer item: {answer_item}"
         )
         raise Exception("Unable to determine answer type")
 
-    def set_defaults_from_scheme(self, section_marking_scheme):
+    def parse_and_set_answer_item(self, answer_item):
+        answer_type = self.answer_type
+        if answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
+            # parse answer scores for weighted answers
+            self.answer_item = [
+                [allowed_answer, parse_float_or_fraction(answer_score)]
+                for allowed_answer, answer_score in answer_item
+            ]
+        else:
+            self.answer_item = answer_item
+
+    def set_local_marking_defaults(self, section_marking_scheme):
         answer_type = self.answer_type
         self.empty_val = section_marking_scheme.empty_val
-        allowed_answers = self.answer_item
+        # Make a copy of section marking locally
         self.marking = deepcopy(section_marking_scheme.marking)
-        # TODO: reuse part of parse_scheme_marking here -
-        if answer_type == "standard":
-            # no local overrides
+        if answer_type == AnswerType.STANDARD:
+            # no local overrides needed
             pass
-        elif answer_type == "multiple-correct":
+        elif answer_type == AnswerType.MULTIPLE_CORRECT:
+            allowed_answers = self.answer_item
             # override marking scheme scores for each allowed answer
             for allowed_answer in allowed_answers:
-                self.marking[f"{Verdict.CORRECT}-{allowed_answer}"] = self.marking[
-                    Verdict.CORRECT
+                self.marking[f"{Verdict.ANSWER_MATCH}-{allowed_answer}"] = self.marking[
+                    Verdict.ANSWER_MATCH
                 ]
-        elif answer_type == "multiple-correct-weighted":
-            custom_marking = list(map(parse_float_or_fraction, allowed_answers[1]))
-            verdict_types_length = min(len(VERDICTS_IN_ORDER), len(custom_marking))
-            # override the given marking
-            for i in range(verdict_types_length):
-                verdict_type = VERDICTS_IN_ORDER[i]
-                self.marking[verdict_type] = custom_marking[i]
-
-            if type(allowed_answers[0] == str):
-                allowed_answer = allowed_answers[0]
-                self.marking[f"{Verdict.CORRECT}-{allowed_answer}"] = self.marking[
-                    Verdict.CORRECT
-                ]
-            else:
-                for allowed_answer in allowed_answers[0]:
-                    self.marking[f"{Verdict.CORRECT}-{allowed_answer}"] = self.marking[
-                        Verdict.CORRECT
-                    ]
+        elif answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
+            for allowed_answer, parsed_answer_score in self.answer_item:
+                self.marking[
+                    f"{Verdict.ANSWER_MATCH}-{allowed_answer}"
+                ] = parsed_answer_score
 
     def get_marking_scheme(self):
         return self.section_marking_scheme
 
     def get_section_explanation(self):
         answer_type = self.answer_type
-        if answer_type in ["standard", "multiple-correct"]:
+        if answer_type in [AnswerType.STANDARD, AnswerType.MULTIPLE_CORRECT]:
             return self.section_marking_scheme.section_key
-        elif answer_type == "multiple-correct-weighted":
-            return f"Custom: {self.marking}"
+        elif answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
+            return f"Custom Weights: {self.marking}"
 
     def get_verdict_marking(self, marked_answer):
         answer_type = self.answer_type
-        question_verdict = "incorrect"
-        if answer_type == "standard":
+        question_verdict = Verdict.NO_ANSWER_MATCH
+        if answer_type == AnswerType.STANDARD:
             question_verdict = self.get_standard_verdict(marked_answer)
-        elif answer_type == "multiple-correct":
+        elif answer_type == AnswerType.MULTIPLE_CORRECT:
             question_verdict = self.get_multiple_correct_verdict(marked_answer)
-        elif answer_type == "multiple-correct-weighted":
+        elif answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
             question_verdict = self.get_multiple_correct_weighted_verdict(marked_answer)
         return question_verdict, self.marking[question_verdict]
 
@@ -141,18 +143,18 @@ class AnswerMatcher:
         if marked_answer == self.empty_val:
             return Verdict.UNMARKED
         elif marked_answer == allowed_answer:
-            return Verdict.CORRECT
+            return Verdict.ANSWER_MATCH
         else:
-            return Verdict.INCORRECT
+            return Verdict.NO_ANSWER_MATCH
 
     def get_multiple_correct_verdict(self, marked_answer):
         allowed_answers = self.answer_item
         if marked_answer == self.empty_val:
             return Verdict.UNMARKED
         elif marked_answer in allowed_answers:
-            return f"{Verdict.CORRECT}-{marked_answer}"
+            return f"{Verdict.ANSWER_MATCH}-{marked_answer}"
         else:
-            return Verdict.INCORRECT
+            return Verdict.NO_ANSWER_MATCH
 
     def get_multiple_correct_weighted_verdict(self, marked_answer):
         allowed_answers = [
@@ -161,9 +163,9 @@ class AnswerMatcher:
         if marked_answer == self.empty_val:
             return Verdict.UNMARKED
         elif marked_answer in allowed_answers:
-            return f"{Verdict.CORRECT}-{marked_answer}"
+            return f"{Verdict.ANSWER_MATCH}-{marked_answer}"
         else:
-            return Verdict.INCORRECT
+            return Verdict.NO_ANSWER_MATCH
 
     def __str__(self):
         return f"{self.answer_item}"
@@ -177,27 +179,34 @@ class SectionMarkingScheme:
         # DEFAULT marking scheme follows a shorthand
         if section_key == DEFAULT_SECTION_KEY:
             self.questions = None
-            self.marking = self.parse_scheme_marking(section_scheme)
+            self.marking = self.parse_verdict_marking_from_scheme(section_scheme)
         else:
             self.questions = parse_fields(section_key, section_scheme["questions"])
-            self.marking = self.parse_scheme_marking(section_scheme["marking"])
+            self.marking = self.parse_verdict_marking_from_scheme(
+                section_scheme["marking"]
+            )
 
     def __str__(self):
         return self.section_key
 
-    def parse_scheme_marking(self, marking):
+    def parse_verdict_marking_from_scheme(self, section_scheme):
         parsed_marking = {}
-        for verdict_type in VERDICTS_IN_ORDER:
-            verdict_marking = parse_float_or_fraction(marking[verdict_type])
+        for verdict in VERDICTS_IN_ORDER:
+            schema_verdict = VERDICT_TO_SCHEMA_VERDICT[verdict]
+            schema_verdict_marking = parse_float_or_fraction(
+                section_scheme[schema_verdict]
+            )
             if (
-                verdict_marking > 0
-                and verdict_type == Verdict.INCORRECT
+                schema_verdict_marking > 0
+                and schema_verdict == SchemaVerdict.INCORRECT
                 and not self.section_key.startswith(BONUS_SECTION_PREFIX)
             ):
                 logger.warning(
-                    f"Found positive marks({round(verdict_marking, 2)}) for incorrect answer in the schema '{self.section_key}'. For Bonus sections, add a prefix 'BONUS_' to them."
+                    f"Found positive marks({round(schema_verdict_marking, 2)}) for incorrect answer in the schema '{self.section_key}'. For Bonus sections, prefer adding a prefix 'BONUS_' to the scheme name."
                 )
-            parsed_marking[verdict_type] = verdict_marking
+
+            # translated marking e.g. parsed[MATCHED] -> section_scheme['correct']
+            parsed_marking[verdict] = schema_verdict_marking
 
         return parsed_marking
 
@@ -219,7 +228,7 @@ class EvaluationConfig:
             evaluation_json.get, ["options", "marking_schemes", "source_type"]
         )
         self.should_explain_scoring = options.get("should_explain_scoring", False)
-        self.has_non_default_section = False
+        self.has_custom_marking = False
         self.exclude_files = []
 
         if source_type == "csv":
@@ -314,19 +323,7 @@ class EvaluationConfig:
 
         self.validate_questions(answers_in_order)
 
-        self.section_marking_schemes, self.question_to_scheme = {}, {}
-        for section_key, section_scheme in marking_schemes.items():
-            section_marking_scheme = SectionMarkingScheme(
-                section_key, section_scheme, template.global_empty_val
-            )
-            if section_key != DEFAULT_SECTION_KEY:
-                self.section_marking_schemes[section_key] = section_marking_scheme
-                for q in section_marking_scheme.questions:
-                    # TODO: check the answer key for custom scheme here?
-                    self.question_to_scheme[q] = section_marking_scheme
-                self.has_non_default_section = True
-            else:
-                self.default_marking_scheme = section_marking_scheme
+        self.set_marking_schemes(marking_schemes, template)
 
         self.validate_marking_schemes()
 
@@ -334,74 +331,6 @@ class EvaluationConfig:
             answers_in_order
         )
         self.validate_answers(answers_in_order, tuning_config)
-
-    def __str__(self):
-        return str(self.path)
-
-    # Externally called methods have higher abstraction level.
-    def prepare_and_validate_omr_response(self, omr_response):
-        self.reset_explanation_table()
-
-        omr_response_questions = set(omr_response.keys())
-        all_questions = set(self.questions_in_order)
-        missing_questions = sorted(all_questions.difference(omr_response_questions))
-        if len(missing_questions) > 0:
-            logger.critical(f"Missing OMR response for: {missing_questions}")
-            raise Exception(
-                f"Some questions are missing in the OMR response for the given answer key"
-            )
-
-        prefixed_omr_response_questions = set(
-            [k for k in omr_response.keys() if k.startswith("q")]
-        )
-        missing_prefixed_questions = sorted(
-            prefixed_omr_response_questions.difference(all_questions)
-        )
-        if len(missing_prefixed_questions) > 0:
-            logger.warning(
-                f"No answer given for potential questions in OMR response: {missing_prefixed_questions}"
-            )
-
-    def match_answer_for_question(self, current_score, question, marked_answer):
-        answer_matcher = self.question_to_answer_matcher[question]
-        question_verdict, delta = answer_matcher.get_verdict_marking(marked_answer)
-        self.update_verdict_mapping(question_verdict)
-        self.conditionally_add_explanation(
-            answer_matcher,
-            delta,
-            marked_answer,
-            question_verdict,
-            question,
-            current_score,
-        )
-        expected_answer_string = str(answer_matcher)
-        return delta, question_verdict, expected_answer_string
-
-    def conditionally_print_explanation(self):
-        if self.should_explain_scoring:
-            console.print(self.explanation_table, justify="center")
-
-    def get_should_explain_scoring(self):
-        return self.should_explain_scoring
-
-    def update_verdict_mapping(self, question_verdict):
-        for verdict in VERDICTS_IN_ORDER:
-            # using startswith to handle cases like Correct-A
-            if question_verdict.startswith(verdict):
-                self.verdict_mapping[verdict] += 1
-                return
-
-    def get_answers_summary(self):
-        answers_summary_string = " ".join(
-            [
-                f"{verdict.title()}: {self.verdict_mapping[verdict]}"
-                for verdict in VERDICTS_IN_ORDER
-            ]
-        )
-        return answers_summary_string
-
-    def get_exclude_files(self):
-        return self.exclude_files
 
     @staticmethod
     def parse_answer_column(answer_column):
@@ -421,30 +350,6 @@ class EvaluationConfig:
     def parse_questions_in_order(self, questions_in_order):
         return parse_fields("questions_in_order", questions_in_order)
 
-    def validate_answers(self, answers_in_order, tuning_config):
-        answer_matcher_map = self.question_to_answer_matcher
-        if tuning_config.outputs.filter_out_multimarked_files:
-            multi_marked_answer = False
-            for question, answer_item in zip(self.questions_in_order, answers_in_order):
-                answer_type = answer_matcher_map[question].answer_type
-                if answer_type == "standard":
-                    if len(answer_item) > 1:
-                        multi_marked_answer = True
-                if answer_type == "multiple-correct":
-                    for single_answer in answer_item:
-                        if len(single_answer) > 1:
-                            multi_marked_answer = True
-                            break
-                if answer_type == "multiple-correct-weighted":
-                    for single_answer, _answer_score in answer_item:
-                        if len(single_answer) > 1:
-                            multi_marked_answer = True
-
-                if multi_marked_answer:
-                    raise Exception(
-                        f"Provided answer key contains multiple correct answer(s), but config.filter_out_multimarked_files is True. Scoring will get skipped."
-                    )
-
     def validate_questions(self, answers_in_order):
         questions_in_order = self.questions_in_order
         len_questions_in_order, len_answers_in_order = len(questions_in_order), len(
@@ -457,6 +362,20 @@ class EvaluationConfig:
             raise Exception(
                 f"Unequal lengths for questions_in_order and answers_in_order ({len_questions_in_order} != {len_answers_in_order})"
             )
+
+    def set_marking_schemes(self, marking_schemes, template):
+        self.section_marking_schemes, self.question_to_scheme = {}, {}
+        for section_key, section_scheme in marking_schemes.items():
+            section_marking_scheme = SectionMarkingScheme(
+                section_key, section_scheme, template.global_empty_val
+            )
+            if section_key != DEFAULT_SECTION_KEY:
+                self.section_marking_schemes[section_key] = section_marking_scheme
+                for q in section_marking_scheme.questions:
+                    self.question_to_scheme[q] = section_marking_scheme
+                self.has_custom_marking = True
+            else:
+                self.default_marking_scheme = section_marking_scheme
 
     def validate_marking_schemes(self):
         section_marking_schemes = self.section_marking_schemes
@@ -485,20 +404,157 @@ class EvaluationConfig:
             section_marking_scheme = self.get_marking_scheme_for_question(question)
             answer_matcher = AnswerMatcher(answer_item, section_marking_scheme)
             question_to_answer_matcher[question] = answer_matcher
-            if (
-                answer_matcher.answer_type == "multiple-correct-weighted"
-                and section_marking_scheme.section_key != DEFAULT_SECTION_KEY
-            ):
-                logger.warning(
-                    f"The custom scheme '{section_marking_scheme}' will not apply to question '{question}' as it will use the given answer weights f{answer_item}"
-                )
+            if answer_matcher.answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
+                self.has_custom_marking = True
+                if section_marking_scheme.section_key != DEFAULT_SECTION_KEY:
+                    logger.warning(
+                        f"The custom scheme '{section_marking_scheme}' contains the question '{question}' but the given answer weights will be used instead: f{answer_item}"
+                    )
         return question_to_answer_matcher
 
-    # Then unfolding lower abstraction levels
+    def get_marking_scheme_for_question(self, question):
+        return self.question_to_scheme.get(question, self.default_marking_scheme)
+
+    def validate_answers(self, answers_in_order, tuning_config):
+        answer_matcher_map = self.question_to_answer_matcher
+        if tuning_config.outputs.filter_out_multimarked_files:
+            contains_multi_marked_answer = False
+            for question, answer_item in zip(self.questions_in_order, answers_in_order):
+                answer_type = answer_matcher_map[question].answer_type
+                if answer_type == AnswerType.STANDARD:
+                    if len(answer_item) > 1:
+                        contains_multi_marked_answer = True
+                if answer_type == AnswerType.MULTIPLE_CORRECT:
+                    for single_answer in answer_item:
+                        if len(single_answer) > 1:
+                            contains_multi_marked_answer = True
+                            break
+                if answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
+                    for single_answer, _answer_score in answer_item:
+                        if len(single_answer) > 1:
+                            contains_multi_marked_answer = True
+
+                if contains_multi_marked_answer:
+                    raise Exception(
+                        f"Provided answer key contains multiple correct answer(s), but config.filter_out_multimarked_files is True. Scoring will get skipped."
+                    )
+
+    def __str__(self):
+        return str(self.path)
+
+    def get_exclude_files(self):
+        return self.exclude_files
+
+    # Externally called methods have higher abstraction level.
+    def prepare_and_validate_omr_response(self, omr_response):
+        self.reset_explanation_table()
+
+        omr_response_questions = set(omr_response.keys())
+        all_questions = set(self.questions_in_order)
+        missing_questions = sorted(all_questions.difference(omr_response_questions))
+        if len(missing_questions) > 0:
+            logger.critical(f"Missing OMR response for: {missing_questions}")
+            raise Exception(
+                f"Some questions are missing in the OMR response for the given answer key"
+            )
+
+        prefixed_omr_response_questions = set(
+            [k for k in omr_response.keys() if k.startswith("q")]
+        )
+        missing_prefixed_questions = sorted(
+            prefixed_omr_response_questions.difference(all_questions)
+        )
+        if len(missing_prefixed_questions) > 0:
+            logger.warning(
+                f"No answer given for potential questions in OMR response: {missing_prefixed_questions}"
+            )
+
+    def match_answer_for_question(self, current_score, question, marked_answer):
+        answer_matcher = self.question_to_answer_matcher[question]
+        question_verdict, delta = answer_matcher.get_verdict_marking(marked_answer)
+        schema_verdict = self.get_schema_verdict(
+            answer_matcher, question_verdict, delta
+        )
+        self.schema_verdict_counts[schema_verdict] += 1
+        self.conditionally_add_explanation(
+            answer_matcher,
+            delta,
+            marked_answer,
+            schema_verdict,
+            question_verdict,
+            question,
+            current_score,
+        )
+        expected_answer_string = str(answer_matcher)
+        return delta, question_verdict, expected_answer_string
+
+    def conditionally_add_explanation(
+        self,
+        answer_matcher,
+        delta,
+        marked_answer,
+        schema_verdict,
+        question_verdict,
+        question,
+        current_score,
+    ):
+        if self.should_explain_scoring:
+            next_score = current_score + delta
+            # Conditionally add cells
+            row = [
+                item
+                for item in [
+                    question,
+                    marked_answer,
+                    str(answer_matcher),
+                    f"{schema_verdict.title()} ({question_verdict.title()})",
+                    str(round(delta, 2)),
+                    str(round(next_score, 2)),
+                    (
+                        answer_matcher.get_section_explanation()
+                        if self.has_custom_marking
+                        else None
+                    ),
+                ]
+                if item is not None
+            ]
+            self.explanation_table.add_row(*row)
+
+    def get_schema_verdict(self, answer_matcher, question_verdict, delta):
+        # Note: Negative custom weights should be considered as incorrect schema verdict(special case)
+        if (
+            delta < 0
+            and answer_matcher.answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED
+        ):
+            return SchemaVerdict.INCORRECT
+        else:
+            for verdict in VERDICTS_IN_ORDER:
+                # using startswith to handle cases like matched-A
+                if question_verdict.startswith(verdict):
+                    schema_verdict = VERDICT_TO_SCHEMA_VERDICT[verdict]
+                    return schema_verdict
+
+    def conditionally_print_explanation(self):
+        if self.should_explain_scoring:
+            console.print(self.explanation_table, justify="center")
+
+    def get_should_explain_scoring(self):
+        return self.should_explain_scoring
+
+    def get_answers_summary_string(self):
+        answers_summary_string = " ".join(
+            [
+                f"{schema_verdict.title()}: {self.schema_verdict_counts[schema_verdict]}"
+                for schema_verdict in SCHEMA_VERDICTS_IN_ORDER
+            ]
+        )
+        return answers_summary_string
+
     def reset_explanation_table(self):
         self.explanation_table = None
-
-        self.verdict_mapping = {verdict: 0 for verdict in VERDICTS_IN_ORDER}
+        self.schema_verdict_counts = {
+            schema_verdict: 0 for schema_verdict in SCHEMA_VERDICTS_IN_ORDER
+        }
         self.prepare_explanation_table()
 
     def prepare_explanation_table(self):
@@ -513,43 +569,9 @@ class EvaluationConfig:
         table.add_column("Delta")
         table.add_column("Score")
         # TODO: Add max and min score in explanation (row-wise and total)
-        if self.has_non_default_section:
-            table.add_column("Section")
+        if self.has_custom_marking:
+            table.add_column("Marking Scheme")
         self.explanation_table = table
-
-    def get_marking_scheme_for_question(self, question):
-        return self.question_to_scheme.get(question, self.default_marking_scheme)
-
-    def conditionally_add_explanation(
-        self,
-        answer_matcher,
-        delta,
-        marked_answer,
-        question_verdict,
-        question,
-        current_score,
-    ):
-        if self.should_explain_scoring:
-            next_score = current_score + delta
-            # Conditionally add cells
-            row = [
-                item
-                for item in [
-                    question,
-                    marked_answer,
-                    str(answer_matcher),
-                    str.title(question_verdict),
-                    str(round(delta, 2)),
-                    str(round(next_score, 2)),
-                    (
-                        answer_matcher.get_section_explanation()
-                        if self.has_non_default_section
-                        else None
-                    ),
-                ]
-                if item is not None
-            ]
-            self.explanation_table.add_row(*row)
 
 
 def evaluate_concatenated_response(concatenated_response, evaluation_config):
@@ -578,6 +600,6 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
     evaluation_meta = {
         "final_score": current_score,
         "question_meta": question_meta,
-        "answers_summary": evaluation_config.get_answers_summary(),
+        "answers_summary_string": evaluation_config.get_answers_summary_string(),
     }
     return current_score, evaluation_meta

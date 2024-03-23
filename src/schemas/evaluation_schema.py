@@ -2,6 +2,7 @@ from src.schemas.constants import (
     ARRAY_OF_STRINGS,
     DEFAULT_SECTION_KEY,
     FIELD_STRING_TYPE,
+    SCHEMA_VERDICTS_IN_ORDER,
 )
 
 marking_score_regex = "-?(\\d+)(/(\\d+))?"
@@ -15,14 +16,10 @@ marking_score = {
 
 marking_object_properties = {
     "additionalProperties": False,
-    "required": ["correct", "incorrect", "unmarked"],
+    "required": SCHEMA_VERDICTS_IN_ORDER,
     "type": "object",
-    "properties": {
-        # TODO: can support streak marking if we allow array of marking_scores here
-        "correct": marking_score,
-        "incorrect": marking_score,
-        "unmarked": marking_score,
-    },
+    # TODO: can support streak marking if we allow array of marking_scores here
+    "properties": {verdict: marking_score for verdict in SCHEMA_VERDICTS_IN_ORDER},
 }
 
 EVALUATION_SCHEMA = {
@@ -103,19 +100,18 @@ EVALUATION_SCHEMA = {
                                         "type": "array",
                                         "items": {
                                             "oneOf": [
-                                                # "standard": single correct, multi-marked single-correct
-                                                # Example: "q1" --> '67'
+                                                # Standard answer type allows single correct answers. They can have multiple characters(multi-marked) as well.
+                                                # Useful for any standard response e.g. 'A', '01', '99', 'AB', etc
                                                 {"type": "string"},
-                                                # "multiple-correct": multiple-correct (for ambiguous/bonus questions)
-                                                # Example: "q1" --> [ 'A', 'B' ]
+                                                # Multiple correct answer type covers multiple correct answers
+                                                # Useful for ambiguous/bonus questions e.g. ['A', 'B'], ['1', '01'], ['A', 'B', 'AB'], etc
                                                 {
                                                     "type": "array",
                                                     "items": {"type": "string"},
                                                     "minItems": 2,
                                                 },
-                                                # "multiple-correct-weighted": array of answer-wise weights (marking scheme not applicable)
-                                                # Example 1: "q1" --> [['A', 1], ['B', 2], ['C', 3]] or
-                                                # Example 2: "q2" --> [['A', 1], ['B', 1], ['AB', 2]]
+                                                # Multiple correct weighted answer covers multiple answers with weights
+                                                # Useful for partial marking e.g. [['A', 2], ['B', 0.5], ['AB', 2.5]], [['1', 0.5], ['01', 1]], etc
                                                 {
                                                     "type": "array",
                                                     "items": {
@@ -129,9 +125,6 @@ EVALUATION_SCHEMA = {
                                                         ],
                                                     },
                                                 },
-                                                # Multiple-correct with custom marking scheme
-                                                # ["A", ["1", "2", "3"]],
-                                                # [["A", "B", "AB"], ["1", "2", "3"]]
                                             ],
                                         },
                                     },
