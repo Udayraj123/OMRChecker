@@ -46,8 +46,7 @@ write_jsons_and_run = generate_write_jsons_and_run(
 
 def test_config_low_dimensions(mocker):
     def modify_config(config):
-        config["dimensions"]["processing_height"] = 1000
-        config["dimensions"]["processing_width"] = 1000
+        config["dimensions"]["processing_image_shape"] = [1000, 1000]
 
     exception = write_jsons_and_run(mocker, modify_config=modify_config)
 

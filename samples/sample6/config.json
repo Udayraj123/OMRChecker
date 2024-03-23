@@ -1,9 +1,13 @@
 {
   "dimensions": {
-    "display_width": 2480,
-    "display_height": 3508,
-    "processing_width": 1653,
-    "processing_height": 2339
+    "display_image_shape": [
+      3508,
+      2480
+    ],
+    "processing_image_shape": [
+      2339,
+      1653
+    ]
   },
   "outputs": {
     "show_image_level": 0

@@ -6,8 +6,8 @@ import numpy as np
 from deepmerge import Merger
 from dotmap import DotMap
 
-from src.defaults import CONFIG_DEFAULTS, TEMPLATE_DEFAULTS
 from src.schemas.constants import FIELD_STRING_REGEX_GROUPS
+from src.schemas.defaults import CONFIG_DEFAULTS, TEMPLATE_DEFAULTS
 from src.utils.constants import FIELD_LABEL_NUMBER_REGEX
 from src.utils.file import load_json
 from src.utils.validations import (

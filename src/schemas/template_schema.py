@@ -1,31 +1,14 @@
-from src.schemas.constants import ARRAY_OF_STRINGS, FIELD_STRING_TYPE
+from src.schemas.constants import (
+    ARRAY_OF_STRINGS,
+    FIELD_STRING_TYPE,
+    positive_integer,
+    positive_number,
+    two_positive_integers,
+    two_positive_numbers,
+    zero_to_one_number,
+)
 from src.utils.constants import FIELD_TYPES
 
-positive_number = {"type": "number", "minimum": 0}
-positive_integer = {"type": "integer", "minimum": 0}
-two_positive_integers = {
-    "type": "array",
-    "prefixItems": [
-        positive_integer,
-        positive_integer,
-    ],
-    "maxItems": 2,
-    "minItems": 2,
-}
-two_positive_numbers = {
-    "type": "array",
-    "prefixItems": [
-        positive_number,
-        positive_number,
-    ],
-    "maxItems": 2,
-    "minItems": 2,
-}
-zero_to_one_number = {
-    "type": "number",
-    "minimum": 0,
-    "maximum": 1,
-}
 patch_area_description = {
     "type": "object",
     "required": ["origin", "dimensions", "margins"],
@@ -63,7 +46,7 @@ pre_processor_if_requirements = {
 crop_on_markers_if_requirements = {
     "required": ["type"],
 }
-pre_processor_options_available_keys = {"processingDimensions": True}
+pre_processor_options_available_keys = {"inputShape": True}
 
 crop_on_markers_tuning_options_available_keys = {
     "dotKernel": True,
@@ -145,7 +128,7 @@ TEMPLATE_SCHEMA = {
                     "options": {
                         "type": "object",
                         "properties": {
-                            "processingDimensions": two_positive_integers,
+                            "inputShape": two_positive_integers,
                         },
                     },
                 },

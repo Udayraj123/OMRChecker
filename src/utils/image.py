@@ -13,15 +13,29 @@ class ImageUtils:
     """A Static-only Class to hold common image processing utilities & wrappers over OpenCV functions"""
 
     @staticmethod
+    def read_image_util(file_path, tuning_config):
+        if tuning_config.outputs.show_colored_outputs:
+            colored_image = cv2.imread(file_path, cv2.IMREAD_COLOR)
+            gray_image = cv2.cvtColor(colored_image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray_image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+            colored_image = None
+        return gray_image, colored_image
+
+    @staticmethod
     def save_img(path, final_marked):
         logger.info(f"Saving Image to '{path}'")
         cv2.imwrite(path, final_marked)
 
     @staticmethod
     def resize_util(img, u_width, u_height=None):
+        h, w = img.shape[:2]
         if u_height is None:
-            h, w = img.shape[:2]
             u_height = int(h * u_width / w)
+
+        if u_height == h and u_width == w:
+            # No need to resize
+            return img
         return cv2.resize(img, (int(u_width), int(u_height)))
 
     @staticmethod

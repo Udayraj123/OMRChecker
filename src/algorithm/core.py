@@ -36,32 +36,32 @@ class ImageInstanceOps:
         self.tuning_config = tuning_config
         self.save_image_level = tuning_config.outputs.save_image_level
 
-    def apply_preprocessors(self, file_path, in_omr, template):
+    def apply_preprocessors(self, file_path, gray_image, colored_image, template):
         tuning_config = self.tuning_config
+        (
+            processing_height,
+            processing_width,
+        ) = tuning_config.dimensions.processing_image_shape
         # resize to conform to common preprocessor input requirements
-        in_omr = ImageUtils.resize_util(
-            in_omr,
-            tuning_config.dimensions.processing_width,
-            tuning_config.dimensions.processing_height,
+        gray_image = ImageUtils.resize_util(
+            gray_image,
+            processing_width,
+            processing_height,
         )
         # Copy template for this instance op
         template = deepcopy(template)
         # run pre_processors in sequence
         for pre_processor in template.pre_processors:
-            result = pre_processor.apply_filter(in_omr, template, file_path)
-            out_omr, next_template = (
-                result if type(result) is tuple else (result, template)
+            (
+                out_omr,
+                colored_image,
+                next_template,
+            ) = pre_processor.resize_and_apply_filter(
+                gray_image, colored_image, template, file_path
             )
-            # resize the image if its shape is changed by the filter
-            if out_omr.shape[:2] != in_omr.shape[:2]:
-                out_omr = ImageUtils.resize_util(
-                    out_omr,
-                    tuning_config.dimensions.processing_width,
-                    tuning_config.dimensions.processing_height,
-                )
-            in_omr = out_omr
+            gray_image = out_omr
             template = next_template
-        return in_omr, template
+        return gray_image, colored_image, template
 
     def read_omr_response(self, template, image, name, save_dir=None):
         config = self.tuning_config
@@ -577,11 +577,14 @@ class ImageInstanceOps:
     #     return overall_confidence, fields_confidence
 
     @staticmethod
-    def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-1):
-        img = ImageUtils.resize_util(
-            img, template.page_dimensions[0], template.page_dimensions[1]
+    def draw_template_layout(
+        gray_image, template, shifted=True, draw_qvals=False, border=-1
+    ):
+        gray_image = ImageUtils.resize_util(
+            gray_image, template.page_dimensions[0], template.page_dimensions[1]
         )
-        final_align = img.copy()
+
+        final_align = gray_image.copy()
         for field_block in template.field_blocks:
             field_block_name, s, d, bubble_dimensions, shift_x, shift_y = map(
                 lambda attr: getattr(field_block, attr),
@@ -632,7 +635,7 @@ class ImageInstanceOps:
                         rect = [y, y + box_h, x, x + box_w]
                         cv2.putText(
                             final_align,
-                            f"{int(cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0])}",
+                            f"{int(cv2.mean(gray_image[rect[0] : rect[1], rect[2] : rect[3]])[0])}",
                             (rect[2] + 2, rect[0] + (box_h * 2) // 3),
                             cv2.FONT_HERSHEY_SIMPLEX,
                             0.6,
@@ -921,11 +924,12 @@ class ImageInstanceOps:
     def save_image_stacks(self, key, filename, save_dir):
         config = self.tuning_config
         if self.save_image_level >= int(key) and self.save_img_list[key] != []:
+            display_height, display_width = config.dimensions.display_image_shape
             name = os.path.splitext(filename)[0]
             result = np.hstack(
                 tuple(
                     [
-                        ImageUtils.resize_util_h(img, config.dimensions.display_height)
+                        ImageUtils.resize_util_h(img, display_height)
                         for img in self.save_img_list[key]
                     ]
                 )
@@ -933,8 +937,8 @@ class ImageInstanceOps:
             result = ImageUtils.resize_util(
                 result,
                 min(
-                    len(self.save_img_list[key]) * config.dimensions.display_width // 3,
-                    int(config.dimensions.display_width * 2.5),
+                    len(self.save_img_list[key]) * display_width // 3,
+                    int(display_width * 2.5),
                 ),
             )
             ImageUtils.save_img(f"{save_dir}stack/{name}_{str(key)}_stack.jpg", result)

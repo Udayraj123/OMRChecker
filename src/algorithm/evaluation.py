@@ -12,7 +12,6 @@ import os
 import re
 from copy import deepcopy
 
-import cv2
 import pandas as pd
 from rich.table import Table
 
@@ -26,6 +25,7 @@ from src.schemas.constants import (
     SchemaVerdict,
     Verdict,
 )
+from src.utils.image import ImageUtils
 from src.utils.logger import console, logger
 from src.utils.parsing import (
     get_concatenated_response,
@@ -264,18 +264,24 @@ class EvaluationConfig:
                     f"Attempting to generate answer key from image: '{image_path}'"
                 )
                 # TODO: use a common function for below changes?
-                in_omr = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-                in_omr, template = template.image_instance_ops.apply_preprocessors(
-                    image_path, in_omr, template
+                gray_image, _colored_image = ImageUtils.read_image_util(
+                    image_path, tuning_config
                 )
-                if in_omr is None:
+                (
+                    gray_image,
+                    _colored_image,
+                    template,
+                ) = template.image_instance_ops.apply_preprocessors(
+                    image_path, gray_image, _colored_image, template
+                )
+                if gray_image is None:
                     raise Exception(
                         f"Could not read answer key from image {image_path}"
                     )
 
                 (response_dict, *_) = template.image_instance_ops.read_omr_response(
                     template,
-                    image=in_omr,
+                    image=gray_image,
                     name=image_path,
                     save_dir=None,
                 )

@@ -68,3 +68,30 @@ FIELD_STRING_TYPE = {
 }
 
 FIELD_STRING_REGEX_GROUPS = r"([^\.\d]+)(\d+)\.{2,3}(\d+)"
+
+
+positive_number = {"type": "number", "minimum": 0}
+positive_integer = {"type": "integer", "minimum": 0}
+two_positive_integers = {
+    "type": "array",
+    "prefixItems": [
+        positive_integer,
+        positive_integer,
+    ],
+    "maxItems": 2,
+    "minItems": 2,
+}
+two_positive_numbers = {
+    "type": "array",
+    "prefixItems": [
+        positive_number,
+        positive_number,
+    ],
+    "maxItems": 2,
+    "minItems": 2,
+}
+zero_to_one_number = {
+    "type": "number",
+    "minimum": 0,
+    "maximum": 1,
+}

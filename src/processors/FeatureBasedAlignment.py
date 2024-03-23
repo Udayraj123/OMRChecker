@@ -2,6 +2,7 @@
 Image based feature alignment
 Credits: https://www.learnopencv.com/image-alignment-feature-based-using-opencv-c-python/
 """
+
 import cv2
 import numpy as np
 
@@ -16,15 +17,15 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         options = self.options
-        config = self.tuning_config
 
         # process reference image
         self.ref_path = self.relative_dir.joinpath(options["reference"])
         ref_img = cv2.imread(str(self.ref_path), cv2.IMREAD_GRAYSCALE)
+        processing_height, processing_width = self.processing_image_shape
         self.ref_img = ImageUtils.resize_util(
             ref_img,
-            config.dimensions.processing_width,
-            config.dimensions.processing_height,
+            processing_width,
+            processing_height,
         )
         # get options with defaults
         self.max_features = int(options.get("maxFeatures", 500))
@@ -53,7 +54,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
     def exclude_files(self):
         return [self.ref_path]
 
-    def apply_filter(self, image, _template, _file_path):
+    def apply_filter(self, image, colored_image, _template, _file_path):
         config = self.tuning_config
         # Convert images to grayscale
         # im1Gray = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
@@ -100,4 +101,9 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
 
         # Use homography
         h, _mask = cv2.findHomography(points1, points2, cv2.RANSAC)
-        return cv2.warpPerspective(image, h, (width, height))
+        warped_image = cv2.warpPerspective(image, h, (width, height))
+
+        if config.outputs.show_colored_outputs:
+            colored_image = cv2.warpPerspective(colored_image, h, (width, height))
+
+        return warped_image, colored_image, _template

@@ -31,8 +31,8 @@ class Levels(ImageTemplatePreprocessor):
             ]
         ).astype("uint8")
 
-    def apply_filter(self, image, _template, _file_path):
-        return cv2.LUT(image, self.gamma)
+    def apply_filter(self, image, _colored_image, _template, _file_path):
+        return cv2.LUT(image, self.gamma), _colored_image, _template
 
 
 class MedianBlur(ImageTemplatePreprocessor):
@@ -41,8 +41,8 @@ class MedianBlur(ImageTemplatePreprocessor):
         options = self.options
         self.kSize = int(options.get("kSize", 5))
 
-    def apply_filter(self, image, _template, _file_path):
-        return cv2.medianBlur(image, self.kSize)
+    def apply_filter(self, image, _colored_image, _template, _file_path):
+        return cv2.medianBlur(image, self.kSize), _colored_image, _template
 
 
 class GaussianBlur(ImageTemplatePreprocessor):
@@ -52,5 +52,9 @@ class GaussianBlur(ImageTemplatePreprocessor):
         self.kSize = tuple(int(x) for x in options.get("kSize", (3, 3)))
         self.sigmaX = int(options.get("sigmaX", 0))
 
-    def apply_filter(self, image, _template, _file_path):
-        return cv2.GaussianBlur(image, self.kSize, self.sigmaX)
+    def apply_filter(self, image, _colored_image, _template, _file_path):
+        return (
+            cv2.GaussianBlur(image, self.kSize, self.sigmaX),
+            _colored_image,
+            _template,
+        )

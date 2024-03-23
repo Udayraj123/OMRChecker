@@ -13,13 +13,12 @@ from csv import QUOTE_NONNUMERIC
 from pathlib import Path
 from time import time
 
-import cv2
 import pandas as pd
 from rich.table import Table
 
 from src.algorithm.evaluation import EvaluationConfig, evaluate_concatenated_response
 from src.algorithm.template import Template
-from src.defaults import CONFIG_DEFAULTS
+from src.schemas.defaults import CONFIG_DEFAULTS
 from src.utils import constants
 from src.utils.file import Paths, setup_dirs_for_paths, setup_outputs_for_template
 from src.utils.image import ImageUtils
@@ -236,15 +235,21 @@ def show_template_layouts(omr_files, template, tuning_config):
     for file_path in omr_files:
         file_name = file_path.name
         file_path = str(file_path)
-        in_omr = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-        in_omr, template = template.image_instance_ops.apply_preprocessors(
-            file_path, in_omr, template
+        gray_image, _colored_image = ImageUtils.read_image_util(
+            file_path, tuning_config
         )
-        template_layout = template.image_instance_ops.draw_template_layout(
-            in_omr, template, shifted=False, border=2
+        (
+            gray_image,
+            _colored_image,
+            template,
+        ) = template.image_instance_ops.apply_preprocessors(
+            file_path, gray_image, _colored_image, template
+        )
+        gray_layout = template.image_instance_ops.draw_template_layout(
+            gray_image, template, shifted=False, border=2
         )
         InteractionUtils.show(
-            f"Template Layout: {file_name}", template_layout, 1, 1, config=tuning_config
+            f"Template Layout: {file_name}", gray_layout, 1, 1, config=tuning_config
         )
 
 
@@ -263,24 +268,32 @@ def process_files(
         files_counter += 1
         file_name = file_path.name
 
-        in_omr = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
+        gray_image, colored_image = ImageUtils.read_image_util(
+            str(file_path), tuning_config
+        )
 
         logger.info("")
         logger.info(
-            f"({files_counter}) Opening image: \t'{file_path}'\tResolution: {in_omr.shape}"
+            f"({files_counter}) Opening image: \t'{file_path}'\tResolution: {gray_image.shape}"
         )
 
         template.image_instance_ops.reset_all_save_img()
 
-        template.image_instance_ops.append_save_img(1, in_omr)
+        template.image_instance_ops.append_save_img(1, gray_image)
 
         # TODO: use try catch here and store paths to error files
         # Note: the returned template is a copy
-        in_omr, template = template.image_instance_ops.apply_preprocessors(
-            file_path, in_omr, template
+        InteractionUtils.show("pre-colored_image", colored_image)
+        (
+            gray_image,
+            colored_image,
+            template,
+        ) = template.image_instance_ops.apply_preprocessors(
+            file_path, gray_image, colored_image, template
         )
+        InteractionUtils.show("post-colored_image", colored_image)
 
-        if in_omr is None:
+        if gray_image is None:
             # Error OMR case
             new_file_path = outputs_namespace.paths.errors_dir.joinpath(file_name)
             outputs_namespace.OUTPUT_SET.append(
@@ -316,7 +329,7 @@ def process_files(
             global_threshold_for_template,
             global_field_confidence_metrics,
         ) = template.image_instance_ops.read_omr_response(
-            template, image=in_omr, name=file_id, save_dir=save_dir
+            template, image=gray_image, name=file_id, save_dir=save_dir
         )
 
         # TODO: move inner try catch here
@@ -344,7 +357,7 @@ def process_files(
             export_omr_metrics(
                 outputs_namespace,
                 file_name,
-                in_omr,
+                gray_image,
                 final_marked,
                 template,
                 field_number_to_field_bubble_means,
@@ -354,11 +367,13 @@ def process_files(
             )
 
         if tuning_config.outputs.show_image_level >= 2:
+            (
+                display_height,
+                _display_width,
+            ) = tuning_config.dimensions.display_image_shape
             InteractionUtils.show(
                 f"Final Marked Bubbles : '{file_id}'",
-                ImageUtils.resize_util_h(
-                    final_marked, int(tuning_config.dimensions.display_height * 1.3)
-                ),
+                ImageUtils.resize_util_h(final_marked, int(display_height * 1.3)),
                 1,
                 1,
                 config=tuning_config,

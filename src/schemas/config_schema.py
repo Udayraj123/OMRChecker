@@ -1,3 +1,5 @@
+from src.schemas.constants import two_positive_integers
+
 CONFIG_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/Udayraj123/OMRChecker/tree/master/src/schemas/config-schema.json",
@@ -10,10 +12,8 @@ CONFIG_SCHEMA = {
             "type": "object",
             "additionalProperties": False,
             "properties": {
-                "display_height": {"type": "integer"},
-                "display_width": {"type": "integer"},
-                "processing_height": {"type": "integer"},
-                "processing_width": {"type": "integer"},
+                "display_image_shape": two_positive_integers,
+                "processing_image_shape": two_positive_integers,
             },
         },
         "threshold_params": {
@@ -62,6 +62,8 @@ CONFIG_SCHEMA = {
             "properties": {
                 "show_image_level": {"type": "integer", "minimum": 0, "maximum": 6},
                 "save_image_level": {"type": "integer", "minimum": 0, "maximum": 6},
+                # This option shows colored outputs while taking a small toll on the processing speeds
+                "show_colored_outputs": {"type": "boolean"},
                 "save_detections": {"type": "boolean"},
                 "save_image_metrics": {"type": "boolean"},
                 # This option moves multimarked files into a separate folder for manual checking, skipping evaluation

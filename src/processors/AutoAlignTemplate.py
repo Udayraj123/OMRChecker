@@ -27,7 +27,7 @@ class AutoAlignTemplate(ImageTemplatePreprocessor):
     def exclude_files(self):
         return []
 
-    def apply_filter(self, image, template, _file_path):
+    def apply_filter(self, image, _colored_image, template, _file_path):
         config = self.tuning_config
         image_instance_ops = self.image_instance_ops
         morph = image.copy()
@@ -174,12 +174,11 @@ class AutoAlignTemplate(ImageTemplatePreprocessor):
         image_instance_ops.append_save_img(5, image)
 
         if config.outputs.show_image_level >= 3 and final_align is not None:
-            final_align = ImageUtils.resize_util_h(
-                final_align, int(config.dimensions.display_height)
-            )
+            display_height, _display_width = config.dimensions.display_image_shape
+            final_align = ImageUtils.resize_util_h(final_align, int(display_height))
             # [final_align.shape[1],0])
             InteractionUtils.show(
                 "Template Alignment Adjustment", final_align, 0, 0, config=config
             )
 
-        return image, template
+        return image, _colored_image, template

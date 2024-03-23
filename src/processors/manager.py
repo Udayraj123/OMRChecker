@@ -2,6 +2,7 @@
 Processor/Extension framework
 Adapated from https://github.com/gdiepen/python_processor_example
 """
+
 import inspect
 import pkgutil
 
@@ -19,9 +20,13 @@ class Processor:
     ):
         self.options = options
         self.tuning_options = options.get("tuningOptions", {})
+        self.tuning_config = image_instance_ops.tuning_config
+        self.processing_image_shape = options.get(
+            "inputShape",
+            self.tuning_config.dimensions.processing_image_shape,
+        )
         self.relative_dir = relative_dir
         self.image_instance_ops = image_instance_ops
-        self.tuning_config = image_instance_ops.tuning_config
         self.description = "UNKNOWN"
 
 

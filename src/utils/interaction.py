@@ -34,7 +34,8 @@ class InteractionUtils:
         if resize:
             if not config:
                 raise Exception("config not provided for resizing the image to show")
-            img = ImageUtils.resize_util(origin, config.dimensions.display_width)
+            _display_height, display_width = config.dimensions.display_image_shape
+            img = ImageUtils.resize_util(origin, display_width)
         else:
             img = origin
 
@@ -54,10 +55,10 @@ class InteractionUtils:
 
         # Set next window position
         margin = 25
-        w += margin
         h += margin
+        w += margin
 
-        w, h = w // 2, h // 2
+        h, w = h // 2, w // 2
         if image_metrics.window_x + w > image_metrics.window_width:
             image_metrics.window_x = 0
             if image_metrics.window_y + h > image_metrics.window_height:
