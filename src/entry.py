@@ -42,6 +42,7 @@ def export_omr_metrics(
     file_name,
     image,
     final_marked,
+    colored_final_marked,
     template,
     field_number_to_field_bubble_means,
     global_threshold_for_template,
@@ -235,21 +236,24 @@ def show_template_layouts(omr_files, template, tuning_config):
     for file_path in omr_files:
         file_name = file_path.name
         file_path = str(file_path)
-        gray_image, _colored_image = ImageUtils.read_image_util(
-            file_path, tuning_config
-        )
+        gray_image, colored_image = ImageUtils.read_image_util(file_path, tuning_config)
         (
             gray_image,
-            _colored_image,
+            colored_image,
             template,
         ) = template.image_instance_ops.apply_preprocessors(
-            file_path, gray_image, _colored_image, template
+            file_path, gray_image, colored_image, template
         )
-        gray_layout = template.image_instance_ops.draw_template_layout(
-            gray_image, template, shifted=False, border=2
+        gray_layout, colored_layout = template.image_instance_ops.draw_template_layout(
+            gray_image, colored_image, template, shifted=False, border=2
+        )
+        template_layout = (
+            colored_layout
+            if tuning_config.outputs.show_colored_outputs
+            else gray_layout
         )
         InteractionUtils.show(
-            f"Template Layout: {file_name}", gray_layout, 1, 1, config=tuning_config
+            f"Template Layout: {file_name}", template_layout, 1, 1, config=tuning_config
         )
 
 
@@ -267,6 +271,7 @@ def process_files(
     for file_path in omr_files:
         files_counter += 1
         file_name = file_path.name
+        file_id = str(file_name)
 
         gray_image, colored_image = ImageUtils.read_image_util(
             str(file_path), tuning_config
@@ -283,7 +288,6 @@ def process_files(
 
         # TODO: use try catch here and store paths to error files
         # Note: the returned template is a copy
-        InteractionUtils.show("pre-colored_image", colored_image)
         (
             gray_image,
             colored_image,
@@ -291,7 +295,6 @@ def process_files(
         ) = template.image_instance_ops.apply_preprocessors(
             file_path, gray_image, colored_image, template
         )
-        InteractionUtils.show("post-colored_image", colored_image)
 
         if gray_image is None:
             # Error OMR case
@@ -317,20 +320,14 @@ def process_files(
                 )
             continue
 
-        # uniquify
-        file_id = str(file_name)
-        save_dir = outputs_namespace.paths.save_marked_dir
         (
             response_dict,
-            final_marked,
             multi_marked,
             _,
             field_number_to_field_bubble_means,
             global_threshold_for_template,
             global_field_confidence_metrics,
-        ) = template.image_instance_ops.read_omr_response(
-            template, image=gray_image, name=file_id, save_dir=save_dir
-        )
+        ) = template.image_instance_ops.read_omr_response(template, image=gray_image)
 
         # TODO: move inner try catch here
         # concatenate roll nos, set unmarked responses, etc
@@ -353,12 +350,29 @@ def process_files(
         else:
             logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
 
+        # Save output images
+        save_marked_dir = outputs_namespace.paths.save_marked_dir
+        (
+            final_marked,
+            colored_final_marked,
+        ) = template.image_instance_ops.draw_template_layout(
+            gray_image,
+            colored_image,
+            template,
+            file_id,
+            field_number_to_field_bubble_means,
+            save_marked_dir=save_marked_dir,
+            evaluation_meta=evaluation_meta,
+        )
+
+        # Save output metrics
         if tuning_config.outputs.save_image_metrics:
             export_omr_metrics(
                 outputs_namespace,
                 file_name,
                 gray_image,
                 final_marked,
+                colored_final_marked,
                 template,
                 field_number_to_field_bubble_means,
                 global_threshold_for_template,
@@ -366,19 +380,7 @@ def process_files(
                 evaluation_meta,
             )
 
-        if tuning_config.outputs.show_image_level >= 2:
-            (
-                display_height,
-                _display_width,
-            ) = tuning_config.dimensions.display_image_shape
-            InteractionUtils.show(
-                f"Final Marked Bubbles : '{file_id}'",
-                ImageUtils.resize_util_h(final_marked, int(display_height * 1.3)),
-                1,
-                1,
-                config=tuning_config,
-            )
-
+        # Save output results
         resp_array = []
         for k in template.output_columns:
             resp_array.append(omr_response[k])
@@ -387,7 +389,7 @@ def process_files(
 
         if multi_marked == 0 or not tuning_config.outputs.filter_out_multimarked_files:
             STATS.files_not_moved += 1
-            new_file_path = save_dir.joinpath(file_id)
+            new_file_path = save_marked_dir.joinpath(file_id)
             # Enter into Results sheet-
             results_line = [file_name, file_path, new_file_path, score] + resp_array
             # Write/Append to results_line file(opened in append mode)

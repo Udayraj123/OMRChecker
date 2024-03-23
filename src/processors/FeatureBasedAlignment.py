@@ -94,7 +94,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
             points2[i, :] = self.to_keypoints[match.trainIdx].pt
 
         # Find homography
-        height, width = self.ref_img.shape
+        height, width = self.ref_img.shape[:2]
         if self.transform_2_d:
             m, _inliers = cv2.estimateAffine2D(points1, points2)
             return cv2.warpAffine(image, m, (width, height))

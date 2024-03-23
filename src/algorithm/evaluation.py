@@ -282,8 +282,6 @@ class EvaluationConfig:
                 (response_dict, *_) = template.image_instance_ops.read_omr_response(
                     template,
                     image=gray_image,
-                    name=image_path,
-                    save_dir=None,
                 )
                 omr_response = get_concatenated_response(response_dict, template)
 
@@ -358,6 +356,13 @@ class EvaluationConfig:
 
     def validate_questions(self, answers_in_order):
         questions_in_order = self.questions_in_order
+
+        # for question, answer in zip(questions_in_order, answers_in_order):
+        #     if question in template.custom_label:
+        #         # TODO: get all bubble values for the custom label
+        #         if len(answer) != len(firstBubbleValues):
+        #           logger.warning(f"The question {question} is a custom label and its answer does not have same length as the custom label")
+
         len_questions_in_order, len_answers_in_order = len(questions_in_order), len(
             answers_in_order
         )
@@ -583,7 +588,7 @@ class EvaluationConfig:
 def evaluate_concatenated_response(concatenated_response, evaluation_config):
     evaluation_config.prepare_and_validate_omr_response(concatenated_response)
     current_score = 0.0
-    question_meta = {}
+    questions_meta = {}
     for question in evaluation_config.questions_in_order:
         marked_answer = concatenated_response[question]
         (
@@ -594,7 +599,7 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
             current_score, question, marked_answer
         )
         current_score += delta
-        question_meta[question] = {
+        questions_meta[question] = {
             "question_verdict": question_verdict,
             "marked_answer": marked_answer,
             "delta": delta,
@@ -605,7 +610,7 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
     evaluation_config.conditionally_print_explanation()
     evaluation_meta = {
         "final_score": current_score,
-        "question_meta": question_meta,
+        "questions_meta": questions_meta,
         "answers_summary_string": evaluation_config.get_answers_summary_string(),
     }
     return current_score, evaluation_meta

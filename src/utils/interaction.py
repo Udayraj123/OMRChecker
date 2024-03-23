@@ -58,7 +58,9 @@ class InteractionUtils:
         h += margin
         w += margin
 
-        h, w = h // 2, w // 2
+        # TODO: get ppi for correct positioning?
+        ppi_ratio = 4
+        h, w = h // ppi_ratio, w // ppi_ratio
         if image_metrics.window_x + w > image_metrics.window_width:
             image_metrics.window_x = 0
             if image_metrics.window_y + h > image_metrics.window_height:
@@ -78,7 +80,6 @@ class InteractionUtils:
             InteractionUtils.image_metrics.window_y = 0
 
 
-@dataclass
 class Stats:
     # TODO Fill these for stats
     # Move qbox_vals here?

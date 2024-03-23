@@ -32,10 +32,8 @@ TEMPLATE_BOILERPLATE = {
 
 CONFIG_BOILERPLATE = {
     "dimensions": {
-        "display_height": 960,
-        "display_width": 1280,
-        "processing_height": 1640,
-        "processing_width": 1332,
+        "processing_image_shape": [1640, 1332],
+        "display_image_shape": [960, 1280],
     },
     "outputs": {"show_image_level": 0, "filter_out_multimarked_files": True},
 }

@@ -32,20 +32,33 @@ class Paths:
 
 def setup_dirs_for_paths(paths):
     logger.info("Checking Directories...")
+
+    # Main output directories
     for save_output_dir in [paths.save_marked_dir]:
         if not os.path.exists(save_output_dir):
             logger.info(f"Created : {save_output_dir}")
             os.makedirs(save_output_dir)
             os.mkdir(save_output_dir.joinpath("stack"))
+            os.mkdir(save_output_dir.joinpath("colored"))
             os.mkdir(save_output_dir.joinpath("_MULTI_"))
             os.mkdir(save_output_dir.joinpath("_MULTI_", "stack"))
+            os.mkdir(save_output_dir.joinpath("_MULTI_", "colored"))
 
+    # Image buckets
     for save_output_dir in [
         paths.manual_dir,
-        paths.results_dir,
-        paths.image_metrics_dir,
         paths.multi_marked_dir,
         paths.errors_dir,
+    ]:
+        if not os.path.exists(save_output_dir):
+            logger.info(f"Created : {save_output_dir}")
+            os.makedirs(save_output_dir)
+            os.mkdir(save_output_dir.joinpath("colored"))
+
+    # Non-image directories
+    for save_output_dir in [
+        paths.results_dir,
+        paths.image_metrics_dir,
     ]:
         if not os.path.exists(save_output_dir):
             logger.info(f"Created : {save_output_dir}")

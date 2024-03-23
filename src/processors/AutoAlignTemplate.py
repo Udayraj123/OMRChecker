@@ -141,7 +141,8 @@ class AutoAlignTemplate(ImageTemplatePreprocessor):
                 steps += 1
 
             # Note: this mutating may not be compatible with parallelizing
-            field_block.shift_x = shift
+            # TODO: support for vertical shifts too
+            field_block.shifts = [shift, 0]
 
             # print("Aligned field_block: ",field_block.name,"Corrected Shift:",
             #   field_block.shift,", dimensions:", field_block.dimensions,
@@ -160,11 +161,13 @@ class AutoAlignTemplate(ImageTemplatePreprocessor):
 
         final_align = None
         if config.outputs.show_image_level >= 2:
-            initial_align = image_instance_ops.draw_template_layout(
+            initial_align = image_instance_ops.draw_field_blocks_layout(
                 image, template, shifted=False
             )
-            final_align = image_instance_ops.draw_template_layout(
-                image, template, shifted=True, draw_qvals=True
+            final_align = image_instance_ops.draw_field_blocks_layout(
+                image,
+                template,
+                shifted=True,
             )
             # appendSaveImg(4,mean_vals)
             image_instance_ops.append_save_img(2, initial_align)

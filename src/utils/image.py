@@ -2,7 +2,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from src.utils.constants import CLR_WHITE
+from src.utils.constants import CLR_BLACK, CLR_DARK_GRAY, CLR_GRAY, CLR_WHITE, TEXT_SIZE
 from src.utils.logger import logger
 
 plt.rcParams["figure.figsize"] = (10.0, 8.0)
@@ -266,4 +266,61 @@ class ImageUtils:
             max_width - image.shape[1],
             cv2.BORDER_CONSTANT,
             value,
+        )
+
+    @staticmethod
+    def draw_box(
+        image,
+        position,
+        box_dimensions,
+        color=None,
+        style="BOX_HOLLOW",
+        thickness_factor=1 / 12,
+        border=3,
+    ):
+        x, y = position
+        box_w, box_h = box_dimensions
+
+        position = (
+            int(x + box_w * thickness_factor),
+            int(y + box_h * thickness_factor),
+        )
+        position_diagonal = (
+            int(x + box_w - box_w * thickness_factor),
+            int(y + box_h - box_h * thickness_factor),
+        )
+        if style == "BOX_HOLLOW":
+            if color is None:
+                color = CLR_GRAY
+        elif style == "BOX_FILLED":
+            if color is None:
+                color = CLR_DARK_GRAY
+            border = -1
+
+        cv2.rectangle(
+            image,
+            position,
+            position_diagonal,
+            color,
+            border,
+        )
+
+    @staticmethod
+    def draw_text(
+        image,
+        text_value,
+        position,
+        font=cv2.FONT_HERSHEY_SIMPLEX,
+        text_size=TEXT_SIZE,
+        color=CLR_BLACK,
+        thickness=2,
+    ):
+        cv2.putText(
+            image,
+            text_value,
+            position,
+            font,
+            text_size,
+            color,
+            thickness,
         )

@@ -1,7 +1,9 @@
 {
   "dimensions": {
-    "display_width": 1189,
-    "display_height": 1682
+    "display_image_shape": [
+      1682,
+      1189
+    ]
   },
   "threshold_params": {
     "MIN_JUMP": 30

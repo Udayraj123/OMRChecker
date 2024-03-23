@@ -20,9 +20,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import colormaps
 
-import src.utils.constants as constants
 from src.algorithm.detection import BubbleMeanValue, FieldStdMeanValue
+from src.utils.constants import CLR_BLACK, MARKED_TEMPLATE_ALPHA, TEXT_SIZE
 from src.utils.image import ImageUtils
+from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 
 
@@ -61,9 +62,10 @@ class ImageInstanceOps:
             )
             gray_image = out_omr
             template = next_template
+
         return gray_image, colored_image, template
 
-    def read_omr_response(self, template, image, name, save_dir=None):
+    def read_omr_response(self, template, image):
         config = self.tuning_config
 
         img = image.copy()
@@ -73,13 +75,8 @@ class ImageInstanceOps:
         )
         if img.max() > img.min():
             img = ImageUtils.normalize_util(img)
-        # Processing copies
-        transp_layer = img.copy()
-        final_marked = img.copy()
 
         # Move them to data class if needed
-        # Overlay Transparencies
-        alpha = 0.65
         omr_response = {}
         multi_marked, multi_roll = 0, 0
 
@@ -109,12 +106,7 @@ class ImageInstanceOps:
                 field_bubbles = field.field_bubbles
                 field_bubble_means = []
                 for unit_bubble in field_bubbles:
-                    # TODO: move this responsibility into the plugin(not pre-processor) (of shifting every point)
-                    # shifted
-                    x, y = (
-                        unit_bubble.x + field_block.shift_x,
-                        unit_bubble.y + field_block.shift_y,
-                    )
+                    x, y = unit_bubble.get_shifted_position(field_block.shifts)
                     rect = [y, y + box_h, x, x + box_w]
                     mean_value = cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]
                     field_bubble_means.append(
@@ -308,17 +300,22 @@ class ImageInstanceOps:
                                 jumps_string,
                             )
                     else:
-                        logger.info(
-                            f"party_matched for field: {field.field_label}",
-                            thresholds_string,
-                        )
+                        # TODO: reduce the noise for parity logs
+                        skip_extra_logs = True  # temp
+                        if not skip_extra_logs:
+                            logger.info(
+                                f"party_matched for field: {field.field_label}",
+                                thresholds_string,
+                            )
+
                         # 5.1 High confidence if the gap is very large compared to MIN_JUMP
                         if is_local_jump_confident:
                             # Higher weightage for confidence
-                            logger.info(
-                                f"is_local_jump_confident = increased confidence",
-                                jumps_string,
-                            )
+                            if not skip_extra_logs:
+                                logger.info(
+                                    f"is_local_jump_confident => increased confidence",
+                                    jumps_string,
+                                )
                         # No output disparity, but -
                         # 2.1 global threshold is "too close" to lower bubbles
                         bubbles_in_doubt["global_lower"] = [
@@ -420,46 +417,6 @@ class ImageInstanceOps:
                     global_threshold_for_template,
                 )
                 global_field_confidence_metrics.append(confidence_metrics)
-                for bubble_detection in field_bubble_means:
-                    bubble = bubble_detection.item_reference
-                    x, y, field_value = (
-                        bubble.x + field_block.shift_x,
-                        bubble.y + field_block.shift_y,
-                        bubble.field_value,
-                    )
-                    if bubble_detection.is_marked:
-                        # Draw the shifted box
-                        cv2.rectangle(
-                            final_marked,
-                            (int(x + box_w / 12), int(y + box_h / 12)),
-                            (
-                                int(x + box_w - box_w / 12),
-                                int(y + box_h - box_h / 12),
-                            ),
-                            constants.CLR_DARK_GRAY,
-                            3,
-                        )
-
-                        cv2.putText(
-                            final_marked,
-                            str(field_value),
-                            (x, y),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            constants.TEXT_SIZE,
-                            (20, 20, 10),
-                            int(1 + 3.5 * constants.TEXT_SIZE),
-                        )
-                    else:
-                        cv2.rectangle(
-                            final_marked,
-                            (int(x + box_w / 10), int(y + box_h / 10)),
-                            (
-                                int(x + box_w - box_w / 10),
-                                int(y + box_h - box_h / 10),
-                            ),
-                            constants.CLR_GRAY,
-                            -1,
-                        )
 
                 detected_bubbles = [
                     bubble_detection
@@ -509,8 +466,6 @@ class ImageInstanceOps:
 
         per_omr_threshold_avg /= absolute_field_number
         per_omr_threshold_avg = round(per_omr_threshold_avg, 2)
-        # Translucent
-        cv2.addWeighted(final_marked, alpha, transp_layer, 1 - alpha, 0, final_marked)
 
         # TODO: refactor all_c_box_vals
         # Box types
@@ -540,21 +495,8 @@ class ImageInstanceOps:
         #     plt.tight_layout(pad=0.5)
         #     plt.show()
 
-        if config.outputs.save_detections and save_dir is not None:
-            if multi_roll:
-                save_dir = save_dir.joinpath("_MULTI_")
-            image_path = str(save_dir.joinpath(name))
-            ImageUtils.save_img(image_path, final_marked)
-
-        self.append_save_img(2, final_marked)
-
-        if save_dir is not None:
-            for i in range(config.outputs.save_image_level):
-                self.save_image_stacks(i + 1, name, save_dir)
-
         return (
             omr_response,
-            final_marked,
             multi_marked,
             multi_roll,
             field_number_to_field_bubble_means,
@@ -562,105 +504,275 @@ class ImageInstanceOps:
             global_field_confidence_metrics,
         )
 
-    # def get_confidence_metrics(self):
-    #     config = self.tuning_config
-    #     overall_confidence, fields_confidence = 0.0, []
-    #     PAGE_TYPE_FOR_THRESHOLD = map(
-    #         config.threshold_params.get, ["PAGE_TYPE_FOR_THRESHOLD"]
-    #     )
-    #     # Note: currently building with assumptions
-    #     if PAGE_TYPE_FOR_THRESHOLD == "black":
-    #         logger.warning(f"Confidence metric not implemented for black pages yet")
-    #         return 0.0, []
-    #     # global_threshold_for_template
-    #     # field
-    #     return overall_confidence, fields_confidence
-
-    @staticmethod
     def draw_template_layout(
-        gray_image, template, shifted=True, draw_qvals=False, border=-1
+        self, gray_image, colored_image, template, *args, **kwargs
     ):
-        gray_image = ImageUtils.resize_util(
-            gray_image, template.page_dimensions[0], template.page_dimensions[1]
+        config = self.tuning_config
+        final_marked = self.draw_template_layout_util(
+            gray_image, "GRAYSCALE", template, *args, **kwargs
         )
 
-        final_align = gray_image.copy()
+        colored_final_marked = colored_image
+        if config.outputs.show_colored_outputs:
+            save_marked_dir = kwargs.get("save_marked_dir", None)
+            kwargs["save_marked_dir"] = (
+                save_marked_dir.joinpath("colored")
+                if save_marked_dir is not None
+                else None
+            )
+            colored_final_marked = self.draw_template_layout_util(
+                colored_final_marked,
+                "COLORED",
+                template,
+                *args,
+                **kwargs,
+            )
+
+            InteractionUtils.show("final_marked", final_marked, 0)
+            InteractionUtils.show("colored_final_marked", colored_final_marked, 1)
+        else:
+            InteractionUtils.show("final_marked", final_marked, 1)
+
+        return final_marked, colored_final_marked
+
+    def draw_template_layout_util(
+        self,
+        image,
+        image_type,
+        template,
+        file_id=None,
+        field_number_to_field_bubble_means=None,
+        save_marked_dir=None,
+        evaluation_meta=None,
+        shifted=False,
+        border=-1,
+    ):
+        config = self.tuning_config
+
+        marked_image = ImageUtils.resize_util(
+            image, template.page_dimensions[0], template.page_dimensions[1]
+        )
+        transparent_layer = marked_image.copy()
+        should_draw_field_block_rectangles = field_number_to_field_bubble_means is None
+        should_draw_marked_bubbles = field_number_to_field_bubble_means is not None
+        should_draw_question_verdicts = (
+            should_draw_marked_bubbles and evaluation_meta is not None
+        )
+        should_save_detections = (
+            # TODO: support colored images
+            image_type == "GRAYSCALE"
+            and config.outputs.save_detections
+            and save_marked_dir is not None
+        )
+
+        if should_draw_field_block_rectangles:
+            marked_image = self.draw_field_blocks_layout(
+                marked_image, template, shifted, border
+            )
+            return marked_image
+
+        # TODO: move indent into smaller function
+        if should_draw_marked_bubbles:
+            marked_image = self.draw_marked_bubbles_with_evaluation_meta(
+                marked_image,
+                image_type,
+                template,
+                evaluation_meta,
+                field_number_to_field_bubble_means,
+            )
+
+        if should_save_detections:
+            # TODO: migrate support for multi_marked bucket based on identifier config
+            # if multi_roll:
+            #     save_marked_dir = save_marked_dir.joinpath("_MULTI_")
+            image_path = str(save_marked_dir.joinpath(file_id))
+            ImageUtils.save_img(image_path, marked_image)
+
+        # if config.outputs.show_colored_outputs:
+        # TODO: add colored counterparts
+
+        if should_draw_question_verdicts:
+            marked_image = self.draw_evaluation_summary(marked_image, evaluation_meta)
+
+        # Prepare save images
+        if should_save_detections:
+            self.append_save_img(2, marked_image)
+
+        # Translucent
+        cv2.addWeighted(
+            marked_image,
+            MARKED_TEMPLATE_ALPHA,
+            transparent_layer,
+            1 - MARKED_TEMPLATE_ALPHA,
+            0,
+            marked_image,
+        )
+
+        if should_save_detections:
+            for i in range(config.outputs.save_image_level):
+                self.save_image_stacks(i + 1, file_id, save_marked_dir)
+
+        if config.outputs.show_image_level >= 2 and file_id is not None:
+            # TODO: minimize no of final images
+            (
+                display_height,
+                _display_width,
+            ) = config.dimensions.display_image_shape
+            InteractionUtils.show(
+                f"Final Marked Bubbles : '{file_id}'",
+                ImageUtils.resize_util_h(marked_image, int(display_height * 1.3)),
+                1,
+                1,
+                config=config,
+            )
+
+        return marked_image
+
+    def draw_field_blocks_layout(self, image, template, shifted=True, border=-1):
         for field_block in template.field_blocks:
-            field_block_name, s, d, bubble_dimensions, shift_x, shift_y = map(
+            field_block_name, origin, dimensions, bubble_dimensions = map(
                 lambda attr: getattr(field_block, attr),
                 [
                     "name",
                     "origin",
                     "dimensions",
                     "bubble_dimensions",
-                    "shift_x",
-                    "shift_y",
                 ],
             )
-            box_w, box_h = bubble_dimensions
+            block_position = field_block.get_shifted_origin() if shifted else origin
 
-            if shifted:
-                cv2.rectangle(
-                    final_align,
-                    (s[0] + shift_x, s[1] + shift_y),
-                    (s[0] + shift_x + d[0], s[1] + shift_y + d[1]),
-                    constants.CLR_BLACK,
-                    3,
-                )
-            else:
-                cv2.rectangle(
-                    final_align,
-                    (s[0], s[1]),
-                    (s[0] + d[0], s[1] + d[1]),
-                    constants.CLR_BLACK,
-                    3,
-                )
+            # Field block bounding rectangle
+            ImageUtils.draw_box(
+                image,
+                block_position,
+                dimensions,
+                color=CLR_BLACK,
+                style="BOX_HOLLOW",
+                thickness_factor=0,
+                border=3,
+            )
+
             for field in field_block.fields:
                 field_bubbles = field.field_bubbles
                 for unit_bubble in field_bubbles:
-                    x, y = (
-                        (unit_bubble.x + shift_x, unit_bubble.y + shift_y)
-                        if shifted
-                        else (unit_bubble.x, unit_bubble.y)
+                    shifted_position = unit_bubble.get_shifted_position(
+                        field_block.shifts
                     )
-                    cv2.rectangle(
-                        final_align,
-                        (int(x + box_w / 10), int(y + box_h / 10)),
-                        (int(x + box_w - box_w / 10), int(y + box_h - box_h / 10)),
-                        constants.CLR_GRAY,
-                        border,
+                    ImageUtils.draw_box(
+                        image,
+                        shifted_position,
+                        bubble_dimensions,
+                        thickness_factor=1 / 10,
+                        border=border,
                     )
-
-                    if draw_qvals:
-                        rect = [y, y + box_h, x, x + box_w]
-                        cv2.putText(
-                            final_align,
-                            f"{int(cv2.mean(gray_image[rect[0] : rect[1], rect[2] : rect[3]])[0])}",
-                            (rect[2] + 2, rect[0] + (box_h * 2) // 3),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.6,
-                            constants.CLR_BLACK,
-                            2,
-                        )
 
             if shifted:
-                text_in_px = cv2.getTextSize(
-                    field_block_name, cv2.FONT_HERSHEY_SIMPLEX, constants.TEXT_SIZE, 4
+                text_x, text_y = cv2.getTextSize(
+                    field_block_name, cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE, 4
+                )[0]
+                text_position = (
+                    int(block_position[0] + dimensions[0] - text_x),
+                    int(block_position[1] - text_y),
                 )
-                cv2.putText(
-                    final_align,
-                    field_block_name,
-                    (
-                        int(s[0] + shift_x + d[0] - text_in_px[0][0]),
-                        int(s[1] + shift_y - text_in_px[0][1]),
-                    ),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    constants.TEXT_SIZE,
-                    constants.CLR_BLACK,
-                    4,
+                ImageUtils.draw_text(
+                    image, field_block_name, text_position, thickness=4
                 )
 
-        return final_align
+        return image
+
+    def draw_marked_bubbles_with_evaluation_meta(
+        self,
+        marked_image,
+        image_type,
+        template,
+        evaluation_meta,
+        field_number_to_field_bubble_means,
+    ):
+        should_draw_question_verdicts = evaluation_meta is not None
+        absolute_field_number = 0
+        for field_block in template.field_blocks:
+            bubble_dimensions = tuple(field_block.bubble_dimensions)
+            for field in field_block.fields:
+                field_label = field.field_label
+                field_bubble_means = field_number_to_field_bubble_means[
+                    absolute_field_number
+                ]
+                absolute_field_number += 1
+
+                question_has_verdict = (
+                    should_draw_question_verdicts
+                    and field_label in evaluation_meta["questions_meta"]
+                )
+                # linked_custom_labels = [custom_label if (field_label in field_labels) else None for (custom_label, field_labels) in template.custom_labels.items()]
+                # is_part_of_custom_label = len(linked_custom_labels) > 0
+                # TODO: replicate verdict: question_has_verdict = len([if field_label in questions_meta else None for field_label in linked_custom_labels])
+
+                for bubble_detection in field_bubble_means:
+                    bubble = bubble_detection.item_reference
+                    shifted_position = tuple(
+                        bubble.get_shifted_position(field_block.shifts)
+                    )
+                    field_value = str(bubble.field_value)
+
+                    # TODO: support for custom_labels verdicts too!
+                    if question_has_verdict:
+                        # TODO: make cases for colors for image_type == "COLORED" and box shapes for image_type == "GRAYSCALE"
+                        # [marked, unmarked]  x [correct, incorrect, optional(if multiple answers)]
+                        # update colors here
+                        pass
+
+                    # TODO: take config for CROSS_TICKS vs BUBBLE_BOUNDARY and call appropriate util
+                    if bubble_detection.is_marked:
+                        # Draw the shifted box
+                        ImageUtils.draw_box(
+                            marked_image,
+                            shifted_position,
+                            bubble_dimensions,
+                            style="BOX_FILLED",
+                            thickness_factor=1 / 12,
+                        )
+                        ImageUtils.draw_text(
+                            marked_image,
+                            field_value,
+                            shifted_position,
+                            text_size=TEXT_SIZE,
+                            color=(20, 20, 10),
+                            thickness=int(1 + 3.5 * TEXT_SIZE),
+                        )
+
+                    else:
+                        ImageUtils.draw_box(
+                            marked_image,
+                            shifted_position,
+                            bubble_dimensions,
+                            style="BOX_HOLLOW",
+                            thickness_factor=1 / 10,
+                        )
+        return marked_image
+
+    def draw_evaluation_summary(self, marked_image, evaluation_meta):
+        _h, w = marked_image.shape[:2]
+        # Put aggregate answers summary
+        ImageUtils.draw_text(
+            marked_image,
+            str(evaluation_meta["answers_summary_string"]),
+            (
+                # TODO: pickup from evaluation.json
+                w - 200,
+                100,
+            ),
+        )
+        # Put final score
+        ImageUtils.draw_text(
+            marked_image,
+            str(evaluation_meta["final_score"]),
+            (
+                # TODO: pickup from evaluation.json
+                100,
+                100,
+            ),
+        )
+        return marked_image
 
     def get_global_threshold(
         self,
@@ -921,7 +1033,7 @@ class ImageInstanceOps:
         if self.save_image_level >= int(key):
             self.save_img_list[key].append(img.copy())
 
-    def save_image_stacks(self, key, filename, save_dir):
+    def save_image_stacks(self, key, filename, save_marked_dir):
         config = self.tuning_config
         if self.save_image_level >= int(key) and self.save_img_list[key] != []:
             display_height, display_width = config.dimensions.display_image_shape
@@ -941,7 +1053,9 @@ class ImageInstanceOps:
                     int(display_width * 2.5),
                 ),
             )
-            ImageUtils.save_img(f"{save_dir}stack/{name}_{str(key)}_stack.jpg", result)
+            ImageUtils.save_img(
+                f"{save_marked_dir}stack/{name}_{str(key)}_stack.jpg", result
+            )
 
     def reset_all_save_img(self):
         for i in range(self.save_image_level):
