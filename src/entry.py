@@ -18,6 +18,7 @@ from rich.table import Table
 
 from src.algorithm.evaluation import EvaluationConfig, evaluate_concatenated_response
 from src.algorithm.template import Template
+from src.schemas.constants import DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING
 from src.schemas.defaults import CONFIG_DEFAULTS
 from src.utils import constants
 from src.utils.file import Paths, setup_dirs_for_paths, setup_outputs_for_template
@@ -344,8 +345,11 @@ def process_files(
             score, evaluation_meta = evaluate_concatenated_response(
                 omr_response, evaluation_config
             )
+            default_answers_summary = evaluation_config.get_formatted_answers_summary(
+                DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING
+            )
             logger.info(
-                f"(/{files_counter}) Graded with score: {round(score, 2)}\t {evaluation_meta['answers_summary_string']} \t file: '{file_id}'"
+                f"(/{files_counter}) Graded with score: {round(score, 2)}\t {default_answers_summary} \t file: '{file_id}'"
             )
         else:
             logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
@@ -363,6 +367,7 @@ def process_files(
             field_number_to_field_bubble_means,
             save_marked_dir=save_marked_dir,
             evaluation_meta=evaluation_meta,
+            evaluation_config=evaluation_config,
         )
 
         # Save output metrics

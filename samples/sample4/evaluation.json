@@ -21,7 +21,11 @@
       "D",
       "C"
     ],
-    "should_explain_scoring": true
+    "should_explain_scoring": true,
+    "draw_score": true,
+    "draw_answers_summary": true,
+    "score_format_string": "Total Score: {score}",
+    "answers_summary_format_string": "Correct: {correct} | Incorrect: {incorrect} | Unmarked: {unmarked}"
   },
   "marking_schemes": {
     "DEFAULT": {

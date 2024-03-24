@@ -315,6 +315,15 @@ class ImageUtils:
         color=CLR_BLACK,
         thickness=2,
     ):
+        if callable(position):
+            size_x, size_y = cv2.getTextSize(
+                text_value,
+                font,
+                text_size,
+                thickness,
+            )[0]
+            position = position(size_x, size_y)
+
         cv2.putText(
             image,
             text_value,

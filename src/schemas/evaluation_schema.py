@@ -22,13 +22,23 @@ marking_object_properties = {
     "properties": {verdict: marking_score for verdict in SCHEMA_VERDICTS_IN_ORDER},
 }
 
+common_options_schema = {
+    "draw_score": {"type": "boolean"},
+    "draw_answers_summary": {"type": "boolean"},
+    "answers_summary_format_string": {
+        "type": "string",
+    },
+    "score_format_string": {
+        "type": "string",
+    },
+}
 EVALUATION_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/Udayraj123/OMRChecker/tree/master/src/schemas/evaluation-schema.json",
     "title": "Evaluation Schema",
     "description": "OMRChecker evaluation schema i.e. the marking scheme",
     "type": "object",
-    "additionalProperties": True,
+    "additionalProperties": False,
     "required": ["source_type", "options", "marking_schemes"],
     "properties": {
         "additionalProperties": False,
@@ -75,6 +85,7 @@ EVALUATION_SCHEMA = {
                         },
                         "type": "object",
                         "properties": {
+                            **common_options_schema,
                             "should_explain_scoring": {"type": "boolean"},
                             "answer_key_csv_path": {"type": "string"},
                             "answer_key_image_path": {"type": "string"},
@@ -93,6 +104,7 @@ EVALUATION_SCHEMA = {
                         "required": ["answers_in_order", "questions_in_order"],
                         "type": "object",
                         "properties": {
+                            **common_options_schema,
                             "should_explain_scoring": {"type": "boolean"},
                             "answers_in_order": {
                                 "oneOf": [

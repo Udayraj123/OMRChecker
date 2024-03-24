@@ -35,6 +35,14 @@ SCHEMA_VERDICTS_IN_ORDER = [
     SchemaVerdict.UNMARKED,
 ]
 
+DEFAULT_SCORE_FORMAT_STRING = "Score: {score}"
+DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING = " ".join(
+    [
+        f"{schema_verdict.title()}: {{{schema_verdict}}}"
+        for schema_verdict in SCHEMA_VERDICTS_IN_ORDER
+    ]
+)
+
 VERDICT_TO_SCHEMA_VERDICT = {
     Verdict.ANSWER_MATCH: SchemaVerdict.CORRECT,
     Verdict.NO_ANSWER_MATCH: SchemaVerdict.INCORRECT,

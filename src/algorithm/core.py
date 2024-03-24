@@ -544,6 +544,7 @@ class ImageInstanceOps:
         field_number_to_field_bubble_means=None,
         save_marked_dir=None,
         evaluation_meta=None,
+        evaluation_config=None,
         shifted=False,
         border=-1,
     ):
@@ -592,7 +593,9 @@ class ImageInstanceOps:
         # TODO: add colored counterparts
 
         if should_draw_question_verdicts:
-            marked_image = self.draw_evaluation_summary(marked_image, evaluation_meta)
+            marked_image = self.draw_evaluation_summary(
+                marked_image, evaluation_meta, evaluation_config
+            )
 
         # Prepare save images
         if should_save_detections:
@@ -667,12 +670,9 @@ class ImageInstanceOps:
                     )
 
             if shifted:
-                text_x, text_y = cv2.getTextSize(
-                    field_block_name, cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE, 4
-                )[0]
-                text_position = (
-                    int(block_position[0] + dimensions[0] - text_x),
-                    int(block_position[1] - text_y),
+                text_position = lambda size_x, size_y: (
+                    int(block_position[0] + dimensions[0] - size_x),
+                    int(block_position[1] - size_y),
                 )
                 ImageUtils.draw_text(
                     image, field_block_name, text_position, thickness=4
@@ -750,29 +750,44 @@ class ImageInstanceOps:
                         )
         return marked_image
 
-    def draw_evaluation_summary(self, marked_image, evaluation_meta):
-        _h, w = marked_image.shape[:2]
-        # Put aggregate answers summary
-        ImageUtils.draw_text(
-            marked_image,
-            str(evaluation_meta["answers_summary_string"]),
-            (
-                # TODO: pickup from evaluation.json
-                w - 200,
-                100,
-            ),
-        )
-        # Put final score
-        ImageUtils.draw_text(
-            marked_image,
-            str(evaluation_meta["final_score"]),
-            (
-                # TODO: pickup from evaluation.json
-                100,
-                100,
-            ),
-        )
+    def draw_evaluation_summary(self, marked_image, evaluation_meta, evaluation_config):
+        if evaluation_config.draw_answers_summary:
+            self.draw_answers_summary(
+                marked_image, evaluation_config, evaluation_meta["score"]
+            )
+        if evaluation_config.draw_score:
+            self.draw_score(marked_image, evaluation_config, evaluation_meta["score"])
         return marked_image
+
+    def draw_answers_summary(self, marked_image, evaluation_config, score):
+        h, w = marked_image.shape[:2]
+
+        # TODO: pickup position from evaluation_config
+        formatted_answers_summary = evaluation_config.get_formatted_answers_summary()
+
+        # Draw the aggregate answers summary
+        summary_position = lambda size_x, size_y: (
+            w - size_x - w // 20,
+            h // 30,
+        )
+        ImageUtils.draw_text(marked_image, formatted_answers_summary, summary_position)
+
+    def draw_score(self, marked_image, evaluation_config, score):
+        h, w = marked_image.shape[:2]
+
+        score_position = (
+            # TODO: pickup from evaluation_config using format string/eval
+            w // 10,
+            h // 30,
+        )
+        formatted_score = evaluation_config.get_formatted_score(score)
+
+        # Draw the final score
+        ImageUtils.draw_text(
+            marked_image,
+            formatted_score,
+            score_position,
+        )
 
     def get_global_threshold(
         self,

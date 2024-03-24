@@ -25,6 +25,7 @@ from src.schemas.constants import (
     SchemaVerdict,
     Verdict,
 )
+from src.schemas.defaults.evaluation import EVALUATION_CONFIG_DEFAULTS
 from src.utils.image import ImageUtils
 from src.utils.logger import console, logger
 from src.utils.parsing import (
@@ -224,10 +225,39 @@ class EvaluationConfig:
     def __init__(self, curr_dir, evaluation_path, template, tuning_config):
         self.path = evaluation_path
         evaluation_json = open_evaluation_with_validation(evaluation_path)
-        options, marking_schemes, source_type = map(
-            evaluation_json.get, ["options", "marking_schemes", "source_type"]
+
+        # Defaults in evaluation config
+        (
+            options,
+            marking_schemes,
+            source_type,
+        ) = map(
+            lambda key: evaluation_json.get(key, EVALUATION_CONFIG_DEFAULTS[key]),
+            [
+                "options",
+                "marking_schemes",
+                "source_type",
+            ],
         )
-        self.should_explain_scoring = options.get("should_explain_scoring", False)
+
+        # Default options
+        (
+            self.answers_summary_format_string,
+            self.draw_answers_summary,
+            self.draw_score,
+            self.score_format_string,
+            self.should_explain_scoring,
+        ) = map(
+            lambda key: options.get(key, EVALUATION_CONFIG_DEFAULTS["options"][key]),
+            [
+                "answers_summary_format_string",
+                "draw_answers_summary",
+                "draw_score",
+                "score_format_string",
+                "should_explain_scoring",
+            ],
+        )
+
         self.has_custom_marking = False
         self.exclude_files = []
 
@@ -335,6 +365,8 @@ class EvaluationConfig:
             answers_in_order
         )
         self.validate_answers(answers_in_order, tuning_config)
+        self.reset_evaluation()
+        self.validate_format_strings()
 
     @staticmethod
     def parse_answer_column(answer_column):
@@ -450,6 +482,23 @@ class EvaluationConfig:
                         f"Provided answer key contains multiple correct answer(s), but config.filter_out_multimarked_files is True. Scoring will get skipped."
                     )
 
+    def validate_format_strings(self):
+        answers_summary_format_string = self.answers_summary_format_string
+        try:
+            answers_summary_format_string.format(**self.schema_verdict_counts)
+        except:  # NOQA
+            raise Exception(
+                f"The format string should contain only allowed variables {SCHEMA_VERDICTS_IN_ORDER}. answers_summary_format_string={answers_summary_format_string}"
+            )
+
+        score_format_string = self.score_format_string
+        try:
+            score_format_string.format(score=0)
+        except:  # NOQA
+            raise Exception(
+                f"The format string should contain only allowed variables ['score']. score_format_string={score_format_string}"
+            )
+
     def __str__(self):
         return str(self.path)
 
@@ -458,7 +507,7 @@ class EvaluationConfig:
 
     # Externally called methods have higher abstraction level.
     def prepare_and_validate_omr_response(self, omr_response):
-        self.reset_explanation_table()
+        self.reset_evaluation()
 
         omr_response_questions = set(omr_response.keys())
         all_questions = set(self.questions_in_order)
@@ -552,16 +601,15 @@ class EvaluationConfig:
     def get_should_explain_scoring(self):
         return self.should_explain_scoring
 
-    def get_answers_summary_string(self):
-        answers_summary_string = " ".join(
-            [
-                f"{schema_verdict.title()}: {self.schema_verdict_counts[schema_verdict]}"
-                for schema_verdict in SCHEMA_VERDICTS_IN_ORDER
-            ]
-        )
-        return answers_summary_string
+    def get_formatted_answers_summary(self, answers_summary_format_string=None):
+        if answers_summary_format_string is None:
+            answers_summary_format_string = self.answers_summary_format_string
+        return answers_summary_format_string.format(**self.schema_verdict_counts)
 
-    def reset_explanation_table(self):
+    def get_formatted_score(self, score):
+        return self.score_format_string.format(score=score)
+
+    def reset_evaluation(self):
         self.explanation_table = None
         self.schema_verdict_counts = {
             schema_verdict: 0 for schema_verdict in SCHEMA_VERDICTS_IN_ORDER
@@ -609,8 +657,9 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
 
     evaluation_config.conditionally_print_explanation()
     evaluation_meta = {
-        "final_score": current_score,
+        "score": current_score,
         "questions_meta": questions_meta,
-        "answers_summary_string": evaluation_config.get_answers_summary_string(),
+        # "schema_verdict_counts": evaluation_config.schema_verdict_counts,
+        "formatted_answers_summary": evaluation_config.get_formatted_answers_summary(),
     }
     return current_score, evaluation_meta
