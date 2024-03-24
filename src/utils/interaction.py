@@ -59,8 +59,8 @@ class InteractionUtils:
         w += margin
 
         # TODO: get ppi for correct positioning?
-        ppi_ratio = 4
-        h, w = h // ppi_ratio, w // ppi_ratio
+        adjustment_ratio = 3
+        h, w = h // adjustment_ratio, w // adjustment_ratio
         if image_metrics.window_x + w > image_metrics.window_width:
             image_metrics.window_x = 0
             if image_metrics.window_y + h > image_metrics.window_height:

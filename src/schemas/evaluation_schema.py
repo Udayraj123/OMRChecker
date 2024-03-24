@@ -18,7 +18,6 @@ marking_object_properties = {
     "additionalProperties": False,
     "required": SCHEMA_VERDICTS_IN_ORDER,
     "type": "object",
-    # TODO: can support streak marking if we allow array of marking_scores here
     "properties": {verdict: marking_score for verdict in SCHEMA_VERDICTS_IN_ORDER},
 }
 
