@@ -128,7 +128,7 @@ class CropOnPatchesCommon(ImageTemplatePreprocessor):
         area = image[area_start[1] : area_end[1], area_start[0] : area_end[0]]
 
         config = self.tuning_config
-        if config.outputs.show_image_level >= 4:
+        if config.outputs.show_image_level >= 1:
             h, w = area.shape[:2]
             cv2.rectangle(
                 self.debug_image,
@@ -181,6 +181,7 @@ class CropOnPatchesCommon(ImageTemplatePreprocessor):
         options = self.options
         config = self.tuning_config
 
+        # TODO: support for defaulting to using quadrants?
         patch_areas = self.patch_areas_for_type[options["type"]]
         corners = []
         for patch_type in patch_areas["DOTS"]:
@@ -188,6 +189,17 @@ class CropOnPatchesCommon(ImageTemplatePreprocessor):
 
         for patch_type in patch_areas["LINES"]:
             corners += self.select_points_from_line(patch_type, image)
+
+            if config.outputs.show_image_level >= 5:
+                if len(self.debug_vstack) > 0:
+                    InteractionUtils.show(
+                        f"Line Patches: {patch_type}",
+                        ImageUtils.get_vstack_image_grid(self.debug_vstack),
+                        0,
+                        0,
+                        config=config,
+                    )
+                self.debug_vstack = []
 
         if config.outputs.show_image_level >= 4:
             logger.info(f"corners={corners}")
@@ -205,18 +217,10 @@ class CropOnPatchesCommon(ImageTemplatePreprocessor):
                     2,
                 )
 
-            if config.outputs.show_image_level >= 5:
-                if len(self.debug_vstack) > 0:
-                    InteractionUtils.show(
-                        "Patch areas processing",
-                        ImageUtils.get_vstack_image_grid(self.debug_vstack),
-                        0,
-                        0,
-                        config=config,
-                    )
         return corners
 
 
+# TODO: add support for showing patch areas during setLayout option?!
 class CropOnCustomMarkers(CropOnPatchesCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -225,19 +229,19 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         }
 
         options = self.options
-        marker_ops = self.options.get("tuningOptions", {})
+        tuning_options = self.tuning_options
         self.threshold_circles = []
         self.marker_path = os.path.join(
             self.relative_dir, options.get("relativePath", "omr_marker.jpg")
         )
 
-        self.min_matching_threshold = marker_ops.get("min_matching_threshold", 0.3)
-        self.max_matching_variation = marker_ops.get("max_matching_variation", 0.41)
+        self.min_matching_threshold = tuning_options.get("min_matching_threshold", 0.3)
+        self.max_matching_variation = tuning_options.get("max_matching_variation", 0.41)
         self.marker_rescale_range = tuple(
-            marker_ops.get("marker_rescale_range", (85, 115))
+            tuning_options.get("marker_rescale_range", (85, 115))
         )
-        self.marker_rescale_steps = int(marker_ops.get("marker_rescale_steps", 5))
-        self.apply_erode_subtract = marker_ops.get("apply_erode_subtract", True)
+        self.marker_rescale_steps = int(tuning_options.get("marker_rescale_steps", 5))
+        self.apply_erode_subtract = tuning_options.get("apply_erode_subtract", True)
         self.init_resized_markers()
 
     def exclude_files(self):
@@ -450,8 +454,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
 class CropOnDotLines(CropOnPatchesCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        options = self.options
-        tuning_options = options.get("tuningOptions", {})
+        tuning_options = self.tuning_options
         self.patch_areas_for_type = self.get_patch_areas_for_type()
         self.line_kernel_morph = cv2.getStructuringElement(
             cv2.MORPH_RECT, tuple(tuning_options.get("lineKernel", [2, 10]))
@@ -465,7 +468,9 @@ class CropOnDotLines(CropOnPatchesCommon):
         points_selector = options[patch_type].get(
             "pointsSelector", self.default_points_selector[patch_type]
         )
-        tl, tr, br, bl = self.find_line_corners_from_options(image, options[patch_type])
+        tl, tr, br, bl = self.find_line_corners_from_options(
+            image, options[patch_type], patch_type
+        )
         if patch_type == "leftLine":
             if points_selector == "LINE_INNER_EDGE":
                 return [tr, br]
@@ -499,7 +504,7 @@ class CropOnDotLines(CropOnPatchesCommon):
             },
         }
 
-    def find_line_corners_from_options(self, image, line_options):
+    def find_line_corners_from_options(self, image, line_options, patch_type):
         config = self.tuning_config
         area, area_start = self.compute_scan_area(image, line_options)
 
@@ -508,13 +513,32 @@ class CropOnDotLines(CropOnPatchesCommon):
         _, morph = cv2.threshold(morph, 200, 255, cv2.THRESH_TRUNC)
         morph = ImageUtils.normalize_util(morph)
 
+        # add white padding
+        kernel_height, kernel_width = self.line_kernel_morph.shape[:2]
+        white, box = ImageUtils.pad_image_from_center(
+            morph, kernel_width, kernel_height, 255
+        )
+
+        # Threshold-Normalize after white padding
+        _, morph = cv2.threshold(white, 180, 255, cv2.THRESH_TRUNC)
+        morph = ImageUtils.normalize_util(morph)
+
+        if config.outputs.show_image_level >= 5:
+            self.debug_hstack += [morph]
+
         # Open : erode then dilate
         morph_v = cv2.morphologyEx(
             morph, cv2.MORPH_OPEN, self.line_kernel_morph, iterations=3
         )
+
+        # remove white padding
+        morph_v = morph_v[box[0] : box[1], box[2] : box[3]]
+
         if config.outputs.show_image_level >= 5:
             self.debug_hstack += [morph, morph_v]
-            # InteractionUtils.show("morph_opened", morph_v, 0, 1, config=config)
+            InteractionUtils.show(
+                f"morph_opened_{patch_type}", morph_v, 0, 1, config=config
+            )
 
         # Note: points are returned in the order of order_points: (tl, tr, br, bl)
         corners = self.find_largest_patch_area_corners(
@@ -548,6 +572,8 @@ class CropOnDotLines(CropOnPatchesCommon):
             area_start, thresholded, patch_type="dot"
         )
         if corners is None:
+            hstack = ImageUtils.get_padded_hstack([self.debug_image, area, thresholded])
+            InteractionUtils.show(f"No patch/dot found:", hstack, pause=1)
             raise Exception(
                 f"No patch/dot found at origin: {dot_options['origin']} with dimensions: { dot_options['dimensions']}"
             )
