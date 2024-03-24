@@ -42,6 +42,16 @@ def extract_sample_outputs(output_dir):
     return sample_outputs
 
 
+def test_run_answer_key_using_csv(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "answer-key/using-csv")
+    assert snapshot == sample_outputs
+
+
+def test_run_answer_key_weighted_answers(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "answer-key/weighted-answers")
+    assert snapshot == sample_outputs
+
+
 def test_run_sample1(mocker, snapshot):
     sample_outputs = run_sample(mocker, "sample1")
     assert snapshot == sample_outputs

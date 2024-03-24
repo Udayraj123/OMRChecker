@@ -6,12 +6,14 @@
  Github: https://github.com/Udayraj123
 
 """
-from src.constants import FIELD_TYPES
-from src.core import ImageInstanceOps
-from src.logger import logger
+
+from src.algorithm.core import ImageInstanceOps
 from src.processors.manager import PROCESSOR_MANAGER
+from src.utils.constants import FIELD_TYPES
+from src.utils.logger import logger
 from src.utils.parsing import (
     custom_sort_output_columns,
+    default_dump,
     open_template_with_defaults,
     parse_fields,
 )
@@ -208,12 +210,45 @@ class Template:
     def __str__(self):
         return str(self.path)
 
+    # Make the class serializable
+    def to_json(self):
+        return {
+            key: default_dump(getattr(self, key))
+            for key in [
+                "page_dimensions",
+                "field_blocks",
+                # Not needed as local props are overridden -
+                # "bubble_dimensions",
+                # 'options',
+                # "global_empty_val",
+            ]
+        }
+
 
 class FieldBlock:
     def __init__(self, block_name, field_block_object):
         self.name = block_name
         self.shift_x, self.shift_y = 0, 0
+        # TODO: Move plot_bin_name into child class
+        self.plot_bin_name = block_name
         self.setup_field_block(field_block_object)
+
+    # Make the class serializable
+    def to_json(self):
+        return {
+            key: default_dump(getattr(self, key))
+            for key in [
+                "bubble_dimensions",
+                "dimensions",
+                "empty_val",
+                "fields",
+                "name",
+                "origin",
+                # "plot_bin_name",
+                # "shift_x",
+                # "shift_y",
+            ]
+        }
 
     def setup_field_block(self, field_block_object):
         # case mapping
@@ -292,22 +327,60 @@ class FieldBlock:
         labels_gap,
     ):
         _h, _v = (1, 0) if (direction == "vertical") else (0, 1)
-        self.traverse_bubbles = []
+        self.fields = []
         # Generate the bubble grid
         lead_point = [float(self.origin[0]), float(self.origin[1])]
         for field_label in self.parsed_field_labels:
             bubble_point = lead_point.copy()
             field_bubbles = []
-            for bubble_value in bubble_values:
+            for bubble_index, bubble_value in enumerate(bubble_values):
                 field_bubbles.append(
-                    Bubble(bubble_point.copy(), field_label, field_type, bubble_value)
+                    FieldBubble(
+                        bubble_point.copy(),
+                        # TODO: move field_label into field_label_ref
+                        field_label,
+                        field_type,
+                        bubble_value,
+                        bubble_index,
+                    )
                 )
                 bubble_point[_h] += bubbles_gap
-            self.traverse_bubbles.append(field_bubbles)
+            self.fields.append(Field(field_label, field_type, field_bubbles, direction))
             lead_point[_v] += labels_gap
 
 
-class Bubble:
+class Field:
+    """
+    Container for a Field on the OMR i.e. a group of FieldBubbles with a collective field_label
+
+    """
+
+    def __init__(self, field_label, field_type, field_bubbles, direction):
+        self.field_label = field_label
+        self.field_type = field_type
+        self.field_bubbles = field_bubbles
+        self.direction = direction
+        # TODO: move local_threshold into child detection class
+        self.local_threshold = None
+
+    def __str__(self):
+        return self.field_label
+
+    # Make the class serializable
+    def to_json(self):
+        return {
+            key: default_dump(getattr(self, key))
+            for key in [
+                "field_label",
+                "field_type",
+                "direction",
+                "field_bubbles",
+                "local_threshold",
+            ]
+        }
+
+
+class FieldBubble:
     """
     Container for a Point Box on the OMR
 
@@ -316,12 +389,32 @@ class Bubble:
     It can also correspond to a single digit of integer type Q (eg q5d1)
     """
 
-    def __init__(self, pt, field_label, field_type, field_value):
+    def __init__(self, pt, field_label, field_type, field_value, bubble_index):
+        self.name = f"{field_label}_{field_value}"
+        self.plot_bin_name = field_label
         self.x = round(pt[0])
         self.y = round(pt[1])
         self.field_label = field_label
         self.field_type = field_type
         self.field_value = field_value
+        self.bubble_index = bubble_index
 
     def __str__(self):
-        return str([self.x, self.y])
+        return self.name  # f"{self.field_label}: [{self.x}, {self.y}]"
+
+    # Make the class serializable
+    def to_json(self):
+        return {
+            key: default_dump(getattr(self, key))
+            for key in [
+                "field_label",
+                "field_value",
+                # for item_reference_name
+                "name",
+                "x",
+                "y",
+                # "plot_bin_name",
+                # "field_type",
+                # "bubble_index",
+            ]
+        }

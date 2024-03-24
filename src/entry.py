@@ -6,6 +6,8 @@
  Github: https://github.com/Udayraj123
 
 """
+
+import json
 import os
 from csv import QUOTE_NONNUMERIC
 from pathlib import Path
@@ -15,14 +17,14 @@ import cv2
 import pandas as pd
 from rich.table import Table
 
-from src import constants
+from src.algorithm.evaluation import EvaluationConfig, evaluate_concatenated_response
+from src.algorithm.template import Template
 from src.defaults import CONFIG_DEFAULTS
-from src.evaluation import EvaluationConfig, evaluate_concatenated_response
-from src.logger import console, logger
-from src.template import Template
+from src.utils import constants
 from src.utils.file import Paths, setup_dirs_for_paths, setup_outputs_for_template
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils, Stats
+from src.utils.logger import console, logger
 from src.utils.parsing import get_concatenated_response, open_config_with_defaults
 
 # Load processors
@@ -34,6 +36,46 @@ def entry_point(input_dir, args):
         raise Exception(f"Given input directory does not exist: '{input_dir}'")
     curr_dir = input_dir
     return process_dir(input_dir, curr_dir, args)
+
+
+def export_omr_metrics(
+    outputs_namespace,
+    file_name,
+    image,
+    final_marked,
+    template,
+    field_number_to_field_bubble_means,
+    global_threshold_for_template,
+    global_field_confidence_metrics,
+    evaluation_meta,
+):
+    global_bubble_means_and_refs = []
+    for field_bubble_means in field_number_to_field_bubble_means:
+        global_bubble_means_and_refs.extend(field_bubble_means)
+    # sorted_global_bubble_means_and_refs = sorted(global_bubble_means_and_refs)
+
+    image_metrics_path = outputs_namespace.paths.image_metrics_dir.joinpath(
+        f"{os.path.splitext(file_name)[0]}.js"
+    )
+    with open(
+        image_metrics_path,
+        "w",
+    ) as f:
+        json_string = json.dumps(
+            {
+                "global_threshold_for_template": global_threshold_for_template,
+                "template": template,
+                "evaluation_meta": (
+                    evaluation_meta if evaluation_meta is not None else {}
+                ),
+                "global_bubble_means_and_refs": global_bubble_means_and_refs,
+                "global_field_confidence_metrics": global_field_confidence_metrics,
+            },
+            default=lambda x: x.to_json(),
+            indent=4,
+        )
+        f.write(f"export default {json_string}")
+        logger.info(f"Exported image metrics to: {image_metrics_path}")
 
 
 def print_config_summary(
@@ -51,14 +93,11 @@ def print_config_summary(
     table.add_column("Value", style="magenta")
     table.add_row("Directory Path", f"{curr_dir}")
     table.add_row("Count of Images", f"{len(omr_files)}")
+    table.add_row("Debug Mode ", "ON" if args["debug"] else "OFF")
     table.add_row("Set Layout Mode ", "ON" if args["setLayout"] else "OFF")
     table.add_row(
         "Markers Detection",
         "ON" if "CropOnMarkers" in template.pre_processors else "OFF",
-    )
-    table.add_row(
-        "Auto Alignment",
-        "ON" if "AutoAlignTemplate" in template.pre_processors else "OFF",
     )
     table.add_row("Detected Template Path", f"{template}")
     if local_config_path:
@@ -69,6 +108,17 @@ def print_config_summary(
     table.add_row(
         "Detected pre-processors",
         f"{[pp.__class__.__name__ for pp in template.pre_processors]}",
+    )
+
+    alignment_preprocessors = list(
+        filter(
+            lambda p: p in template.pre_processors,
+            ["AutoAlignTemplate", "FeatureBasedAlignment"],
+        )
+    )
+    table.add_row(
+        "Auto Alignment",
+        (alignment_preprocessors if len(alignment_preprocessors) else "OFF"),
     )
     console.print(table, justify="center")
 
@@ -262,6 +312,9 @@ def process_files(
             final_marked,
             multi_marked,
             _,
+            field_number_to_field_bubble_means,
+            global_threshold_for_template,
+            global_field_confidence_metrics,
         ) = template.image_instance_ops.read_omr_response(
             template, image=in_omr, name=file_id, save_dir=save_dir
         )
@@ -276,14 +329,29 @@ def process_files(
         ):
             logger.info(f"Read Response: \n{omr_response}")
 
-        score = 0
+        score, evaluation_meta = 0, None
         if evaluation_config is not None:
-            score = evaluate_concatenated_response(omr_response, evaluation_config)
+            score, evaluation_meta = evaluate_concatenated_response(
+                omr_response, evaluation_config
+            )
             logger.info(
                 f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: '{file_id}'"
             )
         else:
             logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
+
+        if tuning_config.outputs.save_image_metrics:
+            export_omr_metrics(
+                outputs_namespace,
+                file_name,
+                in_omr,
+                final_marked,
+                template,
+                field_number_to_field_bubble_means,
+                global_threshold_for_template,
+                global_field_confidence_metrics,
+                evaluation_meta,
+            )
 
         if tuning_config.outputs.show_image_level >= 2:
             InteractionUtils.show(

@@ -2,12 +2,13 @@ import re
 from copy import deepcopy
 from fractions import Fraction
 
+import numpy as np
 from deepmerge import Merger
 from dotmap import DotMap
 
-from src.constants import FIELD_LABEL_NUMBER_REGEX
 from src.defaults import CONFIG_DEFAULTS, TEMPLATE_DEFAULTS
 from src.schemas.constants import FIELD_STRING_REGEX_GROUPS
+from src.utils.constants import FIELD_LABEL_NUMBER_REGEX
 from src.utils.file import load_json
 from src.utils.validations import (
     validate_config_json,
@@ -111,3 +112,17 @@ def parse_float_or_fraction(result):
     else:
         result = float(result)
     return result
+
+
+def default_dump(obj):
+    return (
+        bool(obj)
+        if isinstance(obj, np.bool_)
+        else (
+            obj.to_json()
+            if hasattr(obj, "to_json")
+            else obj.__dict__
+            if hasattr(obj, "__dict__")
+            else obj
+        )
+    )

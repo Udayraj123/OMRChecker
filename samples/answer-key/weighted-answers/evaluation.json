@@ -2,23 +2,25 @@
   "source_type": "custom",
   "options": {
     "questions_in_order": [
-      "q1..11"
+      "q1..5"
     ],
     "answers_in_order": [
-      "B",
-      "D",
       "C",
-      "B",
-      "D",
-      "C",
+      "E",
       [
-        "B",
-        "C",
-        "BC"
+        "A",
+        "C"
       ],
-      "A",
-      "C",
-      "D",
+      [
+        [
+          "B",
+          2
+        ],
+        [
+          "C",
+          "3/2"
+        ]
+      ],
       "C"
     ],
     "should_explain_scoring": true

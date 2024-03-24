@@ -1,19 +1,11 @@
-"""
-
- OMRChecker
-
- Author: Udayraj Deshmukh
- Github: https://github.com/Udayraj123
-
-"""
 import re
 
 import jsonschema
 from jsonschema import validate
 from rich.table import Table
 
-from src.logger import console, logger
 from src.schemas import SCHEMA_JSONS, SCHEMA_VALIDATORS
+from src.utils.logger import console, logger
 
 
 def validate_evaluation_json(json_data, evaluation_path):

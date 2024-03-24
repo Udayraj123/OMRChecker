@@ -1,11 +1,3 @@
-"""
-
- OMRChecker
-
- Author: Udayraj Deshmukh
- Github: https://github.com/Udayraj123
-
-"""
 from dotmap import DotMap
 
 # Filenames
@@ -48,7 +40,3 @@ CLR_BLACK = (50, 150, 150)
 CLR_WHITE = (255, 255, 255)
 CLR_GRAY = (130, 130, 130)
 CLR_DARK_GRAY = (100, 100, 100)
-
-# TODO: move to config.json
-GLOBAL_PAGE_THRESHOLD_WHITE = 200
-GLOBAL_PAGE_THRESHOLD_BLACK = 100

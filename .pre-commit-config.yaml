@@ -41,7 +41,7 @@ repos:
     hooks:
       - id: pytest-on-commit
         name: Running single sample test
-        entry:  pytest -rfpsxEX --disable-warnings --verbose -k sample1
+        entry:  python3 -m pytest -rfpsxEX --disable-warnings --verbose -k sample1
         language: system
         pass_filenames: false
         always_run: true
@@ -51,7 +51,7 @@ repos:
     hooks:
       - id: pytest-on-push
         name: Running all tests before push...
-        entry: pytest -rfpsxEX --disable-warnings --verbose --durations=3
+        entry: python3 -m pytest -rfpsxEX --disable-warnings --verbose --durations=3
         language: system
         pass_filenames: false
         always_run: true

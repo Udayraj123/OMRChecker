@@ -3,12 +3,12 @@ import os
 import cv2
 import numpy as np
 
-from src.logger import logger
 from src.processors.interfaces.ImageTemplatePreprocessor import (
     ImageTemplatePreprocessor,
 )
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
+from src.utils.logger import logger
 
 
 # Internal Processor for separation of code
@@ -608,6 +608,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         elif patch_type == "line":
             # Rotated rectangle can correct slight rotations better
             rotated_rect = cv2.minAreaRect(bounding_cnt)
+            # TODO: less confidence if angle = rotated_rect[2] is too skew
             rotated_rect_points = cv2.boxPoints(rotated_rect)
             patch_corners = np.intp(rotated_rect_points)
             patch_corners = ImageUtils.order_points(patch_corners)
