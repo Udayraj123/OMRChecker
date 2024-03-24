@@ -25,12 +25,11 @@ from src.schemas.constants import (
     SchemaVerdict,
     Verdict,
 )
-from src.schemas.defaults.evaluation import EVALUATION_CONFIG_DEFAULTS
 from src.utils.image import ImageUtils
 from src.utils.logger import console, logger
 from src.utils.parsing import (
     get_concatenated_response,
-    open_evaluation_with_validation,
+    open_evaluation_with_defaults,
     parse_fields,
     parse_float_or_fraction,
 )
@@ -224,31 +223,35 @@ class EvaluationConfig:
 
     def __init__(self, curr_dir, evaluation_path, template, tuning_config):
         self.path = evaluation_path
-        evaluation_json = open_evaluation_with_validation(evaluation_path)
+        evaluation_json = open_evaluation_with_defaults(evaluation_path)
 
         # Defaults in evaluation config
         (
             options,
+            outputs_configuration,
             marking_schemes,
             source_type,
         ) = map(
-            lambda key: evaluation_json.get(key, EVALUATION_CONFIG_DEFAULTS[key]),
+            evaluation_json.get,
             [
                 "options",
+                "outputs_configuration",
                 "marking_schemes",
                 "source_type",
             ],
         )
 
+        # TODO: pickup new config from outputs_configuration
+
         # Default options
         (
             self.answers_summary_format_string,
-            self.draw_answers_summary,
-            self.draw_score,
-            self.score_format_string,
+            # self.draw_answers_summary,
+            # self.draw_score,
+            # self.score_format_string,
             self.should_explain_scoring,
         ) = map(
-            lambda key: options.get(key, EVALUATION_CONFIG_DEFAULTS["options"][key]),
+            options.get,
             [
                 "answers_summary_format_string",
                 "draw_answers_summary",

@@ -8,6 +8,7 @@ from dotmap import DotMap
 
 from src.schemas.constants import FIELD_STRING_REGEX_GROUPS
 from src.schemas.defaults import CONFIG_DEFAULTS, TEMPLATE_DEFAULTS
+from src.schemas.defaults.evaluation import EVALUATION_CONFIG_DEFAULTS
 from src.utils.constants import FIELD_LABEL_NUMBER_REGEX
 from src.utils.file import load_json
 from src.utils.validations import (
@@ -63,8 +64,11 @@ def open_template_with_defaults(template_path):
     return user_template
 
 
-def open_evaluation_with_validation(evaluation_path):
+def open_evaluation_with_defaults(evaluation_path):
     user_evaluation_config = load_json(evaluation_path)
+    user_evaluation_config = OVERRIDE_MERGER.merge(
+        deepcopy(EVALUATION_CONFIG_DEFAULTS), user_evaluation_config
+    )
     validate_evaluation_json(user_evaluation_config, evaluation_path)
     return user_evaluation_config
 

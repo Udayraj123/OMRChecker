@@ -579,6 +579,7 @@ class ImageInstanceOps:
                 image_type,
                 template,
                 evaluation_meta,
+                evaluation_config,
                 field_number_to_field_bubble_means,
             )
 
@@ -686,6 +687,7 @@ class ImageInstanceOps:
         image_type,
         template,
         evaluation_meta,
+        evaluation_config,
         field_number_to_field_bubble_means,
     ):
         should_draw_question_verdicts = evaluation_meta is not None
@@ -751,10 +753,12 @@ class ImageInstanceOps:
         return marked_image
 
     def draw_evaluation_summary(self, marked_image, evaluation_meta, evaluation_config):
+        # TODO: update this condition
         if evaluation_config.draw_answers_summary:
             self.draw_answers_summary(
                 marked_image, evaluation_config, evaluation_meta["score"]
             )
+        # TODO: update this condition
         if evaluation_config.draw_score:
             self.draw_score(marked_image, evaluation_config, evaluation_meta["score"])
         return marked_image
@@ -773,14 +777,8 @@ class ImageInstanceOps:
         ImageUtils.draw_text(marked_image, formatted_answers_summary, summary_position)
 
     def draw_score(self, marked_image, evaluation_config, score):
-        h, w = marked_image.shape[:2]
-
-        score_position = (
-            # TODO: pickup from evaluation_config using format string/eval
-            w // 10,
-            h // 30,
-        )
-        formatted_score = evaluation_config.get_formatted_score(score)
+        # TODO: pickup from evaluation_config using format string/eval
+        formatted_score, score_position = evaluation_config.get_formatted_score(score)
 
         # Draw the final score
         ImageUtils.draw_text(

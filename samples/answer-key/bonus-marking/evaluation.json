@@ -24,7 +24,7 @@
     "should_explain_scoring": true
   },
   "outputs_configuration": {
-    "scoring": {
+    "draw_score": {
       "enabled": true,
       "score_format_string": "Total Score: {score}",
       "position": [
@@ -32,7 +32,7 @@
         20
       ]
     },
-    "answer_summary": {
+    "draw_answer_summary": {
       "enabled": true,
       "answers_summary_format_string": "Correct: {correct} | Incorrect: {incorrect} | Unmarked: {unmarked}",
       "position": [

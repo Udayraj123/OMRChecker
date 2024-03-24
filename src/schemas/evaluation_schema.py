@@ -3,6 +3,7 @@ from src.schemas.constants import (
     DEFAULT_SECTION_KEY,
     FIELD_STRING_TYPE,
     SCHEMA_VERDICTS_IN_ORDER,
+    two_positive_integers,
 )
 
 marking_score_regex = "-?(\\d+)(/(\\d+))?"
@@ -21,16 +22,6 @@ marking_object_properties = {
     "properties": {verdict: marking_score for verdict in SCHEMA_VERDICTS_IN_ORDER},
 }
 
-common_options_schema = {
-    "draw_score": {"type": "boolean"},
-    "draw_answers_summary": {"type": "boolean"},
-    "answers_summary_format_string": {
-        "type": "string",
-    },
-    "score_format_string": {
-        "type": "string",
-    },
-}
 EVALUATION_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/Udayraj123/OMRChecker/tree/master/src/schemas/evaluation-schema.json",
@@ -67,6 +58,34 @@ EVALUATION_SCHEMA = {
                 },
             },
         },
+        "outputs_configuration": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": [],
+            "properties": {
+                "draw_score": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": [
+                        "enabled",
+                    ],
+                    "properties": {
+                        "enabled": {"type": "boolean"},
+                        "position": two_positive_integers,
+                        "score_format_string": {"type": "string"},
+                    },
+                    "allOf": [
+                        {
+                            "if": {"properties": {"enabled": {"const": True}}},
+                            "then": {
+                                "required": ["position", "score_format_string"],
+                            },
+                        }
+                    ],
+                }
+                # TODO: add "draw_answer_summary" and "verdict_colors" properties
+            },
+        },
     },
     "allOf": [
         {
@@ -84,7 +103,6 @@ EVALUATION_SCHEMA = {
                         },
                         "type": "object",
                         "properties": {
-                            **common_options_schema,
                             "should_explain_scoring": {"type": "boolean"},
                             "answer_key_csv_path": {"type": "string"},
                             "answer_key_image_path": {"type": "string"},
@@ -103,7 +121,6 @@ EVALUATION_SCHEMA = {
                         "required": ["answers_in_order", "questions_in_order"],
                         "type": "object",
                         "properties": {
-                            **common_options_schema,
                             "should_explain_scoring": {"type": "boolean"},
                             "answers_in_order": {
                                 "oneOf": [
