@@ -500,7 +500,6 @@ class CropOnDotLines(CropOnPatchesCommon):
 
     def find_line_corners_from_options(self, image, line_options, patch_type):
         config = self.tuning_config
-        tuning_options = self.tuning_options
         area, area_start = self.compute_scan_area(image, line_options)
 
         # Make boxes darker (less gamma)
@@ -508,40 +507,18 @@ class CropOnDotLines(CropOnPatchesCommon):
         _, morph = cv2.threshold(morph, 200, 255, cv2.THRESH_TRUNC)
         morph = ImageUtils.normalize_util(morph)
 
-        # morph = cv2.morphologyEx(
-        #     morph, cv2.MORPH_OPEN, cv2.getStructuringElement(
-        #     cv2.MORPH_RECT, [10, 2]
-        # ), iterations=2
-        # )
-        # InteractionUtils.show(f"morph_h_{patch_type}", morph, 0, 1, config=config)
-
-        # TODO: pad_image_from_center
-        kernel_width, kernel_height = tuning_options["lineKernel"]
-        input_width, input_height = morph.shape[:2]
-        rect = [
-            kernel_width,
-            kernel_width + input_width,
-            kernel_height,
-            kernel_height + input_height,
-        ]
-        white = 255 * np.ones(
-            (kernel_width * 2 + input_width, kernel_height * 2 + input_height), np.uint8
-        )
-        white[rect[0] : rect[1], rect[2] : rect[3]] = morph
-
-        morph = white
         # add white padding
-        # morph = cv2.copyMakeBorder(
-        #     morph,
-        #     kernel_height,
-        #     kernel_height,
-        #     kernel_width,
-        #     kernel_width,
-        #     cv2.BORDER_CONSTANT,
-        #     120
-        # )
+        kernel_height, kernel_width = self.line_kernel_morph.shape[:2]
+        white, box = ImageUtils.pad_image_from_center(
+            morph, kernel_width, kernel_height, 255
+        )
+
+        # Threshold-Normalize after white padding
+        _, morph = cv2.threshold(white, 180, 255, cv2.THRESH_TRUNC)
+        morph = ImageUtils.normalize_util(morph)
+
         if config.outputs.show_image_level >= 5:
-            InteractionUtils.show(f"morph_pad_{patch_type}", morph, 0, 1, config=config)
+            self.debug_hstack += [morph]
 
         # Open : erode then dilate
         morph_v = cv2.morphologyEx(
@@ -549,8 +526,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         )
 
         # remove white padding
-
-        morph_v = morph_v[rect[0] : rect[1], rect[2] : rect[3]]
+        morph_v = morph_v[box[0] : box[1], box[2] : box[3]]
 
         if config.outputs.show_image_level >= 5:
             self.debug_hstack += [morph, morph_v]
