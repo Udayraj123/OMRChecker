@@ -1,0 +1,76 @@
+{
+  "source_type": "custom",
+  "options": {
+    "questions_in_order": [
+      "q1..11"
+    ],
+    "answers_in_order": [
+      "B",
+      "D",
+      "C",
+      "B",
+      "D",
+      "C",
+      [
+        "B",
+        "C",
+        "BC"
+      ],
+      "A",
+      "C",
+      "D",
+      "C"
+    ],
+    "should_explain_scoring": true
+  },
+  "outputs_configuration": {
+    "scoring": {
+      "enabled": true,
+      "score_format_string": "Total Score: {score}",
+      "position": [
+        400,
+        20
+      ]
+    },
+    "answer_summary": {
+      "enabled": true,
+      "answers_summary_format_string": "Correct: {correct} | Incorrect: {incorrect} | Unmarked: {unmarked}",
+      "position": [
+        400,
+        20
+      ]
+    },
+    "verdict_colors": {
+      "correct": "green",
+      "incorrect": "red",
+      "unmarked": "blue"
+    }
+  },
+  "marking_schemes": {
+    "DEFAULT": {
+      "correct": "3",
+      "incorrect": "-1",
+      "unmarked": "0"
+    },
+    "BONUS_MARKS_ON_ATTEMPT": {
+      "marking": {
+        "correct": "3",
+        "incorrect": "3",
+        "unmarked": "0"
+      },
+      "questions": [
+        "q7"
+      ]
+    },
+    "BONUS_MARKS_FOR_ALL": {
+      "marking": {
+        "correct": "3",
+        "incorrect": "3",
+        "unmarked": "3"
+      },
+      "questions": [
+        "q8"
+      ]
+    }
+  }
+}

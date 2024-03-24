@@ -1,0 +1,63 @@
+{
+  "preProcessors": [
+    {
+      "name": "CropOnMarkers",
+      "options": {
+        "processingDimensions": [
+          800,
+          1132
+        ],
+        "tuningOptions": {
+          "lineKernel": [
+            2,
+            10
+          ],
+          "dotKernel": [
+            3,
+            3
+          ]
+        },
+        "type": "TWO_LINES",
+        "pointsSelector": "OUTER_CORNERS",
+        "leftLine": {
+          "origin": [
+            30,
+            21
+          ],
+          "dimensions": [
+            15,
+            1090
+          ],
+          "margins": {
+            "horizontal": 20,
+            "vertical": 15
+          }
+        },
+        "rightLine": {
+          "origin": [
+            750,
+            21
+          ],
+          "dimensions": [
+            15,
+            1090
+          ],
+          "margins": {
+            "horizontal": 20,
+            "vertical": 15
+          }
+        }
+      }
+    }
+  ],
+  "pageDimensions": [
+    1654,
+    2339
+  ],
+  "bubbleDimensions": [
+    35,
+    35
+  ],
+  "customLabels": {},
+  "fieldBlocks": {}
+}
