@@ -28,8 +28,8 @@
     ''',
     'images/Results/Results_05AM.csv': '''
       "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
-      "adrian_omr.png","samples/answer-key/weighted-answers/images/adrian_omr.png","outputs/answer-key/weighted-answers/images/CheckedOMRs/adrian_omr.png","5.5","B","E","A","C","B"
-      "adrian_omr_2.png","samples/answer-key/weighted-answers/images/adrian_omr_2.png","outputs/answer-key/weighted-answers/images/CheckedOMRs/adrian_omr_2.png","10.0","C","E","A","B","B"
+      "adrian_omr.png","samples/answer-key/weighted-answers/images/adrian_omr.png","outputs/answer-key/weighted-answers/images/CheckedOMRs/adrian_omr.png","4.5","B","E","A","C","B"
+      "adrian_omr_2.png","samples/answer-key/weighted-answers/images/adrian_omr_2.png","outputs/answer-key/weighted-answers/images/CheckedOMRs/adrian_omr_2.png","4.0","C","E","A","B","B"
   
     ''',
   })

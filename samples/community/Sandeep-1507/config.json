@@ -1,9 +1,13 @@
 {
   "dimensions": {
-    "display_height": 1000,
-    "display_width": 1300,
-    "processing_height": 820,
-    "processing_width": 666
+    "display_image_shape": [
+      1000,
+      1300
+    ],
+    "processing_image_shape": [
+      820,
+      666
+    ]
   },
   "outputs": {
     "save_detections": true,

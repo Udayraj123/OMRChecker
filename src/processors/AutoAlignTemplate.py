@@ -27,7 +27,7 @@ class AutoAlignTemplate(ImageTemplatePreprocessor):
     def exclude_files(self):
         return []
 
-    def apply_filter(self, image, template, _file_path):
+    def apply_filter(self, image, _colored_image, template, _file_path):
         config = self.tuning_config
         image_instance_ops = self.image_instance_ops
         morph = image.copy()
@@ -141,7 +141,8 @@ class AutoAlignTemplate(ImageTemplatePreprocessor):
                 steps += 1
 
             # Note: this mutating may not be compatible with parallelizing
-            field_block.shift_x = shift
+            # TODO: support for vertical shifts too
+            field_block.shifts = [shift, 0]
 
             # print("Aligned field_block: ",field_block.name,"Corrected Shift:",
             #   field_block.shift,", dimensions:", field_block.dimensions,
@@ -160,11 +161,13 @@ class AutoAlignTemplate(ImageTemplatePreprocessor):
 
         final_align = None
         if config.outputs.show_image_level >= 2:
-            initial_align = image_instance_ops.draw_template_layout(
+            initial_align = image_instance_ops.draw_field_blocks_layout(
                 image, template, shifted=False
             )
-            final_align = image_instance_ops.draw_template_layout(
-                image, template, shifted=True, draw_qvals=True
+            final_align = image_instance_ops.draw_field_blocks_layout(
+                image,
+                template,
+                shifted=True,
             )
             # appendSaveImg(4,mean_vals)
             image_instance_ops.append_save_img(2, initial_align)
@@ -174,12 +177,11 @@ class AutoAlignTemplate(ImageTemplatePreprocessor):
         image_instance_ops.append_save_img(5, image)
 
         if config.outputs.show_image_level >= 3 and final_align is not None:
-            final_align = ImageUtils.resize_util_h(
-                final_align, int(config.dimensions.display_height)
-            )
+            display_height, _display_width = config.dimensions.display_image_shape
+            final_align = ImageUtils.resize_util_h(final_align, int(display_height))
             # [final_align.shape[1],0])
             InteractionUtils.show(
                 "Template Alignment Adjustment", final_align, 0, 0, config=config
             )
 
-        return image, template
+        return image, _colored_image, template

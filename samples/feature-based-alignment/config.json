@@ -1,12 +1,12 @@
 {
   "dimensions": {
     "display_image_shape": [
-      2400,
-      1800
+      3508,
+      2480
     ],
     "processing_image_shape": [
-      2400,
-      1800
+      2339,
+      1653
     ]
   },
   "outputs": {

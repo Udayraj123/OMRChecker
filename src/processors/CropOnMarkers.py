@@ -143,18 +143,9 @@ class CropOnPatchesCommon(ImageTemplatePreprocessor):
     def prepare_image(self, image):
         return image
 
-    def apply_filter(self, image, _template, file_path):
+    def apply_filter(self, image, colored_image, _template, file_path):
         config = self.tuning_config
-        options = self.options
 
-        processingDimensions = options.get(
-            "processingDimensions",
-            [config.dimensions.processing_width, config.dimensions.processing_height],
-        )
-        # Resize the image with options
-        image = ImageUtils.resize_util(
-            image, processingDimensions[0], processingDimensions[1]
-        )
         self.debug_image = image.copy()
         self.debug_hstack = []
         self.debug_vstack = []
@@ -166,6 +157,9 @@ class CropOnPatchesCommon(ImageTemplatePreprocessor):
         # Crop the image
         warped_image = ImageUtils.four_point_transform(image, four_corners)
 
+        if config.outputs.show_colored_outputs:
+            colored_image = ImageUtils.four_point_transform(colored_image, four_corners)
+
         # TODO: Save intuitive meta data
         # appendSaveImg(1,warped_image)
 
@@ -175,7 +169,7 @@ class CropOnPatchesCommon(ImageTemplatePreprocessor):
                 f"warped_image: {file_path}", hstack, 1, 1, config=config
             )
 
-        return warped_image
+        return warped_image, colored_image, _template
 
     def find_four_corners(self, image, file_path):
         options = self.options

@@ -228,10 +228,15 @@ class Template:
 class FieldBlock:
     def __init__(self, block_name, field_block_object):
         self.name = block_name
-        self.shift_x, self.shift_y = 0, 0
         # TODO: Move plot_bin_name into child class
         self.plot_bin_name = block_name
         self.setup_field_block(field_block_object)
+        self.shifts = [0, 0]
+
+    # Need this at runtime as we have allowed mutation of template via pre-processors
+    def get_shifted_origin(self):
+        origin, shifts = self.origin, self.shifts
+        return [origin[0] + shifts[0], origin[1] + shifts[1]]
 
     # Make the class serializable
     def to_json(self):
@@ -244,9 +249,8 @@ class FieldBlock:
                 "fields",
                 "name",
                 "origin",
+                # "shifted_origin",
                 # "plot_bin_name",
-                # "shift_x",
-                # "shift_y",
             ]
         }
 
@@ -401,6 +405,9 @@ class FieldBubble:
 
     def __str__(self):
         return self.name  # f"{self.field_label}: [{self.x}, {self.y}]"
+
+    def get_shifted_position(self, shifts):
+        return [self.x + shifts[0], self.y + shifts[1]]
 
     # Make the class serializable
     def to_json(self):

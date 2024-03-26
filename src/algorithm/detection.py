@@ -36,10 +36,11 @@ class MeanValueItem:
         return self.mean_value < other.mean_value
 
 
-# TODO: merge with FieldBubbleDetection
+# TODO: merge with FieldDetection
 class BubbleMeanValue(MeanValueItem):
-    def __init__(self, mean_value, item_reference):
-        super().__init__(mean_value, item_reference)
+    def __init__(self, mean_value, unit_bubble):
+        super().__init__(mean_value, unit_bubble)
+        # TODO: move this into FieldDetection/give reference to it
         self.is_marked = None
 
     def to_json(self):
@@ -48,10 +49,14 @@ class BubbleMeanValue(MeanValueItem):
             key: default_dump(getattr(self, key))
             for key in [
                 "is_marked",
+                "shifted_position",
                 "item_reference_name",
                 "mean_value",
             ]
         }
+
+    def __str__(self):
+        return f"{self.item_reference} : {round(self.mean_value, 2)} {'*' if self.is_marked else ''}"
 
 
 # TODO: see if this one can be merged in above
@@ -76,3 +81,6 @@ class FieldDetection:
         self.confidence = confidence
         # TODO: use local_threshold from here
         # self.local_threshold = None
+
+
+# TODO: move the detection utils in this file.

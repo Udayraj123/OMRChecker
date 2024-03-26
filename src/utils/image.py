@@ -2,7 +2,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from src.utils.constants import CLR_WHITE
+from src.utils.constants import CLR_BLACK, CLR_DARK_GRAY, CLR_GRAY, CLR_WHITE, TEXT_SIZE
 from src.utils.logger import logger
 
 plt.rcParams["figure.figsize"] = (10.0, 8.0)
@@ -13,15 +13,29 @@ class ImageUtils:
     """A Static-only Class to hold common image processing utilities & wrappers over OpenCV functions"""
 
     @staticmethod
+    def read_image_util(file_path, tuning_config):
+        if tuning_config.outputs.show_colored_outputs:
+            colored_image = cv2.imread(file_path, cv2.IMREAD_COLOR)
+            gray_image = cv2.cvtColor(colored_image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray_image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+            colored_image = None
+        return gray_image, colored_image
+
+    @staticmethod
     def save_img(path, final_marked):
         logger.info(f"Saving Image to '{path}'")
         cv2.imwrite(path, final_marked)
 
     @staticmethod
     def resize_util(img, u_width, u_height=None):
+        h, w = img.shape[:2]
         if u_height is None:
-            h, w = img.shape[:2]
             u_height = int(h * u_width / w)
+
+        if u_height == h and u_width == w:
+            # No need to resize
+            return img
         return cv2.resize(img, (int(u_width), int(u_height)))
 
     @staticmethod
@@ -238,7 +252,6 @@ class ImageUtils:
             value,
         )
 
-    @staticmethod
     def pad_image_from_center(image, padding_width, padding_height=0, value=255):
         input_width, input_height = image.shape[:2]
         bounding_box = [
@@ -256,3 +269,69 @@ class ImageUtils:
         ] = image
 
         return white, bounding_box
+
+    @staticmethod
+    def draw_box(
+        image,
+        position,
+        box_dimensions,
+        color=None,
+        style="BOX_HOLLOW",
+        thickness_factor=1 / 12,
+        border=3,
+    ):
+        x, y = position
+        box_w, box_h = box_dimensions
+
+        position = (
+            int(x + box_w * thickness_factor),
+            int(y + box_h * thickness_factor),
+        )
+        position_diagonal = (
+            int(x + box_w - box_w * thickness_factor),
+            int(y + box_h - box_h * thickness_factor),
+        )
+        if style == "BOX_HOLLOW":
+            if color is None:
+                color = CLR_GRAY
+        elif style == "BOX_FILLED":
+            if color is None:
+                color = CLR_DARK_GRAY
+            border = -1
+
+        cv2.rectangle(
+            image,
+            position,
+            position_diagonal,
+            color,
+            border,
+        )
+
+    @staticmethod
+    def draw_text(
+        image,
+        text_value,
+        position,
+        font=cv2.FONT_HERSHEY_SIMPLEX,
+        text_size=TEXT_SIZE,
+        color=CLR_BLACK,
+        thickness=2,
+    ):
+        if callable(position):
+            size_x, size_y = cv2.getTextSize(
+                text_value,
+                font,
+                text_size,
+                thickness,
+            )[0]
+            position = position(size_x, size_y)
+
+        cv2.putText(
+            image,
+            text_value,
+            position,
+            font,
+            text_size,
+            color,
+            thickness,
+        )

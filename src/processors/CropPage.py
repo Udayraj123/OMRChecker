@@ -1,6 +1,7 @@
 """
 https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/
 """
+
 import cv2
 import numpy as np
 
@@ -26,7 +27,8 @@ class CropPage(ImageTemplatePreprocessor):
             cv2.MORPH_RECT, tuple(cropping_ops.get("morphKernel", (10, 10)))
         )
 
-    def apply_filter(self, image, _template, file_path):
+    def apply_filter(self, image, colored_image, _template, file_path):
+        config = self.tuning_config
         image = normalize(cv2.GaussianBlur(image, (3, 3), 0))
         # Resize should be done with another preprocessor is needed
         sheet = self.find_page(image, file_path)
@@ -40,10 +42,13 @@ class CropPage(ImageTemplatePreprocessor):
         logger.info(f"Found page corners: \t {sheet.tolist()}")
 
         # Warp layer 1
-        image = ImageUtils.four_point_transform(image, sheet)
+        warped_image = ImageUtils.four_point_transform(image, sheet)
+
+        if config.outputs.show_colored_outputs:
+            colored_image = ImageUtils.four_point_transform(colored_image, sheet)
 
         # Return preprocessed image
-        return image
+        return warped_image, colored_image, _template
 
     def find_page(self, image, file_path):
         config = self.tuning_config
