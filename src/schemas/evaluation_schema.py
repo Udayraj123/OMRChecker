@@ -73,6 +73,7 @@ EVALUATION_SCHEMA = {
                         "enabled": {"type": "boolean"},
                         "position": two_positive_integers,
                         "score_format_string": {"type": "string"},
+                        "size": {"type":"number"}
                     },
                     "allOf": [
                         {
@@ -82,6 +83,37 @@ EVALUATION_SCHEMA = {
                             },
                         }
                     ],
+                },
+                "draw_answers_summary":{
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required" : [
+                        "enabled",
+                    ],
+                    "properties" :{
+                        "enabled" : {"type":"boolean"},
+                        "position": two_positive_integers,
+                        "answers_summary_format_string" : {"type":"string"},
+                        "size": {"type":"number"}
+                    },
+                    "allOf": [
+                        {
+                            "if": {"properties": {"enabled": {"const": True}}},
+                            "then": {
+                                "required": ["position", "answers_summary_format_string"],
+                            },
+                        }
+                    ],
+
+                },
+                "verdict_colors":{
+                    "type" : "object",
+                    "additionalProperties": False,
+                    "properties" : {
+                        "correct": {"type":"string"},
+                        "incorrect": {"type":"string"},
+                        "unmarked": {"type":"string"}
+                    }
                 }
                 # TODO: add "draw_answer_summary" and "verdict_colors" properties
             },

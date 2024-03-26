@@ -242,10 +242,22 @@ class EvaluationConfig:
         )
 
         # TODO: pickup new config from outputs_configuration
-
-        # Default options
         (
-            self.answers_summary_format_string,
+            self.draw_score,
+            self.draw_answers_summary,
+            self.verdict_colors
+        ) = map(
+            outputs_configuration.get,
+            [
+            "draw_score",
+            "draw_answers_summary",
+            "verdict_colors"
+            ],
+        )
+        
+        #Default options
+        (
+            # self.answers_summary_format_string,
             # self.draw_answers_summary,
             # self.draw_score,
             # self.score_format_string,
@@ -253,10 +265,10 @@ class EvaluationConfig:
         ) = map(
             options.get,
             [
-                "answers_summary_format_string",
-                "draw_answers_summary",
-                "draw_score",
-                "score_format_string",
+                # "answers_summary_format_string",
+                # "draw_answers_summary",
+                # "draw_score",
+                # "score_format_string",
                 "should_explain_scoring",
             ],
         )
@@ -486,7 +498,8 @@ class EvaluationConfig:
                     )
 
     def validate_format_strings(self):
-        answers_summary_format_string = self.answers_summary_format_string
+        logger.info(self.draw_answers_summary['answers_summary_format_string'])
+        answers_summary_format_string = self.draw_answers_summary['answers_summary_format_string']
         try:
             answers_summary_format_string.format(**self.schema_verdict_counts)
         except:  # NOQA
@@ -494,7 +507,7 @@ class EvaluationConfig:
                 f"The format string should contain only allowed variables {SCHEMA_VERDICTS_IN_ORDER}. answers_summary_format_string={answers_summary_format_string}"
             )
 
-        score_format_string = self.score_format_string
+        score_format_string = self.draw_score['score_format_string']
         try:
             score_format_string.format(score=0)
         except:  # NOQA
@@ -606,11 +619,11 @@ class EvaluationConfig:
 
     def get_formatted_answers_summary(self, answers_summary_format_string=None):
         if answers_summary_format_string is None:
-            answers_summary_format_string = self.answers_summary_format_string
+            answers_summary_format_string = self.draw_answers_summary['answers_summary_format_string']
         return answers_summary_format_string.format(**self.schema_verdict_counts)
 
     def get_formatted_score(self, score):
-        return self.score_format_string.format(score=score)
+        return self.draw_score['score_format_string'].format(score=score)
 
     def reset_evaluation(self):
         self.explanation_table = None
