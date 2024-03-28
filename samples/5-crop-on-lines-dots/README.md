@@ -20,6 +20,8 @@ Depending on the configuration of your OMR sheet, choose the one that is applica
 Open the samples in this folder to know how to configure each type in detail.
 
 
-### Improvements
+### Drawbacks and Improvements
+Currently OMRChecker requires the Dots and Lines to "stand out" from other marks in the sheet. If there's any noise nearby the marker including the print itself, the detection would fail.
+<!-- TODO: insert obstructed OMR -->
 
 Track improvements in this functionality [here](https://github.com/users/Udayraj123/projects/2?pane=issue&itemId=57863176).

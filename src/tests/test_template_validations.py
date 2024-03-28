@@ -101,7 +101,7 @@ def test_field_strings_overlap(mocker):
 
     exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert str(exception) == (
-        "The field strings for field block New_Block overlap with other existing fields"
+        "The field strings for field block New_Block overlap with other existing fields: {'q5'}"
     )
 
 

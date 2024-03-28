@@ -10,8 +10,7 @@
     ]
   },
   "outputs": {
-    "save_detections": true,
-    "save_image_level": 2,
-    "show_image_level": 4
+    "save_image_level": 0,
+    "show_image_level": 0
   }
 }

@@ -178,12 +178,13 @@ class Template:
         )
         field_labels_set = set(parsed_field_labels)
         if not self.all_parsed_labels.isdisjoint(field_labels_set):
+            overlap = field_labels_set.intersection(self.all_parsed_labels)
             # Note: in case of two fields pointing to same column, use a custom column instead of same field labels.
             logger.critical(
                 f"An overlap found between field string: {field_labels} in block '{block_name}' and existing labels: {self.all_parsed_labels}"
             )
             raise Exception(
-                f"The field strings for field block {block_name} overlap with other existing fields"
+                f"The field strings for field block {block_name} overlap with other existing fields: {overlap}"
             )
         self.all_parsed_labels.update(field_labels_set)
 
