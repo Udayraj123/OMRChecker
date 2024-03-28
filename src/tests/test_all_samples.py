@@ -42,43 +42,53 @@ def extract_sample_outputs(output_dir):
     return sample_outputs
 
 
+def test_run_omr_marker_mobile(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "1-omr-marker-mobile")
+    assert snapshot == sample_outputs
+
+
+def test_run_omr_marker_scanned(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "2-omr-marker-scanned")
+    assert snapshot == sample_outputs
+
+
+def test_run_bonus_marking(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "3-answer-key/bonus-marking")
+    assert snapshot == sample_outputs
+
+
 def test_run_answer_key_using_csv(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "answer-key/using-csv")
+    sample_outputs = run_sample(mocker, "3-answer-key/using-csv")
     assert snapshot == sample_outputs
 
 
 def test_run_answer_key_weighted_answers(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "answer-key/weighted-answers")
+    sample_outputs = run_sample(mocker, "3-answer-key/weighted-answers")
     assert snapshot == sample_outputs
 
 
-def test_run_sample1(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "sample1")
+def test_run_crop_four_dots(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "4-timelines-and-dots/four-dots")
     assert snapshot == sample_outputs
 
 
-def test_run_sample2(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "sample2")
+def test_run_crop_two_dots_one_line(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "4-timelines-and-dots/four-dots")
     assert snapshot == sample_outputs
 
 
-def test_run_sample3(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "sample3")
+def test_run_two_lines(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "4-timelines-and-dots/two-lines")
     assert snapshot == sample_outputs
 
 
-def test_run_sample4(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "sample4")
+def test_run_page_thickness(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "5-page-thickness")
     assert snapshot == sample_outputs
 
 
-def test_run_sample5(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "sample5")
-    assert snapshot == sample_outputs
-
-
-def test_run_sample6(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "sample6")
+def test_run_feature_based_alignment(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "6-feature-based-alignment")
     assert snapshot == sample_outputs
 
 

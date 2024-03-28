@@ -10,10 +10,11 @@
   "emptyValue": "no",
   "fieldBlocks": {
     "YesNoBlock1": {
-      "direction": "horizontal",
+      "fieldType": "CUSTOM",
       "bubbleValues": [
         "yes"
       ],
+      "direction": "horizontal",
       "origin": [
         15,
         55

@@ -154,6 +154,23 @@
     ''',
   })
 # ---
+# name: test_run_omr_marker_mobile
+  dict({
+    'MobileCamera/Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
+  
+    ''',
+    'MobileCamera/Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
+  
+    ''',
+    'MobileCamera/Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
+      "sheet1.jpg","samples/1-omr-marker-mobile/MobileCamera/sheet1.jpg","outputs/1-omr-marker-mobile/MobileCamera/CheckedOMRs/sheet1.jpg","0","E503110026","B","","D","B","6","11","20","7","16","B","D","C","D","A","D","B","A","C","C","D"
+  
+    ''',
+  })
+# ---
 # name: test_run_sample1
   dict({
     'MobileCamera/Manual/ErrorFiles.csv': '''

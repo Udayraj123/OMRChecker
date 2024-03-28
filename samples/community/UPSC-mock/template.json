@@ -27,6 +27,7 @@
       "fieldLabels": [
         "bookletNo"
       ],
+      "fieldType": "CUSTOM",
       "bubbleValues": [
         "A",
         "B",
