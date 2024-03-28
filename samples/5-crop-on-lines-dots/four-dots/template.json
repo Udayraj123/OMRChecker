@@ -1,63 +1,249 @@
 {
+  "pageDimensions": [
+    2012,
+    2420
+  ],
+  "bubbleDimensions": [
+    30,
+    25
+  ],
+  "customLabels": {
+    "Subject Code": [
+      "subjectCode1",
+      "subjectCode2"
+    ],
+    "Roll": [
+      "roll1..10"
+    ]
+  },
   "preProcessors": [
     {
       "name": "CropOnMarkers",
       "options": {
-        "processingImageShape": [
-          1132,
-          800
-        ],
-        "tuningOptions": {
-          "lineKernel": [
-            2,
-            10
-          ],
-          "dotKernel": [
-            3,
-            3
-          ]
-        },
-        "type": "TWO_LINES",
-        "pointsSelector": "OUTER_CORNERS",
-        "leftLine": {
+        "type": "FOUR_DOTS",
+        "topLeftDot": {
           "origin": [
-            30,
-            21
+            60,
+            180
           ],
           "dimensions": [
-            15,
-            1090
+            60,
+            60
           ],
           "margins": {
-            "horizontal": 20,
-            "vertical": 15
+            "horizontal": 10,
+            "vertical": 10
           }
         },
-        "rightLine": {
+        "topRightDot": {
           "origin": [
-            750,
-            21
+            810,
+            180
           ],
           "dimensions": [
-            15,
-            1090
+            60,
+            60
           ],
           "margins": {
-            "horizontal": 20,
-            "vertical": 15
+            "horizontal": 10,
+            "vertical": 10
+          }
+        },
+        "bottomRightDot": {
+          "origin": [
+            810,
+            1100
+          ],
+          "dimensions": [
+            60,
+            60
+          ],
+          "margins": {
+            "horizontal": 10,
+            "vertical": 10
+          }
+        },
+        "bottomLeftDot": {
+          "origin": [
+            50,
+            1100
+          ],
+          "dimensions": [
+            60,
+            60
+          ],
+          "margins": {
+            "horizontal": 10,
+            "vertical": 10
           }
         }
       }
     }
   ],
-  "pageDimensions": [
-    1654,
-    2339
-  ],
-  "bubbleDimensions": [
-    35,
-    35
-  ],
-  "customLabels": {},
-  "fieldBlocks": {}
+  "fieldBlocks": {
+    "bookletNo": {
+      "origin": [
+        625,
+        160
+      ],
+      "bubblesGap": 90,
+      "labelsGap": 0,
+      "fieldLabels": [
+        "bookletNo"
+      ],
+      "fieldType": "CUSTOM",
+      "bubbleValues": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "direction": "vertical"
+    },
+    "subjectCode": {
+      "origin": [
+        1022,
+        115
+      ],
+      "bubblesGap": 44.5,
+      "labelsGap": 51,
+      "fieldLabels": [
+        "subjectCode1",
+        "subjectCode2"
+      ],
+      "fieldType": "QTYPE_INT"
+    },
+    "roll": {
+      "origin": [
+        1385,
+        115
+      ],
+      "bubblesGap": 44.5,
+      "labelsGap": 53,
+      "fieldLabels": [
+        "roll1..10"
+      ],
+      "fieldType": "QTYPE_INT"
+    },
+    "q01block": {
+      "origin": [
+        490,
+        673
+      ],
+      "bubblesGap": 79.15,
+      "labelsGap": 43,
+      "fieldLabels": [
+        "q1..10"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q11block": {
+      "origin": [
+        490,
+        1110
+      ],
+      "bubblesGap": 79.15,
+      "labelsGap": 43,
+      "fieldLabels": [
+        "q11..20"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q21block": {
+      "origin": [
+        490,
+        1550
+      ],
+      "bubblesGap": 79.15,
+      "labelsGap": 43,
+      "fieldLabels": [
+        "q21..30"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q31block": {
+      "origin": [
+        490,
+        1990
+      ],
+      "bubblesGap": 79.15,
+      "labelsGap": 43,
+      "fieldLabels": [
+        "q31..40"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q41block": {
+      "origin": [
+        891,
+        673
+      ],
+      "bubblesGap": 79.15,
+      "labelsGap": 43,
+      "fieldLabels": [
+        "q41..50"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q51block": {
+      "origin": [
+        891,
+        1110
+      ],
+      "bubblesGap": 79.15,
+      "labelsGap": 43,
+      "fieldLabels": [
+        "q51..60"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q61block": {
+      "origin": [
+        891,
+        1550
+      ],
+      "bubblesGap": 79.15,
+      "labelsGap": 43,
+      "fieldLabels": [
+        "q61..70"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q71block": {
+      "origin": [
+        891,
+        1990
+      ],
+      "bubblesGap": 79.15,
+      "labelsGap": 43,
+      "fieldLabels": [
+        "q71..80"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q81block": {
+      "origin": [
+        1282,
+        673
+      ],
+      "bubblesGap": 79.15,
+      "labelsGap": 43,
+      "fieldLabels": [
+        "q81..90"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q91block": {
+      "origin": [
+        1282,
+        1110
+      ],
+      "bubblesGap": 79.15,
+      "labelsGap": 43,
+      "fieldLabels": [
+        "q91..100"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    }
+  }
 }
