@@ -3,9 +3,9 @@
     {
       "name": "CropOnMarkers",
       "options": {
-        "processingDimensions": [
-          800,
-          1132
+        "processingImageShape": [
+          1132,
+          800
         ],
         "tuningOptions": {
           "lineKernel": [

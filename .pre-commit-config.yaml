@@ -8,6 +8,7 @@ repos:
       - id: optimize-png
       - id: optimize-jpg
         args: ["--quality","90"]
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:

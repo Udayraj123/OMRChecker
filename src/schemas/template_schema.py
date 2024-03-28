@@ -39,14 +39,14 @@ patch_area_description = {
     },
 }
 
-# if_requirements help in suppressing redundant errors from 'allOf'
-pre_processor_if_requirements = {
+# if_required_attrs help in suppressing redundant errors from 'allOf'
+pre_processor_if_required_attrs = {
     "required": ["name", "options"],
 }
-crop_on_markers_if_requirements = {
+crop_on_markers_if_required_attrs = {
     "required": ["type"],
 }
-pre_processor_options_available_keys = {"inputShape": True}
+pre_processor_options_available_keys = {"processingImageShape": True}
 
 crop_on_markers_tuning_options_available_keys = {
     "dotKernel": True,
@@ -128,16 +128,16 @@ TEMPLATE_SCHEMA = {
                     "options": {
                         "type": "object",
                         "properties": {
-                            "inputShape": two_positive_integers,
+                            "processingImageShape": two_positive_integers,
                         },
                     },
                 },
-                **pre_processor_if_requirements,
+                **pre_processor_if_required_attrs,
                 "allOf": [
                     {
                         "if": {
                             "properties": {"name": {"const": "AutoAlignTemplate"}},
-                            **pre_processor_if_requirements,
+                            **pre_processor_if_required_attrs,
                         },
                         "then": {
                             "properties": {
@@ -178,7 +178,7 @@ TEMPLATE_SCHEMA = {
                     {
                         "if": {
                             "properties": {"name": {"const": "CropPage"}},
-                            **pre_processor_if_requirements,
+                            **pre_processor_if_required_attrs,
                         },
                         "then": {
                             "properties": {
@@ -195,7 +195,7 @@ TEMPLATE_SCHEMA = {
                     {
                         "if": {
                             "properties": {"name": {"const": "FeatureBasedAlignment"}},
-                            **pre_processor_if_requirements,
+                            **pre_processor_if_required_attrs,
                         },
                         "then": {
                             "properties": {
@@ -223,7 +223,7 @@ TEMPLATE_SCHEMA = {
                     {
                         "if": {
                             "properties": {"name": {"const": "GaussianBlur"}},
-                            **pre_processor_if_requirements,
+                            **pre_processor_if_required_attrs,
                         },
                         "then": {
                             "properties": {
@@ -241,7 +241,7 @@ TEMPLATE_SCHEMA = {
                     {
                         "if": {
                             "properties": {"name": {"const": "Levels"}},
-                            **pre_processor_if_requirements,
+                            **pre_processor_if_required_attrs,
                         },
                         "then": {
                             "properties": {
@@ -260,7 +260,7 @@ TEMPLATE_SCHEMA = {
                     {
                         "if": {
                             "properties": {"name": {"const": "MedianBlur"}},
-                            **pre_processor_if_requirements,
+                            **pre_processor_if_required_attrs,
                         },
                         "then": {
                             "properties": {
@@ -275,13 +275,13 @@ TEMPLATE_SCHEMA = {
                     {
                         "if": {
                             "properties": {"name": {"const": "CropOnMarkers"}},
-                            **pre_processor_if_requirements,
+                            **pre_processor_if_required_attrs,
                         },
                         "then": {
                             "properties": {
                                 "options": {
                                     "type": "object",
-                                    # Note: "required" key is retrieved from crop_on_markers_if_requirements
+                                    # Note: "required" key is retrieved from crop_on_markers_if_required_attrs
                                     "properties": {
                                         # Note: the keys need to match with crop_on_markers_options_available_keys
                                         **crop_on_markers_options_available_keys,
@@ -300,17 +300,17 @@ TEMPLATE_SCHEMA = {
                                             "enum": [
                                                 "CUSTOM_MARKER",
                                                 "ONE_LINE_TWO_DOTS",
-                                                "ONE_LINE_TWO_DOTS_MIRROR",
+                                                "TWO_DOTS_ONE_LINE",
                                                 "TWO_LINES",
                                                 "FOUR_DOTS",
                                             ],
                                         },
                                     },
-                                    **crop_on_markers_if_requirements,
+                                    **crop_on_markers_if_required_attrs,
                                     "allOf": [
                                         {
                                             "if": {
-                                                **crop_on_markers_if_requirements,
+                                                **crop_on_markers_if_required_attrs,
                                                 "properties": {
                                                     "type": {"const": "CUSTOM_MARKER"}
                                                 },
@@ -352,7 +352,7 @@ TEMPLATE_SCHEMA = {
                                         },
                                         {
                                             "if": {
-                                                **crop_on_markers_if_requirements,
+                                                **crop_on_markers_if_required_attrs,
                                                 "properties": {
                                                     "type": {
                                                         "const": "ONE_LINE_TWO_DOTS"
@@ -378,10 +378,10 @@ TEMPLATE_SCHEMA = {
                                         },
                                         {
                                             "if": {
-                                                **crop_on_markers_if_requirements,
+                                                **crop_on_markers_if_required_attrs,
                                                 "properties": {
                                                     "type": {
-                                                        "const": "ONE_LINE_TWO_DOTS_MIRROR"
+                                                        "const": "TWO_DOTS_ONE_LINE"
                                                     }
                                                 },
                                             },
@@ -403,7 +403,7 @@ TEMPLATE_SCHEMA = {
                                         },
                                         {
                                             "if": {
-                                                **crop_on_markers_if_requirements,
+                                                **crop_on_markers_if_required_attrs,
                                                 "properties": {
                                                     "type": {"const": "TWO_LINES"}
                                                 },
@@ -421,7 +421,7 @@ TEMPLATE_SCHEMA = {
                                         },
                                         {
                                             "if": {
-                                                **crop_on_markers_if_requirements,
+                                                **crop_on_markers_if_required_attrs,
                                                 "properties": {
                                                     "type": {"const": "FOUR_DOTS"}
                                                 },
@@ -464,9 +464,16 @@ TEMPLATE_SCHEMA = {
                         "labelsGap",
                         "fieldLabels",
                     ],
-                    "oneOf": [
+                    "allOf": [
                         {"required": ["fieldType"]},
-                        {"required": ["bubbleValues", "direction"]},
+                        {
+                            "if": {
+                                "properties": {"fieldType": {"const": "CUSTOM"}},
+                            },
+                            "then": {
+                                "required": ["bubbleValues", "direction", "fieldType"]
+                            },
+                        },
                     ],
                     "properties": {
                         "bubbleDimensions": two_positive_numbers,
@@ -482,7 +489,7 @@ TEMPLATE_SCHEMA = {
                         "origin": two_positive_integers,
                         "fieldType": {
                             "type": "string",
-                            "enum": list(FIELD_TYPES.keys()),
+                            "enum": [*list(FIELD_TYPES.keys()), "CUSTOM"],
                         },
                     },
                 }

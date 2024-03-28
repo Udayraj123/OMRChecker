@@ -14,19 +14,12 @@ class Processor:
 
     def __init__(
         self,
-        options=None,
-        relative_dir=None,
-        image_instance_ops=None,
+        options,
+        relative_dir,
     ):
         self.options = options
         self.tuning_options = options.get("tuningOptions", {})
-        self.tuning_config = image_instance_ops.tuning_config
-        self.processing_image_shape = options.get(
-            "inputImageShape",
-            self.tuning_config.dimensions.processing_image_shape,
-        )
         self.relative_dir = relative_dir
-        self.image_instance_ops = image_instance_ops
         self.description = "UNKNOWN"
 
     def __str__(self):

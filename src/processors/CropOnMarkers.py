@@ -487,7 +487,7 @@ class CropOnDotLines(CropOnPatchesCommon):
                 "LINES": ["leftLine"],
                 "DOTS": ["topRightDot", "bottomRightDot"],
             },
-            "ONE_LINE_TWO_DOTS_MIRROR": {
+            "TWO_DOTS_ONE_LINE": {
                 "LINES": ["rightLine"],
                 "DOTS": ["topLeftDot", "bottomLeftDot"],
             },

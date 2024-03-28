@@ -157,13 +157,12 @@ class Template:
         self.validate_parsed_labels(field_block_object["fieldLabels"], block_instance)
 
     def pre_fill_field_block(self, field_block_object):
-        if "fieldType" in field_block_object:
+        field_type = field_block_object["fieldType"]
+        if field_type in FIELD_TYPES:
             field_block_object = {
                 **field_block_object,
-                **FIELD_TYPES[field_block_object["fieldType"]],
+                **FIELD_TYPES[field_type],
             }
-        else:
-            field_block_object = {**field_block_object, "fieldType": "__CUSTOM__"}
 
         return {
             "direction": "vertical",

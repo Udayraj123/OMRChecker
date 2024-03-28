@@ -6,8 +6,17 @@ from src.utils.image import ImageUtils
 class ImageTemplatePreprocessor(Processor):
     """Base class for an extension that applies some preprocessing to the input image"""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, options, relative_dir, image_instance_ops):
+        super().__init__(
+            options,
+            relative_dir,
+        )
+        self.image_instance_ops = image_instance_ops
+        self.tuning_config = image_instance_ops.tuning_config
+        self.processing_image_shape = options.get(
+            "processingImageShape",
+            self.tuning_config.dimensions.processing_image_shape,
+        )
 
     def apply_filter(self, _image, _colored_image, _template, _file_path):
         """Apply filter to the image and returns modified image"""
