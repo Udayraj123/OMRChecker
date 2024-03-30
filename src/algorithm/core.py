@@ -21,7 +21,7 @@ import numpy as np
 from matplotlib import colormaps
 
 from src.algorithm.detection import BubbleMeanValue, FieldStdMeanValue
-from src.utils.constants import CLR_BLACK, CLR_WHITE, MARKED_TEMPLATE_ALPHA, TEXT_SIZE
+from src.utils.constants import CLR_BLACK, MARKED_TEMPLATE_ALPHA, TEXT_SIZE
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -74,7 +74,7 @@ class ImageInstanceOps:
             img, template.page_dimensions[0], template.page_dimensions[1]
         )
         if img.max() > img.min():
-            img = ImageUtils.normalize_util(img)
+            img = ImageUtils.normalize(img)
 
         # Move them to data class if needed
         omr_response = {}
@@ -186,9 +186,9 @@ class ImageInstanceOps:
         # if(config.outputs.show_image_level>=1):
         #     hist = getPlotImg()
         #     InteractionUtils.show("Hist", hist, 0, 1,config=config)
-        #     appendSaveImg(4,hist)
-        #     appendSaveImg(5,hist)
-        #     appendSaveImg(2,hist)
+        #     self.append_save_image(4,hist)
+        #     self.append_save_image(5,hist)
+        #     self.append_save_image(2,hist)
 
         per_omr_threshold_avg, absolute_field_number = 0, 0
         global_field_confidence_metrics = []
@@ -591,7 +591,7 @@ class ImageInstanceOps:
 
         # Prepare save images
         if should_save_detections:
-            self.append_save_img(2, marked_image)
+            self.append_save_image(2, marked_image)
 
         # Translucent
         cv2.addWeighted(
@@ -739,7 +739,6 @@ class ImageInstanceOps:
                             bubble_dimensions,
                             style="BOX_FILLED",
                             # TODO: pass verdict_color here and insert symbol mapping here ( +, -, *)
-                            color=CLR_WHITE,
                             thickness_factor=1 / 12,
                         )
 
@@ -1048,12 +1047,12 @@ class ImageInstanceOps:
             ax.set_xlabel("Bubble Number(sorted)")
             ax.legend()
             # TODO append QStrip to this plot-
-            # appendSaveImg(6,getPlotImg())
+            # self.append_save_image(6,getPlotImg())
             if plot_show:
                 plt.show()
         return thr1, max1
 
-    def append_save_img(self, key, img):
+    def append_save_image(self, key, img):
         if self.save_image_level >= int(key):
             self.save_img_list[key].append(img.copy())
 

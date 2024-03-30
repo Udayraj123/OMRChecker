@@ -11,7 +11,7 @@ class ImageTemplatePreprocessor(Processor):
             options,
             relative_dir,
         )
-        self.image_instance_ops = image_instance_ops
+        self.append_save_image = image_instance_ops.append_save_image
         self.tuning_config = image_instance_ops.tuning_config
         # Note: we're taking this at preProcessor level instead of tuningOptions because
         # it represents the need of a preProcessor's coordinate system(e.g. area selectors)

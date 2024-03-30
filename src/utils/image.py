@@ -76,7 +76,7 @@ class ImageUtils:
         return cnts
 
     @staticmethod
-    def normalize_util(img, alpha=0, beta=255):
+    def normalize(img, alpha=0, beta=255):
         return cv2.normalize(img, alpha, beta, norm_type=cv2.NORM_MINMAX)
 
     @staticmethod

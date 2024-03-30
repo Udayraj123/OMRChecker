@@ -275,7 +275,7 @@ def process_files(
 
         template.image_instance_ops.reset_all_save_img()
 
-        template.image_instance_ops.append_save_img(1, gray_image)
+        template.image_instance_ops.append_save_image(1, gray_image)
 
         # TODO: use try catch here and store paths to error files
         # Note: the returned template is a copy

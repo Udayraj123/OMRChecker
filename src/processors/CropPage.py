@@ -5,9 +5,7 @@ https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-det
 import cv2
 import numpy as np
 
-from src.processors.interfaces.ImageTemplatePreprocessor import (
-    ImageTemplatePreprocessor,
-)
+from src.processors.internal.CropOnControlPoints import CropOnControlPoints
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -15,60 +13,37 @@ from src.utils.logger import logger
 MIN_PAGE_AREA = 80000
 
 
-def normalize(image):
-    return cv2.normalize(image, 0, 255, norm_type=cv2.NORM_MINMAX)
+class CropPage(CropOnControlPoints):
+    __is_internal_preprocessor__ = False
 
-
-class CropPage(ImageTemplatePreprocessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        cropping_ops = self.options
+        options = self.options
         self.morph_kernel = cv2.getStructuringElement(
-            cv2.MORPH_RECT, tuple(cropping_ops.get("morphKernel", (10, 10)))
+            cv2.MORPH_RECT, tuple(options.get("morphKernel", (10, 10)))
         )
 
-    def apply_filter(self, image, colored_image, _template, file_path):
+    def __str__(self):
+        return f"CropPage"
+
+    def prepare_image(self, image):
+        return ImageUtils.normalize(image)
+
+    def find_four_corners(self, image, file_path):
         config = self.tuning_config
-        image = normalize(cv2.GaussianBlur(image, (3, 3), 0))
-        # Resize should be done with another preprocessor is needed
-        sheet = self.find_page(image, file_path)
-        if len(sheet) == 0:
-            logger.error(f"Error: Paper boundary not found for: '{file_path}'")
-            logger.warning(
-                f"Have you accidentally included CropPage preprocessor?\nIf no, increase the processing dimensions from config. Current image size used: {image.shape[:2]}"
-            )
-            raise Exception("Paper boundary not found")
-
-        logger.info(f"Found page corners: \t {sheet.tolist()}")
-
-        # Warp layer 1
-        warped_image = ImageUtils.four_point_transform(image, sheet)
-
-        if config.outputs.show_colored_outputs:
-            colored_image = ImageUtils.four_point_transform(colored_image, sheet)
-
-        # TODO: self.append_save_img(2, warped_image, colored_image)
-
-        # Return preprocessed image
-        return warped_image, colored_image, _template
-
-    def find_page(self, image, file_path):
-        config = self.tuning_config
-
-        image = normalize(image)
 
         _ret, image = cv2.threshold(image, 200, 255, cv2.THRESH_TRUNC)
-        image = normalize(image)
+        image = ImageUtils.normalize(image)
 
         # Close the small holes, i.e. Complete the edges on canny image
         closed = cv2.morphologyEx(image, cv2.MORPH_CLOSE, self.morph_kernel)
 
-        # TODO: self.append_save_img(2, closed)
+        # TODO: self.append_save_image(2, closed)
 
         # TODO: parametrize these tuning params
         canny_edge = cv2.Canny(closed, 185, 55)
 
-        # TODO: self.append_save_img(3, canny_edge)
+        # TODO: self.append_save_image(3, canny_edge)
 
         # findContours returns outer boundaries in CW and inner ones, ACW.
         cnts = ImageUtils.grab_contours(
@@ -87,7 +62,7 @@ class CropPage(ImageTemplatePreprocessor):
                 sheet = np.reshape(approx, (4, -1))
                 cv2.drawContours(canny_edge, [approx], -1, (255, 255, 255), 10)
 
-                # TODO: self.append_save_img(2, canny_edge)
+                # TODO: self.append_save_image(2, canny_edge)
                 break
 
         if config.outputs.show_image_level >= 6:
@@ -95,4 +70,12 @@ class CropPage(ImageTemplatePreprocessor):
 
             InteractionUtils.show("Page edges detection", hstack, config=config)
 
+        if len(sheet) == 0:
+            logger.error(f"Error: Paper boundary not found for: '{file_path}'")
+            logger.warning(
+                f"Have you accidentally included CropPage preprocessor?\nIf no, increase the processing dimensions from config. Current image size used: {image.shape[:2]}"
+            )
+            raise Exception("Paper boundary not found")
+
+        logger.info(f"Found page corners: \t {sheet.tolist()}")
         return sheet

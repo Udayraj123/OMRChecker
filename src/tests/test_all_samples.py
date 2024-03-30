@@ -43,7 +43,7 @@ def extract_sample_outputs(output_dir):
 
 
 def test_run_omr_marker_mobile(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "1-omr-marker-mobile")
+    sample_outputs = run_sample(mocker, "1-mobile-camera")
     assert snapshot == sample_outputs
 
 
@@ -59,6 +59,11 @@ def test_run_bonus_marking(mocker, snapshot):
 
 def test_run_answer_key_using_csv(mocker, snapshot):
     sample_outputs = run_sample(mocker, "3-answer-key/using-csv")
+    assert snapshot == sample_outputs
+
+
+def test_run_answer_key_using_image(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "3-answer-key/using-image")
     assert snapshot == sample_outputs
 
 
@@ -114,9 +119,4 @@ def test_run_community_Shamanth(mocker, snapshot):
 
 def test_run_community_UmarFarootAPS(mocker, snapshot):
     sample_outputs = run_sample(mocker, "community/UmarFarootAPS")
-    assert snapshot == sample_outputs
-
-
-def test_run_community_UPSC_mock(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "community/UPSC-mock")
     assert snapshot == sample_outputs
