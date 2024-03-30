@@ -225,7 +225,7 @@ class EvaluationConfig:
         self.path = evaluation_path
         evaluation_json = open_evaluation_with_defaults(evaluation_path)
 
-        # Defaults in evaluation config
+        
         (
             options,
             outputs_configuration,
@@ -241,7 +241,7 @@ class EvaluationConfig:
             ],
         )
 
-        # TODO: pickup new config from outputs_configuration
+   
         (
             self.draw_score,
             self.draw_answers_summary,
@@ -255,20 +255,12 @@ class EvaluationConfig:
             ],
         )
         
-        #Default options
+        
         (
-            # self.answers_summary_format_string,
-            # self.draw_answers_summary,
-            # self.draw_score,
-            # self.score_format_string,
             self.should_explain_scoring,
         ) = map(
             options.get,
             [
-                # "answers_summary_format_string",
-                # "draw_answers_summary",
-                # "draw_score",
-                # "score_format_string",
                 "should_explain_scoring",
             ],
         )
@@ -498,7 +490,6 @@ class EvaluationConfig:
                     )
 
     def validate_format_strings(self):
-        logger.info(self.draw_answers_summary['answers_summary_format_string'])
         answers_summary_format_string = self.draw_answers_summary['answers_summary_format_string']
         try:
             answers_summary_format_string.format(**self.schema_verdict_counts)
@@ -620,10 +611,19 @@ class EvaluationConfig:
     def get_formatted_answers_summary(self, answers_summary_format_string=None):
         if answers_summary_format_string is None:
             answers_summary_format_string = self.draw_answers_summary['answers_summary_format_string']
-        return answers_summary_format_string.format(**self.schema_verdict_counts)
+        answers_format = answers_summary_format_string.format(**self.schema_verdict_counts)
+        position = self.draw_answers_summary['position']
+        size = self.draw_answers_summary['size']
+        thickness = int(self.draw_answers_summary['size']*2)
+        return answers_format,position,size,thickness
 
-    def get_formatted_score(self, score):
-        return self.draw_score['score_format_string'].format(score=score)
+
+    def get_formatted_score(self, score):   
+        score_format = self.draw_score['score_format_string'].format(score=score) 
+        position = self.draw_score['position']
+        size = self.draw_score['size']
+        thickness = int(self.draw_score['size']*2)
+        return score_format,position,size,thickness
 
     def reset_evaluation(self):
         self.explanation_table = None

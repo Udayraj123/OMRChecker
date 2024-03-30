@@ -753,46 +753,41 @@ class ImageInstanceOps:
         return marked_image
 
     def draw_evaluation_summary(self, marked_image, evaluation_meta, evaluation_config):
-        # TODO: update this condition
+        
         if evaluation_config.draw_answers_summary['enabled']:
             self.draw_answers_summary(
                 marked_image, evaluation_config, evaluation_meta["score"]
             )
-        # TODO: update this condition
+        
         if evaluation_config.draw_score['enabled']:
             self.draw_score(marked_image, evaluation_config, evaluation_meta["score"])
         return marked_image
 
     def draw_answers_summary(self, marked_image, evaluation_config, score):
-        # h, w = marked_image.shape[:2]
-        summary_position = evaluation_config.draw_answers_summary['position']
-        # TODO: pickup position from evaluation_config
-        formatted_answers_summary = evaluation_config.get_formatted_answers_summary()
-        if "size" in evaluation_config.draw_answers_summary:
-            text_size=evaluation_config.draw_answers_summary["size"]
-            ImageUtils.draw_text(marked_image,formatted_answers_summary,summary_position,text_size=text_size)
-        else:
-            ImageUtils.draw_text(marked_image, formatted_answers_summary, summary_position)
+        (
+        formatted_answers_summary , 
+        position ,
+        size ,
+        thickness ,
+        ) = evaluation_config.get_formatted_answers_summary()
+        ImageUtils.draw_text(marked_image,formatted_answers_summary,position,text_size=size,thickness=thickness)
+        
 
     def draw_score(self, marked_image, evaluation_config, score):
-        # TODO: pickup from evaluation_config using format string/eval
-        formatted_score = evaluation_config.get_formatted_score(score)
-        score_position=evaluation_config.draw_score['position']
-        # Draw the final score
-        if "size" in evaluation_config.draw_score:
-            text_size=evaluation_config.draw_score["size"]
-            ImageUtils.draw_text(
+        (
+        formatted_score , 
+        position ,
+        size ,
+        thickness ,
+        ) = evaluation_config.get_formatted_score(score)
+        ImageUtils.draw_text(
                 marked_image,
                 formatted_score,
-                score_position,
-                text_size=text_size
+                position,
+                text_size=size,
+                thickness=thickness
             )
-        else:
-            ImageUtils.draw_text(
-                marked_image,
-                formatted_score,
-                score_position,
-            )
+        
 
     def get_global_threshold(
         self,

@@ -6,11 +6,6 @@ from src.schemas.constants import (
 EVALUATION_CONFIG_DEFAULTS = {
     "options": {
         "should_explain_scoring": False,
-        # TODO: move into "outputs_configuration"
-        # "score_format_string": DEFAULT_SCORE_FORMAT_STRING,
-        # "answers_summary_format_string": DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING,
-        # "draw_answers_summary": False,
-        # "draw_score": False,
     },
     "marking_schemes": {
         
@@ -20,13 +15,13 @@ EVALUATION_CONFIG_DEFAULTS = {
             "enabled":True,
             "position":[200,200],
             "score_format_string":DEFAULT_SCORE_FORMAT_STRING,
-            "size":4.0
+            "size":1.5
         },
         "draw_answers_summary":{
             "enabled":True,
-            "position":[200,400],
+            "position":[200,600],
             "answers_summary_format_string":DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING,
-            "size":2.0
+            "size":1.0
         },
         "verdict_colors":{
             "correct":"#00ff00",
