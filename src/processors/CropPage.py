@@ -47,6 +47,8 @@ class CropPage(ImageTemplatePreprocessor):
         if config.outputs.show_colored_outputs:
             colored_image = ImageUtils.four_point_transform(colored_image, sheet)
 
+        # TODO: self.append_save_img(2, warped_image, colored_image)
+
         # Return preprocessed image
         return warped_image, colored_image, _template
 
@@ -61,8 +63,12 @@ class CropPage(ImageTemplatePreprocessor):
         # Close the small holes, i.e. Complete the edges on canny image
         closed = cv2.morphologyEx(image, cv2.MORPH_CLOSE, self.morph_kernel)
 
+        # TODO: self.append_save_img(2, closed)
+
         # TODO: parametrize these tuning params
         canny_edge = cv2.Canny(closed, 185, 55)
+
+        # TODO: self.append_save_img(3, canny_edge)
 
         # findContours returns outer boundaries in CW and inner ones, ACW.
         cnts = ImageUtils.grab_contours(
@@ -80,6 +86,8 @@ class CropPage(ImageTemplatePreprocessor):
             if ImageUtils.validate_rect(approx):
                 sheet = np.reshape(approx, (4, -1))
                 cv2.drawContours(canny_edge, [approx], -1, (255, 255, 255), 10)
+
+                # TODO: self.append_save_img(2, canny_edge)
                 break
 
         if config.outputs.show_image_level >= 6:

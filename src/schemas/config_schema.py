@@ -16,7 +16,7 @@ CONFIG_SCHEMA = {
                 "processing_image_shape": two_positive_integers,
             },
         },
-        "threshold_params": {
+        "thresholding": {
             "type": "object",
             "additionalProperties": False,
             "properties": {
@@ -40,16 +40,7 @@ CONFIG_SCHEMA = {
                     "maximum": 100,
                 },
                 "JUMP_DELTA": {"type": "integer", "minimum": 10, "maximum": 100},
-                "PAGE_TYPE_FOR_THRESHOLD": {
-                    "enum": ["white", "black"],
-                    "type": "string",
-                },
-                "GLOBAL_PAGE_THRESHOLD_WHITE": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 255,
-                },
-                "GLOBAL_PAGE_THRESHOLD_BLACK": {
+                "GLOBAL_PAGE_THRESHOLD": {
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 255,

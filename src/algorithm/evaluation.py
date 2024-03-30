@@ -152,6 +152,7 @@ class AnswerMatcher:
         if marked_answer == self.empty_val:
             return Verdict.UNMARKED
         elif marked_answer in allowed_answers:
+            # ANSWER-MATCH-BC
             return f"{Verdict.ANSWER_MATCH}-{marked_answer}"
         else:
             return Verdict.NO_ANSWER_MATCH
@@ -246,9 +247,9 @@ class EvaluationConfig:
         # Default options
         (
             self.answers_summary_format_string,
-            # self.draw_answers_summary,
-            # self.draw_score,
-            # self.score_format_string,
+            self.draw_answers_summary,
+            self.draw_score,
+            self.score_format_string,
             self.should_explain_scoring,
         ) = map(
             options.get,

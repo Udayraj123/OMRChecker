@@ -13,6 +13,8 @@ class ImageTemplatePreprocessor(Processor):
         )
         self.image_instance_ops = image_instance_ops
         self.tuning_config = image_instance_ops.tuning_config
+        # Note: we're taking this at preProcessor level instead of tuningOptions because
+        # it represents the need of a preProcessor's coordinate system(e.g. area selectors)
         self.processing_image_shape = options.get(
             "processingImageShape",
             self.tuning_config.dimensions.processing_image_shape,

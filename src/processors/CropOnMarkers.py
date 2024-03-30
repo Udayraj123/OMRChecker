@@ -503,7 +503,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         area, area_start = self.compute_scan_area(image, line_options)
 
         # Make boxes darker (less gamma)
-        morph = ImageUtils.adjust_gamma(area, config.threshold_params.GAMMA_LOW)
+        morph = ImageUtils.adjust_gamma(area, config.thresholding.GAMMA_LOW)
         _, morph = cv2.threshold(morph, 200, 255, cv2.THRESH_TRUNC)
         morph = ImageUtils.normalize_util(morph)
 

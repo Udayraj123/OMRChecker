@@ -116,7 +116,6 @@ TEMPLATE_SCHEMA = {
                     "name": {
                         "type": "string",
                         "enum": [
-                            "AutoAlignTemplate",
                             "CropOnMarkers",
                             "CropPage",
                             "FeatureBasedAlignment",
@@ -136,47 +135,6 @@ TEMPLATE_SCHEMA = {
                 "allOf": [
                     {
                         "if": {
-                            "properties": {"name": {"const": "AutoAlignTemplate"}},
-                            **pre_processor_if_required_attrs,
-                        },
-                        "then": {
-                            "properties": {
-                                "options": {
-                                    "type": "object",
-                                    "additionalProperties": False,
-                                    "properties": {
-                                        "match_col": {
-                                            "type": "integer",
-                                            "minimum": 0,
-                                            "maximum": 10,
-                                        },
-                                        "max_steps": {
-                                            "type": "integer",
-                                            "minimum": 1,
-                                            "maximum": 100,
-                                        },
-                                        "morph_threshold": {
-                                            "type": "integer",
-                                            "minimum": 1,
-                                            "maximum": 255,
-                                        },
-                                        "stride": {
-                                            "type": "integer",
-                                            "minimum": 1,
-                                            "maximum": 20,
-                                        },
-                                        "thickness": {
-                                            "type": "integer",
-                                            "minimum": 1,
-                                            "maximum": 10,
-                                        },
-                                    },
-                                },
-                            }
-                        },
-                    },
-                    {
-                        "if": {
                             "properties": {"name": {"const": "CropPage"}},
                             **pre_processor_if_required_attrs,
                         },
@@ -186,7 +144,8 @@ TEMPLATE_SCHEMA = {
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {
-                                        "morphKernel": two_positive_integers
+                                        **pre_processor_options_available_keys,
+                                        "morphKernel": two_positive_integers,
                                     },
                                 }
                             }
@@ -203,6 +162,7 @@ TEMPLATE_SCHEMA = {
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {
+                                        **pre_processor_options_available_keys,
                                         "2d": {"type": "boolean"},
                                         "goodMatchPercent": {"type": "number"},
                                         "maxFeatures": {"type": "integer"},
@@ -231,6 +191,7 @@ TEMPLATE_SCHEMA = {
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {
+                                        **pre_processor_options_available_keys,
                                         "kSize": two_positive_integers,
                                         "sigmaX": {"type": "number"},
                                     },
@@ -246,6 +207,7 @@ TEMPLATE_SCHEMA = {
                         "then": {
                             "properties": {
                                 "options": {
+                                    **pre_processor_options_available_keys,
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {
@@ -265,6 +227,7 @@ TEMPLATE_SCHEMA = {
                         "then": {
                             "properties": {
                                 "options": {
+                                    **pre_processor_options_available_keys,
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {"kSize": {"type": "integer"}},
@@ -333,6 +296,7 @@ TEMPLATE_SCHEMA = {
                                                         "type": "object",
                                                         "additionalProperties": False,
                                                         "properties": {
+                                                            **crop_on_markers_tuning_options_available_keys,
                                                             "apply_erode_subtract": {
                                                                 "type": "boolean"
                                                             },

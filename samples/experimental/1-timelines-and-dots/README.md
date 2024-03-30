@@ -11,7 +11,10 @@ OMR software can use the timeline to properly locate the bubbles. So any changes
 
 <!-- TODO: image of a timeline -->
 
-If your OMR sheet has this timeline and if adding a custom marker(in four corner points) is not feasible, you can try evaluating your OMR sheet using this method.
+# When should I use it?
+
+- If your OMR sheet has this timeline and if adding a custom marker(in four corner points) is not feasible, you can try evaluating your OMR sheet using this method.
+- Since the preprocessor converts the dashed line into a filled rectangular blob and uses that for detection, you can use this preprocessor on any rectangular thick lines or thick dots that can be converted to distinguishable blobs.
 
 # How to use?
 We have provided support for 4 configurations: "ONE_LINE_TWO_DOTS", "TWO_DOTS_ONE_LINE", "TWO_LINES", "FOUR_DOTS".
@@ -19,6 +22,7 @@ Depending on the configuration of your OMR sheet, choose the one that is applica
 
 Open the samples in this folder to know how to configure each type in detail.
 
+Also, for further tuning - we support 5 configurations for selecting the points out of the thick blobs: "CENTERS", "INNER_WIDTHS", "INNER_HEIGHTS", "INNER_CORNERS", "OUTER_CORNERS"
 
 ### Drawbacks and Improvements
 Currently OMRChecker requires the Dots and Lines to "stand out" from other marks in the sheet. If there's any noise nearby the marker including the print itself, the detection would fail.

@@ -9,6 +9,9 @@
       666
     ]
   },
+  "thresholding": {
+    "GLOBAL_PAGE_THRESHOLD": 150
+  },
   "outputs": {
     "save_image_level": 0,
     "show_image_level": 0

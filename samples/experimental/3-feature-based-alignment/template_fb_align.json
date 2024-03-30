@@ -16,6 +16,14 @@
       }
     },
     {
+      "name": "FeatureBasedAlignment",
+      "options": {
+        "reference": "reference.png",
+        "maxFeatures": 1000,
+        "2d": true
+      }
+    },
+    {
       "name": "GaussianBlur",
       "options": {
         "kSize": [

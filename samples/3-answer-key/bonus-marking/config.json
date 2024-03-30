@@ -5,7 +5,7 @@
       1189
     ]
   },
-  "threshold_params": {
+  "thresholding": {
     "MIN_JUMP": 30
   },
   "outputs": {

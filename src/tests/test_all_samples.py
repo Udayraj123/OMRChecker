@@ -68,27 +68,27 @@ def test_run_answer_key_weighted_answers(mocker, snapshot):
 
 
 def test_run_crop_four_dots(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "4-timelines-and-dots/four-dots")
+    sample_outputs = run_sample(mocker, "experimental/1-timelines-and-dots/four-dots")
     assert snapshot == sample_outputs
 
 
 def test_run_crop_two_dots_one_line(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "4-timelines-and-dots/four-dots")
+    sample_outputs = run_sample(mocker, "experimental/1-timelines-and-dots/four-dots")
     assert snapshot == sample_outputs
 
 
 def test_run_two_lines(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "4-timelines-and-dots/two-lines")
+    sample_outputs = run_sample(mocker, "experimental/1-timelines-and-dots/two-lines")
     assert snapshot == sample_outputs
 
 
-def test_run_page_thickness(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "5-page-thickness")
+def test_run_template_shifts(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "experimental/2-template-shifts")
     assert snapshot == sample_outputs
 
 
 def test_run_feature_based_alignment(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "6-feature-based-alignment")
+    sample_outputs = run_sample(mocker, "experimental/3-feature-based-alignment")
     assert snapshot == sample_outputs
 
 

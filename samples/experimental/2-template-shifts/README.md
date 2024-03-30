@@ -7,8 +7,9 @@ Link to an explainer with a real life example: [Google Drive](https://drive.goog
 
 ## Reasons for shifts in Template layout:
 Listing out a few reasons for the above observation:
+
 ### Printer margin setting
-The margin settings for different printers may be different for the same OMR layout. Thus causing the print to become elongated either horizontally, vertically or both ways.
+The margin settings for different printers may be different for the same OMR layout. Thus causing the print to become elongated either horizontally, vertically or both ways. This can also
 
 ### The Fan-out effect
 The fan-out effect is usually observed in a sheet fed offset press. Depending on how the papers are made, their dimensions have a tendency to change when they are exposed to moisture or water.
@@ -23,7 +24,7 @@ Below are some examples of the GSM ranges:
 
 ## Solution
 
-It is recommended to scan each types of prints into different folders and use a separate template.json layout for each of the folders. The same is presented in this sample folder.
+- It is recommended to scan each types of prints into different folders and use a separate template.json layout for each of the folders. The same is presented in this sample folder.
 
 ## References
 

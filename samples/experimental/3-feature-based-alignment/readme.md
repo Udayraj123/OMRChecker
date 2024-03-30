@@ -6,7 +6,8 @@ OMR is used to match student roll on final exam scripts. Scripts are scanned usi
 The scripts in this sample were specifically selected incorrectly marked scripts to demonstrate how feature-based alignment can correct transformation errors using a reference image. In the actual batch. 156 out of 532 scripts were incorrectly marked. With feature-based alignment, all scripts were correctly marked.
 
 ## Usage
-Two template files are given in the sample folder, one with feature-based alignment (template_fb_align), the other without (template_no_fb_align).
+Two template files are given in the sample folder, one with feature-based alignment (template_fb_align), the other without (template_no_fb_align). Copy each one's content into template.json file to see their effect.
+
 
 ## Additional Notes
 

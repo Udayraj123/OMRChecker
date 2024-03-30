@@ -13,5 +13,5 @@ EVALUATION_CONFIG_DEFAULTS = {
         "draw_score": False,
     },
     "marking_schemes": {},
-    "outputs_configuration": {},
+    # "outputs_configuration": {},
 }

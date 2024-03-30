@@ -21,7 +21,7 @@ import numpy as np
 from matplotlib import colormaps
 
 from src.algorithm.detection import BubbleMeanValue, FieldStdMeanValue
-from src.utils.constants import CLR_BLACK, MARKED_TEMPLATE_ALPHA, TEXT_SIZE
+from src.utils.constants import CLR_BLACK, CLR_WHITE, MARKED_TEMPLATE_ALPHA, TEXT_SIZE
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -128,31 +128,22 @@ class ImageInstanceOps:
             global_field_bubble_means_stds.extend(field_bubble_means_stds)
 
         (
-            PAGE_TYPE_FOR_THRESHOLD,
-            GLOBAL_PAGE_THRESHOLD_WHITE,
-            GLOBAL_PAGE_THRESHOLD_BLACK,
+            GLOBAL_PAGE_THRESHOLD,
             MIN_JUMP,
             JUMP_DELTA,
             GLOBAL_THRESHOLD_MARGIN,
             MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK,
             CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY,
         ) = map(
-            config.threshold_params.get,
+            config.thresholding.get,
             [
-                "PAGE_TYPE_FOR_THRESHOLD",
-                "GLOBAL_PAGE_THRESHOLD_WHITE",
-                "GLOBAL_PAGE_THRESHOLD_BLACK",
+                "GLOBAL_PAGE_THRESHOLD",
                 "MIN_JUMP",
                 "JUMP_DELTA",
                 "GLOBAL_THRESHOLD_MARGIN",
                 "MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK",
                 "CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY",
             ],
-        )
-        global_default_threshold = (
-            GLOBAL_PAGE_THRESHOLD_WHITE
-            if PAGE_TYPE_FOR_THRESHOLD == "white"
-            else GLOBAL_PAGE_THRESHOLD_BLACK
         )
         # TODO: see if this is needed, then take from config.json
         MIN_JUMP_STD = 15
@@ -175,7 +166,7 @@ class ImageInstanceOps:
         # to support show_image_level
         global_threshold_for_template, j_low, j_high = self.get_global_threshold(
             global_bubble_means_and_refs,  # , looseness=4
-            global_default_threshold,
+            GLOBAL_PAGE_THRESHOLD,
             plot_title="Mean Intensity Barplot",
             MIN_JUMP=MIN_JUMP,
             JUMP_DELTA=JUMP_DELTA,
@@ -568,7 +559,7 @@ class ImageInstanceOps:
 
         if should_draw_field_block_rectangles:
             marked_image = self.draw_field_blocks_layout(
-                marked_image, template, shifted, border
+                marked_image, template, shifted, shouldCopy=False, border=border
             )
             return marked_image
 
@@ -632,7 +623,10 @@ class ImageInstanceOps:
 
         return marked_image
 
-    def draw_field_blocks_layout(self, image, template, shifted=True, border=-1):
+    def draw_field_blocks_layout(
+        self, image, template, shifted=True, shouldCopy=True, thickness=3, border=3
+    ):
+        marked_image = image.copy() if shouldCopy else image
         for field_block in template.field_blocks:
             field_block_name, origin, dimensions, bubble_dimensions = map(
                 lambda attr: getattr(field_block, attr),
@@ -647,13 +641,13 @@ class ImageInstanceOps:
 
             # Field block bounding rectangle
             ImageUtils.draw_box(
-                image,
+                marked_image,
                 block_position,
                 dimensions,
                 color=CLR_BLACK,
                 style="BOX_HOLLOW",
                 thickness_factor=0,
-                border=3,
+                border=border,
             )
 
             for field in field_block.fields:
@@ -663,7 +657,7 @@ class ImageInstanceOps:
                         field_block.shifts
                     )
                     ImageUtils.draw_box(
-                        image,
+                        marked_image,
                         shifted_position,
                         bubble_dimensions,
                         thickness_factor=1 / 10,
@@ -675,11 +669,10 @@ class ImageInstanceOps:
                     int(block_position[0] + dimensions[0] - size_x),
                     int(block_position[1] - size_y),
                 )
-                ImageUtils.draw_text(
-                    image, field_block_name, text_position, thickness=4
-                )
+                text = f"({field_block.shifts}){field_block_name}"
+                ImageUtils.draw_text(marked_image, text, text_position, thickness)
 
-        return image
+        return marked_image
 
     def draw_marked_bubbles_with_evaluation_meta(
         self,
@@ -709,6 +702,12 @@ class ImageInstanceOps:
                 # is_part_of_custom_label = len(linked_custom_labels) > 0
                 # TODO: replicate verdict: question_has_verdict = len([if field_label in questions_meta else None for field_label in linked_custom_labels])
 
+                # question_verdict = evaluation_meta["questions_meta"][field_label]
+                # is_field_correct = question_verdict.startswith(Verdict.ANSWER_MATCH)
+                # is_field_incorrect = question_verdict == Verdict.NO_ANSWER_MATCH
+                # TODO: calculate question's scheme to get delta for all verdicts
+                #
+
                 for bubble_detection in field_bubble_means:
                     bubble = bubble_detection.item_reference
                     shifted_position = tuple(
@@ -725,14 +724,26 @@ class ImageInstanceOps:
 
                     # TODO: take config for CROSS_TICKS vs BUBBLE_BOUNDARY and call appropriate util
                     if bubble_detection.is_marked:
+                        # if(is_field_correct):
+                        #     # TODO: green
+                        #     pass
+
+                        # if(is_field_incorrect):
+                        #     # TODO: red
+                        # pass
+
                         # Draw the shifted box
                         ImageUtils.draw_box(
                             marked_image,
                             shifted_position,
                             bubble_dimensions,
                             style="BOX_FILLED",
+                            # TODO: pass verdict_color here and insert symbol mapping here ( +, -, *)
+                            color=CLR_WHITE,
                             thickness_factor=1 / 12,
                         )
+
+                        # TODO: add condition only for marked_image and not for evaluation_image (new variable)
                         ImageUtils.draw_text(
                             marked_image,
                             field_value,
@@ -988,15 +999,15 @@ class ImageInstanceOps:
         # Small no of pts cases:
         # base case: 1 or 2 pts
         if len(sorted_bubble_means) < 3:
-            max1, thr1 = config.threshold_params.MIN_JUMP, (
+            max1, thr1 = config.thresholding.MIN_JUMP, (
                 global_threshold_for_template
                 if np.max(sorted_bubble_means) - np.min(sorted_bubble_means)
-                < config.threshold_params.MIN_GAP
+                < config.thresholding.MIN_GAP
                 else np.mean(sorted_bubble_means)
             )
         else:
             l = len(sorted_bubble_means) - 1
-            max1, thr1 = config.threshold_params.MIN_JUMP, 255
+            max1, thr1 = config.thresholding.MIN_JUMP, 255
             for i in range(1, l):
                 jump = sorted_bubble_means[i + 1] - sorted_bubble_means[i - 1]
                 if jump > max1:
@@ -1005,8 +1016,8 @@ class ImageInstanceOps:
             # print(field_label,sorted_bubble_means,max1)
 
             confident_jump = (
-                config.threshold_params.MIN_JUMP
-                + config.threshold_params.MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK
+                config.thresholding.MIN_JUMP
+                + config.thresholding.MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK
             )
 
             # TODO: seek improvement here because of the empty cases failing here(boundary walls)

@@ -9,16 +9,6 @@
   ],
   "preProcessors": [
     {
-      "name": "GaussianBlur",
-      "options": {
-        "kSize": [
-          3,
-          3
-        ],
-        "sigmaX": 0
-      }
-    },
-    {
       "name": "CropOnMarkers",
       "options": {
         "processingImageShape": [
@@ -143,7 +133,7 @@
       "labelsGap": 33.7,
       "origin": [
         237,
-        633
+        630
       ]
     },
     "MCQBlock1a2": {
@@ -167,7 +157,7 @@
       "labelsGap": 34.2,
       "origin": [
         435,
-        633
+        630
       ]
     },
     "MCQBlock2a2": {
@@ -214,7 +204,7 @@
       "bubblesGap": 26.7,
       "labelsGap": 34.2,
       "origin": [
-        820,
+        823,
         633
       ]
     },
@@ -226,7 +216,7 @@
       "bubblesGap": 26.7,
       "labelsGap": 34.2,
       "origin": [
-        820,
+        823,
         1145
       ]
     },

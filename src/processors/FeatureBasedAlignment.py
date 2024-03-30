@@ -12,6 +12,8 @@ from src.processors.interfaces.ImageTemplatePreprocessor import (
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 
+# TODO: modify this to return from and to points and then the parent class should handle the warping?
+
 
 class FeatureBasedAlignment(ImageTemplatePreprocessor):
     def __init__(self, *args, **kwargs):
@@ -41,7 +43,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
                 cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING
             )
 
-        self.transform_2_d = options.get("2d", False)
+        self.transform_2_d = options.get("2d", True)
         # Extract keypoints and description of source image
         self.orb = cv2.ORB_create(self.max_features)
         self.to_keypoints, self.to_descriptors = self.orb.detectAndCompute(
@@ -96,11 +98,14 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
         # Find homography
         height, width = self.ref_img.shape[:2]
         if self.transform_2_d:
+            # Note: estimateAffinePartial2D might save on computation as we expect no noise in the data
             m, _inliers = cv2.estimateAffine2D(points1, points2)
+            # 2D == in image plane:
             return cv2.warpAffine(image, m, (width, height))
 
         # Use homography
         h, _mask = cv2.findHomography(points1, points2, cv2.RANSAC)
+        # 3D == perspective from out of plane:
         warped_image = cv2.warpPerspective(image, h, (width, height))
 
         if config.outputs.show_colored_outputs:

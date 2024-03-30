@@ -111,16 +111,6 @@ def print_config_summary(
         f"{[pp.__class__.__name__ for pp in template.pre_processors]}",
     )
 
-    alignment_preprocessors = list(
-        filter(
-            lambda p: p in template.pre_processors,
-            ["AutoAlignTemplate", "FeatureBasedAlignment"],
-        )
-    )
-    table.add_row(
-        "Auto Alignment",
-        (alignment_preprocessors if len(alignment_preprocessors) else "OFF"),
-    )
     console.print(table, justify="center")
 
 
