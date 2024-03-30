@@ -105,11 +105,8 @@ class ImageUtils:
         return cv2.LUT(image, table)
 
     @staticmethod
-    def four_point_transform(image, pts):
-        # obtain a consistent order of the points and unpack them
-        # individually
-        rect = ImageUtils.order_points(pts, dtype="float32")
-        (tl, tr, br, bl) = rect
+    def get_four_destination_points(ordered_corner_points):
+        (tl, tr, br, bl) = ordered_corner_points
 
         # compute the width of the new image, which will be the
         width_a = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
@@ -129,7 +126,7 @@ class ImageUtils:
         # (i.e. top-down view) of the image, again specifying points
         # in the top-left, top-right, bottom-right, and bottom-left
         # order
-        dst = np.array(
+        destination_points = np.array(
             [
                 [0, 0],
                 [max_width - 1, 0],
@@ -138,26 +135,42 @@ class ImageUtils:
             ],
             dtype="float32",
         )
+        return destination_points, max_width, max_height
 
-        transform_matrix = cv2.getPerspectiveTransform(rect, dst)
+    @staticmethod
+    def four_point_transform(image, corner_points):
+        # obtain a consistent order of the points and unpack them
+        # individually
+        ordered_corner_points = ImageUtils.order_four_points(
+            corner_points, dtype="float32"
+        )
+
+        (
+            destination_points,
+            max_width,
+            max_height,
+        ) = ImageUtils.get_four_destination_points(ordered_corner_points)
+        transform_matrix = cv2.getPerspectiveTransform(
+            ordered_corner_points, destination_points
+        )
         warped = cv2.warpPerspective(image, transform_matrix, (max_width, max_height))
 
         # return the warped image
         return warped
 
     @staticmethod
-    def order_points(pts, dtype="int"):
-        pts = np.array(pts)
+    def order_four_points(points, dtype="int"):
+        points = np.array(points)
         rect = np.zeros((4, 2), dtype=dtype)
 
         # the top-left point will have the smallest sum, whereas
         # the bottom-right point will have the largest sum
-        s = pts.sum(axis=1)
-        rect[0] = pts[np.argmin(s)]
-        rect[2] = pts[np.argmax(s)]
-        diff = np.diff(pts, axis=1)
-        rect[1] = pts[np.argmin(diff)]
-        rect[3] = pts[np.argmax(diff)]
+        s = points.sum(axis=1)
+        rect[0] = points[np.argmin(s)]
+        rect[2] = points[np.argmax(s)]
+        diff = np.diff(points, axis=1)
+        rect[1] = points[np.argmin(diff)]
+        rect[3] = points[np.argmax(diff)]
 
         # return the ordered coordinates (tl, tr, br, bl)
         return rect
@@ -168,7 +181,7 @@ class ImageUtils:
 
     @staticmethod
     def get_rectangle_points(x, y, w, h):
-        # order same as order_points: (tl, tr, br, bl)
+        # order same as order_four_points: (tl, tr, br, bl)
         return np.intp(
             [
                 [x, y],
@@ -180,7 +193,7 @@ class ImageUtils:
 
     @staticmethod
     def check_max_cosine(approx):
-        # assumes 4 pts present
+        # assumes 4 points present
         max_cosine = 0
         min_cosine = 1.5
         for i in range(2, 5):

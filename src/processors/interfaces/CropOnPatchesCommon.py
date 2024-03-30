@@ -85,7 +85,7 @@ class CropOnPatchesCommon(ImageTemplatePreprocessor):
 
         if config.outputs.show_image_level >= 4:
             logger.info(f"corners={corners}")
-            corners = ImageUtils.order_points(corners)
+            corners = ImageUtils.order_four_points(corners)
             cv2.drawContours(
                 self.debug_image, [np.intp(corners)], -1, (200, 200, 200), 2
             )

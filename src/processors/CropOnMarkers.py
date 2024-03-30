@@ -3,10 +3,10 @@ import os
 import cv2
 import numpy as np
 
+from src.processors.interfaces.CropOnPatchesCommon import CropOnPatchesCommon
 from src.processors.interfaces.ImageTemplatePreprocessor import (
     ImageTemplatePreprocessor,
 )
-from src.processors.internal.CropOnPatchesCommon import CropOnPatchesCommon
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -332,7 +332,7 @@ class CropOnDotLines(CropOnPatchesCommon):
                 f"morph_opened_{patch_type}", morph_v, 0, 1, config=config
             )
 
-        # Note: points are returned in the order of order_points: (tl, tr, br, bl)
+        # Note: points are returned in the order of order_four_points: (tl, tr, br, bl)
         corners = self.find_largest_patch_area_corners(
             area_start, morph_v, patch_type="line"
         )
@@ -403,7 +403,7 @@ class CropOnDotLines(CropOnPatchesCommon):
             # TODO: less confidence if angle = rotated_rect[2] is too skew
             rotated_rect_points = cv2.boxPoints(rotated_rect)
             patch_corners = np.intp(rotated_rect_points)
-            patch_corners = ImageUtils.order_points(patch_corners)
+            patch_corners = ImageUtils.order_four_points(patch_corners)
 
         # TODO: Give a warning if given dimensions differ from matched block size
         cv2.drawContours(edge, [patch_corners], -1, (200, 200, 200), 2)

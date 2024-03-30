@@ -5,7 +5,7 @@ https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-det
 import cv2
 import numpy as np
 
-from src.processors.internal.CropOnControlPoints import CropOnControlPoints
+from src.processors.interfaces.CropOnIndexPoints import CropOnIndexPoints
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -13,7 +13,7 @@ from src.utils.logger import logger
 MIN_PAGE_AREA = 80000
 
 
-class CropPage(CropOnControlPoints):
+class CropPage(CropOnIndexPoints):
     __is_internal_preprocessor__ = False
 
     def __init__(self, *args, **kwargs):
