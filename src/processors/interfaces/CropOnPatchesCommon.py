@@ -1,15 +1,14 @@
 import cv2
 import numpy as np
 
-from src.processors.interfaces.ImageTemplatePreprocessor import (
-    ImageTemplatePreprocessor,
-)
+from src.processors.constants import EDGE_TYPES_IN_ORDER
+from src.processors.interfaces.CropOnIndexPoints import CropOnIndexPoints
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 
 
-class CropOnPatchesCommon(ImageTemplatePreprocessor):
+class CropOnPatchesCommon(CropOnIndexPoints):
     __is_internal_preprocessor__ = True
 
     # Common code used by both types of croppers
@@ -31,46 +30,29 @@ class CropOnPatchesCommon(ImageTemplatePreprocessor):
     def prepare_image(self, image):
         return image
 
-    def apply_filter(self, image, colored_image, _template, file_path):
-        config = self.tuning_config
-
-        self.debug_image = image.copy()
-        self.debug_hstack = []
-        self.debug_vstack = []
-
-        image = self.prepare_image(image)
-
-        four_corners = self.find_four_corners(image, file_path)
-
-        # Crop the image
-        warped_image = ImageUtils.four_point_transform(image, four_corners)
-
-        if config.outputs.show_colored_outputs:
-            colored_image = ImageUtils.four_point_transform(colored_image, four_corners)
-
-        # TODO: Save intuitive meta data
-        # self.append_save_image(1,warped_image)
-
-        if config.outputs.show_image_level >= 4:
-            hstack = ImageUtils.get_padded_hstack([self.debug_image, warped_image])
-            InteractionUtils.show(
-                f"warped_image: {file_path}", hstack, 1, 1, config=config
-            )
-
-        return warped_image, colored_image, _template
-
-    def find_four_corners(self, image, file_path):
+    def find_corners_and_edges(self, image, file_path):
         options = self.options
         config = self.tuning_config
 
-        # TODO: support for defaulting to using quadrants?
-        patch_areas = self.patch_areas_for_type[options["type"]]
-        corners = []
-        for patch_type in patch_areas["DOTS"]:
-            corners.append(self.select_point_from_dot(patch_type, image, file_path))
+        selectors = self.patch_types_for_layout[options["type"]]
+        patch_selectors, edge_selectors = (
+            selectors["patch_selectors"],
+            selectors["edge_selectors"],
+        )
 
-        for patch_type in patch_areas["LINES"]:
-            corners += self.select_points_from_line(patch_type, image)
+        points_and_edges, corner_points = {}, []
+        for patch_type in patch_selectors["DOTS"]:
+            dot_point = self.select_point_from_dot(patch_type, image, file_path)
+
+            points_and_edges[patch_type] = dot_point
+            corner_points.append(dot_point)
+
+        for patch_type in patch_selectors["LINES"]:
+            edge_points, edge_contour = self.select_points_and_edges_from_line(
+                patch_type, image
+            )
+            points_and_edges[patch_type] = [edge_points, edge_contour]
+            corner_points += edge_points
 
             if config.outputs.show_image_level >= 5:
                 if len(self.debug_vstack) > 0:
@@ -83,14 +65,44 @@ class CropOnPatchesCommon(ImageTemplatePreprocessor):
                     )
                 self.debug_vstack = []
 
+        # First element of each contour should necessarily start & end with a corner point
+        edge_contours_map = {}
+        for edge_type in EDGE_TYPES_IN_ORDER:
+            edge_contours_map[edge_type] = []
+            logger.info(f"{edge_type}: {edge_selectors[edge_type]}")
+            for selector in edge_selectors[edge_type]:
+                logger.info(f"selector={selector}, points_and_edges={points_and_edges}")
+                patch_type, selection_type = (
+                    selector["patch_type"],
+                    selector["selection_type"],
+                )
+                if selection_type == "DOT_PICK_POINT":
+                    dot_point = points_and_edges[patch_type]
+                    edge_contours_map[edge_type].append(dot_point)
+                else:
+                    edge_points, edge_contour = points_and_edges[patch_type]
+                    if selection_type == "LINE_PICK_FIRST_POINT":
+                        edge_contours_map[edge_type].append(edge_points[0])
+                    if selection_type == "LINE_PICK_LAST_POINT":
+                        edge_contours_map[edge_type].append(edge_points[-1])
+                    if selection_type == "LINE_PICK_CONTOUR":
+                        edge_contours_map[edge_type] += edge_contour
+
+        ordered_corner_points = ImageUtils.order_four_points(
+            corner_points, dtype="float32"
+        )
+
         if config.outputs.show_image_level >= 4:
-            logger.info(f"corners={corners}")
-            corners = ImageUtils.order_four_points(corners)
+            logger.info(f"corner_points={ordered_corner_points}")
             cv2.drawContours(
-                self.debug_image, [np.intp(corners)], -1, (200, 200, 200), 2
+                self.debug_image,
+                [np.intp(ordered_corner_points)],
+                -1,
+                (200, 200, 200),
+                2,
             )
 
-            for corner in corners:
+            for corner in ordered_corner_points:
                 cv2.rectangle(
                     self.debug_image,
                     tuple(corner),
@@ -99,7 +111,7 @@ class CropOnPatchesCommon(ImageTemplatePreprocessor):
                     2,
                 )
 
-        return corners
+        return ordered_corner_points, edge_contours_map
 
     default_points_selector_map = {
         "CENTERS": {
@@ -143,7 +155,6 @@ class CropOnPatchesCommon(ImageTemplatePreprocessor):
             "rightLine": "LINE_OUTER_EDGE",
         },
     }
-    all_dots = ["topLeftDot", "topRightDot", "bottomRightDot", "bottomLeftDot"]
 
     def select_point_from_dot_rect(self, patch_type, dot_rect):
         options = self.options

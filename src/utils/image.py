@@ -2,6 +2,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
+from src.processors.constants import EdgeType
 from src.utils.constants import CLR_BLACK, CLR_DARK_GRAY, CLR_GRAY, CLR_WHITE, TEXT_SIZE
 from src.utils.logger import logger
 
@@ -105,7 +106,9 @@ class ImageUtils:
         return cv2.LUT(image, table)
 
     @staticmethod
-    def get_four_destination_points(ordered_corner_points):
+    def get_destination_points_for_cropping(
+        ordered_corner_points, edge_countours_map=None
+    ):
         (tl, tr, br, bl) = ordered_corner_points
 
         # compute the width of the new image, which will be the
@@ -126,6 +129,8 @@ class ImageUtils:
         # (i.e. top-down view) of the image, again specifying points
         # in the top-left, top-right, bottom-right, and bottom-left
         # order
+
+        # TODO: >> fill edge_countours_map points here
         destination_points = np.array(
             [
                 [0, 0],
@@ -138,25 +143,35 @@ class ImageUtils:
         return destination_points, max_width, max_height
 
     @staticmethod
-    def four_point_transform(image, corner_points):
-        # obtain a consistent order of the points and unpack them
-        # individually
-        ordered_corner_points = ImageUtils.order_four_points(
-            corner_points, dtype="float32"
+    def split_patch_contour_on_corners(patch_corners, bounding_contour=None):
+        ordered_patch_corners = ImageUtils.order_four_points(
+            patch_corners, dtype="float32"
         )
+        tl, tr, br, bl = ordered_patch_corners
+        # First element of each contour should necessarily start & end with a corner point
+        edge_contours_map = {
+            EdgeType.TOP: [tl],
+            EdgeType.RIGHT: [tr],
+            EdgeType.BOTTOM: [br],
+            EdgeType.LEFT: [bl],
+        }
 
-        (
-            destination_points,
-            max_width,
-            max_height,
-        ) = ImageUtils.get_four_destination_points(ordered_corner_points)
-        transform_matrix = cv2.getPerspectiveTransform(
-            ordered_corner_points, destination_points
-        )
-        warped = cv2.warpPerspective(image, transform_matrix, (max_width, max_height))
+        # TODO: loop over boundary points in the bounding_contour and split them according to given corner points
 
-        # return the warped image
-        return warped
+        # Note: Each contour's points should be in the clockwise order
+        # TODO: Need clockwise edge contours: top, right, bottom, left
+        # TODO: Split the page_contour into 4 lines using the corner points
+        # Each contour will at-least contain the two corner points
+
+        # Can also readily generate reference points as per the given corner points(non-shifted)
+
+        # Assure contour always covers the edge points
+        edge_contours_map[EdgeType.TOP].append(tr)
+        edge_contours_map[EdgeType.RIGHT].append(br)
+        edge_contours_map[EdgeType.BOTTOM].append(bl)
+        edge_contours_map[EdgeType.LEFT].append(tl)
+
+        return ordered_patch_corners, edge_contours_map
 
     @staticmethod
     def order_four_points(points, dtype="int"):
