@@ -5,7 +5,8 @@ https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-det
 import cv2
 import numpy as np
 
-from src.processors.interfaces.CropOnIndexPoints import CropOnIndexPoints
+from src.processors.constants import EDGE_TYPES_IN_ORDER
+from src.processors.internal.CropOnIndexPointsCommon import CropOnIndexPointsCommon
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -14,7 +15,7 @@ from src.utils.math import MathUtils
 MIN_PAGE_AREA = 80000
 
 
-class CropPage(CropOnIndexPoints):
+class CropPage(CropOnIndexPointsCommon):
     __is_internal_preprocessor__ = False
 
     def __init__(self, *args, **kwargs):
@@ -32,6 +33,8 @@ class CropPage(CropOnIndexPoints):
 
     def find_corners_and_edges(self, image, file_path):
         config = self.tuning_config
+        options = self.options
+        max_points_per_side = options.get("maxPointsPerSide", None)
 
         _ret, image = cv2.threshold(image, 200, 255, cv2.THRESH_TRUNC)
         image = ImageUtils.normalize(image)
@@ -85,10 +88,26 @@ class CropPage(CropOnIndexPoints):
             raise Exception("Paper boundary not found")
 
         (
-            ordered_corner_points,
+            ordered_page_corners,
             edge_contours_map,
         ) = ImageUtils.split_patch_contour_on_corners(sheet, page_contour)
 
-        logger.info(f"Found page corners: \t {ordered_corner_points}")
+        logger.info(f"Found page corners: \t {ordered_page_corners}")
 
-        return ordered_corner_points, edge_contours_map
+        # Store control points in order
+        control_points, destination_points = [], []
+        for edge_type in EDGE_TYPES_IN_ORDER:
+            edge_contour = edge_contours_map[edge_type]
+            edge_line = MathUtils.select_edge_from_rectangle(
+                ordered_page_corners, edge_type
+            )
+            (
+                edge_control_points,
+                edge_destination_points,
+            ) = ImageUtils.get_control_destination_points_from_contour(
+                edge_contour, edge_line, max_points_per_side
+            )
+            control_points.append(edge_control_points)
+            destination_points.append(edge_destination_points)
+
+        return ordered_page_corners, control_points, destination_points

@@ -1,15 +1,15 @@
 import cv2
 import numpy as np
 
-from src.processors.constants import EDGE_TYPES_IN_ORDER
-from src.processors.interfaces.CropOnIndexPoints import CropOnIndexPoints
+from src.processors.internal.CropOnIndexPointsCommon import CropOnIndexPointsCommon
+from src.utils.constants import CLR_DARK_GREEN
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 from src.utils.math import MathUtils
 
 
-class CropOnPatchesCommon(CropOnIndexPoints):
+class CropOnPatchesCommon(CropOnIndexPointsCommon):
     __is_internal_preprocessor__ = True
 
     # Common code used by both types of croppers
@@ -36,23 +36,39 @@ class CropOnPatchesCommon(CropOnIndexPoints):
         config = self.tuning_config
 
         selectors = self.patch_types_for_layout[options["type"]]
-        patch_selectors, edge_selectors = (
-            selectors["patch_selectors"],
-            selectors["edge_selectors"],
+
+        # TODO: remove the need of patch_selectors at this function level (only use for validation)
+        # patch_selectors, edge_selectors = (
+        #     selectors["patch_selectors"],
+        #     selectors["edge_selectors"],
+        # )
+
+        (
+            control_points,
+            destination_points,
+        ) = (
+            [],
+            [],
         )
+        corner_points = []
+        for patch_type in selectors["patch_selectors"]["DOTS"]:
+            dot_point, destination_point = self.find_and_select_point_from_dot(
+                image, patch_type, file_path
+            )
+            control_points.append(dot_point)
+            destination_points.append(destination_point)
 
-        points_and_edges, corner_points = {}, []
-        for patch_type in patch_selectors["DOTS"]:
-            dot_point = self.select_point_from_dot(patch_type, image, file_path)
-
-            points_and_edges[patch_type] = dot_point
             corner_points.append(dot_point)
 
-        for patch_type in patch_selectors["LINES"]:
-            edge_points, edge_contour = self.select_points_and_edges_from_line(
-                patch_type, image
-            )
-            points_and_edges[patch_type] = [edge_points, edge_contour]
+        for patch_type in selectors["patch_selectors"]["LINES"]:
+            (
+                edge_points,
+                line_control_points,
+                line_destination_points,
+            ) = self.find_and_select_points_from_line(patch_type, image)
+
+            control_points += line_control_points
+            destination_points += line_destination_points
             corner_points += edge_points
 
             if config.outputs.show_image_level >= 5:
@@ -66,28 +82,27 @@ class CropOnPatchesCommon(CropOnIndexPoints):
                     )
                 self.debug_vstack = []
 
-        # First element of each contour should necessarily start & end with a corner point
-        edge_contours_map = {}
-        for edge_type in EDGE_TYPES_IN_ORDER:
-            edge_contours_map[edge_type] = []
-            logger.info(f"{edge_type}: {edge_selectors[edge_type]}")
-            for selector in edge_selectors[edge_type]:
-                logger.info(f"selector={selector}, points_and_edges={points_and_edges}")
-                patch_type, selection_type = (
-                    selector["patch_type"],
-                    selector["selection_type"],
-                )
-                if selection_type == "DOT_PICK_POINT":
-                    dot_point = points_and_edges[patch_type]
-                    edge_contours_map[edge_type].append(dot_point)
-                else:
-                    edge_points, edge_contour = points_and_edges[patch_type]
-                    if selection_type == "LINE_PICK_FIRST_POINT":
-                        edge_contours_map[edge_type].append(edge_points[0])
-                    if selection_type == "LINE_PICK_LAST_POINT":
-                        edge_contours_map[edge_type].append(edge_points[-1])
-                    if selection_type == "LINE_PICK_CONTOUR":
-                        edge_contours_map[edge_type] += edge_contour
+        # # First element of each contour should necessarily start & end with a corner point
+        # edge_contours_map = {}
+        # for edge_type in EDGE_TYPES_IN_ORDER:
+        #     edge_contours_map[edge_type] = []
+        #     logger.info(f"{edge_type}: {edge_selectors[edge_type]}")
+        #     for selector in edge_selectors[edge_type]:
+        #         patch_type, selection_type = (
+        #             selector["patch_type"],
+        #             selector["selection_type"],
+        #         )
+        #         if selection_type == "DOT_PICK_POINT":
+        #             dot_point = points_and_edges[patch_type]
+        #             edge_contours_map[edge_type].append(dot_point)
+        #         else:
+        #             edge_points, edge_contour = points_and_edges[patch_type]
+        #             if selection_type == "LINE_PICK_FIRST_POINT":
+        #                 edge_contours_map[edge_type].append(edge_points[0])
+        #             if selection_type == "LINE_PICK_LAST_POINT":
+        #                 edge_contours_map[edge_type].append(edge_points[-1])
+        #             if selection_type == "LINE_PICK_CONTOUR":
+        #                 edge_contours_map[edge_type] += edge_contour
 
         ordered_corner_points = MathUtils.order_four_points(
             corner_points, dtype="float32"
@@ -104,15 +119,16 @@ class CropOnPatchesCommon(CropOnIndexPoints):
             )
 
             for corner in ordered_corner_points:
-                cv2.rectangle(
+                ImageUtils.draw_box(
                     self.debug_image,
-                    tuple(corner),
-                    (corner[0] + 2, corner[1] + 2),
-                    (20, 255, 20),
-                    2,
+                    corner,
+                    [2, 2],
+                    color=CLR_DARK_GREEN,
+                    thickness=2,
                 )
 
-        return ordered_corner_points, edge_contours_map
+        # return ordered_corner_points, edge_contours_map
+        return ordered_corner_points, control_points, destination_points
 
     default_points_selector_map = {
         "CENTERS": {
@@ -157,13 +173,30 @@ class CropOnPatchesCommon(CropOnIndexPoints):
         },
     }
 
-    def select_point_from_dot_rect(self, patch_type, dot_rect):
+    def find_and_select_point_from_dot(self, image, patch_type, file_path):
         options = self.options
-        points_selector = self.default_points_selector[patch_type]
-        if patch_type in options:
-            points_selector = options[patch_type].get("pointsSelector", points_selector)
+        logger.info(f"options={options}")
 
-        tl, tr, br, bl = dot_rect
+        # Note: dot_description is computed at runtime(e.g. for CropOnMarkers with default quadrants)
+        dot_rect, dot_description = self.find_dot_corners_from_options(
+            image, patch_type, file_path
+        )
+
+        points_selector = self.default_points_selector[patch_type]
+        points_selector = dot_description.get("pointsSelector", points_selector)
+
+        dot_point = self.select_point_from_rectangle(dot_rect, points_selector)
+
+        destination_rect = self.compute_scan_area_destination_rect(dot_description)
+        destination_point = self.select_point_from_rectangle(
+            destination_rect, points_selector
+        )
+
+        return dot_point, destination_point
+
+    @staticmethod
+    def select_point_from_rectangle(rectangle, points_selector):
+        tl, tr, br, bl = rectangle
         if points_selector == "DOT_TOP_LEFT":
             return tl
         if points_selector == "DOT_TOP_RIGHT":
@@ -179,7 +212,13 @@ class CropOnPatchesCommon(CropOnIndexPoints):
             ]
         return None
 
-    def compute_scan_area(self, image, area_description):
+    def compute_scan_area_destination_rect(self, area_description):
+        x, y = area_description["origin"]
+        w, h = area_description["dimensions"]
+        return MathUtils.get_rectangle_points(x, y, w, h)
+
+    def compute_scan_area_util(self, image, area_description):
+        logger.info(f"area_description={area_description}")
         # parse arguments
         h, w = image.shape[:2]
         origin, dimensions, margins = map(
@@ -188,12 +227,12 @@ class CropOnPatchesCommon(CropOnIndexPoints):
 
         # compute area and clip to image dimensions
         area_start = [
-            max(0, origin[0] - margins["horizontal"]),
-            max(0, origin[1] - margins["vertical"]),
+            max(0, int(origin[0] - margins["horizontal"])),
+            max(0, int(origin[1] - margins["vertical"])),
         ]
         area_end = [
-            min(w, origin[0] + margins["horizontal"] + dimensions[0]),
-            min(h, origin[1] + margins["vertical"] + dimensions[1]),
+            min(w, int(origin[0] + margins["horizontal"] + dimensions[0])),
+            min(h, int(origin[1] + margins["vertical"] + dimensions[1])),
         ]
 
         if (
@@ -211,13 +250,11 @@ class CropOnPatchesCommon(CropOnIndexPoints):
 
         config = self.tuning_config
         if config.outputs.show_image_level >= 1:
-            h, w = area.shape[:2]
-            cv2.rectangle(
+            ImageUtils.draw_box(
                 self.debug_image,
-                tuple(area_start),
-                (area_start[0] + w, area_start[1] + h),
-                (20, 255, 20),
-                2,
+                area_start,
+                area.shape[:2],
+                color=CLR_DARK_GREEN,
+                thickness=2,
             )
-
         return area, np.array(area_start)

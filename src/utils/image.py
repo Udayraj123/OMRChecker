@@ -107,16 +107,24 @@ class ImageUtils:
         return cv2.LUT(image, table)
 
     @staticmethod
-    def get_contour_to_destination_line_points_mapping(
+    def get_control_destination_points_from_contour(
         edge_contour, edge_line, max_points=None
     ):
+        logger.info(f"edge_contour={edge_contour}")
+        logger.info(f"edge_line={edge_line}")
         total_points = len(edge_contour)
         if max_points is None:
             max_points = total_points
         start, end = edge_line
-        contour_length = cv2.arcLength(edge_contour)
 
-        average_min_gap = contour_length / max_points
+        contour_length = 0
+        for i in range(1, total_points):
+            contour_length += MathUtils.distance(edge_contour[i], edge_contour[i - 1])
+
+        # TODO: replace with this if the assertion passes on uncommenting
+        # contour_length = cv2.arcLength(edge_contour)
+
+        average_min_gap = (contour_length / (max_points - 1)) - 1
 
         # Initialize with first point mapping
         control_points, destination_points = [edge_contour[0]], [start]
@@ -129,12 +137,12 @@ class ImageUtils:
             current_arc_gap += edge_length
             if current_arc_gap > average_min_gap:
                 current_arc_gap = 0
-                control_points.append(boundary_point)
                 current_arc_length += edge_length
                 length_ratio = current_arc_length / contour_length
                 destination_point = MathUtils.get_point_on_line_by_ratio(
                     edge_line, length_ratio
                 )
+                control_points.append(boundary_point)
                 destination_points.append(destination_point)
 
         assert current_arc_length == contour_length
@@ -143,9 +151,7 @@ class ImageUtils:
         return control_points, destination_points
 
     @staticmethod
-    def get_destination_points_for_cropping(
-        ordered_corner_points, edge_countours_map=None
-    ):
+    def get_cropped_rectangle_destination_points(ordered_corner_points):
         (tl, tr, br, bl) = ordered_corner_points
 
         length_t = MathUtils.distance(tr, tl)
@@ -163,7 +169,6 @@ class ImageUtils:
         # the set of destination points to obtain a "birds eye view",
         # (i.e. top-down view) of the image
 
-        # TODO: >> fill edge_countours_map points here
         destination_points = np.array(
             [
                 [0, 0],
@@ -174,11 +179,8 @@ class ImageUtils:
             dtype="float32",
         )
 
-        # Assume clockwise-sorted points are provided in edge_contours_map
-
-        control_points = ordered_corner_points
-
-        return control_points, destination_points, max_width, max_height
+        rectangle_dimensions = (max_width, max_height)
+        return destination_points, rectangle_dimensions
 
     @staticmethod
     def split_patch_contour_on_corners(patch_corners, bounding_contour=None):
@@ -279,6 +281,22 @@ class ImageUtils:
         return white, bounding_box
 
     @staticmethod
+    def draw_box_diagonal(
+        image,
+        position,
+        position_diagonal,
+        color=CLR_DARK_GRAY,
+        border=3,
+    ):
+        cv2.rectangle(
+            image,
+            position,
+            position_diagonal,
+            color,
+            border,
+        )
+
+    @staticmethod
     def draw_box(
         image,
         position,
@@ -299,6 +317,7 @@ class ImageUtils:
             int(x + box_w - box_w * thickness_factor),
             int(y + box_h - box_h * thickness_factor),
         )
+
         if style == "BOX_HOLLOW":
             if color is None:
                 color = CLR_GRAY
@@ -306,8 +325,7 @@ class ImageUtils:
             if color is None:
                 color = CLR_DARK_GRAY
             border = -1
-
-        cv2.rectangle(
+        ImageUtils.draw_box_diagonal(
             image,
             position,
             position_diagonal,

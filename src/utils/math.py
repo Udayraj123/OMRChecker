@@ -2,6 +2,7 @@ import math
 
 import numpy as np
 
+from src.processors.constants import EdgeType
 from src.utils.logger import logger
 
 
@@ -12,6 +13,18 @@ class MathUtils:
     @staticmethod
     def distance(point1, point2):
         return math.hypot(point1[0] - point2[0], point1[1] - point2[1])
+
+    @staticmethod
+    def shift_origin_for_points(new_origin, list_of_points):
+        return list(
+            map(
+                lambda point: [
+                    new_origin[0] + point[0],
+                    new_origin[1] + point[1],
+                ]
+            ),
+            list_of_points,
+        )
 
     @staticmethod
     def get_point_on_line_by_ratio(edge_line, length_ratio):
@@ -35,7 +48,7 @@ class MathUtils:
         rect[1] = points[np.argmin(diff)]
         rect[3] = points[np.argmax(diff)]
 
-        # return the ordered coordinates (tl, tr, br, bl)
+        # returns the ordered coordinates (tl, tr, br, bl)
         return rect
 
     @staticmethod
@@ -53,6 +66,19 @@ class MathUtils:
                 [x, y + h],
             ]
         )
+
+    @staticmethod
+    def select_edge_from_rectangle(rectangle, edge_type):
+        tl, tr, br, bl = rectangle
+        if edge_type == EdgeType.TOP:
+            return [tl, tr]
+        if edge_type == EdgeType.RIGHT:
+            return [tr, br]
+        if edge_type == EdgeType.BOTTOM:
+            return [br, bl]
+        if edge_type == EdgeType.LEFT:
+            return [bl, tl]
+        return [tl, tr]
 
     @staticmethod
     def check_max_cosine(approx):

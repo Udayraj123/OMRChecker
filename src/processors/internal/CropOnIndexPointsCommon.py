@@ -14,7 +14,7 @@ from src.utils.logger import logger
 
 
 # Internal Processor for separation of code
-class CropOnIndexPoints(ImageTemplatePreprocessor):
+class CropOnIndexPointsCommon(ImageTemplatePreprocessor):
     __is_internal_preprocessor__ = True
 
     def __init__(self, *args, **kwargs):
@@ -35,7 +35,6 @@ class CropOnIndexPoints(ImageTemplatePreprocessor):
 
     def apply_filter(self, image, colored_image, _template, file_path):
         config = self.tuning_config
-        cropping_enabled = config.get("enableCropping", False)
 
         self.debug_image = image.copy()
         self.debug_hstack = []
@@ -46,36 +45,48 @@ class CropOnIndexPoints(ImageTemplatePreprocessor):
         # TODO: Save intuitive meta data
         # self.append_save_image(3,warped_image)
 
-        # cropping_enabled: destination points based on relative origin(extracted, topLeftDot) and a bounding box
-        ordered_corner_points, edge_contours_map = self.find_corners_and_edges(
-            image, file_path
-        )
-
-        # For page contour: split the contour between the approx corners somehow
         (
+            ordered_corner_points,
             control_points,
             destination_points,
-            max_width,
-            max_height,
-        ) = ImageUtils.get_control_and_destination_points(
-            ordered_corner_points, edge_contours_map
+        ) = self.find_corners_and_edges(image, file_path)
+
+        # Bounding box things here
+        # enable_cropping = config.get("enableCropping", False)
+        # (
+        #     ordered_control_points,
+        #     ordered_destination_points,
+        #     max_width,
+        #     max_height,
+        #     # Also order the points based on center of the corner points: clockwise direction, with radially closer points first
+        #     # if enable_cropping is true
+        #     #   get bounding box on the destination points (with validation?)
+        #     #   Also change origin of destination points
+        # ) = ImageUtils.get_ordered_and_shifted_control_destination_points(
+        #     ordered_corner_points, control_points, destination_points, enable_cropping
+        # )
+        ordered_control_points = ordered_corner_points
+        (
+            ordered_destination_points,
+            rectangle_dimensions,
+        ) = ImageUtils.get_cropped_rectangle_destination_points(ordered_corner_points)
+        logger.info(
+            f"control_points={control_points}, destination_points={destination_points}, rectangle_dimensions={rectangle_dimensions}"
         )
-        logger.info(f"destination_points={destination_points}, max_width={max_width}")
 
         # Find and pass control points in a defined order
-        # For dots/lines: clockwise direction, with radially closer points first
         transform_matrix = cv2.getPerspectiveTransform(
-            control_points, destination_points
+            ordered_control_points, ordered_destination_points
         )
 
         # Crop the image
         warped_image = cv2.warpPerspective(
-            image, transform_matrix, (max_width, max_height)
+            image, transform_matrix, rectangle_dimensions
         )
 
         if config.outputs.show_colored_outputs:
             colored_image = cv2.warpPerspective(
-                colored_image, transform_matrix, (max_width, max_height)
+                colored_image, transform_matrix, rectangle_dimensions
             )
 
         # self.append_save_image(1,warped_image)
