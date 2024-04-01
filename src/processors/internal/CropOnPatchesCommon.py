@@ -35,13 +35,7 @@ class CropOnPatchesCommon(CropOnIndexPointsCommon):
         options = self.options
         config = self.tuning_config
 
-        selectors = self.patch_types_for_layout[options["type"]]
-
-        # TODO: remove the need of patch_selectors at this function level (only use for validation)
-        # patch_selectors, edge_selectors = (
-        #     selectors["patch_selectors"],
-        #     selectors["edge_selectors"],
-        # )
+        patch_selectors = self.patch_types_for_layout[options["type"]]
 
         (
             control_points,
@@ -51,7 +45,7 @@ class CropOnPatchesCommon(CropOnIndexPointsCommon):
             [],
         )
         corner_points = []
-        for patch_type in selectors["patch_selectors"]["DOTS"]:
+        for patch_type in patch_selectors["DOTS"]:
             dot_point, destination_point = self.find_and_select_point_from_dot(
                 image, patch_type, file_path
             )
@@ -60,7 +54,7 @@ class CropOnPatchesCommon(CropOnIndexPointsCommon):
 
             corner_points.append(dot_point)
 
-        for patch_type in selectors["patch_selectors"]["LINES"]:
+        for patch_type in patch_selectors["LINES"]:
             (
                 edge_points,
                 line_control_points,
@@ -81,28 +75,6 @@ class CropOnPatchesCommon(CropOnIndexPointsCommon):
                         config=config,
                     )
                 self.debug_vstack = []
-
-        # # First element of each contour should necessarily start & end with a corner point
-        # edge_contours_map = {}
-        # for edge_type in EDGE_TYPES_IN_ORDER:
-        #     edge_contours_map[edge_type] = []
-        #     logger.info(f"{edge_type}: {edge_selectors[edge_type]}")
-        #     for selector in edge_selectors[edge_type]:
-        #         patch_type, selection_type = (
-        #             selector["patch_type"],
-        #             selector["selection_type"],
-        #         )
-        #         if selection_type == "DOT_PICK_POINT":
-        #             dot_point = points_and_edges[patch_type]
-        #             edge_contours_map[edge_type].append(dot_point)
-        #         else:
-        #             edge_points, edge_contour = points_and_edges[patch_type]
-        #             if selection_type == "LINE_PICK_FIRST_POINT":
-        #                 edge_contours_map[edge_type].append(edge_points[0])
-        #             if selection_type == "LINE_PICK_LAST_POINT":
-        #                 edge_contours_map[edge_type].append(edge_points[-1])
-        #             if selection_type == "LINE_PICK_CONTOUR":
-        #                 edge_contours_map[edge_type] += edge_contour
 
         ordered_corner_points = MathUtils.order_four_points(
             corner_points, dtype="float32"

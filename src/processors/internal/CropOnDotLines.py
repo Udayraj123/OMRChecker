@@ -13,132 +13,17 @@ class CropOnDotLines(CropOnPatchesCommon):
 
     patch_types_for_layout = {
         "ONE_LINE_TWO_DOTS": {
-            "patch_selectors": {
-                "LINES": ["leftLine"],
-                "DOTS": ["topRightDot", "bottomRightDot"],
-            },
-            # "edge_selectors": {
-            #     EdgeType.TOP: [
-            #         # Note: points in leftLine are also in clockwise order
-            #         {
-            #             "patch_type": "leftLine",
-            #             "selection_type": "LINE_PICK_LAST_POINT",
-            #         },
-            #         {"patch_type": "topRightDot", "selection_type": "DOT_PICK_POINT"},
-            #     ],
-            #     EdgeType.RIGHT: [
-            #         {"patch_type": "topRightDot", "selection_type": "DOT_PICK_POINT"},
-            #         {
-            #             "patch_type": "bottomRightDot",
-            #             "selection_type": "DOT_PICK_POINT",
-            #         },
-            #     ],
-            #     EdgeType.BOTTOM: [
-            #         {
-            #             "patch_type": "bottomRightDot",
-            #             "selection_type": "DOT_PICK_POINT",
-            #         },
-            #         {
-            #             "patch_type": "leftLine",
-            #             "selection_type": "LINE_PICK_FIRST_POINT",
-            #         },
-            #     ],
-            #     EdgeType.LEFT: [
-            #         # TODO: add a config for selecting only first and last (if contour method is not enabled)
-            #         {"patch_type": "leftLine", "selection_type": "LINE_PICK_CONTOUR"},
-            #     ],
-            # },
+            "LINES": ["leftLine"],
+            "DOTS": ["topRightDot", "bottomRightDot"],
         },
         "TWO_DOTS_ONE_LINE": {
-            "patch_selectors": {
-                "LINES": ["rightLine"],
-                "DOTS": ["topLeftDot", "bottomLeftDot"],
-            },
-            # "edge_selectors": {
-            #     EdgeType.TOP: [
-            #         {"patch_type": "topLeftDot", "selection_type": "DOT_PICK_POINT"},
-            #         {
-            #             "patch_type": "rightLine",
-            #             "selection_type": "LINE_PICK_FIRST_POINT",
-            #         },
-            #     ],
-            #     EdgeType.RIGHT: [
-            #         # TODO: add a config for selecting only first and last (if contour method is not enabled)
-            #         {"patch_type": "rightLine", "selection_type": "LINE_PICK_CONTOUR"},
-            #     ],
-            #     EdgeType.BOTTOM: [
-            #         {
-            #             "patch_type": "rightLine",
-            #             "selection_type": "LINE_PICK_LAST_POINT",
-            #         },
-            #         {"patch_type": "bottomLeftDot", "selection_type": "DOT_PICK_POINT"},
-            #     ],
-            #     EdgeType.LEFT: [
-            #         {"patch_type": "bottomLeftDot", "selection_type": "DOT_PICK_POINT"},
-            #         {"patch_type": "topLeftDot", "selection_type": "DOT_PICK_POINT"},
-            #     ],
-            # },
+            "LINES": ["rightLine"],
+            "DOTS": ["topLeftDot", "bottomLeftDot"],
         },
-        "TWO_LINES": {
-            "patch_selectors": {"LINES": ["leftLine", "rightLine"], "DOTS": []},
-            # "edge_selectors": {
-            #     EdgeType.TOP: [
-            #         {
-            #             "patch_type": "leftLine",
-            #             "selection_type": "LINE_PICK_LAST_POINT",
-            #         },
-            #         {
-            #             "patch_type": "rightLine",
-            #             "selection_type": "LINE_PICK_FIRST_POINT",
-            #         },
-            #     ],
-            #     EdgeType.RIGHT: [
-            #         {"patch_type": "rightLine", "selection_type": "LINE_PICK_CONTOUR"},
-            #     ],
-            #     EdgeType.BOTTOM: [
-            #         {
-            #             "patch_type": "rightLine",
-            #             "selection_type": "LINE_PICK_LAST_POINT",
-            #         },
-            #         {
-            #             "patch_type": "leftLine",
-            #             "selection_type": "LINE_PICK_FIRST_POINT",
-            #         },
-            #     ],
-            #     EdgeType.LEFT: [
-            #         {"patch_type": "leftLine", "selection_type": "LINE_PICK_CONTOUR"},
-            #     ],
-            # },
-        },
+        "TWO_LINES": {"LINES": ["leftLine", "rightLine"], "DOTS": []},
         "FOUR_DOTS": {
-            "patch_selectors": {
-                "LINES": [],
-                "DOTS": DOTS_IN_ORDER,
-            },
-            # "edge_selectors": {
-            #     EdgeType.TOP: [
-            #         {"patch_type": "topLeftDot", "selection_type": "DOT_PICK_POINT"},
-            #         {"patch_type": "topRightDot", "selection_type": "DOT_PICK_POINT"},
-            #     ],
-            #     EdgeType.RIGHT: [
-            #         {"patch_type": "topRightDot", "selection_type": "DOT_PICK_POINT"},
-            #         {
-            #             "patch_type": "bottomRightDot",
-            #             "selection_type": "DOT_PICK_POINT",
-            #         },
-            #     ],
-            #     EdgeType.BOTTOM: [
-            #         {
-            #             "patch_type": "bottomRightDot",
-            #             "selection_type": "DOT_PICK_POINT",
-            #         },
-            #         {"patch_type": "bottomLeftDot", "selection_type": "DOT_PICK_POINT"},
-            #     ],
-            #     EdgeType.LEFT: [
-            #         {"patch_type": "bottomLeftDot", "selection_type": "DOT_PICK_POINT"},
-            #         {"patch_type": "topLeftDot", "selection_type": "DOT_PICK_POINT"},
-            #     ],
-            # },
+            "LINES": [],
+            "DOTS": DOTS_IN_ORDER,
         },
     }
 

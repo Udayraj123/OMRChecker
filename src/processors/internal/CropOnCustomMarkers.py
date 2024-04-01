@@ -17,33 +17,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
     __is_internal_preprocessor__ = True
     patch_types_for_layout = {
         # Note: this will match with the FOUR_DOTS configuration
-        "CUSTOM_MARKER": {
-            "patch_selectors": {"DOTS": DOTS_IN_ORDER, "LINES": []},
-            # "edge_selectors": {
-            #     EdgeType.TOP: [
-            #         {"patch_type": "topLeftDot", "selection_type": "DOT_PICK_POINT"},
-            #         {"patch_type": "topRightDot", "selection_type": "DOT_PICK_POINT"},
-            #     ],
-            #     EdgeType.RIGHT: [
-            #         {"patch_type": "topRightDot", "selection_type": "DOT_PICK_POINT"},
-            #         {
-            #             "patch_type": "bottomRightDot",
-            #             "selection_type": "DOT_PICK_POINT",
-            #         },
-            #     ],
-            #     EdgeType.BOTTOM: [
-            #         {
-            #             "patch_type": "bottomRightDot",
-            #             "selection_type": "DOT_PICK_POINT",
-            #         },
-            #         {"patch_type": "bottomLeftDot", "selection_type": "DOT_PICK_POINT"},
-            #     ],
-            #     EdgeType.LEFT: [
-            #         {"patch_type": "bottomLeftDot", "selection_type": "DOT_PICK_POINT"},
-            #         {"patch_type": "topLeftDot", "selection_type": "DOT_PICK_POINT"},
-            #     ],
-            # },
-        }
+        "CUSTOM_MARKER": {"DOTS": DOTS_IN_ORDER, "LINES": []}
     }
 
     def __init__(self, *args, **kwargs):
