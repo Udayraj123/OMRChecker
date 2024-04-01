@@ -35,6 +35,7 @@ class CropOnIndexPoints(ImageTemplatePreprocessor):
 
     def apply_filter(self, image, colored_image, _template, file_path):
         config = self.tuning_config
+        cropping_enabled = config.get("enableCropping", False)
 
         self.debug_image = image.copy()
         self.debug_hstack = []
@@ -45,25 +46,26 @@ class CropOnIndexPoints(ImageTemplatePreprocessor):
         # TODO: Save intuitive meta data
         # self.append_save_image(3,warped_image)
 
-        # Find control points in a defined order
-        # For dots/lines: clockwise direction, with radially closer points first
-        # For page contour: split the contour between the approx corners somehow
-
+        # cropping_enabled: destination points based on relative origin(extracted, topLeftDot) and a bounding box
         ordered_corner_points, edge_contours_map = self.find_corners_and_edges(
             image, file_path
         )
 
+        # For page contour: split the contour between the approx corners somehow
         (
+            control_points,
             destination_points,
             max_width,
             max_height,
-        ) = ImageUtils.get_destination_points_for_cropping(
+        ) = ImageUtils.get_control_and_destination_points(
             ordered_corner_points, edge_contours_map
         )
         logger.info(f"destination_points={destination_points}, max_width={max_width}")
 
+        # Find and pass control points in a defined order
+        # For dots/lines: clockwise direction, with radially closer points first
         transform_matrix = cv2.getPerspectiveTransform(
-            ordered_corner_points, destination_points
+            control_points, destination_points
         )
 
         # Crop the image

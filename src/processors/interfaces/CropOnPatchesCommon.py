@@ -6,6 +6,7 @@ from src.processors.interfaces.CropOnIndexPoints import CropOnIndexPoints
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
+from src.utils.math import MathUtils
 
 
 class CropOnPatchesCommon(CropOnIndexPoints):
@@ -88,7 +89,7 @@ class CropOnPatchesCommon(CropOnIndexPoints):
                     if selection_type == "LINE_PICK_CONTOUR":
                         edge_contours_map[edge_type] += edge_contour
 
-        ordered_corner_points = ImageUtils.order_four_points(
+        ordered_corner_points = MathUtils.order_four_points(
             corner_points, dtype="float32"
         )
 

@@ -9,6 +9,7 @@ from src.processors.interfaces.CropOnIndexPoints import CropOnIndexPoints
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
+from src.utils.math import MathUtils
 
 MIN_PAGE_AREA = 80000
 
@@ -63,7 +64,7 @@ class CropPage(CropOnIndexPoints):
             approx = cv2.approxPolyDP(
                 bounding_contour, epsilon=0.025 * peri, closed=True
             )
-            if ImageUtils.validate_rect(approx):
+            if MathUtils.validate_rect(approx):
                 sheet = np.reshape(approx, (4, -1))
                 page_contour = bounding_contour
                 cv2.drawContours(canny_edge, [approx], -1, (255, 255, 255), 10)

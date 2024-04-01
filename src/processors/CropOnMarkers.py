@@ -11,6 +11,7 @@ from src.processors.interfaces.ImageTemplatePreprocessor import (
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
+from src.utils.math import MathUtils
 
 
 # TODO: add support for showing patch areas during setLayout option?!
@@ -189,7 +190,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
 
         h, w = optimal_marker.shape[:2]
         y, x = np.argwhere(res == match_max)[0]
-        patch_corners = ImageUtils.get_rectangle_points(x, y, w, h)
+        patch_corners = MathUtils.get_rectangle_points(x, y, w, h)
 
         # TODO: reuse bottom code
         absolute_corners = list(
@@ -543,7 +544,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         if patch_type == "dot":
             # Bounding rectangle will not be rotated
             x, y, w, h = cv2.boundingRect(bounding_contour)
-            patch_corners = ImageUtils.get_rectangle_points(x, y, w, h)
+            patch_corners = MathUtils.get_rectangle_points(x, y, w, h)
             (
                 ordered_patch_corners,
                 edge_contours_map,

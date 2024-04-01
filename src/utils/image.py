@@ -5,6 +5,7 @@ import numpy as np
 from src.processors.constants import EdgeType
 from src.utils.constants import CLR_BLACK, CLR_DARK_GRAY, CLR_GRAY, CLR_WHITE, TEXT_SIZE
 from src.utils.logger import logger
+from src.utils.math import MathUtils
 
 plt.rcParams["figure.figsize"] = (10.0, 8.0)
 CLAHE_HELPER = cv2.createCLAHE(clipLimit=5.0, tileGridSize=(8, 8))
@@ -106,29 +107,61 @@ class ImageUtils:
         return cv2.LUT(image, table)
 
     @staticmethod
+    def get_contour_to_destination_line_points_mapping(
+        edge_contour, edge_line, max_points=None
+    ):
+        total_points = len(edge_contour)
+        if max_points is None:
+            max_points = total_points
+        start, end = edge_line
+        contour_length = cv2.arcLength(edge_contour)
+
+        average_min_gap = contour_length / max_points
+
+        # Initialize with first point mapping
+        control_points, destination_points = [edge_contour[0]], [start]
+        current_arc_length = 0
+        current_arc_gap = 0
+        previous_point = None
+        for i in range(1, total_points):
+            boundary_point, previous_point = edge_contour[i], edge_contour[i - 1]
+            edge_length = MathUtils.distance(previous_point, boundary_point)
+            current_arc_gap += edge_length
+            if current_arc_gap > average_min_gap:
+                current_arc_gap = 0
+                control_points.append(boundary_point)
+                current_arc_length += edge_length
+                length_ratio = current_arc_length / contour_length
+                destination_point = MathUtils.get_point_on_line_by_ratio(
+                    edge_line, length_ratio
+                )
+                destination_points.append(destination_point)
+
+        assert current_arc_length == contour_length
+        assert MathUtils.distance(destination_points[-1], end) < 1.0
+
+        return control_points, destination_points
+
+    @staticmethod
     def get_destination_points_for_cropping(
         ordered_corner_points, edge_countours_map=None
     ):
         (tl, tr, br, bl) = ordered_corner_points
 
-        # compute the width of the new image, which will be the
-        width_a = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
-        width_b = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
+        length_t = MathUtils.distance(tr, tl)
+        length_b = MathUtils.distance(br, bl)
+        length_r = MathUtils.distance(tr, br)
+        length_l = MathUtils.distance(tl, bl)
 
-        max_width = max(int(width_a), int(width_b))
-        # max_width = max(int(np.linalg.norm(br-bl)), int(np.linalg.norm(tr-tl)))
+        # compute the width of the new image, which will be the
+        max_width = max(int(length_t), int(length_b))
 
         # compute the height of the new image, which will be the
-        height_a = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
-        height_b = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
-        max_height = max(int(height_a), int(height_b))
-        # max_height = max(int(np.linalg.norm(tr-br)), int(np.linalg.norm(tl-br)))
+        max_height = max(int(length_r), int(length_l))
 
         # now that we have the dimensions of the new image, construct
         # the set of destination points to obtain a "birds eye view",
-        # (i.e. top-down view) of the image, again specifying points
-        # in the top-left, top-right, bottom-right, and bottom-left
-        # order
+        # (i.e. top-down view) of the image
 
         # TODO: >> fill edge_countours_map points here
         destination_points = np.array(
@@ -140,11 +173,16 @@ class ImageUtils:
             ],
             dtype="float32",
         )
-        return destination_points, max_width, max_height
+
+        # Assume clockwise-sorted points are provided in edge_contours_map
+
+        control_points = ordered_corner_points
+
+        return control_points, destination_points, max_width, max_height
 
     @staticmethod
     def split_patch_contour_on_corners(patch_corners, bounding_contour=None):
-        ordered_patch_corners = ImageUtils.order_four_points(
+        ordered_patch_corners = MathUtils.order_four_points(
             patch_corners, dtype="float32"
         )
         tl, tr, br, bl = ordered_patch_corners
@@ -172,64 +210,6 @@ class ImageUtils:
         edge_contours_map[EdgeType.LEFT].append(tl)
 
         return ordered_patch_corners, edge_contours_map
-
-    @staticmethod
-    def order_four_points(points, dtype="int"):
-        points = np.array(points)
-        rect = np.zeros((4, 2), dtype=dtype)
-
-        # the top-left point will have the smallest sum, whereas
-        # the bottom-right point will have the largest sum
-        s = points.sum(axis=1)
-        rect[0] = points[np.argmin(s)]
-        rect[2] = points[np.argmax(s)]
-        diff = np.diff(points, axis=1)
-        rect[1] = points[np.argmin(diff)]
-        rect[3] = points[np.argmax(diff)]
-
-        # return the ordered coordinates (tl, tr, br, bl)
-        return rect
-
-    @staticmethod
-    def validate_rect(approx):
-        return len(approx) == 4 and ImageUtils.check_max_cosine(approx.reshape(4, 2))
-
-    @staticmethod
-    def get_rectangle_points(x, y, w, h):
-        # order same as order_four_points: (tl, tr, br, bl)
-        return np.intp(
-            [
-                [x, y],
-                [x + w, y],
-                [x + w, y + h],
-                [x, y + h],
-            ]
-        )
-
-    @staticmethod
-    def check_max_cosine(approx):
-        # assumes 4 points present
-        max_cosine = 0
-        min_cosine = 1.5
-        for i in range(2, 5):
-            cosine = abs(ImageUtils.angle(approx[i % 4], approx[i - 2], approx[i - 1]))
-            max_cosine = max(cosine, max_cosine)
-            min_cosine = min(cosine, min_cosine)
-
-        if max_cosine >= 0.35:
-            logger.warning("Quadrilateral is not a rectangle.")
-            return False
-        return True
-
-    @staticmethod
-    def angle(p_1, p_2, p_0):
-        dx1 = float(p_1[0] - p_0[0])
-        dy1 = float(p_1[1] - p_0[1])
-        dx2 = float(p_2[0] - p_0[0])
-        dy2 = float(p_2[1] - p_0[1])
-        return (dx1 * dx2 + dy1 * dy2) / np.sqrt(
-            (dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2) + 1e-10
-        )
 
     @staticmethod
     def get_vstack_image_grid(debug_vstack):
@@ -340,15 +320,17 @@ class ImageUtils:
         image,
         text_value,
         position,
-        font=cv2.FONT_HERSHEY_SIMPLEX,
+        font_face=cv2.FONT_HERSHEY_SIMPLEX,
         text_size=TEXT_SIZE,
         color=CLR_BLACK,
         thickness=2,
+        # available LineTypes: FILLED, LINE_4, LINE_8, LINE_AA
+        line_type=cv2.LINE_AA,
     ):
         if callable(position):
             size_x, size_y = cv2.getTextSize(
                 text_value,
-                font,
+                font_face,
                 text_size,
                 thickness,
             )[0]
@@ -358,8 +340,9 @@ class ImageUtils:
             image,
             text_value,
             position,
-            font,
+            font_face,
             text_size,
             color,
             thickness,
+            lineType=line_type,
         )
