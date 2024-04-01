@@ -62,7 +62,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         ) = ImageUtils.get_control_destination_points_from_contour(
             edge_contour, edge_line, max_points
         )
-        return control_points, destination_points
+        return edge_line, control_points, destination_points
 
     @staticmethod
     def select_contour_and_edge_from_patch_area(
@@ -185,7 +185,6 @@ class CropOnDotLines(CropOnPatchesCommon):
         if len(all_contours) == 0:
             return None, None
         ordered_patch_corners, edge_contours_map = None, None
-
         bounding_contour = sorted(all_contours, key=cv2.contourArea, reverse=True)[0]
 
         if patch_type == "dot":
@@ -212,7 +211,7 @@ class CropOnDotLines(CropOnPatchesCommon):
             )
 
         # TODO: Give a warning if given dimensions differ from matched block size
-        cv2.drawContours(edge, [ordered_patch_corners], -1, (200, 200, 200), 2)
+        cv2.drawContours(edge, [np.intp(ordered_patch_corners)], -1, (200, 200, 200), 2)
 
         if config.outputs.show_image_level >= 5:
             self.debug_hstack += [area, edge]

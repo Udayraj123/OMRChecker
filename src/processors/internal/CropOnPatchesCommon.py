@@ -56,14 +56,14 @@ class CropOnPatchesCommon(CropOnIndexPointsCommon):
 
         for patch_type in patch_selectors["LINES"]:
             (
-                edge_points,
+                edge_line,
                 line_control_points,
                 line_destination_points,
             ) = self.find_and_select_points_from_line(patch_type, image)
 
             control_points += line_control_points
             destination_points += line_destination_points
-            corner_points += edge_points
+            corner_points += edge_line
 
             if config.outputs.show_image_level >= 5:
                 if len(self.debug_vstack) > 0:
@@ -146,10 +146,7 @@ class CropOnPatchesCommon(CropOnIndexPointsCommon):
     }
 
     def find_and_select_point_from_dot(self, image, patch_type, file_path):
-        options = self.options
-        logger.info(f"options={options}")
-
-        # Note: dot_description is computed at runtime(e.g. for CropOnMarkers with default quadrants)
+        # Note: dot_description is computed at runtime(e.g. for CropOnCustomMarkers with default quadrants)
         dot_rect, dot_description = self.find_dot_corners_from_options(
             image, patch_type, file_path
         )
@@ -190,7 +187,6 @@ class CropOnPatchesCommon(CropOnIndexPointsCommon):
         return MathUtils.get_rectangle_points(x, y, w, h)
 
     def compute_scan_area_util(self, image, area_description):
-        logger.info(f"area_description={area_description}")
         # parse arguments
         h, w = image.shape[:2]
         origin, dimensions, margins = map(
