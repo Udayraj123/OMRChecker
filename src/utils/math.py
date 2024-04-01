@@ -21,9 +21,9 @@ class MathUtils:
                 lambda point: [
                     new_origin[0] + point[0],
                     new_origin[1] + point[1],
-                ]
-            ),
-            list_of_points,
+                ],
+                list_of_points,
+            )
         )
 
     @staticmethod

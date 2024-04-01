@@ -124,7 +124,7 @@ class CropOnPatchesCommon(CropOnIndexPointsCommon):
                     corner,
                     [2, 2],
                     color=CLR_DARK_GREEN,
-                    thickness=2,
+                    border=2,
                 )
 
         # return ordered_corner_points, edge_contours_map
@@ -250,11 +250,11 @@ class CropOnPatchesCommon(CropOnIndexPointsCommon):
 
         config = self.tuning_config
         if config.outputs.show_image_level >= 1:
-            ImageUtils.draw_box(
+            ImageUtils.draw_box_diagonal(
                 self.debug_image,
                 area_start,
-                area.shape[:2],
+                area_end,
                 color=CLR_DARK_GREEN,
-                thickness=2,
+                border=2,
             )
         return area, np.array(area_start)

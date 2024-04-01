@@ -21,7 +21,7 @@ import numpy as np
 from matplotlib import colormaps
 
 from src.algorithm.detection import BubbleMeanValue, FieldStdMeanValue
-from src.utils.constants import CLR_BLACK, MARKED_TEMPLATE_ALPHA, TEXT_SIZE
+from src.utils.constants import CLR_BLACK, MARKED_TEMPLATE_TRANSPARENCY, TEXT_SIZE
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -596,9 +596,9 @@ class ImageInstanceOps:
         # Translucent
         cv2.addWeighted(
             marked_image,
-            MARKED_TEMPLATE_ALPHA,
+            MARKED_TEMPLATE_TRANSPARENCY,
             transparent_layer,
-            1 - MARKED_TEMPLATE_ALPHA,
+            1 - MARKED_TEMPLATE_TRANSPARENCY,
             0,
             marked_image,
         )

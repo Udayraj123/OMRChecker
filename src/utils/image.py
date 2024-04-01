@@ -110,8 +110,7 @@ class ImageUtils:
     def get_control_destination_points_from_contour(
         edge_contour, edge_line, max_points=None
     ):
-        logger.info(f"edge_contour={edge_contour}")
-        logger.info(f"edge_line={edge_line}")
+        logger.info(f"edge_contour={edge_contour}, edge_line={edge_line}")
         total_points = len(edge_contour)
         if max_points is None:
             max_points = total_points

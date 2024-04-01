@@ -5,6 +5,7 @@ import numpy as np
 
 from src.processors.constants import DOTS_IN_ORDER
 from src.processors.internal.CropOnPatchesCommon import CropOnPatchesCommon
+from src.utils.constants import CLR_LIGHT_GRAY
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -98,16 +99,20 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
     def find_dot_corners_from_options(self, image, patch_type, file_path):
         config = self.tuning_config
 
-        absolute_corners = self.find_marker_corners_in_patch(
+        absolute_corners, dot_description = self.find_marker_corners_in_patch(
             patch_type, image, file_path
+        )
+
+        logger.info(
+            f"absolute_corners={absolute_corners}, dot_description={dot_description}"
         )
 
         if config.outputs.show_image_level >= 1:
             cv2.drawContours(
-                self.debug_image, [np.intp(absolute_corners)], -1, (200, 200, 200), 2
+                self.debug_image, [np.intp(absolute_corners)], -1, CLR_LIGHT_GRAY, 2
             )
 
-        return absolute_corners
+        return absolute_corners, dot_description
 
     def find_marker_corners_in_patch(self, patch_type, image, file_path):
         config = self.tuning_config
@@ -171,11 +176,10 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
 
         h, w = optimal_marker.shape[:2]
         y, x = np.argwhere(res == match_max)[0]
-        patch_corners = MathUtils.get_rectangle_points(x, y, w, h)
+        ordered_patch_corners = MathUtils.get_rectangle_points(x, y, w, h)
 
-        # TODO: reuse bottom code
-        absolute_corners = list(
-            map(lambda point: list(np.add(area_start, point)), patch_corners)
+        absolute_corners = MathUtils.shift_origin_for_points(
+            area_start, ordered_patch_corners
         )
         return absolute_corners, dot_description
 
@@ -193,15 +197,15 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         elif patch_type == "bottomLeftDot":
             area_start, area_end = [0, half_height], [half_width, h]
         else:
-            raise Exception(f"Unexpected patch_type {patch_type}")
+            raise Exception(f"Unexpected quadrant patch_type {patch_type}")
 
         origin = [
             (area_start[0] + area_end[0] - marker_w) // 2,
             (area_start[1] + area_end[1] - marker_h) // 2,
         ]
 
-        margin_horizontal = (area_end[0] - area_start[0] - marker_w) / 2
-        margin_vertical = (area_end[1] - area_start[1] - marker_h) / 2
+        margin_horizontal = (area_end[0] - area_start[0] - marker_w) / 2 - 1
+        margin_vertical = (area_end[1] - area_start[1] - marker_h) / 2 - 1
 
         return {
             "origin": origin,
@@ -210,6 +214,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 "horizontal": margin_horizontal,
                 "vertical": margin_vertical,
             },
+            "pointsSelector": "DOT_CENTER",
         }
 
     # Resizing the marker within scaleRange at rate of descent_per_step to
