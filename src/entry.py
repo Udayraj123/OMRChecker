@@ -318,7 +318,9 @@ def process_files(
             field_number_to_field_bubble_means,
             global_threshold_for_template,
             global_field_confidence_metrics,
-        ) = template.image_instance_ops.read_omr_response(template, image=gray_image)
+        ) = template.image_instance_ops.read_omr_response(
+            gray_image, template, file_path
+        )
 
         # TODO: move inner try catch here
         # concatenate roll nos, set unmarked responses, etc

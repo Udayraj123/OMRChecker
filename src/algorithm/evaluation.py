@@ -314,8 +314,7 @@ class EvaluationConfig:
                     )
 
                 (response_dict, *_) = template.image_instance_ops.read_omr_response(
-                    template,
-                    image=gray_image,
+                    gray_image, template, image_path
                 )
                 omr_response = get_concatenated_response(response_dict, template)
 

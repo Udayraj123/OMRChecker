@@ -100,6 +100,7 @@ pre_processor_options_available_keys = {"processingImageShape": True}
 
 crop_on_markers_tuning_options_available_keys = {
     "dotKernel": True,
+    "dotBlur": True,
     "lineKernel": True,
     "apply_erode_subtract": True,
     "marker_rescale_range": True,
@@ -124,6 +125,7 @@ crop_on_dot_lines_tuning_options = {
     "additionalProperties": False,
     "properties": {
         **crop_on_markers_options_available_keys,
+        "dotBlur": positive_integer,
         "dotKernel": two_positive_integers,
         "lineKernel": two_positive_integers,
         "dotThreshold": positive_number,

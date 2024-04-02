@@ -21,10 +21,14 @@
       "name": "CropOnMarkers",
       "options": {
         "type": "FOUR_DOTS",
+        "tuningOptions": {
+          "dotBlur": 3,
+          "dotThreshold": 120
+        },
         "topLeftDot": {
           "origin": [
-            60,
-            180
+            38,
+            170
           ],
           "dimensions": [
             60,
@@ -39,8 +43,8 @@
         },
         "topRightDot": {
           "origin": [
-            810,
-            180
+            805,
+            170
           ],
           "dimensions": [
             60,
@@ -55,8 +59,8 @@
         },
         "bottomRightDot": {
           "origin": [
-            810,
-            1100
+            805,
+            1092
           ],
           "dimensions": [
             60,
@@ -71,8 +75,8 @@
         },
         "bottomLeftDot": {
           "origin": [
-            50,
-            1100
+            35,
+            1090
           ],
           "dimensions": [
             60,

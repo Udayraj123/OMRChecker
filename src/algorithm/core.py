@@ -65,7 +65,7 @@ class ImageInstanceOps:
 
         return gray_image, colored_image, template
 
-    def read_omr_response(self, template, image):
+    def read_omr_response(self, image, template, file_path):
         config = self.tuning_config
 
         img = image.copy()
@@ -167,7 +167,7 @@ class ImageInstanceOps:
         global_threshold_for_template, j_low, j_high = self.get_global_threshold(
             global_bubble_means_and_refs,  # , looseness=4
             GLOBAL_PAGE_THRESHOLD,
-            plot_title="Mean Intensity Barplot",
+            plot_title=f"Mean Intensity Barplot: {file_path}",
             MIN_JUMP=MIN_JUMP,
             JUMP_DELTA=JUMP_DELTA,
             plot_show=config.outputs.show_image_level >= 5,
@@ -867,12 +867,6 @@ class ImageInstanceOps:
             thr1 - max1 // 2,
             thr1 + max1 // 2,
         )
-
-        # # For normal images
-        # thresholdRead =  116
-        # if(thr1 > thr2 and thr2 > thresholdRead):
-        #     print("Note: taking safer thr line.")
-        #     global_threshold_for_template, j_low, j_high = thr2, thr2 - max2//2, thr2 + max2//2
 
         if plot_title:
             _, ax = plt.subplots()

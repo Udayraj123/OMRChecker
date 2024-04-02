@@ -84,8 +84,8 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
 
     def validate_and_remap_options_schema(self, options):
         reference_image_path, layout_type = options["relativePath"], options["type"]
+        # Note: options["tuningOptions"] is accessible in self.tuning_options at Processor level
         parsed_options = {
-            "tuningOptions": options["tuningOptions"],
             "pointsLayout": layout_type,
             "enableCropping": True,
         }
@@ -108,7 +108,6 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             }
             for area_template in self.scan_area_templates_for_layout[layout_type]
         ]
-        # TODO: expand tuningOptions ->customOptions["tuningOptions"]?  (or use areaConfig["TEMPLATE_MATCH"] in schema?)
         return parsed_options
 
     def validate_scan_areas(self):

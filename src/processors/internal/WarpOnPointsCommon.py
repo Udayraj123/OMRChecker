@@ -24,9 +24,13 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         raise Exception(f"Not implemented")
 
     def __init__(self, options, relative_dir, image_instance_ops):
-        # TODO: think of a better method in class designs :think:
+        # TODO: need to fix this (self attributes will be overridden by parent and may cause inconsistency)
         self.tuning_config = image_instance_ops.tuning_config
         parsed_options = self.validate_and_remap_options_schema(options)
+        parsed_options = {
+            "tuningOptions": options.get("tuningOptions", {}),
+            **parsed_options,
+        }
         super().__init__(parsed_options, relative_dir, image_instance_ops)
         options = self.options
         self.homography_method = self.homography_method_map.get(

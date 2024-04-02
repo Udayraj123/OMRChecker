@@ -14,7 +14,6 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.parse_and_set_scan_areas_with_defaults()
         self.validate_scan_areas()
         self.validate_points_layouts()
@@ -185,8 +184,6 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         dot_rect = self.find_dot_corners_from_options(
             image, area_description, file_path
         )
-
-        logger.info(f"points_selector={points_selector}")
 
         dot_point = self.select_point_from_rectangle(dot_rect, points_selector)
 

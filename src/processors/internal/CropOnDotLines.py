@@ -107,14 +107,13 @@ class CropOnDotLines(CropOnPatchesCommon):
         self.line_kernel_morph = cv2.getStructuringElement(
             cv2.MORPH_RECT, tuple(tuning_options.get("lineKernel", [2, 10]))
         )
-        self.dot_kernel_morph = self.dot_kernel_morph = cv2.getStructuringElement(
+        self.dot_kernel_morph = cv2.getStructuringElement(
             cv2.MORPH_RECT, tuple(tuning_options.get("dotKernel", [5, 5]))
         )
 
     def validate_and_remap_options_schema(self, options):
         layout_type = options["type"]
         parsed_options = {
-            "tuningOptions": options["tuningOptions"],
             "pointsLayout": layout_type,
             "enableCropping": True,
         }
@@ -182,44 +181,55 @@ class CropOnDotLines(CropOnPatchesCommon):
         area, area_start = self.compute_scan_area_util(image, area_description)
 
         # Make boxes darker (less gamma)
-        morph = ImageUtils.adjust_gamma(area, config.thresholding.GAMMA_LOW)
+        darker_image = ImageUtils.adjust_gamma(area, config.thresholding.GAMMA_LOW)
 
         # Lines are expected to be fairly dark
         line_threshold = tuning_options.get("lineThreshold", 180)
 
-        _, morph = cv2.threshold(morph, line_threshold, 255, cv2.THRESH_TRUNC)
-        morph = ImageUtils.normalize(morph)
+        _, thresholded = cv2.threshold(
+            darker_image, line_threshold, 255, cv2.THRESH_TRUNC
+        )
+        normalised = ImageUtils.normalize(thresholded)
 
         # add white padding
         kernel_height, kernel_width = self.line_kernel_morph.shape[:2]
         white, pad_range = ImageUtils.pad_image_from_center(
-            morph, kernel_width, kernel_height, 255
+            normalised, kernel_width, kernel_height, 255
         )
 
-        # Threshold-Normalize after white padding
-        _, thresholded = cv2.threshold(white, 180, 255, cv2.THRESH_TRUNC)
-        morph = ImageUtils.normalize(thresholded)
+        # Threshold-Normalize after morph + white padding
+        _, white_thresholded = cv2.threshold(
+            white, line_threshold, 255, cv2.THRESH_TRUNC
+        )
+        white_normalised = ImageUtils.normalize(white_thresholded)
 
         # Open : erode then dilate
-        morph_v = cv2.morphologyEx(
-            morph, cv2.MORPH_OPEN, self.line_kernel_morph, iterations=3
+        line_morphed = cv2.morphologyEx(
+            white_normalised, cv2.MORPH_OPEN, self.line_kernel_morph, iterations=3
         )
 
         # remove white padding
-        morph_v = morph_v[pad_range[0] : pad_range[1], pad_range[2] : pad_range[3]]
+        line_morphed = line_morphed[
+            pad_range[0] : pad_range[1], pad_range[2] : pad_range[3]
+        ]
 
         if config.outputs.show_image_level >= 5:
-            self.debug_hstack += [thresholded, morph, morph_v]
+            self.debug_hstack += [
+                darker_image,
+                normalised,
+                white_thresholded,
+                line_morphed,
+            ]
             InteractionUtils.show(
-                f"morph_opened_{area_label}", morph_v, 0, 1, config=config
+                f"morph_opened_{area_label}", line_morphed, 0, 1, config=config
             )
 
         # Note: points are returned in the order of order_four_points: (tl, tr, br, bl)
         (
             ordered_patch_corners,
             edge_contours_map,
-        ) = self.find_largest_patch_area_and_contours_map(
-            area_start, morph_v, area_description
+        ) = self.find_morph_corners_and_contours_map(
+            area_start, line_morphed, area_description
         )
 
         if ordered_patch_corners is None:
@@ -236,6 +246,10 @@ class CropOnDotLines(CropOnPatchesCommon):
 
         # TODO: simple colored thresholding to clear out noise?
 
+        blur_size = tuning_options.get("dotBlur", None)
+        if blur_size:
+            area = cv2.GaussianBlur(area, (blur_size, blur_size), 0)
+
         # Open : erode then dilate
         morph_c = cv2.morphologyEx(
             area, cv2.MORPH_OPEN, self.dot_kernel_morph, iterations=3
@@ -247,9 +261,9 @@ class CropOnDotLines(CropOnPatchesCommon):
         normalised = ImageUtils.normalize(thresholded)
 
         if config.outputs.show_image_level >= 5:
-            self.debug_hstack += [morph_c, thresholded, normalised]
+            self.debug_hstack += [area, morph_c, thresholded, normalised]
 
-        corners, _ = self.find_largest_patch_area_and_contours_map(
+        corners, _ = self.find_morph_corners_and_contours_map(
             area_start, normalised, area_description
         )
         if corners is None:
@@ -267,9 +281,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         return corners
 
     # TODO: create a ScanArea class and move some methods there
-    def find_largest_patch_area_and_contours_map(
-        self, area_start, area, area_description
-    ):
+    def find_morph_corners_and_contours_map(self, area_start, area, area_description):
         scanner_type, area_label = (
             area_description["scannerType"],
             area_description["label"],
