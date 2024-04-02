@@ -23,13 +23,14 @@
           "dotKernel": [
             3,
             3
-          ]
+          ],
+          "dotThreshold": 150
         },
         "type": "TWO_DOTS_ONE_LINE",
         "defaultSelector": "OUTER_CORNERS",
         "topLeftDot": {
           "origin": [
-            20,
+            2,
             21
           ],
           "dimensions": [
@@ -40,13 +41,13 @@
             "top": 15,
             "right": 20,
             "bottom": 15,
-            "left": 20
+            "left": 2
           }
         },
         "bottomLeftDot": {
           "origin": [
-            20,
-            921
+            12,
+            929
           ],
           "dimensions": [
             50,
@@ -56,7 +57,7 @@
             "top": 15,
             "right": 20,
             "bottom": 15,
-            "left": 20
+            "left": 12
           }
         },
         "rightLine": {

@@ -104,8 +104,8 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         # self.append_save_image(1,warped_image)
 
         if config.outputs.show_image_level >= 4:
-            hstack = ImageUtils.get_padded_hstack([self.debug_image, warped_image])
             title = "Cropped Image" if self.enable_cropping else "Warped Image"
+            hstack = ImageUtils.get_padded_hstack([self.debug_image, warped_image])
             InteractionUtils.show(f"{title}: {file_path}", hstack, 1, 1, config=config)
 
         return warped_image, colored_image, _template

@@ -155,7 +155,7 @@ class ImageInstanceOps:
             MIN_JUMP=MIN_JUMP_STD,
             JUMP_DELTA=JUMP_DELTA_STD,
             plot_title="Q-wise Std-dev Plot",
-            plot_show=config.outputs.show_image_level >= 5,
+            plot_show=config.outputs.show_image_level >= 6,
             sort_in_plot=True,
         )
         # plt.show()

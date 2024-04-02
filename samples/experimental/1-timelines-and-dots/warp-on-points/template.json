@@ -31,7 +31,7 @@
               "dimensions": [],
               "margins": {},
               "scannerType": "PATCH_DOT",
-              "selector": "DOT_CENTER",
+              "selector": "SELECT_CENTER",
               "selectorMargins": {}
             },
             "customOptions": {

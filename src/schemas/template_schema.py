@@ -1,5 +1,6 @@
 from src.processors.constants import (
     SCANNER_TYPES_IN_ORDER,
+    SELECTOR_TYPES_IN_ORDER,
     AreaTemplate,
     HomographyMethod,
 )
@@ -34,17 +35,9 @@ patch_area_description = {
         "origin": two_positive_integers,
         "dimensions": two_positive_integers,
         "margins": margins_schema,
-        "defaultSelector": {
+        "selector": {
             "type": "string",
-            "enum": [
-                "SELECT_TOP_LEFT",
-                "SELECT_TOP_RIGHT",
-                "SELECT_BOTTOM_RIGHT",
-                "SELECT_BOTTOM_LEFT",
-                "SELECT_CENTER",
-                "LINE_INNER_EDGE",
-                "LINE_OUTER_EDGE",
-            ],
+            "enum": [*SELECTOR_TYPES_IN_ORDER],
         },
     },
 }
@@ -52,13 +45,13 @@ patch_area_description = {
 scan_area_description = {
     **patch_area_description,
     # TODO: "required": [...],
+    "additionalProperties": False,
     "properties": {
         **patch_area_description["properties"],
         "name": {
             "type": "string",
         },
         "selectorMargins": margins_schema,
-        "selector": patch_area_description["properties"]["defaultSelector"],
         "scannerType": {
             "type": "string",
             "enum": SCANNER_TYPES_IN_ORDER,
@@ -80,6 +73,7 @@ crop_on_marker_types = [
     "ONE_LINE_TWO_DOTS",
     "TWO_DOTS_ONE_LINE",
     "TWO_LINES",
+    # TODO: "TWO_LINES_HORIZONTAL",
     "FOUR_DOTS",
 ]
 
@@ -129,8 +123,23 @@ crop_on_dot_lines_tuning_options = {
     "type": "object",
     "additionalProperties": False,
     "properties": {
+        **crop_on_markers_options_available_keys,
         "dotKernel": two_positive_integers,
         "lineKernel": two_positive_integers,
+        "dotThreshold": positive_number,
+        "lineThreshold": positive_number,
+    },
+}
+crop_on_markers_tuning_options = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        **crop_on_markers_tuning_options_available_keys,
+        "apply_erode_subtract": {"type": "boolean"},
+        # Range of rescaling in percentage -
+        "marker_rescale_range": two_positive_integers,
+        "marker_rescale_steps": positive_integer,
+        "min_matching_threshold": {"type": "number"},
     },
 }
 
@@ -389,22 +398,7 @@ TEMPLATE_SCHEMA = {
                                                     "bottomRightMarker": patch_area_description,
                                                     "topLeftMarker": patch_area_description,
                                                     "bottomLeftMarker": patch_area_description,
-                                                    "tuningOptions": {
-                                                        "type": "object",
-                                                        "additionalProperties": False,
-                                                        "properties": {
-                                                            **crop_on_markers_tuning_options_available_keys,
-                                                            "apply_erode_subtract": {
-                                                                "type": "boolean"
-                                                            },
-                                                            # Range of rescaling in percentage -
-                                                            "marker_rescale_range": two_positive_integers,
-                                                            "marker_rescale_steps": positive_integer,
-                                                            "min_matching_threshold": {
-                                                                "type": "number"
-                                                            },
-                                                        },
-                                                    },
+                                                    "tuningOptions": crop_on_markers_tuning_options,
                                                 },
                                             },
                                         },

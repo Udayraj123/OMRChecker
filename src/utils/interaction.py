@@ -24,9 +24,9 @@ class InteractionUtils:
     image_metrics = ImageMetrics()
 
     @staticmethod
-    def show(name, origin, pause=1, resize=False, reset_pos=None, config=None):
+    def show(name, image, pause=1, resize=False, reset_pos=None, config=None):
         image_metrics = InteractionUtils.image_metrics
-        if origin is None:
+        if image is None:
             logger.info(f"'{name}' - NoneType image to show!")
             if pause:
                 cv2.destroyAllWindows()
@@ -35,11 +35,11 @@ class InteractionUtils:
             if not config:
                 raise Exception("config not provided for resizing the image to show")
             _display_height, display_width = config.dimensions.display_image_shape
-            img = ImageUtils.resize_util(origin, display_width)
+            image_to_show = ImageUtils.resize_util(image, display_width)
         else:
-            img = origin
+            image_to_show = image
 
-        cv2.imshow(name, img)
+        cv2.imshow(name, image_to_show)
 
         if reset_pos:
             image_metrics.window_x = reset_pos[0]
@@ -51,7 +51,7 @@ class InteractionUtils:
             image_metrics.window_y,
         )
 
-        h, w = img.shape[:2]
+        h, w = image_to_show.shape[:2]
 
         # Set next window position
         margin = 25

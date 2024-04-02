@@ -329,6 +329,7 @@ class ImageUtils:
         style="BOX_HOLLOW",
         thickness_factor=1 / 12,
         border=3,
+        centered=False,
     ):
         assert position is not None
         x, y = position
@@ -343,6 +344,18 @@ class ImageUtils:
             int(y + box_h - box_h * thickness_factor),
         )
 
+        if centered:
+            centered_position = [
+                (3 * position[0] - position_diagonal[0]) // 2,
+                (3 * position[1] - position_diagonal[1]) // 2,
+            ]
+            centered_diagonal = [
+                (position[0] + position_diagonal[0]) // 2,
+                (position[1] + position_diagonal[1]) // 2,
+            ]
+            position = centered_position
+            position_diagonal = centered_diagonal
+
         if style == "BOX_HOLLOW":
             if color is None:
                 color = CLR_GRAY
@@ -350,6 +363,7 @@ class ImageUtils:
             if color is None:
                 color = CLR_DARK_GRAY
             border = -1
+
         ImageUtils.draw_box_diagonal(
             image,
             position,
@@ -363,6 +377,7 @@ class ImageUtils:
         image,
         text_value,
         position,
+        centered=False,
         font_face=cv2.FONT_HERSHEY_SIMPLEX,
         text_size=TEXT_SIZE,
         color=CLR_BLACK,
@@ -370,6 +385,14 @@ class ImageUtils:
         # available LineTypes: FILLED, LINE_4, LINE_8, LINE_AA
         line_type=cv2.LINE_AA,
     ):
+        if centered:
+            assert not callable(position)
+            text_position = position
+            position = lambda size_x, size_y: (
+                text_position[0] - size_x // 2,
+                text_position[1] + size_y // 2,
+            )
+
         if callable(position):
             size_x, size_y = cv2.getTextSize(
                 text_value,
@@ -379,6 +402,7 @@ class ImageUtils:
             )[0]
             position = position(size_x, size_y)
 
+        position = (int(position[0]), int(position[1]))
         cv2.putText(
             image,
             text_value,

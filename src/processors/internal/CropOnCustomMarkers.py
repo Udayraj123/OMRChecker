@@ -22,6 +22,18 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
     scan_area_templates_for_layout = {
         "FOUR_MARKERS": MARKER_AREA_TYPES_IN_ORDER,
     }
+    default_scan_area_descriptions = {
+        **{
+            marker_type: {
+                "scannerType": ScannerType.TEMPLATE_MATCH,
+                "selector": "SELECT_CENTER",
+                # Note: all 4 margins are a required property for a patch area
+            }
+            for marker_type in MARKER_AREA_TYPES_IN_ORDER
+        },
+        "CUSTOM": {},
+    }
+
     default_points_selector_map = {
         "CENTERS": {
             AreaTemplate.topLeftMarker: "SELECT_CENTER",
@@ -73,6 +85,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
     def validate_and_remap_options_schema(self, options):
         reference_image_path, layout_type = options["relativePath"], options["type"]
         parsed_options = {
+            "tuningOptions": options["tuningOptions"],
             "pointsLayout": layout_type,
             "enableCropping": True,
         }
@@ -265,7 +278,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 "bottom": margin_vertical,
                 "left": margin_horizontal,
             },
-            "selector": "DOT_CENTER",
+            "selector": "SELECT_CENTER",
             "scannerType": "TEMPLATE_MARKER",
         }
 

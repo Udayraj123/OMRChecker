@@ -23,7 +23,9 @@ AreaTemplate = DotMap(
         "topRightMarker": "topRightMarker",
         "bottomRightMarker": "bottomRightMarker",
         "bottomLeftMarker": "bottomLeftMarker",
+        "topLine": "topLine",
         "leftLine": "leftLine",
+        "bottomLine": "bottomLine",
         "rightLine": "rightLine",
     },
     _dynamic=False,
@@ -42,13 +44,14 @@ MARKER_AREA_TYPES_IN_ORDER = [
     AreaTemplate.bottomRightMarker,
     AreaTemplate.bottomLeftMarker,
 ]
+
 LINE_AREA_TYPES_IN_ORDER = [
-    # TODO: support for all kinds of lines
-    # AreaTemplate.topLine,
+    AreaTemplate.topLine,
     AreaTemplate.rightLine,
     AreaTemplate.leftLine,
-    # AreaTemplate.bottomLine,
+    AreaTemplate.bottomLine,
 ]
+
 ScannerType = DotMap(
     {
         "PATCH_DOT": "PATCH_DOT",
@@ -65,6 +68,27 @@ SCANNER_TYPES_IN_ORDER = [
 ]
 
 
+SelectorType = DotMap(
+    {
+        "SELECT_TOP_LEFT": "SELECT_TOP_LEFT",
+        "SELECT_TOP_RIGHT": "SELECT_TOP_RIGHT",
+        "SELECT_BOTTOM_RIGHT": "SELECT_BOTTOM_RIGHT",
+        "SELECT_BOTTOM_LEFT": "SELECT_BOTTOM_LEFT",
+        "SELECT_CENTER": "SELECT_CENTER",
+        "LINE_INNER_EDGE": "LINE_INNER_EDGE",
+        "LINE_OUTER_EDGE": "LINE_OUTER_EDGE",
+    },
+    _dynamic=False,
+)
+SELECTOR_TYPES_IN_ORDER = [
+    SelectorType.SELECT_TOP_LEFT,
+    SelectorType.SELECT_TOP_RIGHT,
+    SelectorType.SELECT_BOTTOM_RIGHT,
+    SelectorType.SELECT_BOTTOM_LEFT,
+    SelectorType.SELECT_CENTER,
+    SelectorType.LINE_INNER_EDGE,
+    SelectorType.LINE_OUTER_EDGE,
+]
 HomographyMethod = DotMap(
     {
         "INTER_LINEAR": "INTER_LINEAR",

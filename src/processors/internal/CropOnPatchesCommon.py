@@ -1,11 +1,6 @@
 import numpy as np
 
-from src.processors.constants import (
-    DOT_AREA_TYPES_IN_ORDER,
-    LINE_AREA_TYPES_IN_ORDER,
-    MARKER_AREA_TYPES_IN_ORDER,
-    ScannerType,
-)
+from src.processors.constants import ScannerType
 from src.processors.internal.WarpOnPointsCommon import WarpOnPointsCommon
 from src.utils.constants import CLR_DARK_GREEN
 from src.utils.image import ImageUtils
@@ -16,33 +11,6 @@ from src.utils.parsing import OVERRIDE_MERGER
 
 class CropOnPatchesCommon(WarpOnPointsCommon):
     __is_internal_preprocessor__ = True
-
-    # TODO: these should be divided into child class accessors!
-    default_scan_area_descriptions = {
-        **{
-            marker_type: {
-                "scannerType": ScannerType.TEMPLATE_MATCH,
-                "selector": "SELECT_CENTER",
-                # Note: all 4 margins are a required property for a patch area
-            }
-            for marker_type in MARKER_AREA_TYPES_IN_ORDER
-        },
-        **{
-            marker_type: {
-                "scannerType": ScannerType.PATCH_DOT,
-                "selector": "DOT_CENTER",
-            }
-            for marker_type in DOT_AREA_TYPES_IN_ORDER
-        },
-        **{
-            marker_type: {
-                "scannerType": "PATCH_LINE",
-                "selector": "LINE_OUTER_EDGE",
-            }
-            for marker_type in LINE_AREA_TYPES_IN_ORDER
-        },
-        "CUSTOM": {},
-    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -154,13 +122,22 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                 if len(area_control_points) > 1:
                     ImageUtils.draw_contour(self.debug_image, area_control_points)
 
+                # Helper for alignment
+                for corner in area_destination_points:
+                    ImageUtils.draw_text(
+                        self.debug_image, "X", corner, centered=True, thickness=2
+                    )
+
+                # Show current detections too
                 for corner in area_control_points:
                     ImageUtils.draw_box(
                         self.debug_image,
                         corner,
-                        [2, 2],
+                        # TODO: change this based on image shape
+                        [20, 20],
                         color=CLR_DARK_GREEN,
-                        border=2,
+                        border=1,
+                        centered=True,
                     )
 
         return control_points, destination_points
@@ -168,6 +145,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
     def get_runtime_area_description_with_defaults(self, image, scan_area):
         return scan_area["areaDescription"]
 
+    # Note: Some common utilities of the child classes are put here
     def extract_points_from_scan_area(self, image, area_description, file_path):
         scanner_type = area_description["scannerType"]
 
@@ -208,12 +186,12 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             image, area_description, file_path
         )
 
-        if dot_rect is None:
-            raise Exception(f"No dot found for area {area_label}")
-
         logger.info(f"points_selector={points_selector}")
 
         dot_point = self.select_point_from_rectangle(dot_rect, points_selector)
+
+        if dot_point is None:
+            raise Exception(f"No dot found for area {area_label}")
 
         destination_rect = self.compute_scan_area_destination_rect(area_description)
         destination_point = self.select_point_from_rectangle(
