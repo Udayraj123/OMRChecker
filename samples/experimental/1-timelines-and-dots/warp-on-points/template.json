@@ -75,7 +75,7 @@
               "dimensions": [],
               "margins": {},
               "scannerType": "TEMPLATE_MATCH",
-              "selector": "TEMPLATE_CENTER"
+              "selector": "SELECT_CENTER"
             },
             "customOptions": {
               "excludeFromCropping": true,
@@ -108,7 +108,7 @@
           ]
         },
         "type": "TWO_DOTS_ONE_LINE",
-        "pointsSelector": "OUTER_CORNERS",
+        "defaultSelector": "OUTER_CORNERS",
         "topLeftDot": {
           "origin": [
             20,
@@ -119,8 +119,10 @@
             50
           ],
           "margins": {
-            "horizontal": 20,
-            "vertical": 15
+            "top": 15,
+            "right": 20,
+            "bottom": 15,
+            "left": 20
           }
         },
         "bottomLeftDot": {
@@ -133,8 +135,10 @@
             50
           ],
           "margins": {
-            "horizontal": 20,
-            "vertical": 15
+            "top": 15,
+            "right": 20,
+            "bottom": 15,
+            "left": 20
           }
         },
         "rightLine": {
@@ -147,8 +151,10 @@
             1000
           ],
           "margins": {
-            "horizontal": 20,
-            "vertical": 15
+            "top": 15,
+            "right": 20,
+            "bottom": 15,
+            "left": 20
           }
         }
       }

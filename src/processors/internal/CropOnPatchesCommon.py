@@ -1,86 +1,58 @@
-import cv2
 import numpy as np
 
-from src.processors.constants import AreaTemplate, ScannerType
+from src.processors.constants import (
+    DOT_AREA_TYPES_IN_ORDER,
+    LINE_AREA_TYPES_IN_ORDER,
+    MARKER_AREA_TYPES_IN_ORDER,
+    ScannerType,
+)
 from src.processors.internal.WarpOnPointsCommon import WarpOnPointsCommon
 from src.utils.constants import CLR_DARK_GREEN
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 from src.utils.math import MathUtils
+from src.utils.parsing import OVERRIDE_MERGER
 
 
 class CropOnPatchesCommon(WarpOnPointsCommon):
     __is_internal_preprocessor__ = True
 
-    default_points_selector_map = {
-        "CENTERS": {
-            AreaTemplate.topLeftDot: "DOT_CENTER",
-            AreaTemplate.topRightDot: "DOT_CENTER",
-            AreaTemplate.bottomRightDot: "DOT_CENTER",
-            AreaTemplate.bottomLeftDot: "DOT_CENTER",
-            AreaTemplate.topLeftMarker: "DOT_CENTER",
-            AreaTemplate.topRightMarker: "DOT_CENTER",
-            AreaTemplate.bottomRightMarker: "DOT_CENTER",
-            AreaTemplate.bottomLeftMarker: "DOT_CENTER",
-            AreaTemplate.leftLine: "LINE_OUTER_EDGE",
-            AreaTemplate.rightLine: "LINE_OUTER_EDGE",
+    # TODO: these should be divided into child class accessors!
+    default_scan_area_descriptions = {
+        **{
+            marker_type: {
+                "scannerType": ScannerType.TEMPLATE_MATCH,
+                "selector": "SELECT_CENTER",
+                # Note: all 4 margins are a required property for a patch area
+            }
+            for marker_type in MARKER_AREA_TYPES_IN_ORDER
         },
-        "INNER_WIDTHS": {
-            AreaTemplate.topLeftDot: "DOT_TOP_RIGHT",
-            AreaTemplate.topRightDot: "DOT_TOP_LEFT",
-            AreaTemplate.bottomRightDot: "DOT_BOTTOM_LEFT",
-            AreaTemplate.bottomLeftDot: "DOT_BOTTOM_RIGHT",
-            AreaTemplate.topLeftMarker: "DOT_TOP_RIGHT",
-            AreaTemplate.topRightMarker: "DOT_TOP_LEFT",
-            AreaTemplate.bottomRightMarker: "DOT_BOTTOM_LEFT",
-            AreaTemplate.bottomLeftMarker: "DOT_BOTTOM_RIGHT",
-            AreaTemplate.leftLine: "LINE_INNER_EDGE",
-            AreaTemplate.rightLine: "LINE_INNER_EDGE",
+        **{
+            marker_type: {
+                "scannerType": ScannerType.PATCH_DOT,
+                "selector": "DOT_CENTER",
+            }
+            for marker_type in DOT_AREA_TYPES_IN_ORDER
         },
-        "INNER_HEIGHTS": {
-            AreaTemplate.topLeftDot: "DOT_BOTTOM_LEFT",
-            AreaTemplate.topRightDot: "DOT_BOTTOM_RIGHT",
-            AreaTemplate.bottomRightDot: "DOT_TOP_RIGHT",
-            AreaTemplate.bottomLeftDot: "DOT_TOP_LEFT",
-            AreaTemplate.topLeftMarker: "DOT_BOTTOM_LEFT",
-            AreaTemplate.topRightMarker: "DOT_BOTTOM_RIGHT",
-            AreaTemplate.bottomRightMarker: "DOT_TOP_RIGHT",
-            AreaTemplate.bottomLeftMarker: "DOT_TOP_LEFT",
-            AreaTemplate.leftLine: "LINE_OUTER_EDGE",
-            AreaTemplate.rightLine: "LINE_OUTER_EDGE",
+        **{
+            marker_type: {
+                "scannerType": "PATCH_LINE",
+                "selector": "LINE_OUTER_EDGE",
+            }
+            for marker_type in LINE_AREA_TYPES_IN_ORDER
         },
-        "INNER_CORNERS": {
-            AreaTemplate.topLeftDot: "DOT_BOTTOM_RIGHT",
-            AreaTemplate.topRightDot: "DOT_BOTTOM_LEFT",
-            AreaTemplate.bottomRightDot: "DOT_TOP_LEFT",
-            AreaTemplate.bottomLeftDot: "DOT_TOP_RIGHT",
-            AreaTemplate.topLeftMarker: "DOT_BOTTOM_RIGHT",
-            AreaTemplate.topRightMarker: "DOT_BOTTOM_LEFT",
-            AreaTemplate.bottomRightMarker: "DOT_TOP_LEFT",
-            AreaTemplate.bottomLeftMarker: "DOT_TOP_RIGHT",
-            AreaTemplate.leftLine: "LINE_INNER_EDGE",
-            AreaTemplate.rightLine: "LINE_INNER_EDGE",
-        },
-        "OUTER_CORNERS": {
-            AreaTemplate.topLeftDot: "DOT_TOP_LEFT",
-            AreaTemplate.topRightDot: "DOT_TOP_RIGHT",
-            AreaTemplate.bottomRightDot: "DOT_BOTTOM_RIGHT",
-            AreaTemplate.bottomLeftDot: "DOT_BOTTOM_LEFT",
-            AreaTemplate.topLeftMarker: "DOT_TOP_LEFT",
-            AreaTemplate.topRightMarker: "DOT_TOP_RIGHT",
-            AreaTemplate.bottomRightMarker: "DOT_BOTTOM_RIGHT",
-            AreaTemplate.bottomLeftMarker: "DOT_BOTTOM_LEFT",
-            AreaTemplate.leftLine: "LINE_OUTER_EDGE",
-            AreaTemplate.rightLine: "LINE_OUTER_EDGE",
-        },
+        "CUSTOM": {},
     }
 
-    # Common code used by both types of croppers
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        options = self.options
 
+        self.parse_and_set_scan_areas_with_defaults()
+        self.validate_scan_areas()
+        self.validate_points_layouts()
+
+        options = self.options
         # Default to select centers for roi
         self.default_points_selector = self.default_points_selector_map[
             options.get("defaultSelector", "CENTERS")
@@ -94,6 +66,67 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
 
     def prepare_image(self, image):
         return image
+
+    def parse_and_set_scan_areas_with_defaults(self):
+        options = self.options
+        scan_areas = options["scanAreas"]
+        scan_areas_with_defaults = []
+        for scan_area in scan_areas:
+            area_template, area_description, custom_options = (
+                scan_area["areaTemplate"],
+                scan_area.get("areaDescription", {}),
+                scan_area.get("customOptions", {}),
+            )
+            area_description["label"] = area_description.get("label", area_template)
+            scan_areas_with_defaults.append(
+                {
+                    "areaTemplate": area_template,
+                    "areaDescription": OVERRIDE_MERGER.merge(
+                        self.default_scan_area_descriptions[area_template],
+                        area_description,
+                    ),
+                    "customOptions": custom_options,
+                }
+            )
+
+        self.scan_areas = scan_areas_with_defaults
+
+    def validate_scan_areas(self):
+        seen_labels = set()
+        repeat_labels = set()
+        for scan_area in self.scan_areas:
+            area_label = scan_area["areaDescription"]["label"]
+            if area_label in seen_labels:
+                repeat_labels.add(area_label)
+            seen_labels.add(area_label)
+        if len(repeat_labels) > 0:
+            raise Exception(f"Found repeated labels in scanAreas: {repeat_labels}")
+
+        # TODO: more validations in child classes
+
+    # TODO: check if this needs to move into child for working properly (accessing self attributes declared in child in parent's constructor)
+    def validate_points_layouts(self):
+        options = self.options
+        points_layout = options["pointsLayout"]
+        if (
+            points_layout not in self.scan_area_templates_for_layout
+            and points_layout != "CUSTOM"
+        ):
+            raise Exception(
+                f"Invalid pointsLayout provided: {points_layout} for {self}"
+            )
+
+        expected_templates = set(self.scan_area_templates_for_layout[points_layout])
+        provided_templates = set(
+            [scan_area["areaTemplate"] for scan_area in self.scan_areas]
+        )
+        not_provided_area_templates = expected_templates.difference(provided_templates)
+
+        if len(not_provided_area_templates) > 0:
+            logger.error(f"not_provided_area_templates={not_provided_area_templates}")
+            raise Exception(
+                f"Missing a few scanAreaTemplates for the pointsLayout {points_layout}"
+            )
 
     def extract_control_destination_points(self, image, file_path):
         config = self.tuning_config
@@ -119,13 +152,8 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             if config.outputs.show_image_level >= 4:
                 area_label = area_description["label"]
                 logger.info(f"{area_label}: area_control_points={area_control_points}")
-                cv2.drawContours(
-                    self.debug_image,
-                    [np.intp(area_control_points)],
-                    -1,
-                    (200, 200, 200),
-                    2,
-                )
+                if len(area_control_points) > 1:
+                    ImageUtils.draw_contour(self.debug_image, area_control_points)
 
                 for corner in area_control_points:
                     ImageUtils.draw_box(
@@ -187,14 +215,19 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         return area_control_points, area_destination_points
 
     def find_and_select_point_from_dot(self, image, area_description, file_path):
-        patch_type = area_description["scannerType"]
+        area_label = area_description["label"]
+        points_selector = area_description.get(
+            "selector", self.default_points_selector[area_label]
+        )
 
         dot_rect = self.find_dot_corners_from_options(
             image, area_description, file_path
         )
 
-        default_points_selector = self.default_points_selector[patch_type]
-        points_selector = area_description.get("selector", default_points_selector)
+        if dot_rect is None:
+            raise Exception(f"No dot found for area {area_label}")
+
+        logger.info(f"points_selector={points_selector}")
 
         dot_point = self.select_point_from_rectangle(dot_rect, points_selector)
 
@@ -208,15 +241,15 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
     @staticmethod
     def select_point_from_rectangle(rectangle, points_selector):
         tl, tr, br, bl = rectangle
-        if points_selector == "DOT_TOP_LEFT":
+        if points_selector == "SELECT_TOP_LEFT":
             return tl
-        if points_selector == "DOT_TOP_RIGHT":
+        if points_selector == "SELECT_TOP_RIGHT":
             return tr
-        if points_selector == "DOT_BOTTOM_RIGHT":
+        if points_selector == "SELECT_BOTTOM_RIGHT":
             return br
-        if points_selector == "DOT_BOTTOM_LEFT":
+        if points_selector == "SELECT_BOTTOM_LEFT":
             return bl
-        if points_selector == "DOT_CENTER":
+        if points_selector == "SELECT_CENTER":
             return [
                 (tl[0] + br[0]) // 2,
                 (tl[1] + br[1]) // 2,
@@ -229,6 +262,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         return MathUtils.get_rectangle_points(x, y, w, h)
 
     def compute_scan_area_util(self, image, area_description):
+        area_label = area_description["label"]
         # parse arguments
         h, w = image.shape[:2]
         origin, dimensions, margins = map(
@@ -237,23 +271,21 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
 
         # compute area and clip to image dimensions
         area_start = [
-            max(0, int(origin[0] - margins["horizontal"])),
-            max(0, int(origin[1] - margins["vertical"])),
+            int(origin[0] - margins["left"]),
+            int(origin[1] - margins["top"]),
         ]
         area_end = [
-            min(w, int(origin[0] + margins["horizontal"] + dimensions[0])),
-            min(h, int(origin[1] + margins["vertical"] + dimensions[1])),
+            int(origin[0] + margins["right"] + dimensions[0]),
+            int(origin[1] + margins["bottom"] + dimensions[1]),
         ]
 
-        if (
-            area_start[0] == 0
-            or area_start[1] == 0
-            or area_end[0] == w
-            or area_end[1] == h
-        ):
+        if area_start[0] < 0 or area_start[1] < 0 or area_end[0] > w or area_end[1] > h:
             logger.warning(
-                f"Scan area clipped to image boundary for patch item with origin: {origin}"
+                f"Clipping label {area_label} with scan rectangle: {[area_start, area_end]} to image boundary."
             )
+
+            area_start = [max(0, area_start[0]), max(0, area_start[1])]
+            area_end = [min(w, area_end[0]), min(h, area_end[1])]
 
         # Extract image area
         area = image[area_start[1] : area_end[1], area_start[0] : area_end[0]]

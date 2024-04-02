@@ -31,8 +31,10 @@
             60
           ],
           "margins": {
-            "horizontal": 10,
-            "vertical": 10
+            "top": 10,
+            "right": 10,
+            "bottom": 10,
+            "left": 10
           }
         },
         "topRightDot": {
@@ -45,8 +47,10 @@
             60
           ],
           "margins": {
-            "horizontal": 10,
-            "vertical": 10
+            "top": 10,
+            "right": 10,
+            "bottom": 10,
+            "left": 10
           }
         },
         "bottomRightDot": {
@@ -59,8 +63,10 @@
             60
           ],
           "margins": {
-            "horizontal": 10,
-            "vertical": 10
+            "top": 10,
+            "right": 10,
+            "bottom": 10,
+            "left": 10
           }
         },
         "bottomLeftDot": {
@@ -73,8 +79,10 @@
             60
           ],
           "margins": {
-            "horizontal": 10,
-            "vertical": 10
+            "top": 10,
+            "right": 10,
+            "bottom": 10,
+            "left": 10
           }
         }
       }

@@ -6,7 +6,8 @@ import cv2
 import numpy as np
 
 from src.processors.constants import EDGE_TYPES_IN_ORDER
-from src.processors.internal.WarpOnPointsCommon import CropOnIndexPointsCommon
+from src.processors.internal.WarpOnPointsCommon import WarpOnPointsCommon
+from src.utils.constants import CLR_WHITE
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -15,8 +16,12 @@ from src.utils.math import MathUtils
 MIN_PAGE_AREA = 80000
 
 
-class CropPage(CropOnIndexPointsCommon):
+class CropPage(WarpOnPointsCommon):
     __is_internal_preprocessor__ = False
+
+    def validate_and_remap_options_schema(self, options):
+        parsed_options = {"enableCropping": True, **options}
+        return parsed_options
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -31,7 +36,7 @@ class CropPage(CropOnIndexPointsCommon):
     def prepare_image(self, image):
         return ImageUtils.normalize(image)
 
-    def find_corners_and_edges(self, image, file_path):
+    def extract_control_destination_points(self, image, file_path):
         config = self.tuning_config
         options = self.options
         max_points_per_side = options.get("maxPointsPerSide", None)
@@ -70,7 +75,9 @@ class CropPage(CropOnIndexPointsCommon):
             if MathUtils.validate_rect(approx):
                 sheet = np.reshape(approx, (4, -1))
                 page_contour = bounding_contour
-                cv2.drawContours(canny_edge, [approx], -1, (255, 255, 255), 10)
+                ImageUtils.draw_contour(
+                    canny_edge, approx, color=CLR_WHITE, thickness=10
+                )
 
                 # TODO: self.append_save_image(2, canny_edge)
                 break
@@ -107,7 +114,7 @@ class CropPage(CropOnIndexPointsCommon):
             ) = ImageUtils.get_control_destination_points_from_contour(
                 edge_contour, edge_line, max_points_per_side
             )
-            control_points.append(edge_control_points)
-            destination_points.append(edge_destination_points)
+            control_points += edge_control_points
+            destination_points += edge_destination_points
 
-        return ordered_page_corners, control_points, destination_points
+        return control_points, destination_points

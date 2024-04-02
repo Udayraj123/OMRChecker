@@ -3,9 +3,12 @@ import os
 import cv2
 import numpy as np
 
-from src.processors.constants import MARKER_AREA_TYPES_IN_ORDER, AreaTemplate
+from src.processors.constants import (
+    MARKER_AREA_TYPES_IN_ORDER,
+    AreaTemplate,
+    ScannerType,
+)
 from src.processors.internal.CropOnPatchesCommon import CropOnPatchesCommon
-from src.utils.constants import CLR_LIGHT_GRAY
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -17,7 +20,39 @@ from src.utils.parsing import OVERRIDE_MERGER
 class CropOnCustomMarkers(CropOnPatchesCommon):
     __is_internal_preprocessor__ = True
     scan_area_templates_for_layout = {
-        "CUSTOM_MARKER": MARKER_AREA_TYPES_IN_ORDER,
+        "FOUR_MARKERS": MARKER_AREA_TYPES_IN_ORDER,
+    }
+    default_points_selector_map = {
+        "CENTERS": {
+            AreaTemplate.topLeftMarker: "SELECT_CENTER",
+            AreaTemplate.topRightMarker: "SELECT_CENTER",
+            AreaTemplate.bottomRightMarker: "SELECT_CENTER",
+            AreaTemplate.bottomLeftMarker: "SELECT_CENTER",
+        },
+        "INNER_WIDTHS": {
+            AreaTemplate.topLeftMarker: "SELECT_TOP_RIGHT",
+            AreaTemplate.topRightMarker: "SELECT_TOP_LEFT",
+            AreaTemplate.bottomRightMarker: "SELECT_BOTTOM_LEFT",
+            AreaTemplate.bottomLeftMarker: "SELECT_BOTTOM_RIGHT",
+        },
+        "INNER_HEIGHTS": {
+            AreaTemplate.topLeftMarker: "SELECT_BOTTOM_LEFT",
+            AreaTemplate.topRightMarker: "SELECT_BOTTOM_RIGHT",
+            AreaTemplate.bottomRightMarker: "SELECT_TOP_RIGHT",
+            AreaTemplate.bottomLeftMarker: "SELECT_TOP_LEFT",
+        },
+        "INNER_CORNERS": {
+            AreaTemplate.topLeftMarker: "SELECT_BOTTOM_RIGHT",
+            AreaTemplate.topRightMarker: "SELECT_BOTTOM_LEFT",
+            AreaTemplate.bottomRightMarker: "SELECT_TOP_LEFT",
+            AreaTemplate.bottomLeftMarker: "SELECT_TOP_RIGHT",
+        },
+        "OUTER_CORNERS": {
+            AreaTemplate.topLeftMarker: "SELECT_TOP_LEFT",
+            AreaTemplate.topRightMarker: "SELECT_TOP_RIGHT",
+            AreaTemplate.bottomRightMarker: "SELECT_BOTTOM_RIGHT",
+            AreaTemplate.bottomLeftMarker: "SELECT_BOTTOM_LEFT",
+        },
     }
 
     def __init__(self, *args, **kwargs):
@@ -25,7 +60,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         tuning_options = self.tuning_options
         self.threshold_circles = []
 
-        # TODO: dedicated marker scanArea config needed for these
+        # TODO: dedicated marker scanArea config needed for these?
         self.min_matching_threshold = tuning_options.get("min_matching_threshold", 0.3)
         self.marker_rescale_range = tuple(
             tuning_options.get("marker_rescale_range", (85, 115))
@@ -35,6 +70,30 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
 
         self.init_resized_markers()
 
+    def validate_and_remap_options_schema(self, options):
+        reference_image_path, layout_type = options["relativePath"], options["type"]
+        parsed_options = {
+            "pointsLayout": layout_type,
+        }
+
+        # TODO: add default values for provided scanAreas?
+        # Allow non-marker scanAreas here too?
+
+        # inject scanAreas
+        parsed_options["scanAreas"] = [
+            {
+                "areaTemplate": area_template,
+                "areaDescription": options.get(area_template, {}),
+                "customOptions": {
+                    "referenceImage": reference_image_path,
+                    # "markerDimensions": dimensions
+                },
+            }
+            for area_template in self.scan_area_templates_for_layout[layout_type]
+        ]
+        # TODO: expand tuningOptions ->customOptions["tuningOptions"]?  (or use areaConfig["TEMPLATE_MATCH"] in schema?)
+        return parsed_options
+
     def validate_scan_areas(self):
         super().validate_scan_areas()
         # Additional marker related validations
@@ -43,12 +102,14 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 scan_area.get, ["areaTemplate", "areaDescription", "customOptions"]
             )
             area_label = area_description["label"]
-            if area_template in self.scan_area_templates_for_layout["CUSTOM_MARKER"]:
+            if area_template in self.scan_area_templates_for_layout["FOUR_MARKERS"]:
                 if "referenceImage" not in custom_options:
                     raise Exception(
                         f"referenceImage not provided for custom marker area {area_label}"
                     )
-                reference_image_path = custom_options["referenceImage"]
+                reference_image_path = self.get_relative_path(
+                    custom_options["referenceImage"]
+                )
 
                 if not os.path.exists(reference_image_path):
                     raise Exception(
@@ -67,16 +128,17 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 area_description["scannerType"],
             )
 
-            if scanner_type != "TEMPLATE_MATCH":
+            if scanner_type != ScannerType.TEMPLATE_MATCH:
                 continue
-            reference_image_path = custom_options["referenceImage"]
+            reference_image_path = self.get_relative_path(
+                custom_options["referenceImage"]
+            )
             if reference_image_path in self.loaded_reference_images:
                 reference_image = self.loaded_reference_images[reference_image_path]
             else:
-                full_path = os.path.join(self.relative_dir, reference_image_path)
                 # TODO: add colored support later based on image_type passed at parent level
-                reference_image = cv2.imread(full_path, cv2.IMREAD_GRAYSCALE)
-                self.loaded_reference_images[reference_image_path]
+                reference_image = cv2.imread(reference_image_path, cv2.IMREAD_GRAYSCALE)
+                self.loaded_reference_images[reference_image_path] = reference_image
             reference_area = custom_options.get(
                 "referenceArea", self.get_default_scan_area_for_image(reference_image)
             )
@@ -90,12 +152,15 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
     def extract_marker_from_reference(
         self, reference_image, reference_area, custom_options
     ):
+        options = self.options
         origin, dimensions = reference_area["origin"], reference_area["dimensions"]
         x, y = origin
         w, h = dimensions
-        marker = reference_image[x : x + w, y : y + h]
+        marker = reference_image[y : y + h, x : x + w]
 
-        marker_dimensions = custom_options.get("markerDimensions", None)
+        marker_dimensions = custom_options.get(
+            "markerDimensions", options.get("dimensions", None)
+        )
         if marker_dimensions is not None:
             w, h = marker_dimensions
             marker = ImageUtils.resize_util(marker, w, h)
@@ -116,8 +181,8 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
     def get_default_scan_area_for_image(image):
         h, w = image.shape[:2]
         return {
-            "origin": [0, 0],
-            "dimensions": [w, h],
+            "origin": [1, 1],
+            "dimensions": [w - 1, h - 1],
         }
 
     def get_runtime_area_description_with_defaults(self, image, scan_area):
@@ -129,7 +194,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         # Note: currently user input would be restricted to only markers at once (no combination of markers and dots)
         # TODO: >> handle a instance of this class from parent using scannerType for applicable ones!
         # Check for area_template
-        if area_template not in self.scan_area_templates_for_layout["CUSTOM_MARKER"]:
+        if area_template not in self.scan_area_templates_for_layout["FOUR_MARKERS"]:
             return area_description
 
         area_label, origin, dimensions = map(
@@ -159,9 +224,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         )
 
         if config.outputs.show_image_level >= 1:
-            cv2.drawContours(
-                self.debug_image, [np.intp(absolute_corners)], -1, CLR_LIGHT_GRAY, 2
-            )
+            ImageUtils.draw_contour(self.debug_image, absolute_corners)
 
         return absolute_corners
 
@@ -170,14 +233,14 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         half_height, half_width = h // 2, w // 2
         marker_h, marker_w = marker_shape
 
-        if patch_type == AreaTemplate.topLeftDot:
-            area_start, area_end = [0, 0], [half_width, half_height]
-        elif patch_type == AreaTemplate.topRightDot:
-            area_start, area_end = [half_width, 0], [w, half_height]
-        elif patch_type == AreaTemplate.bottomRightDot:
+        if patch_type == AreaTemplate.topLeftMarker:
+            area_start, area_end = [1, 1], [half_width, half_height]
+        elif patch_type == AreaTemplate.topRightMarker:
+            area_start, area_end = [half_width, 1], [w, half_height]
+        elif patch_type == AreaTemplate.bottomRightMarker:
             area_start, area_end = [half_width, half_height], [w, h]
-        elif patch_type == AreaTemplate.bottomLeftDot:
-            area_start, area_end = [0, half_height], [half_width, h]
+        elif patch_type == AreaTemplate.bottomLeftMarker:
+            area_start, area_end = [1, half_height], [half_width, h]
         else:
             raise Exception(f"Unexpected quadrant patch_type {patch_type}")
 
@@ -193,8 +256,10 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             "origin": origin,
             "dimensions": [marker_w, marker_h],
             "margins": {
-                "horizontal": margin_horizontal,
-                "vertical": margin_vertical,
+                "top": margin_vertical,
+                "right": margin_horizontal,
+                "bottom": margin_vertical,
+                "left": margin_horizontal,
             },
             "selector": "DOT_CENTER",
             "scannerType": "TEMPLATE_MARKER",
@@ -312,7 +377,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         return optimal_res, optimal_marker, optimal_scale, optimal_match_max
 
     def exclude_files(self):
-        return [self.marker_path]
+        return self.loaded_reference_images.keys()
 
     def prepare_image(self, image):
         # TODO: remove apply_erode_subtract?

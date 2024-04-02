@@ -59,7 +59,7 @@ class MathUtils:
         bounding_box = np.array(
             [(min_x, min_y), (max_x, min_y), (max_x, max_y), (min_x, max_y)]
         )
-        box_dimensions = tuple(max_x - min_x, max_y - min_y)
+        box_dimensions = (int(max_x - min_x), int(max_y - min_y))
         return bounding_box, box_dimensions
 
     @staticmethod

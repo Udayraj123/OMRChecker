@@ -1,4 +1,8 @@
-from src.processors.constants import SCANNER_TYPES_IN_ORDER, AreaTemplate
+from src.processors.constants import (
+    SCANNER_TYPES_IN_ORDER,
+    AreaTemplate,
+    HomographyMethod,
+)
 from src.schemas.constants import (
     ARRAY_OF_STRINGS,
     FIELD_STRING_TYPE,
@@ -13,9 +17,12 @@ from src.utils.constants import FIELD_TYPES
 margins_schema = {
     "type": "object",
     "additionalProperties": False,
+    "required": ["top", "right", "bottom", "left"],
     "properties": {
-        "vertical": positive_integer,
-        "horizontal": positive_integer,
+        "top": positive_integer,
+        "right": positive_integer,
+        "bottom": positive_integer,
+        "left": positive_integer,
     },
 }
 # TODO: deprecate in favor of scan_area_description
@@ -27,14 +34,14 @@ patch_area_description = {
         "origin": two_positive_integers,
         "dimensions": two_positive_integers,
         "margins": margins_schema,
-        "pointsSelector": {
+        "defaultSelector": {
             "type": "string",
             "enum": [
-                "DOT_TOP_LEFT",
-                "DOT_TOP_RIGHT",
-                "DOT_BOTTOM_RIGHT",
-                "DOT_BOTTOM_LEFT",
-                "DOT_CENTER",
+                "SELECT_TOP_LEFT",
+                "SELECT_TOP_RIGHT",
+                "SELECT_BOTTOM_RIGHT",
+                "SELECT_BOTTOM_LEFT",
+                "SELECT_CENTER",
                 "LINE_INNER_EDGE",
                 "LINE_OUTER_EDGE",
             ],
@@ -51,23 +58,7 @@ scan_area_description = {
             "type": "string",
         },
         "selectorMargins": margins_schema,
-        "selector": {
-            "type": "string",
-            "enum": [
-                "DOT_TOP_LEFT",
-                "DOT_TOP_RIGHT",
-                "DOT_BOTTOM_RIGHT",
-                "DOT_BOTTOM_LEFT",
-                "DOT_CENTER",
-                "LINE_INNER_EDGE",
-                "LINE_OUTER_EDGE",
-                # TODO: consume these
-                "TEMPLATE_CENTER",
-                "TEMPLATE_TOP_LEFT",
-                "TEMPLATE_BOTTOM_RIGHT",
-                "TEMPLATE_BOTTOM_LEFT",
-            ],
-        },
+        "selector": patch_area_description["properties"]["defaultSelector"],
         "scannerType": {
             "type": "string",
             "enum": SCANNER_TYPES_IN_ORDER,
@@ -85,7 +76,7 @@ default_points_selector_types = [
 
 # TODO: deprecate crop_on_marker_types
 crop_on_marker_types = [
-    "CUSTOM_MARKER",
+    "FOUR_MARKERS",
     "ONE_LINE_TWO_DOTS",
     "TWO_DOTS_ONE_LINE",
     "TWO_LINES",
@@ -93,9 +84,8 @@ crop_on_marker_types = [
 ]
 
 points_layout_types = [
-    *crop_on_marker_types[1:],
+    *crop_on_marker_types,
     "CUSTOM",
-    "TEMPLATE_MATCH",
 ]
 
 scan_area_template = {
@@ -106,10 +96,10 @@ scan_area_template = {
 pre_processor_if_required_attrs = {
     "required": ["name", "options"],
 }
-crop_on_markers_if_required_attrs = {
+crop_on_markers_options_if_required_attrs = {
     "required": ["type"],
 }
-warp_on_points_if_required_attrs = {
+warp_on_points_options_if_required_attrs = {
     "required": ["scanAreas"],
 }
 pre_processor_options_available_keys = {"processingImageShape": True}
@@ -124,7 +114,7 @@ crop_on_markers_tuning_options_available_keys = {
 }
 crop_on_markers_options_available_keys = {
     **pre_processor_options_available_keys,
-    "pointsSelector": True,
+    "defaultSelector": True,
     "tuningOptions": True,
     "type": True,
 }
@@ -315,11 +305,15 @@ TEMPLATE_SCHEMA = {
                         "then": {
                             "properties": {
                                 "options": {
-                                    **warp_on_points_if_required_attrs,
+                                    **warp_on_points_options_if_required_attrs,
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {
                                         **warp_on_points_options_available_keys,
+                                        "homographyMethod": {
+                                            "type": "string",
+                                            "enum": [*HomographyMethod.values()],
+                                        },
                                         "pointsLayout": {
                                             "type": "string",
                                             "enum": points_layout_types,
@@ -359,11 +353,12 @@ TEMPLATE_SCHEMA = {
                             "properties": {
                                 "options": {
                                     "type": "object",
-                                    # Note: "required" key is retrieved from crop_on_markers_if_required_attrs
+                                    # Note: "required" key is retrieved from crop_on_markers_options_if_required_attrs
+                                    **crop_on_markers_options_if_required_attrs,
                                     "properties": {
                                         # Note: the keys need to match with crop_on_markers_options_available_keys
                                         **crop_on_markers_options_available_keys,
-                                        "pointsSelector": {
+                                        "defaultSelector": {
                                             "type": "string",
                                             "enum": default_points_selector_types,
                                         },
@@ -372,13 +367,12 @@ TEMPLATE_SCHEMA = {
                                             "enum": crop_on_marker_types,
                                         },
                                     },
-                                    **crop_on_markers_if_required_attrs,
                                     "allOf": [
                                         {
                                             "if": {
-                                                **crop_on_markers_if_required_attrs,
+                                                **crop_on_markers_options_if_required_attrs,
                                                 "properties": {
-                                                    "type": {"const": "CUSTOM_MARKER"}
+                                                    "type": {"const": "FOUR_MARKERS"}
                                                 },
                                             },
                                             "then": {
@@ -391,10 +385,10 @@ TEMPLATE_SCHEMA = {
                                                     **crop_on_markers_options_available_keys,
                                                     "dimensions": two_positive_integers,
                                                     "relativePath": {"type": "string"},
-                                                    "topRightDot": patch_area_description,
-                                                    "bottomRightDot": patch_area_description,
-                                                    "topLeftDot": patch_area_description,
-                                                    "bottomLeftDot": patch_area_description,
+                                                    "topRightMarker": patch_area_description,
+                                                    "bottomRightMarker": patch_area_description,
+                                                    "topLeftMarker": patch_area_description,
+                                                    "bottomLeftMarker": patch_area_description,
                                                     "tuningOptions": {
                                                         "type": "object",
                                                         "additionalProperties": False,
@@ -416,7 +410,7 @@ TEMPLATE_SCHEMA = {
                                         },
                                         {
                                             "if": {
-                                                **crop_on_markers_if_required_attrs,
+                                                **crop_on_markers_options_if_required_attrs,
                                                 "properties": {
                                                     "type": {
                                                         "const": "ONE_LINE_TWO_DOTS"
@@ -424,6 +418,7 @@ TEMPLATE_SCHEMA = {
                                                 },
                                             },
                                             "then": {
+                                                # TODO: check that "topLeftDot": False, etc here is not passable
                                                 "required": [
                                                     "leftLine",
                                                     "topRightDot",
@@ -436,13 +431,12 @@ TEMPLATE_SCHEMA = {
                                                     "leftLine": patch_area_description,
                                                     "topRightDot": patch_area_description,
                                                     "bottomRightDot": patch_area_description,
-                                                    # TODO: add "topLeftDot": False, etc here?
                                                 },
                                             },
                                         },
                                         {
                                             "if": {
-                                                **crop_on_markers_if_required_attrs,
+                                                **crop_on_markers_options_if_required_attrs,
                                                 "properties": {
                                                     "type": {
                                                         "const": "TWO_DOTS_ONE_LINE"
@@ -467,7 +461,7 @@ TEMPLATE_SCHEMA = {
                                         },
                                         {
                                             "if": {
-                                                **crop_on_markers_if_required_attrs,
+                                                **crop_on_markers_options_if_required_attrs,
                                                 "properties": {
                                                     "type": {"const": "TWO_LINES"}
                                                 },
@@ -485,7 +479,7 @@ TEMPLATE_SCHEMA = {
                                         },
                                         {
                                             "if": {
-                                                **crop_on_markers_if_required_attrs,
+                                                **crop_on_markers_options_if_required_attrs,
                                                 "properties": {
                                                     "type": {"const": "FOUR_DOTS"}
                                                 },

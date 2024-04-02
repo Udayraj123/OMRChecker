@@ -1,11 +1,7 @@
 import cv2
+import numpy as np
 
-from src.processors.constants import (
-    DOT_AREA_TYPES_IN_ORDER,
-    LINE_AREA_TYPES_IN_ORDER,
-    MARKER_AREA_TYPES_IN_ORDER,
-    ScannerType,
-)
+from src.processors.constants import HomographyMethod
 from src.processors.interfaces.ImageTemplatePreprocessor import (
     ImageTemplatePreprocessor,
 )
@@ -13,109 +9,35 @@ from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 from src.utils.math import MathUtils
-from src.utils.parsing import OVERRIDE_MERGER
 
 
 # Internal Processor for separation of code
 class WarpOnPointsCommon(ImageTemplatePreprocessor):
     __is_internal_preprocessor__ = True
 
-    # TODO: these should be divided into child class accessors!
-    default_scan_area_descriptions = {
-        **{
-            marker_type: {
-                "scannerType": ScannerType.TEMPLATE_MATCH,
-                "selector": "TEMPLATE_CENTER",
-            }
-            for marker_type in MARKER_AREA_TYPES_IN_ORDER
-        },
-        **{
-            marker_type: {
-                "scannerType": ScannerType.PATCH_DOT,
-                "selector": "DOT_CENTER",
-            }
-            for marker_type in DOT_AREA_TYPES_IN_ORDER
-        },
-        **{
-            marker_type: {
-                "scannerType": "PATCH_LINE",
-                "selector": "LINE_OUTER_EDGE",
-            }
-            for marker_type in LINE_AREA_TYPES_IN_ORDER
-        },
-        "CUSTOM": {},
+    homography_method_map = {
+        HomographyMethod.INTER_LINEAR: cv2.INTER_LINEAR,
+        HomographyMethod.INTER_CUBIC: cv2.INTER_CUBIC,
     }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def validate_and_remap_options_schema(self):
+        raise Exception(f"Not implemented")
+
+    def __init__(self, options, relative_dir, image_instance_ops):
+        # TODO: think of a better method in class designs :think:
+        self.tuning_config = image_instance_ops.tuning_config
+        parsed_options = self.validate_and_remap_options_schema(options)
+        super().__init__(parsed_options, relative_dir, image_instance_ops)
         options = self.options
-        self.scan_areas = self.parse_scan_areas_with_defaults(options["scanAreas"])
-        self.validate_scan_areas()
-        self.validate_points_layouts()
+        self.homography_method = self.homography_method_map.get(
+            options.get("homographyMethod", "INTER_LINEAR")
+        )
 
     def exclude_files(self):
         return []
 
     def prepare_image(self, image):
         return image
-
-    def parse_scan_areas_with_defaults(self, scan_areas):
-        scan_areas_with_defaults = []
-        for scan_area in scan_areas:
-            area_template, area_description = scan_area["areaTemplate"], scan_area.get(
-                "areaDescription", {}
-            )
-            area_description["label"] = area_description.get("label", area_template)
-            custom_options = area_description.get("customOptions", {})
-            scan_areas_with_defaults.append(
-                {
-                    "areaTemplate": area_template,
-                    "areaDescription": OVERRIDE_MERGER.merge(
-                        self.default_scan_area_descriptions[area_template],
-                        area_description,
-                    ),
-                    "customOptions": custom_options,
-                }
-            )
-
-        self.scan_areas = scan_areas_with_defaults
-
-    def validate_scan_areas(self):
-        seen_labels = set()
-        repeat_labels = set()
-        for scan_area in self.scan_areas:
-            area_label = scan_area["areaDescription"]["label"]
-            if area_label in seen_labels:
-                repeat_labels.add(area_label)
-            seen_labels.add(area_label)
-        if len(repeat_labels) > 0:
-            raise Exception(f"Found repeated labels in scanAreas: {repeat_labels}")
-
-        # TODO: more validations in child classes
-
-    # TODO: check if this needs to move into child for working properly (accessing self attributes declared in child in parent's constructor)
-    def validate_points_layouts(self):
-        options = self.options
-        points_layout = options["pointsLayout"]
-        if (
-            points_layout not in self.scan_area_templates_for_layout
-            and points_layout != "CUSTOM"
-        ):
-            raise Exception(
-                f"Invalid pointsLayout provided: {points_layout} for {self}"
-            )
-
-        expected_templates = set(self.scan_area_templates_for_layout[points_layout])
-        provided_templates = set(
-            [scan_area["areaTemplate"] for scan_area in self.scan_areas]
-        )
-        not_provided_area_templates = expected_templates.difference(provided_templates)
-
-        if len(not_provided_area_templates) > 0:
-            logger.error(f"not_provided_area_templates={not_provided_area_templates}")
-            raise Exception(
-                f"Missing a few scanAreaTemplates for the pointsLayout {points_layout}"
-            )
 
     def apply_filter(self, image, colored_image, _template, file_path):
         config = self.tuning_config
@@ -133,25 +55,42 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             control_points,
             destination_points,
         ) = self.extract_control_destination_points(image, file_path)
-
         (
             parsed_destination_points,
             warped_dimensions,
-        ) = self.parse_destination_points_for_image(
-            image, control_points, destination_points
-        )
+        ) = self.parse_destination_points_for_image(image, destination_points)
 
         logger.info(
-            f"control_points={control_points}, destination_points={destination_points}, warped_dimensions={warped_dimensions}"
+            f"control_points={control_points}, parsed_destination_points={parsed_destination_points}, warped_dimensions={warped_dimensions}"
         )
+        # TODO: check if float32 is really needed
+        parsed_control_points = np.float32(control_points)
+        parsed_destination_points = np.float32(parsed_destination_points)
 
-        # Find and pass control points in a defined order
-        transform_matrix = cv2.getPerspectiveTransform(
-            control_points, parsed_destination_points
-        )
+        if len(parsed_control_points) == 4:
+            # Find and pass control points in a defined order
+            transform_matrix = cv2.getPerspectiveTransform(
+                parsed_control_points, parsed_destination_points
+            )
+        else:
+            # Getting the homography.
+            homography, mask = cv2.findHomography(
+                parsed_control_points,
+                parsed_destination_points,
+                method=cv2.RANSAC,
+                ransacReprojThreshold=3.0,
+            )
+            # TODO: print mask for debugging
+            # TODO: check if float32 is really needed
+            transform_matrix = np.float32(homography)
+        # elif TODO: try remap as well
+        # elif TODO: try warpAffine as well for non cropped Alignment!!
 
+        logger.info(f"transform_matrix={transform_matrix}")
         # Crop the image
-        warped_image = cv2.warpPerspective(image, transform_matrix, warped_dimensions)
+        warped_image = cv2.warpPerspective(
+            image, transform_matrix, warped_dimensions, flags=self.homography_method
+        )
 
         if config.outputs.show_colored_outputs:
             colored_image = cv2.warpPerspective(
@@ -169,10 +108,10 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         return warped_image, colored_image, _template
 
     def parse_destination_points_for_image(self, image, destination_points):
-        config = self.tuning_config
+        options = self.options
         h, w = image.shape[:2]
         parsed_destination_points, warped_dimensions = destination_points, (w, h)
-        enable_cropping = config.get("enableCropping", False)
+        enable_cropping = options.get("enableCropping", False)
         if enable_cropping:
             # TODO: exclude the destination points marked with excludeFromCropping (using a small class for each point?)
             # Also exclude corresponding points from control points (Note: may need to be done in a second pass after alignment warping)

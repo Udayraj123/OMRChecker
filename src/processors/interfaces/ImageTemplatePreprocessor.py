@@ -1,4 +1,6 @@
 # Use all imports relative to root directory
+import os
+
 from src.processors.manager import Processor
 from src.utils.image import ImageUtils
 
@@ -19,6 +21,9 @@ class ImageTemplatePreprocessor(Processor):
             "processingImageShape",
             self.tuning_config.dimensions.processing_image_shape,
         )
+
+    def get_relative_path(self, path):
+        return os.path.join(self.relative_dir, path)
 
     def apply_filter(self, _image, _colored_image, _template, _file_path):
         """Apply filter to the image and returns modified image"""

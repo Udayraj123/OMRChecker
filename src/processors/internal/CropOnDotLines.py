@@ -35,6 +35,49 @@ class CropOnDotLines(CropOnPatchesCommon):
         "FOUR_DOTS": DOT_AREA_TYPES_IN_ORDER,
     }
 
+    default_points_selector_map = {
+        "CENTERS": {
+            AreaTemplate.topLeftDot: "SELECT_CENTER",
+            AreaTemplate.topRightDot: "SELECT_CENTER",
+            AreaTemplate.bottomRightDot: "SELECT_CENTER",
+            AreaTemplate.bottomLeftDot: "SELECT_CENTER",
+            AreaTemplate.leftLine: "LINE_OUTER_EDGE",
+            AreaTemplate.rightLine: "LINE_OUTER_EDGE",
+        },
+        "INNER_WIDTHS": {
+            AreaTemplate.topLeftDot: "SELECT_TOP_RIGHT",
+            AreaTemplate.topRightDot: "SELECT_TOP_LEFT",
+            AreaTemplate.bottomRightDot: "SELECT_BOTTOM_LEFT",
+            AreaTemplate.bottomLeftDot: "SELECT_BOTTOM_RIGHT",
+            AreaTemplate.leftLine: "LINE_INNER_EDGE",
+            AreaTemplate.rightLine: "LINE_INNER_EDGE",
+        },
+        "INNER_HEIGHTS": {
+            AreaTemplate.topLeftDot: "SELECT_BOTTOM_LEFT",
+            AreaTemplate.topRightDot: "SELECT_BOTTOM_RIGHT",
+            AreaTemplate.bottomRightDot: "SELECT_TOP_RIGHT",
+            AreaTemplate.bottomLeftDot: "SELECT_TOP_LEFT",
+            AreaTemplate.leftLine: "LINE_OUTER_EDGE",
+            AreaTemplate.rightLine: "LINE_OUTER_EDGE",
+        },
+        "INNER_CORNERS": {
+            AreaTemplate.topLeftDot: "SELECT_BOTTOM_RIGHT",
+            AreaTemplate.topRightDot: "SELECT_BOTTOM_LEFT",
+            AreaTemplate.bottomRightDot: "SELECT_TOP_LEFT",
+            AreaTemplate.bottomLeftDot: "SELECT_TOP_RIGHT",
+            AreaTemplate.leftLine: "LINE_INNER_EDGE",
+            AreaTemplate.rightLine: "LINE_INNER_EDGE",
+        },
+        "OUTER_CORNERS": {
+            AreaTemplate.topLeftDot: "SELECT_TOP_LEFT",
+            AreaTemplate.topRightDot: "SELECT_TOP_RIGHT",
+            AreaTemplate.bottomRightDot: "SELECT_BOTTOM_RIGHT",
+            AreaTemplate.bottomLeftDot: "SELECT_BOTTOM_LEFT",
+            AreaTemplate.leftLine: "LINE_OUTER_EDGE",
+            AreaTemplate.rightLine: "LINE_OUTER_EDGE",
+        },
+    }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         tuning_options = self.tuning_options
@@ -44,6 +87,10 @@ class CropOnDotLines(CropOnPatchesCommon):
         self.dot_kernel_morph = self.dot_kernel_morph = cv2.getStructuringElement(
             cv2.MORPH_RECT, tuple(tuning_options.get("dotKernel", [5, 5]))
         )
+
+    def validate_and_remap_options_schema(self, options):
+        # TODO: implement
+        return options
 
     def find_and_select_points_from_line(self, image, area_description, _file_path):
         area_label = area_description["label"]
@@ -55,7 +102,7 @@ class CropOnDotLines(CropOnPatchesCommon):
             image, area_description, area_label
         )
 
-        # Extract the line_contours points based on pointsSelector
+        # Extract the line_contours points based on defaultSelector
         edge_contour, edge_line = self.select_contour_and_edge_from_patch_area(
             ordered_patch_corners, area_label, points_selector, line_edge_contours
         )
@@ -101,7 +148,7 @@ class CropOnDotLines(CropOnPatchesCommon):
 
         # add white padding
         kernel_height, kernel_width = self.line_kernel_morph.shape[:2]
-        white, box = ImageUtils.pad_image_from_center(
+        white, pad_range = ImageUtils.pad_image_from_center(
             morph, kernel_width, kernel_height, 255
         )
 
@@ -118,7 +165,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         )
 
         # remove white padding
-        morph_v = morph_v[box[0] : box[1], box[2] : box[3]]
+        morph_v = morph_v[pad_range[0] : pad_range[1], pad_range[2] : pad_range[3]]
 
         if config.outputs.show_image_level >= 5:
             self.debug_hstack += [morph, morph_v]
@@ -213,8 +260,7 @@ class CropOnDotLines(CropOnPatchesCommon):
             )
 
         # TODO: less confidence if given dimensions differ from matched block size (also give a warning)
-        cv2.drawContours(edge, [np.intp(ordered_patch_corners)], -1, (200, 200, 200), 2)
-
+        ImageUtils.draw_contour(edge, ordered_patch_corners)
         if config.outputs.show_image_level >= 5:
             self.debug_hstack += [area, edge]
             self.debug_vstack.append(self.debug_hstack)

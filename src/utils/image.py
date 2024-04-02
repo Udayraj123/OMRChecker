@@ -3,7 +3,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from src.processors.constants import EdgeType
-from src.utils.constants import CLR_BLACK, CLR_DARK_GRAY, CLR_GRAY, CLR_WHITE, TEXT_SIZE
+from src.utils.constants import (
+    CLR_BLACK,
+    CLR_DARK_GRAY,
+    CLR_GRAY,
+    CLR_LIGHT_GRAY,
+    CLR_WHITE,
+    TEXT_SIZE,
+)
 from src.utils.logger import logger
 from src.utils.math import MathUtils
 
@@ -110,7 +117,7 @@ class ImageUtils:
     def get_control_destination_points_from_contour(
         edge_contour, edge_line, max_points=None
     ):
-        logger.info(f"edge_contour={edge_contour}, edge_line={edge_line}")
+        # logger.info(f"edge_contour={edge_contour}, edge_line={edge_line}")
         total_points = len(edge_contour)
         if max_points is None:
             max_points = total_points
@@ -264,22 +271,20 @@ class ImageUtils:
         )
 
     def pad_image_from_center(image, padding_width, padding_height=0, value=255):
-        input_width, input_height = image.shape[:2]
-        bounding_box = [
-            padding_width,
-            padding_width + input_width,
+        input_height, input_width = image.shape[:2]
+        pad_range = [
             padding_height,
             padding_height + input_height,
+            padding_width,
+            padding_width + input_width,
         ]
-        white = value * np.ones(
-            (padding_width * 2 + input_width, padding_height * 2 + input_height),
+        white_image = value * np.ones(
+            (padding_height * 2 + input_height, padding_width * 2 + input_width),
             np.uint8,
         )
-        white[
-            bounding_box[0] : bounding_box[1], bounding_box[2] : bounding_box[3]
-        ] = image
+        white_image[pad_range[0] : pad_range[1], pad_range[2] : pad_range[3]] = image
 
-        return white, bounding_box
+        return white_image, pad_range
 
     @staticmethod
     def draw_box_diagonal(
@@ -298,6 +303,24 @@ class ImageUtils:
         )
 
     @staticmethod
+    def draw_contour(
+        image,
+        contour,
+        color=CLR_LIGHT_GRAY,
+        thickness=2,
+    ):
+        for boundary_point in contour:
+            assert boundary_point is not None
+        contourIndex = -1
+        cv2.drawContours(
+            image,
+            [np.intp(contour)],
+            contourIndex,
+            color=color,
+            thickness=thickness,
+        )
+
+    @staticmethod
     def draw_box(
         image,
         position,
@@ -307,6 +330,7 @@ class ImageUtils:
         thickness_factor=1 / 12,
         border=3,
     ):
+        assert position is not None
         x, y = position
         box_w, box_h = box_dimensions
 

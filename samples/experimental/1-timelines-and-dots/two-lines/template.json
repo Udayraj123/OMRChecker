@@ -36,7 +36,7 @@
           ]
         },
         "type": "TWO_LINES",
-        "pointsSelector": "OUTER_CORNERS",
+        "defaultSelector": "OUTER_CORNERS",
         "leftLine": {
           "origin": [
             40,
@@ -47,8 +47,10 @@
             980
           ],
           "margins": {
-            "horizontal": 20,
-            "vertical": 15
+            "top": 15,
+            "right": 20,
+            "bottom": 15,
+            "left": 20
           }
         },
         "rightLine": {
@@ -61,8 +63,10 @@
             980
           ],
           "margins": {
-            "horizontal": 20,
-            "vertical": 15
+            "top": 15,
+            "right": 20,
+            "bottom": 15,
+            "left": 20
           }
         }
       }

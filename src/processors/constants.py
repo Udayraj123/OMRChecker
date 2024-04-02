@@ -63,3 +63,12 @@ SCANNER_TYPES_IN_ORDER = [
     ScannerType.PATCH_LINE,
     ScannerType.TEMPLATE_MATCH,
 ]
+
+
+HomographyMethod = DotMap(
+    {
+        "INTER_LINEAR": "INTER_LINEAR",
+        "INTER_CUBIC": "INTER_CUBIC",
+    },
+    _dynamic=False,
+)

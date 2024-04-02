@@ -11,7 +11,7 @@ class CropOnMarkers(ImageTemplatePreprocessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if self.options["type"] == "CUSTOM_MARKER":
+        if self.options["type"] == "FOUR_MARKERS":
             self.instance = CropOnCustomMarkers(*args, **kwargs)
         else:
             self.instance = CropOnDotLines(*args, **kwargs)
