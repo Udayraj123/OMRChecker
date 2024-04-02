@@ -52,6 +52,17 @@ class MathUtils:
         return rect
 
     @staticmethod
+    def get_bounding_box_of_points(points):
+        min_x, min_y = np.min(points, axis=0)
+        max_x, max_y = np.max(points, axis=0)
+        # returns the ordered coordinates (tl, tr, br, bl)
+        bounding_box = np.array(
+            [(min_x, min_y), (max_x, min_y), (max_x, max_y), (min_x, max_y)]
+        )
+        box_dimensions = tuple(max_x - min_x, max_y - min_y)
+        return bounding_box, box_dimensions
+
+    @staticmethod
     def validate_rect(approx):
         return len(approx) == 4 and MathUtils.check_max_cosine(approx.reshape(4, 2))
 

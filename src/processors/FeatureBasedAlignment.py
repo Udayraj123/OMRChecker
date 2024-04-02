@@ -12,7 +12,7 @@ from src.processors.interfaces.ImageTemplatePreprocessor import (
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 
-# TODO: modify this to return from and to points and then the parent class should handle the warping?
+# TODO: modify this to return from and to points and then the parent class should handle the warping? (extend WarpOnPointsCommon)
 
 
 class FeatureBasedAlignment(ImageTemplatePreprocessor):

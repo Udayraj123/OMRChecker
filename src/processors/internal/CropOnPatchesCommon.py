@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 
-from src.processors.internal.CropOnIndexPointsCommon import CropOnIndexPointsCommon
+from src.processors.constants import AreaTemplate, ScannerType
+from src.processors.internal.WarpOnPointsCommon import WarpOnPointsCommon
 from src.utils.constants import CLR_DARK_GREEN
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
@@ -9,8 +10,71 @@ from src.utils.logger import logger
 from src.utils.math import MathUtils
 
 
-class CropOnPatchesCommon(CropOnIndexPointsCommon):
+class CropOnPatchesCommon(WarpOnPointsCommon):
     __is_internal_preprocessor__ = True
+
+    default_points_selector_map = {
+        "CENTERS": {
+            AreaTemplate.topLeftDot: "DOT_CENTER",
+            AreaTemplate.topRightDot: "DOT_CENTER",
+            AreaTemplate.bottomRightDot: "DOT_CENTER",
+            AreaTemplate.bottomLeftDot: "DOT_CENTER",
+            AreaTemplate.topLeftMarker: "DOT_CENTER",
+            AreaTemplate.topRightMarker: "DOT_CENTER",
+            AreaTemplate.bottomRightMarker: "DOT_CENTER",
+            AreaTemplate.bottomLeftMarker: "DOT_CENTER",
+            AreaTemplate.leftLine: "LINE_OUTER_EDGE",
+            AreaTemplate.rightLine: "LINE_OUTER_EDGE",
+        },
+        "INNER_WIDTHS": {
+            AreaTemplate.topLeftDot: "DOT_TOP_RIGHT",
+            AreaTemplate.topRightDot: "DOT_TOP_LEFT",
+            AreaTemplate.bottomRightDot: "DOT_BOTTOM_LEFT",
+            AreaTemplate.bottomLeftDot: "DOT_BOTTOM_RIGHT",
+            AreaTemplate.topLeftMarker: "DOT_TOP_RIGHT",
+            AreaTemplate.topRightMarker: "DOT_TOP_LEFT",
+            AreaTemplate.bottomRightMarker: "DOT_BOTTOM_LEFT",
+            AreaTemplate.bottomLeftMarker: "DOT_BOTTOM_RIGHT",
+            AreaTemplate.leftLine: "LINE_INNER_EDGE",
+            AreaTemplate.rightLine: "LINE_INNER_EDGE",
+        },
+        "INNER_HEIGHTS": {
+            AreaTemplate.topLeftDot: "DOT_BOTTOM_LEFT",
+            AreaTemplate.topRightDot: "DOT_BOTTOM_RIGHT",
+            AreaTemplate.bottomRightDot: "DOT_TOP_RIGHT",
+            AreaTemplate.bottomLeftDot: "DOT_TOP_LEFT",
+            AreaTemplate.topLeftMarker: "DOT_BOTTOM_LEFT",
+            AreaTemplate.topRightMarker: "DOT_BOTTOM_RIGHT",
+            AreaTemplate.bottomRightMarker: "DOT_TOP_RIGHT",
+            AreaTemplate.bottomLeftMarker: "DOT_TOP_LEFT",
+            AreaTemplate.leftLine: "LINE_OUTER_EDGE",
+            AreaTemplate.rightLine: "LINE_OUTER_EDGE",
+        },
+        "INNER_CORNERS": {
+            AreaTemplate.topLeftDot: "DOT_BOTTOM_RIGHT",
+            AreaTemplate.topRightDot: "DOT_BOTTOM_LEFT",
+            AreaTemplate.bottomRightDot: "DOT_TOP_LEFT",
+            AreaTemplate.bottomLeftDot: "DOT_TOP_RIGHT",
+            AreaTemplate.topLeftMarker: "DOT_BOTTOM_RIGHT",
+            AreaTemplate.topRightMarker: "DOT_BOTTOM_LEFT",
+            AreaTemplate.bottomRightMarker: "DOT_TOP_LEFT",
+            AreaTemplate.bottomLeftMarker: "DOT_TOP_RIGHT",
+            AreaTemplate.leftLine: "LINE_INNER_EDGE",
+            AreaTemplate.rightLine: "LINE_INNER_EDGE",
+        },
+        "OUTER_CORNERS": {
+            AreaTemplate.topLeftDot: "DOT_TOP_LEFT",
+            AreaTemplate.topRightDot: "DOT_TOP_RIGHT",
+            AreaTemplate.bottomRightDot: "DOT_BOTTOM_RIGHT",
+            AreaTemplate.bottomLeftDot: "DOT_BOTTOM_LEFT",
+            AreaTemplate.topLeftMarker: "DOT_TOP_LEFT",
+            AreaTemplate.topRightMarker: "DOT_TOP_RIGHT",
+            AreaTemplate.bottomRightMarker: "DOT_BOTTOM_RIGHT",
+            AreaTemplate.bottomLeftMarker: "DOT_BOTTOM_LEFT",
+            AreaTemplate.leftLine: "LINE_OUTER_EDGE",
+            AreaTemplate.rightLine: "LINE_OUTER_EDGE",
+        },
+    }
 
     # Common code used by both types of croppers
     def __init__(self, *args, **kwargs):
@@ -19,7 +83,7 @@ class CropOnPatchesCommon(CropOnIndexPointsCommon):
 
         # Default to select centers for roi
         self.default_points_selector = self.default_points_selector_map[
-            options.get("pointsSelector", "CENTERS")
+            options.get("defaultSelector", "CENTERS")
         ]
 
     def exclude_files(self):
@@ -31,11 +95,8 @@ class CropOnPatchesCommon(CropOnIndexPointsCommon):
     def prepare_image(self, image):
         return image
 
-    def find_corners_and_edges(self, image, file_path):
-        options = self.options
+    def extract_control_destination_points(self, image, file_path):
         config = self.tuning_config
-
-        patch_selectors = self.patch_types_for_layout[options["type"]]
 
         (
             control_points,
@@ -44,31 +105,45 @@ class CropOnPatchesCommon(CropOnIndexPointsCommon):
             [],
             [],
         )
-        corner_points = []
-        for patch_type in patch_selectors["DOTS"]:
-            dot_point, destination_point = self.find_and_select_point_from_dot(
-                image, patch_type, file_path
+        for scan_area in self.scan_areas:
+            area_description = self.get_runtime_area_description_with_defaults(
+                image, scan_area
             )
-            control_points.append(dot_point)
-            destination_points.append(destination_point)
-
-            corner_points.append(dot_point)
-
-        for patch_type in patch_selectors["LINES"]:
             (
-                edge_line,
-                line_control_points,
-                line_destination_points,
-            ) = self.find_and_select_points_from_line(patch_type, image)
+                area_control_points,
+                area_destination_points,
+            ) = self.extract_points_from_scan_area(image, area_description, file_path)
+            control_points += area_control_points
+            destination_points += area_destination_points
 
-            control_points += line_control_points
-            destination_points += line_destination_points
-            corner_points += edge_line
+            if config.outputs.show_image_level >= 4:
+                area_label = area_description["label"]
+                logger.info(f"{area_label}: area_control_points={area_control_points}")
+                cv2.drawContours(
+                    self.debug_image,
+                    [np.intp(area_control_points)],
+                    -1,
+                    (200, 200, 200),
+                    2,
+                )
+
+                for corner in area_control_points:
+                    ImageUtils.draw_box(
+                        self.debug_image,
+                        corner,
+                        [2, 2],
+                        color=CLR_DARK_GREEN,
+                        border=2,
+                    )
 
             if config.outputs.show_image_level >= 5:
                 if len(self.debug_vstack) > 0:
+                    area_label, scanner_type = (
+                        area_description["label"],
+                        area_description["scannerType"],
+                    )
                     InteractionUtils.show(
-                        f"Line Patches: {patch_type}",
+                        f"{area_label} Patches: {scanner_type}",
                         ImageUtils.get_vstack_image_grid(self.debug_vstack),
                         0,
                         0,
@@ -76,87 +151,54 @@ class CropOnPatchesCommon(CropOnIndexPointsCommon):
                     )
                 self.debug_vstack = []
 
-        ordered_corner_points = MathUtils.order_four_points(
-            corner_points, dtype="float32"
-        )
+        return control_points, destination_points
 
-        if config.outputs.show_image_level >= 4:
-            logger.info(f"corner_points={ordered_corner_points}")
-            cv2.drawContours(
-                self.debug_image,
-                [np.intp(ordered_corner_points)],
-                -1,
-                (200, 200, 200),
-                2,
+    def get_runtime_area_description_with_defaults(self, image, scan_area):
+        return scan_area["areaDescription"]
+
+    def extract_points_from_scan_area(self, image, area_description, file_path):
+        scanner_type = area_description["scannerType"]
+
+        # Note: area_description is computed at runtime(e.g. for CropOnCustomMarkers with default quadrants)
+        if (
+            scanner_type == ScannerType.PATCH_DOT
+            or scanner_type == ScannerType.TEMPLATE_MATCH
+        ):
+            dot_point, destination_point = self.find_and_select_point_from_dot(
+                image, area_description, file_path
+            )
+            area_control_points, area_destination_points = [dot_point], [
+                destination_point
+            ]
+        elif scanner_type == ScannerType.PATCH_LINE:
+            (
+                line_control_points,
+                line_destination_points,
+            ) = self.find_and_select_points_from_line(
+                image, area_description, file_path
             )
 
-            for corner in ordered_corner_points:
-                ImageUtils.draw_box(
-                    self.debug_image,
-                    corner,
-                    [2, 2],
-                    color=CLR_DARK_GREEN,
-                    border=2,
-                )
+            area_control_points, area_destination_points = (
+                line_control_points,
+                line_destination_points,
+            )
+        # TODO: support DASHED_LINE here later
 
-        # return ordered_corner_points, edge_contours_map
-        return ordered_corner_points, control_points, destination_points
+        return area_control_points, area_destination_points
 
-    default_points_selector_map = {
-        "CENTERS": {
-            "topLeftDot": "DOT_CENTER",
-            "topRightDot": "DOT_CENTER",
-            "bottomRightDot": "DOT_CENTER",
-            "bottomLeftDot": "DOT_CENTER",
-            "leftLine": "LINE_OUTER_EDGE",
-            "rightLine": "LINE_OUTER_EDGE",
-        },
-        "INNER_WIDTHS": {
-            "topLeftDot": "DOT_TOP_RIGHT",
-            "topRightDot": "DOT_TOP_LEFT",
-            "bottomRightDot": "DOT_BOTTOM_LEFT",
-            "bottomLeftDot": "DOT_BOTTOM_RIGHT",
-            "leftLine": "LINE_INNER_EDGE",
-            "rightLine": "LINE_INNER_EDGE",
-        },
-        "INNER_HEIGHTS": {
-            "topLeftDot": "DOT_BOTTOM_LEFT",
-            "topRightDot": "DOT_BOTTOM_RIGHT",
-            "bottomRightDot": "DOT_TOP_RIGHT",
-            "bottomLeftDot": "DOT_TOP_LEFT",
-            "leftLine": "LINE_OUTER_EDGE",
-            "rightLine": "LINE_OUTER_EDGE",
-        },
-        "INNER_CORNERS": {
-            "topLeftDot": "DOT_BOTTOM_RIGHT",
-            "topRightDot": "DOT_BOTTOM_LEFT",
-            "bottomRightDot": "DOT_TOP_LEFT",
-            "bottomLeftDot": "DOT_TOP_RIGHT",
-            "leftLine": "LINE_INNER_EDGE",
-            "rightLine": "LINE_INNER_EDGE",
-        },
-        "OUTER_CORNERS": {
-            "topLeftDot": "DOT_TOP_LEFT",
-            "topRightDot": "DOT_TOP_RIGHT",
-            "bottomRightDot": "DOT_BOTTOM_RIGHT",
-            "bottomLeftDot": "DOT_BOTTOM_LEFT",
-            "leftLine": "LINE_OUTER_EDGE",
-            "rightLine": "LINE_OUTER_EDGE",
-        },
-    }
+    def find_and_select_point_from_dot(self, image, area_description, file_path):
+        patch_type = area_description["scannerType"]
 
-    def find_and_select_point_from_dot(self, image, patch_type, file_path):
-        # Note: dot_description is computed at runtime(e.g. for CropOnCustomMarkers with default quadrants)
-        dot_rect, dot_description = self.find_dot_corners_from_options(
-            image, patch_type, file_path
+        dot_rect = self.find_dot_corners_from_options(
+            image, area_description, file_path
         )
 
-        points_selector = self.default_points_selector[patch_type]
-        points_selector = dot_description.get("pointsSelector", points_selector)
+        default_points_selector = self.default_points_selector[patch_type]
+        points_selector = area_description.get("selector", default_points_selector)
 
         dot_point = self.select_point_from_rectangle(dot_rect, points_selector)
 
-        destination_rect = self.compute_scan_area_destination_rect(dot_description)
+        destination_rect = self.compute_scan_area_destination_rect(area_description)
         destination_point = self.select_point_from_rectangle(
             destination_rect, points_selector
         )

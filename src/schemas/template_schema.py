@@ -1,3 +1,4 @@
+from src.processors.constants import SCANNER_TYPES_IN_ORDER, AreaTemplate
 from src.schemas.constants import (
     ARRAY_OF_STRINGS,
     FIELD_STRING_TYPE,
@@ -9,6 +10,15 @@ from src.schemas.constants import (
 )
 from src.utils.constants import FIELD_TYPES
 
+margins_schema = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "vertical": positive_integer,
+        "horizontal": positive_integer,
+    },
+}
+# TODO: deprecate in favor of scan_area_description
 patch_area_description = {
     "type": "object",
     "required": ["origin", "dimensions", "margins"],
@@ -16,14 +26,7 @@ patch_area_description = {
     "properties": {
         "origin": two_positive_integers,
         "dimensions": two_positive_integers,
-        "margins": {
-            "type": "object",
-            "additionalProperties": False,
-            "properties": {
-                "vertical": positive_integer,
-                "horizontal": positive_integer,
-            },
-        },
+        "margins": margins_schema,
         "pointsSelector": {
             "type": "string",
             "enum": [
@@ -39,12 +42,75 @@ patch_area_description = {
     },
 }
 
+scan_area_description = {
+    **patch_area_description,
+    # TODO: "required": [...],
+    "properties": {
+        **patch_area_description["properties"],
+        "name": {
+            "type": "string",
+        },
+        "selectorMargins": margins_schema,
+        "selector": {
+            "type": "string",
+            "enum": [
+                "DOT_TOP_LEFT",
+                "DOT_TOP_RIGHT",
+                "DOT_BOTTOM_RIGHT",
+                "DOT_BOTTOM_LEFT",
+                "DOT_CENTER",
+                "LINE_INNER_EDGE",
+                "LINE_OUTER_EDGE",
+                # TODO: consume these
+                "TEMPLATE_CENTER",
+                "TEMPLATE_TOP_LEFT",
+                "TEMPLATE_BOTTOM_RIGHT",
+                "TEMPLATE_BOTTOM_LEFT",
+            ],
+        },
+        "scannerType": {
+            "type": "string",
+            "enum": SCANNER_TYPES_IN_ORDER,
+        },
+    },
+}
+
+default_points_selector_types = [
+    "CENTERS",
+    "INNER_WIDTHS",
+    "INNER_HEIGHTS",
+    "INNER_CORNERS",
+    "OUTER_CORNERS",
+]
+
+# TODO: deprecate crop_on_marker_types
+crop_on_marker_types = [
+    "CUSTOM_MARKER",
+    "ONE_LINE_TWO_DOTS",
+    "TWO_DOTS_ONE_LINE",
+    "TWO_LINES",
+    "FOUR_DOTS",
+]
+
+points_layout_types = [
+    *crop_on_marker_types[1:],
+    "CUSTOM",
+    "TEMPLATE_MATCH",
+]
+
+scan_area_template = {
+    "type": "string",
+    "enum": ["CUSTOM", *AreaTemplate.values()],
+}
 # if_required_attrs help in suppressing redundant errors from 'allOf'
 pre_processor_if_required_attrs = {
     "required": ["name", "options"],
 }
 crop_on_markers_if_required_attrs = {
     "required": ["type"],
+}
+warp_on_points_if_required_attrs = {
+    "required": ["scanAreas"],
 }
 pre_processor_options_available_keys = {"processingImageShape": True}
 
@@ -54,7 +120,6 @@ crop_on_markers_tuning_options_available_keys = {
     "apply_erode_subtract": True,
     "marker_rescale_range": True,
     "marker_rescale_steps": True,
-    "max_matching_variation": True,
     "min_matching_threshold": True,
 }
 crop_on_markers_options_available_keys = {
@@ -62,6 +127,12 @@ crop_on_markers_options_available_keys = {
     "pointsSelector": True,
     "tuningOptions": True,
     "type": True,
+}
+warp_on_points_options_available_keys = {
+    **pre_processor_options_available_keys,
+    "scanAreas": True,
+    "defaultSelector": True,
+    "cropToBoundingBox": True,
 }
 
 crop_on_dot_lines_tuning_options = {
@@ -117,6 +188,7 @@ TEMPLATE_SCHEMA = {
                         "type": "string",
                         "enum": [
                             "CropOnMarkers",
+                            "WarpOnPoints",
                             "CropPage",
                             "FeatureBasedAlignment",
                             "GaussianBlur",
@@ -237,6 +309,49 @@ TEMPLATE_SCHEMA = {
                     },
                     {
                         "if": {
+                            "properties": {"name": {"const": "WarpOnPoints"}},
+                            **pre_processor_if_required_attrs,
+                        },
+                        "then": {
+                            "properties": {
+                                "options": {
+                                    **warp_on_points_if_required_attrs,
+                                    "type": "object",
+                                    "additionalProperties": False,
+                                    "properties": {
+                                        **warp_on_points_options_available_keys,
+                                        "pointsLayout": {
+                                            "type": "string",
+                                            "enum": points_layout_types,
+                                        },
+                                        "defaultSelector": {
+                                            "type": "string",
+                                            "enum": default_points_selector_types,
+                                        },
+                                        "cropToBoundingBox": {"type": "boolean"},
+                                        "scanAreas": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "additionalProperties": False,
+                                                "required": ["areaTemplate"],
+                                                "properties": {
+                                                    "areaTemplate": scan_area_template,
+                                                    "areaDescription": scan_area_description,
+                                                    "customOptions": {
+                                                        "type": "object"
+                                                        # TODO: add conditional properties here like maxPoints and excludeFromCropping here based on scannerType
+                                                    },
+                                                },
+                                            },
+                                        },
+                                    },
+                                }
+                            }
+                        },
+                    },
+                    {
+                        "if": {
                             "properties": {"name": {"const": "CropOnMarkers"}},
                             **pre_processor_if_required_attrs,
                         },
@@ -250,23 +365,11 @@ TEMPLATE_SCHEMA = {
                                         **crop_on_markers_options_available_keys,
                                         "pointsSelector": {
                                             "type": "string",
-                                            "enum": [
-                                                "CENTERS",
-                                                "INNER_WIDTHS",
-                                                "INNER_HEIGHTS",
-                                                "INNER_CORNERS",
-                                                "OUTER_CORNERS",
-                                            ],
+                                            "enum": default_points_selector_types,
                                         },
                                         "type": {
                                             "type": "string",
-                                            "enum": [
-                                                "CUSTOM_MARKER",
-                                                "ONE_LINE_TWO_DOTS",
-                                                "TWO_DOTS_ONE_LINE",
-                                                "TWO_LINES",
-                                                "FOUR_DOTS",
-                                            ],
+                                            "enum": crop_on_marker_types,
                                         },
                                     },
                                     **crop_on_markers_if_required_attrs,
@@ -303,9 +406,6 @@ TEMPLATE_SCHEMA = {
                                                             # Range of rescaling in percentage -
                                                             "marker_rescale_range": two_positive_integers,
                                                             "marker_rescale_steps": positive_integer,
-                                                            "max_matching_variation": {
-                                                                "type": "number"
-                                                            },
                                                             "min_matching_threshold": {
                                                                 "type": "number"
                                                             },

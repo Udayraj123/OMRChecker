@@ -151,6 +151,8 @@ class ImageUtils:
 
     @staticmethod
     def get_cropped_rectangle_destination_points(ordered_corner_points):
+        # Note: This utility would just find a good size ratio for the cropped image to look more realistic
+        # but since we're anyway resizing the image, it doesn't make much sense to use these calculations
         (tl, tr, br, bl) = ordered_corner_points
 
         length_t = MathUtils.distance(tr, tl)

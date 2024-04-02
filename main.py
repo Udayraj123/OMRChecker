@@ -77,9 +77,8 @@ def parse_args():
     args = vars(args)
 
     if len(unknown) > 0:
-        logger.warning(f"\nError: Unknown arguments: {unknown}", unknown)
         argparser.print_help()
-        exit(11)
+        raise Exception(f"\nError: Unknown arguments: {unknown}")
     return args
 
 

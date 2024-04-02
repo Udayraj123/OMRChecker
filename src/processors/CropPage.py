@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 
 from src.processors.constants import EDGE_TYPES_IN_ORDER
-from src.processors.internal.CropOnIndexPointsCommon import CropOnIndexPointsCommon
+from src.processors.internal.WarpOnPointsCommon import CropOnIndexPointsCommon
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
