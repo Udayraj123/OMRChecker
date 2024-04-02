@@ -78,6 +78,9 @@ class CropPage(WarpOnPointsCommon):
                 ImageUtils.draw_contour(
                     canny_edge, approx, color=CLR_WHITE, thickness=10
                 )
+                ImageUtils.draw_contour(
+                    self.debug_image, approx, color=CLR_WHITE, thickness=10
+                )
 
                 # TODO: self.append_save_image(2, canny_edge)
                 break

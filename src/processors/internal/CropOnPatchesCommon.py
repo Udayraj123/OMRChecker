@@ -9,7 +9,6 @@ from src.processors.constants import (
 from src.processors.internal.WarpOnPointsCommon import WarpOnPointsCommon
 from src.utils.constants import CLR_DARK_GREEN
 from src.utils.image import ImageUtils
-from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 from src.utils.math import MathUtils
 from src.utils.parsing import OVERRIDE_MERGER
@@ -163,21 +162,6 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                         color=CLR_DARK_GREEN,
                         border=2,
                     )
-
-            if config.outputs.show_image_level >= 5:
-                if len(self.debug_vstack) > 0:
-                    area_label, scanner_type = (
-                        area_description["label"],
-                        area_description["scannerType"],
-                    )
-                    InteractionUtils.show(
-                        f"{area_label} Patches: {scanner_type}",
-                        ImageUtils.get_vstack_image_grid(self.debug_vstack),
-                        0,
-                        0,
-                        config=config,
-                    )
-                self.debug_vstack = []
 
         return control_points, destination_points
 

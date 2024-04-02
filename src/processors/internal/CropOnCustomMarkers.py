@@ -74,11 +74,15 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         reference_image_path, layout_type = options["relativePath"], options["type"]
         parsed_options = {
             "pointsLayout": layout_type,
+            "enableCropping": True,
         }
 
         # TODO: add default values for provided scanAreas?
         # Allow non-marker scanAreas here too?
-
+        dimensions = options.get("dimensions", None)
+        optional_custom_options = (
+            {} if dimensions is None else {"markerDimensions": dimensions}
+        )
         # inject scanAreas
         parsed_options["scanAreas"] = [
             {
@@ -86,7 +90,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 "areaDescription": options.get(area_template, {}),
                 "customOptions": {
                     "referenceImage": reference_image_path,
-                    # "markerDimensions": dimensions
+                    **optional_custom_options,
                 },
             }
             for area_template in self.scan_area_templates_for_layout[layout_type]
@@ -266,53 +270,17 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         }
 
     def find_marker_corners_in_patch(self, area_description, image, file_path):
-        config = self.tuning_config
-
         area_label = area_description["label"]
 
-        area, area_start = self.compute_scan_area_util(image, area_description)
-        # Note: now best match is being computed separately inside each patch area
-        (
-            optimal_res,
-            optimal_marker,
-            optimal_scale,
-            optimal_match_max,
-        ) = self.get_best_match(area_label, area)
+        patch_area, area_start = self.compute_scan_area_util(image, area_description)
+        # Note: now best match is being computed separately inside each patch_area
+        (marker_position, optimal_marker) = self.get_best_match(area_label, patch_area)
 
-        if optimal_scale is None:
-            if config.outputs.show_image_level >= 1:
-                # TODO check if debug_image is drawn-over
-                InteractionUtils.show("Quads", self.debug_image, config=config)
+        if marker_position is None:
             return None
 
-        if config.outputs.show_image_level >= 1:
-            # Note: We need images of dtype float for displaying optimal_res.
-            self.debug_hstack += [area / 255, optimal_marker / 255, optimal_res]
-            self.debug_vstack.append(self.debug_hstack)
-            self.debug_hstack = []
-
-        logger.info(
-            f"{area_label}:\toptimal_match_max={str(round(optimal_match_max, 2))}\t optimal_scale={optimal_scale}\t"
-        )
-
-        if optimal_match_max < self.min_matching_threshold:
-            logger.error(
-                f"{file_path}\nError: No marker found in patch {area_label}, match_max={optimal_match_max}",
-            )
-
-            if config.outputs.show_image_level >= 1:
-                hstack = ImageUtils.get_padded_hstack(
-                    [self.debug_image / 255, optimal_res]
-                )
-                InteractionUtils.show(
-                    f"No Markers res_{area_label} ({str(optimal_match_max)})",
-                    hstack,
-                    1,
-                    config=config,
-                )
-
         h, w = optimal_marker.shape[:2]
-        y, x = np.argwhere(optimal_res == optimal_match_max)[0]
+        x, y = marker_position
         ordered_patch_corners = MathUtils.get_rectangle_points(x, y, w, h)
 
         absolute_corners = MathUtils.shift_origin_for_points(
@@ -328,30 +296,47 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             self.marker_rescale_range[1] - self.marker_rescale_range[0]
         ) // self.marker_rescale_steps
         marker = self.marker_for_area_label[area_label]
-        _h, _w = marker.shape[:2]
-        optimal_res, optimal_scale, optimal_marker = None, None, None
+        marker_height, marker_width = marker.shape[:2]
+        marker_position, optimal_match_result, optimal_scale, optimal_marker = (
+            None,
+            None,
+            None,
+            None,
+        )
         optimal_match_max = 0
+
         for r0 in np.arange(
             self.marker_rescale_range[1],
             self.marker_rescale_range[0],
             -1 * descent_per_step,
         ):  # reverse order
-            s = float(r0 * 1 / 100)
-            if s == 0.0:
+            scale = float(r0 * 1 / 100)
+            if scale <= 0.0:
                 continue
-            rescaled_marker = ImageUtils.resize_util_h(marker, u_height=int(_h * s))
+            rescaled_marker = ImageUtils.resize_util_h(
+                marker,
+                u_width=int(marker_width * scale),
+                u_height=int(marker_height * scale),
+            )
 
             # res is the black image with white dots
-            res = cv2.matchTemplate(patch_area, rescaled_marker, cv2.TM_CCOEFF_NORMED)
+            match_result = cv2.matchTemplate(
+                patch_area, rescaled_marker, cv2.TM_CCOEFF_NORMED
+            )
 
-            match_max = res.max()
+            match_max = match_result.max()
             if optimal_match_max < match_max:
-                # print('Scale: '+str(s)+', Circle Match: '+str(round(match_max*100,2))+'%')
-                optimal_marker, optimal_scale, optimal_match_max, optimal_res = (
+                # print('Scale: '+str(scale)+', Circle Match: '+str(round(match_max*100,2))+'%')
+                (
+                    optimal_scale,
+                    optimal_marker,
+                    optimal_match_max,
+                    optimal_match_result,
+                ) = (
+                    scale,
                     rescaled_marker,
-                    s,
                     match_max,
-                    res,
+                    match_result,
                 )
 
         if optimal_scale is None:
@@ -359,22 +344,59 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 f"No matchings for {area_label} for given scaleRange:",
                 self.marker_rescale_range,
             )
-        is_low_matching = optimal_match_max < self.min_matching_threshold
-        if is_low_matching or config.outputs.show_image_level >= 5:
-            if is_low_matching:
-                logger.warning(
-                    f"Template matching too low for {area_label}! Recheck tuningOptions or output of previous preProcessor."
-                )
-                logger.info(
-                    f"Sizes: marker:{marker.shape[:2]}, patch_area: {patch_area.shape[:2]}"
-                )
+        if config.outputs.show_image_level >= 1:
+            # Note: We need images of dtype float for displaying optimal_match_result.
+            self.debug_hstack += [
+                patch_area / 255,
+                optimal_marker / 255,
+                optimal_match_result,
+            ]
+            self.debug_vstack.append(self.debug_hstack)
+            self.debug_hstack = []
+
+        is_not_matching = optimal_match_max < self.min_matching_threshold
+        if is_not_matching:
+            logger.error(
+                f"Error: No marker found in patch {area_label}, (match_max={optimal_match_max:.2f} < {self.min_matching_threshold:.2f}) for {area_label}! Recheck tuningOptions or output of previous preProcessor."
+            )
+            logger.info(
+                f"Sizes: optimal_marker:{optimal_marker.shape[:2]}, patch_area: {patch_area.shape[:2]}"
+            )
+
             if config.outputs.show_image_level >= 1:
                 hstack = ImageUtils.get_padded_hstack(
-                    [rescaled_marker / 255, self.debug_image / 255, res]
+                    [patch_area / 255, optimal_marker / 255, optimal_match_result]
                 )
-                InteractionUtils.show(f"Marker matching: {area_label}", hstack)
+                InteractionUtils.show(
+                    f"No Markers res_{area_label} ({str(optimal_match_max)})",
+                    hstack,
+                    1,
+                    config=config,
+                )
 
-        return optimal_res, optimal_marker, optimal_scale, optimal_match_max
+        else:
+            y, x = np.argwhere(optimal_match_result == optimal_match_max)[0]
+            marker_position = [x, y]
+
+            logger.info(
+                f"{area_label}:\toptimal_match_max={str(round(optimal_match_max, 2))}\t optimal_scale={optimal_scale}\t"
+            )
+
+        if config.outputs.show_image_level >= 5 or (
+            is_not_matching and config.outputs.show_image_level >= 1
+        ):
+            hstack = ImageUtils.get_padded_hstack(
+                [
+                    rescaled_marker / 255,
+                    self.debug_image / 255,
+                    optimal_match_result,
+                ]
+            )
+            InteractionUtils.show(
+                f"Template Marker Matching: {area_label} ({optimal_match_max})", hstack
+            )
+
+        return marker_position, optimal_marker
 
     def exclude_files(self):
         return self.loaded_reference_images.keys()

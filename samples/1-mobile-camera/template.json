@@ -190,28 +190,8 @@
     {
       "name": "CropOnMarkers",
       "options": {
-        "processingImageShape": [
-          1132,
-          800
-        ],
         "type": "FOUR_MARKERS",
         "relativePath": "omr_marker.jpg",
-        "topLeftMarker": {
-          "origin": [
-            0,
-            0
-          ],
-          "dimensions": [
-            35,
-            35
-          ],
-          "margins": {
-            "top": 100,
-            "left": 100,
-            "bottom": 100,
-            "right": 100
-          }
-        },
         "tuningOptions": {
           "marker_rescale_range": [
             80,
