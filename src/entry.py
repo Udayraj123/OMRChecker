@@ -110,6 +110,7 @@ def print_config_summary(
         "Detected pre-processors",
         f"{[pp.__class__.__name__ for pp in template.pre_processors]}",
     )
+    table.add_row("Processing Image Shape", f"{template.processing_image_shape}")
 
     console.print(table, justify="center")
 

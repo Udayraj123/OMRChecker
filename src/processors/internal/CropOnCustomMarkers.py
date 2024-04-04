@@ -85,7 +85,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
 
     def validate_and_remap_options_schema(self, options):
         reference_image_path, layout_type = options["relativePath"], options["type"]
-        tuning_options = options["tuningOptions"]
+        tuning_options = options.get("tuningOptions", {})
         # Note: options["tuningOptions"] is accessible in self.tuning_options at Processor level
         parsed_options = {
             "pointsLayout": layout_type,

@@ -20,7 +20,7 @@ class CropPage(WarpOnPointsCommon):
     __is_internal_preprocessor__ = False
 
     def validate_and_remap_options_schema(self, options):
-        tuning_options = options["tuningOptions"]
+        tuning_options = options.get("tuningOptions", {})
 
         parsed_options = {
             "enableCropping": True,

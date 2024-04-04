@@ -30,14 +30,14 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         # TODO: need to fix this (self attributes will be overridden by parent and may cause inconsistency)
         self.tuning_config = image_instance_ops.tuning_config
 
+        parsed_options = self.validate_and_remap_options_schema(options)
         # Processor tuningOptions defaults
-        options = OVERRIDE_MERGER.merge(
+        parsed_options = OVERRIDE_MERGER.merge(
             {
                 "tuningOptions": options.get("tuningOptions", {}),
             },
-            options,
+            parsed_options,
         )
-        parsed_options = self.validate_and_remap_options_schema(options)
 
         super().__init__(
             parsed_options,

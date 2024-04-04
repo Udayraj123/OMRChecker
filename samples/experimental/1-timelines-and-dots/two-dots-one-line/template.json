@@ -28,7 +28,7 @@
             3,
             3
           ],
-          "dotThreshold": 150
+          "dotThreshold": 120
         },
         "type": "TWO_DOTS_ONE_LINE",
         "defaultSelector": "OUTER_CORNERS",

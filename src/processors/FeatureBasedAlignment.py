@@ -80,8 +80,8 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
             im_matches = cv2.drawMatches(
                 image, from_keypoints, self.ref_img, self.to_keypoints, matches, None
             )
-            im_matches = ImageUtils.resize_util_h(
-                im_matches, config.outputs.display_image_shape[0]
+            im_matches = ImageUtils.resize_util(
+                im_matches, u_height=config.outputs.display_image_dimensions[1]
             )
             InteractionUtils.show(
                 "Aligning", im_matches, resize_to_height=True, config=config

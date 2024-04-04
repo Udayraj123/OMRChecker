@@ -114,7 +114,7 @@ class CropOnDotLines(CropOnPatchesCommon):
 
     def validate_and_remap_options_schema(self, options):
         layout_type = options["type"]
-        tuning_options = options["tuningOptions"]
+        tuning_options = options.get("tuningOptions", {})
         parsed_options = {
             "pointsLayout": layout_type,
             "enableCropping": True,
@@ -173,9 +173,7 @@ class CropOnDotLines(CropOnPatchesCommon):
             "selector", self.default_points_selector[area_label]
         )
 
-        line_edge_contours = self.find_line_edges_from_options(
-            image, area_description, area_label
-        )
+        line_edge_contours = self.find_line_edges_from_options(image, area_description)
 
         edge_type = self.edge_selector_map[area_label][points_selector]
         source_contour = line_edge_contours[edge_type]
@@ -192,7 +190,8 @@ class CropOnDotLines(CropOnPatchesCommon):
         )
         return control_points, destination_points
 
-    def find_line_edges_from_options(self, image, area_description, area_label):
+    def find_line_edges_from_options(self, image, area_description):
+        area_label = area_description["label"]
         config = self.tuning_config
         tuning_options = self.tuning_options
         area, area_start = self.compute_scan_area_util(image, area_description)
@@ -259,6 +258,7 @@ class CropOnDotLines(CropOnPatchesCommon):
     def find_dot_corners_from_options(self, image, area_description, _file_path):
         config = self.tuning_config
         tuning_options = self.tuning_options
+        area_label = area_description["label"]
 
         area, area_start = self.compute_scan_area_util(image, area_description)
 
@@ -280,6 +280,10 @@ class CropOnDotLines(CropOnPatchesCommon):
 
         if config.outputs.show_image_level >= 5:
             self.debug_hstack += [area, morph_c, thresholded, normalised]
+        elif config.outputs.show_image_level == 4:
+            InteractionUtils.show(
+                f"threshold_normalised: {area_label}", normalised, pause=False
+            )
 
         corners, _ = self.find_morph_corners_and_contours_map(
             area_start, normalised, area_description
@@ -328,12 +332,12 @@ class CropOnDotLines(CropOnPatchesCommon):
             x, y, w, h = cv2.boundingRect(bounding_contour)
             patch_corners = MathUtils.get_rectangle_points(x, y, w, h)
             (
-                _,
+                ordered_patch_corners,
                 edge_contours_map,
             ) = ImageUtils.split_patch_contour_on_corners(
                 patch_corners, bounding_contour
             )
-        if scanner_type == ScannerType.PATCH_LINE:
+        elif scanner_type == ScannerType.PATCH_LINE:
             # Rotated rectangle can correct slight rotations better
             rotated_rect = cv2.minAreaRect(bounding_contour)
             # TODO: less confidence if angle = rotated_rect[2] is too skew
@@ -345,6 +349,8 @@ class CropOnDotLines(CropOnPatchesCommon):
             ) = ImageUtils.split_patch_contour_on_corners(
                 patch_corners, bounding_contour
             )
+        else:
+            raise Exception(f"Unsupported scanner type: {scanner_type}")
 
         # TODO: less confidence if given dimensions differ from matched block size (also give a warning)
         if config.outputs.show_image_level >= 5:
