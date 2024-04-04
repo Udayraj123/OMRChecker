@@ -1,6 +1,7 @@
 TEMPLATE_BOILERPLATE = {
-    "pageDimensions": [2550, 3300],
+    "templateDimensions": [2550, 3300],
     "bubbleDimensions": [32, 32],
+    "inputImageShape": [1640, 1332],
     "preProcessors": [
         {
             "name": "CropOnMarkers",
@@ -31,9 +32,9 @@ TEMPLATE_BOILERPLATE = {
 }
 
 CONFIG_BOILERPLATE = {
-    "dimensions": {
-        "processing_image_shape": [1640, 1332],
-        "display_image_shape": [960, 1280],
+    "outputs": {
+        "show_image_level": 0,
+        "filter_out_multimarked_files": True,
+        "display_image_dimensions": [960, 1280],
     },
-    "outputs": {"show_image_level": 0, "filter_out_multimarked_files": True},
 }

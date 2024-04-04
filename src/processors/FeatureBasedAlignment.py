@@ -23,12 +23,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
         # process reference image
         self.ref_path = self.relative_dir.joinpath(options["reference"])
         ref_img = cv2.imread(str(self.ref_path), cv2.IMREAD_GRAYSCALE)
-        processing_height, processing_width = self.processing_image_shape
-        self.ref_img = ImageUtils.resize_util(
-            ref_img,
-            processing_width,
-            processing_height,
-        )
+        self.ref_img = ImageUtils.resize_to_shape(ref_img, self.input_image_shape)
         # get options with defaults
         self.max_features = int(options.get("maxFeatures", 500))
         self.good_match_percent = options.get("goodMatchPercent", 0.15)

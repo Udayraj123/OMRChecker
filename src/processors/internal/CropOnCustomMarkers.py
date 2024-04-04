@@ -178,8 +178,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             "markerDimensions", options.get("dimensions", None)
         )
         if marker_dimensions is not None:
-            w, h = marker_dimensions
-            marker = ImageUtils.resize_util(marker, w, h)
+            marker = ImageUtils.resize_to_dimensions(marker, marker_dimensions)
 
         blur_kernel = custom_options.get("markerBlurKernel", (5, 5))
         marker = cv2.GaussianBlur(marker, blur_kernel, 0)
@@ -385,7 +384,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                     1,
                     config=config,
                 )
-
+            raise Exception(f"Error: No marker found in patch {area_label}")
         else:
             y, x = np.argwhere(optimal_match_result == optimal_match_max)[0]
             marker_position = [x, y]

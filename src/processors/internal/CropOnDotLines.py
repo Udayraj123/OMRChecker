@@ -160,18 +160,18 @@ class CropOnDotLines(CropOnPatchesCommon):
         )
 
         edge_type = self.edge_selector_map[area_label][points_selector]
-        edge_line = MathUtils.select_edge_from_rectangle(
+        source_contour = line_edge_contours[edge_type]
+        destination_line = MathUtils.select_edge_from_rectangle(
             ordered_patch_corners, edge_type
         )
-        edge_contour = line_edge_contours[edge_type]
-
-        # Extrapolate the edge_line and get approximate destination points
         max_points = area_description.get("maxPoints", None)
+
+        # Extrapolates the destination_line to get approximate destination points
         (
             control_points,
             destination_points,
         ) = ImageUtils.get_control_destination_points_from_contour(
-            edge_contour, edge_line, max_points
+            source_contour, destination_line, max_points
         )
         return control_points, destination_points
 

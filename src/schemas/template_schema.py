@@ -73,7 +73,7 @@ crop_on_marker_types = [
     "ONE_LINE_TWO_DOTS",
     "TWO_DOTS_ONE_LINE",
     "TWO_LINES",
-    # TODO: "TWO_LINES_HORIZONTAL",
+    # TODO: support for "TWO_LINES_HORIZONTAL"
     "FOUR_DOTS",
 ]
 
@@ -96,7 +96,7 @@ crop_on_markers_options_if_required_attrs = {
 warp_on_points_options_if_required_attrs = {
     "required": ["scanAreas"],
 }
-pre_processor_options_available_keys = {"processingImageShape": True}
+pre_processor_options_available_keys = {"inputImageShape": True}
 
 crop_on_markers_tuning_options_available_keys = {
     "dotKernel": True,
@@ -153,7 +153,7 @@ TEMPLATE_SCHEMA = {
     "type": "object",
     "required": [
         "bubbleDimensions",
-        "pageDimensions",
+        "templateDimensions",
         "preProcessors",
         "fieldBlocks",
     ],
@@ -175,15 +175,19 @@ TEMPLATE_SCHEMA = {
             "items": FIELD_STRING_TYPE,
             "description": "The ordered list of columns to be contained in the output csv(default order: alphabetical)",
         },
-        "pageDimensions": {
+        "templateDimensions": {
             **two_positive_integers,
             "description": "The dimensions(width, height) to which the page will be resized to before applying template",
         },
+        "inputImageShape": two_positive_integers,
+        "outputImageShape": two_positive_integers,
         "preProcessors": {
             "description": "Custom configuration values to use in the template's directory",
             "type": "array",
             "items": {
                 "type": "object",
+                "additionalProperties": False,
+                **pre_processor_if_required_attrs,
                 "properties": {
                     "name": {
                         "type": "string",
@@ -200,11 +204,11 @@ TEMPLATE_SCHEMA = {
                     "options": {
                         "type": "object",
                         "properties": {
-                            "processingImageShape": two_positive_integers,
+                            # Note: common properties across all preprocessors items can stay here
+                            "inputImageShape": two_positive_integers,
                         },
                     },
                 },
-                **pre_processor_if_required_attrs,
                 "allOf": [
                     {
                         "if": {

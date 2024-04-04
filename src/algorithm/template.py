@@ -32,8 +32,10 @@ class Template:
             pre_processors_object,
             self.bubble_dimensions,
             self.global_empty_val,
+            self.template_dimensions,
             self.options,
-            self.page_dimensions,
+            self.input_image_shape,
+            self.output_image_shape,
         ) = map(
             json_object.get,
             [
@@ -43,8 +45,10 @@ class Template:
                 "preProcessors",
                 "bubbleDimensions",
                 "emptyValue",
+                "templateDimensions",
                 "options",
-                "pageDimensions",
+                "inputImageShape",
+                "outputImageShape",
             ],
         )
 
@@ -70,11 +74,14 @@ class Template:
         # load image pre_processors
         self.pre_processors = []
         for pre_processor in pre_processors_object:
-            ProcessorClass = PROCESSOR_MANAGER.processors[pre_processor["name"]]
-            pre_processor_instance = ProcessorClass(
+            ImageTemplateProcessorClass = PROCESSOR_MANAGER.processors[
+                pre_processor["name"]
+            ]
+            pre_processor_instance = ImageTemplateProcessorClass(
                 options=pre_processor["options"],
                 relative_dir=relative_dir,
                 image_instance_ops=self.image_instance_ops,
+                default_input_image_shape=self.input_image_shape,
             )
             self.pre_processors.append(pre_processor_instance)
 
@@ -188,7 +195,7 @@ class Template:
             )
         self.all_parsed_labels.update(field_labels_set)
 
-        page_width, page_height = self.page_dimensions
+        page_width, page_height = self.template_dimensions
         block_width, block_height = block_instance.dimensions
         [block_start_x, block_start_y] = block_instance.origin
 
@@ -204,7 +211,7 @@ class Template:
             or block_start_y < 0
         ):
             raise Exception(
-                f"Overflowing field block '{block_name}' with origin {block_instance.origin} and dimensions {block_instance.dimensions} in template with dimensions {self.page_dimensions}"
+                f"Overflowing field block '{block_name}' with origin {block_instance.origin} and dimensions {block_instance.dimensions} in template with dimensions {self.template_dimensions}"
             )
 
     def __str__(self):
@@ -215,7 +222,7 @@ class Template:
         return {
             key: default_dump(getattr(self, key))
             for key in [
-                "page_dimensions",
+                "template_dimensions",
                 "field_blocks",
                 # Not needed as local props are overridden -
                 # "bubble_dimensions",

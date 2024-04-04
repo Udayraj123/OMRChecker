@@ -4,7 +4,7 @@
       1800,
       2400
     ],
-    "processing_image_shape": [
+    "input_image_shape": [
       1280,
       906
     ]

@@ -1,6 +1,6 @@
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import pyplot
 
 from src.processors.constants import EdgeType
 from src.utils.constants import (
@@ -14,7 +14,7 @@ from src.utils.constants import (
 from src.utils.logger import logger
 from src.utils.math import MathUtils
 
-plt.rcParams["figure.figsize"] = (10.0, 8.0)
+pyplot.rcParams["figure.figsize"] = (10.0, 8.0)
 CLAHE_HELPER = cv2.createCLAHE(clipLimit=5.0, tileGridSize=(8, 8))
 
 
@@ -37,6 +37,15 @@ class ImageUtils:
         cv2.imwrite(path, final_marked)
 
     @staticmethod
+    def resize_to_shape(img, image_shape):
+        h, w = image_shape
+        return ImageUtils.resize_util(img, w, h)
+
+    @staticmethod
+    def resize_to_dimensions(img, image_dimensions):
+        w, h = image_dimensions
+        return ImageUtils.resize_util(img, w, h)
+
     def resize_util(img, u_width, u_height=None):
         h, w = img.shape[:2]
         if u_height is None:
@@ -115,30 +124,32 @@ class ImageUtils:
 
     @staticmethod
     def get_control_destination_points_from_contour(
-        edge_contour, edge_line, max_points=None
+        source_contour, destination_line, max_points=None
     ):
-        # logger.info(f"edge_contour={edge_contour}, edge_line={edge_line}")
-        total_points = len(edge_contour)
+        # logger.info(f"source_contour={source_contour}, destination_line={destination_line}")
+        total_points = len(source_contour)
         if max_points is None:
             max_points = total_points
-        start, end = edge_line
+        start, end = destination_line
 
         contour_length = 0
         for i in range(1, total_points):
-            contour_length += MathUtils.distance(edge_contour[i], edge_contour[i - 1])
+            contour_length += MathUtils.distance(
+                source_contour[i], source_contour[i - 1]
+            )
 
         # TODO: replace with this if the assertion passes on uncommenting
-        # contour_length = cv2.arcLength(edge_contour)
+        # contour_length = cv2.arcLength(source_contour)
 
         average_min_gap = (contour_length / (max_points - 1)) - 1
 
         # Initialize with first point mapping
-        control_points, destination_points = [edge_contour[0]], [start]
+        control_points, destination_points = [source_contour[0]], [start]
         current_arc_length = 0
         current_arc_gap = 0
         previous_point = None
         for i in range(1, total_points):
-            boundary_point, previous_point = edge_contour[i], edge_contour[i - 1]
+            boundary_point, previous_point = source_contour[i], source_contour[i - 1]
             edge_length = MathUtils.distance(previous_point, boundary_point)
             current_arc_gap += edge_length
             if current_arc_gap > average_min_gap:
@@ -146,49 +157,16 @@ class ImageUtils:
                 current_arc_length += edge_length
                 length_ratio = current_arc_length / contour_length
                 destination_point = MathUtils.get_point_on_line_by_ratio(
-                    edge_line, length_ratio
+                    destination_line, length_ratio
                 )
                 control_points.append(boundary_point)
                 destination_points.append(destination_point)
 
         assert current_arc_length == contour_length
+        assert len(destination_points) <= max_points
         assert MathUtils.distance(destination_points[-1], end) < 1.0
 
         return control_points, destination_points
-
-    @staticmethod
-    def get_cropped_rectangle_destination_points(ordered_corner_points):
-        # Note: This utility would just find a good size ratio for the cropped image to look more realistic
-        # but since we're anyway resizing the image, it doesn't make much sense to use these calculations
-        (tl, tr, br, bl) = ordered_corner_points
-
-        length_t = MathUtils.distance(tr, tl)
-        length_b = MathUtils.distance(br, bl)
-        length_r = MathUtils.distance(tr, br)
-        length_l = MathUtils.distance(tl, bl)
-
-        # compute the width of the new image, which will be the
-        max_width = max(int(length_t), int(length_b))
-
-        # compute the height of the new image, which will be the
-        max_height = max(int(length_r), int(length_l))
-
-        # now that we have the dimensions of the new image, construct
-        # the set of destination points to obtain a "birds eye view",
-        # (i.e. top-down view) of the image
-
-        destination_points = np.array(
-            [
-                [0, 0],
-                [max_width - 1, 0],
-                [max_width - 1, max_height - 1],
-                [0, max_height - 1],
-            ],
-            dtype="float32",
-        )
-
-        rectangle_dimensions = (max_width, max_height)
-        return destination_points, rectangle_dimensions
 
     @staticmethod
     def split_patch_contour_on_corners(patch_corners, bounding_contour=None):

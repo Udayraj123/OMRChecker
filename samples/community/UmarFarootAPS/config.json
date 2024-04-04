@@ -4,7 +4,7 @@
       960,
       1280
     ],
-    "processing_image_shape": [
+    "input_image_shape": [
       1640,
       1332
     ]

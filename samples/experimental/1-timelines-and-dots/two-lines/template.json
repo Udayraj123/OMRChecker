@@ -1,5 +1,5 @@
 {
-  "pageDimensions": [
+  "templateDimensions": [
     1189,
     1682
   ],
@@ -21,7 +21,7 @@
     {
       "name": "CropOnMarkers",
       "options": {
-        "processingImageShape": [
+        "inputImageShape": [
           1132,
           800
         ],

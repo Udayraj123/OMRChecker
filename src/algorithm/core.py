@@ -16,9 +16,8 @@ from copy import deepcopy
 from typing import Any
 
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import colormaps
+from matplotlib import colormaps, pyplot
 
 from src.algorithm.detection import BubbleMeanValue, FieldStdMeanValue
 from src.utils.constants import CLR_BLACK, MARKED_TEMPLATE_TRANSPARENCY, TEXT_SIZE
@@ -38,17 +37,15 @@ class ImageInstanceOps:
         self.save_image_level = tuning_config.outputs.save_image_level
 
     def apply_preprocessors(self, file_path, gray_image, colored_image, template):
-        tuning_config = self.tuning_config
-        (
-            processing_height,
-            processing_width,
-        ) = tuning_config.dimensions.processing_image_shape
+        config = self.tuning_config
+
         # resize to conform to common preprocessor input requirements
-        gray_image = ImageUtils.resize_util(
-            gray_image,
-            processing_width,
-            processing_height,
-        )
+        gray_image = ImageUtils.resize_to_shape(gray_image, template.input_image_shape)
+        if config.outputs.show_colored_outputs:
+            colored_image = ImageUtils.resize_to_shape(
+                colored_image, template.input_image_shape
+            )
+
         # Copy template for this instance op
         template = deepcopy(template)
         # run pre_processors in sequence
@@ -63,6 +60,16 @@ class ImageInstanceOps:
             gray_image = out_omr
             template = next_template
 
+        if template.output_image_shape:
+            # resize to output requirements
+            gray_image = ImageUtils.resize_to_shape(
+                gray_image, template.output_image_shape
+            )
+            if config.outputs.show_colored_outputs:
+                colored_image = ImageUtils.resize_to_shape(
+                    colored_image, template.output_image_shape
+                )
+
         return gray_image, colored_image, template
 
     def read_omr_response(self, image, template, file_path):
@@ -70,9 +77,7 @@ class ImageInstanceOps:
 
         img = image.copy()
         # origDim = img.shape[:2]
-        img = ImageUtils.resize_util(
-            img, template.page_dimensions[0], template.page_dimensions[1]
-        )
+        img = ImageUtils.resize_to_dimensions(img, template.template_dimensions)
         if img.max() > img.min():
             img = ImageUtils.normalize(img)
 
@@ -158,7 +163,7 @@ class ImageInstanceOps:
             plot_show=config.outputs.show_image_level >= 6,
             sort_in_plot=True,
         )
-        # plt.show()
+        # pyplot.show()
         # hist = getPlotImg()
         # InteractionUtils.show("StdHist", hist, 0, 1,config=config)
 
@@ -179,7 +184,7 @@ class ImageInstanceOps:
         logger.info(
             f"Thresholding:\t global_threshold_for_template: {round(global_threshold_for_template, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_threshold_for_template == 255) else ''}"
         )
-        # plt.show()
+        # pyplot.show()
         # hist = getPlotImg()
         # InteractionUtils.show("StdHist", hist, 0, 1,config=config)
 
@@ -461,8 +466,8 @@ class ImageInstanceOps:
         # TODO: refactor all_c_box_vals
         # Box types
         # if config.outputs.show_image_level >= 5:
-        #     # plt.draw()
-        #     f, axes = plt.subplots(len(all_c_box_vals), sharey=True)
+        #     # pyplot.draw()
+        #     f, axes = pyplot.subplots(len(all_c_box_vals), sharey=True)
         #     f.canvas.manager.set_window_title(
         #         f"Bubble Intensity by question type for {name}"
         #     )
@@ -483,8 +488,8 @@ class ImageInstanceOps:
         #         # axes[ctr].legend()
         #         ctr += 1
         #     # imshow will do the waiting
-        #     plt.tight_layout(pad=0.5)
-        #     plt.show()
+        #     pyplot.tight_layout(pad=0.5)
+        #     pyplot.show()
 
         return (
             omr_response,
@@ -541,8 +546,8 @@ class ImageInstanceOps:
     ):
         config = self.tuning_config
 
-        marked_image = ImageUtils.resize_util(
-            image, template.page_dimensions[0], template.page_dimensions[1]
+        marked_image = ImageUtils.resize_to_dimensions(
+            image, template.template_dimensions
         )
         transparent_layer = marked_image.copy()
         should_draw_field_block_rectangles = field_number_to_field_bubble_means is None
@@ -610,9 +615,9 @@ class ImageInstanceOps:
         if config.outputs.show_image_level >= 2 and file_id is not None:
             # TODO: minimize no of final images
             (
-                display_height,
                 _display_width,
-            ) = config.dimensions.display_image_shape
+                display_height,
+            ) = config.outputs.display_image_dimensions
             InteractionUtils.show(
                 f"Final Marked Bubbles : '{file_id}'",
                 ImageUtils.resize_util_h(marked_image, int(display_height * 1.3)),
@@ -869,7 +874,7 @@ class ImageInstanceOps:
         )
 
         if plot_title:
-            _, ax = plt.subplots()
+            _, ax = pyplot.subplots()
             # TODO: move into individual utils
             plot_means_and_refs = (
                 sorted_bubble_means_and_refs if sort_in_plot else bubble_means_and_refs
@@ -908,7 +913,7 @@ class ImageInstanceOps:
             low = min(plot_values)
             high = max(plot_values)
             margin_factor = 0.1
-            plt.ylim(
+            pyplot.ylim(
                 [
                     math.ceil(low - margin_factor * (high - low)),
                     math.ceil(high + margin_factor * (high - low)),
@@ -946,8 +951,8 @@ class ImageInstanceOps:
             ax.set_xlabel("Position")
 
             if plot_show:
-                plt.title(plot_title)
-                plt.show()
+                pyplot.title(plot_title)
+                pyplot.show()
 
         return global_threshold_for_template, j_low, j_high
 
@@ -1028,7 +1033,7 @@ class ImageInstanceOps:
         # TODO: Make a common plot util to show local and global thresholds
         if plot_show and plot_title is not None:
             # TODO: add plot labels via the util
-            _, ax = plt.subplots()
+            _, ax = pyplot.subplots()
             ax.bar(range(len(sorted_bubble_means)), sorted_bubble_means)
             thrline = ax.axhline(thr1, color="green", ls=("-."), linewidth=3)
             thrline.set_label("Local Threshold")
@@ -1043,7 +1048,7 @@ class ImageInstanceOps:
             # TODO append QStrip to this plot-
             # self.append_save_image(6,getPlotImg())
             if plot_show:
-                plt.show()
+                pyplot.show()
         return thr1, max1
 
     def append_save_image(self, key, img):
@@ -1053,7 +1058,7 @@ class ImageInstanceOps:
     def save_image_stacks(self, key, filename, save_marked_dir):
         config = self.tuning_config
         if self.save_image_level >= int(key) and self.save_img_list[key] != []:
-            display_height, display_width = config.dimensions.display_image_shape
+            display_height, display_width = config.outputs.display_image_dimensions
             name = os.path.splitext(filename)[0]
             result = np.hstack(
                 tuple(

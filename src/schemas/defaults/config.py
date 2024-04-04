@@ -2,10 +2,6 @@ from dotmap import DotMap
 
 CONFIG_DEFAULTS = DotMap(
     {
-        "dimensions": {
-            "display_image_shape": [2480, 1640],
-            "processing_image_shape": [820, 666],
-        },
         "thresholding": {
             "GAMMA_LOW": 0.7,
             "MIN_GAP": 30,
@@ -18,6 +14,7 @@ CONFIG_DEFAULTS = DotMap(
             "GLOBAL_PAGE_THRESHOLD": 200,
         },
         "outputs": {
+            "display_image_dimensions": [1640, 2480],
             "show_image_level": 0,
             "save_image_level": 0,
             "save_detections": True,

@@ -101,23 +101,59 @@ class CropPage(WarpOnPointsCommon):
             ordered_page_corners,
             edge_contours_map,
         ) = ImageUtils.split_patch_contour_on_corners(sheet, page_contour)
+        destination_page_corners = self.get_cropped_rectangle_destination_points(
+            ordered_page_corners
+        )
 
         logger.info(f"Found page corners: \t {ordered_page_corners}")
-
         # Store control points in order
         control_points, destination_points = [], []
         for edge_type in EDGE_TYPES_IN_ORDER:
-            edge_contour = edge_contours_map[edge_type]
-            edge_line = MathUtils.select_edge_from_rectangle(
-                ordered_page_corners, edge_type
+            source_contour = edge_contours_map[edge_type]
+            destination_line = MathUtils.select_edge_from_rectangle(
+                destination_page_corners, edge_type
             )
+            # Extrapolates the destination_line to get approximate destination points
             (
                 edge_control_points,
                 edge_destination_points,
             ) = ImageUtils.get_control_destination_points_from_contour(
-                edge_contour, edge_line, max_points_per_side
+                source_contour, destination_line, max_points_per_side
             )
             control_points += edge_control_points
             destination_points += edge_destination_points
 
         return control_points, destination_points
+
+    @staticmethod
+    def get_cropped_rectangle_destination_points(ordered_page_corners):
+        # Note: This utility would just find a good size ratio for the cropped image to look more realistic
+        # but since we're anyway resizing the image, it doesn't make much sense to use these calculations
+        (tl, tr, br, bl) = ordered_page_corners
+
+        length_t = MathUtils.distance(tr, tl)
+        length_b = MathUtils.distance(br, bl)
+        length_r = MathUtils.distance(tr, br)
+        length_l = MathUtils.distance(tl, bl)
+
+        # compute the width of the new image, which will be the
+        max_width = max(int(length_t), int(length_b))
+
+        # compute the height of the new image, which will be the
+        max_height = max(int(length_r), int(length_l))
+
+        # now that we have the dimensions of the new image, construct
+        # the set of destination points to obtain a "birds eye view",
+        # (i.e. top-down view) of the image
+
+        destination_points = np.array(
+            [
+                [0, 0],
+                [max_width - 1, 0],
+                [max_width - 1, max_height - 1],
+                [0, max_height - 1],
+            ],
+            dtype="float32",
+        )
+
+        return destination_points

@@ -152,6 +152,7 @@ def process_dir(
             excluded_files.extend(Path(p) for p in pp.exclude_files())
 
     local_evaluation_path = curr_dir.joinpath(constants.EVALUATION_FILENAME)
+    # Note: if setLayout is passed, there's no need to load evaluation file
     if not args["setLayout"] and os.path.exists(local_evaluation_path):
         if not local_template_exists:
             logger.warning(

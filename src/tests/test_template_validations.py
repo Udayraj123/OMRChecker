@@ -83,7 +83,7 @@ def test_overflow_labels(mocker):
 
 def test_overflow_safe_dimensions(mocker):
     def modify_template(template):
-        template["pageDimensions"] = [255, 400]
+        template["templateDimensions"] = [255, 400]
 
     exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert str(exception) == "No Error"

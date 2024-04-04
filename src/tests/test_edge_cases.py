@@ -44,13 +44,31 @@ write_jsons_and_run = generate_write_jsons_and_run(
 )
 
 
-def test_config_low_dimensions(mocker):
-    def modify_config(config):
-        config["dimensions"]["processing_image_shape"] = [1000, 1000]
+def test_config_low_dimensions_error_case(mocker, snapshot):
+    def modify_template(template):
+        template["preProcessors"][0]["options"]["inputImageShape"] = [
+            1640 // 4,
+            1332 // 4,
+        ]
+        template["preProcessors"][0]["options"]["dimensions"] = [20, 20]
 
-    exception = write_jsons_and_run(mocker, modify_config=modify_config)
+    _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    assert str(exception) == snapshot
 
+
+def test_config_low_dimensions_safe_case(mocker, snapshot):
+    def modify_template(template):
+        template["preProcessors"][0]["options"]["inputImageShape"] = [
+            1640 // 2,
+            1332 // 2,
+        ]
+        template["preProcessors"][0]["options"]["dimensions"] = [20, 20]
+
+    sample_outputs, exception = write_jsons_and_run(
+        mocker, modify_template=modify_template
+    )
     assert str(exception) == "No Error"
+    assert snapshot == sample_outputs
 
 
 def test_different_bubble_dimensions(mocker):
@@ -58,7 +76,7 @@ def test_different_bubble_dimensions(mocker):
     remove_file(BASE_RESULTS_CSV_PATH)
     remove_file(BASE_MULTIMARKED_CSV_PATH)
 
-    exception = write_jsons_and_run(mocker)
+    _, exception = write_jsons_and_run(mocker)
     assert str(exception) == "No Error"
 
     original_output_data = extract_output_data(BASE_RESULTS_CSV_PATH)
@@ -75,7 +93,7 @@ def test_different_bubble_dimensions(mocker):
 
     remove_file(BASE_RESULTS_CSV_PATH)
     remove_file(BASE_MULTIMARKED_CSV_PATH)
-    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert str(exception) == "No Error"
 
     results_output_data = extract_output_data(BASE_RESULTS_CSV_PATH)

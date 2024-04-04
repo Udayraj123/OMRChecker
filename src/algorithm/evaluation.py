@@ -334,7 +334,7 @@ class EvaluationConfig:
                     ]
                     if len(empty_answered_questions) > 0:
                         logger.error(
-                            f"Found empty answers for questions: {empty_answered_questions}, empty value used: '{empty_val}'"
+                            f"Found empty answers for the questions: {empty_answered_questions}, empty value used: '{empty_val}'"
                         )
                         raise Exception(
                             f"Found empty answers in file '{image_path}'. Please check your template again in the --setLayout mode."
