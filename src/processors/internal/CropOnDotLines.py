@@ -8,6 +8,7 @@ from src.processors.constants import (
     AreaTemplate,
     EdgeType,
     ScannerType,
+    WarpMethod,
 )
 from src.processors.internal.CropOnPatchesCommon import CropOnPatchesCommon
 from src.utils.image import ImageUtils
@@ -113,9 +114,15 @@ class CropOnDotLines(CropOnPatchesCommon):
 
     def validate_and_remap_options_schema(self, options):
         layout_type = options["type"]
+        tuning_options = options["tuningOptions"]
         parsed_options = {
             "pointsLayout": layout_type,
             "enableCropping": True,
+            "tuningOptions": {
+                "warpMethod": tuning_options.get(
+                    "warpMethod", WarpMethod.PERSPECTIVE_TRANSFORM
+                )
+            },
         }
 
         # TODO: add default values for provided options["scanAreas"]? like get "maxPoints" from options["lineMaxPoints"]
@@ -149,23 +156,33 @@ class CropOnDotLines(CropOnPatchesCommon):
         },
     }
 
+    @staticmethod
+    def select_edge_from_scan_area(area_description, edge_type):
+        destination_rectangle = MathUtils.get_rectangle_points_from_box(
+            area_description["origin"], area_description["dimensions"]
+        )
+
+        destination_line = MathUtils.select_edge_from_rectangle(
+            destination_rectangle, edge_type
+        )
+        return destination_line
+
     def find_and_select_points_from_line(self, image, area_description, _file_path):
         area_label = area_description["label"]
         points_selector = area_description.get(
             "selector", self.default_points_selector[area_label]
         )
 
-        ordered_patch_corners, line_edge_contours = self.find_line_edges_from_options(
+        line_edge_contours = self.find_line_edges_from_options(
             image, area_description, area_label
         )
 
         edge_type = self.edge_selector_map[area_label][points_selector]
         source_contour = line_edge_contours[edge_type]
-        destination_line = MathUtils.select_edge_from_rectangle(
-            ordered_patch_corners, edge_type
-        )
-        max_points = area_description.get("maxPoints", None)
 
+        destination_line = self.select_edge_from_scan_area(area_description, edge_type)
+
+        max_points = area_description.get("maxPoints", None)
         # Extrapolates the destination_line to get approximate destination points
         (
             control_points,
@@ -220,23 +237,24 @@ class CropOnDotLines(CropOnPatchesCommon):
                 white_thresholded,
                 line_morphed,
             ]
+        elif config.outputs.show_image_level == 4:
             InteractionUtils.show(
-                f"morph_opened_{area_label}", line_morphed, 0, 1, config=config
+                f"morph_opened_{area_label}", line_morphed, pause=False
             )
 
         # Note: points are returned in the order of order_four_points: (tl, tr, br, bl)
         (
-            ordered_patch_corners,
+            _,
             edge_contours_map,
         ) = self.find_morph_corners_and_contours_map(
             area_start, line_morphed, area_description
         )
 
-        if ordered_patch_corners is None:
+        if edge_contours_map is None:
             raise Exception(
                 f"No line match found at origin: {area_description['origin']} with dimensions: { area_description['dimensions']}"
             )
-        return ordered_patch_corners, edge_contours_map
+        return edge_contours_map
 
     def find_dot_corners_from_options(self, image, area_description, _file_path):
         config = self.tuning_config
@@ -310,7 +328,7 @@ class CropOnDotLines(CropOnPatchesCommon):
             x, y, w, h = cv2.boundingRect(bounding_contour)
             patch_corners = MathUtils.get_rectangle_points(x, y, w, h)
             (
-                ordered_patch_corners,
+                _,
                 edge_contours_map,
             ) = ImageUtils.split_patch_contour_on_corners(
                 patch_corners, bounding_contour
@@ -329,8 +347,9 @@ class CropOnDotLines(CropOnPatchesCommon):
             )
 
         # TODO: less confidence if given dimensions differ from matched block size (also give a warning)
-        ImageUtils.draw_contour(edge, ordered_patch_corners)
         if config.outputs.show_image_level >= 5:
+            if ordered_patch_corners is not None:
+                ImageUtils.draw_contour(edge, ordered_patch_corners)
             self.debug_hstack.append(edge)
             InteractionUtils.show(
                 f"Debug Largest Patch: {area_label}",
@@ -340,12 +359,12 @@ class CropOnDotLines(CropOnPatchesCommon):
             self.debug_vstack.append(self.debug_hstack)
             self.debug_hstack = []
 
-        absolute_corners = MathUtils.shift_origin_for_points(
+        absolute_corners = MathUtils.shift_points_from_origin(
             area_start, ordered_patch_corners
         )
 
         shifted_edge_contours_map = {
-            edge_type: MathUtils.shift_origin_for_points(
+            edge_type: MathUtils.shift_points_from_origin(
                 area_start, edge_contours_map[edge_type]
             )
             for edge_type in EDGE_TYPES_IN_ORDER

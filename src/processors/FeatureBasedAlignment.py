@@ -83,7 +83,9 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
             im_matches = ImageUtils.resize_util_h(
                 im_matches, config.outputs.display_image_shape[0]
             )
-            InteractionUtils.show("Aligning", im_matches, resize=False, config=config)
+            InteractionUtils.show(
+                "Aligning", im_matches, resize_to_height=True, config=config
+            )
 
         # Extract location of good matches
         points1 = np.zeros((len(matches), 2), dtype=np.float32)

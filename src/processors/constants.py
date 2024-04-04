@@ -89,10 +89,19 @@ SELECTOR_TYPES_IN_ORDER = [
     SelectorType.LINE_INNER_EDGE,
     SelectorType.LINE_OUTER_EDGE,
 ]
-HomographyMethod = DotMap(
+WarpMethodFlags = DotMap(
     {
         "INTER_LINEAR": "INTER_LINEAR",
         "INTER_CUBIC": "INTER_CUBIC",
+    },
+    _dynamic=False,
+)
+
+WarpMethod = DotMap(
+    {
+        "PERSPECTIVE_TRANSFORM": "PERSPECTIVE_TRANSFORM",
+        "HOMOGRAPHY": "HOMOGRAPHY",
+        "WARP_AFFINE": "WARP_AFFINE",
     },
     _dynamic=False,
 )

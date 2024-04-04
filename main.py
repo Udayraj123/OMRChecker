@@ -83,7 +83,7 @@ def parse_args():
 
 
 def entry_point_for_args(args):
-    if args["debug"] is False:
+    if args["debug"] is True:
         # Disable tracebacks
         sys.tracebacklimit = 0
         # TODO: set log levels
@@ -94,7 +94,7 @@ def entry_point_for_args(args):
                 args,
             )
         except Exception:
-            if args["debug"] is False:
+            if args["debug"] is True:
                 logger.critical(
                     f"OMRChecker crashed. add --debug and run again to see error details"
                 )

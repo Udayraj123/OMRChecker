@@ -7,6 +7,7 @@ from src.processors.constants import (
     MARKER_AREA_TYPES_IN_ORDER,
     AreaTemplate,
     ScannerType,
+    WarpMethod,
 )
 from src.processors.internal.CropOnPatchesCommon import CropOnPatchesCommon
 from src.utils.image import ImageUtils
@@ -84,10 +85,16 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
 
     def validate_and_remap_options_schema(self, options):
         reference_image_path, layout_type = options["relativePath"], options["type"]
+        tuning_options = options["tuningOptions"]
         # Note: options["tuningOptions"] is accessible in self.tuning_options at Processor level
         parsed_options = {
             "pointsLayout": layout_type,
             "enableCropping": True,
+            "tuningOptions": {
+                "warpMethod": tuning_options.get(
+                    "warpMethod", WarpMethod.PERSPECTIVE_TRANSFORM
+                )
+            },
         }
 
         # TODO: add default values for provided scanAreas?
@@ -294,7 +301,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         x, y = marker_position
         ordered_patch_corners = MathUtils.get_rectangle_points(x, y, w, h)
 
-        absolute_corners = MathUtils.shift_origin_for_points(
+        absolute_corners = MathUtils.shift_points_from_origin(
             area_start, ordered_patch_corners
         )
         return absolute_corners
@@ -381,8 +388,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 InteractionUtils.show(
                     f"No Markers res_{area_label} ({str(optimal_match_max)})",
                     hstack,
-                    1,
-                    config=config,
+                    pause=True,
                 )
             raise Exception(f"Error: No marker found in patch {area_label}")
         else:

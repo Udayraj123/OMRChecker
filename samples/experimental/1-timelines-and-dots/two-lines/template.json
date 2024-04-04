@@ -44,14 +44,14 @@
         "leftLine": {
           "origin": [
             40,
-            121
+            161
           ],
           "dimensions": [
             25,
-            980
+            940
           ],
           "margins": {
-            "top": 15,
+            "top": 25,
             "right": 20,
             "bottom": 15,
             "left": 20

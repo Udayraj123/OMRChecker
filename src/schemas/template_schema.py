@@ -2,7 +2,8 @@ from src.processors.constants import (
     SCANNER_TYPES_IN_ORDER,
     SELECTOR_TYPES_IN_ORDER,
     AreaTemplate,
-    HomographyMethod,
+    WarpMethod,
+    WarpMethodFlags,
 )
 from src.schemas.constants import (
     ARRAY_OF_STRINGS,
@@ -17,8 +18,8 @@ from src.utils.constants import FIELD_TYPES
 
 margins_schema = {
     "type": "object",
-    "additionalProperties": False,
     "required": ["top", "right", "bottom", "left"],
+    "additionalProperties": False,
     "properties": {
         "top": positive_integer,
         "right": positive_integer,
@@ -115,9 +116,10 @@ crop_on_markers_options_available_keys = {
 }
 warp_on_points_options_available_keys = {
     **pre_processor_options_available_keys,
-    "scanAreas": True,
-    "defaultSelector": True,
     "cropToBoundingBox": True,
+    "defaultSelector": True,
+    "scanAreas": True,
+    "tuningOptions": True,
 }
 
 crop_on_dot_lines_tuning_options = {
@@ -132,7 +134,7 @@ crop_on_dot_lines_tuning_options = {
         "lineThreshold": positive_number,
     },
 }
-crop_on_markers_tuning_options = {
+crop_on_four_markers_tuning_options = {
     "type": "object",
     "additionalProperties": False,
     "properties": {
@@ -170,6 +172,10 @@ TEMPLATE_SCHEMA = {
                 "^.*$": {"type": "array", "items": FIELD_STRING_TYPE}
             },
         },
+        "emptyValue": {
+            "description": "The value to be used in case of empty bubble detected at global level.",
+            "type": "string",
+        },
         "outputColumns": {
             "type": "array",
             "items": FIELD_STRING_TYPE,
@@ -179,15 +185,15 @@ TEMPLATE_SCHEMA = {
             **two_positive_integers,
             "description": "The dimensions(width, height) to which the page will be resized to before applying template",
         },
-        "processingImageShape": two_positive_integers,
         "outputImageShape": two_positive_integers,
+        "processingImageShape": two_positive_integers,
         "preProcessors": {
             "description": "Custom configuration values to use in the template's directory",
             "type": "array",
             "items": {
                 "type": "object",
-                "additionalProperties": False,
                 **pre_processor_if_required_attrs,
+                "additionalProperties": True,
                 "properties": {
                     "name": {
                         "type": "string",
@@ -203,6 +209,7 @@ TEMPLATE_SCHEMA = {
                     },
                     "options": {
                         "type": "object",
+                        "additionalProperties": True,
                         "properties": {
                             # Note: common properties across all preprocessors items can stay here
                             "processingImageShape": two_positive_integers,
@@ -325,10 +332,6 @@ TEMPLATE_SCHEMA = {
                                     "additionalProperties": False,
                                     "properties": {
                                         **warp_on_points_options_available_keys,
-                                        "homographyMethod": {
-                                            "type": "string",
-                                            "enum": [*HomographyMethod.values()],
-                                        },
                                         "pointsLayout": {
                                             "type": "string",
                                             "enum": points_layout_types,
@@ -338,12 +341,26 @@ TEMPLATE_SCHEMA = {
                                             "enum": default_points_selector_types,
                                         },
                                         "cropToBoundingBox": {"type": "boolean"},
+                                        "tuningOptions": {
+                                            "type": "object",
+                                            "additionalProperties": False,
+                                            "properties": {
+                                                "warpMethod": {
+                                                    "type": "string",
+                                                    "enum": [*WarpMethod.values()],
+                                                },
+                                                "warpMethodFlags": {
+                                                    "type": "string",
+                                                    "enum": [*WarpMethodFlags.values()],
+                                                },
+                                            },
+                                        },
                                         "scanAreas": {
                                             "type": "array",
                                             "items": {
                                                 "type": "object",
-                                                "additionalProperties": False,
                                                 "required": ["areaTemplate"],
+                                                "additionalProperties": False,
                                                 "properties": {
                                                     "areaTemplate": scan_area_template,
                                                     "areaDescription": scan_area_description,
@@ -370,6 +387,7 @@ TEMPLATE_SCHEMA = {
                                     "type": "object",
                                     # Note: "required" key is retrieved from crop_on_markers_options_if_required_attrs
                                     **crop_on_markers_options_if_required_attrs,
+                                    "additionalProperties": True,
                                     "properties": {
                                         # Note: the keys need to match with crop_on_markers_options_available_keys
                                         **crop_on_markers_options_available_keys,
@@ -404,7 +422,7 @@ TEMPLATE_SCHEMA = {
                                                     "bottomRightMarker": patch_area_description,
                                                     "topLeftMarker": patch_area_description,
                                                     "bottomLeftMarker": patch_area_description,
-                                                    "tuningOptions": crop_on_markers_tuning_options,
+                                                    "tuningOptions": crop_on_four_markers_tuning_options,
                                                 },
                                             },
                                         },
@@ -533,6 +551,7 @@ TEMPLATE_SCHEMA = {
                             },
                         },
                     ],
+                    "additionalProperties": False,
                     "properties": {
                         "bubbleDimensions": two_positive_numbers,
                         "bubblesGap": positive_number,
@@ -552,10 +571,6 @@ TEMPLATE_SCHEMA = {
                     },
                 }
             },
-        },
-        "emptyValue": {
-            "description": "The value to be used in case of empty bubble detected at global level.",
-            "type": "string",
         },
     },
 }

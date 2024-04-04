@@ -184,7 +184,7 @@ class ImageInstanceOps:
             plot_title=f"Mean Intensity Barplot: {file_path}",
             MIN_JUMP=MIN_JUMP,
             JUMP_DELTA=JUMP_DELTA,
-            plot_show=config.outputs.show_image_level >= 5,
+            plot_show=config.outputs.show_image_level >= 6,
             sort_in_plot=True,
             looseness=4,
         )
@@ -236,7 +236,7 @@ class ImageInstanceOps:
                     plot_title=f"Mean Intensity Barplot for {key}.{field.field_label}.block{block_field_number}",
                     # plot_show=field.field_label in ["q72", "q52", "roll5"],  # Temp
                     # plot_show=field.field_label in ["q70", "q69"],  # Temp
-                    plot_show=config.outputs.show_image_level >= 6,
+                    plot_show=config.outputs.show_image_level >= 7,
                 )
                 # TODO: move get_local_threshold into FieldDetection
                 field.local_threshold = local_threshold_for_field
@@ -534,10 +534,20 @@ class ImageInstanceOps:
                 **kwargs,
             )
 
-            InteractionUtils.show("final_marked", final_marked, 0)
-            InteractionUtils.show("colored_final_marked", colored_final_marked, 1)
+            InteractionUtils.show(
+                "final_marked", final_marked, 0, resize_to_height=True, config=config
+            )
+            InteractionUtils.show(
+                "colored_final_marked",
+                colored_final_marked,
+                1,
+                resize_to_height=True,
+                config=config,
+            )
         else:
-            InteractionUtils.show("final_marked", final_marked, 1)
+            InteractionUtils.show(
+                "final_marked", final_marked, 1, resize_to_height=True, config=config
+            )
 
         return final_marked, colored_final_marked
 
@@ -623,18 +633,11 @@ class ImageInstanceOps:
                 self.save_image_stacks(i + 1, file_id, save_marked_dir)
 
         if config.outputs.show_image_level >= 2 and file_id is not None:
-            # TODO: minimize no of final images
-            (
-                _display_width,
-                display_height,
-            ) = config.outputs.display_image_dimensions
             InteractionUtils.show(
                 f"Final Marked Bubbles : '{file_id}'",
-                ImageUtils.resize_util(
-                    marked_image, u_height=int(display_height * 1.3)
-                ),
-                1,
-                1,
+                marked_image,
+                pause=True,
+                resize_to_height=True,
                 config=config,
             )
 

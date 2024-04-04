@@ -59,6 +59,39 @@ class ImageUtils:
         return cv2.resize(img, (int(u_width), int(u_height)))
 
     @staticmethod
+    def get_cropped_rectangle_destination_points(ordered_page_corners):
+        # Note: This utility would just find a good size ratio for the cropped image to look more realistic
+        # but since we're anyway resizing the image, it doesn't make much sense to use these calculations
+        (tl, tr, br, bl) = ordered_page_corners
+
+        length_t = MathUtils.distance(tr, tl)
+        length_b = MathUtils.distance(br, bl)
+        length_r = MathUtils.distance(tr, br)
+        length_l = MathUtils.distance(tl, bl)
+
+        # compute the width of the new image, which will be the
+        max_width = max(int(length_t), int(length_b))
+
+        # compute the height of the new image, which will be the
+        max_height = max(int(length_r), int(length_l))
+
+        # now that we have the dimensions of the new image, construct
+        # the set of destination points to obtain a "birds eye view",
+        # (i.e. top-down view) of the image
+
+        destination_points = np.array(
+            [
+                [0, 0],
+                [max_width - 1, 0],
+                [max_width - 1, max_height - 1],
+                [0, max_height - 1],
+            ],
+            dtype="float32",
+        )
+        warped_dimensions = (max_width, max_height)
+        return destination_points, warped_dimensions
+
+    @staticmethod
     def grab_contours(cnts):
         # source: imutils package
 

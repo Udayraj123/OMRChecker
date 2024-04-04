@@ -15,7 +15,7 @@ class MathUtils:
         return math.hypot(point1[0] - point2[0], point1[1] - point2[1])
 
     @staticmethod
-    def shift_origin_for_points(new_origin, list_of_points):
+    def shift_points_from_origin(new_origin, list_of_points):
         return list(
             map(
                 lambda point: [
@@ -36,20 +36,21 @@ class MathUtils:
 
     @staticmethod
     def order_four_points(points, dtype="int"):
-        points = np.array(points)
-        rect = np.zeros((4, 2), dtype=dtype)
+        points = np.array(points, dtype=dtype)
 
         # the top-left point will have the smallest sum, whereas
         # the bottom-right point will have the largest sum
-        s = points.sum(axis=1)
-        rect[0] = points[np.argmin(s)]
-        rect[2] = points[np.argmax(s)]
+        sum = points.sum(axis=1)
         diff = np.diff(points, axis=1)
-        rect[1] = points[np.argmin(diff)]
-        rect[3] = points[np.argmax(diff)]
-
+        ordered_indices = [
+            np.argmin(sum),
+            np.argmin(diff),
+            np.argmax(sum),
+            np.argmax(diff),
+        ]
+        rect = points[ordered_indices]
         # returns the ordered coordinates (tl, tr, br, bl)
-        return rect
+        return rect  # , ordered_indices
 
     @staticmethod
     def get_bounding_box_of_points(points):
@@ -65,6 +66,13 @@ class MathUtils:
     @staticmethod
     def validate_rect(approx):
         return len(approx) == 4 and MathUtils.check_max_cosine(approx.reshape(4, 2))
+
+    @staticmethod
+    def get_rectangle_points_from_box(origin, dimensions):
+        x, y = origin
+        w, h = dimensions
+        # order same as order_four_points: (tl, tr, br, bl)
+        return MathUtils.get_rectangle_points(x, y, w, h)
 
     @staticmethod
     def get_rectangle_points(x, y, w, h):

@@ -14,7 +14,7 @@ CONFIG_DEFAULTS = DotMap(
             "GLOBAL_PAGE_THRESHOLD": 200,
         },
         "outputs": {
-            "display_image_dimensions": [1640, 2480],
+            "display_image_dimensions": [720, 1080],
             "show_image_level": 0,
             "save_image_level": 0,
             "save_detections": True,

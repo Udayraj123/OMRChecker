@@ -25,19 +25,27 @@ class InteractionUtils:
     image_metrics = ImageMetrics()
 
     @staticmethod
-    def show(name, image, pause=1, resize=False, reset_pos=None, config=None):
+    def show(
+        name,
+        image,
+        pause=1,
+        resize_to_width=False,
+        resize_to_height=False,
+        reset_pos=None,
+        config=None,
+    ):
         image_metrics = InteractionUtils.image_metrics
         if image is None:
             logger.info(f"'{name}' - NoneType image to show!")
             if pause:
                 cv2.destroyAllWindows()
             return
-        if resize:
-            if not config:
-                raise Exception("config not provided for resizing the image to show")
-            image_to_show = ImageUtils.resize_to_dimensions(
-                image, config.outputs.display_image_dimensions
-            )
+        if config is not None:
+            display_width, display_height = config.outputs.display_image_dimensions
+            if resize_to_width:
+                image_to_show = ImageUtils.resize_util(image, u_width=display_width)
+            elif resize_to_height:
+                image_to_show = ImageUtils.resize_util(image, u_height=display_height)
         else:
             image_to_show = image
 
