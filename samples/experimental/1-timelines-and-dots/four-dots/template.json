@@ -16,6 +16,10 @@
       "roll1..10"
     ]
   },
+  "processingImageShape": [
+    1280,
+    906
+  ],
   "preProcessors": [
     {
       "name": "CropOnMarkers",

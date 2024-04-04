@@ -46,7 +46,7 @@ write_jsons_and_run = generate_write_jsons_and_run(
 
 def test_config_low_dimensions_error_case(mocker, snapshot):
     def modify_template(template):
-        template["preProcessors"][0]["options"]["inputImageShape"] = [
+        template["preProcessors"][0]["options"]["processingImageShape"] = [
             1640 // 4,
             1332 // 4,
         ]
@@ -58,7 +58,7 @@ def test_config_low_dimensions_error_case(mocker, snapshot):
 
 def test_config_low_dimensions_safe_case(mocker, snapshot):
     def modify_template(template):
-        template["preProcessors"][0]["options"]["inputImageShape"] = [
+        template["preProcessors"][0]["options"]["processingImageShape"] = [
             1640 // 2,
             1332 // 2,
         ]

@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: test_config_low_dimensions
+# name: test_config_low_dimensions_error_case
   'Error: No marker found in patch topLeftMarker'
 # ---
 # name: test_config_low_dimensions_safe_case

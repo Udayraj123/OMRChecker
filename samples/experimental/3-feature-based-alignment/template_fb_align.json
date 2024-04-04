@@ -7,6 +7,10 @@
     42,
     42
   ],
+  "processingImageShape": [
+    2339,
+    1653
+  ],
   "preProcessors": [
     {
       "name": "Levels",

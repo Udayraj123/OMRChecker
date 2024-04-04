@@ -1,5 +1,5 @@
 TEMPLATE_DEFAULTS = {
-    "inputImageShape": [820, 666],
+    "processingImageShape": [820, 666],
     "preProcessors": [],
     "emptyValue": "",
     "customLabels": {},

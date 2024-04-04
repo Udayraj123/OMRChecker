@@ -24,7 +24,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         raise Exception(f"Not implemented")
 
     def __init__(
-        self, options, relative_dir, image_instance_ops, default_input_image_shape
+        self, options, relative_dir, image_instance_ops, default_processing_image_shape
     ):
         # TODO: need to fix this (self attributes will be overridden by parent and may cause inconsistency)
         self.tuning_config = image_instance_ops.tuning_config
@@ -34,7 +34,10 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             **parsed_options,
         }
         super().__init__(
-            parsed_options, relative_dir, image_instance_ops, default_input_image_shape
+            parsed_options,
+            relative_dir,
+            image_instance_ops,
+            default_processing_image_shape,
         )
         options = self.options
         self.homography_method = self.homography_method_map.get(
@@ -114,6 +117,11 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         if config.outputs.show_image_level >= 4:
             title = "Cropped Image" if self.enable_cropping else "Warped Image"
             hstack = ImageUtils.get_padded_hstack([self.debug_image, warped_image])
+
+            # TODO: show match lines output
+            # im_matches = cv2.drawMatches(
+            #     image, from_keypoints, self.ref_img, self.to_keypoints, matches, None
+            # )
             InteractionUtils.show(f"{title}: {file_path}", hstack, 1, 1, config=config)
 
         return warped_image, colored_image, _template

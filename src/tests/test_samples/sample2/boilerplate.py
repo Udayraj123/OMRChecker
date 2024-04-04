@@ -1,7 +1,7 @@
 TEMPLATE_BOILERPLATE = {
     "templateDimensions": [2550, 3300],
     "bubbleDimensions": [32, 32],
-    "inputImageShape": [1640, 1332],
+    "processingImageShape": [1640, 1332],
     "preProcessors": [
         {
             "name": "CropOnMarkers",

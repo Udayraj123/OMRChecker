@@ -12,7 +12,7 @@ from src.processors.interfaces.ImageTemplatePreprocessor import (
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 
-# TODO: modify this to return from and to points and then the parent class should handle the warping? (extend WarpOnPointsCommon)
+# TODO: support WarpOnPointsCommon?
 
 
 class FeatureBasedAlignment(ImageTemplatePreprocessor):
@@ -23,7 +23,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
         # process reference image
         self.ref_path = self.relative_dir.joinpath(options["reference"])
         ref_img = cv2.imread(str(self.ref_path), cv2.IMREAD_GRAYSCALE)
-        self.ref_img = ImageUtils.resize_to_shape(ref_img, self.input_image_shape)
+        self.ref_img = ImageUtils.resize_to_shape(ref_img, self.processing_image_shape)
         # get options with defaults
         self.max_features = int(options.get("maxFeatures", 500))
         self.good_match_percent = options.get("goodMatchPercent", 0.15)
@@ -80,7 +80,10 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
             im_matches = cv2.drawMatches(
                 image, from_keypoints, self.ref_img, self.to_keypoints, matches, None
             )
-            InteractionUtils.show("Aligning", im_matches, resize=True, config=config)
+            im_matches = ImageUtils.resize_util_h(
+                im_matches, config.outputs.display_image_shape[0]
+            )
+            InteractionUtils.show("Aligning", im_matches, resize=False, config=config)
 
         # Extract location of good matches
         points1 = np.zeros((len(matches), 2), dtype=np.float32)
@@ -96,14 +99,18 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
             # Note: estimateAffinePartial2D might save on computation as we expect no noise in the data
             m, _inliers = cv2.estimateAffine2D(points1, points2)
             # 2D == in image plane:
-            return cv2.warpAffine(image, m, (width, height))
 
-        # Use homography
-        h, _mask = cv2.findHomography(points1, points2, cv2.RANSAC)
-        # 3D == perspective from out of plane:
-        warped_image = cv2.warpPerspective(image, h, (width, height))
+            warped_image = cv2.warpAffine(image, m, (width, height))
 
-        if config.outputs.show_colored_outputs:
-            colored_image = cv2.warpPerspective(colored_image, h, (width, height))
+            if config.outputs.show_colored_outputs:
+                colored_image = cv2.warpAffine(colored_image, m, (width, height))
+        else:
+            # Use homography
+            h, _mask = cv2.findHomography(points1, points2, cv2.RANSAC)
+            # 3D == perspective from out of plane:
+            warped_image = cv2.warpPerspective(image, h, (width, height))
+
+            if config.outputs.show_colored_outputs:
+                colored_image = cv2.warpPerspective(colored_image, h, (width, height))
 
         return warped_image, colored_image, _template

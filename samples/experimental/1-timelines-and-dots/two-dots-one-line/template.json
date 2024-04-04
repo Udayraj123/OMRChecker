@@ -7,11 +7,15 @@
     25,
     25
   ],
+  "processingImageShape": [
+    820,
+    666
+  ],
   "preProcessors": [
     {
       "name": "CropOnMarkers",
       "options": {
-        "inputImageShape": [
+        "processingImageShape": [
           1132,
           800
         ],

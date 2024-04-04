@@ -182,6 +182,10 @@
       "fieldType": "QTYPE_MCQ4"
     }
   },
+  "processingImageShape": [
+    2400,
+    1800
+  ],
   "preProcessors": [
     {
       "name": "CropPage",

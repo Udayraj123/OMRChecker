@@ -34,7 +34,7 @@ class Template:
             self.global_empty_val,
             self.template_dimensions,
             self.options,
-            self.input_image_shape,
+            self.processing_image_shape,
             self.output_image_shape,
         ) = map(
             json_object.get,
@@ -47,7 +47,7 @@ class Template:
                 "emptyValue",
                 "templateDimensions",
                 "options",
-                "inputImageShape",
+                "processingImageShape",
                 "outputImageShape",
             ],
         )
@@ -81,7 +81,7 @@ class Template:
                 options=pre_processor["options"],
                 relative_dir=relative_dir,
                 image_instance_ops=self.image_instance_ops,
-                default_input_image_shape=self.input_image_shape,
+                default_processing_image_shape=self.processing_image_shape,
             )
             self.pre_processors.append(pre_processor_instance)
 

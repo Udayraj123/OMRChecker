@@ -1,15 +1,9 @@
 {
-  "dimensions": {
-    "display_image_shape": [
-      2400,
-      1800
-    ],
-    "input_image_shape": [
-      2400,
-      1800
-    ]
-  },
   "outputs": {
+    "display_image_dimensions": [
+      1800,
+      2400
+    ],
     "show_image_level": 0
   }
 }

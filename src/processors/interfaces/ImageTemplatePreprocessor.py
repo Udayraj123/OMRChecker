@@ -9,7 +9,7 @@ class ImageTemplatePreprocessor(Processor):
     """Base class for an extension that applies some preprocessing to the input image"""
 
     def __init__(
-        self, options, relative_dir, image_instance_ops, default_input_image_shape
+        self, options, relative_dir, image_instance_ops, default_processing_image_shape
     ):
         super().__init__(
             options,
@@ -19,8 +19,8 @@ class ImageTemplatePreprocessor(Processor):
         self.tuning_config = image_instance_ops.tuning_config
         # Note: we're taking this at preProcessor level because it represents
         # the need of a preProcessor's coordinate system(e.g. area selectors)
-        self.input_image_shape = options.get(
-            "inputImageShape", default_input_image_shape
+        self.processing_image_shape = options.get(
+            "processingImageShape", default_processing_image_shape
         )
 
     def get_relative_path(self, path):
@@ -33,12 +33,12 @@ class ImageTemplatePreprocessor(Processor):
     def resize_and_apply_filter(self, in_image, colored_image, _template, _file_path):
         config = self.tuning_config
 
-        in_image = ImageUtils.resize_to_shape(in_image, self.input_image_shape)
+        in_image = ImageUtils.resize_to_shape(in_image, self.processing_image_shape)
 
         if config.outputs.show_colored_outputs:
             colored_image = ImageUtils.resize_to_shape(
                 colored_image,
-                self.input_image_shape,
+                self.processing_image_shape,
             )
 
         out_image, colored_image, _template = self.apply_filter(

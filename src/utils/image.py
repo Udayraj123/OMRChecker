@@ -46,21 +46,16 @@ class ImageUtils:
         w, h = image_dimensions
         return ImageUtils.resize_util(img, w, h)
 
-    def resize_util(img, u_width, u_height=None):
+    def resize_util(img, u_width=None, u_height=None):
         h, w = img.shape[:2]
         if u_height is None:
             u_height = int(h * u_width / w)
+        if u_width is None:
+            u_width = int(w * u_height / h)
 
         if u_height == h and u_width == w:
             # No need to resize
             return img
-        return cv2.resize(img, (int(u_width), int(u_height)))
-
-    @staticmethod
-    def resize_util_h(img, u_height, u_width=None):
-        if u_width is None:
-            h, w = img.shape[:2]
-            u_width = int(w * u_height / h)
         return cv2.resize(img, (int(u_width), int(u_height)))
 
     @staticmethod

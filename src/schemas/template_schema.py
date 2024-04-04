@@ -96,7 +96,7 @@ crop_on_markers_options_if_required_attrs = {
 warp_on_points_options_if_required_attrs = {
     "required": ["scanAreas"],
 }
-pre_processor_options_available_keys = {"inputImageShape": True}
+pre_processor_options_available_keys = {"processingImageShape": True}
 
 crop_on_markers_tuning_options_available_keys = {
     "dotKernel": True,
@@ -179,7 +179,7 @@ TEMPLATE_SCHEMA = {
             **two_positive_integers,
             "description": "The dimensions(width, height) to which the page will be resized to before applying template",
         },
-        "inputImageShape": two_positive_integers,
+        "processingImageShape": two_positive_integers,
         "outputImageShape": two_positive_integers,
         "preProcessors": {
             "description": "Custom configuration values to use in the template's directory",
@@ -205,7 +205,7 @@ TEMPLATE_SCHEMA = {
                         "type": "object",
                         "properties": {
                             # Note: common properties across all preprocessors items can stay here
-                            "inputImageShape": two_positive_integers,
+                            "processingImageShape": two_positive_integers,
                         },
                     },
                 },

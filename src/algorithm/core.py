@@ -12,6 +12,7 @@ import os
 import random
 import re
 from collections import defaultdict
+from copy import copy as shallowcopy
 from copy import deepcopy
 from typing import Any
 
@@ -36,18 +37,26 @@ class ImageInstanceOps:
         self.tuning_config = tuning_config
         self.save_image_level = tuning_config.outputs.save_image_level
 
-    def apply_preprocessors(self, file_path, gray_image, colored_image, template):
+    def apply_preprocessors(
+        self, file_path, gray_image, colored_image, original_template
+    ):
         config = self.tuning_config
 
+        # Copy template for this instance op
+        template = shallowcopy(original_template)
+
+        # Make deepcopy for only parts that are mutated by Processor
+        template.field_blocks = deepcopy(template.field_blocks)
+
         # resize to conform to common preprocessor input requirements
-        gray_image = ImageUtils.resize_to_shape(gray_image, template.input_image_shape)
+        gray_image = ImageUtils.resize_to_shape(
+            gray_image, template.processing_image_shape
+        )
         if config.outputs.show_colored_outputs:
             colored_image = ImageUtils.resize_to_shape(
-                colored_image, template.input_image_shape
+                colored_image, template.processing_image_shape
             )
 
-        # Copy template for this instance op
-        template = deepcopy(template)
         # run pre_processors in sequence
         for pre_processor in template.pre_processors:
             (
@@ -261,6 +270,7 @@ class ImageInstanceOps:
                         local_bubble_is_marked = (
                             local_threshold_for_field > bubble.mean_value
                         )
+                        # TODO: refactor this mutation to a more appropriate place
                         bubble.is_marked = local_bubble_is_marked
                         # 1. Disparity in global/local threshold output
                         if global_bubble_is_marked != local_bubble_is_marked:
@@ -620,7 +630,9 @@ class ImageInstanceOps:
             ) = config.outputs.display_image_dimensions
             InteractionUtils.show(
                 f"Final Marked Bubbles : '{file_id}'",
-                ImageUtils.resize_util_h(marked_image, int(display_height * 1.3)),
+                ImageUtils.resize_util(
+                    marked_image, u_height=int(display_height * 1.3)
+                ),
                 1,
                 1,
                 config=config,
@@ -1063,7 +1075,7 @@ class ImageInstanceOps:
             result = np.hstack(
                 tuple(
                     [
-                        ImageUtils.resize_util_h(img, display_height)
+                        ImageUtils.resize_util(img, u_height=display_height)
                         for img in self.save_img_list[key]
                     ]
                 )
