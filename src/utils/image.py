@@ -319,7 +319,9 @@ class ImageUtils:
             color,
             border,
         )
+        return position,position_diagonal
 
+    
     @staticmethod
     def draw_text(
         image,
@@ -348,3 +350,29 @@ class ImageUtils:
             color,
             thickness,
         )
+
+    @staticmethod
+    def draw_symbol(
+        image,
+        symbol,
+        position,
+        position_diagonal,
+        color=CLR_BLACK
+     ):
+        
+        center_position = lambda size_x , size_y : (
+            (position[0]+position_diagonal[0]-size_x)//2,
+            (position[1]+position_diagonal[1]+size_y)//2
+        )
+        
+
+        ImageUtils.draw_text(
+            image,
+            symbol,
+            center_position,
+            color=color
+        )
+        
+
+        
+

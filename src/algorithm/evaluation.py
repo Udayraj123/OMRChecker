@@ -217,6 +217,17 @@ class SectionMarkingScheme:
         )
 
         return verdict_marking, question_verdict
+    def get_bonus_type(self):
+        if self.marking[Verdict.NO_ANSWER_MATCH]<=0:
+            return None
+        elif self.marking[Verdict.UNMARKED]>0:
+            return  "BONUS_FOR_ALL"
+        elif self.marking[Verdict.UNMARKED]==0:
+            return "BONUS_ON_ATTEMPT"
+        else:
+            return None
+        
+
 
 
 class EvaluationConfig:
@@ -543,7 +554,7 @@ class EvaluationConfig:
             current_score,
         )
         expected_answer_string = str(answer_matcher)
-        return delta, question_verdict, expected_answer_string
+        return delta, question_verdict, expected_answer_string 
 
     def conditionally_add_explanation(
         self,
@@ -641,7 +652,15 @@ class EvaluationConfig:
             table.add_column("Marking Scheme")
         self.explanation_table = table
 
-
+def get_evaluation_symbol(evaluation_meta,field_label,field_value):
+    if evaluation_meta["questions_meta"][field_label]["bonus_type"] == "BONUS_ON_ATTEMPT":
+        return "+"
+    if evaluation_meta["questions_meta"][field_label]["delta"]>0:
+        return "+"
+    if evaluation_meta["questions_meta"][field_label]["delta"]<0:
+        return "-"
+    else:
+        return "o"
 def evaluate_concatenated_response(concatenated_response, evaluation_config):
     evaluation_config.prepare_and_validate_omr_response(concatenated_response)
     current_score = 0.0
@@ -655,6 +674,8 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
         ) = evaluation_config.match_answer_for_question(
             current_score, question, marked_answer
         )
+        marking_scheme = evaluation_config.get_marking_scheme_for_question(question)
+        bonus_type = marking_scheme.get_bonus_type() 
         current_score += delta
         questions_meta[question] = {
             "question_verdict": question_verdict,
@@ -662,6 +683,7 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
             "delta": delta,
             "current_score": current_score,
             "expected_answer_string": expected_answer_string,
+            "bonus_type": bonus_type
         }
 
     evaluation_config.conditionally_print_explanation()

@@ -36,7 +36,7 @@ FIELD_TYPES = {
 
 # TODO: move to interaction.py
 TEXT_SIZE = 0.95
-CLR_BLACK = (50, 150, 150)
+CLR_BLACK = (0, 0, 0)
 CLR_WHITE = (255, 255, 255)
 CLR_GRAY = (130, 130, 130)
 CLR_DARK_GRAY = (100, 100, 100)
