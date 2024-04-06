@@ -117,7 +117,6 @@ EVALUATION_SCHEMA = {
                         "unmarked": {"type": "string"},
                     },
                 },
-                # TODO: add "draw_answer_summary" and "verdict_colors" properties
             },
         },
     },
