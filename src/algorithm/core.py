@@ -800,7 +800,7 @@ class ImageInstanceOps:
                                 # TODO: pass verdict_color here and insert symbol mapping here ( +, -, *)
                                 thickness_factor=1 / 12,
                             )
-                            logger.info(question_meta)
+                            
                             symbol = get_evaluation_symbol(question_meta)
                             ImageUtils.draw_symbol(
                                 marked_image,
