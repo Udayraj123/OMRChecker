@@ -619,7 +619,7 @@ class ImageInstanceOps:
 
         if config.outputs.show_image_level >= 2 and file_id is not None:
             InteractionUtils.show(
-                f"Final Marked Bubbles : '{file_id}'",
+                f"Final Marked Bubbles({image_type}) : '{file_id}'",
                 marked_image,
                 pause=True,
                 resize_to_height=True,

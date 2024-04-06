@@ -12,6 +12,7 @@ PROCESSOR_MANAGER = DotMap(
     {
         "processors": {
             "CropOnMarkers": CropOnMarkers,
+            # TODO: "WarpOnPoints": WarpOnPointsCommon,
             "CropPage": CropPage,
             "FeatureBasedAlignment": FeatureBasedAlignment,
             "GaussianBlur": GaussianBlur,

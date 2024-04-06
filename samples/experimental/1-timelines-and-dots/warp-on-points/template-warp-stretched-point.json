@@ -33,6 +33,28 @@
           "warpMethod": "HOMOGRAPHY"
         },
         "defaultSelector": "OUTER_CORNERS",
+        "scanAreas": [
+          {
+            "areaTemplate": "topLeftDot",
+            "areaDescription": {
+              "label": "AdditionalPoint",
+              "origin": [
+                48,
+                450
+              ],
+              "dimensions": [
+                50,
+                50
+              ],
+              "margins": {
+                "top": 55,
+                "right": 20,
+                "bottom": 15,
+                "left": 2
+              }
+            }
+          }
+        ],
         "topLeftDot": {
           "origin": [
             2,

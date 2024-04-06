@@ -40,7 +40,13 @@ patch_area_description = {
             "type": "string",
             "enum": [*SELECTOR_TYPES_IN_ORDER],
         },
+        # TODO: give customOptions via merging the two
     },
+}
+
+scan_area_template = {
+    "type": "string",
+    "enum": ["CUSTOM", *AreaTemplate.values()],
 }
 
 scan_area_description = {
@@ -49,7 +55,7 @@ scan_area_description = {
     "additionalProperties": False,
     "properties": {
         **patch_area_description["properties"],
-        "name": {
+        "label": {
             "type": "string",
         },
         "selectorMargins": margins_schema,
@@ -58,6 +64,22 @@ scan_area_description = {
             "enum": SCANNER_TYPES_IN_ORDER,
         },
         "maxPoints": positive_integer,
+    },
+}
+scan_areas_object = {
+    "type": "array",
+    "items": {
+        "type": "object",
+        "required": ["areaTemplate"],
+        "additionalProperties": False,
+        "properties": {
+            "areaTemplate": scan_area_template,
+            "areaDescription": scan_area_description,
+            "customOptions": {
+                "type": "object"
+                # TODO: add conditional properties here like maxPoints and excludeFromCropping here based on scannerType
+            },
+        },
     },
 }
 
@@ -84,10 +106,6 @@ points_layout_types = [
     "CUSTOM",
 ]
 
-scan_area_template = {
-    "type": "string",
-    "enum": ["CUSTOM", *AreaTemplate.values()],
-}
 # if_required_attrs help in suppressing redundant errors from 'allOf'
 pre_processor_if_required_attrs = {
     "required": ["name", "options"],
@@ -101,7 +119,9 @@ warp_on_points_options_if_required_attrs = {
 pre_processor_options_available_keys = {"processingImageShape": True}
 
 crop_on_markers_tuning_options_available_keys = {
+    "dotThreshold": True,
     "dotKernel": True,
+    "lineThreshold": True,
     "dotBlur": True,
     "lineKernel": True,
     "apply_erode_subtract": True,
@@ -111,10 +131,12 @@ crop_on_markers_tuning_options_available_keys = {
 }
 crop_on_markers_options_available_keys = {
     **pre_processor_options_available_keys,
+    "scanAreas": True,
     "defaultSelector": True,
     "tuningOptions": True,
     "type": True,
 }
+
 warp_on_points_tuning_options = {
     "warpMethod": {
         "type": "string",
@@ -139,7 +161,7 @@ crop_on_dot_lines_tuning_options = {
     "type": "object",
     "additionalProperties": False,
     "properties": {
-        **crop_on_markers_options_available_keys,
+        **crop_on_markers_tuning_options_available_keys,
         **warp_on_points_tuning_options,
         "dotBlur": positive_integer,
         "dotKernel": two_positive_integers,
@@ -214,7 +236,7 @@ TEMPLATE_SCHEMA = {
                         "type": "string",
                         "enum": [
                             "CropOnMarkers",
-                            "WarpOnPoints",
+                            # TODO: "WarpOnPoints",
                             "CropPage",
                             "FeatureBasedAlignment",
                             "GaussianBlur",
@@ -244,10 +266,11 @@ TEMPLATE_SCHEMA = {
                                     "additionalProperties": False,
                                     "properties": {
                                         **pre_processor_options_available_keys,
+                                        "tuningOptions": False,
                                         "morphKernel": two_positive_integers,
                                         "maxPointsPerEdge": positive_integer,
                                     },
-                                }
+                                },
                             }
                         },
                     },
@@ -345,6 +368,7 @@ TEMPLATE_SCHEMA = {
                                 "options": {
                                     **warp_on_points_options_if_required_attrs,
                                     "type": "object",
+                                    "required": [],
                                     "additionalProperties": False,
                                     "properties": {
                                         **warp_on_points_options_available_keys,
@@ -359,25 +383,15 @@ TEMPLATE_SCHEMA = {
                                         "enableCropping": {"type": "boolean"},
                                         "tuningOptions": {
                                             "type": "object",
+                                            "required": [],
                                             "additionalProperties": False,
-                                            "properties": warp_on_points_tuning_options,
-                                        },
-                                        "scanAreas": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "required": ["areaTemplate"],
-                                                "additionalProperties": False,
-                                                "properties": {
-                                                    "areaTemplate": scan_area_template,
-                                                    "areaDescription": scan_area_description,
-                                                    "customOptions": {
-                                                        "type": "object"
-                                                        # TODO: add conditional properties here like maxPoints and excludeFromCropping here based on scannerType
-                                                    },
-                                                },
+                                            "properties": {
+                                                **crop_on_dot_lines_tuning_options[
+                                                    "properties"
+                                                ],
                                             },
                                         },
+                                        "scanAreas": scan_areas_object,
                                     },
                                 }
                             }
@@ -398,6 +412,7 @@ TEMPLATE_SCHEMA = {
                                     "properties": {
                                         # Note: the keys need to match with crop_on_markers_options_available_keys
                                         **crop_on_markers_options_available_keys,
+                                        "scanAreas": scan_areas_object,
                                         "defaultSelector": {
                                             "type": "string",
                                             "enum": default_points_selector_types,

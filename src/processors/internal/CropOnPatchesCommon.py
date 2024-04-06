@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import cv2
 import numpy as np
 
@@ -45,17 +47,17 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                 scan_area.get("customOptions", {}),
             )
             area_description["label"] = area_description.get("label", area_template)
-            scan_areas_with_defaults.append(
+            scan_areas_with_defaults += [
                 {
                     "areaTemplate": area_template,
                     "areaDescription": OVERRIDE_MERGER.merge(
-                        self.default_scan_area_descriptions[area_template],
+                        deepcopy(self.default_scan_area_descriptions[area_template]),
                         area_description,
                     ),
                     "customOptions": custom_options,
                 }
-            )
-
+            ]
+        # print("self.scan_areas", self.scan_areas)
         self.scan_areas = scan_areas_with_defaults
 
     def validate_scan_areas(self):
@@ -105,6 +107,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             [],
             [],
         )
+        print("self.scan_areas", self.scan_areas)
         for scan_area in self.scan_areas:
             area_description = self.get_runtime_area_description_with_defaults(
                 image, scan_area
@@ -193,7 +196,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
     def find_and_select_point_from_dot(self, image, area_description, file_path):
         area_label = area_description["label"]
         points_selector = area_description.get(
-            "selector", self.default_points_selector[area_label]
+            "selector", self.default_points_selector.get(area_label, None)
         )
 
         dot_rect = self.find_dot_corners_from_options(

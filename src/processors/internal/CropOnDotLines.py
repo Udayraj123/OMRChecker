@@ -128,12 +128,18 @@ class CropOnDotLines(CropOnPatchesCommon):
         # TODO: add default values for provided options["scanAreas"]? like get "maxPoints" from options["lineMaxPoints"]
         # inject scanAreas
         parsed_options["scanAreas"] = [
-            {
-                "areaTemplate": area_template,
-                "areaDescription": options.get(area_template, {}),
-                "customOptions": {},
-            }
-            for area_template in self.scan_area_templates_for_layout[layout_type]
+            # Note: currently at CropOnMarkers/CropOnDotLines level, 'scanAreas' is extended provided areas
+            *options["scanAreas"],
+            *[
+                {
+                    "areaTemplate": area_template,
+                    "areaDescription": options.get(area_template, {}),
+                    "customOptions": {
+                        # TODO: get customOptions here
+                    },
+                }
+                for area_template in self.scan_area_templates_for_layout[layout_type]
+            ],
         ]
         return parsed_options
 
@@ -170,7 +176,7 @@ class CropOnDotLines(CropOnPatchesCommon):
     def find_and_select_points_from_line(self, image, area_description, _file_path):
         area_label = area_description["label"]
         points_selector = area_description.get(
-            "selector", self.default_points_selector[area_label]
+            "selector", self.default_points_selector.get(area_label, None)
         )
 
         line_edge_contours = self.find_line_edges_from_options(image, area_description)
