@@ -29,15 +29,26 @@ def convert_image(image_path):
 
 def convert_images_in_tree(args):
     filenames = args.get("filenames", None)
+    trigger_size = args.get("trigger_size", None)
     converted_any = False
     for path in filenames:
         old_size = get_size_in_kb(path)
+        if old_size <= trigger_size:
+            continue
+
         new_image_path = convert_image(path)
         new_size = get_size_in_kb(new_image_path)
-        print(
-            f"Converted png to jpg: {path} : {new_size:.2f}KB {get_size_reduction(old_size, new_size)}"
-        )
-        converted_any = True
+        if new_size <= old_size:
+            print(
+                f"Converted png to jpg: {path} : {new_size:.2f}KB {get_size_reduction(old_size, new_size)}"
+            )
+            converted_any = True
+        else:
+            print(
+                f"Skipping conversion for {path} as size is more than before ({new_size:.2f} KB > {old_size:.2f} KB)"
+            )
+            os.remove(new_image_path)
+
     return converted_any
 
 
@@ -45,6 +56,14 @@ def parse_args():
     # construct the argument parse and parse the arguments
     argparser = argparse.ArgumentParser()
 
+    argparser.add_argument(
+        "--trigger-size",
+        default=200,
+        required=True,
+        type=int,
+        dest="trigger_size",
+        help="Specify minimum file size to trigger the hook.",
+    )
     argparser.add_argument("filenames", nargs="*", help="Files to optimize.")
 
     (
@@ -69,5 +88,5 @@ if __name__ == "__main__":
         )
         exit(1)
     else:
-        print("All sample images are jpgs. Commit accepted.")
+        # print("All sample images are jpgs. Commit accepted.")
         exit(0)

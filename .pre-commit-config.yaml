@@ -5,9 +5,10 @@ repos:
   - repo: local
     hooks:
       - id: convert-images
-        name: Convert png images to jpg
+        name: Convert png to jpg in samples
         entry: scripts/convert_images_hook.py
-        files: \.(png|PNG)$
+        args: ["--trigger-size", "150"]
+        files: ^samples.*\.(png|PNG)$
         pass_filenames: true
         stages: [commit]
         language: python
@@ -21,7 +22,7 @@ repos:
       - id: resize-images
         name: Resize images
         entry: scripts/resize_images_hook.py
-        args: ["--max-width", "1000", "--max-height", "1000"]
+        args: ["--max-width", "1500", "--max-height", "1500", "--trigger-size", "150"]
         files: \.(png|jpg|jpeg|PNG|JPG|JPEG)$
         pass_filenames: true
         stages: [commit]

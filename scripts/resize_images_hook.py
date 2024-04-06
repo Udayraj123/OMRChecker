@@ -47,10 +47,13 @@ def resize_image_and_save(image_path, max_width, max_height):
 def resize_images_in_tree(args):
     max_width = args.get("max_width", None)
     max_height = args.get("max_height", None)
+    trigger_size = args.get("trigger_size", None)
     filenames = args.get("filenames", None)
     resized_any = False
     for path in filenames:
         old_size = get_size_in_kb(path)
+        if old_size <= trigger_size:
+            continue
         resized_and_saved, new_image_size = resize_image_and_save(
             path, max_width, max_height
         )
@@ -68,6 +71,15 @@ def parse_args():
     argparser = argparse.ArgumentParser()
 
     argparser.add_argument("filenames", nargs="*", help="Files to optimize.")
+
+    argparser.add_argument(
+        "--trigger-size",
+        default=200,
+        required=True,
+        type=int,
+        dest="trigger_size",
+        help="Specify minimum file size to trigger the hook.",
+    )
 
     argparser.add_argument(
         "--max-width",
@@ -107,5 +119,5 @@ if __name__ == "__main__":
         print("Note: Some images were resized. Please check, add and commit again.")
         exit(1)
     else:
-        print("All images are of the appropriate size. Commit accepted.")
+        # print("All images are of the appropriate size. Commit accepted.")
         exit(0)
