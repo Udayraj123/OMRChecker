@@ -265,7 +265,7 @@ class EvaluationConfig:
         self.has_custom_marking = False
         self.exclude_files = []
 
-        if source_type == "csv":
+        if source_type == "image_and_csv":
             csv_path = curr_dir.joinpath(options["answer_key_csv_path"])
             if not os.path.exists(csv_path):
                 logger.warning(f"Answer key csv does not exist at: '{csv_path}'.")
@@ -286,13 +286,16 @@ class EvaluationConfig:
                 self.questions_in_order = answer_key["question"].to_list()
                 answers_in_order = answer_key["answer"].to_list()
             elif not answer_key_image_path:
-                raise Exception(f"Answer key csv not found at '{csv_path}'")
+                raise Exception(
+                    f"Answer key csv not found at '{csv_path}' and answer key image not provided to generate the csv"
+                )
             else:
+                # Attempt answer key image to generate the csv
                 image_path = str(curr_dir.joinpath(answer_key_image_path))
                 if not os.path.exists(image_path):
                     raise Exception(f"Answer key image not found at '{image_path}'")
 
-                # self.exclude_files.append(image_path)
+                self.exclude_files.append(image_path)
 
                 logger.debug(
                     f"Attempting to generate answer key from image: '{image_path}'"
