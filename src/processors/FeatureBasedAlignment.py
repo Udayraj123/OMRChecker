@@ -59,7 +59,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
 
         image = cv2.normalize(image, 0, 255, norm_type=cv2.NORM_MINMAX)
 
-        # Detect ORB features and compute descriptors.
+        # Detect Oriented Fast and Rotated Brief (ORB) features and compute descriptors.
         from_keypoints, from_descriptors = self.orb.detectAndCompute(image, None)
 
         # Match features.

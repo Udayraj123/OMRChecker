@@ -13,7 +13,7 @@
   ],
   "preProcessors": [
     {
-      "name": "CropOnMarkers",
+      "name": "WarpOnPoints",
       "options": {
         "processingImageShape": [
           1132,
@@ -31,56 +31,66 @@
           "dotThreshold": 120,
           "warpMethod": "HOMOGRAPHY"
         },
-        "type": "TWO_DOTS_ONE_LINE",
         "defaultSelector": "OUTER_CORNERS",
-        "topLeftDot": {
-          "origin": [
-            2,
-            21
-          ],
-          "dimensions": [
-            50,
-            50
-          ],
-          "margins": {
-            "top": 15,
-            "right": 20,
-            "bottom": 15,
-            "left": 2
+        "scanAreas": [
+          {
+            "areaTemplate": "topLeftDot",
+            "areaDescription": {
+              "origin": [
+                2,
+                21
+              ],
+              "dimensions": [
+                50,
+                50
+              ],
+              "margins": {
+                "top": 15,
+                "right": 20,
+                "bottom": 15,
+                "left": 2
+              }
+            }
+          },
+          {
+            "areaTemplate": "bottomLeftDot",
+            "areaDescription": {
+              "origin": [
+                12,
+                929
+              ],
+              "dimensions": [
+                50,
+                50
+              ],
+              "margins": {
+                "top": 15,
+                "right": 20,
+                "bottom": 15,
+                "left": 12
+              }
+            }
+          },
+          {
+            "areaTemplate": "rightLine",
+            "areaDescription": {
+              "origin": [
+                760,
+                21
+              ],
+              "dimensions": [
+                15,
+                1000
+              ],
+              "margins": {
+                "top": 15,
+                "right": 20,
+                "bottom": 15,
+                "left": 20
+              }
+            }
           }
-        },
-        "bottomLeftDot": {
-          "origin": [
-            12,
-            929
-          ],
-          "dimensions": [
-            50,
-            50
-          ],
-          "margins": {
-            "top": 15,
-            "right": 20,
-            "bottom": 35,
-            "left": 12
-          }
-        },
-        "rightLine": {
-          "origin": [
-            770,
-            41
-          ],
-          "dimensions": [
-            15,
-            920
-          ],
-          "margins": {
-            "top": 35,
-            "right": 20,
-            "bottom": 55,
-            "left": 20
-          }
-        }
+        ]
       }
     }
   ],

@@ -61,23 +61,23 @@
           "margins": {
             "top": 15,
             "right": 20,
-            "bottom": 35,
+            "bottom": 15,
             "left": 12
           }
         },
         "rightLine": {
           "origin": [
-            770,
-            41
+            760,
+            21
           ],
           "dimensions": [
             15,
-            920
+            1000
           ],
           "margins": {
-            "top": 35,
+            "top": 15,
             "right": 20,
-            "bottom": 55,
+            "bottom": 15,
             "left": 20
           }
         }

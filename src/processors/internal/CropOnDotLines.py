@@ -241,7 +241,6 @@ class CropOnDotLines(CropOnPatchesCommon):
                 f"morph_opened_{area_label}", line_morphed, pause=False
             )
 
-        # Note: points are returned in the order of order_four_points: (tl, tr, br, bl)
         (
             _,
             edge_contours_map,
@@ -273,6 +272,7 @@ class CropOnDotLines(CropOnPatchesCommon):
             area, cv2.MORPH_OPEN, self.dot_kernel_morph, iterations=3
         )
 
+        # TODO: try pyrDown to 64 values and find the outlier for black threshold?
         # Dots are expected to be fairly dark
         dot_threshold = tuning_options.get("dotThreshold", 150)
         _, thresholded = cv2.threshold(morph_c, dot_threshold, 255, cv2.THRESH_TRUNC)

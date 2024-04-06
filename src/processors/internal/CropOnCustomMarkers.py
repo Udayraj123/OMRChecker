@@ -327,7 +327,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             self.marker_rescale_range[1],
             self.marker_rescale_range[0],
             -1 * descent_per_step,
-        ):  # reverse order
+        ):
             scale = float(r0 * 1 / 100)
             if scale <= 0.0:
                 continue
@@ -404,13 +404,15 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         ):
             hstack = ImageUtils.get_padded_hstack(
                 [
-                    rescaled_marker / 255,
                     self.debug_image / 255,
+                    rescaled_marker / 255,
                     optimal_match_result,
                 ]
             )
             InteractionUtils.show(
-                f"Template Marker Matching: {area_label} ({optimal_match_max})", hstack
+                f"Template Marker Matching: {area_label} ({optimal_match_max:.2f}/{self.min_matching_threshold:.2f})",
+                hstack,
+                pause=is_not_matching,
             )
 
         return marker_position, optimal_marker

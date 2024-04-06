@@ -93,6 +93,7 @@ WarpMethodFlags = DotMap(
     {
         "INTER_LINEAR": "INTER_LINEAR",
         "INTER_CUBIC": "INTER_CUBIC",
+        "INTER_NEAREST": "INTER_NEAREST",
     },
     _dynamic=False,
 )

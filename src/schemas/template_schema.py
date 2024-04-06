@@ -57,6 +57,7 @@ scan_area_description = {
             "type": "string",
             "enum": SCANNER_TYPES_IN_ORDER,
         },
+        "maxPoints": positive_integer,
     },
 }
 
@@ -114,9 +115,21 @@ crop_on_markers_options_available_keys = {
     "tuningOptions": True,
     "type": True,
 }
+warp_on_points_tuning_options = {
+    "warpMethod": {
+        "type": "string",
+        "enum": [*WarpMethod.values()],
+    },
+    "warpMethodFlag": {
+        "type": "string",
+        "enum": [*WarpMethodFlags.values()],
+    },
+}
+
+
 warp_on_points_options_available_keys = {
     **pre_processor_options_available_keys,
-    "cropToBoundingBox": True,
+    "enableCropping": True,
     "defaultSelector": True,
     "scanAreas": True,
     "tuningOptions": True,
@@ -127,6 +140,7 @@ crop_on_dot_lines_tuning_options = {
     "additionalProperties": False,
     "properties": {
         **crop_on_markers_options_available_keys,
+        **warp_on_points_tuning_options,
         "dotBlur": positive_integer,
         "dotKernel": two_positive_integers,
         "lineKernel": two_positive_integers,
@@ -139,6 +153,7 @@ crop_on_four_markers_tuning_options = {
     "additionalProperties": False,
     "properties": {
         **crop_on_markers_tuning_options_available_keys,
+        **warp_on_points_tuning_options,
         "apply_erode_subtract": {"type": "boolean"},
         # Range of rescaling in percentage -
         "marker_rescale_range": two_positive_integers,
@@ -230,6 +245,7 @@ TEMPLATE_SCHEMA = {
                                     "properties": {
                                         **pre_processor_options_available_keys,
                                         "morphKernel": two_positive_integers,
+                                        "maxPointsPerEdge": positive_integer,
                                     },
                                 }
                             }
@@ -340,20 +356,11 @@ TEMPLATE_SCHEMA = {
                                             "type": "string",
                                             "enum": default_points_selector_types,
                                         },
-                                        "cropToBoundingBox": {"type": "boolean"},
+                                        "enableCropping": {"type": "boolean"},
                                         "tuningOptions": {
                                             "type": "object",
                                             "additionalProperties": False,
-                                            "properties": {
-                                                "warpMethod": {
-                                                    "type": "string",
-                                                    "enum": [*WarpMethod.values()],
-                                                },
-                                                "warpMethodFlags": {
-                                                    "type": "string",
-                                                    "enum": [*WarpMethodFlags.values()],
-                                                },
-                                            },
+                                            "properties": warp_on_points_tuning_options,
                                         },
                                         "scanAreas": {
                                             "type": "array",

@@ -7,7 +7,7 @@ from src.utils.constants import (
     CLR_BLACK,
     CLR_DARK_GRAY,
     CLR_GRAY,
-    CLR_LIGHT_GRAY,
+    CLR_GREEN,
     CLR_WHITE,
     TEXT_SIZE,
 )
@@ -154,6 +154,9 @@ class ImageUtils:
     def get_control_destination_points_from_contour(
         source_contour, destination_line, max_points=None
     ):
+        # TODO: - It's a good idea to map the contour to a line(or a 0 to 1 space) by getPerspectiveTransform()
+        # https://github.com/FelixHertlein/contour-based-image-rectification/blob/0c1f41/src/contour_based_image_rectification/rectify.py#L211
+
         # logger.info(f"source_contour={source_contour}, destination_line={destination_line}")
         total_points = len(source_contour)
         if max_points is None:
@@ -198,7 +201,7 @@ class ImageUtils:
 
     @staticmethod
     def split_patch_contour_on_corners(patch_corners, bounding_contour=None):
-        ordered_patch_corners = MathUtils.order_four_points(
+        ordered_patch_corners, _ = MathUtils.order_four_points(
             patch_corners, dtype="float32"
         )
         tl, tr, br, bl = ordered_patch_corners
@@ -293,6 +296,22 @@ class ImageUtils:
         return white_image, pad_range
 
     @staticmethod
+    def draw_matches(image, from_points, warped_image, to_points):
+        horizontal_stack = ImageUtils.get_padded_hstack([image, warped_image])
+        h, w = image.shape[:2]
+        from_points = MathUtils.get_tuple_points(from_points)
+        to_points = MathUtils.get_tuple_points(to_points)
+        for from_point, to_point in zip(from_points, to_points):
+            horizontal_stack = cv2.line(
+                horizontal_stack,
+                from_point,
+                (w + to_point[0], to_point[1]),
+                color=CLR_GREEN,
+                thickness=3,
+            )
+        return horizontal_stack
+
+    @staticmethod
     def draw_box_diagonal(
         image,
         position,
@@ -312,7 +331,7 @@ class ImageUtils:
     def draw_contour(
         image,
         contour,
-        color=CLR_LIGHT_GRAY,
+        color=CLR_GREEN,
         thickness=2,
     ):
         for boundary_point in contour:
@@ -377,6 +396,31 @@ class ImageUtils:
             color,
             border,
         )
+
+    @staticmethod
+    def draw_arrows(
+        image,
+        start_points,
+        end_points,
+        color=CLR_GREEN,
+        thickness=2,
+        line_type=cv2.LINE_AA,
+        tip_length=0.1,
+    ):
+        start_points = MathUtils.get_tuple_points(start_points)
+        end_points = MathUtils.get_tuple_points(end_points)
+        for start_point, end_point in zip(start_points, end_points):
+            image = cv2.arrowedLine(
+                image,
+                start_point,
+                end_point,
+                color,
+                thickness,
+                line_type,
+                tipLength=tip_length,
+            )
+
+        return image
 
     @staticmethod
     def draw_text(

@@ -172,9 +172,6 @@ class ImageInstanceOps:
             plot_show=config.outputs.show_image_level >= 6,
             sort_in_plot=True,
         )
-        # pyplot.show()
-        # hist = getPlotImg()
-        # InteractionUtils.show("StdHist", hist, 0, 1,config=config)
 
         # Note: Plotting takes Significant times here --> Change Plotting args
         # to support show_image_level
@@ -193,16 +190,6 @@ class ImageInstanceOps:
         logger.info(
             f"Thresholding:\t global_threshold_for_template: {round(global_threshold_for_template, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_threshold_for_template == 255) else ''}"
         )
-        # pyplot.show()
-        # hist = getPlotImg()
-        # InteractionUtils.show("StdHist", hist, 0, 1,config=config)
-
-        # if(config.outputs.show_image_level>=1):
-        #     hist = getPlotImg()
-        #     InteractionUtils.show("Hist", hist, 0, 1,config=config)
-        #     self.append_save_image(4,hist)
-        #     self.append_save_image(5,hist)
-        #     self.append_save_image(2,hist)
 
         per_omr_threshold_avg, absolute_field_number = 0, 0
         global_field_confidence_metrics = []
@@ -234,8 +221,6 @@ class ImageInstanceOps:
                     global_threshold_for_template,
                     no_outliers,
                     plot_title=f"Mean Intensity Barplot for {key}.{field.field_label}.block{block_field_number}",
-                    # plot_show=field.field_label in ["q72", "q52", "roll5"],  # Temp
-                    # plot_show=field.field_label in ["q70", "q69"],  # Temp
                     plot_show=config.outputs.show_image_level >= 7,
                 )
                 # TODO: move get_local_threshold into FieldDetection
@@ -823,8 +808,8 @@ class ImageInstanceOps:
         global_default_threshold,
         MIN_JUMP,
         JUMP_DELTA,
-        plot_title=None,
-        plot_show=True,
+        plot_title,
+        plot_show,
         sort_in_plot=True,
         looseness=1,
     ):
@@ -888,7 +873,8 @@ class ImageInstanceOps:
             thr1 + max1 // 2,
         )
 
-        if plot_title:
+        # TODO: maybe use plot_create flag when using plots in append_save_image
+        if plot_show:
             _, ax = pyplot.subplots()
             # TODO: move into individual utils
             plot_means_and_refs = (
@@ -965,9 +951,8 @@ class ImageInstanceOps:
             ax.set_ylabel("Values")
             ax.set_xlabel("Position")
 
-            if plot_show:
-                pyplot.title(plot_title)
-                pyplot.show()
+            pyplot.title(plot_title)
+            pyplot.show()
 
         return global_threshold_for_template, j_low, j_high
 
@@ -976,8 +961,8 @@ class ImageInstanceOps:
         bubble_means_and_refs,
         global_threshold_for_template,
         no_outliers,
-        plot_title=None,
-        plot_show=True,
+        plot_title,
+        plot_show,
     ):
         """
         TODO: Update this documentation too-
@@ -1046,7 +1031,7 @@ class ImageInstanceOps:
                     pass
 
         # TODO: Make a common plot util to show local and global thresholds
-        if plot_show and plot_title is not None:
+        if plot_show:
             # TODO: add plot labels via the util
             _, ax = pyplot.subplots()
             ax.bar(range(len(sorted_bubble_means)), sorted_bubble_means)
@@ -1060,10 +1045,7 @@ class ImageInstanceOps:
             ax.set_ylabel("Bubble Mean Intensity")
             ax.set_xlabel("Bubble Number(sorted)")
             ax.legend()
-            # TODO append QStrip to this plot-
-            # self.append_save_image(6,getPlotImg())
-            if plot_show:
-                pyplot.show()
+            pyplot.show()
         return thr1, max1
 
     def append_save_image(self, key, img):

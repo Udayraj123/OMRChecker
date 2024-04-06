@@ -50,7 +50,11 @@ class MathUtils:
         ]
         rect = points[ordered_indices]
         # returns the ordered coordinates (tl, tr, br, bl)
-        return rect  # , ordered_indices
+        return rect, ordered_indices
+
+    @staticmethod
+    def get_tuple_points(points):
+        return [(int(point[0]), int(point[1])) for point in points]
 
     @staticmethod
     def get_bounding_box_of_points(points):

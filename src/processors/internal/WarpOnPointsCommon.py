@@ -16,9 +16,10 @@ from src.utils.parsing import OVERRIDE_MERGER
 class WarpOnPointsCommon(ImageTemplatePreprocessor):
     __is_internal_preprocessor__ = True
 
-    warp_perspective_flags_map = {
+    warp_method_flags_map = {
         WarpMethodFlags.INTER_LINEAR: cv2.INTER_LINEAR,
         WarpMethodFlags.INTER_CUBIC: cv2.INTER_CUBIC,
+        WarpMethodFlags.INTER_NEAREST: cv2.INTER_NEAREST,
     }
 
     def validate_and_remap_options_schema(self):
@@ -48,6 +49,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         options = self.options
         tuning_options = self.tuning_options
         self.enable_cropping = options.get("enableCropping", False)
+
         self.warp_method = tuning_options.get(
             "warpMethod",
             (
@@ -56,7 +58,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
                 else WarpMethod.HOMOGRAPHY
             ),
         )
-        self.warp_perspective_flag = self.warp_perspective_flags_map.get(
+        self.warp_method_flag = self.warp_method_flags_map.get(
             tuning_options.get("warpMethodFlag", "INTER_LINEAR")
         )
 
@@ -67,6 +69,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         return image
 
     def apply_filter(self, image, colored_image, _template, file_path):
+        config = self.tuning_config
         self.debug_image = image.copy()
         self.debug_hstack = []
         self.debug_vstack = []
@@ -78,7 +81,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             destination_points,
         ) = self.extract_control_destination_points(image, file_path)
 
-        # TODO: support for isOptionalFeaturePoint (filter the 'None' control points!)
+        # TODO: add support for isOptionalFeaturePoint(maybe filter the 'None' control points!)
         (
             parsed_control_points,
             parsed_destination_points,
@@ -91,24 +94,49 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             f"Cropping Enabled: {self.enable_cropping}\n parsed_control_points={parsed_control_points} \n parsed_destination_points={parsed_destination_points} \n warped_dimensions={warped_dimensions}"
         )
 
-        # TODO: set options["warpMethod"] = "perspectiveTransform", "homography", "docAffine"
         if self.warp_method == WarpMethod.PERSPECTIVE_TRANSFORM:
             transform_matrix, warped_dimensions = self.get_perspective_transform_matrix(
                 parsed_control_points, parsed_destination_points
             )
             warped_image, warped_colored_image = self.warp_perspective(
-                image, colored_image, file_path, transform_matrix, warped_dimensions
+                image, colored_image, transform_matrix, warped_dimensions
             )
 
         elif self.warp_method == WarpMethod.HOMOGRAPHY:
-            transform_matrix = self.get_homography_matrix(
+            transform_matrix, _matches_mask = self.get_homography_matrix(
                 parsed_control_points, parsed_destination_points
             )
             warped_image, warped_colored_image = self.warp_perspective(
-                image, colored_image, file_path, transform_matrix, warped_dimensions
+                image, colored_image, transform_matrix, warped_dimensions
             )
         # elif TODO: try remap as well
         # elif TODO: try warpAffine as well for non cropped Alignment!!
+
+        if config.outputs.show_image_level >= 4:
+            title = "Warped Image"
+            if self.enable_cropping:
+                title = "Cropped Image"
+                # Draw the convex hull of all control points
+                ImageUtils.draw_contour(
+                    self.debug_image, cv2.convexHull(parsed_control_points)
+                )
+            if config.outputs.show_image_level >= 5:
+                InteractionUtils.show("Anchor Points", self.debug_image, pause=False)
+
+            matched_lines = ImageUtils.draw_matches(
+                image,
+                parsed_control_points,
+                warped_image,
+                parsed_destination_points,
+            )
+
+            InteractionUtils.show(
+                f"{title} with Match Lines: {file_path}",
+                matched_lines,
+                pause=True,
+                resize_to_height=True,
+                config=config,
+            )
 
         return warped_image, warped_colored_image, _template
 
@@ -121,43 +149,45 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
                 f"Expected 4 control points for perspective transform. Found {len(parsed_control_points)}"
             )
         # TODO: order the points from outside in parsing itself
-        parsed_control_points = MathUtils.order_four_points(
+        parsed_control_points, ordered_indices = MathUtils.order_four_points(
             parsed_control_points, dtype="float32"
         )
-        # parsed_destination_points = parsed_destination_points[ordered_indices]
+        # TODO: fix use _parsed_destination_points and make it work?
+        # parsed_destination_points = _parsed_destination_points[ordered_indices]
         (
             parsed_destination_points,
             warped_dimensions,
         ) = ImageUtils.get_cropped_rectangle_destination_points(parsed_control_points)
 
-        # Note: we use perspective transform  This would be faster/traditional to do
-        # Find and pass control points in a defined order
-        # TODO: this needs ordering of points!
         transform_matrix = cv2.getPerspectiveTransform(
             parsed_control_points, parsed_destination_points
         )
         return transform_matrix, warped_dimensions
 
     def get_homography_matrix(self, parsed_control_points, parsed_destination_points):
+        # Note: the robust methods cv2.RANSAC or cv2.LMEDS are not used as they will
+        # take a subset of the destination points(inliers) which is not desired for our use-case
+
         # Getting the homography.
-        homography, mask = cv2.findHomography(
+        homography, matches_mask = cv2.findHomography(
             parsed_control_points,
             parsed_destination_points,
-            method=cv2.RANSAC,
-            ransacReprojThreshold=3.0,
+            method=0,
+            # Note: ransacReprojThreshold is literally the the pixel distance in our coordinates
+            # ransacReprojThreshold=3.0,
         )
-        # TODO: print mask for debugging; TODO: check if float32 is really needed
+        # TODO: check if float32 is really needed for the matrix
         transform_matrix = np.float32(homography)
-        return transform_matrix
+        return transform_matrix, matches_mask
 
     def warp_perspective(
-        self, image, colored_image, file_path, transform_matrix, warped_dimensions
+        self, image, colored_image, transform_matrix, warped_dimensions
     ):
         config = self.tuning_config
 
         # Crop the image
         warped_image = cv2.warpPerspective(
-            image, transform_matrix, warped_dimensions, flags=self.warp_perspective_flag
+            image, transform_matrix, warped_dimensions, flags=self.warp_method_flag
         )
 
         # TODO: Save intuitive meta data
@@ -170,26 +200,11 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
 
         # self.append_save_image(1,warped_image)
 
-        if config.outputs.show_image_level >= 4:
-            title = "Warped Image"
-            if self.enable_cropping:
-                title = "Cropped Image"
-
-            hstack = ImageUtils.get_padded_hstack([self.debug_image, warped_image])
-            _display_width, display_height = config.outputs.display_image_dimensions
-            hstack = ImageUtils.resize_util(hstack, u_height=display_height)
-
-            # TODO: show match lines output
-            # im_matches = cv2.drawMatches(
-            #     image, from_keypoints, self.ref_img, self.to_keypoints, matches, None
-            # )
-            InteractionUtils.show(f"{title}: {file_path}", hstack, pause=True)
         return warped_image, warped_colored_image
 
     def parse_control_destination_points_for_image(
         self, image, control_points, destination_points
     ):
-        config = self.tuning_config
         parsed_control_points, parsed_destination_points = [], []
 
         # de-dupe
@@ -201,13 +216,13 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
                 parsed_control_points.append(control_point)
                 parsed_destination_points.append(destination_point)
 
+        # TODO: do an ordering of the points
+
         h, w = image.shape[:2]
         warped_dimensions = (w, h)
         if self.enable_cropping:
-            # TODO: exclude the destination points marked with excludeFromCropping (using a small class for each point?)
-            # Also exclude corresponding points from control points (Note: may need to be done in a second pass after alignment warping)
-            # But if warping supports alignment of negative points, this will work as-is (TRY IT!)
-
+            # TODO: exclude the 'excludeFromCropping' destination points(and corresponding control points, after using for alignments)
+            # TODO: use a small class for each point?
             # TODO: Give a warning if the destination_points do not form a convex polygon!
 
             #   get bounding box on the destination points (with validation?)
@@ -216,18 +231,21 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
                 rectangle_dimensions,
             ) = MathUtils.get_bounding_box_of_points(parsed_destination_points)
             warped_dimensions = rectangle_dimensions
+
+            # Cropping means the bounding destination points need to become the bounding box!
+            # >> Rest of the points need to scale according to that grid!?
+
+            # TODO: find a way to get the bounding box to control points mapping
+            # parsed_destination_points = destination_box[[1,2,0,3]]
+
             # Shift the destination points to enable the cropping
             from_origin = -1 * destination_box[0]
             parsed_destination_points = MathUtils.shift_points_from_origin(
                 from_origin, parsed_destination_points
             )
-            # TODO: this needs ordering of points
-            if config.outputs.show_image_level >= 1:
-                ImageUtils.draw_contour(self.debug_image, parsed_control_points)
-
             # Note: control points remain the same (wrt image shape!)
 
-        # TODO: check if float32 is really needed for homography
+        # Note: the inner elements may already be floats returned by scan area detections
         parsed_control_points = np.float32(parsed_control_points)
         parsed_destination_points = np.float32(parsed_destination_points)
 

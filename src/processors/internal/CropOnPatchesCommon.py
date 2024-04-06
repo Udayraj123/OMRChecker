@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 
 from src.processors.constants import ScannerType
@@ -119,19 +120,33 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                 area_label = area_description["label"]
                 logger.info(f"{area_label}: area_control_points={area_control_points}")
                 if len(area_control_points) > 1:
-                    ImageUtils.draw_contour(self.debug_image, area_control_points)
+                    if len(area_control_points) == 2:
+                        # Draw line if it's just two points
+                        ImageUtils.draw_contour(self.debug_image, area_control_points)
+                    else:
+                        # Draw convex hull of the found control points
+                        ImageUtils.draw_contour(
+                            self.debug_image, cv2.convexHull(area_control_points)
+                        )
 
                 # Helper for alignment
-                for corner in area_destination_points:
-                    ImageUtils.draw_text(
-                        self.debug_image, "X", corner, centered=True, thickness=2
-                    )
+                ImageUtils.draw_arrows(
+                    self.debug_image,
+                    area_control_points,
+                    area_destination_points,
+                    tip_length=0.4,
+                )
+                for control_point, destination_point in zip(
+                    area_control_points, area_destination_points
+                ):
+                    # ImageUtils.draw_text(
+                    #     self.debug_image, "X", destination_point, centered=True, thickness=2
+                    # )
 
-                # Show current detections too
-                for corner in area_control_points:
+                    # Show current detections too
                     ImageUtils.draw_box(
                         self.debug_image,
-                        corner,
+                        control_point,
                         # TODO: change this based on image shape
                         [20, 20],
                         color=CLR_DARK_GREEN,

@@ -535,28 +535,28 @@ class EvaluationConfig:
     def match_answer_for_question(self, current_score, question, marked_answer):
         answer_matcher = self.question_to_answer_matcher[question]
         question_verdict, delta = answer_matcher.get_verdict_marking(marked_answer)
-        schema_verdict = self.get_schema_verdict(
+        question_schema_verdict = self.get_schema_verdict(
             answer_matcher, question_verdict, delta
         )
-        self.schema_verdict_counts[schema_verdict] += 1
+        self.schema_verdict_counts[question_schema_verdict] += 1
         self.conditionally_add_explanation(
             answer_matcher,
             delta,
             marked_answer,
-            schema_verdict,
+            question_schema_verdict,
             question_verdict,
             question,
             current_score,
         )
         expected_answer_string = str(answer_matcher)
-        return delta, question_verdict, expected_answer_string
+        return delta, question_verdict, question_schema_verdict, expected_answer_string
 
     def conditionally_add_explanation(
         self,
         answer_matcher,
         delta,
         marked_answer,
-        schema_verdict,
+        question_schema_verdict,
         question_verdict,
         question,
         current_score,
@@ -570,7 +570,7 @@ class EvaluationConfig:
                     question,
                     marked_answer,
                     str(answer_matcher),
-                    f"{schema_verdict.title()} ({question_verdict.title()})",
+                    f"{question_schema_verdict.title()} ({question_verdict.title()})",
                     str(round(delta, 2)),
                     str(round(next_score, 2)),
                     (
@@ -645,6 +645,7 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
         (
             delta,
             question_verdict,
+            question_schema_verdict,
             expected_answer_string,
         ) = evaluation_config.match_answer_for_question(
             current_score, question, marked_answer
@@ -652,6 +653,7 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
         current_score += delta
         questions_meta[question] = {
             "question_verdict": question_verdict,
+            "question_schema_verdict": question_schema_verdict,
             "marked_answer": marked_answer,
             "delta": delta,
             "current_score": current_score,

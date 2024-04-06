@@ -12,7 +12,7 @@ monitor_window = get_monitors()[0]
 
 @dataclass
 class ImageMetrics:
-    # TODO: Move TEXT_SIZE, etc here and find a better class name
+    # TODO: fix window metrics doesn't account for the doc/taskbar on macos
     window_width, window_height = monitor_window.width, monitor_window.height
     # for positioning image windows
     window_x, window_y = 0, 0

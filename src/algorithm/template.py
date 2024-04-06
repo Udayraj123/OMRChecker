@@ -70,6 +70,7 @@ class Template:
     def parse_output_columns(self, output_columns_array):
         self.output_columns = parse_fields(f"Output Columns", output_columns_array)
 
+    # TODO: make a child class TemplateLayout to keep template only about the layouts & json data?
     def setup_pre_processors(self, pre_processors_object, relative_dir):
         # load image pre_processors
         self.pre_processors = []

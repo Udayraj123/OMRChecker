@@ -1,7 +1,7 @@
 # Use all imports relative to root directory
 import os
 
-from src.processors.manager import Processor
+from src.processors.internal.Processor import Processor
 from src.utils.image import ImageUtils
 
 
