@@ -265,7 +265,8 @@ class EvaluationConfig:
         self.has_custom_marking = False
         self.exclude_files = []
 
-        if source_type == "image_and_csv":
+        # TODO: separate handlers for these two type
+        if source_type == "image_and_csv" or source_type == "csv":
             csv_path = curr_dir.joinpath(options["answer_key_csv_path"])
             if not os.path.exists(csv_path):
                 logger.warning(f"Answer key csv does not exist at: '{csv_path}'.")

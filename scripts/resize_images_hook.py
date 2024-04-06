@@ -4,6 +4,7 @@
 
 import argparse
 import os
+import shutil
 
 from PIL import Image
 
@@ -31,17 +32,27 @@ def resize_util(image, u_width=None, u_height=None):
 
 
 def resize_image_and_save(image_path, max_width, max_height):
+    without_extension, extension = os.path.splitext(image_path)
+    temp_image_path = f"{without_extension}-tmp{extension}"
     with Image.open(image_path) as image:
-        w, h = image.size[:2]
+        old_image_size = image.size[:2]
+        w, h = old_image_size
+        resized = False
+
+        if h > max_height:
+            image = resize_util(image, u_height=max_height)
+            resized = True
 
         if w > max_width:
             image = resize_util(image, u_width=max_width)
-        if h > max_height:
-            image = resize_util(image, u_height=max_height)
-        if w > max_width or h > max_height:
-            image.save(image_path)
-            return True, image.size
-        return False, image.size
+            w, h = image.size[:2]
+            resized = True
+
+        if resized:
+            image.save(temp_image_path)
+            return True, temp_image_path, old_image_size, image.size
+
+        return False, temp_image_path, old_image_size, image.size
 
 
 def resize_images_in_tree(args):
@@ -50,19 +61,29 @@ def resize_images_in_tree(args):
     trigger_size = args.get("trigger_size", None)
     filenames = args.get("filenames", None)
     resized_any = False
-    for path in filenames:
-        old_size = get_size_in_kb(path)
+    for image_path in filenames:
+        old_size = get_size_in_kb(image_path)
         if old_size <= trigger_size:
             continue
-        resized_and_saved, new_image_size = resize_image_and_save(
-            path, max_width, max_height
-        )
+        (
+            resized_and_saved,
+            temp_image_path,
+            old_image_size,
+            new_image_size,
+        ) = resize_image_and_save(image_path, max_width, max_height)
         if resized_and_saved:
-            new_size = get_size_in_kb(path)
-            print(
-                f"Resized: {path} to {new_image_size} with size {new_size:.2f}KB {get_size_reduction(old_size, new_size)}"
-            )
-            resized_any = True
+            new_size = get_size_in_kb(temp_image_path)
+            if new_size >= old_size:
+                print(
+                    f"Skipping resize for {image_path} as size is more than before ({new_size:.2f} KB > {old_size:.2f} KB)"
+                )
+                os.remove(temp_image_path)
+            else:
+                shutil.move(temp_image_path, image_path)
+                print(
+                    f"Resized: {image_path} {old_image_size} -> {new_image_size} with file size {new_size:.2f}KB {get_size_reduction(old_size, new_size)}"
+                )
+                resized_any = True
     return resized_any
 
 

@@ -19,6 +19,7 @@ def get_size_reduction(old_size, new_size):
 
 def convert_image(image_path):
     with Image.open(image_path) as image:
+        # Note: using hardcoded -4 as we're expected to receive .png or .PNG files only
         new_image_path = f"{image_path[:-4]}.jpg"
         if not image.mode == "RGB":
             image = image.convert("RGB")
@@ -31,21 +32,21 @@ def convert_images_in_tree(args):
     filenames = args.get("filenames", None)
     trigger_size = args.get("trigger_size", None)
     converted_any = False
-    for path in filenames:
-        old_size = get_size_in_kb(path)
+    for image_path in filenames:
+        old_size = get_size_in_kb(image_path)
         if old_size <= trigger_size:
             continue
 
-        new_image_path = convert_image(path)
+        new_image_path = convert_image(image_path)
         new_size = get_size_in_kb(new_image_path)
         if new_size <= old_size:
             print(
-                f"Converted png to jpg: {path} : {new_size:.2f}KB {get_size_reduction(old_size, new_size)}"
+                f"Converted png to jpg: {image_path}: {new_size:.2f}KB {get_size_reduction(old_size, new_size)}"
             )
             converted_any = True
         else:
             print(
-                f"Skipping conversion for {path} as size is more than before ({new_size:.2f} KB > {old_size:.2f} KB)"
+                f"Skipping conversion for {image_path} as size is more than before ({new_size:.2f} KB > {old_size:.2f} KB)"
             )
             os.remove(new_image_path)
 

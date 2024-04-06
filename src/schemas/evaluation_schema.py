@@ -30,6 +30,8 @@ common_options_schema = {
     "score_format_string": {
         "type": "string",
     },
+    "should_explain_scoring": {"type": "boolean"},
+    "questions_in_order": ARRAY_OF_STRINGS,
 }
 EVALUATION_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -41,7 +43,7 @@ EVALUATION_SCHEMA = {
     "additionalProperties": False,
     "properties": {
         "additionalProperties": False,
-        "source_type": {"type": "string", "enum": ["image_and_csv", "custom"]},
+        "source_type": {"type": "string", "enum": ["image_and_csv", "csv", "custom"]},
         "options": {"type": "object"},
         "marking_schemes": {
             "type": "object",
@@ -74,22 +76,30 @@ EVALUATION_SCHEMA = {
             "then": {
                 "properties": {
                     "options": {
-                        "required": ["answer_key_csv_path"],
-                        "dependentRequired": {
-                            # Note: we use answer_key_image_path as a source to generate the csv which can be used from the next time for editing convenience
-                            "answer_key_image_path": [
-                                "answer_key_csv_path",
-                                "questions_in_order",
-                            ]
-                        },
+                        # Note: we use answer_key_image_path as a source to generate the csv which can be used from the next time for editing convenience
+                        "required": ["answer_key_csv_path", "questions_in_order"],
                         "type": "object",
                         "additionalProperties": False,
                         "properties": {
                             **common_options_schema,
-                            "should_explain_scoring": {"type": "boolean"},
                             "answer_key_csv_path": {"type": "string"},
                             "answer_key_image_path": {"type": "string"},
-                            "questions_in_order": ARRAY_OF_STRINGS,
+                        },
+                    }
+                }
+            },
+        },
+        {
+            "if": {"properties": {"source_type": {"const": "csv"}}},
+            "then": {
+                "properties": {
+                    "options": {
+                        "required": ["answer_key_csv_path"],
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            **common_options_schema,
+                            "answer_key_csv_path": {"type": "string"},
                         },
                     }
                 }
@@ -105,7 +115,6 @@ EVALUATION_SCHEMA = {
                         "additionalProperties": False,
                         "properties": {
                             **common_options_schema,
-                            "should_explain_scoring": {"type": "boolean"},
                             "answers_in_order": {
                                 "oneOf": [
                                     {
@@ -142,7 +151,6 @@ EVALUATION_SCHEMA = {
                                     },
                                 ]
                             },
-                            "questions_in_order": ARRAY_OF_STRINGS,
                         },
                     }
                 }
