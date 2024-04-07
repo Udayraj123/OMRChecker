@@ -1,11 +1,15 @@
 {
-  "pageDimensions": [
+  "templateDimensions": [
     1189,
     1682
   ],
   "bubbleDimensions": [
     25,
     25
+  ],
+  "processingImageShape": [
+    820,
+    666
   ],
   "preProcessors": [
     {
@@ -23,13 +27,14 @@
           "dotKernel": [
             3,
             3
-          ]
+          ],
+          "dotThreshold": 120
         },
         "type": "TWO_DOTS_ONE_LINE",
-        "pointsSelector": "OUTER_CORNERS",
+        "defaultSelector": "OUTER_CORNERS",
         "topLeftDot": {
           "origin": [
-            20,
+            2,
             21
           ],
           "dimensions": [
@@ -37,22 +42,26 @@
             50
           ],
           "margins": {
-            "horizontal": 20,
-            "vertical": 15
+            "top": 15,
+            "right": 20,
+            "bottom": 15,
+            "left": 2
           }
         },
         "bottomLeftDot": {
           "origin": [
-            20,
-            921
+            12,
+            929
           ],
           "dimensions": [
             50,
             50
           ],
           "margins": {
-            "horizontal": 20,
-            "vertical": 15
+            "top": 15,
+            "right": 20,
+            "bottom": 15,
+            "left": 12
           }
         },
         "rightLine": {
@@ -65,8 +74,10 @@
             1000
           ],
           "margins": {
-            "horizontal": 20,
-            "vertical": 15
+            "top": 15,
+            "right": 20,
+            "bottom": 15,
+            "left": 20
           }
         }
       }

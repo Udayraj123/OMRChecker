@@ -1,5 +1,5 @@
 {
-  "pageDimensions": [
+  "templateDimensions": [
     2012,
     2420
   ],
@@ -16,65 +16,81 @@
       "roll1..10"
     ]
   },
+  "processingImageShape": [
+    1280,
+    906
+  ],
   "preProcessors": [
     {
       "name": "CropOnMarkers",
       "options": {
         "type": "FOUR_DOTS",
+        "tuningOptions": {
+          "dotBlur": 3,
+          "dotThreshold": 120
+        },
         "topLeftDot": {
           "origin": [
-            60,
-            180
+            38,
+            170
           ],
           "dimensions": [
             60,
             60
           ],
           "margins": {
-            "horizontal": 10,
-            "vertical": 10
+            "top": 10,
+            "right": 10,
+            "bottom": 10,
+            "left": 10
           }
         },
         "topRightDot": {
           "origin": [
-            810,
-            180
+            805,
+            170
           ],
           "dimensions": [
             60,
             60
           ],
           "margins": {
-            "horizontal": 10,
-            "vertical": 10
+            "top": 10,
+            "right": 10,
+            "bottom": 10,
+            "left": 10
           }
         },
         "bottomRightDot": {
           "origin": [
-            810,
-            1100
+            805,
+            1092
           ],
           "dimensions": [
             60,
             60
           ],
           "margins": {
-            "horizontal": 10,
-            "vertical": 10
+            "top": 10,
+            "right": 10,
+            "bottom": 10,
+            "left": 10
           }
         },
         "bottomLeftDot": {
           "origin": [
-            50,
-            1100
+            35,
+            1090
           ],
           "dimensions": [
             60,
             60
           ],
           "margins": {
-            "horizontal": 10,
-            "vertical": 10
+            "top": 10,
+            "right": 10,
+            "bottom": 10,
+            "left": 10
           }
         }
       }

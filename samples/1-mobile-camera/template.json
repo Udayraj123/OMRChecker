@@ -1,5 +1,5 @@
 {
-  "pageDimensions": [
+  "templateDimensions": [
     1846,
     1500
   ],
@@ -190,7 +190,7 @@
     {
       "name": "CropOnMarkers",
       "options": {
-        "type": "CUSTOM_MARKER",
+        "type": "FOUR_MARKERS",
         "relativePath": "omr_marker.jpg",
         "tuningOptions": {
           "marker_rescale_range": [

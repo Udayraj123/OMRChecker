@@ -1,11 +1,15 @@
 {
-  "pageDimensions": [
+  "templateDimensions": [
     1189,
     1682
   ],
   "bubbleDimensions": [
     15,
     15
+  ],
+  "processingImageShape": [
+    820,
+    666
   ],
   "preProcessors": [
     {

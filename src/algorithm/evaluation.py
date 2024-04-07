@@ -266,7 +266,8 @@ class EvaluationConfig:
         self.has_custom_marking = False
         self.exclude_files = []
 
-        if source_type == "csv":
+        # TODO: separate handlers for these two type
+        if source_type == "image_and_csv" or source_type == "csv":
             csv_path = curr_dir.joinpath(options["answer_key_csv_path"])
             if not os.path.exists(csv_path):
                 logger.warning(f"Answer key csv does not exist at: '{csv_path}'.")
@@ -287,13 +288,16 @@ class EvaluationConfig:
                 self.questions_in_order = answer_key["question"].to_list()
                 answers_in_order = answer_key["answer"].to_list()
             elif not answer_key_image_path:
-                raise Exception(f"Answer key csv not found at '{csv_path}'")
+                raise Exception(
+                    f"Answer key csv not found at '{csv_path}' and answer key image not provided to generate the csv"
+                )
             else:
+                # Attempt answer key image to generate the csv
                 image_path = str(curr_dir.joinpath(answer_key_image_path))
                 if not os.path.exists(image_path):
                     raise Exception(f"Answer key image not found at '{image_path}'")
 
-                # self.exclude_files.append(image_path)
+                self.exclude_files.append(image_path)
 
                 logger.debug(
                     f"Attempting to generate answer key from image: '{image_path}'"
@@ -315,8 +319,7 @@ class EvaluationConfig:
                     )
 
                 (response_dict, *_) = template.image_instance_ops.read_omr_response(
-                    template,
-                    image=gray_image,
+                    gray_image, template, image_path
                 )
                 omr_response = get_concatenated_response(response_dict, template)
 
@@ -336,7 +339,7 @@ class EvaluationConfig:
                     ]
                     if len(empty_answered_questions) > 0:
                         logger.error(
-                            f"Found empty answers for questions: {empty_answered_questions}, empty value used: '{empty_val}'"
+                            f"Found empty answers for the questions: {empty_answered_questions}, empty value used: '{empty_val}'"
                         )
                         raise Exception(
                             f"Found empty answers in file '{image_path}'. Please check your template again in the --setLayout mode."
@@ -539,28 +542,29 @@ class EvaluationConfig:
     def match_answer_for_question(self, current_score, question, marked_answer):
         answer_matcher = self.question_to_answer_matcher[question]
         question_verdict, delta = answer_matcher.get_verdict_marking(marked_answer)
-        schema_verdict = self.get_schema_verdict(
+        question_schema_verdict = self.get_schema_verdict(
             answer_matcher, question_verdict, delta
         )
-        self.schema_verdict_counts[schema_verdict] += 1
+        self.schema_verdict_counts[question_schema_verdict] += 1
         self.conditionally_add_explanation(
             answer_matcher,
             delta,
             marked_answer,
-            schema_verdict,
+            question_schema_verdict,
             question_verdict,
             question,
             current_score,
         )
         expected_answer_string = str(answer_matcher)
-        return delta, question_verdict, expected_answer_string, schema_verdict
+        return delta, question_verdict, expected_answer_string, question_schema_verdict
+
 
     def conditionally_add_explanation(
         self,
         answer_matcher,
         delta,
         marked_answer,
-        schema_verdict,
+        question_schema_verdict,
         question_verdict,
         question,
         current_score,
@@ -574,7 +578,7 @@ class EvaluationConfig:
                     question,
                     marked_answer,
                     str(answer_matcher),
-                    f"{schema_verdict.title()} ({question_verdict.title()})",
+                    f"{question_schema_verdict.title()} ({question_verdict.title()})",
                     str(round(delta, 2)),
                     str(round(next_score, 2)),
                     (
@@ -669,16 +673,18 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
     questions_meta = {}
     for question in evaluation_config.questions_in_order:
         marked_answer = concatenated_response[question]
-        (delta, question_verdict, expected_answer_string, schema_verdict) = (
+        (delta, question_verdict, expected_answer_string, question_schema_verdict) = (
             evaluation_config.match_answer_for_question(
                 current_score, question, marked_answer
             )
+
         )
         marking_scheme = evaluation_config.get_marking_scheme_for_question(question)
         bonus_type = marking_scheme.get_bonus_type()
         current_score += delta
         questions_meta[question] = {
             "question_verdict": question_verdict,
+            "question_schema_verdict": question_schema_verdict,
             "marked_answer": marked_answer,
             "delta": delta,
             "current_score": current_score,

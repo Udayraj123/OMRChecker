@@ -8,14 +8,6 @@ CONFIG_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "properties": {
-        "dimensions": {
-            "type": "object",
-            "additionalProperties": False,
-            "properties": {
-                "display_image_shape": two_positive_integers,
-                "processing_image_shape": two_positive_integers,
-            },
-        },
         "thresholding": {
             "type": "object",
             "additionalProperties": False,
@@ -51,6 +43,7 @@ CONFIG_SCHEMA = {
             "type": "object",
             "additionalProperties": False,
             "properties": {
+                "display_image_dimensions": two_positive_integers,
                 "show_image_level": {"type": "integer", "minimum": 0, "maximum": 6},
                 "save_image_level": {"type": "integer", "minimum": 0, "maximum": 6},
                 # This option shows colored outputs while taking a small toll on the processing speeds

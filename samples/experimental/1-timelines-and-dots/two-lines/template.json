@@ -1,11 +1,15 @@
 {
-  "pageDimensions": [
+  "templateDimensions": [
     1189,
     1682
   ],
   "bubbleDimensions": [
     25,
     25
+  ],
+  "processingImageShape": [
+    820,
+    666
   ],
   "preProcessors": [
     {
@@ -36,19 +40,21 @@
           ]
         },
         "type": "TWO_LINES",
-        "pointsSelector": "OUTER_CORNERS",
+        "defaultSelector": "OUTER_CORNERS",
         "leftLine": {
           "origin": [
             40,
-            121
+            161
           ],
           "dimensions": [
             25,
-            980
+            940
           ],
           "margins": {
-            "horizontal": 20,
-            "vertical": 15
+            "top": 25,
+            "right": 20,
+            "bottom": 15,
+            "left": 20
           }
         },
         "rightLine": {
@@ -61,8 +67,10 @@
             980
           ],
           "margins": {
-            "horizontal": 20,
-            "vertical": 15
+            "top": 15,
+            "right": 20,
+            "bottom": 15,
+            "left": 20
           }
         }
       }

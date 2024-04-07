@@ -1,8 +1,8 @@
 {
-  "source_type": "csv",
+  "source_type": "image_and_csv",
   "options": {
-    "answer_key_csv_path": "answer_key.csv",
     "answer_key_image_path": "answer_key.jpg",
+    "answer_key_csv_path": "answer_key.csv",
     "questions_in_order": [
       "q1..100"
     ],

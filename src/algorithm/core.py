@@ -12,13 +12,13 @@ import os
 import random
 import re
 from collections import defaultdict
+from copy import copy as shallowcopy
 from copy import deepcopy
 from typing import Any
 
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import colormaps
+from matplotlib import colormaps, pyplot
 
 from src.algorithm.detection import BubbleMeanValue, FieldStdMeanValue
 from src.utils.constants import (
@@ -54,20 +54,26 @@ class ImageInstanceOps:
         self.tuning_config = tuning_config
         self.save_image_level = tuning_config.outputs.save_image_level
 
-    def apply_preprocessors(self, file_path, gray_image, colored_image, template):
-        tuning_config = self.tuning_config
-        (
-            processing_height,
-            processing_width,
-        ) = tuning_config.dimensions.processing_image_shape
-        # resize to conform to common preprocessor input requirements
-        gray_image = ImageUtils.resize_util(
-            gray_image,
-            processing_width,
-            processing_height,
-        )
+    def apply_preprocessors(
+        self, file_path, gray_image, colored_image, original_template
+    ):
+        config = self.tuning_config
+
         # Copy template for this instance op
-        template = deepcopy(template)
+        template = shallowcopy(original_template)
+
+        # Make deepcopy for only parts that are mutated by Processor
+        template.field_blocks = deepcopy(template.field_blocks)
+
+        # resize to conform to common preprocessor input requirements
+        gray_image = ImageUtils.resize_to_shape(
+            gray_image, template.processing_image_shape
+        )
+        if config.outputs.show_colored_outputs:
+            colored_image = ImageUtils.resize_to_shape(
+                colored_image, template.processing_image_shape
+            )
+
         # run pre_processors in sequence
         for pre_processor in template.pre_processors:
             (
@@ -80,16 +86,24 @@ class ImageInstanceOps:
             gray_image = out_omr
             template = next_template
 
+        if template.output_image_shape:
+            # resize to output requirements
+            gray_image = ImageUtils.resize_to_shape(
+                gray_image, template.output_image_shape
+            )
+            if config.outputs.show_colored_outputs:
+                colored_image = ImageUtils.resize_to_shape(
+                    colored_image, template.output_image_shape
+                )
+
         return gray_image, colored_image, template
 
-    def read_omr_response(self, template, image):
+    def read_omr_response(self, image, template, file_path):
         config = self.tuning_config
 
         img = image.copy()
         # origDim = img.shape[:2]
-        img = ImageUtils.resize_util(
-            img, template.page_dimensions[0], template.page_dimensions[1]
-        )
+        img = ImageUtils.resize_to_dimensions(img, template.template_dimensions)
         if img.max() > img.min():
             img = ImageUtils.normalize(img)
 
@@ -172,22 +186,19 @@ class ImageInstanceOps:
             MIN_JUMP=MIN_JUMP_STD,
             JUMP_DELTA=JUMP_DELTA_STD,
             plot_title="Q-wise Std-dev Plot",
-            plot_show=config.outputs.show_image_level >= 5,
+            plot_show=config.outputs.show_image_level >= 6,
             sort_in_plot=True,
         )
-        # plt.show()
-        # hist = getPlotImg()
-        # InteractionUtils.show("StdHist", hist, 0, 1,config=config)
 
         # Note: Plotting takes Significant times here --> Change Plotting args
         # to support show_image_level
         global_threshold_for_template, j_low, j_high = self.get_global_threshold(
             global_bubble_means_and_refs,  # , looseness=4
             GLOBAL_PAGE_THRESHOLD,
-            plot_title="Mean Intensity Barplot",
+            plot_title=f"Mean Intensity Barplot: {file_path}",
             MIN_JUMP=MIN_JUMP,
             JUMP_DELTA=JUMP_DELTA,
-            plot_show=config.outputs.show_image_level >= 5,
+            plot_show=config.outputs.show_image_level >= 6,
             sort_in_plot=True,
             looseness=4,
         )
@@ -196,16 +207,6 @@ class ImageInstanceOps:
         logger.info(
             f"Thresholding:\t global_threshold_for_template: {round(global_threshold_for_template, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_threshold_for_template == 255) else ''}"
         )
-        # plt.show()
-        # hist = getPlotImg()
-        # InteractionUtils.show("StdHist", hist, 0, 1,config=config)
-
-        # if(config.outputs.show_image_level>=1):
-        #     hist = getPlotImg()
-        #     InteractionUtils.show("Hist", hist, 0, 1,config=config)
-        #     self.append_save_image(4,hist)
-        #     self.append_save_image(5,hist)
-        #     self.append_save_image(2,hist)
 
         per_omr_threshold_avg, absolute_field_number = 0, 0
         global_field_confidence_metrics = []
@@ -237,9 +238,7 @@ class ImageInstanceOps:
                     global_threshold_for_template,
                     no_outliers,
                     plot_title=f"Mean Intensity Barplot for {key}.{field.field_label}.block{block_field_number}",
-                    # plot_show=field.field_label in ["q72", "q52", "roll5"],  # Temp
-                    # plot_show=field.field_label in ["q70", "q69"],  # Temp
-                    plot_show=config.outputs.show_image_level >= 6,
+                    plot_show=config.outputs.show_image_level >= 7,
                 )
                 # TODO: move get_local_threshold into FieldDetection
                 field.local_threshold = local_threshold_for_field
@@ -273,6 +272,7 @@ class ImageInstanceOps:
                         local_bubble_is_marked = (
                             local_threshold_for_field > bubble.mean_value
                         )
+                        # TODO: refactor this mutation to a more appropriate place
                         bubble.is_marked = local_bubble_is_marked
                         # 1. Disparity in global/local threshold output
                         if global_bubble_is_marked != local_bubble_is_marked:
@@ -478,8 +478,8 @@ class ImageInstanceOps:
         # TODO: refactor all_c_box_vals
         # Box types
         # if config.outputs.show_image_level >= 5:
-        #     # plt.draw()
-        #     f, axes = plt.subplots(len(all_c_box_vals), sharey=True)
+        #     # pyplot.draw()
+        #     f, axes = pyplot.subplots(len(all_c_box_vals), sharey=True)
         #     f.canvas.manager.set_window_title(
         #         f"Bubble Intensity by question type for {name}"
         #     )
@@ -500,8 +500,8 @@ class ImageInstanceOps:
         #         # axes[ctr].legend()
         #         ctr += 1
         #     # imshow will do the waiting
-        #     plt.tight_layout(pad=0.5)
-        #     plt.show()
+        #     pyplot.tight_layout(pad=0.5)
+        #     pyplot.show()
 
         return (
             omr_response,
@@ -536,10 +536,20 @@ class ImageInstanceOps:
                 **kwargs,
             )
 
-            InteractionUtils.show("final_marked", final_marked, 0)
-            InteractionUtils.show("colored_final_marked", colored_final_marked, 1)
+            InteractionUtils.show(
+                "final_marked", final_marked, 0, resize_to_height=True, config=config
+            )
+            InteractionUtils.show(
+                "colored_final_marked",
+                colored_final_marked,
+                1,
+                resize_to_height=True,
+                config=config,
+            )
         else:
-            InteractionUtils.show("final_marked", final_marked, 1)
+            InteractionUtils.show(
+                "final_marked", final_marked, 1, resize_to_height=True, config=config
+            )
 
         return final_marked, colored_final_marked
 
@@ -558,8 +568,8 @@ class ImageInstanceOps:
     ):
         config = self.tuning_config
 
-        marked_image = ImageUtils.resize_util(
-            image, template.page_dimensions[0], template.page_dimensions[1]
+        marked_image = ImageUtils.resize_to_dimensions(
+            image, template.template_dimensions
         )
         transparent_layer = marked_image.copy()
         should_draw_field_block_rectangles = field_number_to_field_bubble_means is None
@@ -613,9 +623,9 @@ class ImageInstanceOps:
         # Translucent
         cv2.addWeighted(
             marked_image,
-            MARKED_TEMPLATE_ALPHA,
+            MARKED_TEMPLATE_TRANSPARENCY,
             transparent_layer,
-            1 - MARKED_TEMPLATE_ALPHA,
+            1 - MARKED_TEMPLATE_TRANSPARENCY,
             0,
             marked_image,
         )
@@ -625,16 +635,11 @@ class ImageInstanceOps:
                 self.save_image_stacks(i + 1, file_id, save_marked_dir)
 
         if config.outputs.show_image_level >= 2 and file_id is not None:
-            # TODO: minimize no of final images
-            (
-                display_height,
-                _display_width,
-            ) = config.dimensions.display_image_shape
             InteractionUtils.show(
                 f"Final Marked Bubbles : '{file_id}'",
-                ImageUtils.resize_util_h(marked_image, int(display_height * 1.3)),
-                1,
-                1,
+                marked_image,
+                pause=True,
+                resize_to_height=True,
                 config=config,
             )
 
@@ -879,8 +884,8 @@ class ImageInstanceOps:
         global_default_threshold,
         MIN_JUMP,
         JUMP_DELTA,
-        plot_title=None,
-        plot_show=True,
+        plot_title,
+        plot_show,
         sort_in_plot=True,
         looseness=1,
     ):
@@ -944,14 +949,9 @@ class ImageInstanceOps:
             thr1 + max1 // 2,
         )
 
-        # # For normal images
-        # thresholdRead =  116
-        # if(thr1 > thr2 and thr2 > thresholdRead):
-        #     print("Note: taking safer thr line.")
-        #     global_threshold_for_template, j_low, j_high = thr2, thr2 - max2//2, thr2 + max2//2
-
-        if plot_title:
-            _, ax = plt.subplots()
+        # TODO: maybe use plot_create flag when using plots in append_save_image
+        if plot_show:
+            _, ax = pyplot.subplots()
             # TODO: move into individual utils
             plot_means_and_refs = (
                 sorted_bubble_means_and_refs if sort_in_plot else bubble_means_and_refs
@@ -990,7 +990,7 @@ class ImageInstanceOps:
             low = min(plot_values)
             high = max(plot_values)
             margin_factor = 0.1
-            plt.ylim(
+            pyplot.ylim(
                 [
                     math.ceil(low - margin_factor * (high - low)),
                     math.ceil(high + margin_factor * (high - low)),
@@ -1027,9 +1027,8 @@ class ImageInstanceOps:
             ax.set_ylabel("Values")
             ax.set_xlabel("Position")
 
-            if plot_show:
-                plt.title(plot_title)
-                plt.show()
+            pyplot.title(plot_title)
+            pyplot.show()
 
         return global_threshold_for_template, j_low, j_high
 
@@ -1038,8 +1037,8 @@ class ImageInstanceOps:
         bubble_means_and_refs,
         global_threshold_for_template,
         no_outliers,
-        plot_title=None,
-        plot_show=True,
+        plot_title,
+        plot_show,
     ):
         """
         TODO: Update this documentation too-
@@ -1108,9 +1107,9 @@ class ImageInstanceOps:
                     pass
 
         # TODO: Make a common plot util to show local and global thresholds
-        if plot_show and plot_title is not None:
+        if plot_show:
             # TODO: add plot labels via the util
-            _, ax = plt.subplots()
+            _, ax = pyplot.subplots()
             ax.bar(range(len(sorted_bubble_means)), sorted_bubble_means)
             thrline = ax.axhline(thr1, color="green", ls=("-."), linewidth=3)
             thrline.set_label("Local Threshold")
@@ -1122,10 +1121,7 @@ class ImageInstanceOps:
             ax.set_ylabel("Bubble Mean Intensity")
             ax.set_xlabel("Bubble Number(sorted)")
             ax.legend()
-            # TODO append QStrip to this plot-
-            # self.append_save_image(6,getPlotImg())
-            if plot_show:
-                plt.show()
+            pyplot.show()
         return thr1, max1
 
     def append_save_image(self, key, img):
@@ -1135,12 +1131,12 @@ class ImageInstanceOps:
     def save_image_stacks(self, key, filename, save_marked_dir):
         config = self.tuning_config
         if self.save_image_level >= int(key) and self.save_img_list[key] != []:
-            display_height, display_width = config.dimensions.display_image_shape
+            display_height, display_width = config.outputs.display_image_dimensions
             name = os.path.splitext(filename)[0]
             result = np.hstack(
                 tuple(
                     [
-                        ImageUtils.resize_util_h(img, display_height)
+                        ImageUtils.resize_util(img, u_height=display_height)
                         for img in self.save_img_list[key]
                     ]
                 )

@@ -110,6 +110,7 @@ def print_config_summary(
         "Detected pre-processors",
         f"{[pp.__class__.__name__ for pp in template.pre_processors]}",
     )
+    table.add_row("Processing Image Shape", f"{template.processing_image_shape}")
 
     console.print(table, justify="center")
 
@@ -152,6 +153,7 @@ def process_dir(
             excluded_files.extend(Path(p) for p in pp.exclude_files())
 
     local_evaluation_path = curr_dir.joinpath(constants.EVALUATION_FILENAME)
+    # Note: if setLayout is passed, there's no need to load evaluation file
     if not args["setLayout"] and os.path.exists(local_evaluation_path):
         if not local_template_exists:
             logger.warning(
@@ -318,7 +320,9 @@ def process_files(
             field_number_to_field_bubble_means,
             global_threshold_for_template,
             global_field_confidence_metrics,
-        ) = template.image_instance_ops.read_omr_response(template, image=gray_image)
+        ) = template.image_instance_ops.read_omr_response(
+            gray_image, template, file_path
+        )
 
         # TODO: move inner try catch here
         # concatenate roll nos, set unmarked responses, etc
