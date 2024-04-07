@@ -173,8 +173,9 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             parsed_control_points,
             parsed_destination_points,
             method=0,
+            # method=cv2.RANSAC,
             # Note: ransacReprojThreshold is literally the the pixel distance in our coordinates
-            # ransacReprojThreshold=3.0,
+            # ransacReprojThreshold=3,
         )
         # TODO: check if float32 is really needed for the matrix
         transform_matrix = np.float32(homography)

@@ -31,7 +31,7 @@ def convert_image(image_path):
 def convert_images_in_tree(args):
     filenames = args.get("filenames", None)
     trigger_size = args.get("trigger_size", None)
-    converted_any = False
+    converted_count = 0
     for image_path in filenames:
         old_size = get_size_in_kb(image_path)
         if old_size <= trigger_size:
@@ -43,14 +43,14 @@ def convert_images_in_tree(args):
             print(
                 f"Converted png to jpg: {image_path}: {new_size:.2f}KB {get_size_reduction(old_size, new_size)}"
             )
-            converted_any = True
+            converted_count += 1
         else:
             print(
                 f"Skipping conversion for {image_path} as size is more than before ({new_size:.2f} KB > {old_size:.2f} KB)"
             )
             os.remove(new_image_path)
 
-    return converted_any
+    return converted_count
 
 
 def parse_args():
@@ -83,9 +83,11 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
-    if convert_images_in_tree(args):
+    converted_count = convert_images_in_tree(args)
+    trigger_size = args["trigger_size"]
+    if converted_count > 0:
         print(
-            "Note: Some png images were converted to jpg. Please manually remove the png files and add your commit again."
+            f"Note: {converted_count} png images above {trigger_size}KB were converted to jpg.\nPlease manually remove the png files and add your commit again."
         )
         exit(1)
     else:

@@ -15,7 +15,8 @@ repos:
         language_version: python3
         additional_dependencies: [pillow]
         always_run: true
-        fail_fast: false
+        fail_fast: true # Wait for user to remove the png files
+
   # Run resize image before the compress image check
   - repo: local
     hooks:

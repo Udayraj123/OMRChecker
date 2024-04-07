@@ -60,7 +60,7 @@ def resize_images_in_tree(args):
     max_height = args.get("max_height", None)
     trigger_size = args.get("trigger_size", None)
     filenames = args.get("filenames", None)
-    resized_any = False
+    resized_count = 0
     for image_path in filenames:
         old_size = get_size_in_kb(image_path)
         if old_size <= trigger_size:
@@ -83,8 +83,8 @@ def resize_images_in_tree(args):
                 print(
                     f"Resized: {image_path} {old_image_size} -> {new_image_size} with file size {new_size:.2f}KB {get_size_reduction(old_size, new_size)}"
                 )
-                resized_any = True
-    return resized_any
+                resized_count += 1
+    return resized_count
 
 
 def parse_args():
@@ -135,9 +135,11 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-
-    if resize_images_in_tree(args):
-        print("Note: Some images were resized. Please check, add and commit again.")
+    resized_count = resize_images_in_tree(args)
+    if resized_count > 0:
+        print(
+            f"Note: {resized_count} images were resized. Please check, add and commit again."
+        )
         exit(1)
     else:
         # print("All images are of the appropriate size. Commit accepted.")
