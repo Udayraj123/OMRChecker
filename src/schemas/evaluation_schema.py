@@ -16,24 +16,10 @@ marking_score = {
 }
 
 marking_object_properties = {
+    "additionalProperties": False,
     "required": SCHEMA_VERDICTS_IN_ORDER,
     "type": "object",
-    "additionalProperties": False,
     "properties": {verdict: marking_score for verdict in SCHEMA_VERDICTS_IN_ORDER},
-}
-
-
-common_options_schema = {
-    "draw_score": {"type": "boolean"},
-    "draw_answers_summary": {"type": "boolean"},
-    "answers_summary_format_string": {
-        "type": "string",
-    },
-    "score_format_string": {
-        "type": "string",
-    },
-    "should_explain_scoring": {"type": "boolean"},
-    "questions_in_order": ARRAY_OF_STRINGS,
 }
 
 EVALUATION_SCHEMA = {
@@ -42,11 +28,11 @@ EVALUATION_SCHEMA = {
     "title": "Evaluation Schema",
     "description": "OMRChecker evaluation schema i.e. the marking scheme",
     "type": "object",
-    "required": ["source_type", "options", "marking_schemes"],
     "additionalProperties": False,
+    "required": ["source_type", "options", "marking_schemes"],
     "properties": {
         "additionalProperties": False,
-        "source_type": {"type": "string", "enum": ["image_and_csv", "csv", "custom"]},
+        "source_type": {"type": "string", "enum": ["csv", "custom"]},
         "options": {"type": "object"},
         "marking_schemes": {
             "type": "object",
@@ -54,9 +40,9 @@ EVALUATION_SCHEMA = {
             "patternProperties": {
                 f"^{DEFAULT_SECTION_KEY}$": marking_object_properties,
                 f"^(?!{DEFAULT_SECTION_KEY}$).*": {
+                    "additionalProperties": False,
                     "required": ["marking", "questions"],
                     "type": "object",
-                    "additionalProperties": False,
                     "properties": {
                         "questions": {
                             "oneOf": [
@@ -131,36 +117,25 @@ EVALUATION_SCHEMA = {
                         "unmarked": {"type": "string"},
                     },
                 },
+                # TODO: add "draw_answer_summary" and "verdict_colors" properties
             },
         },
     },
     "allOf": [
         {
-            "if": {"properties": {"source_type": {"const": "image_and_csv"}}},
-            "then": {
-                "properties": {
-                    "options": {
-                        # Note: we use answer_key_image_path as a source to generate the csv which can be used from the next time for editing convenience
-                        "required": ["answer_key_csv_path", "questions_in_order"],
-                        "type": "object",
-                        "additionalProperties": False,
-                        "properties": {
-                            **common_options_schema,
-                            "answer_key_csv_path": {"type": "string"},
-                            "answer_key_image_path": {"type": "string"},
-                        },
-                    }
-                }
-            },
-        },
-        {
             "if": {"properties": {"source_type": {"const": "csv"}}},
             "then": {
                 "properties": {
                     "options": {
-                        "required": ["answer_key_csv_path"],
-                        "type": "object",
                         "additionalProperties": False,
+                        "required": ["answer_key_csv_path"],
+                        "dependentRequired": {
+                            "answer_key_image_path": [
+                                "answer_key_csv_path",
+                                "questions_in_order",
+                            ]
+                        },
+                        "type": "object",
                         "properties": {
                             "should_explain_scoring": {"type": "boolean"},
                             "answer_key_csv_path": {"type": "string"},
@@ -176,11 +151,10 @@ EVALUATION_SCHEMA = {
             "then": {
                 "properties": {
                     "options": {
+                        "additionalProperties": False,
                         "required": ["answers_in_order", "questions_in_order"],
                         "type": "object",
-                        "additionalProperties": False,
                         "properties": {
-
                             "should_explain_scoring": {"type": "boolean"},
                             "answers_in_order": {
                                 "oneOf": [
@@ -218,6 +192,7 @@ EVALUATION_SCHEMA = {
                                     },
                                 ]
                             },
+                            "questions_in_order": ARRAY_OF_STRINGS,
                         },
                     }
                 }

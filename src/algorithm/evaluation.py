@@ -684,13 +684,12 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
         current_score += delta
         questions_meta[question] = {
             "question_verdict": question_verdict,
-            "question_schema_verdict": question_schema_verdict,
             "marked_answer": marked_answer,
             "delta": delta,
             "current_score": current_score,
             "expected_answer_string": expected_answer_string,
             "bonus_type": bonus_type,
-            "question_schema_verdict": schema_verdict,
+            "question_schema_verdict": question_schema_verdict,
         }
 
     evaluation_config.conditionally_print_explanation()
