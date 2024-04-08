@@ -154,7 +154,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         if len(parsed_control_points) > 4:
             logger.critical(f"Too many parsed_control_points={parsed_control_points}")
             raise Exception(
-                f"Expected 4 control points for perspective transform. Found {len(parsed_control_points)}"
+                f"Expected 4 control points for perspective transform, found {len(parsed_control_points)}. If you want to use a different method, pass it in tuningOptions['warpMethod']"
             )
         # TODO: order the points from outside in parsing itself
         parsed_control_points, ordered_indices = MathUtils.order_four_points(

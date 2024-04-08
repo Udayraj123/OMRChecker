@@ -119,7 +119,9 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
 
             if config.outputs.show_image_level >= 4:
                 area_label = area_description["label"]
-                logger.info(f"{area_label}: area_control_points={area_control_points}")
+                logger.info(
+                    f"{area_label}: area_control_points={area_control_points} area_destination_points={area_destination_points}"
+                )
                 if len(area_control_points) > 1:
                     if len(area_control_points) == 2:
                         # Draw line if it's just two points
@@ -127,7 +129,8 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                     else:
                         # Draw convex hull of the found control points
                         ImageUtils.draw_contour(
-                            self.debug_image, cv2.convexHull(area_control_points)
+                            self.debug_image,
+                            cv2.convexHull(np.intp(area_control_points)),
                         )
 
                 # Helper for alignment
@@ -234,7 +237,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
     def compute_scan_area_destination_rect(self, area_description):
         x, y = area_description["origin"]
         w, h = area_description["dimensions"]
-        return MathUtils.get_rectangle_points(x, y, w, h)
+        return np.intp(MathUtils.get_rectangle_points(x, y, w, h))
 
     def compute_scan_area_util(self, image, area_description):
         area_label = area_description["label"]

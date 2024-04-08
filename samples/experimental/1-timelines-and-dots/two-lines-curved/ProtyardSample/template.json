@@ -12,6 +12,7 @@
           800
         ],
         "tuningOptions": {
+          "warpMethod": "HOMOGRAPHY",
           "lineKernel": [
             2,
             10

@@ -183,7 +183,6 @@ class CropOnDotLines(CropOnPatchesCommon):
 
         edge_type = self.edge_selector_map[area_label][points_selector]
         source_contour = line_edge_contours[edge_type]
-
         destination_line = self.select_edge_from_scan_area(area_description, edge_type)
 
         max_points = area_description.get("maxPoints", None)
@@ -315,25 +314,30 @@ class CropOnDotLines(CropOnPatchesCommon):
             area_description["label"],
         )
         config = self.tuning_config
-        edge = cv2.Canny(area, 185, 55)
+        canny_edges = cv2.Canny(area, 185, 55)
 
         if config.outputs.show_image_level >= 5:
-            self.debug_hstack.append(edge.copy())
+            self.debug_hstack.append(canny_edges)
 
         # Should mostly return a single contour in the area
         all_contours = ImageUtils.grab_contours(
-            cv2.findContours(edge, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            cv2.findContours(canny_edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
         )
 
         # convexHull to resolve disordered curves due to noise
         all_contours = [cv2.convexHull(c) for c in all_contours]
-
         if len(all_contours) == 0:
             return None, None
         ordered_patch_corners, edge_contours_map = None, None
-        bounding_contour = sorted(all_contours, key=cv2.contourArea, reverse=True)[0]
+        largest_contour = sorted(all_contours, key=cv2.contourArea, reverse=True)[0]
+        if config.outputs.show_image_level >= 5:
+            h, w = canny_edges.shape[:2]
+            largest_contour_overlay = 255 * np.ones((h, w), np.uint8)
+            ImageUtils.draw_contour(largest_contour_overlay, largest_contour)
+            self.debug_hstack.append(largest_contour_overlay)
+
         # Convert to list of 2d points
-        bounding_contour = np.vstack(bounding_contour).squeeze()
+        bounding_contour = np.vstack(largest_contour).squeeze()
 
         if scanner_type == ScannerType.PATCH_DOT:
             # Bounding rectangle will not be rotated
@@ -363,8 +367,10 @@ class CropOnDotLines(CropOnPatchesCommon):
         # TODO: less confidence if given dimensions differ from matched block size (also give a warning)
         if config.outputs.show_image_level >= 5:
             if ordered_patch_corners is not None:
-                ImageUtils.draw_contour(edge, ordered_patch_corners)
-            self.debug_hstack.append(edge)
+                corners_contour_overlay = canny_edges.copy()
+                ImageUtils.draw_contour(corners_contour_overlay, ordered_patch_corners)
+                self.debug_hstack.append(corners_contour_overlay)
+
             InteractionUtils.show(
                 f"Debug Largest Patch: {area_label}",
                 ImageUtils.get_padded_hstack(self.debug_hstack),

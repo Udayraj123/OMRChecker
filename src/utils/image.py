@@ -155,23 +155,26 @@ class ImageUtils:
     def get_control_destination_points_from_contour(
         source_contour, destination_line, max_points=None
     ):
-        # TODO: - It's a good idea to map the contour to a line(or a 0 to 1 space) by getPerspectiveTransform()
-        # https://github.com/FelixHertlein/contour-based-image-rectification/blob/0c1f41/src/contour_based_image_rectification/rectify.py#L211
-
-        # logger.info(f"source_contour={source_contour}, destination_line={destination_line}")
         total_points = len(source_contour)
         if max_points is None:
             max_points = total_points
+        assert max_points >= 2
         start, end = destination_line
 
+        destination_line_length = MathUtils.distance(start, end)
         contour_length = 0
         for i in range(1, total_points):
             contour_length += MathUtils.distance(
                 source_contour[i], source_contour[i - 1]
             )
 
-        # TODO: replace with this if the assertion passes on uncommenting
-        # contour_length = cv2.arcLength(source_contour)
+        # TODO: replace with this if the assertion passes on more samples
+        cv2_arclength = cv2.arcLength(
+            np.array(source_contour, dtype="float32"), closed=False
+        )
+        assert (
+            abs(cv2_arclength - contour_length) < 0.001
+        ), f"{contour_length:.3f} != {cv2_arclength:.3f}"
 
         average_min_gap = (contour_length / (max_points - 1)) - 1
 
@@ -182,11 +185,11 @@ class ImageUtils:
         previous_point = None
         for i in range(1, total_points):
             boundary_point, previous_point = source_contour[i], source_contour[i - 1]
-            edge_length = MathUtils.distance(previous_point, boundary_point)
+            edge_length = MathUtils.distance(boundary_point, previous_point)
             current_arc_gap += edge_length
-            if current_arc_gap > average_min_gap:
+            if current_arc_gap > average_min_gap or 1:
+                current_arc_length += current_arc_gap
                 current_arc_gap = 0
-                current_arc_length += edge_length
                 length_ratio = current_arc_length / contour_length
                 destination_point = MathUtils.get_point_on_line_by_ratio(
                     destination_line, length_ratio
@@ -194,9 +197,13 @@ class ImageUtils:
                 control_points.append(boundary_point)
                 destination_points.append(destination_point)
 
-        assert current_arc_length == contour_length
         assert len(destination_points) <= max_points
-        assert MathUtils.distance(destination_points[-1], end) < 1.0
+
+        # Assert that the float error is not skewing the estimations badly
+        assert (
+            MathUtils.distance(destination_points[-1], end) / destination_line_length
+            < 0.02
+        ), f"{destination_points[-1]} != {end}"
 
         return control_points, destination_points
 
@@ -213,36 +220,26 @@ class ImageUtils:
             EdgeType.BOTTOM: [br],
             EdgeType.LEFT: [bl],
         }
-        # rectangle = Polygon(patch_corners)
-        # logger.info("rectangle", rectangle)
-
-        # logger.info("bounding_contour", bounding_contour)
-        # contour = LineString(bounding_contour)
-        # logger.info("contour", contour)
-
-        # # We allow high tolerance here as all points need to be on the rectangle
-        # snapped_contour = snap(contour, rectangle, tolerance=10)
-        # logger.info("snapped_contour", snapped_contour)
-        # splits = split(snapped_contour, rectangle)
-        # logger.info("splits", splits)
-
-        edge_linestrings = {}
+        edge_line_strings = {}
         for i, edge_type in enumerate(EDGE_TYPES_IN_ORDER):
-            edge_linestrings[edge_type] = LineString(
+            edge_line_strings[edge_type] = LineString(
                 [ordered_patch_corners[i], ordered_patch_corners[(i + 1) % 4]]
             )
         for boundary_point in bounding_contour:
             min_distance, nearest_edge_type = min(
                 [
                     (
-                        Point(boundary_point).distance(edge_linestrings[edge_type]),
+                        Point(boundary_point).distance(edge_line_strings[edge_type]),
                         edge_type,
                     )
                     for edge_type in EDGE_TYPES_IN_ORDER
                 ]
             )
+            logger.info(
+                f"boundary_point={boundary_point} nearest_edge_type={nearest_edge_type} min_distance={min_distance}"
+            )
             edge_contours_map[nearest_edge_type].append(boundary_point)
-
+        logger.info("edge_contours_map", edge_contours_map)
         # TODO: loop over boundary points in the bounding_contour and split them according to given corner points
 
         # Note: Each contour's points should be in the clockwise order
@@ -364,13 +361,11 @@ class ImageUtils:
         color=CLR_GREEN,
         thickness=2,
     ):
-        for boundary_point in contour:
-            assert boundary_point is not None
-        contourIndex = -1
+        assert None not in contour, "Invalid contour provided"
         cv2.drawContours(
             image,
             [np.intp(contour)],
-            contourIndex,
+            contourIdx=-1,
             color=color,
             thickness=thickness,
         )

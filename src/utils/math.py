@@ -81,14 +81,12 @@ class MathUtils:
     @staticmethod
     def get_rectangle_points(x, y, w, h):
         # order same as order_four_points: (tl, tr, br, bl)
-        return np.intp(
-            [
-                [x, y],
-                [x + w, y],
-                [x + w, y + h],
-                [x, y + h],
-            ]
-        )
+        return [
+            [x, y],
+            [x + w, y],
+            [x + w, y + h],
+            [x, y + h],
+        ]
 
     @staticmethod
     def select_edge_from_rectangle(rectangle, edge_type):
