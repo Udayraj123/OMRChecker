@@ -21,27 +21,18 @@ import numpy as np
 from matplotlib import colormaps, pyplot
 
 from src.algorithm.detection import BubbleMeanValue, FieldStdMeanValue
+from src.algorithm.evaluation import get_evaluation_symbol
+from src.schemas.constants import Verdict
 from src.utils.constants import (
-    CLR_BLACK,
-    MARKED_TEMPLATE_ALPHA,
-    TEXT_SIZE,
-    CLR_WHITE,
     BONUS_SYMBOL,
+    CLR_BLACK,
+    CLR_WHITE,
+    MARKED_TEMPLATE_TRANSPARENCY,
+    TEXT_SIZE,
 )
-from src.algorithm.evaluation import EvaluationConfig, get_evaluation_symbol
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
-from src.schemas.constants import (
-    BONUS_SECTION_PREFIX,
-    DEFAULT_SECTION_KEY,
-    SCHEMA_VERDICTS_IN_ORDER,
-    VERDICT_TO_SCHEMA_VERDICT,
-    VERDICTS_IN_ORDER,
-    AnswerType,
-    SchemaVerdict,
-    Verdict,
-)
 
 
 class ImageInstanceOps:
@@ -742,7 +733,6 @@ class ImageInstanceOps:
                         if (
                             field_value in question_meta["expected_answer_string"]
                         ) or question_meta["bonus_type"]:
-
                             ImageUtils.draw_box(
                                 marked_image,
                                 shifted_position,
@@ -795,7 +785,6 @@ class ImageInstanceOps:
                             bubble_detection.is_marked
                             or question_meta["bonus_type"] == "BONUS_FOR_ALL"
                         ):
-
                             position, position_diagonal = ImageUtils.draw_box(
                                 marked_image,
                                 shifted_position,
@@ -805,7 +794,7 @@ class ImageInstanceOps:
                                 # TODO: pass verdict_color here and insert symbol mapping here ( +, -, *)
                                 thickness_factor=1 / 12,
                             )
-                            
+
                             symbol = get_evaluation_symbol(question_meta)
                             ImageUtils.draw_symbol(
                                 marked_image,
