@@ -21,6 +21,23 @@ marking_object_properties = {
     "type": "object",
     "properties": {verdict: marking_score for verdict in SCHEMA_VERDICTS_IN_ORDER},
 }
+image_and_csv_options = {
+    "additionalProperties": False,
+    "required": ["answer_key_csv_path"],
+    "dependentRequired": {
+        "answer_key_image_path": [
+            "answer_key_csv_path",
+            "questions_in_order",
+        ]
+    },
+    "type": "object",
+    "properties": {
+        "should_explain_scoring": {"type": "boolean"},
+        "answer_key_csv_path": {"type": "string"},
+        "answer_key_image_path": {"type": "string"},
+        "questions_in_order": ARRAY_OF_STRINGS,
+    },
+}
 
 EVALUATION_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -32,7 +49,7 @@ EVALUATION_SCHEMA = {
     "required": ["source_type", "options", "marking_schemes"],
     "properties": {
         "additionalProperties": False,
-        "source_type": {"type": "string", "enum": ["csv", "custom"]},
+        "source_type": {"type": "string", "enum": ["csv", "image_and_csv", "custom"]},
         "options": {"type": "object"},
         "marking_schemes": {
             "type": "object",
@@ -117,34 +134,17 @@ EVALUATION_SCHEMA = {
                         "unmarked": {"type": "string"},
                     },
                 },
-                # TODO: add "draw_answer_summary" and "verdict_colors" properties
             },
         },
     },
     "allOf": [
         {
             "if": {"properties": {"source_type": {"const": "csv"}}},
-            "then": {
-                "properties": {
-                    "options": {
-                        "additionalProperties": False,
-                        "required": ["answer_key_csv_path"],
-                        "dependentRequired": {
-                            "answer_key_image_path": [
-                                "answer_key_csv_path",
-                                "questions_in_order",
-                            ]
-                        },
-                        "type": "object",
-                        "properties": {
-                            "should_explain_scoring": {"type": "boolean"},
-                            "answer_key_csv_path": {"type": "string"},
-                            "answer_key_image_path": {"type": "string"},
-                            "questions_in_order": ARRAY_OF_STRINGS,
-                        },
-                    }
-                }
-            },
+            "then": {"properties": {"options": image_and_csv_options}},
+        },
+        {
+            "if": {"properties": {"source_type": {"const": "image_and_csv"}}},
+            "then": {"properties": {"options": image_and_csv_options}},
         },
         {
             "if": {"properties": {"source_type": {"const": "custom"}}},
