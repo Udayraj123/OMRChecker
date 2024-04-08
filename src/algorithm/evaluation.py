@@ -113,9 +113,9 @@ class AnswerMatcher:
                 ]
         elif answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
             for allowed_answer, parsed_answer_score in self.answer_item:
-                self.marking[
-                    f"{Verdict.ANSWER_MATCH}-{allowed_answer}"
-                ] = parsed_answer_score
+                self.marking[f"{Verdict.ANSWER_MATCH}-{allowed_answer}"] = (
+                    parsed_answer_score
+                )
 
     def get_marking_scheme(self):
         return self.section_marking_scheme
@@ -218,6 +218,16 @@ class SectionMarkingScheme:
 
         return verdict_marking, question_verdict
 
+    def get_bonus_type(self):
+        if self.marking[Verdict.NO_ANSWER_MATCH] <= 0:
+            return None
+        elif self.marking[Verdict.UNMARKED] > 0:
+            return "BONUS_FOR_ALL"
+        elif self.marking[Verdict.UNMARKED] == 0:
+            return "BONUS_ON_ATTEMPT"
+        else:
+            return None
+
 
 class EvaluationConfig:
     """Note: this instance will be reused for multiple omr sheets"""
@@ -226,7 +236,6 @@ class EvaluationConfig:
         self.path = evaluation_path
         evaluation_json = open_evaluation_with_defaults(evaluation_path)
 
-        # Defaults in evaluation config
         (
             options,
             outputs_configuration,
@@ -242,22 +251,14 @@ class EvaluationConfig:
             ],
         )
 
-        # TODO: pickup new config from outputs_configuration
+        (self.draw_score, self.draw_answers_summary, self.verdict_colors) = map(
+            outputs_configuration.get,
+            ["draw_score", "draw_answers_summary", "verdict_colors"],
+        )
 
-        # Default options
-        (
-            self.answers_summary_format_string,
-            self.draw_answers_summary,
-            self.draw_score,
-            self.score_format_string,
-            self.should_explain_scoring,
-        ) = map(
+        (self.should_explain_scoring,) = map(
             options.get,
             [
-                "answers_summary_format_string",
-                "draw_answers_summary",
-                "draw_score",
-                "score_format_string",
                 "should_explain_scoring",
             ],
         )
@@ -490,7 +491,9 @@ class EvaluationConfig:
                     )
 
     def validate_format_strings(self):
-        answers_summary_format_string = self.answers_summary_format_string
+        answers_summary_format_string = self.draw_answers_summary[
+            "answers_summary_format_string"
+        ]
         try:
             answers_summary_format_string.format(**self.schema_verdict_counts)
         except:  # NOQA
@@ -498,7 +501,7 @@ class EvaluationConfig:
                 f"The format string should contain only allowed variables {SCHEMA_VERDICTS_IN_ORDER}. answers_summary_format_string={answers_summary_format_string}"
             )
 
-        score_format_string = self.score_format_string
+        score_format_string = self.draw_score["score_format_string"]
         try:
             score_format_string.format(score=0)
         except:  # NOQA
@@ -553,7 +556,8 @@ class EvaluationConfig:
             current_score,
         )
         expected_answer_string = str(answer_matcher)
-        return delta, question_verdict, question_schema_verdict, expected_answer_string
+        return delta, question_verdict, expected_answer_string, question_schema_verdict
+
 
     def conditionally_add_explanation(
         self,
@@ -610,11 +614,23 @@ class EvaluationConfig:
 
     def get_formatted_answers_summary(self, answers_summary_format_string=None):
         if answers_summary_format_string is None:
-            answers_summary_format_string = self.answers_summary_format_string
-        return answers_summary_format_string.format(**self.schema_verdict_counts)
+            answers_summary_format_string = self.draw_answers_summary[
+                "answers_summary_format_string"
+            ]
+        answers_format = answers_summary_format_string.format(
+            **self.schema_verdict_counts
+        )
+        position = self.draw_answers_summary["position"]
+        size = self.draw_answers_summary["size"]
+        thickness = int(self.draw_answers_summary["size"] * 2)
+        return answers_format, position, size, thickness
 
     def get_formatted_score(self, score):
-        return self.score_format_string.format(score=score)
+        score_format = self.draw_score["score_format_string"].format(score=score)
+        position = self.draw_score["position"]
+        size = self.draw_score["size"]
+        thickness = int(self.draw_score["size"] * 2)
+        return score_format, position, size, thickness
 
     def reset_evaluation(self):
         self.explanation_table = None
@@ -640,28 +656,40 @@ class EvaluationConfig:
         self.explanation_table = table
 
 
+def get_evaluation_symbol(question_meta):
+    if question_meta["bonus_type"] is not None:
+        return "+"
+    if question_meta["delta"] > 0:
+        return "+"
+    if question_meta["delta"] < 0:
+        return "-"
+    else:
+        return "o"
+
+
 def evaluate_concatenated_response(concatenated_response, evaluation_config):
     evaluation_config.prepare_and_validate_omr_response(concatenated_response)
     current_score = 0.0
     questions_meta = {}
     for question in evaluation_config.questions_in_order:
         marked_answer = concatenated_response[question]
-        (
-            delta,
-            question_verdict,
-            question_schema_verdict,
-            expected_answer_string,
-        ) = evaluation_config.match_answer_for_question(
-            current_score, question, marked_answer
+        (delta, question_verdict, expected_answer_string, question_schema_verdict) = (
+            evaluation_config.match_answer_for_question(
+                current_score, question, marked_answer
+            )
+
         )
+        marking_scheme = evaluation_config.get_marking_scheme_for_question(question)
+        bonus_type = marking_scheme.get_bonus_type()
         current_score += delta
         questions_meta[question] = {
             "question_verdict": question_verdict,
-            "question_schema_verdict": question_schema_verdict,
             "marked_answer": marked_answer,
             "delta": delta,
             "current_score": current_score,
             "expected_answer_string": expected_answer_string,
+            "bonus_type": bonus_type,
+            "question_schema_verdict": question_schema_verdict,
         }
 
     evaluation_config.conditionally_print_explanation()

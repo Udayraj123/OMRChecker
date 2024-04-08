@@ -23,6 +23,29 @@
     ],
     "should_explain_scoring": true
   },
+  "outputs_configuration": {
+    "draw_score": {
+      "enabled": true,
+      "position": [
+        600,
+        650
+      ],
+      "size": 1.5
+    },
+    "draw_answers_summary": {
+      "enabled": true,
+      "position": [
+        300,
+        550
+      ],
+      "size": 1.0
+    },
+    "verdict_colors": {
+      "correct": "#00ff00",
+      "incorrect": "#ff0000",
+      "unmarked": "#0000ff"
+    }
+  },
   "marking_schemes": {
     "DEFAULT": {
       "correct": "3",
