@@ -17,7 +17,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.parse_and_set_scan_areas_with_defaults()
+        self.parse_and_apply_scan_area_templates_and_defaults()
         self.validate_scan_areas()
         self.validate_points_layouts()
 
@@ -36,7 +36,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
     def prepare_image(self, image):
         return image
 
-    def parse_and_set_scan_areas_with_defaults(self):
+    def parse_and_apply_scan_area_templates_and_defaults(self):
         options = self.options
         scan_areas = options["scanAreas"]
         scan_areas_with_defaults = []

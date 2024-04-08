@@ -129,7 +129,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         # inject scanAreas
         parsed_options["scanAreas"] = [
             # Note: currently at CropOnMarkers/CropOnDotLines level, 'scanAreas' is extended provided areas
-            *options["scanAreas"],
+            *options.get("scanAreas", []),
             *[
                 {
                     "areaTemplate": area_template,

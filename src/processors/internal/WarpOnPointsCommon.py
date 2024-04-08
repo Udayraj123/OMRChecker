@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from scipy.interpolate import griddata
 
 from src.processors.constants import WarpMethod, WarpMethodFlags
 from src.processors.interfaces.ImageTemplatePreprocessor import (
@@ -109,6 +110,13 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             warped_image, warped_colored_image = self.warp_perspective(
                 image, colored_image, transform_matrix, warped_dimensions
             )
+        elif self.warp_method == WarpMethod.REMAP:
+            warped_image, warped_colored_image = self.remap_points_with_interpolation(
+                image,
+                colored_image,
+                parsed_control_points,
+                parsed_destination_points,
+            )
         # elif TODO: try remap as well
         # elif TODO: try warpAffine as well for non cropped Alignment!!
 
@@ -193,7 +201,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
 
         # TODO: Save intuitive meta data
         # self.append_save_image(3,warped_image)
-
+        warped_colored_image = None
         if config.outputs.show_colored_outputs:
             warped_colored_image = cv2.warpPerspective(
                 colored_image, transform_matrix, warped_dimensions
@@ -255,3 +263,47 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             parsed_destination_points,
             warped_dimensions,
         )
+
+    def remap_points_with_interpolation(
+        self, image, colored_image, parsed_control_points, parsed_destination_points
+    ):
+        config = self.tuning_config
+
+        assert image.shape[:2] == colored_image.shape[:2]
+
+        # TODO: >> get this more reliably
+        if self.enable_cropping:
+            _, (w, h) = MathUtils.get_bounding_box_of_points(parsed_destination_points)
+        else:
+            h, w = image.shape[:2]
+
+        # https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.griddata.html
+        # For us: D=2, n=len(parsed_control_points)
+        # meshgrid == all integer coordinates of destination image ( [0, h] x [0, w])
+        grid_y, grid_x = np.mgrid[0 : h - 1 : complex(h), 0 : w - 1 : complex(w)]
+
+        # We make use of griddata's ability to map n-d data points in a continuous function
+        grid_z = griddata(
+            # Input points
+            points=parsed_destination_points,
+            # Expected values
+            values=parsed_control_points,
+            # Points at which to interpolate data (inside convex hull of the points)
+            xi=(grid_x, grid_y),
+            method="cubic",
+        )
+        grid_z = grid_z.astype("float32")
+
+        warped_image = cv2.remap(
+            image, map1=grid_z, map2=None, interpolation=cv2.INTER_CUBIC
+        )
+        warped_colored_image = None
+        if config.outputs.show_colored_outputs:
+            warped_colored_image = cv2.remap(
+                colored_image,
+                map1=grid_z,
+                map2=None,
+                interpolation=cv2.INTER_CUBIC,
+            )
+
+        return warped_image, warped_colored_image

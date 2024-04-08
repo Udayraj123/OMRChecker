@@ -102,6 +102,7 @@ WarpMethod = DotMap(
     {
         "PERSPECTIVE_TRANSFORM": "PERSPECTIVE_TRANSFORM",
         "HOMOGRAPHY": "HOMOGRAPHY",
+        "REMAP": "REMAP",
         "WARP_AFFINE": "WARP_AFFINE",
     },
     _dynamic=False,

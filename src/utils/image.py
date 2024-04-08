@@ -280,6 +280,7 @@ class ImageUtils:
         )
 
     def pad_image_from_center(image, padding_width, padding_height=0, value=255):
+        # TODO: support colored images for this util
         input_height, input_width = image.shape[:2]
         pad_range = [
             padding_height,
