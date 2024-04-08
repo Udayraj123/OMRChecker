@@ -332,6 +332,8 @@ class CropOnDotLines(CropOnPatchesCommon):
             return None, None
         ordered_patch_corners, edge_contours_map = None, None
         bounding_contour = sorted(all_contours, key=cv2.contourArea, reverse=True)[0]
+        # Convert to list of 2d points
+        bounding_contour = np.vstack(bounding_contour).squeeze()
 
         if scanner_type == ScannerType.PATCH_DOT:
             # Bounding rectangle will not be rotated

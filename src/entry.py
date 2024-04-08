@@ -179,6 +179,7 @@ def process_dir(
                 of '{curr_dir}'. \nPlace {constants.TEMPLATE_FILENAME} in the \
                 appropriate directory."
             )
+            # TODO: restore support for --default-template flag
             raise Exception(
                 f"No template file found in the directory tree of {curr_dir}"
             )

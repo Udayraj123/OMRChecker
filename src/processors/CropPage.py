@@ -120,7 +120,7 @@ class CropPage(WarpOnPointsCommon):
             )
             if MathUtils.validate_rect(approx):
                 sheet = np.reshape(approx, (4, -1))
-                page_contour = bounding_contour
+                page_contour = np.vstack(bounding_contour).squeeze()
                 ImageUtils.draw_contour(
                     canny_edge, approx, color=CLR_WHITE, thickness=10
                 )

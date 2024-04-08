@@ -57,7 +57,6 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                     "customOptions": custom_options,
                 }
             ]
-        # print("self.scan_areas", self.scan_areas)
         self.scan_areas = scan_areas_with_defaults
 
     def validate_scan_areas(self):
@@ -107,7 +106,6 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             [],
             [],
         )
-        print("self.scan_areas", self.scan_areas)
         for scan_area in self.scan_areas:
             area_description = self.get_runtime_area_description_with_defaults(
                 image, scan_area

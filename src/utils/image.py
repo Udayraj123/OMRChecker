@@ -1,8 +1,9 @@
 import cv2
 import numpy as np
 from matplotlib import pyplot
+from shapely import LineString, Point
 
-from src.processors.constants import EdgeType
+from src.processors.constants import EDGE_TYPES_IN_ORDER, EdgeType
 from src.utils.constants import (
     CLR_BLACK,
     CLR_DARK_GRAY,
@@ -200,7 +201,7 @@ class ImageUtils:
         return control_points, destination_points
 
     @staticmethod
-    def split_patch_contour_on_corners(patch_corners, bounding_contour=None):
+    def split_patch_contour_on_corners(patch_corners, bounding_contour):
         ordered_patch_corners, _ = MathUtils.order_four_points(
             patch_corners, dtype="float32"
         )
@@ -212,11 +213,39 @@ class ImageUtils:
             EdgeType.BOTTOM: [br],
             EdgeType.LEFT: [bl],
         }
+        # rectangle = Polygon(patch_corners)
+        # logger.info("rectangle", rectangle)
+
+        # logger.info("bounding_contour", bounding_contour)
+        # contour = LineString(bounding_contour)
+        # logger.info("contour", contour)
+
+        # # We allow high tolerance here as all points need to be on the rectangle
+        # snapped_contour = snap(contour, rectangle, tolerance=10)
+        # logger.info("snapped_contour", snapped_contour)
+        # splits = split(snapped_contour, rectangle)
+        # logger.info("splits", splits)
+
+        edge_linestrings = {}
+        for i, edge_type in enumerate(EDGE_TYPES_IN_ORDER):
+            edge_linestrings[edge_type] = LineString(
+                [ordered_patch_corners[i], ordered_patch_corners[(i + 1) % 4]]
+            )
+        for boundary_point in bounding_contour:
+            min_distance, nearest_edge_type = min(
+                [
+                    (
+                        Point(boundary_point).distance(edge_linestrings[edge_type]),
+                        edge_type,
+                    )
+                    for edge_type in EDGE_TYPES_IN_ORDER
+                ]
+            )
+            edge_contours_map[nearest_edge_type].append(boundary_point)
 
         # TODO: loop over boundary points in the bounding_contour and split them according to given corner points
 
         # Note: Each contour's points should be in the clockwise order
-        # TODO: Need clockwise edge contours: top, right, bottom, left
         # TODO: Split the page_contour into 4 lines using the corner points
         # Each contour will at-least contain the two corner points
 
