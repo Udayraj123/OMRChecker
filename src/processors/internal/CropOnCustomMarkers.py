@@ -28,6 +28,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             marker_type: {
                 "scannerType": ScannerType.TEMPLATE_MATCH,
                 "selector": "SELECT_CENTER",
+                "maxPoints": 2,  # for cropping
                 # Note: all 4 margins are a required property for a patch area
             }
             for marker_type in MARKER_AREA_TYPES_IN_ORDER

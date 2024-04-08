@@ -47,6 +47,7 @@ class CropOnDotLines(CropOnPatchesCommon):
             marker_type: {
                 "scannerType": ScannerType.PATCH_DOT,
                 "selector": "SELECT_CENTER",
+                "maxPoints": 2,  # for cropping
             }
             for marker_type in DOT_AREA_TYPES_IN_ORDER
         },
