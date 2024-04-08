@@ -321,7 +321,7 @@ class CropOnDotLines(CropOnPatchesCommon):
 
         # Should mostly return a single contour in the area
         all_contours = ImageUtils.grab_contours(
-            cv2.findContours(canny_edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            cv2.findContours(canny_edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
         )
 
         # convexHull to resolve disordered curves due to noise
