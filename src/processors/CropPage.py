@@ -102,7 +102,9 @@ class CropPage(WarpOnPointsCommon):
 
         # findContours returns outer boundaries in CW and inner ones, ACW.
         all_contours = ImageUtils.grab_contours(
-            cv2.findContours(canny_edge, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+            cv2.findContours(
+                canny_edge, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
+            )  # , cv2.CHAIN_APPROX_NONE)
         )
         # convexHull to resolve disordered curves due to noise
         all_contours = [

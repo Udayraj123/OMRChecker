@@ -12,7 +12,7 @@
           800
         ],
         "tuningOptions": {
-          "warpMethod": "HOMOGRAPHY",
+          "warpMethod": "REMAP",
           "lineKernel": [
             2,
             10

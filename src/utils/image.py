@@ -176,26 +176,31 @@ class ImageUtils:
             abs(cv2_arclength - contour_length) < 0.001
         ), f"{contour_length:.3f} != {cv2_arclength:.3f}"
 
-        average_min_gap = (contour_length / (max_points - 1)) - 1
+        # average_min_gap = (contour_length / (max_points - 1)) - 1
 
         # Initialize with first point mapping
         control_points, destination_points = [source_contour[0]], [start]
         current_arc_length = 0
-        current_arc_gap = 0
+        # current_arc_gap = 0
         previous_point = None
         for i in range(1, total_points):
             boundary_point, previous_point = source_contour[i], source_contour[i - 1]
             edge_length = MathUtils.distance(boundary_point, previous_point)
-            current_arc_gap += edge_length
-            if current_arc_gap > average_min_gap or 1:
-                current_arc_length += current_arc_gap
-                current_arc_gap = 0
-                length_ratio = current_arc_length / contour_length
-                destination_point = MathUtils.get_point_on_line_by_ratio(
-                    destination_line, length_ratio
-                )
-                control_points.append(boundary_point)
-                destination_points.append(destination_point)
+
+            # TODO: figure out an alternative to support maxPoints
+            # current_arc_gap += edge_length
+            # if current_arc_gap > average_min_gap :
+            #     current_arc_length += current_arc_gap
+            #     current_arc_gap = 0
+
+            # Including all points for now -
+            current_arc_length += edge_length
+            length_ratio = current_arc_length / contour_length
+            destination_point = MathUtils.get_point_on_line_by_ratio(
+                destination_line, length_ratio
+            )
+            control_points.append(boundary_point)
+            destination_points.append(destination_point)
 
         assert len(destination_points) <= max_points
 
@@ -204,7 +209,9 @@ class ImageUtils:
             MathUtils.distance(destination_points[-1], end) / destination_line_length
             < 0.02
         ), f"{destination_points[-1]} != {end}"
-
+        logger.info(
+            f"source_contour={source_contour} control_points={control_points} destination_points={destination_points}"
+        )
         return control_points, destination_points
 
     @staticmethod
@@ -212,6 +219,7 @@ class ImageUtils:
         ordered_patch_corners, _ = MathUtils.order_four_points(
             patch_corners, dtype="float32"
         )
+        bounding_contour = np.float32(bounding_contour)
         tl, tr, br, bl = ordered_patch_corners
         # First element of each contour should necessarily start & end with a corner point
         edge_contours_map = {
@@ -238,15 +246,8 @@ class ImageUtils:
             logger.info(
                 f"boundary_point={boundary_point} nearest_edge_type={nearest_edge_type} min_distance={min_distance}"
             )
+            # TODO: Each edge contour's points should be in the clockwise order
             edge_contours_map[nearest_edge_type].append(boundary_point)
-        logger.info("edge_contours_map", edge_contours_map)
-        # TODO: loop over boundary points in the bounding_contour and split them according to given corner points
-
-        # Note: Each contour's points should be in the clockwise order
-        # TODO: Split the page_contour into 4 lines using the corner points
-        # Each contour will at-least contain the two corner points
-
-        # Can also readily generate reference points as per the given corner points(non-shifted)
 
         # Assure contour always covers the edge points
         edge_contours_map[EdgeType.TOP].append(tr)

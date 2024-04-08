@@ -11,6 +11,7 @@ from src.processors.constants import (
     WarpMethod,
 )
 from src.processors.internal.CropOnPatchesCommon import CropOnPatchesCommon
+from src.utils.constants import CLR_GREEN
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.math import MathUtils
@@ -321,7 +322,9 @@ class CropOnDotLines(CropOnPatchesCommon):
 
         # Should mostly return a single contour in the area
         all_contours = ImageUtils.grab_contours(
-            cv2.findContours(canny_edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+            cv2.findContours(
+                canny_edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
+            )  # cv2.CHAIN_APPROX_NONE)
         )
 
         # convexHull to resolve disordered curves due to noise
@@ -332,9 +335,17 @@ class CropOnDotLines(CropOnPatchesCommon):
         largest_contour = sorted(all_contours, key=cv2.contourArea, reverse=True)[0]
         if config.outputs.show_image_level >= 5:
             h, w = canny_edges.shape[:2]
-            largest_contour_overlay = 255 * np.ones((h, w), np.uint8)
-            ImageUtils.draw_contour(largest_contour_overlay, largest_contour)
-            self.debug_hstack.append(largest_contour_overlay)
+            contour_overlay = 255 * np.ones((h, w), np.uint8)
+            # ImageUtils.draw_contour(contour_overlay, largest_contour)
+            print(f"drawing {len(all_contours)} contours from {area_label}")
+            cv2.drawContours(
+                contour_overlay,
+                all_contours,
+                contourIdx=-1,
+                color=CLR_GREEN,
+                thickness=2,
+            )
+            self.debug_hstack.append(contour_overlay)
 
         # Convert to list of 2d points
         bounding_contour = np.vstack(largest_contour).squeeze()
@@ -361,6 +372,7 @@ class CropOnDotLines(CropOnPatchesCommon):
             ) = ImageUtils.split_patch_contour_on_corners(
                 patch_corners, bounding_contour
             )
+            print(area_label, edge_contours_map)
         else:
             raise Exception(f"Unsupported scanner type: {scanner_type}")
 
@@ -375,6 +387,8 @@ class CropOnDotLines(CropOnPatchesCommon):
                 f"Debug Largest Patch: {area_label}",
                 ImageUtils.get_padded_hstack(self.debug_hstack),
                 0,
+                resize_to_height=True,
+                config=config,
             )
             self.debug_vstack.append(self.debug_hstack)
             self.debug_hstack = []
