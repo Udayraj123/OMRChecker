@@ -209,51 +209,61 @@ class ImageUtils:
             MathUtils.distance(destination_points[-1], end) / destination_line_length
             < 0.02
         ), f"{destination_points[-1]} != {end}"
-        logger.info(
-            f"source_contour={source_contour} control_points={control_points} destination_points={destination_points}"
-        )
+
         return control_points, destination_points
 
     @staticmethod
-    def split_patch_contour_on_corners(patch_corners, bounding_contour):
+    def split_patch_contour_on_corners(patch_corners, source_contour):
         ordered_patch_corners, _ = MathUtils.order_four_points(
             patch_corners, dtype="float32"
         )
-        bounding_contour = np.float32(bounding_contour)
-        tl, tr, br, bl = ordered_patch_corners
-        # First element of each contour should necessarily start & end with a corner point
+        source_contour = np.float32(source_contour)
         edge_contours_map = {
-            EdgeType.TOP: [tl],
-            EdgeType.RIGHT: [tr],
-            EdgeType.BOTTOM: [br],
-            EdgeType.LEFT: [bl],
+            EdgeType.TOP: [],
+            EdgeType.RIGHT: [],
+            EdgeType.BOTTOM: [],
+            EdgeType.LEFT: [],
         }
         edge_line_strings = {}
         for i, edge_type in enumerate(EDGE_TYPES_IN_ORDER):
             edge_line_strings[edge_type] = LineString(
                 [ordered_patch_corners[i], ordered_patch_corners[(i + 1) % 4]]
             )
-        for boundary_point in bounding_contour:
-            min_distance, nearest_edge_type = min(
-                [
-                    (
-                        Point(boundary_point).distance(edge_line_strings[edge_type]),
-                        edge_type,
-                    )
-                    for edge_type in EDGE_TYPES_IN_ORDER
-                ]
-            )
+        for boundary_point in source_contour:
+            edge_distances = [
+                (
+                    Point(boundary_point).distance(edge_line_strings[edge_type]),
+                    edge_type,
+                )
+                for edge_type in EDGE_TYPES_IN_ORDER
+            ]
+            min_distance, nearest_edge_type = min(edge_distances)
             logger.info(
-                f"boundary_point={boundary_point} nearest_edge_type={nearest_edge_type} min_distance={min_distance}"
+                f"boundary_point={boundary_point} nearest_edge_type={nearest_edge_type} min_distance={min_distance:.2f}"
             )
             # TODO: Each edge contour's points should be in the clockwise order
             edge_contours_map[nearest_edge_type].append(boundary_point)
 
-        # Assure contour always covers the edge points
-        edge_contours_map[EdgeType.TOP].append(tr)
-        edge_contours_map[EdgeType.RIGHT].append(br)
-        edge_contours_map[EdgeType.BOTTOM].append(bl)
-        edge_contours_map[EdgeType.LEFT].append(tl)
+        for i, edge_type in enumerate(EDGE_TYPES_IN_ORDER):
+            start_point, end_point = (
+                ordered_patch_corners[i],
+                ordered_patch_corners[(i + 1) % 4],
+            )
+            edge_contour = edge_contours_map[edge_type]
+
+            if len(edge_contour) == 0:
+                logger.critical(
+                    ordered_patch_corners, source_contour, edge_contours_map
+                )
+                raise Exception(f"No closest points found for {edge_type}")
+            if MathUtils.distance(start_point, edge_contour[-1]) < MathUtils.distance(
+                start_point, edge_contour[0]
+            ):
+                edge_contours_map[edge_type].reverse()
+
+            # Each contour should necessarily start & end with a corner point
+            edge_contours_map[edge_type].insert(0, start_point)
+            edge_contours_map[edge_type].append(end_point)
 
         return ordered_patch_corners, edge_contours_map
 
@@ -422,9 +432,8 @@ class ImageUtils:
             color,
             border,
         )
-        return position,position_diagonal
+        return position, position_diagonal
 
-    
     @staticmethod
     def draw_arrows(
         image,
@@ -493,27 +502,10 @@ class ImageUtils:
         )
 
     @staticmethod
-    def draw_symbol(
-        image,
-        symbol,
-        position,
-        position_diagonal,
-        color=CLR_BLACK
-     ):
-        
-        center_position = lambda size_x , size_y : (
-            (position[0]+position_diagonal[0]-size_x)//2,
-            (position[1]+position_diagonal[1]+size_y)//2
+    def draw_symbol(image, symbol, position, position_diagonal, color=CLR_BLACK):
+        center_position = lambda size_x, size_y: (
+            (position[0] + position_diagonal[0] - size_x) // 2,
+            (position[1] + position_diagonal[1] + size_y) // 2,
         )
-        
 
-        ImageUtils.draw_text(
-            image,
-            symbol,
-            center_position,
-            color=color
-        )
-        
-
-        
-
+        ImageUtils.draw_text(image, symbol, center_position, color=color)

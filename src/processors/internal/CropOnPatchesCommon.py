@@ -118,10 +118,6 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             destination_points += area_destination_points
 
             if config.outputs.show_image_level >= 4:
-                area_label = area_description["label"]
-                logger.info(
-                    f"{area_label}: area_control_points={area_control_points} area_destination_points={area_destination_points}"
-                )
                 if len(area_control_points) > 1:
                     if len(area_control_points) == 2:
                         # Draw line if it's just two points
@@ -140,13 +136,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                     area_destination_points,
                     tip_length=0.4,
                 )
-                for control_point, destination_point in zip(
-                    area_control_points, area_destination_points
-                ):
-                    # ImageUtils.draw_text(
-                    #     self.debug_image, "X", destination_point, centered=True, thickness=2
-                    # )
-
+                for control_point in area_control_points:
                     # Show current detections too
                     ImageUtils.draw_box(
                         self.debug_image,

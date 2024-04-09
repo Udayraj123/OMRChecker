@@ -699,7 +699,6 @@ class ImageInstanceOps:
         should_draw_question_verdicts = evaluation_meta is not None
         absolute_field_number = 0
         for field_block in template.field_blocks:
-            bubble_dimensions = tuple(field_block.bubble_dimensions)
             for field in field_block.fields:
                 field_label = field.field_label
                 field_bubble_means = field_number_to_field_bubble_means[
@@ -718,118 +717,161 @@ class ImageInstanceOps:
 
                 if question_has_verdict:
                     question_meta = evaluation_meta["questions_meta"][field_label]
-
-                for bubble_detection in field_bubble_means:
-                    bubble = bubble_detection.item_reference
-                    shifted_position = tuple(
-                        bubble.get_shifted_position(field_block.shifts)
+                    # Draw answer key items
+                    self.draw_field_with_question_meta(
+                        marked_image, field_bubble_means, field_block, question_meta
                     )
-                    field_value = str(bubble.field_value)
-                    # TODO: support for custom_labels verdicts too!
-                    if question_has_verdict:
-                        # TODO: make cases for colors for image_type == "COLORED" and box shapes for image_type == "GRAYSCALE"
-                        # [marked, unmarked]  x [correct, incorrect, optional(if multiple answers)]
-                        # update colors here
-                        if (
-                            field_value in question_meta["expected_answer_string"]
-                        ) or question_meta["bonus_type"]:
-                            ImageUtils.draw_box(
-                                marked_image,
-                                shifted_position,
-                                bubble_dimensions,
-                                CLR_BLACK,
-                                style="BOX_HOLLOW",
-                                thickness_factor=0,
-                            )
-                        if question_meta["bonus_type"] == "BONUS_ON_ATTEMPT":
-                            if (
-                                question_meta["question_schema_verdict"]
-                                == Verdict.UNMARKED
-                            ):
-                                position, position_diagonal = ImageUtils.draw_box(
-                                    marked_image,
-                                    shifted_position,
-                                    bubble_dimensions,
-                                    color=CLR_WHITE,
-                                    style="BOX_FILLED",
-                                    # TODO: pass verdict_color here and insert symbol mapping here ( +, -, *)
-                                    thickness_factor=1 / 12,
-                                )
-
-                                ImageUtils.draw_symbol(
-                                    marked_image,
-                                    BONUS_SYMBOL,
-                                    position,
-                                    position_diagonal,
-                                )
-                        if question_meta["bonus_type"] == "BONUS_FOR_ALL":
-                            position, position_diagonal = ImageUtils.draw_box(
-                                marked_image,
-                                shifted_position,
-                                bubble_dimensions,
-                                color=CLR_WHITE,
-                                style="BOX_FILLED",
-                                # TODO: pass verdict_color here and insert symbol mapping here ( +, -, *)
-                                thickness_factor=1 / 12,
-                            )
-
-                            ImageUtils.draw_symbol(
-                                marked_image,
-                                "+",
-                                position,
-                                position_diagonal,
-                            )
-
-                        # TODO: take config for CROSS_TICKS vs BUBBLE_BOUNDARY and call appropriate util
-                        if (
-                            bubble_detection.is_marked
-                            or question_meta["bonus_type"] == "BONUS_FOR_ALL"
-                        ):
-                            position, position_diagonal = ImageUtils.draw_box(
-                                marked_image,
-                                shifted_position,
-                                bubble_dimensions,
-                                color=CLR_WHITE,
-                                style="BOX_FILLED",
-                                # TODO: pass verdict_color here and insert symbol mapping here ( +, -, *)
-                                thickness_factor=1 / 12,
-                            )
-
-                            symbol = get_evaluation_symbol(question_meta)
-                            ImageUtils.draw_symbol(
-                                marked_image,
-                                symbol,
-                                position,
-                                position_diagonal,
-                            )
-                            # if(is_field_correct):
-                            #     # TODO: green
-                            #     pass
-
-                            # if(is_field_incorrect):
-                            #     # TODO: red
-                            # pass
-
-                            # TODO: add condition only for marked_image and not for evaluation_image (new variable)
-                            if bubble_detection.is_marked:
-                                ImageUtils.draw_text(
-                                    marked_image,
-                                    field_value,
-                                    shifted_position,
-                                    text_size=TEXT_SIZE,
-                                    color=(20, 20, 10),
-                                    thickness=int(1 + 3.5 * TEXT_SIZE),
-                                )
-
-                        else:
-                            ImageUtils.draw_box(
-                                marked_image,
-                                shifted_position,
-                                bubble_dimensions,
-                                style="BOX_HOLLOW",
-                                thickness_factor=1 / 10,
-                            )
+                else:
+                    self.draw_field_bubbles_and_detections(
+                        marked_image, field_bubble_means, field_block
+                    )
         return marked_image
+
+    def draw_field_bubbles_and_detections(
+        self, marked_image, field_bubble_means, field_block
+    ):
+        bubble_dimensions = tuple(field_block.bubble_dimensions)
+        for bubble_detection in field_bubble_means:
+            bubble = bubble_detection.item_reference
+            shifted_position = tuple(bubble.get_shifted_position(field_block.shifts))
+            field_value = str(bubble.field_value)
+
+            if bubble_detection.is_marked:
+                ImageUtils.draw_box(
+                    marked_image,
+                    shifted_position,
+                    bubble_dimensions,
+                    color=CLR_WHITE,
+                    style="BOX_FILLED",
+                    # TODO: pass verdict_color here and insert symbol mapping here ( +, -, *)
+                    thickness_factor=1 / 12,
+                )
+                ImageUtils.draw_text(
+                    marked_image,
+                    field_value,
+                    shifted_position,
+                    text_size=TEXT_SIZE,
+                    color=(20, 20, 10),
+                    thickness=int(1 + 3.5 * TEXT_SIZE),
+                )
+            else:
+                ImageUtils.draw_box(
+                    marked_image,
+                    shifted_position,
+                    bubble_dimensions,
+                    style="BOX_HOLLOW",
+                    thickness_factor=1 / 10,
+                )
+
+    def draw_field_with_question_meta(
+        self, marked_image, field_bubble_means, field_block, question_meta
+    ):
+        bubble_dimensions = tuple(field_block.bubble_dimensions)
+        for bubble_detection in field_bubble_means:
+            bubble = bubble_detection.item_reference
+            shifted_position = tuple(bubble.get_shifted_position(field_block.shifts))
+            field_value = str(bubble.field_value)
+
+            # TODO: support for custom_labels verdicts too!
+            # TODO: make cases for colors for image_type == "COLORED" and box shapes for image_type == "GRAYSCALE"
+            # [marked, unmarked]  x [correct, incorrect, optional(if multiple answers)]
+            # update colors here
+            if (
+                field_value in question_meta["expected_answer_string"]
+            ) or question_meta["bonus_type"]:
+                ImageUtils.draw_box(
+                    marked_image,
+                    shifted_position,
+                    bubble_dimensions,
+                    CLR_BLACK,
+                    style="BOX_HOLLOW",
+                    thickness_factor=0,
+                )
+            if question_meta["bonus_type"] == "BONUS_ON_ATTEMPT":
+                if question_meta["question_schema_verdict"] == Verdict.UNMARKED:
+                    position, position_diagonal = ImageUtils.draw_box(
+                        marked_image,
+                        shifted_position,
+                        bubble_dimensions,
+                        color=CLR_WHITE,
+                        style="BOX_FILLED",
+                        # TODO: pass verdict_color here and insert symbol mapping here ( +, -, *)
+                        thickness_factor=1 / 12,
+                    )
+
+                    ImageUtils.draw_symbol(
+                        marked_image,
+                        BONUS_SYMBOL,
+                        position,
+                        position_diagonal,
+                    )
+            if question_meta["bonus_type"] == "BONUS_FOR_ALL":
+                position, position_diagonal = ImageUtils.draw_box(
+                    marked_image,
+                    shifted_position,
+                    bubble_dimensions,
+                    color=CLR_WHITE,
+                    style="BOX_FILLED",
+                    # TODO: pass verdict_color here and insert symbol mapping here ( +, -, *)
+                    thickness_factor=1 / 12,
+                )
+
+                ImageUtils.draw_symbol(
+                    marked_image,
+                    "+",
+                    position,
+                    position_diagonal,
+                )
+
+            # TODO: take config for CROSS_TICKS vs BUBBLE_BOUNDARY and call appropriate util
+            if (
+                bubble_detection.is_marked
+                or question_meta["bonus_type"] == "BONUS_FOR_ALL"
+            ):
+                position, position_diagonal = ImageUtils.draw_box(
+                    marked_image,
+                    shifted_position,
+                    bubble_dimensions,
+                    color=CLR_WHITE,
+                    style="BOX_FILLED",
+                    # TODO: pass verdict_color here and insert symbol mapping here ( +, -, *)
+                    thickness_factor=1 / 12,
+                )
+
+                symbol = get_evaluation_symbol(question_meta)
+                ImageUtils.draw_symbol(
+                    marked_image,
+                    symbol,
+                    position,
+                    position_diagonal,
+                )
+                # if(is_field_correct):
+                #     # TODO: green
+                #     pass
+
+                # if(is_field_incorrect):
+                #     # TODO: red
+                # pass
+
+                # TODO: add condition only for marked_image and not for evaluation_image (new variable)
+                if bubble_detection.is_marked:
+                    ImageUtils.draw_text(
+                        marked_image,
+                        field_value,
+                        shifted_position,
+                        text_size=TEXT_SIZE,
+                        color=(20, 20, 10),
+                        thickness=int(1 + 3.5 * TEXT_SIZE),
+                    )
+
+            else:
+                ImageUtils.draw_box(
+                    marked_image,
+                    shifted_position,
+                    bubble_dimensions,
+                    style="BOX_HOLLOW",
+                    thickness_factor=1 / 10,
+                )
 
     def draw_evaluation_summary(self, marked_image, evaluation_meta, evaluation_config):
         if evaluation_config.draw_answers_summary["enabled"]:

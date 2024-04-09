@@ -11,10 +11,12 @@ from src.processors.constants import (
     WarpMethod,
 )
 from src.processors.internal.CropOnPatchesCommon import CropOnPatchesCommon
-from src.utils.constants import CLR_GREEN
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.math import MathUtils
+
+# from rich.table import Table
+# from src.utils.logger import console
 
 
 class CropOnDotLines(CropOnPatchesCommon):
@@ -195,6 +197,18 @@ class CropOnDotLines(CropOnPatchesCommon):
         ) = ImageUtils.get_control_destination_points_from_contour(
             source_contour, destination_line, max_points
         )
+        # Temp
+        # table = Table(
+        #     title=f"{area_label}: {destination_line}",
+        #     show_header=True,
+        #     show_lines=False,
+        # )
+        # table.add_column("Control", style="cyan", no_wrap=True)
+        # table.add_column("Destination", style="magenta")
+        # for c, d in zip(control_points, destination_points):
+        #     table.add_row(str(c), str(d))
+        # console.print(table, justify="center")
+
         return control_points, destination_points
 
     def find_line_edges_from_options(self, image, area_description):
@@ -327,33 +341,26 @@ class CropOnDotLines(CropOnPatchesCommon):
                 canny_edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
             )  # cv2.CHAIN_APPROX_NONE)
         )
+        # Note: skipping convexHull here because we want to preserve the curves
 
-        # convexHull to resolve disordered curves due to noise
-        all_contours = [cv2.convexHull(c) for c in all_contours]
         if len(all_contours) == 0:
             return None, None
+
         ordered_patch_corners, edge_contours_map = None, None
         largest_contour = sorted(all_contours, key=cv2.contourArea, reverse=True)[0]
         if config.outputs.show_image_level >= 5:
             h, w = canny_edges.shape[:2]
             contour_overlay = 255 * np.ones((h, w), np.uint8)
-            # ImageUtils.draw_contour(contour_overlay, largest_contour)
-            print(f"drawing {len(all_contours)} contours from {area_label}")
-            cv2.drawContours(
-                contour_overlay,
-                all_contours,
-                contourIdx=-1,
-                color=CLR_GREEN,
-                thickness=2,
-            )
+            ImageUtils.draw_contour(contour_overlay, largest_contour)
             self.debug_hstack.append(contour_overlay)
 
         # Convert to list of 2d points
         bounding_contour = np.vstack(largest_contour).squeeze()
+        bounding_hull = cv2.convexHull(bounding_contour)
 
         if scanner_type == ScannerType.PATCH_DOT:
             # Bounding rectangle will not be rotated
-            x, y, w, h = cv2.boundingRect(bounding_contour)
+            x, y, w, h = cv2.boundingRect(bounding_hull)
             patch_corners = MathUtils.get_rectangle_points(x, y, w, h)
             (
                 ordered_patch_corners,
@@ -363,7 +370,7 @@ class CropOnDotLines(CropOnPatchesCommon):
             )
         elif scanner_type == ScannerType.PATCH_LINE:
             # Rotated rectangle can correct slight rotations better
-            rotated_rect = cv2.minAreaRect(bounding_contour)
+            rotated_rect = cv2.minAreaRect(bounding_hull)
             # TODO: less confidence if angle = rotated_rect[2] is too skew
             rotated_rect_points = cv2.boxPoints(rotated_rect)
             patch_corners = np.intp(rotated_rect_points)
@@ -373,7 +380,6 @@ class CropOnDotLines(CropOnPatchesCommon):
             ) = ImageUtils.split_patch_contour_on_corners(
                 patch_corners, bounding_contour
             )
-            print(area_label, edge_contours_map)
         else:
             raise Exception(f"Unsupported scanner type: {scanner_type}")
 
