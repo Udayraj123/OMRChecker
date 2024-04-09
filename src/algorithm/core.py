@@ -775,6 +775,8 @@ class ImageInstanceOps:
             shifted_position = tuple(bubble.get_shifted_position(field_block.shifts))
             field_value = str(bubble.field_value)
 
+            # TODO: answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED etc
+
             # TODO: support for custom_labels verdicts too!
             if (
                 # Convert answer_item to string to handle array of answers

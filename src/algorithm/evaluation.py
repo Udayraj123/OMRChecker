@@ -555,8 +555,7 @@ class EvaluationConfig:
             question,
             current_score,
         )
-        answer_item = answer_matcher.answer_item
-        return delta, question_verdict, answer_item, question_schema_verdict
+        return delta, question_verdict, answer_matcher, question_schema_verdict
 
     def conditionally_add_explanation(
         self,
@@ -675,7 +674,7 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
         (
             delta,
             question_verdict,
-            answer_item,
+            answer_matcher,
             question_schema_verdict,
         ) = evaluation_config.match_answer_for_question(
             current_score, question, marked_answer
@@ -688,7 +687,8 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
             "marked_answer": marked_answer,
             "delta": delta,
             "current_score": current_score,
-            "answer_item": answer_item,
+            "answer_item": answer_matcher.answer_item,
+            "answer_type": answer_matcher.answer_type,
             "bonus_type": bonus_type,
             "question_schema_verdict": question_schema_verdict,
         }
