@@ -255,11 +255,14 @@ class ImageUtils:
                 logger.critical(
                     ordered_patch_corners, source_contour, edge_contours_map
                 )
-                raise Exception(f"No closest points found for {edge_type}")
-            if MathUtils.distance(start_point, edge_contour[-1]) < MathUtils.distance(
-                start_point, edge_contour[0]
-            ):
-                edge_contours_map[edge_type].reverse()
+                logger.warning(
+                    f"No closest points found for {edge_type}: {edge_contours_map}"
+                )
+            else:
+                if MathUtils.distance(
+                    start_point, edge_contour[-1]
+                ) < MathUtils.distance(start_point, edge_contour[0]):
+                    edge_contours_map[edge_type].reverse()
 
             # Each contour should necessarily start & end with a corner point
             edge_contours_map[edge_type].insert(0, start_point)

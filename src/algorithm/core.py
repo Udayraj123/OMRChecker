@@ -26,6 +26,7 @@ from src.schemas.constants import Verdict
 from src.utils.constants import (
     BONUS_SYMBOL,
     CLR_BLACK,
+    CLR_GRAY,
     CLR_WHITE,
     MARKED_TEMPLATE_TRANSPARENCY,
     TEXT_SIZE,
@@ -690,6 +691,7 @@ class ImageInstanceOps:
     def draw_marked_bubbles_with_evaluation_meta(
         self,
         marked_image,
+        # TODO: make cases for colors for image_type == "COLORED" and box shapes for image_type == "GRAYSCALE"
         image_type,
         template,
         evaluation_meta,
@@ -725,6 +727,7 @@ class ImageInstanceOps:
                     self.draw_field_bubbles_and_detections(
                         marked_image, field_bubble_means, field_block
                     )
+
         return marked_image
 
     def draw_field_bubbles_and_detections(
@@ -741,7 +744,7 @@ class ImageInstanceOps:
                     marked_image,
                     shifted_position,
                     bubble_dimensions,
-                    color=CLR_WHITE,
+                    color=CLR_GRAY,
                     style="BOX_FILLED",
                     # TODO: pass verdict_color here and insert symbol mapping here ( +, -, *)
                     thickness_factor=1 / 12,
@@ -773,11 +776,11 @@ class ImageInstanceOps:
             field_value = str(bubble.field_value)
 
             # TODO: support for custom_labels verdicts too!
-            # TODO: make cases for colors for image_type == "COLORED" and box shapes for image_type == "GRAYSCALE"
-            # [marked, unmarked]  x [correct, incorrect, optional(if multiple answers)]
-            # update colors here
             if (
-                field_value in question_meta["expected_answer_string"]
+                # Convert answer_item to string to handle array of answers
+                # TODO: think of edge cases for this
+                field_value
+                in str(question_meta["answer_item"])
             ) or question_meta["bonus_type"]:
                 ImageUtils.draw_box(
                     marked_image,

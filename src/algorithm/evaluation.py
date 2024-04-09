@@ -113,9 +113,9 @@ class AnswerMatcher:
                 ]
         elif answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
             for allowed_answer, parsed_answer_score in self.answer_item:
-                self.marking[f"{Verdict.ANSWER_MATCH}-{allowed_answer}"] = (
-                    parsed_answer_score
-                )
+                self.marking[
+                    f"{Verdict.ANSWER_MATCH}-{allowed_answer}"
+                ] = parsed_answer_score
 
     def get_marking_scheme(self):
         return self.section_marking_scheme
@@ -555,9 +555,8 @@ class EvaluationConfig:
             question,
             current_score,
         )
-        expected_answer_string = str(answer_matcher)
-        return delta, question_verdict, expected_answer_string, question_schema_verdict
-
+        answer_item = answer_matcher.answer_item
+        return delta, question_verdict, answer_item, question_schema_verdict
 
     def conditionally_add_explanation(
         self,
@@ -673,11 +672,13 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
     questions_meta = {}
     for question in evaluation_config.questions_in_order:
         marked_answer = concatenated_response[question]
-        (delta, question_verdict, expected_answer_string, question_schema_verdict) = (
-            evaluation_config.match_answer_for_question(
-                current_score, question, marked_answer
-            )
-
+        (
+            delta,
+            question_verdict,
+            answer_item,
+            question_schema_verdict,
+        ) = evaluation_config.match_answer_for_question(
+            current_score, question, marked_answer
         )
         marking_scheme = evaluation_config.get_marking_scheme_for_question(question)
         bonus_type = marking_scheme.get_bonus_type()
@@ -687,7 +688,7 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
             "marked_answer": marked_answer,
             "delta": delta,
             "current_score": current_score,
-            "expected_answer_string": expected_answer_string,
+            "answer_item": answer_item,
             "bonus_type": bonus_type,
             "question_schema_verdict": question_schema_verdict,
         }
