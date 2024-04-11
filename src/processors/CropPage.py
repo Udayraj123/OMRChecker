@@ -45,7 +45,7 @@ class CropPage(WarpOnPointsCommon):
     def prepare_image(self, image):
         return ImageUtils.normalize(image)
 
-    def extract_control_destination_points(self, image, file_path):
+    def extract_control_destination_points(self, image, colored_image, file_path):
         options = self.options
         sheet, page_contour = self.find_page_contour_and_corners(image, file_path)
         (
@@ -59,14 +59,18 @@ class CropPage(WarpOnPointsCommon):
             _,
         ) = ImageUtils.get_cropped_rectangle_destination_points(ordered_page_corners)
 
-        if self.warp_method == WarpMethod.PERSPECTIVE_TRANSFORM:
-            return ordered_page_corners, destination_page_corners
+        if self.warp_method in [
+            WarpMethod.DOC_REFINE,
+            WarpMethod.PERSPECTIVE_TRANSFORM,
+        ]:
+            return ordered_page_corners, destination_page_corners, edge_contours_map
         else:
+            # TODO: remove this if REMAP method is removed, see if homography REALLY needs page contour points
+            # TODO: support for maxPointsPerEdge
             max_points_per_edge = options.get("maxPointsPerEdge", None)
 
             control_points, destination_points = [], []
             for edge_type in EDGE_TYPES_IN_ORDER:
-                source_contour = edge_contours_map[edge_type]
                 destination_line = MathUtils.select_edge_from_rectangle(
                     destination_page_corners, edge_type
                 )
@@ -75,14 +79,14 @@ class CropPage(WarpOnPointsCommon):
                     edge_control_points,
                     edge_destination_points,
                 ) = ImageUtils.get_control_destination_points_from_contour(
-                    source_contour, destination_line, max_points_per_edge
+                    edge_contours_map[edge_type], destination_line, max_points_per_edge
                 )
                 # Note: edge-wise duplicates would get added here
                 # TODO: see if we can avoid duplicates at source itself
                 control_points += edge_control_points
                 destination_points += edge_destination_points
 
-            return control_points, destination_points
+            return control_points, destination_points, edge_contours_map
 
     def find_page_contour_and_corners(self, image, file_path):
         config = self.tuning_config

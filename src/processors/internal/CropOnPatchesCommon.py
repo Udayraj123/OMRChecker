@@ -3,7 +3,13 @@ from copy import deepcopy
 import cv2
 import numpy as np
 
-from src.processors.constants import ScannerType
+from src.processors.constants import (
+    EDGE_TYPES_IN_ORDER,
+    TARGET_ENDPOINTS_FOR_EDGES,
+    EdgeType,
+    ScannerType,
+    WarpMethod,
+)
 from src.processors.internal.WarpOnPointsCommon import WarpOnPointsCommon
 from src.utils.constants import CLR_DARK_GREEN
 from src.utils.image import ImageUtils
@@ -70,8 +76,6 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         if len(repeat_labels) > 0:
             raise Exception(f"Found repeated labels in scanAreas: {repeat_labels}")
 
-        # TODO: more validations in child classes
-
     # TODO: check if this needs to move into child for working properly (accessing self attributes declared in child in parent's constructor)
     def validate_points_layouts(self):
         options = self.options
@@ -96,7 +100,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                 f"Missing a few scanAreaTemplates for the pointsLayout {points_layout}"
             )
 
-    def extract_control_destination_points(self, image, file_path):
+    def extract_control_destination_points(self, image, _colored_image, file_path):
         config = self.tuning_config
 
         (
@@ -106,83 +110,132 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             [],
             [],
         )
+
+        # TODO: use shapely and corner points to split easily?
+
+        area_template_points = {}
+        page_corners, destination_page_corners = [], []
         for scan_area in self.scan_areas:
+            area_template = scan_area["areaTemplate"]
             area_description = self.get_runtime_area_description_with_defaults(
                 image, scan_area
             )
-            (
-                area_control_points,
-                area_destination_points,
-            ) = self.extract_points_from_scan_area(image, area_description, file_path)
+            scanner_type = area_description["scannerType"]
+            # Note: area_description is computed at runtime(e.g. for CropOnCustomMarkers with default quadrants)
+            if (
+                scanner_type == ScannerType.PATCH_DOT
+                or scanner_type == ScannerType.TEMPLATE_MATCH
+            ):
+                dot_point, destination_point = self.find_and_select_point_from_dot(
+                    image, area_description, file_path
+                )
+                area_control_points, area_destination_points = [dot_point], [
+                    destination_point
+                ]
+                area_template_points[area_template] = area_control_points
+
+                page_corners.append(dot_point)
+                destination_page_corners.append(destination_point)
+
+            elif scanner_type == ScannerType.PATCH_LINE:
+                (
+                    area_control_points,
+                    area_destination_points,
+                    selected_contour,
+                ) = self.find_and_select_points_from_line(
+                    image, area_template, area_description, file_path
+                )
+                area_template_points[area_template] = selected_contour
+                page_corners += [area_control_points[0], area_control_points[-1]]
+                destination_page_corners += [
+                    area_destination_points[0],
+                    area_destination_points[-1],
+                ]
+            # TODO: support DASHED_LINE here later
             control_points += area_control_points
             destination_points += area_destination_points
 
             if config.outputs.show_image_level >= 4:
-                if len(area_control_points) > 1:
-                    if len(area_control_points) == 2:
-                        # Draw line if it's just two points
-                        ImageUtils.draw_contour(self.debug_image, area_control_points)
-                    else:
-                        # Draw convex hull of the found control points
-                        ImageUtils.draw_contour(
-                            self.debug_image,
-                            cv2.convexHull(np.intp(area_control_points)),
-                        )
-
-                # Helper for alignment
-                ImageUtils.draw_arrows(
-                    self.debug_image,
-                    area_control_points,
-                    area_destination_points,
-                    tip_length=0.4,
+                self.draw_area_contours_and_anchor_shifts(
+                    area_control_points, area_destination_points
                 )
-                for control_point in area_control_points:
-                    # Show current detections too
-                    ImageUtils.draw_box(
-                        self.debug_image,
-                        control_point,
-                        # TODO: change this based on image shape
-                        [20, 20],
-                        color=CLR_DARK_GREEN,
-                        border=1,
-                        centered=True,
-                    )
 
-        return control_points, destination_points
+        # Fill edge contours
+        edge_contours_map = self.get_edge_contours_map_from_area_points(
+            area_template_points
+        )
+
+        if self.warp_method in [
+            WarpMethod.PERSPECTIVE_TRANSFORM,
+        ]:
+            ordered_page_corners, ordered_indices = MathUtils.order_four_points(
+                page_corners, dtype="float32"
+            )
+            destination_page_corners = [
+                destination_page_corners[i] for i in ordered_indices
+            ]
+            return ordered_page_corners, destination_page_corners, edge_contours_map
+
+        # TODO: sort edge_contours_map manually?
+        return control_points, destination_points, edge_contours_map
 
     def get_runtime_area_description_with_defaults(self, image, scan_area):
         return scan_area["areaDescription"]
 
-    # Note: Some common utilities of the child classes are put here
-    def extract_points_from_scan_area(self, image, area_description, file_path):
-        scanner_type = area_description["scannerType"]
+    def get_edge_contours_map_from_area_points(self, area_template_points):
+        edge_contours_map = {
+            EdgeType.TOP: [],
+            EdgeType.RIGHT: [],
+            EdgeType.BOTTOM: [],
+            EdgeType.LEFT: [],
+        }
 
-        # Note: area_description is computed at runtime(e.g. for CropOnCustomMarkers with default quadrants)
-        if (
-            scanner_type == ScannerType.PATCH_DOT
-            or scanner_type == ScannerType.TEMPLATE_MATCH
-        ):
-            dot_point, destination_point = self.find_and_select_point_from_dot(
-                image, area_description, file_path
-            )
-            area_control_points, area_destination_points = [dot_point], [
-                destination_point
-            ]
-        elif scanner_type == ScannerType.PATCH_LINE:
-            (
-                line_control_points,
-                line_destination_points,
-            ) = self.find_and_select_points_from_line(
-                image, area_description, file_path
-            )
+        for edge_type in EDGE_TYPES_IN_ORDER:
+            for area_template, contour_point_index in TARGET_ENDPOINTS_FOR_EDGES[
+                edge_type
+            ]:
+                if area_template in area_template_points:
+                    area_points = area_template_points[area_template]
+                    if contour_point_index == "ALL":
+                        edge_contours_map[edge_type] += area_points
+                    else:
+                        edge_contours_map[edge_type].append(
+                            area_points[contour_point_index]
+                        )
+        return edge_contours_map
 
-            area_control_points, area_destination_points = (
-                line_control_points,
-                line_destination_points,
-            )
-        # TODO: support DASHED_LINE here later
+    def draw_area_contours_and_anchor_shifts(
+        self, area_control_points, area_destination_points
+    ):
+        if len(area_control_points) > 1:
+            if len(area_control_points) == 2:
+                # Draw line if it's just two points
+                ImageUtils.draw_contour(self.debug_image, area_control_points)
+            else:
+                # Draw convex hull of the found control points
+                ImageUtils.draw_contour(
+                    self.debug_image,
+                    cv2.convexHull(np.intp(area_control_points)),
+                )
 
-        return area_control_points, area_destination_points
+        # Helper for alignment
+        ImageUtils.draw_arrows(
+            self.debug_image,
+            area_control_points,
+            area_destination_points,
+            tip_length=0.4,
+        )
+        for control_point in area_control_points:
+            # Show current detections too
+            ImageUtils.draw_box(
+                self.debug_image,
+                control_point,
+                # TODO: change this based on image shape
+                [20, 20],
+                color=CLR_DARK_GREEN,
+                border=1,
+                centered=True,
+            )
 
     def find_and_select_point_from_dot(self, image, area_description, file_path):
         area_label = area_description["label"]

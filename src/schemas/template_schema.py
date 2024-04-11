@@ -266,7 +266,8 @@ TEMPLATE_SCHEMA = {
                                     "additionalProperties": False,
                                     "properties": {
                                         **pre_processor_options_available_keys,
-                                        "tuningOptions": False,
+                                        # TODO: support DOC_REFINE warpMethod
+                                        "tuningOptions": True,
                                         "morphKernel": two_positive_integers,
                                         "maxPointsPerEdge": positive_integer,
                                     },

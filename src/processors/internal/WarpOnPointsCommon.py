@@ -3,6 +3,7 @@ import numpy as np
 from scipy.interpolate import griddata
 
 from src.processors.constants import WarpMethod, WarpMethodFlags
+from src.processors.helpers.rectify import rectify
 from src.processors.interfaces.ImageTemplatePreprocessor import (
     ImageTemplatePreprocessor,
 )
@@ -80,9 +81,9 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         (
             control_points,
             destination_points,
-        ) = self.extract_control_destination_points(image, file_path)
+            edge_contours_map,
+        ) = self.extract_control_destination_points(image, colored_image, file_path)
 
-        # TODO: add support for isOptionalFeaturePoint(maybe filter the 'None' control points!)
         (
             parsed_control_points,
             parsed_destination_points,
@@ -102,7 +103,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             warped_image, warped_colored_image = self.warp_perspective(
                 image, colored_image, transform_matrix, warped_dimensions
             )
-
+        # elif TODO: support for warpAffine as well for non cropped Alignment!!
         elif self.warp_method == WarpMethod.HOMOGRAPHY:
             transform_matrix, _matches_mask = self.get_homography_matrix(
                 parsed_control_points, parsed_destination_points
@@ -110,15 +111,17 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             warped_image, warped_colored_image = self.warp_perspective(
                 image, colored_image, transform_matrix, warped_dimensions
             )
-        elif self.warp_method == WarpMethod.REMAP:
-            warped_image, warped_colored_image = self.remap_points_with_interpolation(
+        elif self.warp_method == WarpMethod.REMAP_GRIDDATA:
+            warped_image, warped_colored_image = self.remap_with_griddata(
                 image,
                 colored_image,
                 parsed_control_points,
                 parsed_destination_points,
             )
-        # elif TODO: try remap as well
-        # elif TODO: try warpAffine as well for non cropped Alignment!!
+        elif self.warp_method == WarpMethod.DOC_REFINE:
+            warped_image, warped_colored_image = self.remap_with_doc_refine_rectify(
+                image, colored_image, edge_contours_map
+            )
 
         if config.outputs.show_image_level >= 4:
             title = "Warped Image"
@@ -225,6 +228,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
                 parsed_control_points.append(control_point)
                 parsed_destination_points.append(destination_point)
 
+        # TODO: add support for isOptionalFeaturePoint(maybe filter the 'None' control points!)
         # TODO: do an ordering of the points
 
         h, w = image.shape[:2]
@@ -232,13 +236,13 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         if self.enable_cropping:
             # TODO: exclude the 'excludeFromCropping' destination points(and corresponding control points, after using for alignments)
             # TODO: use a small class for each point?
-            # TODO: Give a warning if the destination_points do not form a convex polygon!
 
             #   get bounding box on the destination points (with validation?)
             (
                 destination_box,
                 rectangle_dimensions,
             ) = MathUtils.get_bounding_box_of_points(parsed_destination_points)
+            # TODO: Give a warning if the destination_points do not form a convex polygon!
             warped_dimensions = rectangle_dimensions
 
             # Cropping means the bounding destination points need to become the bounding box!
@@ -264,15 +268,15 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             warped_dimensions,
         )
 
-    def remap_points_with_interpolation(
+    def remap_with_griddata(
         self, image, colored_image, parsed_control_points, parsed_destination_points
     ):
         config = self.tuning_config
 
         assert image.shape[:2] == colored_image.shape[:2]
 
-        # TODO: >> get this more reliably
         if self.enable_cropping:
+            # TODO: >> get this more reliably - use minAreaRect instead?
             _, (w, h) = MathUtils.get_bounding_box_of_points(parsed_destination_points)
         else:
             h, w = image.shape[:2]
@@ -305,5 +309,35 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
                 map2=None,
                 interpolation=cv2.INTER_CUBIC,
             )
+
+        return warped_image, warped_colored_image
+
+    def remap_with_doc_refine_rectify(self, image, colored_image, edge_contours_map):
+        config = self.tuning_config
+
+        # TODO: adapt this contract in the remap framework (use griddata vs scanline interchangeably?)
+        scaled_map = rectify(
+            edge_contours_map=edge_contours_map, enable_cropping=self.enable_cropping
+        )
+
+        # logger.info("scaled_map parts", scaled_map[::120, ::120, :])
+        # logger.info("rectified_image", rectified_image)
+        logger.info("scaled_map.shape", scaled_map.shape)
+
+        warped_image = cv2.remap(
+            image,
+            map1=scaled_map,
+            map2=None,
+            interpolation=cv2.INTER_NEAREST,  # cv2.INTER_CUBIC
+        )
+        InteractionUtils.show("warped_image", warped_image, 0)
+
+        warped_colored_image = None
+        if config.outputs.show_colored_outputs:
+            warped_colored_image = cv2.remap(
+                colored_image, map1=scaled_map, map2=None, interpolation=cv2.INTER_CUBIC
+            )
+            logger.info("warped_colored_image.shape", warped_colored_image.shape)
+            InteractionUtils.show("warped_colored_image", warped_colored_image, 0)
 
         return warped_image, warped_colored_image

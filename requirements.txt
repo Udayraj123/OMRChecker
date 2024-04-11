@@ -6,8 +6,10 @@ numpy>=1.26.4
 pandas>=2.2.1
 rich>=13.7.1
 screeninfo>=0.8.1
+# External deps
 scipy>=1.12.0
 shapely>=2.0.3
+einops==0.7.0
 # Note: opencv is excluded from requirements.txt because the installation steps
 # may be different as per your OS. Windows/MacOS users can uncomment the following
 # opencv-python>=4.9.0.80

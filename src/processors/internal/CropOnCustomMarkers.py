@@ -17,7 +17,7 @@ from src.utils.math import MathUtils
 from src.utils.parsing import OVERRIDE_MERGER
 
 
-# TODO: add support for showing patch areas during setLayout option?!
+# TODO: add support for showing patch area centers during setLayout option?!
 class CropOnCustomMarkers(CropOnPatchesCommon):
     __is_internal_preprocessor__ = True
     scan_area_templates_for_layout = {
@@ -25,13 +25,13 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
     }
     default_scan_area_descriptions = {
         **{
-            marker_type: {
+            area_template: {
                 "scannerType": ScannerType.TEMPLATE_MATCH,
                 "selector": "SELECT_CENTER",
                 "maxPoints": 2,  # for cropping
                 # Note: all 4 margins are a required property for a patch area
             }
-            for marker_type in MARKER_AREA_TYPES_IN_ORDER
+            for area_template in MARKER_AREA_TYPES_IN_ORDER
         },
         "CUSTOM": {},
     }
@@ -74,7 +74,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         tuning_options = self.tuning_options
         self.threshold_circles = []
 
-        # TODO: dedicated marker scanArea config needed for these?
+        # TODO: dedicated marker scanArea override support needed for these?
         self.min_matching_threshold = tuning_options.get("min_matching_threshold", 0.3)
         self.marker_rescale_range = tuple(
             tuning_options.get("marker_rescale_range", (85, 115))
@@ -92,9 +92,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             "pointsLayout": layout_type,
             "enableCropping": True,
             "tuningOptions": {
-                "warpMethod": tuning_options.get(
-                    "warpMethod", WarpMethod.PERSPECTIVE_TRANSFORM
-                )
+                "warpMethod": tuning_options.get("warpMethod", WarpMethod.DOC_REFINE)
             },
         }
 

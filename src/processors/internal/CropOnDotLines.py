@@ -5,6 +5,7 @@ from src.processors.constants import (
     DOT_AREA_TYPES_IN_ORDER,
     EDGE_TYPES_IN_ORDER,
     LINE_AREA_TYPES_IN_ORDER,
+    TARGET_EDGE_FOR_LINE,
     AreaTemplate,
     EdgeType,
     ScannerType,
@@ -46,19 +47,19 @@ class CropOnDotLines(CropOnPatchesCommon):
 
     default_scan_area_descriptions = {
         **{
-            marker_type: {
+            area_template: {
                 "scannerType": ScannerType.PATCH_DOT,
                 "selector": "SELECT_CENTER",
                 "maxPoints": 2,  # for cropping
             }
-            for marker_type in DOT_AREA_TYPES_IN_ORDER
+            for area_template in DOT_AREA_TYPES_IN_ORDER
         },
         **{
-            marker_type: {
+            area_template: {
                 "scannerType": ScannerType.PATCH_LINE,
                 "selector": "LINE_OUTER_EDGE",
             }
-            for marker_type in LINE_AREA_TYPES_IN_ORDER
+            for area_template in LINE_AREA_TYPES_IN_ORDER
         },
         "CUSTOM": {},
     }
@@ -115,6 +116,10 @@ class CropOnDotLines(CropOnPatchesCommon):
         self.dot_kernel_morph = cv2.getStructuringElement(
             cv2.MORPH_RECT, tuple(tuning_options.get("dotKernel", [5, 5]))
         )
+
+    def validate_scan_areas(self):
+        # TODO: more validations here at child class level (customOptions etc)
+        return super().validate_scan_areas()
 
     def validate_and_remap_options_schema(self, options):
         layout_type = options["type"]
@@ -177,25 +182,37 @@ class CropOnDotLines(CropOnPatchesCommon):
         )
         return destination_line
 
-    def find_and_select_points_from_line(self, image, area_description, _file_path):
+    def find_and_select_points_from_line(
+        self, image, area_template, area_description, _file_path
+    ):
         area_label = area_description["label"]
         points_selector = area_description.get(
             "selector", self.default_points_selector.get(area_label, None)
         )
 
-        line_edge_contours = self.find_line_edges_from_options(image, area_description)
+        line_edge_contours_map = self.find_line_corners_and_contours(
+            image, area_description
+        )
 
-        edge_type = self.edge_selector_map[area_label][points_selector]
-        source_contour = line_edge_contours[edge_type]
-        destination_line = self.select_edge_from_scan_area(area_description, edge_type)
+        selected_edge_type = self.edge_selector_map[area_label][points_selector]
+        target_edge_type = TARGET_EDGE_FOR_LINE[area_template]
+        selected_contour = line_edge_contours_map[selected_edge_type]
+        destination_line = self.select_edge_from_scan_area(
+            area_description, selected_edge_type
+        )
+        # Ensure clockwise order after extraction
+        if selected_edge_type != target_edge_type:
+            selected_contour.reverse()
+            destination_line.reverse()
 
         max_points = area_description.get("maxPoints", None)
+
         # Extrapolates the destination_line to get approximate destination points
         (
             control_points,
             destination_points,
         ) = ImageUtils.get_control_destination_points_from_contour(
-            source_contour, destination_line, max_points
+            selected_contour, destination_line, max_points
         )
         # Temp
         # table = Table(
@@ -209,9 +226,9 @@ class CropOnDotLines(CropOnPatchesCommon):
         #     table.add_row(str(c), str(d))
         # console.print(table, justify="center")
 
-        return control_points, destination_points
+        return control_points, destination_points, selected_contour
 
-    def find_line_edges_from_options(self, image, area_description):
+    def find_line_corners_and_contours(self, image, area_description):
         area_label = area_description["label"]
         config = self.tuning_config
         tuning_options = self.tuning_options
@@ -323,7 +340,7 @@ class CropOnDotLines(CropOnPatchesCommon):
 
         return corners
 
-    # TODO: create a ScanArea class and move some methods there
+    # TODO: >> create a ScanArea class and move some methods there
     def find_morph_corners_and_contours_map(self, area_start, area, area_description):
         scanner_type, area_label = (
             area_description["scannerType"],
@@ -356,6 +373,8 @@ class CropOnDotLines(CropOnPatchesCommon):
 
         # Convert to list of 2d points
         bounding_contour = np.vstack(largest_contour).squeeze()
+
+        # TODO: >> see if bounding_hull is still needed
         bounding_hull = cv2.convexHull(bounding_contour)
 
         if scanner_type == ScannerType.PATCH_DOT:
