@@ -242,7 +242,7 @@
     ''',
     'ScanBatch1/Results/Results_05AM.csv': '''
       "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22"
-      "camscanner-1.jpg","samples/2-omr-marker-scanned/ScanBatch1/camscanner-1.jpg","outputs/2-omr-marker-scanned/ScanBatch1/CheckedOMRs/camscanner-1.jpg","-4.0","E204420102","D","C","A","C","B","08","52","21","85","36","B","C","A","A","D","C","C","AD","A","A","D",""
+      "camscanner-1.jpg","samples/2-omr-marker/ScanBatch1/camscanner-1.jpg","outputs/2-omr-marker/ScanBatch1/CheckedOMRs/camscanner-1.jpg","-4.0","E204420102","D","C","A","C","B","08","52","21","85","36","B","C","A","A","D","C","C","AD","A","A","D",""
   
     ''',
     'ScanBatch2/Manual/ErrorFiles.csv': '''
@@ -255,7 +255,7 @@
     ''',
     'ScanBatch2/Results/Results_05AM.csv': '''
       "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22"
-      "camscanner-2.jpg","samples/2-omr-marker-scanned/ScanBatch2/camscanner-2.jpg","outputs/2-omr-marker-scanned/ScanBatch2/CheckedOMRs/camscanner-2.jpg","55.0","E204420109","C","C","B","C","C","01","19","10","10","18","D","A","D","D","D","C","C","C","C","D","B","A"
+      "camscanner-2.jpg","samples/2-omr-marker/ScanBatch2/camscanner-2.jpg","outputs/2-omr-marker/ScanBatch2/CheckedOMRs/camscanner-2.jpg","55.0","E204420109","C","C","B","C","C","01","19","10","10","18","D","A","D","D","D","C","C","C","C","D","B","A"
   
     ''',
   })

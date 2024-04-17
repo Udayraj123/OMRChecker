@@ -47,8 +47,8 @@ def test_run_omr_marker_mobile(mocker, snapshot):
     assert snapshot == sample_outputs
 
 
-def test_run_omr_marker_scanned(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "2-omr-marker-scanned")
+def test_run_omr_marker(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "2-omr-marker")
     assert snapshot == sample_outputs
 
 
