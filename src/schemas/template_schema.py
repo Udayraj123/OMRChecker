@@ -17,6 +17,7 @@ from src.schemas.constants import (
 from src.utils.constants import FIELD_TYPES
 
 margins_schema = {
+    "description": "The margins to use around a box",
     "type": "object",
     "required": ["top", "right", "bottom", "left"],
     "additionalProperties": False,
@@ -29,6 +30,7 @@ margins_schema = {
 }
 # TODO: deprecate in favor of scan_area_description
 patch_area_description = {
+    "description": "The detailed description of a patch area",
     "type": "object",
     "required": ["origin", "dimensions", "margins"],
     "additionalProperties": False,
@@ -45,28 +47,39 @@ patch_area_description = {
 }
 
 scan_area_template = {
+    "description": "The ready-made template to use to prefill description of a scanArea",
     "type": "string",
     "enum": ["CUSTOM", *AreaTemplate.values()],
 }
 
 scan_area_description = {
     **patch_area_description,
+    "description": "The detailed description of a scanArea's coordinates and purpose",
     # TODO: "required": [...],
     "additionalProperties": False,
     "properties": {
         **patch_area_description["properties"],
         "label": {
+            "description": "The label to use for the scanArea",
             "type": "string",
         },
-        "selectorMargins": margins_schema,
+        "selectorMargins": {
+            **margins_schema,
+            "description": "The margins around the scanArea's box at provided origin",
+        },
         "scannerType": {
+            "description": "The scanner type to use in the given scan area",
             "type": "string",
             "enum": SCANNER_TYPES_IN_ORDER,
         },
-        "maxPoints": positive_integer,
+        "maxPoints": {
+            **positive_integer,
+            "description": "The maximum points to pick from the given scanArea",
+        },
     },
 }
 scan_areas_object = {
+    "description": "The schema of a scanArea",
     "type": "array",
     "items": {
         "type": "object",
@@ -76,7 +89,8 @@ scan_areas_object = {
             "areaTemplate": scan_area_template,
             "areaDescription": scan_area_description,
             "customOptions": {
-                "type": "object"
+                "description": "Custom options based on the scannerType",
+                "type": "object",
                 # TODO: add conditional properties here like maxPoints and excludeFromCropping here based on scannerType
             },
         },
@@ -122,7 +136,7 @@ crop_on_markers_tuning_options_available_keys = {
     "dotThreshold": True,
     "dotKernel": True,
     "lineThreshold": True,
-    "dotBlur": True,
+    "dotBlurKernel": True,
     "lineKernel": True,
     "apply_erode_subtract": True,
     "marker_rescale_range": True,
@@ -158,29 +172,57 @@ warp_on_points_options_available_keys = {
 }
 
 crop_on_dot_lines_tuning_options = {
+    "description": "Custom tuning options for the CropOnDotLines pre-processor",
     "type": "object",
     "additionalProperties": False,
     "properties": {
         **crop_on_markers_tuning_options_available_keys,
         **warp_on_points_tuning_options,
-        "dotBlur": positive_integer,
-        "dotKernel": two_positive_integers,
-        "lineKernel": two_positive_integers,
-        "dotThreshold": positive_number,
-        "lineThreshold": positive_number,
+        "dotBlurKernel": {
+            **two_positive_integers,
+            "description": "The size of the kernel to use for blurring in each dot's scanArea",
+        },
+        "dotKernel": {
+            **two_positive_integers,
+            "description": "The size of the morph kernel to use for smudging each dot",
+        },
+        "lineKernel": {
+            **two_positive_integers,
+            "description": "The size of the morph kernel to use for smudging each line",
+        },
+        "dotThreshold": {
+            **positive_number,
+            "description": "The threshold to apply for clearing out the noise near a dot after smudging",
+        },
+        "lineThreshold": {
+            **positive_number,
+            "description": "The threshold to apply for clearing out the noise near a line after smudging",
+        },
     },
 }
 crop_on_four_markers_tuning_options = {
+    "description": "Custom tuning options for the CropOnCustomMarkers pre-processor",
     "type": "object",
     "additionalProperties": False,
     "properties": {
         **crop_on_markers_tuning_options_available_keys,
         **warp_on_points_tuning_options,
-        "apply_erode_subtract": {"type": "boolean"},
-        # Range of rescaling in percentage -
-        "marker_rescale_range": two_positive_integers,
-        "marker_rescale_steps": positive_integer,
-        "min_matching_threshold": {"type": "number"},
+        "apply_erode_subtract": {
+            "description": "A boolean to enable erosion for (sometimes) better marker detection",
+            "type": "boolean",
+        },
+        "marker_rescale_range": {
+            **two_positive_integers,
+            "description": "The range of rescaling in percentage",
+        },
+        "marker_rescale_steps": {
+            **positive_integer,
+            "description": "The number of rescaling steps",
+        },
+        "min_matching_threshold": {
+            "description": "The threshold for template matching",
+            "type": "number",
+        },
     },
 }
 
@@ -200,7 +242,7 @@ TEMPLATE_SCHEMA = {
     "properties": {
         "bubbleDimensions": {
             **two_positive_integers,
-            "description": "The dimensions of the overlay bubble area: [width, height]",
+            "description": "The default dimensions for the bubbles in the template overlay: [width, height]",
         },
         "customLabels": {
             "description": "The customLabels contain fields that need to be joined together before generating the results sheet",
@@ -214,16 +256,22 @@ TEMPLATE_SCHEMA = {
             "type": "string",
         },
         "outputColumns": {
+            "description": "The ordered list of columns to be contained in the output csv(default order: alphabetical)",
             "type": "array",
             "items": FIELD_STRING_TYPE,
-            "description": "The ordered list of columns to be contained in the output csv(default order: alphabetical)",
         },
         "templateDimensions": {
             **two_positive_integers,
             "description": "The dimensions(width, height) to which the page will be resized to before applying template",
         },
-        "outputImageShape": two_positive_integers,
-        "processingImageShape": two_positive_integers,
+        "processingImageShape": {
+            **two_positive_integers,
+            "description": "Shape of the processing image after all the pre-processors are applied: [height, width]",
+        },
+        "outputImageShape": {
+            **two_positive_integers,
+            "description": "Shape of the final output image: [height, width]",
+        },
         "preProcessors": {
             "description": "Custom configuration values to use in the template's directory",
             "type": "array",
@@ -233,6 +281,7 @@ TEMPLATE_SCHEMA = {
                 "additionalProperties": True,
                 "properties": {
                     "name": {
+                        "description": "The name of the pre-processor to use",
                         "type": "string",
                         "enum": [
                             "CropOnMarkers",
@@ -245,11 +294,15 @@ TEMPLATE_SCHEMA = {
                         ],
                     },
                     "options": {
+                        "description": "The options to pass to the pre-processor",
                         "type": "object",
                         "additionalProperties": True,
                         "properties": {
                             # Note: common properties across all preprocessors items can stay here
-                            "processingImageShape": two_positive_integers,
+                            "processingImageShape": {
+                                **two_positive_integers,
+                                "description": "Shape of the processing image for the current pre-processors: [height, width]",
+                            },
                         },
                     },
                 },
@@ -262,14 +315,22 @@ TEMPLATE_SCHEMA = {
                         "then": {
                             "properties": {
                                 "options": {
+                                    "description": "Options for the CropPage pre-processor",
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {
                                         **pre_processor_options_available_keys,
                                         # TODO: support DOC_REFINE warpMethod
                                         "tuningOptions": True,
-                                        "morphKernel": two_positive_integers,
-                                        "maxPointsPerEdge": positive_integer,
+                                        "morphKernel": {
+                                            **two_positive_integers,
+                                            "description": "The size of the morph kernel used for smudging the page",
+                                        },
+                                        # TODO: support for maxPointsPerEdge
+                                        "maxPointsPerEdge": {
+                                            **two_positive_integers,
+                                            "description": "Max number of control points to use in one edge",
+                                        },
                                     },
                                 },
                             }
@@ -283,15 +344,29 @@ TEMPLATE_SCHEMA = {
                         "then": {
                             "properties": {
                                 "options": {
+                                    "description": "Options for the FeatureBasedAlignment pre-processor",
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {
                                         **pre_processor_options_available_keys,
-                                        "2d": {"type": "boolean"},
-                                        "goodMatchPercent": {"type": "number"},
-                                        "maxFeatures": {"type": "integer"},
-                                        "reference": {"type": "string"},
+                                        "2d": {
+                                            "description": "Uses warpAffine if True, otherwise uses warpPerspective",
+                                            "type": "boolean",
+                                        },
+                                        "goodMatchPercent": {
+                                            "description": "Threshold for the match percentage",
+                                            "type": "number",
+                                        },
+                                        "maxFeatures": {
+                                            "description": "Maximum number of matched features to consider",
+                                            "type": "integer",
+                                        },
+                                        "reference": {
+                                            "description": "Relative path to the reference image",
+                                            "type": "string",
+                                        },
                                         "matcherType": {
+                                            "description": "Type of the matcher to use",
                                             "type": "string",
                                             "enum": [
                                                 "DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING",
@@ -312,12 +387,19 @@ TEMPLATE_SCHEMA = {
                         "then": {
                             "properties": {
                                 "options": {
+                                    "description": "Options for the GaussianBlur pre-processor",
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {
                                         **pre_processor_options_available_keys,
-                                        "kSize": two_positive_integers,
-                                        "sigmaX": {"type": "number"},
+                                        "kSize": {
+                                            **two_positive_integers,
+                                            "description": "Size of the kernel",
+                                        },
+                                        "sigmaX": {
+                                            "description": "Value of sigmaX in fraction",
+                                            "type": "number",
+                                        },
                                     },
                                 }
                             }
@@ -331,13 +413,22 @@ TEMPLATE_SCHEMA = {
                         "then": {
                             "properties": {
                                 "options": {
-                                    **pre_processor_options_available_keys,
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {
-                                        "gamma": zero_to_one_number,
-                                        "high": zero_to_one_number,
-                                        "low": zero_to_one_number,
+                                        **pre_processor_options_available_keys,
+                                        "gamma": {
+                                            **zero_to_one_number,
+                                            "description": "The value for gamma parameter",
+                                        },
+                                        "high": {
+                                            **zero_to_one_number,
+                                            "description": "The value for high parameter",
+                                        },
+                                        "low": {
+                                            **zero_to_one_number,
+                                            "description": "The value for low parameter",
+                                        },
                                     },
                                 }
                             }
@@ -351,10 +442,13 @@ TEMPLATE_SCHEMA = {
                         "then": {
                             "properties": {
                                 "options": {
-                                    **pre_processor_options_available_keys,
+                                    "description": "Options for the MedianBlur pre-processor",
                                     "type": "object",
                                     "additionalProperties": False,
-                                    "properties": {"kSize": {"type": "integer"}},
+                                    "properties": {
+                                        **pre_processor_options_available_keys,
+                                        "kSize": {"type": "integer"},
+                                    },
                                 }
                             }
                         },
@@ -367,6 +461,7 @@ TEMPLATE_SCHEMA = {
                         "then": {
                             "properties": {
                                 "options": {
+                                    "description": "Options for the WarpOnPoints pre-processor",
                                     **warp_on_points_options_if_required_attrs,
                                     "type": "object",
                                     "required": [],
@@ -374,15 +469,21 @@ TEMPLATE_SCHEMA = {
                                     "properties": {
                                         **warp_on_points_options_available_keys,
                                         "pointsLayout": {
+                                            "description": "The type of layout of the scanAreas for finding anchor points",
                                             "type": "string",
                                             "enum": points_layout_types,
                                         },
                                         "defaultSelector": {
+                                            "description": "The default points selector for the given scanAreas",
                                             "type": "string",
                                             "enum": default_points_selector_types,
                                         },
-                                        "enableCropping": {"type": "boolean"},
+                                        "enableCropping": {
+                                            "description": "Whether to crop the image to a bounding box of the given anchor points",
+                                            "type": "boolean",
+                                        },
                                         "tuningOptions": {
+                                            "description": "Custom tuning options for the WarpOnPoints pre-processor",
                                             "type": "object",
                                             "required": [],
                                             "additionalProperties": False,
@@ -406,6 +507,7 @@ TEMPLATE_SCHEMA = {
                         "then": {
                             "properties": {
                                 "options": {
+                                    "description": "Options for the CropOnMarkers pre-processor",
                                     "type": "object",
                                     # Note: "required" key is retrieved from crop_on_markers_options_if_required_attrs
                                     **crop_on_markers_options_if_required_attrs,
@@ -415,10 +517,12 @@ TEMPLATE_SCHEMA = {
                                         **crop_on_markers_options_available_keys,
                                         "scanAreas": scan_areas_object,
                                         "defaultSelector": {
+                                            "description": "The default points selector for the given scanAreas",
                                             "type": "string",
                                             "enum": default_points_selector_types,
                                         },
                                         "type": {
+                                            "description": "The type of the Cropping instance to use",
                                             "type": "string",
                                             "enum": crop_on_marker_types,
                                         },
@@ -439,8 +543,14 @@ TEMPLATE_SCHEMA = {
                                                 "additionalProperties": False,
                                                 "properties": {
                                                     **crop_on_markers_options_available_keys,
-                                                    "dimensions": two_positive_integers,
-                                                    "relativePath": {"type": "string"},
+                                                    "dimensions": {
+                                                        **two_positive_integers,
+                                                        "description": "The dimensions of the omr marker",
+                                                    },
+                                                    "relativePath": {
+                                                        "description": "The relative path to the omr marker",
+                                                        "type": "string",
+                                                    },
                                                     "topRightMarker": patch_area_description,
                                                     "bottomRightMarker": patch_area_description,
                                                     "topLeftMarker": patch_area_description,
@@ -552,10 +662,11 @@ TEMPLATE_SCHEMA = {
             },
         },
         "fieldBlocks": {
-            "description": "The fieldBlocks denote small groups of adjacent fields",
+            "description": "Each fieldBlock denotes a small group of adjacent fields",
             "type": "object",
             "patternProperties": {
                 "^.*$": {
+                    "description": "The key is a unique name for the field block",
                     "type": "object",
                     "required": [
                         "origin",
@@ -576,18 +687,42 @@ TEMPLATE_SCHEMA = {
                     ],
                     "additionalProperties": False,
                     "properties": {
-                        "bubbleDimensions": two_positive_numbers,
-                        "bubblesGap": positive_number,
-                        "bubbleValues": ARRAY_OF_STRINGS,
+                        "bubbleDimensions": {
+                            **two_positive_numbers,
+                            "description": "The custom dimensions for the bubbles in the current field block: [width, height]",
+                        },
+                        "bubblesGap": {
+                            **positive_number,
+                            "description": "The gap between two bubbles(top-left to top-left) in the current field block",
+                        },
+                        "bubbleValues": {
+                            **ARRAY_OF_STRINGS,
+                            "description": "The ordered array of values to use for given bubbles per field in this field block",
+                        },
                         "direction": {
+                            "description": "The direction of expanding the bubbles layout in this field block",
                             "type": "string",
                             "enum": ["horizontal", "vertical"],
                         },
-                        "emptyValue": {"type": "string"},
-                        "fieldLabels": {"type": "array", "items": FIELD_STRING_TYPE},
-                        "labelsGap": positive_number,
-                        "origin": two_positive_integers,
+                        "emptyValue": {
+                            "description": "The custom empty bubble value to use in this field block",
+                            "type": "string",
+                        },
+                        "fieldLabels": {
+                            "description": "The ordered array of labels to use for given fields in this field block",
+                            "type": "array",
+                            "items": FIELD_STRING_TYPE,
+                        },
+                        "labelsGap": {
+                            **positive_number,
+                            "description": "The gap between two labels(top-left to top-left) in the current field block",
+                        },
+                        "origin": {
+                            **two_positive_integers,
+                            "description": "The top left point of the first bubble in this field block",
+                        },
                         "fieldType": {
+                            "description": "The field type to use from a list of ready-made types as well as the custom type",
                             "type": "string",
                             "enum": [*list(FIELD_TYPES.keys()), "CUSTOM"],
                         },

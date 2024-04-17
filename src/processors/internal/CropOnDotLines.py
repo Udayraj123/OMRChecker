@@ -301,9 +301,9 @@ class CropOnDotLines(CropOnPatchesCommon):
 
         # TODO: simple colored thresholding to clear out noise?
 
-        blur_size = tuning_options.get("dotBlur", None)
-        if blur_size:
-            area = cv2.GaussianBlur(area, (blur_size, blur_size), 0)
+        dot_blur_kernel = tuning_options.get("dotBlurKernel", None)
+        if dot_blur_kernel:
+            area = cv2.GaussianBlur(area, dot_blur_kernel, 0)
 
         # Open : erode then dilate
         morph_c = cv2.morphologyEx(

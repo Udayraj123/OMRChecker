@@ -26,7 +26,10 @@
       "options": {
         "type": "FOUR_DOTS",
         "tuningOptions": {
-          "dotBlur": 3,
+          "dotBlurKernel": [
+            3,
+            3
+          ],
           "dotThreshold": 120
         },
         "topLeftDot": {

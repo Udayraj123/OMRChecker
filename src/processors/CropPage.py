@@ -66,7 +66,6 @@ class CropPage(WarpOnPointsCommon):
             return ordered_page_corners, destination_page_corners, edge_contours_map
         else:
             # TODO: remove this if REMAP method is removed, see if homography REALLY needs page contour points
-            # TODO: support for maxPointsPerEdge
             max_points_per_edge = options.get("maxPointsPerEdge", None)
 
             control_points, destination_points = [], []
