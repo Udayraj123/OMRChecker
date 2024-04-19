@@ -302,22 +302,19 @@ class ImageInstanceOps:
                                 jumps_string,
                             )
                     else:
-                        # TODO: reduce the noise for parity logs
-                        skip_extra_logs = True  # temp
-                        if not skip_extra_logs:
-                            logger.info(
-                                f"party_matched for field: {field.field_label}",
-                                thresholds_string,
-                            )
+                        # Note: debug logs are disabled by default
+                        logger.debug(
+                            f"party_matched for field: {field.field_label}",
+                            thresholds_string,
+                        )
 
                         # 5.1 High confidence if the gap is very large compared to MIN_JUMP
                         if is_local_jump_confident:
                             # Higher weightage for confidence
-                            if not skip_extra_logs:
-                                logger.info(
-                                    f"is_local_jump_confident => increased confidence",
-                                    jumps_string,
-                                )
+                            logger.debug(
+                                f"is_local_jump_confident => increased confidence",
+                                jumps_string,
+                            )
                         # No output disparity, but -
                         # 2.1 global threshold is "too close" to lower bubbles
                         bubbles_in_doubt["global_lower"] = [
@@ -531,10 +528,14 @@ class ImageInstanceOps:
             )
 
             InteractionUtils.show(
-                "final_marked", final_marked, 0, resize_to_height=True, config=config
+                "Final Marked Bubbles",
+                final_marked,
+                0,
+                resize_to_height=True,
+                config=config,
             )
             InteractionUtils.show(
-                "colored_final_marked",
+                "Final Marked Bubbles (Colored)",
                 colored_final_marked,
                 1,
                 resize_to_height=True,
@@ -542,7 +543,11 @@ class ImageInstanceOps:
             )
         else:
             InteractionUtils.show(
-                "final_marked", final_marked, 1, resize_to_height=True, config=config
+                "Final Marked Bubbles",
+                final_marked,
+                1,
+                resize_to_height=True,
+                config=config,
             )
 
         return final_marked, colored_final_marked
@@ -627,15 +632,6 @@ class ImageInstanceOps:
         if should_save_detections:
             for i in range(config.outputs.save_image_level):
                 self.save_image_stacks(i + 1, file_id, save_marked_dir)
-
-        if config.outputs.show_image_level >= 2 and file_id is not None:
-            InteractionUtils.show(
-                f"Final Marked Bubbles({image_type}) : '{file_id}'",
-                marked_image,
-                pause=True,
-                resize_to_height=True,
-                config=config,
-            )
 
         return marked_image
 

@@ -261,7 +261,7 @@ def process_files(
     start_time = int(time())
     files_counter = 0
     STATS.files_not_moved = 0
-
+    logger.set_log_levels(tuning_config.outputs.show_logs_by_type)
     for file_path in omr_files:
         files_counter += 1
         file_name = file_path.name
@@ -418,6 +418,8 @@ def process_files(
             # else:
             #     TODO:  Add appropriate record handling here
             #     pass
+
+    logger.reset_log_levels()
 
     print_stats(start_time, files_counter, tuning_config)
 

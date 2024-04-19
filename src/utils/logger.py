@@ -1,12 +1,10 @@
 import logging
-from typing import Union
 
 from rich.console import Console
 from rich.logging import RichHandler
 
 FORMAT = "%(message)s"
 
-# TODO: set logging level from config.json + CLI args dynamically
 logging.basicConfig(
     level=logging.INFO,
     format="%(message)s",
@@ -14,19 +12,33 @@ logging.basicConfig(
     handlers=[RichHandler(rich_tracebacks=True)],
 )
 
+DEFAULT_LOG_LEVEL_MAP = {
+    "critical": True,
+    "error": True,
+    "warning": True,
+    "info": True,
+    "debug": True,
+}
+
 
 class Logger:
     def __init__(
         self,
         name,
-        level: Union[int, str] = logging.NOTSET,
         message_format="%(message)s",
         date_format="[%X]",
     ):
         self.log = logging.getLogger(name)
-        self.log.setLevel(level)
+        self.log.setLevel(logging.DEBUG)
         self.log.__format__ = message_format
         self.log.__date_format__ = date_format
+        self.reset_log_levels()
+
+    def set_log_levels(self, show_logs_by_type):
+        self.show_logs_by_type = {**DEFAULT_LOG_LEVEL_MAP, **show_logs_by_type}
+
+    def reset_log_levels(self):
+        self.show_logs_by_type = DEFAULT_LOG_LEVEL_MAP
 
     def debug(self, *msg: object, sep=" "):
         return self.logutil("debug", *msg, sep=sep)
@@ -58,10 +70,12 @@ class Logger:
     # stack-frame - self.log.debug - logutil - stringify - log method - caller
     @stringify
     def logutil(self, method_type: str, *msg: object, sep=" ") -> None:
-        func = getattr(self.log, method_type, None)
-        if not func:
+        if self.show_logs_by_type[method_type] is False:
+            return
+        logger_func = getattr(self.log, method_type, None)
+        if not logger_func:
             raise AttributeError(f"Logger has no method {method_type}")
-        return func(sep.join(msg), stacklevel=4)
+        return logger_func(sep.join(msg), stacklevel=4)
 
 
 logger = Logger(__name__)

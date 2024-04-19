@@ -17,6 +17,13 @@ CONFIG_DEFAULTS = DotMap(
             "display_image_dimensions": [720, 1080],
             "show_image_level": 0,
             "save_image_level": 0,
+            "show_logs_by_type": {
+                "critical": True,
+                "error": True,
+                "warning": True,
+                "info": True,
+                "debug": False,
+            },
             "save_detections": True,
             "show_colored_outputs": True,
             "save_image_metrics": False,

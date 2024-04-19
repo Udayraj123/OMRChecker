@@ -299,7 +299,7 @@ class EvaluationConfig:
 
                 self.exclude_files.append(image_path)
 
-                logger.debug(
+                logger.info(
                     f"Attempting to generate answer key from image: '{image_path}'"
                 )
                 # TODO: use a common function for below changes?
