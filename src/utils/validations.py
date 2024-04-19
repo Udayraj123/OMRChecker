@@ -58,15 +58,16 @@ def validate_template_json(json_data, template_path):
                 preProcessorJson = json_data["preProcessors"][error.path[1]]
                 preProcessorName = preProcessorJson.get("name", "UNKNOWN")
                 preProcessorKey = error.path[2]
-                table.add_row(f"{key}.{preProcessorName}.{preProcessorKey}", msg)
+                key = f"{key}.{preProcessorName}.{preProcessorKey}"
             elif validator == "required":
                 requiredProperty = re.findall(r"'(.*?)'", msg)[0]
-                table.add_row(
-                    f"{key}.{requiredProperty}",
-                    f"{msg}. Check for spelling errors and make sure it is in camelCase",
-                )
-            else:
-                table.add_row(key, msg)
+                key = f"{key}.{requiredProperty}"
+
+                if key == "fieldBlocks.DEFAULT":
+                    msg = f"{msg}. Nest your field blocks object by adding 'DEFAULT' key to it."
+                else:
+                    msg = f"{msg}. Check for spelling errors and make sure it is in camelCase"
+            table.add_row(key, msg)
         console.print(table, justify="center")
         raise Exception(
             f"Provided Template JSON is Invalid: '{template_path}'"
