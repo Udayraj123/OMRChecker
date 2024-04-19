@@ -7,6 +7,7 @@ from src.processors.constants import (
 )
 from src.schemas.constants import (
     ARRAY_OF_STRINGS,
+    DEFAULT_FIELD_BLOCKS_KEY,
     FIELD_STRING_TYPE,
     positive_integer,
     positive_number,
@@ -14,7 +15,7 @@ from src.schemas.constants import (
     two_positive_numbers,
     zero_to_one_number,
 )
-from src.utils.constants import FIELD_TYPES
+from src.utils.constants import BUILTIN_FIELD_TYPES
 
 margins_schema = {
     "description": "The margins to use around a box",
@@ -29,8 +30,8 @@ margins_schema = {
     },
 }
 # TODO: deprecate in favor of scan_area_description
-patch_area_description = {
-    "description": "The detailed description of a patch area",
+box_area_description = {
+    "description": "The description of a box area on the image",
     "type": "object",
     "required": ["origin", "dimensions", "margins"],
     "additionalProperties": False,
@@ -38,6 +39,14 @@ patch_area_description = {
         "origin": two_positive_integers,
         "dimensions": two_positive_integers,
         "margins": margins_schema,
+    },
+}
+
+point_selector_patch_area_description = {
+    **box_area_description,
+    "description": "The detailed description of a patch area with an optional point selector",
+    "properties": {
+        **box_area_description["properties"],
         "selector": {
             "type": "string",
             "enum": [*SELECTOR_TYPES_IN_ORDER],
@@ -53,12 +62,12 @@ scan_area_template = {
 }
 
 scan_area_description = {
-    **patch_area_description,
+    **point_selector_patch_area_description,
     "description": "The detailed description of a scanArea's coordinates and purpose",
     # TODO: "required": [...],
     "additionalProperties": False,
     "properties": {
-        **patch_area_description["properties"],
+        **point_selector_patch_area_description["properties"],
         "label": {
             "description": "The label to use for the scanArea",
             "type": "string",
@@ -226,6 +235,148 @@ crop_on_four_markers_tuning_options = {
     },
 }
 
+common_field_block_properties = {
+    # Common properties here
+    "emptyValue": {
+        "description": "The custom empty bubble value to use in this field block",
+        "type": "string",
+    },
+    "fieldType": {
+        "description": "The field type to use from a list of ready-made types as well as the custom type",
+        "type": "string",
+        "enum": [*list(BUILTIN_FIELD_TYPES.keys()), "CUSTOM", "BARCODE"],
+    },
+}
+traditional_field_block_properties = {
+    **common_field_block_properties,
+    "bubbleDimensions": {
+        **two_positive_numbers,
+        "description": "The custom dimensions for the bubbles in the current field block: [width, height]",
+    },
+    "bubblesGap": {
+        **positive_number,
+        "description": "The gap between two bubbles(top-left to top-left) in the current field block",
+    },
+    "bubbleValues": {
+        **ARRAY_OF_STRINGS,
+        "description": "The ordered array of values to use for given bubbles per field in this field block",
+    },
+    "direction": {
+        "description": "The direction of expanding the bubbles layout in this field block",
+        "type": "string",
+        "enum": ["horizontal", "vertical"],
+    },
+    "fieldLabels": {
+        "description": "The ordered array of labels to use for given fields in this field block",
+        "type": "array",
+        "items": FIELD_STRING_TYPE,
+    },
+    "labelsGap": {
+        **positive_number,
+        "description": "The gap between two labels(top-left to top-left) in the current field block",
+    },
+    "origin": {
+        **two_positive_integers,
+        "description": "The top left point of the first bubble in this field block",
+    },
+}
+
+many_field_blocks_description = {
+    "description": "Each fieldBlock denotes a small group of adjacent fields",
+    "type": "object",
+    "patternProperties": {
+        "^.*$": {
+            "description": "The key is a unique name for the field block",
+            "type": "object",
+            "required": [
+                "origin",
+                "bubblesGap",
+                "labelsGap",
+                "fieldLabels",
+            ],
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "fieldType": {
+                                "enum": [
+                                    *list(BUILTIN_FIELD_TYPES.keys()),
+                                ]
+                            }
+                        },
+                    },
+                    "then": {
+                        "required": ["fieldType"],
+                        "additionalProperties": False,
+                        "properties": traditional_field_block_properties,
+                    },
+                },
+                {
+                    "if": {
+                        "properties": {"fieldType": {"const": "CUSTOM"}},
+                    },
+                    "then": {
+                        "required": [
+                            "bubbleValues",
+                            "direction",
+                            "fieldType",
+                        ],
+                        "additionalProperties": False,
+                        "properties": traditional_field_block_properties,
+                    },
+                },
+                {
+                    "if": {
+                        "properties": {"fieldType": {"const": "BARCODE"}},
+                    },
+                    "then": {
+                        # TODO: move barcode specific properties into this if-else
+                        "required": [
+                            "scanArea",
+                            "fieldType",
+                            "fieldLabel",
+                            # TODO: "failIfNotFound"
+                            # "emptyValue",
+                        ],
+                        "additionalProperties": False,
+                        "properties": {
+                            **common_field_block_properties,
+                            "scanArea": box_area_description,
+                            "fieldLabel": {"type": "string"},
+                        },
+                    },
+                },
+                # TODO: support for PHOTO_BLOB, OCR custom fields here
+            ],
+            "properties": common_field_block_properties,
+        }
+    },
+}
+
+field_regex_extraction_schema = {
+    "type": "object",
+    "required": ["formatString"],
+    "additionalProperties": False,
+    "properties": {
+        # "{barcode}", "{roll}-{barcode}"
+        "formatString": {
+            "description": "Format string of variables to use from field responses e.g. '{roll}-{barcode}'",
+            "type": "string",
+        },
+        # Example: extract first for characters "(\w{4}).*"
+        "extractRegex": {
+            "description": "Mapping to use on the composed field string",
+            "type": "string",
+            "format": "regex",
+        },
+        # TODO: support for "abortIfNotMatched"?
+        "capturedString": {
+            "description": "The captured groups string to use for replacement",
+            "type": "string",
+        },
+    },
+}
+
 TEMPLATE_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/Udayraj123/OMRChecker/tree/master/src/schemas/template-schema.json",
@@ -280,6 +431,7 @@ TEMPLATE_SCHEMA = {
                 **pre_processor_if_required_attrs,
                 "additionalProperties": True,
                 "properties": {
+                    # Common properties to be used here
                     "name": {
                         "description": "The name of the pre-processor to use",
                         "type": "string",
@@ -551,10 +703,10 @@ TEMPLATE_SCHEMA = {
                                                         "description": "The relative path to the omr marker",
                                                         "type": "string",
                                                     },
-                                                    "topRightMarker": patch_area_description,
-                                                    "bottomRightMarker": patch_area_description,
-                                                    "topLeftMarker": patch_area_description,
-                                                    "bottomLeftMarker": patch_area_description,
+                                                    "topRightMarker": point_selector_patch_area_description,
+                                                    "bottomRightMarker": point_selector_patch_area_description,
+                                                    "topLeftMarker": point_selector_patch_area_description,
+                                                    "bottomLeftMarker": point_selector_patch_area_description,
                                                     "tuningOptions": crop_on_four_markers_tuning_options,
                                                 },
                                             },
@@ -579,9 +731,9 @@ TEMPLATE_SCHEMA = {
                                                 "properties": {
                                                     **crop_on_markers_options_available_keys,
                                                     "tuningOptions": crop_on_dot_lines_tuning_options,
-                                                    "leftLine": patch_area_description,
-                                                    "topRightDot": patch_area_description,
-                                                    "bottomRightDot": patch_area_description,
+                                                    "leftLine": point_selector_patch_area_description,
+                                                    "topRightDot": point_selector_patch_area_description,
+                                                    "bottomRightDot": point_selector_patch_area_description,
                                                 },
                                             },
                                         },
@@ -604,9 +756,9 @@ TEMPLATE_SCHEMA = {
                                                 "properties": {
                                                     **crop_on_markers_options_available_keys,
                                                     "tuningOptions": crop_on_dot_lines_tuning_options,
-                                                    "rightLine": patch_area_description,
-                                                    "topLeftDot": patch_area_description,
-                                                    "bottomLeftDot": patch_area_description,
+                                                    "rightLine": point_selector_patch_area_description,
+                                                    "topLeftDot": point_selector_patch_area_description,
+                                                    "bottomLeftDot": point_selector_patch_area_description,
                                                 },
                                             },
                                         },
@@ -618,13 +770,16 @@ TEMPLATE_SCHEMA = {
                                                 },
                                             },
                                             "then": {
-                                                "required": ["leftLine", "rightLine"],
+                                                "required": [
+                                                    "leftLine",
+                                                    "rightLine",
+                                                ],
                                                 "additionalProperties": False,
                                                 "properties": {
                                                     **crop_on_markers_options_available_keys,
                                                     "tuningOptions": crop_on_dot_lines_tuning_options,
-                                                    "leftLine": patch_area_description,
-                                                    "rightLine": patch_area_description,
+                                                    "leftLine": point_selector_patch_area_description,
+                                                    "rightLine": point_selector_patch_area_description,
                                                 },
                                             },
                                         },
@@ -646,10 +801,10 @@ TEMPLATE_SCHEMA = {
                                                 "properties": {
                                                     **crop_on_markers_options_available_keys,
                                                     "tuningOptions": crop_on_dot_lines_tuning_options,
-                                                    "topRightDot": patch_area_description,
-                                                    "bottomRightDot": patch_area_description,
-                                                    "topLeftDot": patch_area_description,
-                                                    "bottomLeftDot": patch_area_description,
+                                                    "topRightDot": point_selector_patch_area_description,
+                                                    "bottomRightDot": point_selector_patch_area_description,
+                                                    "topLeftDot": point_selector_patch_area_description,
+                                                    "bottomLeftDot": point_selector_patch_area_description,
                                                 },
                                             },
                                         },
@@ -662,72 +817,68 @@ TEMPLATE_SCHEMA = {
             },
         },
         "fieldBlocks": {
-            "description": "Each fieldBlock denotes a small group of adjacent fields",
             "type": "object",
-            "patternProperties": {
-                "^.*$": {
-                    "description": "The key is a unique name for the field block",
+            "required": [DEFAULT_FIELD_BLOCKS_KEY],
+            "additionalProperties": False,
+            "properties": {
+                DEFAULT_FIELD_BLOCKS_KEY: many_field_blocks_description,
+                "customSetFieldBlocks": {
                     "type": "object",
-                    "required": [
-                        "origin",
-                        "bubblesGap",
-                        "labelsGap",
-                        "fieldLabels",
-                    ],
-                    "allOf": [
-                        {"required": ["fieldType"]},
-                        {
-                            "if": {
-                                "properties": {"fieldType": {"const": "CUSTOM"}},
-                            },
-                            "then": {
-                                "required": ["bubbleValues", "direction", "fieldType"]
-                            },
-                        },
-                    ],
-                    "additionalProperties": False,
-                    "properties": {
-                        "bubbleDimensions": {
-                            **two_positive_numbers,
-                            "description": "The custom dimensions for the bubbles in the current field block: [width, height]",
-                        },
-                        "bubblesGap": {
-                            **positive_number,
-                            "description": "The gap between two bubbles(top-left to top-left) in the current field block",
-                        },
-                        "bubbleValues": {
-                            **ARRAY_OF_STRINGS,
-                            "description": "The ordered array of values to use for given bubbles per field in this field block",
-                        },
-                        "direction": {
-                            "description": "The direction of expanding the bubbles layout in this field block",
-                            "type": "string",
-                            "enum": ["horizontal", "vertical"],
-                        },
-                        "emptyValue": {
-                            "description": "The custom empty bubble value to use in this field block",
-                            "type": "string",
-                        },
-                        "fieldLabels": {
-                            "description": "The ordered array of labels to use for given fields in this field block",
-                            "type": "array",
-                            "items": FIELD_STRING_TYPE,
-                        },
-                        "labelsGap": {
-                            **positive_number,
-                            "description": "The gap between two labels(top-left to top-left) in the current field block",
-                        },
-                        "origin": {
-                            **two_positive_integers,
-                            "description": "The top left point of the first bubble in this field block",
-                        },
-                        "fieldType": {
-                            "description": "The field type to use from a list of ready-made types as well as the custom type",
-                            "type": "string",
-                            "enum": [*list(FIELD_TYPES.keys()), "CUSTOM"],
-                        },
+                    "description": "Each key is a unique name for a set of custom fieldBlocks (useful for test paper sets)",
+                    "patternProperties": {
+                        # Note: first default field blocks will be applied and read, then the chosen layout will override the default field blocks
+                        "^.*$": many_field_blocks_description,
                     },
-                }
+                },
+                "customSetMapping": {
+                    **field_regex_extraction_schema,
+                    # "formatString" : "{barcode}"
+                    "description": "Mapping response fields from default layout to the set name",
+                },
+            },
+        },
+        "sortFiles": {
+            "description": "Configuration to sort images/files based on field responses, QR codes, barcodes, etc and a regex mapping",
+            "type": "object",
+            "allOf": [
+                {"required": ["enabled"]},
+                {
+                    "if": {
+                        "properties": {"enabled": {"const": True}},
+                    },
+                    "then": {
+                        "required": [
+                            "enabled",
+                            "sortMode",
+                            "outputDirectory",
+                            "fileMappings",
+                        ]
+                    },
+                },
+            ],
+            "additionalProperties": False,
+            "properties": {
+                "enabled": {
+                    "description": "Whether to enable sorting. Note that file copies/movements are irreversible once enabled",
+                    "type": "boolean",
+                },
+                "sortMode": {
+                    "description": "Whether to copy files or move files",
+                    "type": "string",
+                    "enum": [
+                        "COPY",
+                        "MOVE",
+                    ],
+                },
+                # TODO: ignore outputDirectory when resolved during template reading
+                "outputDirectory": {
+                    "description": "Relative path of the directory to use to sort the files",
+                    "type": "string",
+                },
+                "fileMapping": {
+                    **field_regex_extraction_schema,
+                    "description": "A mapping from regex to the relative file path to use",
+                },
             },
         },
     },

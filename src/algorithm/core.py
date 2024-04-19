@@ -123,6 +123,8 @@ class ImageInstanceOps:
             [],
         )
         for field_block in template.field_blocks:
+            #  TODO: support for if field_block.field_type == "BARCODE":
+
             field_bubble_means_stds = []
             box_w, box_h = field_block.bubble_dimensions
             for field in field_block.fields:

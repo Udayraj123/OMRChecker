@@ -9,7 +9,8 @@
 
 from src.algorithm.core import ImageInstanceOps
 from src.processors.manager import PROCESSOR_MANAGER
-from src.utils.constants import FIELD_TYPES
+from src.schemas.constants import DEFAULT_FIELD_BLOCKS_KEY
+from src.utils.constants import BUILTIN_FIELD_TYPES
 from src.utils.logger import logger
 from src.utils.parsing import (
     custom_sort_output_columns,
@@ -49,6 +50,7 @@ class Template:
                 "options",
                 "processingImageShape",
                 "outputImageShape",
+                # TODO: support for "sortFiles" key
             ],
         )
 
@@ -90,7 +92,10 @@ class Template:
         # Add field_blocks
         self.field_blocks = []
         self.all_parsed_labels = set()
-        for block_name, field_block_object in field_blocks_object.items():
+        # TODO: add support for parsing "customSetFieldBlocks" and "customSetMapping"
+        for block_name, field_block_object in field_blocks_object[
+            DEFAULT_FIELD_BLOCKS_KEY
+        ].items():
             self.parse_and_add_field_block(block_name, field_block_object)
 
     def parse_custom_labels(self, custom_labels_object):
@@ -161,15 +166,18 @@ class Template:
     def parse_and_add_field_block(self, block_name, field_block_object):
         field_block_object = self.pre_fill_field_block(field_block_object)
         block_instance = FieldBlock(block_name, field_block_object)
+        # TODO: support custom field types like Barcode and OCR
         self.field_blocks.append(block_instance)
         self.validate_parsed_labels(field_block_object["fieldLabels"], block_instance)
 
     def pre_fill_field_block(self, field_block_object):
         field_type = field_block_object["fieldType"]
-        if field_type in FIELD_TYPES:
+        #  TODO: support for if field_type == "BARCODE":
+
+        if field_type in BUILTIN_FIELD_TYPES:
             field_block_object = {
                 **field_block_object,
-                **FIELD_TYPES[field_type],
+                **BUILTIN_FIELD_TYPES[field_type],
             }
 
         return {
@@ -293,6 +301,8 @@ class FieldBlock:
         )
         self.origin = origin
         self.bubble_dimensions = bubble_dimensions
+        # TODO: support barcode, ocr, etc custom field types
+        self.field_type = field_type
         self.calculate_block_dimensions(
             bubble_dimensions,
             bubble_values,

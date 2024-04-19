@@ -4,15 +4,68 @@
     2400
   ],
   "bubbleDimensions": [
-    23,
-    20
+    30,
+    25
   ],
+  "customLabels": {
+    "Subject Code": [
+      "subjectCode1",
+      "subjectCode2"
+    ],
+    "Roll": [
+      "roll1..10"
+    ]
+  },
   "fieldBlocks": {
     "DEFAULT": {
+      "bookletNo": {
+        "origin": [
+          595,
+          545
+        ],
+        "bubblesGap": 68,
+        "labelsGap": 0,
+        "fieldLabels": [
+          "bookletNo"
+        ],
+        "fieldType": "CUSTOM",
+        "bubbleValues": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "direction": "vertical"
+      },
+      "subjectCode": {
+        "origin": [
+          912,
+          512
+        ],
+        "bubblesGap": 33,
+        "labelsGap": 42.5,
+        "fieldLabels": [
+          "subjectCode1",
+          "subjectCode2"
+        ],
+        "fieldType": "QTYPE_INT"
+      },
+      "roll": {
+        "origin": [
+          1200,
+          510
+        ],
+        "bubblesGap": 33,
+        "labelsGap": 42.8,
+        "fieldLabels": [
+          "roll1..10"
+        ],
+        "fieldType": "QTYPE_INT"
+      },
       "q01block": {
         "origin": [
-          492,
-          924
+          500,
+          927
         ],
         "bubblesGap": 58.75,
         "labelsGap": 32.65,
@@ -23,10 +76,10 @@
       },
       "q11block": {
         "origin": [
-          492,
+          500,
           1258
         ],
-        "bubblesGap": 59.75,
+        "bubblesGap": 58.75,
         "labelsGap": 32.65,
         "fieldLabels": [
           "q11..20"
@@ -35,10 +88,10 @@
       },
       "q21block": {
         "origin": [
-          492,
+          500,
           1589
         ],
-        "bubblesGap": 60.75,
+        "bubblesGap": 58.75,
         "labelsGap": 32.65,
         "fieldLabels": [
           "q21..30"
@@ -47,10 +100,10 @@
       },
       "q31block": {
         "origin": [
-          487,
-          1920
+          495,
+          1925
         ],
-        "bubblesGap": 61.75,
+        "bubblesGap": 58.75,
         "labelsGap": 32.65,
         "fieldLabels": [
           "q31..40"
@@ -59,8 +112,8 @@
       },
       "q41block": {
         "origin": [
-          807,
-          924
+          811,
+          927
         ],
         "bubblesGap": 58.75,
         "labelsGap": 32.65,
@@ -71,10 +124,10 @@
       },
       "q51block": {
         "origin": [
-          803,
+          811,
           1258
         ],
-        "bubblesGap": 59.75,
+        "bubblesGap": 58.75,
         "labelsGap": 32.65,
         "fieldLabels": [
           "q51..60"
@@ -83,10 +136,10 @@
       },
       "q61block": {
         "origin": [
-          803,
+          811,
           1589
         ],
-        "bubblesGap": 60.75,
+        "bubblesGap": 58.75,
         "labelsGap": 32.65,
         "fieldLabels": [
           "q61..70"
@@ -95,10 +148,10 @@
       },
       "q71block": {
         "origin": [
-          803,
-          1920
+          811,
+          1925
         ],
-        "bubblesGap": 60.75,
+        "bubblesGap": 58.75,
         "labelsGap": 32.65,
         "fieldLabels": [
           "q71..80"
@@ -107,8 +160,8 @@
       },
       "q81block": {
         "origin": [
-          1115,
-          924
+          1125,
+          927
         ],
         "bubblesGap": 58.75,
         "labelsGap": 32.65,
@@ -119,10 +172,10 @@
       },
       "q91block": {
         "origin": [
-          1115,
+          1125,
           1258
         ],
-        "bubblesGap": 59.75,
+        "bubblesGap": 58.75,
         "labelsGap": 32.65,
         "fieldLabels": [
           "q91..100"
@@ -131,6 +184,10 @@
       }
     }
   },
+  "processingImageShape": [
+    2400,
+    1800
+  ],
   "preProcessors": [
     {
       "name": "CropPage",
@@ -138,7 +195,10 @@
         "morphKernel": [
           10,
           10
-        ]
+        ],
+        "tuningOptions": {
+          "warpMethod": "DOC_REFINE"
+        }
       }
     }
   ]

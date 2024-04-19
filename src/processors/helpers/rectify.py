@@ -144,6 +144,7 @@ def _create_backward_output_map(
     logger.info(
         f"Approx Transformed Bounds: ({cropped_page_min_x:.2f},{cropped_page_min_y:.2f}) -> ({cropped_page_max_x:.2f},{cropped_page_max_y:.2f})",
     )
+
     transformed_box_with_vertical_curves = MultiLineString(
         [transformed_segments["left"], transformed_segments["right"]]
     )

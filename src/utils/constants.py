@@ -15,7 +15,7 @@ ERROR_CODES = DotMap(
     _dynamic=False,
 )
 
-FIELD_TYPES = {
+BUILTIN_FIELD_TYPES = {
     "QTYPE_INT": {
         "bubbleValues": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
         "direction": "vertical",

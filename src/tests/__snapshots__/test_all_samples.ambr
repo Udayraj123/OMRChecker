@@ -213,24 +213,7 @@
     ''',
   })
 # ---
-# name: test_run_omr_marker_mobile
-  dict({
-    'MobileCamera/Manual/ErrorFiles.csv': '''
-      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
-  
-    ''',
-    'MobileCamera/Manual/MultiMarkedFiles.csv': '''
-      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
-  
-    ''',
-    'MobileCamera/Results/Results_05AM.csv': '''
-      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
-      "sheet1.jpg","samples/1-mobile-camera/MobileCamera/sheet1.jpg","outputs/1-mobile-camera/MobileCamera/CheckedOMRs/sheet1.jpg","0","E503110026","B","","D","B","6","11","20","7","16","B","D","C","D","A","D","B","A","C","C","D"
-  
-    ''',
-  })
-# ---
-# name: test_run_omr_marker_scanned
+# name: test_run_omr_marker
   dict({
     'ScanBatch1/Manual/ErrorFiles.csv': '''
       "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22"
@@ -256,6 +239,23 @@
     'ScanBatch2/Results/Results_05AM.csv': '''
       "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22"
       "camscanner-2.jpg","samples/2-omr-marker/ScanBatch2/camscanner-2.jpg","outputs/2-omr-marker/ScanBatch2/CheckedOMRs/camscanner-2.jpg","55.0","E204420109","C","C","B","C","C","01","19","10","10","18","D","A","D","D","D","C","C","C","C","D","B","A"
+  
+    ''',
+  })
+# ---
+# name: test_run_omr_marker_mobile
+  dict({
+    'MobileCamera/Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
+  
+    ''',
+    'MobileCamera/Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
+  
+    ''',
+    'MobileCamera/Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
+      "sheet1.jpg","samples/1-mobile-camera/MobileCamera/sheet1.jpg","outputs/1-mobile-camera/MobileCamera/CheckedOMRs/sheet1.jpg","0","E503110026","B","","D","B","6","11","20","7","16","B","D","C","D","A","D","B","A","C","C","D"
   
     ''',
   })
