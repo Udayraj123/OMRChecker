@@ -78,7 +78,7 @@
       "code1..3"
     ]
   },
-  "fieldBlocks": {
+  "fieldBlockGroups": {
     "DEFAULT": {
       "Roll_No": {
         "fieldType": "QTYPE_INT",

@@ -33,7 +33,7 @@
       "q9_2"
     ]
   },
-  "fieldBlocks": {
+  "fieldBlockGroups": {
     "DEFAULT": {
       "Medium": {
         "bubblesGap": 41,

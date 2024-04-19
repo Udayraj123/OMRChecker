@@ -46,7 +46,7 @@
       "check_2"
     ]
   },
-  "fieldBlocks": {
+  "fieldBlockGroups": {
     "DEFAULT": {
       "Check1": {
         "origin": [

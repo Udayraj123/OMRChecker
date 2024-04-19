@@ -63,7 +63,7 @@ def validate_template_json(json_data, template_path):
                 requiredProperty = re.findall(r"'(.*?)'", msg)[0]
                 key = f"{key}.{requiredProperty}"
 
-                if key == "fieldBlocks.DEFAULT":
+                if key == "fieldBlockGroups.DEFAULT":
                     msg = f"{msg}. Nest your field blocks object by adding 'DEFAULT' key to it."
                 else:
                     msg = f"{msg}. Check for spelling errors and make sure it is in camelCase"

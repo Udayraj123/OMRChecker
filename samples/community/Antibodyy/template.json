@@ -7,7 +7,7 @@
     42,
     42
   ],
-  "fieldBlocks": {
+  "fieldBlockGroups": {
     "DEFAULT": {
       "MCQBlock1": {
         "fieldType": "QTYPE_MCQ5",

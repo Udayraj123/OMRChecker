@@ -97,12 +97,17 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         )
 
         if self.warp_method == WarpMethod.PERSPECTIVE_TRANSFORM:
-            transform_matrix, warped_dimensions = self.get_perspective_transform_matrix(
-                parsed_control_points, parsed_destination_points
+            (
+                transform_matrix,
+                warped_dimensions,
+                parsed_destination_points,
+            ) = self.get_perspective_transform_matrix(
+                parsed_control_points,  # parsed_destination_points
             )
             warped_image, warped_colored_image = self.warp_perspective(
                 image, colored_image, transform_matrix, warped_dimensions
             )
+
         # elif TODO: support for warpAffine as well for non cropped Alignment!!
         elif self.warp_method == WarpMethod.HOMOGRAPHY:
             transform_matrix, _matches_mask = self.get_homography_matrix(
@@ -124,9 +129,9 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             )
 
         if config.outputs.show_image_level >= 4:
-            title = "Warped Image"
+            title_prefix = "Warped Image"
             if self.enable_cropping:
-                title = "Cropped Image"
+                title_prefix = "Cropped Image"
                 # Draw the convex hull of all control points
                 ImageUtils.draw_contour(
                     self.debug_image, cv2.convexHull(parsed_control_points)
@@ -142,7 +147,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             )
 
             InteractionUtils.show(
-                f"{title} with Match Lines: {file_path}",
+                f"{title_prefix} with Match Lines: {file_path}",
                 matched_lines,
                 pause=True,
                 resize_to_height=True,
@@ -152,7 +157,8 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         return warped_image, warped_colored_image, _template
 
     def get_perspective_transform_matrix(
-        self, parsed_control_points, _parsed_destination_points
+        self,
+        parsed_control_points,  # _parsed_destination_points
     ):
         if len(parsed_control_points) > 4:
             logger.critical(f"Too many parsed_control_points={parsed_control_points}")
@@ -173,7 +179,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         transform_matrix = cv2.getPerspectiveTransform(
             parsed_control_points, parsed_destination_points
         )
-        return transform_matrix, warped_dimensions
+        return transform_matrix, warped_dimensions, parsed_destination_points
 
     def get_homography_matrix(self, parsed_control_points, parsed_destination_points):
         # Note: the robust methods cv2.RANSAC or cv2.LMEDS are not used as they will

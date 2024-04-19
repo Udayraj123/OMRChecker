@@ -18,7 +18,7 @@
       }
     }
   ],
-  "fieldBlocks": {
+  "fieldBlockGroups": {
     "DEFAULT": {
       "MCQ_Block_1": {
         "fieldType": "QTYPE_MCQ5",

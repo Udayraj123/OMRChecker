@@ -92,7 +92,7 @@
       "booklet1..7"
     ]
   },
-  "fieldBlocks": {
+  "fieldBlockGroups": {
     "DEFAULT": {
       "Roll_No": {
         "fieldType": "QTYPE_INT",

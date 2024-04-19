@@ -41,7 +41,7 @@ class Template:
             json_object.get,
             [
                 "customLabels",
-                "fieldBlocks",
+                "fieldBlockGroups",
                 "outputColumns",
                 "preProcessors",
                 "bubbleDimensions",
@@ -92,7 +92,7 @@ class Template:
         # Add field_blocks
         self.field_blocks = []
         self.all_parsed_labels = set()
-        # TODO: add support for parsing "customSetFieldBlocks" and "customSetMapping"
+        # TODO: add support for parsing "conditionalFieldBlockGroups" and "responseToGroupMapping"
         for block_name, field_block_object in field_blocks_object[
             DEFAULT_FIELD_BLOCKS_KEY
         ].items():

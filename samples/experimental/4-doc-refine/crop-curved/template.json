@@ -16,7 +16,7 @@
       "roll1..10"
     ]
   },
-  "fieldBlocks": {
+  "fieldBlockGroups": {
     "DEFAULT": {
       "bookletNo": {
         "origin": [

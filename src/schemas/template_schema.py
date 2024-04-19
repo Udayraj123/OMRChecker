@@ -387,7 +387,7 @@ TEMPLATE_SCHEMA = {
         "bubbleDimensions",
         "templateDimensions",
         "preProcessors",
-        "fieldBlocks",
+        "fieldBlockGroups",
     ],
     "additionalProperties": False,
     "properties": {
@@ -816,21 +816,21 @@ TEMPLATE_SCHEMA = {
                 ],
             },
         },
-        "fieldBlocks": {
+        "fieldBlockGroups": {
             "type": "object",
             "required": [DEFAULT_FIELD_BLOCKS_KEY],
             "additionalProperties": False,
             "properties": {
                 DEFAULT_FIELD_BLOCKS_KEY: many_field_blocks_description,
-                "customSetFieldBlocks": {
+                "conditionalFieldBlockGroups": {
                     "type": "object",
-                    "description": "Each key is a unique name for a set of custom fieldBlocks (useful for test paper sets)",
+                    "description": "Each key is a unique name for a set of custom fieldBlockGroups (useful for test paper sets)",
                     "patternProperties": {
                         # Note: first default field blocks will be applied and read, then the chosen layout will override the default field blocks
                         "^.*$": many_field_blocks_description,
                     },
                 },
-                "customSetMapping": {
+                "responseToGroupMapping": {
                     **field_regex_extraction_schema,
                     # "formatString" : "{barcode}"
                     "description": "Mapping response fields from default layout to the set name",

@@ -32,7 +32,7 @@
       "r4"
     ]
   },
-  "fieldBlocks": {
+  "fieldBlockGroups": {
     "DEFAULT": {
       "Roll_no": {
         "fieldType": "QTYPE_INT",

@@ -1,7 +1,7 @@
 TEMPLATE_DEFAULTS = {
     "customLabels": {},
     "emptyValue": "",
-    "fieldBlocks": {},
+    "fieldBlockGroups": {},
     "outputColumns": [],
     "preProcessors": [],
     "processingImageShape": [820, 666],

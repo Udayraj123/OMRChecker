@@ -46,7 +46,7 @@
       "q10_2"
     ]
   },
-  "fieldBlocks": {
+  "fieldBlockGroups": {
     "DEFAULT": {
       "Medium": {
         "fieldType": "CUSTOM",

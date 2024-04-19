@@ -99,7 +99,7 @@
       }
     }
   ],
-  "fieldBlocks": {
+  "fieldBlockGroups": {
     "DEFAULT": {
       "bookletNo": {
         "origin": [

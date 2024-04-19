@@ -28,7 +28,7 @@
       "b1..7"
     ]
   },
-  "fieldBlocks": {
+  "fieldBlockGroups": {
     "DEFAULT": {
       "Booklet_No": {
         "fieldType": "QTYPE_INT",

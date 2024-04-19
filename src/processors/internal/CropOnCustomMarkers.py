@@ -92,7 +92,9 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             "pointsLayout": layout_type,
             "enableCropping": True,
             "tuningOptions": {
-                "warpMethod": tuning_options.get("warpMethod", WarpMethod.DOC_REFINE)
+                "warpMethod": tuning_options.get(
+                    "warpMethod", WarpMethod.PERSPECTIVE_TRANSFORM
+                )
             },
         }
 

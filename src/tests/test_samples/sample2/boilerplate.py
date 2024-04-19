@@ -13,7 +13,7 @@ TEMPLATE_BOILERPLATE = {
             },
         }
     ],
-    "fieldBlocks": {
+    "fieldBlockGroups": {
         "DEFAULT": {
             "MCQBlock1a1": {
                 "fieldType": "QTYPE_MCQ4",

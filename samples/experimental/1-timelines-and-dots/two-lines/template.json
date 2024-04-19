@@ -87,7 +87,7 @@
       "cpl1..3"
     ]
   },
-  "fieldBlocks": {
+  "fieldBlockGroups": {
     "DEFAULT": {
       "NameBlock": {
         "fieldType": "CUSTOM",

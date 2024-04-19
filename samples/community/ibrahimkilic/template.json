@@ -8,7 +8,7 @@
     20
   ],
   "emptyValue": "no",
-  "fieldBlocks": {
+  "fieldBlockGroups": {
     "DEFAULT": {
       "YesNoBlock1": {
         "fieldType": "CUSTOM",
