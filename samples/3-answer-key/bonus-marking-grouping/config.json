@@ -1,0 +1,13 @@
+{
+  "thresholding": {
+    "MIN_JUMP": 30
+  },
+  "outputs": {
+    "display_image_dimensions": [
+      1189,
+      1682
+    ],
+    "filter_out_multimarked_files": false,
+    "show_image_level": 0
+  }
+}

@@ -14,7 +14,6 @@ from copy import deepcopy
 
 import pandas as pd
 from rich.table import Table
-
 from src.schemas.constants import (
     BONUS_SECTION_PREFIX,
     DEFAULT_SECTION_KEY,
@@ -33,6 +32,7 @@ from src.utils.parsing import (
     parse_fields,
     parse_float_or_fraction,
 )
+from src.utils.math import MathUtils
 
 
 class AnswerMatcher:
@@ -113,9 +113,9 @@ class AnswerMatcher:
                 ]
         elif answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
             for allowed_answer, parsed_answer_score in self.answer_item:
-                self.marking[
-                    f"{Verdict.ANSWER_MATCH}-{allowed_answer}"
-                ] = parsed_answer_score
+                self.marking[f"{Verdict.ANSWER_MATCH}-{allowed_answer}"] = (
+                    parsed_answer_score
+                )
 
     def get_marking_scheme(self):
         return self.section_marking_scheme
@@ -251,11 +251,22 @@ class EvaluationConfig:
             ],
         )
 
-        (self.draw_score, self.draw_answers_summary, self.verdict_colors) = map(
+        (
+            self.draw_score,
+            self.draw_answers_summary,
+            self.draw_marked_bubble_texts,
+            self.draw_question_verdicts,
+        ) = map(
             outputs_configuration.get,
-            ["draw_score", "draw_answers_summary", "verdict_colors"],
+            [
+                "draw_score",
+                "draw_answers_summary",
+                "draw_marked_bubble_texts",
+                "draw_question_verdicts",
+            ],
         )
-
+        if self.draw_question_verdicts["enabled"]:
+            self.get_draw_question_dict()
         (self.should_explain_scoring,) = map(
             options.get,
             [
@@ -390,6 +401,50 @@ class EvaluationConfig:
             # single-correct
             parsed_answer = answer_column
         return parsed_answer
+
+    @staticmethod
+    def get_colors(verdict_colors, verdict_symbol_colors, draw_answer_groups):
+        verdict_colors_dict = {
+            "correct": MathUtils.hex_to_bgr(verdict_colors["correct"]),
+            "neutral": MathUtils.hex_to_bgr(verdict_colors["neutral"]),
+            "negative": MathUtils.hex_to_bgr(verdict_colors["negative"]),
+            "bonus": MathUtils.hex_to_bgr(verdict_colors["bonus"]),
+        }
+        verdict_symbol_colors_dict = {
+            "positive": MathUtils.hex_to_bgr(verdict_symbol_colors["positive"]),
+            "neutral": MathUtils.hex_to_bgr(verdict_symbol_colors["neutral"]),
+            "negative": MathUtils.hex_to_bgr(verdict_symbol_colors["negative"]),
+            "bonus": MathUtils.hex_to_bgr(verdict_symbol_colors["bonus"]),
+        }
+
+        draw_answer_groups_dict = {
+            "enabled": draw_answer_groups["enabled"],
+        }
+        if draw_answer_groups["enabled"]:
+            draw_answer_groups_dict["color_sequence"] = [
+                MathUtils.hex_to_bgr(hex)
+                for hex in draw_answer_groups["color_sequence"]
+            ]
+
+        return verdict_colors_dict, verdict_symbol_colors_dict, draw_answer_groups_dict
+
+    def get_draw_question_dict(self):
+        (
+            verdict_colors,
+            verdict_symbol_colors,
+            draw_answer_groups,
+        ) = map(
+            self.draw_question_verdicts.get,
+            [
+                "verdict_colors",
+                "verdict_symbol_colors",
+                "draw_answer_groups",
+            ],
+        )
+
+        self.verdict_colors, self.verdict_symbol_colors, self.draw_answer_groups = (
+            self.get_colors(verdict_colors, verdict_symbol_colors, draw_answer_groups)
+        )
 
     def parse_questions_in_order(self, questions_in_order):
         return parse_fields("questions_in_order", questions_in_order)
@@ -624,7 +679,9 @@ class EvaluationConfig:
         return answers_format, position, size, thickness
 
     def get_formatted_score(self, score):
-        score_format = self.draw_score["score_format_string"].format(score=score)
+        score_format = self.draw_score["score_format_string"].format(
+            score=round(score, 2)
+        )
         position = self.draw_score["position"]
         size = self.draw_score["size"]
         thickness = int(self.draw_score["size"] * 2)
@@ -654,15 +711,15 @@ class EvaluationConfig:
         self.explanation_table = table
 
 
-def get_evaluation_symbol(question_meta):
+def get_evaluation_symbol(question_meta, verdict_colors, verdict_symbol_colors):
     if question_meta["bonus_type"] is not None:
-        return "+"
+        return "+", verdict_colors["correct"], verdict_symbol_colors["positive"]
     if question_meta["delta"] > 0:
-        return "+"
+        return "+", verdict_colors["correct"], verdict_symbol_colors["positive"]
     if question_meta["delta"] < 0:
-        return "-"
+        return "-", verdict_colors["negative"], verdict_symbol_colors["negative"]
     else:
-        return "o"
+        return "o", verdict_colors["neutral"], verdict_symbol_colors["neutral"]
 
 
 def evaluate_concatenated_response(concatenated_response, evaluation_config):

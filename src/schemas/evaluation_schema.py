@@ -125,14 +125,70 @@ EVALUATION_SCHEMA = {
                         }
                     ],
                 },
-                "verdict_colors": {
+                "draw_question_verdicts": {
                     "type": "object",
                     "additionalProperties": False,
+                    "required": ["enabled"],
                     "properties": {
-                        "correct": {"type": "string"},
-                        "incorrect": {"type": "string"},
-                        "unmarked": {"type": "string"},
+                        "enabled": {"type": "boolean"},
+                        "verdict_colors": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": ["correct", "neutral", "negative", "bonus"],
+                            "properties": {
+                                "correct": {"type": "string"},
+                                "neutral": {"type": "string"},
+                                "negative": {"type": "string"},
+                                "bonus": {"type": "string"},
+                            },
+                        },
+                        "verdict_symbol_colors": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": ["positive", "neutral", "negative", "bonus"],
+                            "properties": {
+                                "positive": {"type": "string"},
+                                "neutral": {"type": "string"},
+                                "negative": {"type": "string"},
+                                "bonus": {"type": "string"},
+                            },
+                        },
+                        "draw_answer_groups": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": ["enabled"],
+                            "properties": {
+                                "enabled": {"type": "boolean"},
+                                "color_sequence": ARRAY_OF_STRINGS,
+                            },
+                            "allOf": [
+                                {
+                                    "if": {"properties": {"enabled": {"const": True}}},
+                                    "then": {
+                                        "required": ["color_sequence"],
+                                    },
+                                }
+                            ],
+                        },
                     },
+                    "allOf": [
+                        {
+                            "if": {"properties": {"enabled": {"const": True}}},
+                            "then": {
+                                "required": [
+                                    "verdict_colors",
+                                    "verdict_symbol_colors",
+                                    "draw_answer_groups",
+                                ],
+                            },
+                        }
+                    ],
+                },
+                "draw_marked_bubble_texts": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["enabled"],
+                    "properties": {"enabled": {"type": "boolean"}},
                 },
             },
         },

@@ -155,6 +155,7 @@ class ImageUtils:
     def get_control_destination_points_from_contour(
         source_contour, destination_line, max_points=None
     ):
+        # TODO: can use shapely intersections too?
         total_points = len(source_contour)
         if max_points is None:
             max_points = total_points
@@ -217,7 +218,12 @@ class ImageUtils:
         ordered_patch_corners, _ = MathUtils.order_four_points(
             patch_corners, dtype="float32"
         )
+
+        # TODO: consider snapping the corners to the contour
+        # TODO: consider using split from shapely after snap_corners
+
         source_contour = np.float32(source_contour)
+
         edge_contours_map = {
             EdgeType.TOP: [],
             EdgeType.RIGHT: [],
@@ -229,6 +235,8 @@ class ImageUtils:
             edge_line_strings[edge_type] = LineString(
                 [ordered_patch_corners[i], ordered_patch_corners[(i + 1) % 4]]
             )
+
+        #  segments = split(boundary, MultiPoint(corners)).geoms
         for boundary_point in source_contour:
             edge_distances = [
                 (
@@ -238,12 +246,14 @@ class ImageUtils:
                 for edge_type in EDGE_TYPES_IN_ORDER
             ]
             min_distance, nearest_edge_type = min(edge_distances)
+            distance_warning = "*" if min_distance > 10 else ""
             logger.info(
-                f"boundary_point={boundary_point} nearest_edge_type={nearest_edge_type} min_distance={min_distance:.2f}"
+                f"boundary_point={boundary_point}\t nearest_edge_type={nearest_edge_type}\t min_distance={min_distance:.2f}{distance_warning}"
             )
             # TODO: Each edge contour's points should be in the clockwise order
-            edge_contours_map[nearest_edge_type].append(boundary_point)
+            edge_contours_map[nearest_edge_type].append(tuple(boundary_point))
 
+        # Add corner points and ensure clockwise order
         for i, edge_type in enumerate(EDGE_TYPES_IN_ORDER):
             start_point, end_point = (
                 ordered_patch_corners[i],
@@ -259,14 +269,15 @@ class ImageUtils:
                     f"No closest points found for {edge_type}: {edge_contours_map}"
                 )
             else:
+                # Ensure correct order
                 if MathUtils.distance(
                     start_point, edge_contour[-1]
                 ) < MathUtils.distance(start_point, edge_contour[0]):
                     edge_contours_map[edge_type].reverse()
 
             # Each contour should necessarily start & end with a corner point
-            edge_contours_map[edge_type].insert(0, start_point)
-            edge_contours_map[edge_type].append(end_point)
+            edge_contours_map[edge_type].insert(0, tuple(start_point))
+            edge_contours_map[edge_type].append(tuple(end_point))
 
         return ordered_patch_corners, edge_contours_map
 
@@ -512,3 +523,28 @@ class ImageUtils:
         )
 
         ImageUtils.draw_text(image, symbol, center_position, color=color)
+
+    @staticmethod
+    def draw_line(image, start, end, color, thickness):
+        cv2.line(image, start, end, color, thickness)
+
+    @staticmethod
+    def draw_group(image, start, bubble_dimensions, state, color, thickness=4):
+        if state == "T":
+            end_position = (start[0] + int(bubble_dimensions[0] * 7 / 10), start[1])
+            start = (start[0] + int(bubble_dimensions[0] * 3 / 10), start[1])
+            ImageUtils.draw_line(image, start, end_position, color, thickness)
+        elif state == "R":
+            start = (start[0] + bubble_dimensions[0], start[1])
+            end_position = (start[0], int(start[1] + bubble_dimensions[1] * 7 / 10))
+            start = (start[0], int(start[1] + bubble_dimensions[1] * 3 / 10))
+            ImageUtils.draw_line(image, start, end_position, color, thickness)
+        elif state == "B":
+            start = (start[0], start[1] + bubble_dimensions[1])
+            end_position = (int(start[0] + bubble_dimensions[0] * 7 / 10), start[1])
+            start = (int(start[0] + bubble_dimensions[0] * 3 / 10), start[1])
+            ImageUtils.draw_line(image, start, end_position, color, thickness)
+        elif state == "L":
+            end_position = (start[0], int(start[1] + bubble_dimensions[1] * 7 / 10))
+            start = (start[0], int(start[1] + bubble_dimensions[1] * 3 / 10))
+            ImageUtils.draw_line(image, start, end_position, color, thickness)
