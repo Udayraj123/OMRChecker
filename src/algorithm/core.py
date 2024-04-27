@@ -775,6 +775,23 @@ class ImageInstanceOps:
                     thickness_factor=1 / 10,
                 )
 
+    @staticmethod
+    def is_part_of_some_answer(question_meta, field_value):
+        if question_meta["bonus_type"]:
+            return True
+        if question_meta["answer_type"] == AnswerType.STANDARD:
+            return field_value in str(question_meta["answer_item"])
+        elif question_meta["answer_type"] == AnswerType.MULTIPLE_CORRECT:
+            for allowed_answer in question_meta["answer_item"]:
+                if field_value in allowed_answer:
+                    return True
+            return False
+        else:
+            for allowed_answer, score in question_meta["answer_item"]:
+                if score>0 and field_value in allowed_answer:
+                    return True
+            return False
+
     def draw_field_with_question_meta(
         self,
         marked_image,
@@ -796,12 +813,7 @@ class ImageInstanceOps:
             # TODO: answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED etc
 
             # TODO: support for custom_labels verdicts too!
-            if (
-                # Convert answer_item to string to handle array of answers
-                # TODO: think of edge cases for this
-                field_value
-                in str(question_meta["answer_item"])
-            ) or question_meta["bonus_type"]:
+            if self.is_part_of_some_answer(question_meta, field_value):
                 ImageUtils.draw_box(
                     marked_image,
                     shifted_position,

@@ -159,7 +159,7 @@ EVALUATION_SCHEMA = {
                             "required": ["enabled"],
                             "properties": {
                                 "enabled": {"type": "boolean"},
-                                "color_sequence": ARRAY_OF_STRINGS,
+                                "color_sequence": {**ARRAY_OF_STRINGS,"minItems": 4,"maxItems": 4}
                             },
                             "allOf": [
                                 {
