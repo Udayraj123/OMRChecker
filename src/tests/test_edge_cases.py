@@ -50,7 +50,7 @@ def test_config_low_dimensions_error_case(mocker, snapshot):
             1640 // 4,
             1332 // 4,
         ]
-        template["preProcessors"][0]["options"]["dimensions"] = [20, 20]
+        template["preProcessors"][0]["options"]["markerDimensions"] = [20, 20]
 
     _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert str(exception) == snapshot
@@ -62,7 +62,7 @@ def test_config_low_dimensions_safe_case(mocker, snapshot):
             1640 // 2,
             1332 // 2,
         ]
-        template["preProcessors"][0]["options"]["dimensions"] = [20, 20]
+        template["preProcessors"][0]["options"]["markerDimensions"] = [20, 20]
 
     sample_outputs, exception = write_jsons_and_run(
         mocker, modify_template=modify_template

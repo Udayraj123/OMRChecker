@@ -12,8 +12,8 @@
       "name": "CropOnMarkers",
       "options": {
         "type": "FOUR_MARKERS",
-        "relativePath": "omr_marker.jpg",
-        "dimensions": [
+        "referenceImage": "omr_marker.jpg",
+        "markerDimensions": [
           35,
           35
         ]

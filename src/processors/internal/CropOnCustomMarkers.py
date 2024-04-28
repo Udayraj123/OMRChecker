@@ -85,7 +85,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         self.init_resized_markers()
 
     def validate_and_remap_options_schema(self, options):
-        reference_image_path, layout_type = options["relativePath"], options["type"]
+        reference_image_path, layout_type = options["referenceImage"], options["type"]
         tuning_options = options.get("tuningOptions", {})
         # Note: options["tuningOptions"] is accessible in self.tuning_options at Processor level
         parsed_options = {
@@ -100,11 +100,11 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
 
         # TODO: add default values for provided scanAreas?
         # Allow non-marker scanAreas here too?
-        dimensions = options.get("dimensions", None)
+        defaultDimensions = options.get("markerDimensions", None)
         optional_custom_options = (
-            {} if dimensions is None else {"markerDimensions": dimensions}
+            {} if defaultDimensions is None else {"markerDimensions": defaultDimensions}
         )
-        # inject scanAreas
+        # inject scanAreas (Note: override merge with defaults will happen in parent class)
         parsed_options["scanAreas"] = [
             {
                 "areaTemplate": area_template,
@@ -143,6 +143,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
     def init_resized_markers(self):
         self.loaded_reference_images = {}
         self.marker_for_area_label = {}
+        print(self.scan_areas)
         for scan_area in self.scan_areas:
             area_description, custom_options = map(
                 scan_area.get, ["areaDescription", "customOptions"]
@@ -166,6 +167,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             reference_area = custom_options.get(
                 "referenceArea", self.get_default_scan_area_for_image(reference_image)
             )
+            logger.debug("area_label=", area_label, custom_options)
 
             extracted_marker = self.extract_marker_from_reference(
                 reference_image, reference_area, custom_options
@@ -183,7 +185,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         marker = reference_image[y : y + h, x : x + w]
 
         marker_dimensions = custom_options.get(
-            "markerDimensions", options.get("dimensions", None)
+            "markerDimensions", options.get("markerDimensions", None)
         )
         if marker_dimensions is not None:
             marker = ImageUtils.resize_to_dimensions(marker, marker_dimensions)

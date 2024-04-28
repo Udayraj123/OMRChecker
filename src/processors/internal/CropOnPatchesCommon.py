@@ -64,6 +64,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                 }
             ]
         self.scan_areas = scan_areas_with_defaults
+        logger.debug(self.scan_areas)
 
     def validate_scan_areas(self):
         seen_labels = set()

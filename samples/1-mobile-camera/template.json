@@ -193,14 +193,14 @@
       "name": "CropOnMarkers",
       "options": {
         "type": "FOUR_MARKERS",
-        "relativePath": "omr_marker.jpg",
+        "referenceImage": "omr_marker.jpg",
         "tuningOptions": {
           "marker_rescale_range": [
             80,
             120
           ]
         },
-        "dimensions": [
+        "markerDimensions": [
           35,
           35
         ]

@@ -1,4 +1,5 @@
 from src.processors.constants import (
+    MARKER_AREA_TYPES_IN_ORDER,
     SCANNER_TYPES_IN_ORDER,
     SELECTOR_TYPES_IN_ORDER,
     AreaTemplate,
@@ -42,6 +43,18 @@ box_area_description = {
     },
 }
 
+scan_area_template = {
+    "description": "The ready-made template to use to prefill description of a scanArea",
+    "type": "string",
+    "enum": ["CUSTOM", *AreaTemplate.values()],
+}
+custom_options_schema = {
+    "description": "Custom options based on the scannerType",
+    "type": "object",
+    # TODO: add conditional properties here like maxPoints and excludeFromCropping here based on scannerType
+}
+
+
 point_selector_patch_area_description = {
     **box_area_description,
     "description": "The detailed description of a patch area with an optional point selector",
@@ -51,15 +64,10 @@ point_selector_patch_area_description = {
             "type": "string",
             "enum": [*SELECTOR_TYPES_IN_ORDER],
         },
-        # TODO: give customOptions via merging the two
+        "customOptions": custom_options_schema,
     },
 }
 
-scan_area_template = {
-    "description": "The ready-made template to use to prefill description of a scanArea",
-    "type": "string",
-    "enum": ["CUSTOM", *AreaTemplate.values()],
-}
 
 scan_area_description = {
     **point_selector_patch_area_description,
@@ -97,11 +105,7 @@ scan_areas_object = {
         "properties": {
             "areaTemplate": scan_area_template,
             "areaDescription": scan_area_description,
-            "customOptions": {
-                "description": "Custom options based on the scannerType",
-                "type": "object",
-                # TODO: add conditional properties here like maxPoints and excludeFromCropping here based on scannerType
-            },
+            "customOptions": custom_options_schema,
         },
     },
 }
@@ -689,24 +693,25 @@ TEMPLATE_SCHEMA = {
                                             },
                                             "then": {
                                                 "required": [
-                                                    "relativePath",
-                                                    "dimensions",
+                                                    "referenceImage",
+                                                    "markerDimensions",
+                                                    # *MARKER_AREA_TYPES_IN_ORDER,
                                                 ],
                                                 "additionalProperties": False,
                                                 "properties": {
                                                     **crop_on_markers_options_available_keys,
-                                                    "dimensions": {
+                                                    "markerDimensions": {
                                                         **two_positive_integers,
                                                         "description": "The dimensions of the omr marker",
                                                     },
-                                                    "relativePath": {
-                                                        "description": "The relative path to the omr marker",
+                                                    "referenceImage": {
+                                                        "description": "The relative path to reference image of the omr marker",
                                                         "type": "string",
                                                     },
-                                                    "topRightMarker": point_selector_patch_area_description,
-                                                    "bottomRightMarker": point_selector_patch_area_description,
-                                                    "topLeftMarker": point_selector_patch_area_description,
-                                                    "bottomLeftMarker": point_selector_patch_area_description,
+                                                    **{
+                                                        area_template: point_selector_patch_area_description
+                                                        for area_template in MARKER_AREA_TYPES_IN_ORDER
+                                                    },
                                                     "tuningOptions": crop_on_four_markers_tuning_options,
                                                 },
                                             },
