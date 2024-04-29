@@ -101,21 +101,24 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         # TODO: add default values for provided scanAreas?
         # Allow non-marker scanAreas here too?
         defaultDimensions = options.get("markerDimensions", None)
-        optional_custom_options = (
-            {} if defaultDimensions is None else {"markerDimensions": defaultDimensions}
-        )
         # inject scanAreas (Note: override merge with defaults will happen in parent class)
-        parsed_options["scanAreas"] = [
-            {
-                "areaTemplate": area_template,
-                "areaDescription": options.get(area_template, {}),
-                "customOptions": {
-                    "referenceImage": reference_image_path,
-                    **optional_custom_options,
-                },
-            }
-            for area_template in self.scan_area_templates_for_layout[layout_type]
-        ]
+        parsed_scan_areas = []
+        for area_template in self.scan_area_templates_for_layout[layout_type]:
+            local_description = options.get(area_template, {})
+            # .pop() will delete the customOptions key from the description if it exists
+            local_custom_options = local_description.pop("customOptions", {})
+            parsed_scan_areas.append(
+                {
+                    "areaTemplate": area_template,
+                    "areaDescription": local_description,
+                    "customOptions": {
+                        "referenceImage": reference_image_path,
+                        "markerDimensions": defaultDimensions,
+                        **local_custom_options,
+                    },
+                }
+            )
+        parsed_options["scanAreas"] = parsed_scan_areas
         return parsed_options
 
     def validate_scan_areas(self):

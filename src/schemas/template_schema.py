@@ -48,23 +48,59 @@ scan_area_template = {
     "type": "string",
     "enum": ["CUSTOM", *AreaTemplate.values()],
 }
-custom_options_schema = {
+
+custom_marker_options = {
+    "markerDimensions": {
+        **two_positive_integers,
+        "description": "The dimensions of the omr marker",
+    },
+    "referenceImage": {
+        "description": "The relative path to reference image of the omr marker",
+        "type": "string",
+    },
+}
+
+crop_on_marker_custom_options_schema = {
+    "description": "Custom options for the scannerType TEMPLATE_MATCH",
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {**custom_marker_options},
+}
+
+# TODO: actually this one needs to be specific to processor.type
+common_custom_options_schema = {
     "description": "Custom options based on the scannerType",
     "type": "object",
     # TODO: add conditional properties here like maxPoints and excludeFromCropping here based on scannerType
+    # expand conditionally: crop_on_marker_custom_options_schema
 }
 
 
 point_selector_patch_area_description = {
     **box_area_description,
     "description": "The detailed description of a patch area with an optional point selector",
+    "additionalProperties": False,
     "properties": {
         **box_area_description["properties"],
         "selector": {
             "type": "string",
             "enum": [*SELECTOR_TYPES_IN_ORDER],
         },
-        "customOptions": custom_options_schema,
+    },
+}
+
+
+marker_area_description = {
+    **point_selector_patch_area_description,
+    "description": "The detailed description of a patch area for a custom marker",
+    "additionalProperties": False,
+    "properties": {
+        **point_selector_patch_area_description["properties"],
+        "selector": {
+            "type": "string",
+            "enum": [*SELECTOR_TYPES_IN_ORDER],
+        },
+        "customOptions": crop_on_marker_custom_options_schema,
     },
 }
 
@@ -105,7 +141,7 @@ scan_areas_object = {
         "properties": {
             "areaTemplate": scan_area_template,
             "areaDescription": scan_area_description,
-            "customOptions": custom_options_schema,
+            "customOptions": common_custom_options_schema,
         },
     },
 }
@@ -700,16 +736,9 @@ TEMPLATE_SCHEMA = {
                                                 "additionalProperties": False,
                                                 "properties": {
                                                     **crop_on_markers_options_available_keys,
-                                                    "markerDimensions": {
-                                                        **two_positive_integers,
-                                                        "description": "The dimensions of the omr marker",
-                                                    },
-                                                    "referenceImage": {
-                                                        "description": "The relative path to reference image of the omr marker",
-                                                        "type": "string",
-                                                    },
+                                                    **custom_marker_options,
                                                     **{
-                                                        area_template: point_selector_patch_area_description
+                                                        area_template: marker_area_description
                                                         for area_template in MARKER_AREA_TYPES_IN_ORDER
                                                     },
                                                     "tuningOptions": crop_on_four_markers_tuning_options,
