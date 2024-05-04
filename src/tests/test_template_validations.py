@@ -60,7 +60,7 @@ def test_empty_template(mocker):
 
 def test_invalid_field_type(mocker):
     def modify_template(template):
-        template["fieldBlockGroups"]["DEFAULT"]["MCQ_Block_1"]["fieldType"] = "X"
+        template["fieldBlocks"]["MCQ_Block_1"]["fieldType"] = "X"
 
     print("\nExpecting invalid template json error logs:")
     _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
@@ -72,9 +72,7 @@ def test_invalid_field_type(mocker):
 
 def test_overflow_labels(mocker):
     def modify_template(template):
-        template["fieldBlockGroups"]["DEFAULT"]["MCQ_Block_1"]["fieldLabels"] = [
-            "q1..100"
-        ]
+        template["fieldBlocks"]["MCQ_Block_1"]["fieldLabels"] = ["q1..100"]
 
     _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert (
@@ -93,10 +91,10 @@ def test_overflow_safe_dimensions(mocker):
 
 def test_field_strings_overlap(mocker):
     def modify_template(template):
-        template["fieldBlockGroups"]["DEFAULT"] = {
-            **template["fieldBlockGroups"]["DEFAULT"],
+        template["fieldBlocks"] = {
+            **template["fieldBlocks"],
             "New_Block": {
-                **template["fieldBlockGroups"]["DEFAULT"]["MCQ_Block_1"],
+                **template["fieldBlocks"]["MCQ_Block_1"],
                 "fieldLabels": ["q5"],
             },
         }

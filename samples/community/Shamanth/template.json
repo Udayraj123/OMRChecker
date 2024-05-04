@@ -7,21 +7,19 @@
     20,
     20
   ],
-  "fieldBlockGroups": {
-    "DEFAULT": {
-      "MCQBlock1": {
-        "fieldType": "QTYPE_MCQ4",
-        "origin": [
-          78,
-          41
-        ],
-        "fieldLabels": [
-          "q21..28"
-        ],
-        "bubblesGap": 56,
-        "labelsGap": 46
-      }
+  "preProcessors": [],
+  "fieldBlocks": {
+    "MCQBlock1": {
+      "fieldType": "QTYPE_MCQ4",
+      "origin": [
+        78,
+        41
+      ],
+      "fieldLabels": [
+        "q21..28"
+      ],
+      "bubblesGap": 56,
+      "labelsGap": 46
     }
-  },
-  "preProcessors": []
+  }
 }

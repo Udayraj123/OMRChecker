@@ -9,7 +9,6 @@
 
 from src.algorithm.core import ImageInstanceOps
 from src.processors.manager import PROCESSOR_MANAGER
-from src.schemas.constants import DEFAULT_FIELD_BLOCKS_KEY
 from src.utils.constants import BUILTIN_FIELD_TYPES
 from src.utils.logger import logger
 from src.utils.parsing import (
@@ -41,7 +40,7 @@ class Template:
             json_object.get,
             [
                 "customLabels",
-                "fieldBlockGroups",
+                "fieldBlocks",
                 "outputColumns",
                 "preProcessors",
                 "bubbleDimensions",
@@ -92,10 +91,8 @@ class Template:
         # Add field_blocks
         self.field_blocks = []
         self.all_parsed_labels = set()
-        # TODO: add support for parsing "conditionalFieldBlockGroups" and "responseToGroupMapping"
-        for block_name, field_block_object in field_blocks_object[
-            DEFAULT_FIELD_BLOCKS_KEY
-        ].items():
+        # TODO: add support for parsing "conditionalSets" with their matcher
+        for block_name, field_block_object in field_blocks_object.items():
             self.parse_and_add_field_block(block_name, field_block_object)
 
     def parse_custom_labels(self, custom_labels_object):

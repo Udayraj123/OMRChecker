@@ -2,15 +2,13 @@ TEMPLATE_BOILERPLATE = {
     "templateDimensions": [300, 400],
     "bubbleDimensions": [25, 25],
     "preProcessors": [{"name": "CropPage", "options": {"morphKernel": [10, 10]}}],
-    "fieldBlockGroups": {
-        "DEFAULT": {
-            "MCQ_Block_1": {
-                "fieldType": "QTYPE_MCQ5",
-                "origin": [65, 60],
-                "fieldLabels": ["q1..5"],
-                "labelsGap": 52,
-                "bubblesGap": 41,
-            }
-        },
+    "fieldBlocks": {
+        "MCQ_Block_1": {
+            "fieldType": "QTYPE_MCQ5",
+            "origin": [65, 60],
+            "fieldLabels": ["q1..5"],
+            "labelsGap": 52,
+            "bubblesGap": 41,
+        }
     },
 }

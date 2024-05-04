@@ -8,7 +8,6 @@ from src.processors.constants import (
 )
 from src.schemas.constants import (
     ARRAY_OF_STRINGS,
-    DEFAULT_FIELD_BLOCKS_KEY,
     FIELD_STRING_TYPE,
     positive_integer,
     positive_number,
@@ -393,29 +392,6 @@ many_field_blocks_description = {
     },
 }
 
-field_regex_extraction_schema = {
-    "type": "object",
-    "required": ["formatString"],
-    "additionalProperties": False,
-    "properties": {
-        # "{barcode}", "{roll}-{barcode}"
-        "formatString": {
-            "description": "Format string of variables to use from field responses e.g. '{roll}-{barcode}'",
-            "type": "string",
-        },
-        # Example: extract first for characters "(\w{4}).*"
-        "extractRegex": {
-            "description": "Mapping to use on the composed field string",
-            "type": "string",
-            "format": "regex",
-        },
-        # TODO: support for "abortIfNotMatched"?
-        "capturedString": {
-            "description": "The captured groups string to use for replacement",
-            "type": "string",
-        },
-    },
-}
 
 TEMPLATE_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -427,7 +403,7 @@ TEMPLATE_SCHEMA = {
         "bubbleDimensions",
         "templateDimensions",
         "preProcessors",
-        "fieldBlockGroups",
+        "fieldBlocks",
     ],
     "additionalProperties": False,
     "properties": {
@@ -850,24 +826,36 @@ TEMPLATE_SCHEMA = {
                 ],
             },
         },
-        "fieldBlockGroups": {
-            "type": "object",
-            "required": [DEFAULT_FIELD_BLOCKS_KEY],
-            "additionalProperties": False,
-            "properties": {
-                DEFAULT_FIELD_BLOCKS_KEY: many_field_blocks_description,
-                "conditionalFieldBlockGroups": {
-                    "type": "object",
-                    "description": "Each key is a unique name for a set of custom fieldBlockGroups (useful for test paper sets)",
-                    "patternProperties": {
-                        # Note: first default field blocks will be applied and read, then the chosen layout will override the default field blocks
-                        "^.*$": many_field_blocks_description,
+        "fieldBlocks": many_field_blocks_description,
+        "conditionalSets": {
+            "type": "array",
+            "description": "An array of field block sets with their conditions",
+            "items": {
+                "type": "object",
+                "description": "Each item represents a conditional layout of field blocks",
+                "required": ["name", "matcher", "fieldBlocks"],
+                "additionalProperties": False,
+                "properties": {
+                    "name": {"type": "string"},
+                    "matcher": {
+                        "description": "Mapping response fields from default layout to the set name",
+                        "type": "object",
+                        "required": ["formatString", "matchRegex"],
+                        "additionalProperties": False,
+                        "properties": {
+                            "formatString": {
+                                "description": "Format string composed of the response variables to apply the regex on e.g. '{roll}-{barcode}'",
+                                "type": "string",
+                            },
+                            # Example: match last four characters ".*-SET1"
+                            "matchRegex": {
+                                "description": "Mapping to use on the composed field string",
+                                "type": "string",
+                                "format": "regex",
+                            },
+                        },
                     },
-                },
-                "responseToGroupMapping": {
-                    **field_regex_extraction_schema,
-                    # "formatString" : "{barcode}"
-                    "description": "Mapping response fields from default layout to the set name",
+                    "fieldBlocks": many_field_blocks_description,
                 },
             },
         },
@@ -910,8 +898,28 @@ TEMPLATE_SCHEMA = {
                     "type": "string",
                 },
                 "fileMapping": {
-                    **field_regex_extraction_schema,
                     "description": "A mapping from regex to the relative file path to use",
+                    "type": "object",
+                    "required": ["formatString"],
+                    "additionalProperties": False,
+                    "properties": {
+                        # "{barcode}", "{roll}-{barcode}"
+                        "formatString": {
+                            "description": "Format string composed of the response variables to apply the regex on e.g. '{roll}-{barcode}'",
+                            "type": "string",
+                        },
+                        # Example: extract first four characters "(\w{4}).*"
+                        "extractRegex": {
+                            "description": "Mapping to use on the composed field string",
+                            "type": "string",
+                            "format": "regex",
+                        },
+                        # TODO: support for "abortIfNotMatched"?
+                        "capturedString": {
+                            "description": "The captured groups string to use for replacement",
+                            "type": "string",
+                        },
+                    },
                 },
             },
         },

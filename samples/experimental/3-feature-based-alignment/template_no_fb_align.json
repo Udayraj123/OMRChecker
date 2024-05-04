@@ -38,82 +38,80 @@
       "check_2"
     ]
   },
-  "fieldBlockGroups": {
-    "DEFAULT": {
-      "Check1": {
-        "origin": [
-          2033,
-          1290
-        ],
-        "bubblesGap": 50,
-        "labelsGap": 50,
-        "fieldLabels": [
-          "check_1"
-        ],
-        "fieldType": "CUSTOM",
-        "bubbleValues": [
-          "A",
-          "B",
-          "E",
-          "H",
-          "J",
-          "L",
-          "M"
-        ],
-        "direction": "vertical"
-      },
-      "Check2": {
-        "origin": [
-          2083,
-          1290
-        ],
-        "bubblesGap": 50,
-        "labelsGap": 50,
-        "fieldLabels": [
-          "check_2"
-        ],
-        "fieldType": "CUSTOM",
-        "bubbleValues": [
-          "N",
-          "R",
-          "U",
-          "W",
-          "X",
-          "Y"
-        ],
-        "direction": "vertical"
-      },
-      "Stu": {
-        "origin": [
-          1636,
-          1290
-        ],
-        "bubblesGap": 50,
-        "labelsGap": 50,
-        "fieldLabels": [
-          "stu"
-        ],
-        "fieldType": "CUSTOM",
-        "bubbleValues": [
-          "U",
-          "A",
-          "HT",
-          "GT"
-        ],
-        "direction": "vertical"
-      },
-      "Roll": {
-        "fieldType": "QTYPE_INT",
-        "origin": [
-          1685,
-          1290
-        ],
-        "bubblesGap": 50.5,
-        "labelsGap": 50.5,
-        "fieldLabels": [
-          "roll1..7"
-        ]
-      }
+  "fieldBlocks": {
+    "Check1": {
+      "origin": [
+        2033,
+        1290
+      ],
+      "bubblesGap": 50,
+      "labelsGap": 50,
+      "fieldLabels": [
+        "check_1"
+      ],
+      "fieldType": "CUSTOM",
+      "bubbleValues": [
+        "A",
+        "B",
+        "E",
+        "H",
+        "J",
+        "L",
+        "M"
+      ],
+      "direction": "vertical"
+    },
+    "Check2": {
+      "origin": [
+        2083,
+        1290
+      ],
+      "bubblesGap": 50,
+      "labelsGap": 50,
+      "fieldLabels": [
+        "check_2"
+      ],
+      "fieldType": "CUSTOM",
+      "bubbleValues": [
+        "N",
+        "R",
+        "U",
+        "W",
+        "X",
+        "Y"
+      ],
+      "direction": "vertical"
+    },
+    "Stu": {
+      "origin": [
+        1636,
+        1290
+      ],
+      "bubblesGap": 50,
+      "labelsGap": 50,
+      "fieldLabels": [
+        "stu"
+      ],
+      "fieldType": "CUSTOM",
+      "bubbleValues": [
+        "U",
+        "A",
+        "HT",
+        "GT"
+      ],
+      "direction": "vertical"
+    },
+    "Roll": {
+      "fieldType": "QTYPE_INT",
+      "origin": [
+        1685,
+        1290
+      ],
+      "bubblesGap": 50.5,
+      "labelsGap": 50.5,
+      "fieldLabels": [
+        "roll1..7"
+      ]
     }
   }
 }

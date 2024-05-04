@@ -28,20 +28,18 @@
       }
     }
   ],
-  "fieldBlockGroups": {
-    "DEFAULT": {
-      "MCQBlock1": {
-        "fieldType": "QTYPE_MCQ4",
-        "origin": [
-          138,
-          605
-        ],
-        "fieldLabels": [
-          "q1..11"
-        ],
-        "bubblesGap": 79,
-        "labelsGap": 55
-      }
+  "fieldBlocks": {
+    "MCQBlock1": {
+      "fieldType": "QTYPE_MCQ4",
+      "origin": [
+        138,
+        605
+      ],
+      "fieldLabels": [
+        "q1..11"
+      ],
+      "bubblesGap": 79,
+      "labelsGap": 55
     }
   }
 }

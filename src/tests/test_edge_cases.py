@@ -87,12 +87,12 @@ def test_different_bubble_dimensions(mocker):
         # Incorrect global bubble size
         template["bubbleDimensions"] = [5, 5]
         # Correct bubble size for MCQBlock1a1
-        template["fieldBlockGroups"]["DEFAULT"]["MCQBlock1a1"]["bubbleDimensions"] = [
+        template["fieldBlocks"]["MCQBlock1a1"]["bubbleDimensions"] = [
             32,
             32,
         ]
         # Incorrect bubble size for MCQBlock1a11
-        template["fieldBlockGroups"]["DEFAULT"]["MCQBlock1a11"]["bubbleDimensions"] = [
+        template["fieldBlocks"]["MCQBlock1a11"]["bubbleDimensions"] = [
             5,
             5,
         ]

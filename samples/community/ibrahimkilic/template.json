@@ -8,26 +8,24 @@
     20
   ],
   "emptyValue": "no",
-  "fieldBlockGroups": {
-    "DEFAULT": {
-      "YesNoBlock1": {
-        "fieldType": "CUSTOM",
-        "bubbleValues": [
-          "yes"
-        ],
-        "direction": "horizontal",
-        "origin": [
-          15,
-          55
-        ],
-        "emptyValue": "no",
-        "bubblesGap": 48,
-        "labelsGap": 48,
-        "fieldLabels": [
-          "q1..5"
-        ]
-      }
+  "preProcessors": [],
+  "fieldBlocks": {
+    "YesNoBlock1": {
+      "fieldType": "CUSTOM",
+      "bubbleValues": [
+        "yes"
+      ],
+      "direction": "horizontal",
+      "origin": [
+        15,
+        55
+      ],
+      "emptyValue": "no",
+      "bubblesGap": 48,
+      "labelsGap": 48,
+      "fieldLabels": [
+        "q1..5"
+      ]
     }
-  },
-  "preProcessors": []
+  }
 }
