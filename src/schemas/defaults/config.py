@@ -4,7 +4,7 @@ CONFIG_DEFAULTS = DotMap(
     {
         "thresholding": {
             "GAMMA_LOW": 0.7,
-            "MIN_GAP": 30,
+            "MIN_GAP_TWO_BUBBLES": 30,
             "MIN_JUMP": 25,
             "CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY": 25,
             "MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK": 5,

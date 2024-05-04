@@ -4,11 +4,11 @@ from src.schemas.constants import (
 )
 
 EVALUATION_CONFIG_DEFAULTS = {
-    "options": {
-        "should_explain_scoring": False,
-    },
+    "options": {},
     "marking_schemes": {},
+    "conditionalSets": [],
     "outputs_configuration": {
+        "should_explain_scoring": False,
         "draw_score": {
             "enabled": False,
             "position": [200, 200],

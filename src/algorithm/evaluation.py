@@ -251,15 +251,18 @@ class EvaluationConfig:
             ],
         )
 
-        (self.draw_score, self.draw_answers_summary, self.verdict_colors) = map(
+        (
+            self.should_explain_scoring,
+            self.draw_score,
+            self.draw_answers_summary,
+            self.verdict_colors,
+        ) = map(
             outputs_configuration.get,
-            ["draw_score", "draw_answers_summary", "verdict_colors"],
-        )
-
-        (self.should_explain_scoring,) = map(
-            options.get,
             [
                 "should_explain_scoring",
+                "draw_score",
+                "draw_answers_summary",
+                "verdict_colors",
             ],
         )
 

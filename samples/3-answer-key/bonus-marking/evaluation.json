@@ -20,8 +20,7 @@
       "C",
       "D",
       "C"
-    ],
-    "should_explain_scoring": true
+    ]
   },
   "outputs_configuration": {
     "draw_score": {
@@ -44,7 +43,8 @@
       "correct": "#00ff00",
       "incorrect": "#ff0000",
       "unmarked": "#0000ff"
-    }
+    },
+    "should_explain_scoring": true
   },
   "marking_schemes": {
     "DEFAULT": {

@@ -1,8 +1,7 @@
 {
   "source_type": "csv",
   "options": {
-    "answer_key_csv_path": "answer_key.csv",
-    "should_explain_scoring": true
+    "answer_key_csv_path": "answer_key.csv"
   },
   "marking_schemes": {
     "DEFAULT": {
@@ -10,5 +9,8 @@
       "incorrect": "0",
       "unmarked": "0"
     }
+  },
+  "outputs_configuration": {
+    "should_explain_scoring": true
   }
 }

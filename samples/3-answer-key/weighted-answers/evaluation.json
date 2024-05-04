@@ -31,8 +31,7 @@
         ]
       ],
       "C"
-    ],
-    "should_explain_scoring": true
+    ]
   },
   "marking_schemes": {
     "DEFAULT": {
@@ -50,5 +49,8 @@
         "unmarked": "0"
       }
     }
+  },
+  "outputs_configuration": {
+    "should_explain_scoring": true
   }
 }

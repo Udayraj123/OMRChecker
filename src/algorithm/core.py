@@ -944,7 +944,7 @@ class ImageInstanceOps:
             ||||||||||||
 
         The abstract "First LARGE GAP" is perfect for this.
-        Current code is considering ONLY TOP 2 jumps(>= MIN_GAP) to be big,
+        Current code is considering ONLY TOP 2 jumps(>= MIN_GAP_TWO_BUBBLES) to be big,
             gives the smaller one (looseness factor)
 
         """
@@ -964,7 +964,13 @@ class ImageInstanceOps:
                 max1 = jump
                 thr1 = sorted_bubble_means[i - ls] + jump / 2
 
-        # NOTE: thr2 is deprecated, thus is JUMP_DELTA
+        global_threshold_for_template, j_low, j_high = (
+            thr1,
+            thr1 - max1 // 2,
+            thr1 + max1 // 2,
+        )
+
+        # NOTE: thr2 is deprecated, thus is JUMP_DELTA (used only in the plotting)
         # TODO: make use of outliers using percentile logic and report the benchmarks
         # Make use of the fact that the JUMP_DELTA(Vertical gap ofc) between
         # values at detected jumps would be atleast 20
@@ -977,11 +983,6 @@ class ImageInstanceOps:
                 max2 = jump
                 thr2 = new_thr
         # global_threshold_for_template = min(thr1,thr2)
-        global_threshold_for_template, j_low, j_high = (
-            thr1,
-            thr1 - max1 // 2,
-            thr1 + max1 // 2,
-        )
 
         # TODO: maybe use plot_create flag when using plots in append_save_image
         if plot_show:
@@ -1110,7 +1111,7 @@ class ImageInstanceOps:
             max1, thr1 = config.thresholding.MIN_JUMP, (
                 global_threshold_for_template
                 if np.max(sorted_bubble_means) - np.min(sorted_bubble_means)
-                < config.thresholding.MIN_GAP
+                < config.thresholding.MIN_GAP_TWO_BUBBLES
                 else np.mean(sorted_bubble_means)
             )
         else:

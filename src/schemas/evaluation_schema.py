@@ -10,19 +10,29 @@ marking_score_regex = "-?(\\d+)(/(\\d+))?"
 
 marking_score = {
     "oneOf": [
-        {"type": "string", "pattern": marking_score_regex},
-        {"type": "number"},
+        {
+            "description": "The marking score as a string. We can pass natural fractions as well",
+            "type": "string",
+            "pattern": marking_score_regex,
+        },
+        {
+            "description": "The marking score as a number. It can be negative as well",
+            "type": "number",
+        },
     ]
 }
 
 marking_object_properties = {
-    "additionalProperties": False,
+    "description": "The marking object describes verdict-wise score deltas",
     "required": SCHEMA_VERDICTS_IN_ORDER,
     "type": "object",
-    "properties": {verdict: marking_score for verdict in SCHEMA_VERDICTS_IN_ORDER},
+    "additionalProperties": False,
+    "properties": {
+        schema_verdict: marking_score for schema_verdict in SCHEMA_VERDICTS_IN_ORDER
+    },
 }
 image_and_csv_options = {
-    "additionalProperties": False,
+    "description": "The options needed if source type is image and csv",
     "required": ["answer_key_csv_path"],
     "dependentRequired": {
         "answer_key_image_path": [
@@ -31,172 +41,264 @@ image_and_csv_options = {
         ]
     },
     "type": "object",
+    "additionalProperties": False,
     "properties": {
-        "should_explain_scoring": {"type": "boolean"},
-        "answer_key_csv_path": {"type": "string"},
-        "answer_key_image_path": {"type": "string"},
-        "questions_in_order": ARRAY_OF_STRINGS,
+        "answer_key_csv_path": {
+            "description": "The path to the answer key csv relative to the evalution.json file",
+            "type": "string",
+        },
+        "answer_key_image_path": {
+            "description": "The path to the answer key image relative to the evalution.json file",
+            "type": "string",
+        },
+        "questions_in_order": {
+            **ARRAY_OF_STRINGS,
+            "description": "An array of fields to treat as questions when the answer key image is provided",
+        },
     },
 }
+
+common_evaluation_schema_properties = {
+    "source_type": {"type": "string", "enum": ["csv", "image_and_csv", "custom"]},
+    "options": {"type": "object"},
+    "marking_schemes": {
+        "type": "object",
+        "required": [DEFAULT_SECTION_KEY],
+        "patternProperties": {
+            f"^{DEFAULT_SECTION_KEY}$": marking_object_properties,
+            f"^(?!{DEFAULT_SECTION_KEY}$).*": {
+                "description": "A section that defines custom marking for a subset of the questions",
+                "additionalProperties": False,
+                "required": ["marking", "questions"],
+                "type": "object",
+                "properties": {
+                    "questions": {
+                        "oneOf": [
+                            FIELD_STRING_TYPE,
+                            {
+                                "type": "array",
+                                "items": FIELD_STRING_TYPE,
+                            },
+                        ]
+                    },
+                    "marking": marking_object_properties,
+                },
+            },
+        },
+    },
+    "outputs_configuration": {
+        "description": "The configuration for outputs produced from the evaluation",
+        "type": "object",
+        "required": [],
+        "additionalProperties": False,
+        "properties": {
+            "should_explain_scoring": {
+                "description": "Whether to print the table explaining question-wise verdicts",
+                "type": "boolean",
+            },
+            "draw_score": {
+                "description": "The configuration for drawing the final score",
+                "type": "object",
+                "required": [
+                    "enabled",
+                ],
+                "additionalProperties": False,
+                "properties": {
+                    "enabled": {
+                        "description": "The toggle for enabling the configuration",
+                        "type": "boolean",
+                    },
+                    "position": {
+                        "description": "The position of the score box",
+                        **two_positive_integers,
+                    },
+                    "score_format_string": {
+                        "description": "The format string to compose the score string. Supported variables - {score}",
+                        "type": "string",
+                    },
+                    "size": {
+                        "description": "The font size for the score box",
+                        "type": "number",
+                    },
+                },
+                "allOf": [
+                    {
+                        "if": {"properties": {"enabled": {"const": True}}},
+                        "then": {
+                            "required": ["position", "score_format_string"],
+                        },
+                    }
+                ],
+            },
+            "draw_answers_summary": {
+                "description": "The configuration for drawing the answers summary",
+                "type": "object",
+                "required": [
+                    "enabled",
+                ],
+                "additionalProperties": False,
+                "properties": {
+                    "enabled": {
+                        "description": "The toggle for enabling the configuration",
+                        "type": "boolean",
+                    },
+                    "position": {
+                        "description": "The position of the answers summary box",
+                        **two_positive_integers,
+                    },
+                    "answers_summary_format_string": {
+                        "description": "The format string to compose the answer summary. Supported variables - {correct}, {incorrect}, {unmarked} ",
+                        "type": "string",
+                    },
+                    "size": {
+                        "description": "The font size for the answers summary box",
+                        "type": "number",
+                    },
+                },
+                "allOf": [
+                    {
+                        "if": {"properties": {"enabled": {"const": True}}},
+                        "then": {
+                            "required": [
+                                "position",
+                                "answers_summary_format_string",
+                            ],
+                        },
+                    }
+                ],
+            },
+            "verdict_colors": {
+                "description": "The mapping from schema verdicts to the corresponding colors",
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "correct": {"type": "string"},
+                    "incorrect": {"type": "string"},
+                    "unmarked": {"type": "string"},
+                },
+            },
+        },
+    },
+}
+common_evaluation_schema_conditions = [
+    {
+        "if": {"properties": {"source_type": {"const": "csv"}}},
+        "then": {"properties": {"options": image_and_csv_options}},
+    },
+    {
+        "if": {"properties": {"source_type": {"const": "image_and_csv"}}},
+        "then": {"properties": {"options": image_and_csv_options}},
+    },
+    {
+        "if": {"properties": {"source_type": {"const": "custom"}}},
+        "then": {
+            "properties": {
+                "options": {
+                    "additionalProperties": False,
+                    "required": ["answers_in_order", "questions_in_order"],
+                    "type": "object",
+                    "properties": {
+                        "questions_in_order": {
+                            **ARRAY_OF_STRINGS,
+                            "description": "An array of fields to treat as questions specified in an order to apply evaluation",
+                        },
+                        "answers_in_order": {
+                            "oneOf": [
+                                {
+                                    "description": "An array of answers in the same order as provided array of questions",
+                                    "type": "array",
+                                    "items": {
+                                        "oneOf": [
+                                            # Standard answer type allows single correct answers. They can have multiple characters(multi-marked) as well.
+                                            # Useful for any standard response e.g. 'A', '01', '99', 'AB', etc
+                                            {"type": "string"},
+                                            # Multiple correct answer type covers multiple correct answers
+                                            # Useful for ambiguous/bonus questions e.g. ['A', 'B'], ['1', '01'], ['A', 'B', 'AB'], etc
+                                            {
+                                                "type": "array",
+                                                "items": {"type": "string"},
+                                                "minItems": 2,
+                                            },
+                                            # Multiple correct weighted answer covers multiple answers with weights
+                                            # Useful for partial marking e.g. [['A', 2], ['B', 0.5], ['AB', 2.5]], [['1', 0.5], ['01', 1]], etc
+                                            {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "array",
+                                                    "items": False,
+                                                    "minItems": 2,
+                                                    "maxItems": 2,
+                                                    "prefixItems": [
+                                                        {"type": "string"},
+                                                        marking_score,
+                                                    ],
+                                                },
+                                            },
+                                        ],
+                                    },
+                                },
+                            ]
+                        },
+                    },
+                }
+            }
+        },
+    },
+]
 
 EVALUATION_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/Udayraj123/OMRChecker/tree/master/src/schemas/evaluation-schema.json",
     "title": "Evaluation Schema",
-    "description": "OMRChecker evaluation schema i.e. the marking scheme",
+    "description": "The OMRChecker evaluation schema",
     "type": "object",
-    "additionalProperties": False,
     "required": ["source_type", "options", "marking_schemes"],
+    "additionalProperties": False,
     "properties": {
         "additionalProperties": False,
-        "source_type": {"type": "string", "enum": ["csv", "image_and_csv", "custom"]},
-        "options": {"type": "object"},
-        "marking_schemes": {
-            "type": "object",
-            "required": [DEFAULT_SECTION_KEY],
-            "patternProperties": {
-                f"^{DEFAULT_SECTION_KEY}$": marking_object_properties,
-                f"^(?!{DEFAULT_SECTION_KEY}$).*": {
-                    "additionalProperties": False,
-                    "required": ["marking", "questions"],
-                    "type": "object",
-                    "properties": {
-                        "questions": {
-                            "oneOf": [
-                                FIELD_STRING_TYPE,
-                                {
-                                    "type": "array",
-                                    "items": FIELD_STRING_TYPE,
-                                },
-                            ]
+        **common_evaluation_schema_properties,
+        "conditionalSets": {
+            "description": "An array of answer sets with their conditions. These will override the default values in case of any conflict",
+            "type": "array",
+            "items": {
+                "description": "Each item represents a conditional evaluation schema to apply for the given matcher",
+                "type": "object",
+                "required": ["name", "matcher", "evaluation"],
+                "additionalProperties": False,
+                "properties": {
+                    "name": {"type": "string"},
+                    "matcher": {
+                        "description": "Mapping response fields from default layout to the set name",
+                        "type": "object",
+                        "required": ["formatString", "matchRegex"],
+                        "additionalProperties": False,
+                        "properties": {
+                            "formatString": {
+                                "description": "Format string composed of the response variables to apply the regex on e.g. '{roll}-{barcode}'",
+                                "type": "string",
+                            },
+                            # Example: match last four characters ".*-SET1"
+                            "matchRegex": {
+                                "description": "Mapping to use on the composed field string",
+                                "type": "string",
+                                "format": "regex",
+                            },
                         },
-                        "marking": marking_object_properties,
                     },
-                },
-            },
-        },
-        "outputs_configuration": {
-            "type": "object",
-            "additionalProperties": False,
-            "required": [],
-            "properties": {
-                "draw_score": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "required": [
-                        "enabled",
-                    ],
-                    "properties": {
-                        "enabled": {"type": "boolean"},
-                        "position": two_positive_integers,
-                        "score_format_string": {"type": "string"},
-                        "size": {"type": "number"},
-                    },
-                    "allOf": [
-                        {
-                            "if": {"properties": {"enabled": {"const": True}}},
-                            "then": {
-                                "required": ["position", "score_format_string"],
-                            },
-                        }
-                    ],
-                },
-                "draw_answers_summary": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "required": [
-                        "enabled",
-                    ],
-                    "properties": {
-                        "enabled": {"type": "boolean"},
-                        "position": two_positive_integers,
-                        "answers_summary_format_string": {"type": "string"},
-                        "size": {"type": "number"},
-                    },
-                    "allOf": [
-                        {
-                            "if": {"properties": {"enabled": {"const": True}}},
-                            "then": {
-                                "required": [
-                                    "position",
-                                    "answers_summary_format_string",
-                                ],
-                            },
-                        }
-                    ],
-                },
-                "verdict_colors": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "properties": {
-                        "correct": {"type": "string"},
-                        "incorrect": {"type": "string"},
-                        "unmarked": {"type": "string"},
+                    "evaluation": {
+                        # Note: even outputs_configuration is going to be different as per the set, allowing custom colors for different sets!
+                        "description": "The custom evaluation schema to apply if given matcher is satisfied",
+                        "type": "object",
+                        "required": ["source_type", "options", "marking_schemes"],
+                        "additionalProperties": False,
+                        "properties": {
+                            **common_evaluation_schema_properties,
+                        },
+                        "allOf": [*common_evaluation_schema_conditions],
                     },
                 },
             },
         },
     },
-    "allOf": [
-        {
-            "if": {"properties": {"source_type": {"const": "csv"}}},
-            "then": {"properties": {"options": image_and_csv_options}},
-        },
-        {
-            "if": {"properties": {"source_type": {"const": "image_and_csv"}}},
-            "then": {"properties": {"options": image_and_csv_options}},
-        },
-        {
-            "if": {"properties": {"source_type": {"const": "custom"}}},
-            "then": {
-                "properties": {
-                    "options": {
-                        "additionalProperties": False,
-                        "required": ["answers_in_order", "questions_in_order"],
-                        "type": "object",
-                        "properties": {
-                            "should_explain_scoring": {"type": "boolean"},
-                            "answers_in_order": {
-                                "oneOf": [
-                                    {
-                                        "type": "array",
-                                        "items": {
-                                            "oneOf": [
-                                                # Standard answer type allows single correct answers. They can have multiple characters(multi-marked) as well.
-                                                # Useful for any standard response e.g. 'A', '01', '99', 'AB', etc
-                                                {"type": "string"},
-                                                # Multiple correct answer type covers multiple correct answers
-                                                # Useful for ambiguous/bonus questions e.g. ['A', 'B'], ['1', '01'], ['A', 'B', 'AB'], etc
-                                                {
-                                                    "type": "array",
-                                                    "items": {"type": "string"},
-                                                    "minItems": 2,
-                                                },
-                                                # Multiple correct weighted answer covers multiple answers with weights
-                                                # Useful for partial marking e.g. [['A', 2], ['B', 0.5], ['AB', 2.5]], [['1', 0.5], ['01', 1]], etc
-                                                {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "array",
-                                                        "items": False,
-                                                        "minItems": 2,
-                                                        "maxItems": 2,
-                                                        "prefixItems": [
-                                                            {"type": "string"},
-                                                            marking_score,
-                                                        ],
-                                                    },
-                                                },
-                                            ],
-                                        },
-                                    },
-                                ]
-                            },
-                            "questions_in_order": ARRAY_OF_STRINGS,
-                        },
-                    }
-                }
-            },
-        },
-    ],
+    "allOf": [*common_evaluation_schema_conditions],
 }

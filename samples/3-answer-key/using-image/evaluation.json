@@ -5,8 +5,7 @@
     "answer_key_csv_path": "answer_key.csv",
     "questions_in_order": [
       "q1..100"
-    ],
-    "should_explain_scoring": true
+    ]
   },
   "marking_schemes": {
     "DEFAULT": {
@@ -14,5 +13,8 @@
       "incorrect": "-2/3",
       "unmarked": "0"
     }
+  },
+  "outputs_configuration": {
+    "should_explain_scoring": true
   }
 }

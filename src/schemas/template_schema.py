@@ -826,13 +826,16 @@ TEMPLATE_SCHEMA = {
                 ],
             },
         },
-        "fieldBlocks": many_field_blocks_description,
+        "fieldBlocks": {
+            **many_field_blocks_description,
+            "description": "The default field block to apply and read before applying any matcher on the fields response.",
+        },
         "conditionalSets": {
+            "description": "An array of field block sets with their conditions. These will override the default values in case of any conflict",
             "type": "array",
-            "description": "An array of field block sets with their conditions",
             "items": {
-                "type": "object",
                 "description": "Each item represents a conditional layout of field blocks",
+                "type": "object",
                 "required": ["name", "matcher", "fieldBlocks"],
                 "additionalProperties": False,
                 "properties": {
@@ -855,7 +858,10 @@ TEMPLATE_SCHEMA = {
                             },
                         },
                     },
-                    "fieldBlocks": many_field_blocks_description,
+                    "fieldBlocks": {
+                        **many_field_blocks_description,
+                        "description": "The custom field blocks layout to apply if given matcher is satisfied",
+                    },
                 },
             },
         },

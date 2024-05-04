@@ -146,7 +146,6 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
     def init_resized_markers(self):
         self.loaded_reference_images = {}
         self.marker_for_area_label = {}
-        print(self.scan_areas)
         for scan_area in self.scan_areas:
             area_description, custom_options = map(
                 scan_area.get, ["areaDescription", "customOptions"]
