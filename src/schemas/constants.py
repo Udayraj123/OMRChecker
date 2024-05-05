@@ -1,5 +1,7 @@
 from dotmap import DotMap
 
+from src.utils.constants import MATPLOTLIB_COLORS
+
 DEFAULT_SECTION_KEY = "DEFAULT"
 
 BONUS_SECTION_PREFIX = "BONUS"
@@ -102,4 +104,19 @@ zero_to_one_number = {
     "type": "number",
     "minimum": 0,
     "maximum": 1,
+}
+
+matplotlib_color = {
+    "oneOf": [
+        {
+            "type": "string",
+            "description": "This should match with #rgb, #rgba, #rrggbb, and #rrggbbaa syntax",
+            "pattern": "^#(?:(?:[\\da-fA-F]{3}){1,2}|(?:[\\da-fA-F]{4}){1,2})$",
+        },
+        {
+            "type": "string",
+            "description": "This should match with all colors supported by matplotlib",
+            "enum": list(MATPLOTLIB_COLORS.keys()),
+        },
+    ]
 }

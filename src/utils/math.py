@@ -1,10 +1,10 @@
 import math
 
+import matplotlib.colors as colors
 import numpy as np
 
 from src.processors.constants import EdgeType
 from src.utils.logger import logger
-import matplotlib.colors as colors
 
 
 class MathUtils:
@@ -128,6 +128,6 @@ class MathUtils:
         )
 
     @staticmethod
-    def hex_to_bgr(hex):
-        r, g, b = tuple(int(x * 255) for x in colors.hex2color(hex))
+    def to_bgr(any_color):
+        r, g, b = tuple(int(x * 255) for x in colors.to_rgb(any_color))
         return (b, g, r)

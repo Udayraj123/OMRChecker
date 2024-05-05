@@ -61,7 +61,7 @@
     "draw_question_verdicts": {
       "enabled": true,
       "verdict_colors": {
-        "correct": "#00ff00",
+        "correct": "darkgreen",
         "neutral": "#000000",
         "negative": "#ff0000",
         "bonus": "#00DDDD"

@@ -3,6 +3,7 @@ from src.schemas.constants import (
     DEFAULT_SECTION_KEY,
     FIELD_STRING_TYPE,
     SCHEMA_VERDICTS_IN_ORDER,
+    matplotlib_color,
     two_positive_integers,
 )
 
@@ -179,10 +180,10 @@ common_evaluation_schema_properties = {
                         "additionalProperties": False,
                         "required": ["correct", "neutral", "negative", "bonus"],
                         "properties": {
-                            "correct": {"type": "string"},
-                            "neutral": {"type": "string"},
-                            "negative": {"type": "string"},
-                            "bonus": {"type": "string"},
+                            "correct": matplotlib_color,
+                            "neutral": matplotlib_color,
+                            "negative": matplotlib_color,
+                            "bonus": matplotlib_color,
                         },
                     },
                     "verdict_symbol_colors": {
@@ -191,10 +192,10 @@ common_evaluation_schema_properties = {
                         "additionalProperties": False,
                         "required": ["positive", "neutral", "negative", "bonus"],
                         "properties": {
-                            "positive": {"type": "string"},
-                            "neutral": {"type": "string"},
-                            "negative": {"type": "string"},
-                            "bonus": {"type": "string"},
+                            "positive": matplotlib_color,
+                            "neutral": matplotlib_color,
+                            "negative": matplotlib_color,
+                            "bonus": matplotlib_color,
                         },
                     },
                     "draw_answer_groups": {
@@ -204,7 +205,8 @@ common_evaluation_schema_properties = {
                         "properties": {
                             "enabled": {"type": "boolean"},
                             "color_sequence": {
-                                **ARRAY_OF_STRINGS,
+                                "type": "array",
+                                "items": matplotlib_color,
                                 "minItems": 4,
                                 "maxItems": 4,
                             },

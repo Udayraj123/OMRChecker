@@ -414,24 +414,23 @@ class EvaluationConfig:
         )
 
         self.verdict_colors = {
-            "correct": MathUtils.hex_to_bgr(verdict_colors["correct"]),
-            "neutral": MathUtils.hex_to_bgr(verdict_colors["neutral"]),
-            "negative": MathUtils.hex_to_bgr(verdict_colors["negative"]),
-            "bonus": MathUtils.hex_to_bgr(verdict_colors["bonus"]),
+            "correct": MathUtils.to_bgr(verdict_colors["correct"]),
+            "neutral": MathUtils.to_bgr(verdict_colors["neutral"]),
+            "negative": MathUtils.to_bgr(verdict_colors["negative"]),
+            "bonus": MathUtils.to_bgr(verdict_colors["bonus"]),
         }
         self.verdict_symbol_colors = {
-            "positive": MathUtils.hex_to_bgr(verdict_symbol_colors["positive"]),
-            "neutral": MathUtils.hex_to_bgr(verdict_symbol_colors["neutral"]),
-            "negative": MathUtils.hex_to_bgr(verdict_symbol_colors["negative"]),
-            "bonus": MathUtils.hex_to_bgr(verdict_symbol_colors["bonus"]),
+            "positive": MathUtils.to_bgr(verdict_symbol_colors["positive"]),
+            "neutral": MathUtils.to_bgr(verdict_symbol_colors["neutral"]),
+            "negative": MathUtils.to_bgr(verdict_symbol_colors["negative"]),
+            "bonus": MathUtils.to_bgr(verdict_symbol_colors["bonus"]),
         }
         draw_answer_groups_dict = {
             "enabled": draw_answer_groups["enabled"],
         }
         if draw_answer_groups["enabled"]:
             draw_answer_groups_dict["color_sequence"] = [
-                MathUtils.hex_to_bgr(hex)
-                for hex in draw_answer_groups["color_sequence"]
+                MathUtils.to_bgr(hex) for hex in draw_answer_groups["color_sequence"]
             ]
         self.draw_answer_groups = draw_answer_groups_dict
 

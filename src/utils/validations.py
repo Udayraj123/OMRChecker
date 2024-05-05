@@ -30,6 +30,16 @@ def validate_evaluation_json(json_data, evaluation_path):
                     msg + ". Make sure the spelling of the key is correct",
                 )
             else:
+                if (
+                    key in ["outputs_configuration", "marking_schemes"]
+                    and len(error.path) > 1
+                ):
+                    path = ".".join(list(error.path))
+                    key = path
+                    if "color" in path and validator == "oneOf":
+                        color = re.findall(r"'(.*?)'", msg)[0]
+                        msg = f"{color} is not a valid color."
+
                 table.add_row(key, msg)
         console.print(table, justify="center")
         raise Exception(

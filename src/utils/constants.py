@@ -1,3 +1,4 @@
+import matplotlib
 from dotmap import DotMap
 
 # Filenames
@@ -46,3 +47,5 @@ CLR_WHITE = (255, 255, 255)
 MARKED_TEMPLATE_TRANSPARENCY = 0.65
 BONUS_SYMBOL = "*"
 GROUP_THICKNESS = 3
+
+MATPLOTLIB_COLORS = matplotlib.colors.get_named_colors_mapping()
