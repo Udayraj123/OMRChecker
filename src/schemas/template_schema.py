@@ -503,6 +503,7 @@ TEMPLATE_SCHEMA = {
                             "Levels",
                             "MedianBlur",
                             "AutoAlign",
+                            "Contrast",
                         ],
                     },
                     "options": {
@@ -686,6 +687,31 @@ TEMPLATE_SCHEMA = {
                                             "description": "The relative path to reference image of the omr marker",
                                             "type": "string",
                                         }
+                                    },
+                                }
+                            }
+                        },
+                    },
+                    {
+                        "if": {
+                            "properties": {"name": {"const": "Contrast"}},
+                            **pre_processor_if_required_attrs,
+                        },
+                        "then": {
+                            "properties": {
+                                "options": {
+                                    "description": "Options for the Contrast pre-processor",
+                                    "type": "object",
+                                    "additionalProperties": False,
+                                    "properties": {
+                                        **pre_processor_options_available_keys,
+                                        "mode": {
+                                            "type": "string",
+                                            "enum": ["manual", "auto"],
+                                        },
+                                        "alpha": {"type": "number"},
+                                        "beta": {"type": "number"},
+                                        "clipPercentage": {"type": "number"},
                                     },
                                 }
                             }
