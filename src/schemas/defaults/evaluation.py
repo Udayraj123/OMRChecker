@@ -36,10 +36,10 @@ EVALUATION_CONFIG_DEFAULTS = {
                 "bonus": "#000000",
             },
             "draw_answer_groups":{
-      "enabled":True,
-      "color_sequence":["#8DFBC4","#F7FB8D","#8D9EFB","#EA666F"]
-        }
+                "enabled":True,
+                "color_sequence":["#8DFBC4","#F7FB8D","#8D9EFB","#EA666F"]
+            }
         },
-        "draw_marked_bubble_texts": {"enabled": False},
+        "draw_detected_bubble_texts": {"enabled": False},
     },
 }

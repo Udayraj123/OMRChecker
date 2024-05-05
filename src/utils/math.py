@@ -130,4 +130,4 @@ class MathUtils:
     @staticmethod
     def hex_to_bgr(hex):
         r, g, b = tuple(int(x * 255) for x in colors.hex2color(hex))
-        return tuple([b, g, r])
+        return (b, g, r)

@@ -59,7 +59,7 @@
         "enabled":false
       }
     },
-    "draw_marked_bubble_texts":{
+    "draw_detected_bubble_texts":{
       "enabled":false
     }
   },

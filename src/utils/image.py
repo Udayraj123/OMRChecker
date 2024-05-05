@@ -248,10 +248,10 @@ class ImageUtils:
             min_distance, nearest_edge_type = min(edge_distances)
             distance_warning = "*" if min_distance > 10 else ""
             logger.info(
-                f"boundary_point={boundary_point}\t nearest_edge_type={nearest_edge_type}\t min_distance={min_distance:.2f}{distance_warning}"
+                f"boundary_point={boundary_point} nearest_edge_type={nearest_edge_type} min_distance={min_distance:.2f}"
             )
             # TODO: Each edge contour's points should be in the clockwise order
-            edge_contours_map[nearest_edge_type].append(tuple(boundary_point))
+            edge_contours_map[nearest_edge_type].append(boundary_point)
 
         # Add corner points and ensure clockwise order
         for i, edge_type in enumerate(EDGE_TYPES_IN_ORDER):
@@ -525,26 +525,29 @@ class ImageUtils:
         ImageUtils.draw_text(image, symbol, center_position, color=color)
 
     @staticmethod
-    def draw_line(image, start, end, color, thickness):
+    def draw_line(image, start, end, color=CLR_BLACK, thickness=3):
         cv2.line(image, start, end, color, thickness)
 
     @staticmethod
     def draw_group(image, start, bubble_dimensions, state, color, thickness=4):
-        if state == "T":
-            end_position = (start[0] + int(bubble_dimensions[0] * 7 / 10), start[1])
-            start = (start[0] + int(bubble_dimensions[0] * 3 / 10), start[1])
+        start_x,start_y=start
+        box_w,box_h=bubble_dimensions
+        thickness_factor=7/10
+        if state == "TOP":
+            end_position = (start_x + int(box_w * thickness_factor), start_y)
+            start = (start_x + int(box_w * (1-thickness_factor)), start_y)
             ImageUtils.draw_line(image, start, end_position, color, thickness)
-        elif state == "R":
-            start = (start[0] + bubble_dimensions[0], start[1])
-            end_position = (start[0], int(start[1] + bubble_dimensions[1] * 7 / 10))
-            start = (start[0], int(start[1] + bubble_dimensions[1] * 3 / 10))
+        elif state == "RIGHT":
+            start = (start_x + box_w, start_y)
+            end_position = (start_x, int(start_y + box_h * thickness_factor))
+            start = (start_x, int(start_y + box_h * (1-thickness_factor)))
             ImageUtils.draw_line(image, start, end_position, color, thickness)
-        elif state == "B":
-            start = (start[0], start[1] + bubble_dimensions[1])
-            end_position = (int(start[0] + bubble_dimensions[0] * 7 / 10), start[1])
-            start = (int(start[0] + bubble_dimensions[0] * 3 / 10), start[1])
+        elif state == "BOTTOM":
+            start = (start_x, start_y + box_h)
+            end_position = (int(start_x + box_w * thickness_factor), start_y)
+            start = (int(start_x + box_w * (1-thickness_factor)), start_y)
             ImageUtils.draw_line(image, start, end_position, color, thickness)
-        elif state == "L":
-            end_position = (start[0], int(start[1] + bubble_dimensions[1] * 7 / 10))
-            start = (start[0], int(start[1] + bubble_dimensions[1] * 3 / 10))
+        elif state == "LEFT":
+            end_position = (start_x, int(start_y + box_h * thickness_factor))
+            start = (start_x, int(start_y + box_h * (1-thickness_factor)))
             ImageUtils.draw_line(image, start, end_position, color, thickness)

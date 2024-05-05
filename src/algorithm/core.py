@@ -20,7 +20,7 @@ import numpy as np
 from matplotlib import colormaps, pyplot
 
 from src.algorithm.detection import BubbleMeanValue, FieldStdMeanValue
-from src.algorithm.evaluation import get_evaluation_symbol
+from src.algorithm.evaluation import get_evaluation_meta_for_question
 from src.schemas.constants import Verdict
 from src.utils.constants import (
     BONUS_SYMBOL,
@@ -29,6 +29,7 @@ from src.utils.constants import (
     CLR_WHITE,
     MARKED_TEMPLATE_TRANSPARENCY,
     TEXT_SIZE,
+    GROUP_THICKNESS
 )
 from src.schemas.constants import AnswerType
 from src.utils.image import ImageUtils
@@ -757,7 +758,7 @@ class ImageInstanceOps:
                     # TODO: pass verdict_color here and insert symbol mapping here ( +, -, *)
                     thickness_factor=1 / 12,
                 )
-                if evaluation_config.draw_marked_bubble_texts["enabled"]:
+                if evaluation_config.draw_detected_bubble_texts["enabled"]:
                     ImageUtils.draw_text(
                         marked_image,
                         field_value,
@@ -777,18 +778,21 @@ class ImageInstanceOps:
 
     @staticmethod
     def is_part_of_some_answer(question_meta, field_value):
-        if question_meta["bonus_type"]:
+        bonus_type, answer_type, answer_item = map(
+            question_meta.get, ["bonus_type", "answer_type", "answer_item"]
+        )
+        if bonus_type:
             return True
-        if question_meta["answer_type"] == AnswerType.STANDARD:
-            return field_value in str(question_meta["answer_item"])
-        elif question_meta["answer_type"] == AnswerType.MULTIPLE_CORRECT:
-            for allowed_answer in question_meta["answer_item"]:
+        if answer_type == AnswerType.STANDARD:
+            return field_value in str(answer_item)
+        elif answer_type == AnswerType.MULTIPLE_CORRECT:
+            for allowed_answer in answer_item:
                 if field_value in allowed_answer:
                     return True
             return False
         else:
-            for allowed_answer, score in question_meta["answer_item"]:
-                if score>0 and field_value in allowed_answer:
+            for allowed_answer, score in answer_item:
+                if score > 0 and field_value in allowed_answer:
                     return True
             return False
 
@@ -809,10 +813,6 @@ class ImageInstanceOps:
             bubble = bubble_detection.item_reference
             shifted_position = tuple(bubble.get_shifted_position(field_block.shifts))
             field_value = str(bubble.field_value)
-
-            # TODO: answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED etc
-
-            # TODO: support for custom_labels verdicts too!
             if self.is_part_of_some_answer(question_meta, field_value):
                 ImageUtils.draw_box(
                     marked_image,
@@ -901,7 +901,7 @@ class ImageInstanceOps:
                 bubble_detection.is_marked
                 or question_meta["bonus_type"] == "BONUS_FOR_ALL"
             ):
-                symbol, verdict_color, verdict_symbol_color = get_evaluation_symbol(
+                symbol, verdict_color, verdict_symbol_color =  get_evaluation_meta_for_question(
                     question_meta, verdict_colors, verdict_symbol_colors
                 )
 
@@ -912,7 +912,6 @@ class ImageInstanceOps:
                         bubble_dimensions,
                         color=CLR_WHITE,
                         style="BOX_FILLED",
-                        # TODO: pass verdict_color here and insert symbol mapping here ( +, -, *)
                         thickness_factor=1 / 12,
                     )
 
@@ -929,7 +928,6 @@ class ImageInstanceOps:
                         bubble_dimensions,
                         color=verdict_color,
                         style="BOX_FILLED",
-                        # TODO: pass verdict_color here and insert symbol mapping here ( +, -, *)
                         thickness_factor=1 / 12,
                     )
 
@@ -940,18 +938,10 @@ class ImageInstanceOps:
                         position_diagonal,
                         color=verdict_symbol_color,
                     )
-                # if(is_field_correct):
-                #     # TODO: green
-                #     pass
-
-                # if(is_field_incorrect):
-                #     # TODO: red
-                # pass
-
-                # TODO: add condition only for marked_image and not for evaluation_image (new variable)
+         
                 if (
                     bubble_detection.is_marked
-                    and evaluation_config.draw_marked_bubble_texts["enabled"]
+                    and evaluation_config.draw_detected_bubble_texts["enabled"]
                 ):
                     ImageUtils.draw_text(
                         marked_image,
@@ -983,17 +973,20 @@ class ImageInstanceOps:
                 evaluation_config,
             )
 
-    def get_occurences(self, question_meta, field_value):
+    def get_matched_answer_groups(self, question_meta, field_value):
         occurences = []
-        if question_meta["answer_type"] == AnswerType.MULTIPLE_CORRECT:
-            for i in range(0, len(question_meta["answer_item"])):
-                if field_value in question_meta["answer_item"][i]:
+        answer_type, answer_item = map(
+            question_meta.get, ["answer_type", "answer_item"]
+        )
+        if answer_type == AnswerType.MULTIPLE_CORRECT:
+            for i in range(0, len(answer_item)):
+                if field_value in answer_item[i]:
                     occurences.append(i)
         else:
-            for i in range(0, len(question_meta["answer_item"])):
+            for i in range(0, len(answer_item)):
                 if (
-                    field_value in question_meta["answer_item"][i][0]
-                    and question_meta["answer_item"][i][1] > 0
+                    field_value in answer_item[i][0]
+                    and answer_item[i][1] > 0
                 ):
                     occurences.append(i)
         return occurences
@@ -1007,8 +1000,8 @@ class ImageInstanceOps:
         field_block,
         evaluation_config,
     ):
-        bubble_dimensions = tuple(field_block.bubble_dimensions)
-        draw_pos = ["T", "R", "B", "L"]
+        bubble_dimensions = field_block.bubble_dimensions
+        draw_pos = ["TOP", "RIGHT", "BOTTOM", "LEFT"]
         color_sequence = evaluation_config.draw_answer_groups["color_sequence"]
         if image_type == "GRAYSCALE":
             color_sequence = [CLR_WHITE] * len(color_sequence)
@@ -1016,12 +1009,12 @@ class ImageInstanceOps:
             bubble = bubble_detection.item_reference
             shifted_position = tuple(bubble.get_shifted_position(field_block.shifts))
             field_value = str(bubble.field_value)
-            occurence = self.get_occurences(question_meta, field_value)
+            occurence = self.get_matched_answer_groups(question_meta, field_value)
             for pos in occurence:
                 state = draw_pos[pos]
                 color = color_sequence[pos]
                 ImageUtils.draw_group(
-                    marked_image, shifted_position, bubble_dimensions, state, color, 3
+                    marked_image, shifted_position, bubble_dimensions, state, color, GROUP_THICKNESS
                 )
 
     def draw_evaluation_summary(self, marked_image, evaluation_meta, evaluation_config):

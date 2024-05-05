@@ -156,7 +156,7 @@ EVALUATION_SCHEMA = {
                         "draw_answer_groups": {
                             "type": "object",
                             "additionalProperties": False,
-                            "required": ["enabled"],
+                            "required": [],
                             "properties": {
                                 "enabled": {"type": "boolean"},
                                 "color_sequence": {**ARRAY_OF_STRINGS,"minItems": 4,"maxItems": 4}
@@ -184,7 +184,7 @@ EVALUATION_SCHEMA = {
                         }
                     ],
                 },
-                "draw_marked_bubble_texts": {
+                "draw_detected_bubble_texts": {
                     "type": "object",
                     "additionalProperties": False,
                     "required": ["enabled"],
