@@ -520,6 +520,8 @@ class ImageInstanceOps:
                 if save_marked_dir is not None
                 else None
             )
+            template.image_instance_ops.reset_all_save_img()
+
             colored_final_marked = self.draw_template_layout_util(
                 colored_final_marked,
                 "COLORED",
@@ -743,7 +745,6 @@ class ImageInstanceOps:
     def draw_field_bubbles_and_detections(
         self, marked_image, field_bubble_means, field_block, evaluation_config
     ):
-        should_draw_question_verdicts = evaluation_config is not None
         bubble_dimensions = tuple(field_block.bubble_dimensions)
         for bubble_detection in field_bubble_means:
             bubble = bubble_detection.item_reference
@@ -761,8 +762,9 @@ class ImageInstanceOps:
                     thickness_factor=1 / 12,
                 )
                 if (
-                    should_draw_question_verdicts
-                    and evaluation_config.draw_detected_bubble_texts["enabled"]
+                    # Note: this mimics the default false behavior for draw_detected_bubble_texts
+                    evaluation_config is None
+                    or evaluation_config.draw_detected_bubble_texts["enabled"]
                 ):
                     ImageUtils.draw_text(
                         marked_image,

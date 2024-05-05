@@ -40,6 +40,6 @@ EVALUATION_CONFIG_DEFAULTS = {
                 "color_sequence": ["#8DFBC4", "#F7FB8D", "#8D9EFB", "#EA666F"],
             },
         },
-        "draw_detected_bubble_texts": {"enabled": False},
+        "draw_detected_bubble_texts": {"enabled": True},
     },
 }

@@ -39,10 +39,13 @@
       ],
       "size": 1.0
     },
-    "verdict_colors": {
-      "correct": "#00ff00",
-      "incorrect": "#ff0000",
-      "unmarked": "#0000ff"
+    "draw_question_verdicts": {
+      "enabled": true,
+      "verdict_colors": {
+        "correct": "#00ff00",
+        "incorrect": "#ff0000",
+        "unmarked": "#0000ff"
+      }
     },
     "should_explain_scoring": true
   },
