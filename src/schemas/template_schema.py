@@ -585,7 +585,7 @@ TEMPLATE_SCHEMA = {
                                             "description": "Type of the matcher to use",
                                             "type": "string",
                                             "enum": [
-                                                "DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING",
+                                                "BRUTEFORCE_HAMMING",
                                                 "NORM_HAMMING",
                                             ],
                                         },
