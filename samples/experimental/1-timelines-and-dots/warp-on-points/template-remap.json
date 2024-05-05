@@ -35,7 +35,7 @@
         "defaultSelector": "OUTER_CORNERS",
         "scanAreas": [
           {
-            "areaTemplate": "topLeftDot",
+            "areaPreset": "topLeftDot",
             "areaDescription": {
               "label": "AdditionalPoint",
               "origin": [

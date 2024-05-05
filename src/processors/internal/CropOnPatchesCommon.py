@@ -24,7 +24,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.parse_and_apply_scan_area_templates_and_defaults()
+        self.parse_and_apply_scan_area_presets_and_defaults()
         self.validate_scan_areas()
         self.validate_points_layouts()
 
@@ -43,22 +43,22 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
     def prepare_image(self, image):
         return image
 
-    def parse_and_apply_scan_area_templates_and_defaults(self):
+    def parse_and_apply_scan_area_presets_and_defaults(self):
         options = self.options
         scan_areas = options["scanAreas"]
         scan_areas_with_defaults = []
         for scan_area in scan_areas:
-            area_template, area_description, custom_options = (
-                scan_area["areaTemplate"],
+            area_preset, area_description, custom_options = (
+                scan_area["areaPreset"],
                 scan_area.get("areaDescription", {}),
                 scan_area.get("customOptions", {}),
             )
-            area_description["label"] = area_description.get("label", area_template)
+            area_description["label"] = area_description.get("label", area_preset)
             scan_areas_with_defaults += [
                 {
-                    "areaTemplate": area_template,
+                    "areaPreset": area_preset,
                     "areaDescription": OVERRIDE_MERGER.merge(
-                        deepcopy(self.default_scan_area_descriptions[area_template]),
+                        deepcopy(self.default_scan_area_descriptions[area_preset]),
                         area_description,
                     ),
                     "customOptions": custom_options,
@@ -83,23 +83,23 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         options = self.options
         points_layout = options["pointsLayout"]
         if (
-            points_layout not in self.scan_area_templates_for_layout
+            points_layout not in self.scan_area_presets_for_layout
             and points_layout != "CUSTOM"
         ):
             raise Exception(
                 f"Invalid pointsLayout provided: {points_layout} for {self}"
             )
 
-        expected_templates = set(self.scan_area_templates_for_layout[points_layout])
+        expected_templates = set(self.scan_area_presets_for_layout[points_layout])
         provided_templates = set(
-            [scan_area["areaTemplate"] for scan_area in self.scan_areas]
+            [scan_area["areaPreset"] for scan_area in self.scan_areas]
         )
-        not_provided_area_templates = expected_templates.difference(provided_templates)
+        not_provided_area_presets = expected_templates.difference(provided_templates)
 
-        if len(not_provided_area_templates) > 0:
-            logger.error(f"not_provided_area_templates={not_provided_area_templates}")
+        if len(not_provided_area_presets) > 0:
+            logger.error(f"not_provided_area_presets={not_provided_area_presets}")
             raise Exception(
-                f"Missing a few scanAreaTemplates for the pointsLayout {points_layout}"
+                f"Missing a few areaPresets for the pointsLayout {points_layout}"
             )
 
     def extract_control_destination_points(self, image, _colored_image, file_path):
@@ -115,10 +115,10 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
 
         # TODO: use shapely and corner points to split easily?
 
-        area_template_points = {}
+        area_preset_points = {}
         page_corners, destination_page_corners = [], []
         for scan_area in self.scan_areas:
-            area_template = scan_area["areaTemplate"]
+            area_preset = scan_area["areaPreset"]
             area_description = self.get_runtime_area_description_with_defaults(
                 image, scan_area
             )
@@ -134,7 +134,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                 area_control_points, area_destination_points = [dot_point], [
                     destination_point
                 ]
-                area_template_points[area_template] = area_control_points
+                area_preset_points[area_preset] = area_control_points
 
                 page_corners.append(dot_point)
                 destination_page_corners.append(destination_point)
@@ -145,9 +145,9 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                     area_destination_points,
                     selected_contour,
                 ) = self.find_and_select_points_from_line(
-                    image, area_template, area_description, file_path
+                    image, area_preset, area_description, file_path
                 )
-                area_template_points[area_template] = selected_contour
+                area_preset_points[area_preset] = selected_contour
                 page_corners += [area_control_points[0], area_control_points[-1]]
                 destination_page_corners += [
                     area_destination_points[0],
@@ -164,7 +164,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
 
         # Fill edge contours
         edge_contours_map = self.get_edge_contours_map_from_area_points(
-            area_template_points
+            area_preset_points
         )
 
         if self.warp_method in [
@@ -184,7 +184,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
     def get_runtime_area_description_with_defaults(self, image, scan_area):
         return scan_area["areaDescription"]
 
-    def get_edge_contours_map_from_area_points(self, area_template_points):
+    def get_edge_contours_map_from_area_points(self, area_preset_points):
         edge_contours_map = {
             EdgeType.TOP: [],
             EdgeType.RIGHT: [],
@@ -193,11 +193,11 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         }
 
         for edge_type in EDGE_TYPES_IN_ORDER:
-            for area_template, contour_point_index in TARGET_ENDPOINTS_FOR_EDGES[
+            for area_preset, contour_point_index in TARGET_ENDPOINTS_FOR_EDGES[
                 edge_type
             ]:
-                if area_template in area_template_points:
-                    area_points = area_template_points[area_template]
+                if area_preset in area_preset_points:
+                    area_points = area_preset_points[area_preset]
                     if contour_point_index == "ALL":
                         edge_contours_map[edge_type] += area_points
                     else:

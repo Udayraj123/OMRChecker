@@ -2,7 +2,7 @@ from src.processors.constants import (
     MARKER_AREA_TYPES_IN_ORDER,
     SCANNER_TYPES_IN_ORDER,
     SELECTOR_TYPES_IN_ORDER,
-    AreaTemplate,
+    AreaPreset,
     WarpMethod,
     WarpMethodFlags,
 )
@@ -46,10 +46,10 @@ _box_area_description = {
     },
 }
 
-_scan_area_template = {
+scan_area_preset = {
     "description": "The ready-made template to use to prefill description of a scanArea",
     "type": "string",
-    "enum": ["CUSTOM", *AreaTemplate.values()],
+    "enum": ["CUSTOM", *AreaPreset.values()],
 }
 
 _custom_marker_options = {
@@ -140,12 +140,12 @@ scan_areas_array_def = {
     "type": "array",
     "items": {
         "type": "object",
-        "required": ["areaTemplate"],
+        "required": ["areaPreset"],
         "additionalProperties": False,
         "properties": {
-            "areaTemplate": _scan_area_template,
-            "areaDescription": _scan_area_description,
-            "customOptions": _common_custom_options_schema,
+            "areaPreset": scan_area_preset,
+            "areaDescription": scan_area_description,
+            "customOptions": common_custom_options_schema,
         },
     },
 }
@@ -814,10 +814,10 @@ TEMPLATE_SCHEMA = {
                                                     **crop_on_markers_options_available_keys,
                                                     **_custom_marker_options,
                                                     **{
-                                                        area_template: {
+                                                        area_preset: {
                                                             "$ref": "#/$def/marker_area_description"
                                                         }
-                                                        for area_template in MARKER_AREA_TYPES_IN_ORDER
+                                                        for area_preset in MARKER_AREA_TYPES_IN_ORDER
                                                     },
                                                     "tuningOptions": {
                                                         "$ref": "#/$def/crop_on_four_markers_tuning_options"

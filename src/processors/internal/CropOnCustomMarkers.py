@@ -5,7 +5,7 @@ import numpy as np
 
 from src.processors.constants import (
     MARKER_AREA_TYPES_IN_ORDER,
-    AreaTemplate,
+    AreaPreset,
     ScannerType,
     WarpMethod,
 )
@@ -21,52 +21,52 @@ from src.utils.parsing import OVERRIDE_MERGER
 # TODO: add support for showing patch area centers during setLayout option?!
 class CropOnCustomMarkers(CropOnPatchesCommon):
     __is_internal_preprocessor__ = True
-    scan_area_templates_for_layout = {
+    scan_area_presets_for_layout = {
         "FOUR_MARKERS": MARKER_AREA_TYPES_IN_ORDER,
     }
     default_scan_area_descriptions = {
         **{
-            area_template: {
+            area_preset: {
                 "scannerType": ScannerType.TEMPLATE_MATCH,
                 # "selector": "SELECT_CENTER",
                 "maxPoints": 2,  # for cropping
                 # Note: all 4 margins are a required property for a patch area
             }
-            for area_template in MARKER_AREA_TYPES_IN_ORDER
+            for area_preset in MARKER_AREA_TYPES_IN_ORDER
         },
         "CUSTOM": {},
     }
 
     default_points_selector_map = {
         "CENTERS": {
-            AreaTemplate.topLeftMarker: "SELECT_CENTER",
-            AreaTemplate.topRightMarker: "SELECT_CENTER",
-            AreaTemplate.bottomRightMarker: "SELECT_CENTER",
-            AreaTemplate.bottomLeftMarker: "SELECT_CENTER",
+            AreaPreset.topLeftMarker: "SELECT_CENTER",
+            AreaPreset.topRightMarker: "SELECT_CENTER",
+            AreaPreset.bottomRightMarker: "SELECT_CENTER",
+            AreaPreset.bottomLeftMarker: "SELECT_CENTER",
         },
         "INNER_WIDTHS": {
-            AreaTemplate.topLeftMarker: "SELECT_TOP_RIGHT",
-            AreaTemplate.topRightMarker: "SELECT_TOP_LEFT",
-            AreaTemplate.bottomRightMarker: "SELECT_BOTTOM_LEFT",
-            AreaTemplate.bottomLeftMarker: "SELECT_BOTTOM_RIGHT",
+            AreaPreset.topLeftMarker: "SELECT_TOP_RIGHT",
+            AreaPreset.topRightMarker: "SELECT_TOP_LEFT",
+            AreaPreset.bottomRightMarker: "SELECT_BOTTOM_LEFT",
+            AreaPreset.bottomLeftMarker: "SELECT_BOTTOM_RIGHT",
         },
         "INNER_HEIGHTS": {
-            AreaTemplate.topLeftMarker: "SELECT_BOTTOM_LEFT",
-            AreaTemplate.topRightMarker: "SELECT_BOTTOM_RIGHT",
-            AreaTemplate.bottomRightMarker: "SELECT_TOP_RIGHT",
-            AreaTemplate.bottomLeftMarker: "SELECT_TOP_LEFT",
+            AreaPreset.topLeftMarker: "SELECT_BOTTOM_LEFT",
+            AreaPreset.topRightMarker: "SELECT_BOTTOM_RIGHT",
+            AreaPreset.bottomRightMarker: "SELECT_TOP_RIGHT",
+            AreaPreset.bottomLeftMarker: "SELECT_TOP_LEFT",
         },
         "INNER_CORNERS": {
-            AreaTemplate.topLeftMarker: "SELECT_BOTTOM_RIGHT",
-            AreaTemplate.topRightMarker: "SELECT_BOTTOM_LEFT",
-            AreaTemplate.bottomRightMarker: "SELECT_TOP_LEFT",
-            AreaTemplate.bottomLeftMarker: "SELECT_TOP_RIGHT",
+            AreaPreset.topLeftMarker: "SELECT_BOTTOM_RIGHT",
+            AreaPreset.topRightMarker: "SELECT_BOTTOM_LEFT",
+            AreaPreset.bottomRightMarker: "SELECT_TOP_LEFT",
+            AreaPreset.bottomLeftMarker: "SELECT_TOP_RIGHT",
         },
         "OUTER_CORNERS": {
-            AreaTemplate.topLeftMarker: "SELECT_TOP_LEFT",
-            AreaTemplate.topRightMarker: "SELECT_TOP_RIGHT",
-            AreaTemplate.bottomRightMarker: "SELECT_BOTTOM_RIGHT",
-            AreaTemplate.bottomLeftMarker: "SELECT_BOTTOM_LEFT",
+            AreaPreset.topLeftMarker: "SELECT_TOP_LEFT",
+            AreaPreset.topRightMarker: "SELECT_TOP_RIGHT",
+            AreaPreset.bottomRightMarker: "SELECT_BOTTOM_RIGHT",
+            AreaPreset.bottomLeftMarker: "SELECT_BOTTOM_LEFT",
         },
     }
 
@@ -105,13 +105,13 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         defaultDimensions = options.get("markerDimensions", None)
         # inject scanAreas (Note: override merge with defaults will happen in parent class)
         parsed_scan_areas = []
-        for area_template in self.scan_area_templates_for_layout[layout_type]:
-            local_description = options.get(area_template, {})
+        for area_preset in self.scan_area_presets_for_layout[layout_type]:
+            local_description = options.get(area_preset, {})
             # .pop() will delete the customOptions key from the description if it exists
             local_custom_options = local_description.pop("customOptions", {})
             parsed_scan_areas.append(
                 {
-                    "areaTemplate": area_template,
+                    "areaPreset": area_preset,
                     "areaDescription": {
                         # Default box dimensions to markerDimensions
                         "dimensions": defaultDimensions,
@@ -131,11 +131,11 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         super().validate_scan_areas()
         # Additional marker related validations
         for scan_area in self.scan_areas:
-            area_template, area_description, custom_options = map(
-                scan_area.get, ["areaTemplate", "areaDescription", "customOptions"]
+            area_preset, area_description, custom_options = map(
+                scan_area.get, ["areaPreset", "areaDescription", "customOptions"]
             )
             area_label = area_description["label"]
-            if area_template in self.scan_area_templates_for_layout["FOUR_MARKERS"]:
+            if area_preset in self.scan_area_presets_for_layout["FOUR_MARKERS"]:
                 if "referenceImage" not in custom_options:
                     raise Exception(
                         f"referenceImage not provided for custom marker area {area_label}"
@@ -221,15 +221,15 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         }
 
     def get_runtime_area_description_with_defaults(self, image, scan_area):
-        area_template, area_description = (
-            scan_area["areaTemplate"],
+        area_preset, area_description = (
+            scan_area["areaPreset"],
             scan_area["areaDescription"],
         )
         logger.debug(scan_area)
         # Note: currently user input would be restricted to only markers at once (no combination of markers and dots)
         # TODO: >> handle a instance of this class from parent using scannerType for applicable ones!
-        # Check for area_template
-        if area_template not in self.scan_area_templates_for_layout["FOUR_MARKERS"]:
+        # Check for area_preset
+        if area_preset not in self.scan_area_presets_for_layout["FOUR_MARKERS"]:
             return area_description
 
         area_label, origin, dimensions = map(
@@ -239,7 +239,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             image_shape = image.shape[:2]
             marker_shape = self.marker_for_area_label[area_label].shape[:2]
             quadrant_description = self.get_quadrant_area_description(
-                area_template, image_shape, marker_shape
+                area_preset, image_shape, marker_shape
             )
             area_description = OVERRIDE_MERGER.merge(
                 quadrant_description, area_description
@@ -252,7 +252,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
     def find_dot_corners_from_options(self, image, area_description, file_path):
         config = self.tuning_config
 
-        # Note we expect fill_runtime_defaults_from_area_templates to be called from parent
+        # Note we expect fill_runtime_defaults_from_area_presets to be called from parent
 
         absolute_corners = self.find_marker_corners_in_patch(
             area_description, image, file_path
@@ -268,13 +268,13 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         half_height, half_width = h // 2, w // 2
         marker_h, marker_w = marker_shape
 
-        if patch_type == AreaTemplate.topLeftMarker:
+        if patch_type == AreaPreset.topLeftMarker:
             area_start, area_end = [1, 1], [half_width, half_height]
-        elif patch_type == AreaTemplate.topRightMarker:
+        elif patch_type == AreaPreset.topRightMarker:
             area_start, area_end = [half_width, 1], [w, half_height]
-        elif patch_type == AreaTemplate.bottomRightMarker:
+        elif patch_type == AreaPreset.bottomRightMarker:
             area_start, area_end = [half_width, half_height], [w, h]
-        elif patch_type == AreaTemplate.bottomLeftMarker:
+        elif patch_type == AreaPreset.bottomLeftMarker:
             area_start, area_end = [1, half_height], [half_width, h]
         else:
             raise Exception(f"Unexpected quadrant patch_type {patch_type}")

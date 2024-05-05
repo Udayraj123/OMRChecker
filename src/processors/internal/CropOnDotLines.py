@@ -6,7 +6,7 @@ from src.processors.constants import (
     EDGE_TYPES_IN_ORDER,
     LINE_AREA_TYPES_IN_ORDER,
     TARGET_EDGE_FOR_LINE,
-    AreaTemplate,
+    AreaPreset,
     EdgeType,
     ScannerType,
     SelectorType,
@@ -25,87 +25,87 @@ from src.utils.math import MathUtils
 class CropOnDotLines(CropOnPatchesCommon):
     __is_internal_preprocessor__ = True
 
-    scan_area_templates_for_layout = {
+    scan_area_presets_for_layout = {
         "ONE_LINE_TWO_DOTS": [
-            AreaTemplate.topRightDot,
-            AreaTemplate.bottomRightDot,
-            AreaTemplate.leftLine,
+            AreaPreset.topRightDot,
+            AreaPreset.bottomRightDot,
+            AreaPreset.leftLine,
         ],
         "TWO_DOTS_ONE_LINE": [
-            AreaTemplate.rightLine,
-            AreaTemplate.topLeftDot,
-            AreaTemplate.bottomLeftDot,
+            AreaPreset.rightLine,
+            AreaPreset.topLeftDot,
+            AreaPreset.bottomLeftDot,
         ],
         "TWO_LINES": [
-            AreaTemplate.leftLine,
-            AreaTemplate.rightLine,
+            AreaPreset.leftLine,
+            AreaPreset.rightLine,
         ],
         "TWO_LINES_HORIZONTAL": [
-            AreaTemplate.topLine,
-            AreaTemplate.bottomLine,
+            AreaPreset.topLine,
+            AreaPreset.bottomLine,
         ],
         "FOUR_DOTS": DOT_AREA_TYPES_IN_ORDER,
     }
 
     default_scan_area_descriptions = {
         **{
-            area_template: {
+            area_preset: {
                 "scannerType": ScannerType.PATCH_DOT,
                 "selector": "SELECT_CENTER",
                 "maxPoints": 2,  # for cropping
             }
-            for area_template in DOT_AREA_TYPES_IN_ORDER
+            for area_preset in DOT_AREA_TYPES_IN_ORDER
         },
         **{
-            area_template: {
+            area_preset: {
                 "scannerType": ScannerType.PATCH_LINE,
                 "selector": "LINE_OUTER_EDGE",
             }
-            for area_template in LINE_AREA_TYPES_IN_ORDER
+            for area_preset in LINE_AREA_TYPES_IN_ORDER
         },
         "CUSTOM": {},
     }
 
     default_points_selector_map = {
         "CENTERS": {
-            AreaTemplate.topLeftDot: "SELECT_CENTER",
-            AreaTemplate.topRightDot: "SELECT_CENTER",
-            AreaTemplate.bottomRightDot: "SELECT_CENTER",
-            AreaTemplate.bottomLeftDot: "SELECT_CENTER",
-            AreaTemplate.leftLine: "LINE_OUTER_EDGE",
-            AreaTemplate.rightLine: "LINE_OUTER_EDGE",
+            AreaPreset.topLeftDot: "SELECT_CENTER",
+            AreaPreset.topRightDot: "SELECT_CENTER",
+            AreaPreset.bottomRightDot: "SELECT_CENTER",
+            AreaPreset.bottomLeftDot: "SELECT_CENTER",
+            AreaPreset.leftLine: "LINE_OUTER_EDGE",
+            AreaPreset.rightLine: "LINE_OUTER_EDGE",
         },
         "INNER_WIDTHS": {
-            AreaTemplate.topLeftDot: "SELECT_TOP_RIGHT",
-            AreaTemplate.topRightDot: "SELECT_TOP_LEFT",
-            AreaTemplate.bottomRightDot: "SELECT_BOTTOM_LEFT",
-            AreaTemplate.bottomLeftDot: "SELECT_BOTTOM_RIGHT",
-            AreaTemplate.leftLine: "LINE_INNER_EDGE",
-            AreaTemplate.rightLine: "LINE_INNER_EDGE",
+            AreaPreset.topLeftDot: "SELECT_TOP_RIGHT",
+            AreaPreset.topRightDot: "SELECT_TOP_LEFT",
+            AreaPreset.bottomRightDot: "SELECT_BOTTOM_LEFT",
+            AreaPreset.bottomLeftDot: "SELECT_BOTTOM_RIGHT",
+            AreaPreset.leftLine: "LINE_INNER_EDGE",
+            AreaPreset.rightLine: "LINE_INNER_EDGE",
         },
         "INNER_HEIGHTS": {
-            AreaTemplate.topLeftDot: "SELECT_BOTTOM_LEFT",
-            AreaTemplate.topRightDot: "SELECT_BOTTOM_RIGHT",
-            AreaTemplate.bottomRightDot: "SELECT_TOP_RIGHT",
-            AreaTemplate.bottomLeftDot: "SELECT_TOP_LEFT",
-            AreaTemplate.leftLine: "LINE_OUTER_EDGE",
-            AreaTemplate.rightLine: "LINE_OUTER_EDGE",
+            AreaPreset.topLeftDot: "SELECT_BOTTOM_LEFT",
+            AreaPreset.topRightDot: "SELECT_BOTTOM_RIGHT",
+            AreaPreset.bottomRightDot: "SELECT_TOP_RIGHT",
+            AreaPreset.bottomLeftDot: "SELECT_TOP_LEFT",
+            AreaPreset.leftLine: "LINE_OUTER_EDGE",
+            AreaPreset.rightLine: "LINE_OUTER_EDGE",
         },
         "INNER_CORNERS": {
-            AreaTemplate.topLeftDot: "SELECT_BOTTOM_RIGHT",
-            AreaTemplate.topRightDot: "SELECT_BOTTOM_LEFT",
-            AreaTemplate.bottomRightDot: "SELECT_TOP_LEFT",
-            AreaTemplate.bottomLeftDot: "SELECT_TOP_RIGHT",
-            AreaTemplate.leftLine: "LINE_INNER_EDGE",
-            AreaTemplate.rightLine: "LINE_INNER_EDGE",
+            AreaPreset.topLeftDot: "SELECT_BOTTOM_RIGHT",
+            AreaPreset.topRightDot: "SELECT_BOTTOM_LEFT",
+            AreaPreset.bottomRightDot: "SELECT_TOP_LEFT",
+            AreaPreset.bottomLeftDot: "SELECT_TOP_RIGHT",
+            AreaPreset.leftLine: "LINE_INNER_EDGE",
+            AreaPreset.rightLine: "LINE_INNER_EDGE",
         },
         "OUTER_CORNERS": {
-            AreaTemplate.topLeftDot: "SELECT_TOP_LEFT",
-            AreaTemplate.topRightDot: "SELECT_TOP_RIGHT",
-            AreaTemplate.bottomRightDot: "SELECT_BOTTOM_RIGHT",
-            AreaTemplate.bottomLeftDot: "SELECT_BOTTOM_LEFT",
-            AreaTemplate.leftLine: "LINE_OUTER_EDGE",
-            AreaTemplate.rightLine: "LINE_OUTER_EDGE",
+            AreaPreset.topLeftDot: "SELECT_TOP_LEFT",
+            AreaPreset.topRightDot: "SELECT_TOP_RIGHT",
+            AreaPreset.bottomRightDot: "SELECT_BOTTOM_RIGHT",
+            AreaPreset.bottomLeftDot: "SELECT_BOTTOM_LEFT",
+            AreaPreset.leftLine: "LINE_OUTER_EDGE",
+            AreaPreset.rightLine: "LINE_OUTER_EDGE",
         },
     }
 
@@ -144,31 +144,31 @@ class CropOnDotLines(CropOnPatchesCommon):
             *options.get("scanAreas", []),
             *[
                 {
-                    "areaTemplate": area_template,
-                    "areaDescription": options.get(area_template, {}),
+                    "areaPreset": area_preset,
+                    "areaDescription": options.get(area_preset, {}),
                     "customOptions": {
                         # TODO: get customOptions here
                     },
                 }
-                for area_template in self.scan_area_templates_for_layout[layout_type]
+                for area_preset in self.scan_area_presets_for_layout[layout_type]
             ],
         ]
         return parsed_options
 
     edge_selector_map = {
-        AreaTemplate.topLine: {
+        AreaPreset.topLine: {
             "LINE_INNER_EDGE": EdgeType.BOTTOM,
             "LINE_OUTER_EDGE": EdgeType.TOP,
         },
-        AreaTemplate.leftLine: {
+        AreaPreset.leftLine: {
             "LINE_INNER_EDGE": EdgeType.RIGHT,
             "LINE_OUTER_EDGE": EdgeType.LEFT,
         },
-        AreaTemplate.bottomLine: {
+        AreaPreset.bottomLine: {
             "LINE_INNER_EDGE": EdgeType.TOP,
             "LINE_OUTER_EDGE": EdgeType.BOTTOM,
         },
-        AreaTemplate.rightLine: {
+        AreaPreset.rightLine: {
             "LINE_INNER_EDGE": EdgeType.LEFT,
             "LINE_OUTER_EDGE": EdgeType.RIGHT,
         },
@@ -186,7 +186,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         return destination_line
 
     def find_and_select_points_from_line(
-        self, image, area_template, area_description, _file_path
+        self, image, area_preset, area_description, _file_path
     ):
         area_label = area_description["label"]
         points_selector = area_description.get(
@@ -199,7 +199,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         )
 
         selected_edge_type = self.edge_selector_map[area_label][points_selector]
-        target_edge_type = TARGET_EDGE_FOR_LINE[area_template]
+        target_edge_type = TARGET_EDGE_FOR_LINE[area_preset]
         selected_contour = line_edge_contours_map[selected_edge_type]
         destination_line = self.select_edge_from_scan_area(
             area_description, selected_edge_type
