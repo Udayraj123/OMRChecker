@@ -811,10 +811,11 @@ class ImageInstanceOps:
         evaluation_config,
     ):
         bubble_dimensions = tuple(field_block.bubble_dimensions)
-        # TODO: map(evaluation_config.__dict__.get, ["verdict_colors", "verdict_symbol_colors", "draw_answer_groups"]
-        verdict_colors = evaluation_config.verdict_colors
-        verdict_symbol_colors = evaluation_config.verdict_symbol_colors
-        draw_answer_groups = evaluation_config.draw_answer_groups
+        verdict_colors, verdict_symbol_colors, draw_answer_groups = map(
+            evaluation_config.__dict__.get,
+            ["verdict_colors", "verdict_symbol_colors", "draw_answer_groups"],
+        )
+
         for bubble_detection in field_bubble_means:
             bubble = bubble_detection.item_reference
             shifted_position = tuple(bubble.get_shifted_position(field_block.shifts))
@@ -984,19 +985,19 @@ class ImageInstanceOps:
             )
 
     def get_matched_answer_groups(self, question_meta, field_value):
-        occurences = []
+        matched_groups = []
         answer_type, answer_item = map(
             question_meta.get, ["answer_type", "answer_item"]
         )
         if answer_type == AnswerType.MULTIPLE_CORRECT:
-            for i in range(0, len(answer_item)):
-                if field_value in answer_item[i]:
-                    occurences.append(i)
+            for i, allowed_answer in enumerate(answer_item):
+                if field_value in allowed_answer:
+                    matched_groups.append(i)
         else:
-            for i in range(0, len(answer_item)):
-                if field_value in answer_item[i][0] and answer_item[i][1] > 0:
-                    occurences.append(i)
-        return occurences
+            for i, (allowed_answer, score) in enumerate(answer_item):
+                if field_value in allowed_answer and score > 0:
+                    matched_groups.append(i)
+        return matched_groups
 
     def draw_answer_groups(
         self,

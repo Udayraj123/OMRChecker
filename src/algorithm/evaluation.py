@@ -268,7 +268,6 @@ class EvaluationConfig:
                 "should_explain_scoring",
             ],
         )
-        print(outputs_configuration)
         if self.draw_question_verdicts["enabled"]:
             self.parse_draw_question_verdicts()
 

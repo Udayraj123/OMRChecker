@@ -6,8 +6,26 @@
     ],
     "answers_in_order": [
       "B",
-      "D",
-      "C",
+      [
+        [
+          "A",
+          2
+        ],
+        [
+          "D",
+          -1
+        ]
+      ],
+      [
+        [
+          "C",
+          10
+        ],
+        [
+          "D",
+          -1
+        ]
+      ],
       "B",
       "D",
       "C",
@@ -20,10 +38,10 @@
       "C",
       "D",
       "C"
-    ],
-    "should_explain_scoring": true
+    ]
   },
   "outputs_configuration": {
+    "should_explain_scoring": true,
     "draw_score": {
       "enabled": true,
       "position": [
@@ -41,26 +59,25 @@
       "size": 1.0
     },
     "draw_question_verdicts": {
-      "enabled":true,
-      "verdict_colors":{
-        "correct":"#ff00ff",
-        "neutral":"#ffffff",
-        "negative":"#ff0000",
-        "bonus": "#ff0000"
+      "enabled": true,
+      "verdict_colors": {
+        "correct": "#00ff00",
+        "neutral": "#000000",
+        "negative": "#ff0000",
+        "bonus": "#00DDDD"
       },
       "verdict_symbol_colors": {
-        
-        "positive": "#ff00ff",
-        "neutral": "#ff00ff",
-        "negative": "#ff00ff",
-        "bonus":"#ff00ff"
-      } ,
-      "draw_answer_groups":{
-        "enabled":false
+        "positive": "#000000",
+        "neutral": "#000000",
+        "negative": "#000000",
+        "bonus": "#000000"
+      },
+      "draw_answer_groups": {
+        "enabled": true
       }
     },
-    "draw_detected_bubble_texts":{
-      "enabled":false
+    "draw_detected_bubble_texts": {
+      "enabled": false
     }
   },
   "marking_schemes": {
