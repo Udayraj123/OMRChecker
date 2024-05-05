@@ -6,7 +6,7 @@ from time import localtime, strftime
 
 import pandas as pd
 
-from src.logger import logger
+from src.utils.logger import logger
 
 
 def load_json(path, **rest):
@@ -14,8 +14,9 @@ def load_json(path, **rest):
         with open(path, "r") as f:
             loaded = json.load(f, **rest)
     except json.decoder.JSONDecodeError as error:
-        logger.critical(f"Error when loading json file at: '{path}'\n{error}")
-        exit(1)
+        logger.critical(error)
+        raise Exception(f"Error when loading json file at: '{path}'")
+
     return loaded
 
 
@@ -23,6 +24,7 @@ class Paths:
     def __init__(self, output_dir):
         self.output_dir = output_dir
         self.save_marked_dir = output_dir.joinpath("CheckedOMRs")
+        self.image_metrics_dir = output_dir.joinpath("ImageMetrics")
         self.results_dir = output_dir.joinpath("Results")
         self.manual_dir = output_dir.joinpath("Manual")
         self.errors_dir = self.manual_dir.joinpath("ErrorFiles")
@@ -31,20 +33,34 @@ class Paths:
 
 def setup_dirs_for_paths(paths):
     logger.info("Checking Directories...")
+
+    # Main output directories
     for save_output_dir in [paths.save_marked_dir]:
         if not os.path.exists(save_output_dir):
             logger.info(f"Created : {save_output_dir}")
             os.makedirs(save_output_dir)
             os.mkdir(save_output_dir.joinpath("stack"))
+            os.mkdir(save_output_dir.joinpath("colored"))
             os.mkdir(save_output_dir.joinpath("_MULTI_"))
             os.mkdir(save_output_dir.joinpath("_MULTI_", "stack"))
+            os.mkdir(save_output_dir.joinpath("_MULTI_", "colored"))
 
-    for save_output_dir in [paths.manual_dir, paths.results_dir]:
+    # Image buckets
+    for save_output_dir in [
+        paths.manual_dir,
+        paths.multi_marked_dir,
+        paths.errors_dir,
+    ]:
         if not os.path.exists(save_output_dir):
             logger.info(f"Created : {save_output_dir}")
             os.makedirs(save_output_dir)
+            os.mkdir(save_output_dir.joinpath("colored"))
 
-    for save_output_dir in [paths.multi_marked_dir, paths.errors_dir]:
+    # Non-image directories
+    for save_output_dir in [
+        paths.results_dir,
+        paths.image_metrics_dir,
+    ]:
         if not os.path.exists(save_output_dir):
             logger.info(f"Created : {save_output_dir}")
             os.makedirs(save_output_dir)

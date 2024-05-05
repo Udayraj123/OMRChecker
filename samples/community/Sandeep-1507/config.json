@@ -1,0 +1,11 @@
+{
+  "outputs": {
+    "display_image_dimensions": [
+      1000,
+      1300
+    ],
+    "save_detections": true,
+    "save_image_level": 2,
+    "show_image_level": 0
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "pageDimensions": [
+  "templateDimensions": [
     2550,
     3300
   ],
@@ -7,12 +7,20 @@
     32,
     32
   ],
+  "processingImageShape": [
+    1640,
+    1332
+  ],
   "preProcessors": [
     {
       "name": "CropOnMarkers",
       "options": {
-        "relativePath": "omr_marker.jpg",
-        "sheetToMarkerWidthRatio": 17
+        "type": "FOUR_MARKERS",
+        "referenceImage": "omr_marker.jpg",
+        "markerDimensions": [
+          40,
+          40
+        ]
       }
     }
   ],

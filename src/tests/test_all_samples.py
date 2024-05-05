@@ -42,43 +42,58 @@ def extract_sample_outputs(output_dir):
     return sample_outputs
 
 
+def test_run_omr_marker_mobile(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "1-mobile-camera")
+    assert snapshot == sample_outputs
+
+
+def test_run_omr_marker(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "2-omr-marker")
+    assert snapshot == sample_outputs
+
+
+def test_run_bonus_marking(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "3-answer-key/bonus-marking")
+    assert snapshot == sample_outputs
+
+
 def test_run_answer_key_using_csv(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "answer-key/using-csv")
+    sample_outputs = run_sample(mocker, "3-answer-key/using-csv")
+    assert snapshot == sample_outputs
+
+
+def test_run_answer_key_using_image(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "3-answer-key/using-image")
     assert snapshot == sample_outputs
 
 
 def test_run_answer_key_weighted_answers(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "answer-key/weighted-answers")
+    sample_outputs = run_sample(mocker, "3-answer-key/weighted-answers")
     assert snapshot == sample_outputs
 
 
-def test_run_sample1(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "sample1")
+def test_run_crop_four_dots(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "experimental/1-timelines-and-dots/four-dots")
     assert snapshot == sample_outputs
 
 
-def test_run_sample2(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "sample2")
+def test_run_crop_two_dots_one_line(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "experimental/1-timelines-and-dots/four-dots")
     assert snapshot == sample_outputs
 
 
-def test_run_sample3(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "sample3")
+def test_run_two_lines(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "experimental/1-timelines-and-dots/two-lines")
     assert snapshot == sample_outputs
 
 
-def test_run_sample4(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "sample4")
+def test_run_template_shifts(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "experimental/2-template-shifts")
     assert snapshot == sample_outputs
 
 
-def test_run_sample5(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "sample5")
-    assert snapshot == sample_outputs
-
-
-def test_run_sample6(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "sample6")
+def test_run_feature_based_alignment(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "experimental/3-feature-based-alignment")
     assert snapshot == sample_outputs
 
 
@@ -104,9 +119,4 @@ def test_run_community_Shamanth(mocker, snapshot):
 
 def test_run_community_UmarFarootAPS(mocker, snapshot):
     sample_outputs = run_sample(mocker, "community/UmarFarootAPS")
-    assert snapshot == sample_outputs
-
-
-def test_run_community_UPSC_mock(mocker, snapshot):
-    sample_outputs = run_sample(mocker, "community/UPSC-mock")
     assert snapshot == sample_outputs

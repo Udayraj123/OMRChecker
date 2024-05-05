@@ -1,0 +1,234 @@
+{
+  "pageDimensions": [
+    1189,
+    1682
+  ],
+  "bubbleDimensions": [
+    15,
+    15
+  ],
+  "preProcessors": [
+    {
+      "name": "GaussianBlur",
+      "options": {
+        "kSize": [
+          3,
+          3
+        ],
+        "sigmaX": 0
+      }
+    }
+  ],
+  "customLabels": {
+    "Booklet_No": [
+      "b1..7"
+    ]
+  },
+  "fieldBlocks": {
+    "Booklet_No": {
+      "fieldType": "QTYPE_INT",
+      "origin": [
+        112,
+        530
+      ],
+      "fieldLabels": [
+        "b1..7"
+      ],
+      "emptyValue": "no",
+      "bubblesGap": 28,
+      "labelsGap": 26.5
+    },
+    "MCQBlock1a1": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q1..10"
+      ],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [
+        476,
+        100
+      ]
+    },
+    "MCQBlock1a2": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q11..20"
+      ],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [
+        476,
+        370
+      ]
+    },
+    "MCQBlock1a3": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q21..35"
+      ],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [
+        476,
+        638
+      ]
+    },
+    "MCQBlock2a1": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q51..60"
+      ],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [
+        645,
+        100
+      ]
+    },
+    "MCQBlock2a2": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q61..70"
+      ],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [
+        645,
+        370
+      ]
+    },
+    "MCQBlock2a3": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q71..85"
+      ],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [
+        645,
+        638
+      ]
+    },
+    "MCQBlock3a1": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q101..110"
+      ],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [
+        815,
+        100
+      ]
+    },
+    "MCQBlock3a2": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q111..120"
+      ],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [
+        815,
+        370
+      ]
+    },
+    "MCQBlock3a3": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q121..135"
+      ],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [
+        815,
+        638
+      ]
+    },
+    "MCQBlock4a1": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q151..160"
+      ],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [
+        983,
+        100
+      ]
+    },
+    "MCQBlock4a2": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q161..170"
+      ],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [
+        983,
+        370
+      ]
+    },
+    "MCQBlock4a3": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q171..185"
+      ],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [
+        983,
+        638
+      ]
+    },
+    "MCQBlock1a": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q36..50"
+      ],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [
+        480,
+        1061
+      ]
+    },
+    "MCQBlock2a": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q86..100"
+      ],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [
+        648,
+        1061
+      ]
+    },
+    "MCQBlock3a": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q136..150"
+      ],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.7,
+      "origin": [
+        815,
+        1061
+      ]
+    },
+    "MCQBlock4a": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q186..200"
+      ],
+      "bubblesGap": 28.7,
+      "labelsGap": 26.6,
+      "origin": [
+        986,
+        1061
+      ]
+    }
+  }
+}

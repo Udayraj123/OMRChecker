@@ -1,0 +1,12 @@
+{
+  "thresholding": {
+    "GLOBAL_PAGE_THRESHOLD": 150
+  },
+  "outputs": {
+    "display_image_dimensions": [
+      1000,
+      1300
+    ],
+    "show_image_level": 0
+  }
+}

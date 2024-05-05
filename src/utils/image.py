@@ -1,18 +1,21 @@
-"""
-
- OMRChecker
-
- Author: Udayraj Deshmukh
- Github: https://github.com/Udayraj123
-
-"""
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import pyplot
+from shapely import LineString, Point
 
-from src.logger import logger
+from src.processors.constants import EDGE_TYPES_IN_ORDER, EdgeType
+from src.utils.constants import (
+    CLR_BLACK,
+    CLR_DARK_GRAY,
+    CLR_GRAY,
+    CLR_GREEN,
+    CLR_WHITE,
+    TEXT_SIZE,
+)
+from src.utils.logger import logger
+from src.utils.math import MathUtils
 
-plt.rcParams["figure.figsize"] = (10.0, 8.0)
+pyplot.rcParams["figure.figsize"] = (10.0, 8.0)
 CLAHE_HELPER = cv2.createCLAHE(clipLimit=5.0, tileGridSize=(8, 8))
 
 
@@ -20,23 +23,74 @@ class ImageUtils:
     """A Static-only Class to hold common image processing utilities & wrappers over OpenCV functions"""
 
     @staticmethod
+    def read_image_util(file_path, tuning_config):
+        if tuning_config.outputs.show_colored_outputs:
+            colored_image = cv2.imread(file_path, cv2.IMREAD_COLOR)
+            gray_image = cv2.cvtColor(colored_image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray_image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+            colored_image = None
+        return gray_image, colored_image
+
+    @staticmethod
     def save_img(path, final_marked):
         logger.info(f"Saving Image to '{path}'")
         cv2.imwrite(path, final_marked)
 
     @staticmethod
-    def resize_util(img, u_width, u_height=None):
+    def resize_to_shape(img, image_shape):
+        h, w = image_shape
+        return ImageUtils.resize_util(img, w, h)
+
+    @staticmethod
+    def resize_to_dimensions(img, image_dimensions):
+        w, h = image_dimensions
+        return ImageUtils.resize_util(img, w, h)
+
+    def resize_util(img, u_width=None, u_height=None):
+        h, w = img.shape[:2]
         if u_height is None:
-            h, w = img.shape[:2]
             u_height = int(h * u_width / w)
+        if u_width is None:
+            u_width = int(w * u_height / h)
+
+        if u_height == h and u_width == w:
+            # No need to resize
+            return img
         return cv2.resize(img, (int(u_width), int(u_height)))
 
     @staticmethod
-    def resize_util_h(img, u_height, u_width=None):
-        if u_width is None:
-            h, w = img.shape[:2]
-            u_width = int(w * u_height / h)
-        return cv2.resize(img, (int(u_width), int(u_height)))
+    def get_cropped_rectangle_destination_points(ordered_page_corners):
+        # Note: This utility would just find a good size ratio for the cropped image to look more realistic
+        # but since we're anyway resizing the image, it doesn't make much sense to use these calculations
+        (tl, tr, br, bl) = ordered_page_corners
+
+        length_t = MathUtils.distance(tr, tl)
+        length_b = MathUtils.distance(br, bl)
+        length_r = MathUtils.distance(tr, br)
+        length_l = MathUtils.distance(tl, bl)
+
+        # compute the width of the new image, which will be the
+        max_width = max(int(length_t), int(length_b))
+
+        # compute the height of the new image, which will be the
+        max_height = max(int(length_r), int(length_l))
+
+        # now that we have the dimensions of the new image, construct
+        # the set of destination points to obtain a "birds eye view",
+        # (i.e. top-down view) of the image
+
+        destination_points = np.array(
+            [
+                [0, 0],
+                [max_width - 1, 0],
+                [max_width - 1, max_height - 1],
+                [0, max_height - 1],
+            ],
+            dtype="float32",
+        )
+        warped_dimensions = (max_width, max_height)
+        return destination_points, warped_dimensions
 
     @staticmethod
     def grab_contours(cnts):
@@ -69,7 +123,7 @@ class ImageUtils:
         return cnts
 
     @staticmethod
-    def normalize_util(img, alpha=0, beta=255):
+    def normalize(img, alpha=0, beta=255):
         return cv2.normalize(img, alpha, beta, norm_type=cv2.NORM_MINMAX)
 
     @staticmethod
@@ -98,58 +152,374 @@ class ImageUtils:
         return cv2.LUT(image, table)
 
     @staticmethod
-    def four_point_transform(image, pts):
-        # obtain a consistent order of the points and unpack them
-        # individually
-        rect = ImageUtils.order_points(pts)
-        (tl, tr, br, bl) = rect
+    def get_control_destination_points_from_contour(
+        source_contour, destination_line, max_points=None
+    ):
+        # TODO: can use shapely intersections too?
+        total_points = len(source_contour)
+        if max_points is None:
+            max_points = total_points
+        assert max_points >= 2
+        start, end = destination_line
 
-        # compute the width of the new image, which will be the
-        width_a = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
-        width_b = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
+        destination_line_length = MathUtils.distance(start, end)
+        contour_length = 0
+        for i in range(1, total_points):
+            contour_length += MathUtils.distance(
+                source_contour[i], source_contour[i - 1]
+            )
 
-        max_width = max(int(width_a), int(width_b))
-        # max_width = max(int(np.linalg.norm(br-bl)), int(np.linalg.norm(tr-tl)))
-
-        # compute the height of the new image, which will be the
-        height_a = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
-        height_b = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
-        max_height = max(int(height_a), int(height_b))
-        # max_height = max(int(np.linalg.norm(tr-br)), int(np.linalg.norm(tl-br)))
-
-        # now that we have the dimensions of the new image, construct
-        # the set of destination points to obtain a "birds eye view",
-        # (i.e. top-down view) of the image, again specifying points
-        # in the top-left, top-right, bottom-right, and bottom-left
-        # order
-        dst = np.array(
-            [
-                [0, 0],
-                [max_width - 1, 0],
-                [max_width - 1, max_height - 1],
-                [0, max_height - 1],
-            ],
-            dtype="float32",
+        # TODO: replace with this if the assertion passes on more samples
+        cv2_arclength = cv2.arcLength(
+            np.array(source_contour, dtype="float32"), closed=False
         )
+        assert (
+            abs(cv2_arclength - contour_length) < 0.001
+        ), f"{contour_length:.3f} != {cv2_arclength:.3f}"
 
-        transform_matrix = cv2.getPerspectiveTransform(rect, dst)
-        warped = cv2.warpPerspective(image, transform_matrix, (max_width, max_height))
+        # average_min_gap = (contour_length / (max_points - 1)) - 1
 
-        # return the warped image
-        return warped
+        # Initialize with first point mapping
+        control_points, destination_points = [source_contour[0]], [start]
+        current_arc_length = 0
+        # current_arc_gap = 0
+        previous_point = None
+        for i in range(1, total_points):
+            boundary_point, previous_point = source_contour[i], source_contour[i - 1]
+            edge_length = MathUtils.distance(boundary_point, previous_point)
+
+            # TODO: figure out an alternative to support maxPoints
+            # current_arc_gap += edge_length
+            # if current_arc_gap > average_min_gap :
+            #     current_arc_length += current_arc_gap
+            #     current_arc_gap = 0
+
+            # Including all points for now -
+            current_arc_length += edge_length
+            length_ratio = current_arc_length / contour_length
+            destination_point = MathUtils.get_point_on_line_by_ratio(
+                destination_line, length_ratio
+            )
+            control_points.append(boundary_point)
+            destination_points.append(destination_point)
+
+        assert len(destination_points) <= max_points
+
+        # Assert that the float error is not skewing the estimations badly
+        assert (
+            MathUtils.distance(destination_points[-1], end) / destination_line_length
+            < 0.02
+        ), f"{destination_points[-1]} != {end}"
+
+        return control_points, destination_points
 
     @staticmethod
-    def order_points(pts):
-        rect = np.zeros((4, 2), dtype="float32")
+    def split_patch_contour_on_corners(patch_corners, source_contour):
+        ordered_patch_corners, _ = MathUtils.order_four_points(
+            patch_corners, dtype="float32"
+        )
 
-        # the top-left point will have the smallest sum, whereas
-        # the bottom-right point will have the largest sum
-        s = pts.sum(axis=1)
-        rect[0] = pts[np.argmin(s)]
-        rect[2] = pts[np.argmax(s)]
-        diff = np.diff(pts, axis=1)
-        rect[1] = pts[np.argmin(diff)]
-        rect[3] = pts[np.argmax(diff)]
+        # TODO: consider snapping the corners to the contour
+        # TODO: consider using split from shapely after snap_corners
 
-        # return the ordered coordinates
-        return rect
+        source_contour = np.float32(source_contour)
+
+        edge_contours_map = {
+            EdgeType.TOP: [],
+            EdgeType.RIGHT: [],
+            EdgeType.BOTTOM: [],
+            EdgeType.LEFT: [],
+        }
+        edge_line_strings = {}
+        for i, edge_type in enumerate(EDGE_TYPES_IN_ORDER):
+            edge_line_strings[edge_type] = LineString(
+                [ordered_patch_corners[i], ordered_patch_corners[(i + 1) % 4]]
+            )
+
+        #  segments = split(boundary, MultiPoint(corners)).geoms
+        for boundary_point in source_contour:
+            edge_distances = [
+                (
+                    Point(boundary_point).distance(edge_line_strings[edge_type]),
+                    edge_type,
+                )
+                for edge_type in EDGE_TYPES_IN_ORDER
+            ]
+            min_distance, nearest_edge_type = min(edge_distances)
+            distance_warning = "*" if min_distance > 10 else ""
+            logger.info(
+                f"boundary_point={boundary_point}\t nearest_edge_type={nearest_edge_type}\t min_distance={min_distance:.2f}{distance_warning}"
+            )
+            # TODO: Each edge contour's points should be in the clockwise order
+            edge_contours_map[nearest_edge_type].append(tuple(boundary_point))
+
+        # Add corner points and ensure clockwise order
+        for i, edge_type in enumerate(EDGE_TYPES_IN_ORDER):
+            start_point, end_point = (
+                ordered_patch_corners[i],
+                ordered_patch_corners[(i + 1) % 4],
+            )
+            edge_contour = edge_contours_map[edge_type]
+
+            if len(edge_contour) == 0:
+                logger.critical(
+                    ordered_patch_corners, source_contour, edge_contours_map
+                )
+                logger.warning(
+                    f"No closest points found for {edge_type}: {edge_contours_map}"
+                )
+            else:
+                # Ensure correct order
+                if MathUtils.distance(
+                    start_point, edge_contour[-1]
+                ) < MathUtils.distance(start_point, edge_contour[0]):
+                    edge_contours_map[edge_type].reverse()
+
+            # Each contour should necessarily start & end with a corner point
+            edge_contours_map[edge_type].insert(0, tuple(start_point))
+            edge_contours_map[edge_type].append(tuple(end_point))
+
+        return ordered_patch_corners, edge_contours_map
+
+    @staticmethod
+    def get_vstack_image_grid(debug_vstack):
+        padded_hstack = [
+            ImageUtils.get_padded_hstack(hstack) for hstack in debug_vstack
+        ]
+        return ImageUtils.get_padded_vstack(padded_hstack)
+
+    @staticmethod
+    def get_padded_hstack(hstack):
+        max_height = max(image.shape[0] for image in hstack)
+        padded_hstack = [
+            ImageUtils.pad_image_to_height(image, max_height) for image in hstack
+        ]
+
+        return np.hstack(padded_hstack)
+
+    @staticmethod
+    def get_padded_vstack(vstack):
+        max_width = max(image.shape[1] for image in vstack)
+        padded_vstack = [
+            ImageUtils.pad_image_to_width(image, max_width) for image in vstack
+        ]
+
+        return np.vstack(padded_vstack)
+
+    @staticmethod
+    def pad_image_to_height(image, max_height, value=CLR_WHITE):
+        return cv2.copyMakeBorder(
+            image,
+            0,
+            max_height - image.shape[0],
+            0,
+            0,
+            cv2.BORDER_CONSTANT,
+            value,
+        )
+
+    @staticmethod
+    def pad_image_to_width(image, max_width, value=CLR_WHITE):
+        return cv2.copyMakeBorder(
+            image,
+            0,
+            0,
+            0,
+            max_width - image.shape[1],
+            cv2.BORDER_CONSTANT,
+            value,
+        )
+
+    def pad_image_from_center(image, padding_width, padding_height=0, value=255):
+        # TODO: support colored images for this util
+        input_height, input_width = image.shape[:2]
+        pad_range = [
+            padding_height,
+            padding_height + input_height,
+            padding_width,
+            padding_width + input_width,
+        ]
+        white_image = value * np.ones(
+            (padding_height * 2 + input_height, padding_width * 2 + input_width),
+            np.uint8,
+        )
+        white_image[pad_range[0] : pad_range[1], pad_range[2] : pad_range[3]] = image
+
+        return white_image, pad_range
+
+    @staticmethod
+    def draw_matches(image, from_points, warped_image, to_points):
+        horizontal_stack = ImageUtils.get_padded_hstack([image, warped_image])
+        h, w = image.shape[:2]
+        from_points = MathUtils.get_tuple_points(from_points)
+        to_points = MathUtils.get_tuple_points(to_points)
+        for from_point, to_point in zip(from_points, to_points):
+            horizontal_stack = cv2.line(
+                horizontal_stack,
+                from_point,
+                (w + to_point[0], to_point[1]),
+                color=CLR_GREEN,
+                thickness=3,
+            )
+        return horizontal_stack
+
+    @staticmethod
+    def draw_box_diagonal(
+        image,
+        position,
+        position_diagonal,
+        color=CLR_DARK_GRAY,
+        border=3,
+    ):
+        cv2.rectangle(
+            image,
+            position,
+            position_diagonal,
+            color,
+            border,
+        )
+
+    @staticmethod
+    def draw_contour(
+        image,
+        contour,
+        color=CLR_GREEN,
+        thickness=2,
+    ):
+        assert None not in contour, "Invalid contour provided"
+        cv2.drawContours(
+            image,
+            [np.intp(contour)],
+            contourIdx=-1,
+            color=color,
+            thickness=thickness,
+        )
+
+    @staticmethod
+    def draw_box(
+        image,
+        position,
+        box_dimensions,
+        color=None,
+        style="BOX_HOLLOW",
+        thickness_factor=1 / 12,
+        border=3,
+        centered=False,
+    ):
+        assert position is not None
+        x, y = position
+        box_w, box_h = box_dimensions
+
+        position = (
+            int(x + box_w * thickness_factor),
+            int(y + box_h * thickness_factor),
+        )
+        position_diagonal = (
+            int(x + box_w - box_w * thickness_factor),
+            int(y + box_h - box_h * thickness_factor),
+        )
+
+        if centered:
+            centered_position = [
+                (3 * position[0] - position_diagonal[0]) // 2,
+                (3 * position[1] - position_diagonal[1]) // 2,
+            ]
+            centered_diagonal = [
+                (position[0] + position_diagonal[0]) // 2,
+                (position[1] + position_diagonal[1]) // 2,
+            ]
+            position = centered_position
+            position_diagonal = centered_diagonal
+
+        if style == "BOX_HOLLOW":
+            if color is None:
+                color = CLR_GRAY
+        elif style == "BOX_FILLED":
+            if color is None:
+                color = CLR_DARK_GRAY
+            border = -1
+
+        ImageUtils.draw_box_diagonal(
+            image,
+            position,
+            position_diagonal,
+            color,
+            border,
+        )
+        return position, position_diagonal
+
+    @staticmethod
+    def draw_arrows(
+        image,
+        start_points,
+        end_points,
+        color=CLR_GREEN,
+        thickness=2,
+        line_type=cv2.LINE_AA,
+        tip_length=0.1,
+    ):
+        start_points = MathUtils.get_tuple_points(start_points)
+        end_points = MathUtils.get_tuple_points(end_points)
+        for start_point, end_point in zip(start_points, end_points):
+            image = cv2.arrowedLine(
+                image,
+                start_point,
+                end_point,
+                color,
+                thickness,
+                line_type,
+                tipLength=tip_length,
+            )
+
+        return image
+
+    @staticmethod
+    def draw_text(
+        image,
+        text_value,
+        position,
+        centered=False,
+        font_face=cv2.FONT_HERSHEY_SIMPLEX,
+        text_size=TEXT_SIZE,
+        color=CLR_BLACK,
+        thickness=2,
+        # available LineTypes: FILLED, LINE_4, LINE_8, LINE_AA
+        line_type=cv2.LINE_AA,
+    ):
+        if centered:
+            assert not callable(position)
+            text_position = position
+            position = lambda size_x, size_y: (
+                text_position[0] - size_x // 2,
+                text_position[1] + size_y // 2,
+            )
+
+        if callable(position):
+            size_x, size_y = cv2.getTextSize(
+                text_value,
+                font_face,
+                text_size,
+                thickness,
+            )[0]
+            position = position(size_x, size_y)
+
+        position = (int(position[0]), int(position[1]))
+        cv2.putText(
+            image,
+            text_value,
+            position,
+            font_face,
+            text_size,
+            color,
+            thickness,
+            lineType=line_type,
+        )
+
+    @staticmethod
+    def draw_symbol(image, symbol, position, position_diagonal, color=CLR_BLACK):
+        center_position = lambda size_x, size_y: (
+            (position[0] + position_diagonal[0] - size_x) // 2,
+            (position[1] + position_diagonal[1] + size_y) // 2,
+        )
+
+        ImageUtils.draw_text(image, symbol, center_position, color=color)

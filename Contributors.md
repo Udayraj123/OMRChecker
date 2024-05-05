@@ -20,3 +20,4 @@
 - [aayushibansal2001](https://github.com/aayushibansal2001)
 - [ShamanthVallem](https://github.com/ShamanthVallem)
 - [rudrapsc](https://github.com/rudrapsc)
+- [palash018](https://github.com/palash018)

@@ -1,5 +1,5 @@
 {
-  "pageDimensions": [
+  "templateDimensions": [
     300,
     400
   ],
@@ -7,6 +7,7 @@
     20,
     20
   ],
+  "preProcessors": [],
   "fieldBlocks": {
     "MCQBlock1": {
       "fieldType": "QTYPE_MCQ4",
@@ -20,6 +21,5 @@
       "bubblesGap": 56,
       "labelsGap": 46
     }
-  },
-  "preProcessors": []
+  }
 }

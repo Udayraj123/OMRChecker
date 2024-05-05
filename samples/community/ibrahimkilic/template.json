@@ -1,5 +1,5 @@
 {
-  "pageDimensions": [
+  "templateDimensions": [
     299,
     328
   ],
@@ -8,12 +8,14 @@
     20
   ],
   "emptyValue": "no",
+  "preProcessors": [],
   "fieldBlocks": {
     "YesNoBlock1": {
-      "direction": "horizontal",
+      "fieldType": "CUSTOM",
       "bubbleValues": [
         "yes"
       ],
+      "direction": "horizontal",
       "origin": [
         15,
         55
@@ -25,6 +27,5 @@
         "q1..5"
       ]
     }
-  },
-  "preProcessors": []
+  }
 }

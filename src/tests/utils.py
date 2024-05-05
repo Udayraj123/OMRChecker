@@ -23,11 +23,10 @@ def setup_mocker_patches(mocker):
 def run_entry_point(input_path, output_dir):
     args = {
         "autoAlign": False,
-        "debug": False,
+        "debug": True,
         "input_paths": [input_path],
         "output_dir": output_dir,
         "setLayout": False,
-        "silent": True,
     }
     with freeze_time(FROZEN_TIMESTAMP):
         entry_point_for_args(args)
@@ -82,9 +81,9 @@ def generate_write_jsons_and_run(
             modify_evaluation, evaluation_boilerplate, sample_evaluation_path
         )
 
-        exception = "No Error"
+        sample_outputs, exception = "No output", "No Error"
         try:
-            run_sample(mocker, sample_path)
+            sample_outputs = run_sample(mocker, sample_path)
         except Exception as e:
             exception = e
 
@@ -92,6 +91,6 @@ def generate_write_jsons_and_run(
         remove_file(sample_config_path)
         remove_file(sample_evaluation_path)
 
-        return exception
+        return sample_outputs, exception
 
     return write_jsons_and_run
