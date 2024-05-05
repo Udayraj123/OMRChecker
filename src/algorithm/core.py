@@ -23,6 +23,99 @@ from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 
 
+
+# source: https://learnopencv.com/blob-detection-using-opencv-python-c/
+def create_bubble_blob_detector(field_block):
+    # Setup SimpleBlobDetector parameters.
+    params = cv2.SimpleBlobDetector_Params()
+    box_w, box_h = field_block.bubble_dimensions
+    box_area = box_w * box_h
+
+    # # Change thresholds
+    # params.minThreshold = 10;
+    # params.maxThreshold = 200;
+
+    # # Filter by Area.
+    params.filterByArea = True
+    params.minArea = box_area * 0.25
+
+    # Filter by Circularity
+    # params.filterByCircularity = True
+    # params.minCircularity = 0.75
+
+    # # Filter by Convexity
+    # params.filterByConvexity = True
+    # params.minConvexity = 0.87
+
+    # # Filter by Inertia
+    params.filterByInertia = True
+    params.minInertiaRatio = 0.09
+
+    # Create a detector with the parameters
+    return cv2.SimpleBlobDetector_create(params)
+
+
+def get_bubble_blob_metrics(
+    detector, final_marked, bubble, field_block, draw_keypoints=True
+):
+    x, y = bubble.get_shifted_position(field_block.shifts)
+
+    box_w, box_h = field_block.bubble_dimensions
+    box_area = box_w * box_h
+
+    # TODO: apply bubble_likeliness_threshold
+    # Note: assumes direction == "horizontal"
+    x_margin = (min(field_block.bubbles_gap - box_w, box_w) * 11 / 14) // 2
+    y_margin = (min(field_block.labels_gap - box_h, box_h) * 11 / 14) // 2
+
+    scan_rect = [
+        int(y - y_margin),
+        int(y + box_h + y_margin),
+        int(x - x_margin),
+        int(x + box_w + x_margin),
+    ]
+
+    scan_box = final_marked[scan_rect[0] : scan_rect[1], scan_rect[2] : scan_rect[3]]
+    keypoints = detector.detect(scan_box)
+    if len(keypoints) < 1:
+        # TODO: highlight low confidence metric
+        logger.warning(
+            f"No bubble-like blob found in scan area for the bubble {bubble}"
+        )
+
+    if len(keypoints) > 1:
+        # TODO: highlight low confidence metric
+        logger.warning(f"Found multiple blobs in scan area for the bubble {bubble}")
+
+    area_ratio = (
+        0 if len(keypoints) == 0 else np.square(keypoints[0].size / 2) * math.pi / box_area
+    )
+
+    logger.info(
+        f"area_ratio={round(area_ratio, 2)}", [(keypoint.pt, keypoint) for keypoint in keypoints]
+    )
+    InteractionUtils.show("scan_box", scan_box, 1)
+
+    if draw_keypoints:
+        # Draw detected blobs as red circles.
+        # cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle corresponds to the size of blob
+        im_with_keypoints = cv2.drawKeypoints(
+            scan_box,
+            keypoints,
+            np.array([]),
+            (0, 0, 255),
+            cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS,
+        )
+        im_with_keypoints = cv2.cvtColor(im_with_keypoints, cv2.COLOR_BGR2GRAY)
+        # modify output image
+        final_marked[scan_rect[0] : scan_rect[1], scan_rect[2] : scan_rect[3]] = (
+            im_with_keypoints
+        )
+        InteractionUtils.show("im_with_keypoints", im_with_keypoints, 1)
+
+    return keypoints, scan_rect, area_ratio
+
+
 class ImageInstanceOps:
     """Class to hold fine-tuned utilities for a group of images. One instance for each processing directory."""
 
@@ -133,7 +226,6 @@ class ImageInstanceOps:
         )
         for field_block in template.field_blocks:
             #  TODO: support for if field_block.field_type == "BARCODE":
-
             field_bubble_means_stds = []
             box_w, box_h = field_block.bubble_dimensions
             for field in field_block.fields:
@@ -213,6 +305,7 @@ class ImageInstanceOps:
         per_omr_threshold_avg, absolute_field_number = 0, 0
         global_field_confidence_metrics = []
         for field_block in template.field_blocks:
+            detector = create_bubble_blob_detector(field_block)
             block_field_number = 1
             key = field_block.name[:3]
             box_w, box_h = field_block.bubble_dimensions
@@ -260,8 +353,17 @@ class ImageInstanceOps:
                     for bubble_detection in field_bubble_means
                     if bubble_detection.is_marked
                 ]
+
+
                 for bubble_detection in detected_bubbles:
                     bubble = bubble_detection.item_reference
+                    # TODO: config
+                    draw_keypoints = False
+
+                    # apply SimpleBlobDetector
+                    _keypoints, scan_rect, area_ratio = get_bubble_blob_metrics(
+                        detector, img, bubble, field_block, draw_keypoints
+                    )
                     field_label, field_value = (
                         bubble.field_label,
                         bubble.field_value,

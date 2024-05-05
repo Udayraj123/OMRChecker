@@ -340,6 +340,8 @@ class FieldBlock:
         offset_x, offset_y = field_blocks_offset
         self.origin = [origin[0] + offset_x, origin[1] + offset_y]
         self.bubble_dimensions = bubble_dimensions
+        self.bubbles_gap = bubbles_gap
+        self.labels_gap = labels_gap
         # TODO: support barcode, ocr, etc custom field types
         self.field_type = field_type
         self.calculate_block_dimensions(
