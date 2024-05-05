@@ -217,7 +217,7 @@ If you prefer to run OMRChecker in isolation without impacting your system's Pyt
 ### Docker Installation
 
 1. **Install Docker Desktop:**
-   - For Windows and macOS users, download and install Docker Desktop from [Docker Hub](https://docs.docker.com/desktop/install/windows-install/).
+   - For Windows and macOS users, download and install Docker Desktop from [Docker Hub](https://docs.docker.com/desktop/).
    - For Linux users, follow the instructions provided in the official [Docker documentation](https://docs.docker.com/desktop/install/linux-install/) for your specific distribution.
 
 2. **Verify Installation:**
