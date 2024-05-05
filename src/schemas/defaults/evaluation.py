@@ -21,10 +21,25 @@ EVALUATION_CONFIG_DEFAULTS = {
             "answers_summary_format_string": DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING,
             "size": 1.0,
         },
-        "verdict_colors": {
-            "correct": "#00ff00",
-            "incorrect": "#ff0000",
-            "unmarked": "#0000ff",
+        "draw_question_verdicts": {
+            "enabled": True,
+            "verdict_colors": {
+                "correct": "#00FF00",
+                "neutral": "#FFFFFF",
+                "negative": "#FF0000",
+                "bonus": "#00DDDD",
+            },
+            "verdict_symbol_colors": {
+                "positive": "#000000",
+                "neutral": "#000000",
+                "negative": "#000000",
+                "bonus": "#000000",
+            },
+            "draw_answer_groups": {
+                "enabled": True,
+                "color_sequence": ["#8DFBC4", "#F7FB8D", "#8D9EFB", "#EA666F"],
+            },
         },
+        "draw_detected_bubble_texts": {"enabled": False},
     },
 }

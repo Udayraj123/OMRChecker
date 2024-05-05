@@ -523,3 +523,31 @@ class ImageUtils:
         )
 
         ImageUtils.draw_text(image, symbol, center_position, color=color)
+
+    @staticmethod
+    def draw_line(image, start, end, color=CLR_BLACK, thickness=3):
+        cv2.line(image, start, end, color, thickness)
+
+    @staticmethod
+    def draw_group(image, start, bubble_dimensions, state, color, thickness=4):
+        start_x, start_y = start
+        box_w, box_h = bubble_dimensions
+        thickness_factor = 7 / 10
+        if state == "TOP":
+            end_position = (start_x + int(box_w * thickness_factor), start_y)
+            start = (start_x + int(box_w * (1 - thickness_factor)), start_y)
+            ImageUtils.draw_line(image, start, end_position, color, thickness)
+        elif state == "RIGHT":
+            start = (start_x + box_w, start_y)
+            end_position = (start_x, int(start_y + box_h * thickness_factor))
+            start = (start_x, int(start_y + box_h * (1 - thickness_factor)))
+            ImageUtils.draw_line(image, start, end_position, color, thickness)
+        elif state == "BOTTOM":
+            start = (start_x, start_y + box_h)
+            end_position = (int(start_x + box_w * thickness_factor), start_y)
+            start = (int(start_x + box_w * (1 - thickness_factor)), start_y)
+            ImageUtils.draw_line(image, start, end_position, color, thickness)
+        elif state == "LEFT":
+            end_position = (start_x, int(start_y + box_h * thickness_factor))
+            start = (start_x, int(start_y + box_h * (1 - thickness_factor)))
+            ImageUtils.draw_line(image, start, end_position, color, thickness)

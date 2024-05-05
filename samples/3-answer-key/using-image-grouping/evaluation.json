@@ -1,0 +1,170 @@
+{
+  "source_type": "custom",
+  "options": {
+    
+    "questions_in_order": [
+      "q1..100"
+    ],
+    "answers_in_order":[
+      "A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A",
+"A"
+],
+    "should_explain_scoring": true
+},
+"outputs_configuration": {
+  "draw_score": {
+    "enabled": true,
+    "position": [
+      600,
+      650
+    ],
+    "size": 1.5
+  },
+  "draw_answers_summary": {
+    "enabled": true,
+    "position": [
+      300,
+      550
+    ],
+    "size": 1.0
+  },
+  "draw_question_verdicts": {
+    "enabled":true,
+    "verdict_colors":{
+      "correct":"#ff00ff",
+      "neutral":"#ffffff",
+      "negative":"#ff0000",
+      "bonus": "#ff0000"
+    },
+    "verdict_symbol_colors": {
+      
+      "positive": "#ff00ff",
+      "neutral": "#ff00ff",
+      "negative": "#ff00ff",
+      "bonus":"#ff00ff"
+    } ,
+    "draw_answer_groups":{
+      "enabled":false
+    }
+  },
+  "draw_detected_bubble_texts":{
+    "enabled":false
+  }
+  
+},
+  "marking_schemes": {
+    "DEFAULT": {
+      "correct": "2",
+      "incorrect": "-2/3",
+      "unmarked": "0"
+    },
+    "BONUS_MARKS_ON_ATTEMPT" : {
+      "marking":{
+      "correct" :"2",
+      "incorrect":"2",
+      "unmarked":"0"
+      },
+      "questions":[
+        "q41"
+      ]
+    }
+  }
+}

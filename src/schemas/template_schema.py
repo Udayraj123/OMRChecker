@@ -846,11 +846,12 @@ TEMPLATE_SCHEMA = {
                         "required": ["formatString", "matchRegex"],
                         "additionalProperties": False,
                         "properties": {
+                            # Example: "SET_{booklet_No}"
                             "formatString": {
                                 "description": "Format string composed of the response variables to apply the regex on e.g. '{roll}-{barcode}'",
                                 "type": "string",
                             },
-                            # Example: match last four characters ".*-SET1"
+                            # Example: match last four characters ".*-SET1", "SET_A", "B",
                             "matchRegex": {
                                 "description": "Mapping to use on the composed field string",
                                 "type": "string",

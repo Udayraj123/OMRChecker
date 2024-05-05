@@ -167,15 +167,76 @@ common_evaluation_schema_properties = {
                     }
                 ],
             },
-            "verdict_colors": {
-                "description": "The mapping from schema verdicts to the corresponding colors",
+            "draw_question_verdicts": {
                 "type": "object",
                 "additionalProperties": False,
+                "required": ["enabled"],
                 "properties": {
-                    "correct": {"type": "string"},
-                    "incorrect": {"type": "string"},
-                    "unmarked": {"type": "string"},
+                    "enabled": {"type": "boolean"},
+                    "verdict_colors": {
+                        "description": "The mapping from schema verdicts to the corresponding colors",
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": ["correct", "neutral", "negative", "bonus"],
+                        "properties": {
+                            "correct": {"type": "string"},
+                            "neutral": {"type": "string"},
+                            "negative": {"type": "string"},
+                            "bonus": {"type": "string"},
+                        },
+                    },
+                    "verdict_symbol_colors": {
+                        "description": "The mapping from verdict symbols to the corresponding colors",
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": ["positive", "neutral", "negative", "bonus"],
+                        "properties": {
+                            "positive": {"type": "string"},
+                            "neutral": {"type": "string"},
+                            "negative": {"type": "string"},
+                            "bonus": {"type": "string"},
+                        },
+                    },
+                    "draw_answer_groups": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": [],
+                        "properties": {
+                            "enabled": {"type": "boolean"},
+                            "color_sequence": {
+                                **ARRAY_OF_STRINGS,
+                                "minItems": 4,
+                                "maxItems": 4,
+                            },
+                        },
+                        "allOf": [
+                            {
+                                "if": {"properties": {"enabled": {"const": True}}},
+                                "then": {
+                                    "required": ["color_sequence"],
+                                },
+                            }
+                        ],
+                    },
                 },
+                "allOf": [
+                    {
+                        "if": {"properties": {"enabled": {"const": True}}},
+                        "then": {
+                            "required": [
+                                "verdict_colors",
+                                "verdict_symbol_colors",
+                                "draw_answer_groups",
+                            ],
+                        },
+                    }
+                ],
+            },
+            "draw_detected_bubble_texts": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["enabled"],
+                "properties": {"enabled": {"type": "boolean"}},
             },
         },
     },

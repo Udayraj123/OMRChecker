@@ -4,6 +4,7 @@ import numpy as np
 
 from src.processors.constants import EdgeType
 from src.utils.logger import logger
+import matplotlib.colors as colors
 
 
 class MathUtils:
@@ -125,3 +126,8 @@ class MathUtils:
         return (dx1 * dx2 + dy1 * dy2) / np.sqrt(
             (dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2) + 1e-10
         )
+
+    @staticmethod
+    def hex_to_bgr(hex):
+        r, g, b = tuple(int(x * 255) for x in colors.hex2color(hex))
+        return (b, g, r)

@@ -27,6 +27,7 @@ from src.schemas.constants import (
 )
 from src.utils.image import ImageUtils
 from src.utils.logger import console, logger
+from src.utils.math import MathUtils
 from src.utils.parsing import (
     get_concatenated_response,
     open_evaluation_with_defaults,
@@ -252,19 +253,24 @@ class EvaluationConfig:
         )
 
         (
-            self.should_explain_scoring,
-            self.draw_score,
             self.draw_answers_summary,
-            self.verdict_colors,
+            self.draw_detected_bubble_texts,
+            self.draw_question_verdicts,
+            self.draw_score,
+            self.should_explain_scoring,
         ) = map(
             outputs_configuration.get,
             [
-                "should_explain_scoring",
-                "draw_score",
                 "draw_answers_summary",
-                "verdict_colors",
+                "draw_detected_bubble_texts",
+                "draw_question_verdicts",
+                "draw_score",
+                "should_explain_scoring",
             ],
         )
+        print(outputs_configuration)
+        if self.draw_question_verdicts["enabled"]:
+            self.parse_draw_question_verdicts()
 
         self.has_custom_marking = False
         self.exclude_files = []
@@ -393,6 +399,42 @@ class EvaluationConfig:
             # single-correct
             parsed_answer = answer_column
         return parsed_answer
+
+    def parse_draw_question_verdicts(self):
+        (
+            verdict_colors,
+            verdict_symbol_colors,
+            draw_answer_groups,
+        ) = map(
+            self.draw_question_verdicts.get,
+            [
+                "verdict_colors",
+                "verdict_symbol_colors",
+                "draw_answer_groups",
+            ],
+        )
+
+        self.verdict_colors = {
+            "correct": MathUtils.hex_to_bgr(verdict_colors["correct"]),
+            "neutral": MathUtils.hex_to_bgr(verdict_colors["neutral"]),
+            "negative": MathUtils.hex_to_bgr(verdict_colors["negative"]),
+            "bonus": MathUtils.hex_to_bgr(verdict_colors["bonus"]),
+        }
+        self.verdict_symbol_colors = {
+            "positive": MathUtils.hex_to_bgr(verdict_symbol_colors["positive"]),
+            "neutral": MathUtils.hex_to_bgr(verdict_symbol_colors["neutral"]),
+            "negative": MathUtils.hex_to_bgr(verdict_symbol_colors["negative"]),
+            "bonus": MathUtils.hex_to_bgr(verdict_symbol_colors["bonus"]),
+        }
+        draw_answer_groups_dict = {
+            "enabled": draw_answer_groups["enabled"],
+        }
+        if draw_answer_groups["enabled"]:
+            draw_answer_groups_dict["color_sequence"] = [
+                MathUtils.hex_to_bgr(hex)
+                for hex in draw_answer_groups["color_sequence"]
+            ]
+        self.draw_answer_groups = draw_answer_groups_dict
 
     def parse_questions_in_order(self, questions_in_order):
         return parse_fields("questions_in_order", questions_in_order)
@@ -627,7 +669,9 @@ class EvaluationConfig:
         return answers_format, position, size, thickness
 
     def get_formatted_score(self, score):
-        score_format = self.draw_score["score_format_string"].format(score=score)
+        score_format = self.draw_score["score_format_string"].format(
+            score=round(score, 2)
+        )
         position = self.draw_score["position"]
         size = self.draw_score["size"]
         thickness = int(self.draw_score["size"] * 2)
@@ -657,15 +701,17 @@ class EvaluationConfig:
         self.explanation_table = table
 
 
-def get_evaluation_symbol(question_meta):
+def get_evaluation_meta_for_question(
+    question_meta, verdict_colors, verdict_symbol_colors
+):
     if question_meta["bonus_type"] is not None:
-        return "+"
+        return "+", verdict_colors["correct"], verdict_symbol_colors["positive"]
     if question_meta["delta"] > 0:
-        return "+"
+        return "+", verdict_colors["correct"], verdict_symbol_colors["positive"]
     if question_meta["delta"] < 0:
-        return "-"
+        return "-", verdict_colors["negative"], verdict_symbol_colors["negative"]
     else:
-        return "o"
+        return "o", verdict_colors["neutral"], verdict_symbol_colors["neutral"]
 
 
 def evaluate_concatenated_response(concatenated_response, evaluation_config):
