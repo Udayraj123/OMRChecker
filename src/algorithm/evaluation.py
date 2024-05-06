@@ -424,14 +424,11 @@ class EvaluationConfig:
             "negative": MathUtils.to_bgr(verdict_symbol_colors["negative"]),
             "bonus": MathUtils.to_bgr(verdict_symbol_colors["bonus"]),
         }
-        draw_answer_groups_dict = {
-            "enabled": draw_answer_groups["enabled"],
-        }
-        if draw_answer_groups["enabled"]:
-            draw_answer_groups_dict["color_sequence"] = [
-                MathUtils.to_bgr(hex) for hex in draw_answer_groups["color_sequence"]
-            ]
-        self.draw_answer_groups = draw_answer_groups_dict
+
+        self.draw_answer_groups = draw_answer_groups
+        self.draw_answer_groups["color_sequence"] = map(
+            MathUtils.to_bgr, draw_answer_groups["color_sequence"]
+        )
 
     def parse_questions_in_order(self, questions_in_order):
         return parse_fields("questions_in_order", questions_in_order)
