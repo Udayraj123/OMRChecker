@@ -426,8 +426,8 @@ class EvaluationConfig:
         }
 
         self.draw_answer_groups = draw_answer_groups
-        self.draw_answer_groups["color_sequence"] = map(
-            MathUtils.to_bgr, draw_answer_groups["color_sequence"]
+        self.draw_answer_groups["color_sequence"] = list(
+            map(MathUtils.to_bgr, draw_answer_groups["color_sequence"])
         )
 
     def parse_questions_in_order(self, questions_in_order):

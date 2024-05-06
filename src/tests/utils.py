@@ -2,11 +2,11 @@ import json
 import os
 from copy import deepcopy
 
+import pandas as pd
 from freezegun import freeze_time
 
 from main import entry_point_for_args
-
-FROZEN_TIMESTAMP = "1970-01-01"
+from src.tests.constants import FROZEN_TIMESTAMP
 
 
 def setup_mocker_patches(mocker):
@@ -94,3 +94,8 @@ def generate_write_jsons_and_run(
         return sample_outputs, exception
 
     return write_jsons_and_run
+
+
+def extract_output_data(path):
+    output_data = pd.read_csv(path, keep_default_na=False)
+    return output_data

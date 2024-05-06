@@ -2,12 +2,7 @@ import os
 import shutil
 from glob import glob
 
-from src.tests.utils import run_entry_point, setup_mocker_patches
-
-
-def read_file(path):
-    with open(path) as file:
-        return file.read()
+from src.tests.utils import extract_output_data, run_entry_point, setup_mocker_patches
 
 
 def run_sample(mocker, sample_path):
@@ -22,7 +17,7 @@ def run_sample(mocker, sample_path):
 
     run_entry_point(input_path, output_dir)
 
-    sample_outputs = extract_sample_outputs(output_dir)
+    sample_outputs = extract_all_csv_outputs(output_dir)
 
     print(f"Note: removing output directory: {output_dir}")
     shutil.rmtree(output_dir)
@@ -33,12 +28,14 @@ def run_sample(mocker, sample_path):
 EXT = "*.csv"
 
 
-def extract_sample_outputs(output_dir):
+def extract_all_csv_outputs(output_dir):
     sample_outputs = {}
     for _dir, _subdir, _files in os.walk(output_dir):
         for file in glob(os.path.join(_dir, EXT)):
             relative_path = os.path.relpath(file, output_dir)
-            sample_outputs[relative_path] = read_file(file)
+            output_df = extract_output_data(file)
+            # pandas pretty print complete df
+            sample_outputs[relative_path] = output_df.to_string()
     return sample_outputs
 
 
@@ -59,7 +56,9 @@ def test_run_bonus_marking(mocker, snapshot):
 
 def test_run_bonus_marking_grouping(mocker, snapshot):
     sample_outputs = run_sample(mocker, "3-answer-key/bonus-marking-grouping")
-    # TODO: image snapshot
+    # Note image snapshots are updated using the --image-snapshot-update flag
+    # image_snapshot()
+    # Image.open(image_path)
     assert snapshot == sample_outputs
 
 
