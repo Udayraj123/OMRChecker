@@ -113,7 +113,7 @@
       "enabled": true,
       "position": [
         600,
-        650
+        150
       ],
       "size": 1.5
     },
@@ -121,7 +121,7 @@
       "enabled": true,
       "position": [
         300,
-        550
+        70
       ],
       "size": 1.0
     },
@@ -130,7 +130,7 @@
       "verdict_colors": {
         "correct": "#00ff00",
         "neutral": "#000000",
-        "negative": "#ff0000",
+        "incorrect": "#ff0000",
         "bonus": "#00DDDD"
       },
       "verdict_symbol_colors": {
@@ -160,7 +160,20 @@
         "unmarked": "0"
       },
       "questions": [
-        "q41"
+        "q43",
+        "q44",
+        "q81"
+      ]
+    },
+    "BONUS_MARKS_FOR_ALL": {
+      "marking": {
+        "correct": "2",
+        "incorrect": "2",
+        "unmarked": "2"
+      },
+      "questions": [
+        "q41",
+        "q42"
       ]
     }
   }

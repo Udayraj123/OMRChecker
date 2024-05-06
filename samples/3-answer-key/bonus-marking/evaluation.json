@@ -26,25 +26,25 @@
     "draw_score": {
       "enabled": true,
       "position": [
-        600,
-        650
+        650,
+        750
       ],
       "size": 1.5
     },
     "draw_answers_summary": {
       "enabled": true,
       "position": [
-        300,
-        550
+        650,
+        820
       ],
-      "size": 1.0
+      "size": 0.85
     },
     "draw_question_verdicts": {
       "enabled": true,
       "verdict_colors": {
         "correct": "#00ff00",
         "incorrect": "#ff0000",
-        "unmarked": "#0000ff"
+        "neutral": "#0000ff"
       }
     },
     "should_explain_scoring": true
@@ -52,7 +52,7 @@
   "marking_schemes": {
     "DEFAULT": {
       "correct": "3",
-      "incorrect": "-1",
+      "incorrect": "0",
       "unmarked": "0"
     },
     "BONUS_MARKS_ON_ATTEMPT": {

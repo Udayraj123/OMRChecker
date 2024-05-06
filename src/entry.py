@@ -340,7 +340,10 @@ def process_files(
             score, evaluation_meta = evaluate_concatenated_response(
                 omr_response, evaluation_config
             )
-            default_answers_summary = evaluation_config.get_formatted_answers_summary(
+            (
+                default_answers_summary,
+                *_,
+            ) = evaluation_config.get_formatted_answers_summary(
                 DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING
             )
             logger.info(

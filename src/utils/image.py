@@ -529,25 +529,32 @@ class ImageUtils:
         cv2.line(image, start, end, color, thickness)
 
     @staticmethod
-    def draw_group(image, start, bubble_dimensions, state, color, thickness=4):
+    def draw_group(
+        image,
+        start,
+        bubble_dimensions,
+        box_edge,
+        color,
+        thickness=3,
+        thickness_factor=7 / 10,
+    ):
         start_x, start_y = start
         box_w, box_h = bubble_dimensions
-        thickness_factor = 7 / 10
-        if state == "TOP":
+        if box_edge == "TOP":
             end_position = (start_x + int(box_w * thickness_factor), start_y)
             start = (start_x + int(box_w * (1 - thickness_factor)), start_y)
             ImageUtils.draw_line(image, start, end_position, color, thickness)
-        elif state == "RIGHT":
+        elif box_edge == "RIGHT":
             start = (start_x + box_w, start_y)
             end_position = (start_x, int(start_y + box_h * thickness_factor))
             start = (start_x, int(start_y + box_h * (1 - thickness_factor)))
             ImageUtils.draw_line(image, start, end_position, color, thickness)
-        elif state == "BOTTOM":
+        elif box_edge == "BOTTOM":
             start = (start_x, start_y + box_h)
             end_position = (int(start_x + box_w * thickness_factor), start_y)
             start = (int(start_x + box_w * (1 - thickness_factor)), start_y)
             ImageUtils.draw_line(image, start, end_position, color, thickness)
-        elif state == "LEFT":
+        elif box_edge == "LEFT":
             end_position = (start_x, int(start_y + box_h * thickness_factor))
             start = (start_x, int(start_y + box_h * (1 - thickness_factor)))
             ImageUtils.draw_line(image, start, end_position, color, thickness)

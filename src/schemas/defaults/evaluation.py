@@ -25,8 +25,8 @@ EVALUATION_CONFIG_DEFAULTS = {
             "enabled": True,
             "verdict_colors": {
                 "correct": "#00FF00",
-                "neutral": "#FFFFFF",
-                "negative": "#FF0000",
+                "neutral": None,
+                "incorrect": "#FF0000",
                 "bonus": "#00DDDD",
             },
             "verdict_symbol_colors": {

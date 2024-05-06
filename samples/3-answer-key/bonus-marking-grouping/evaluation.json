@@ -63,7 +63,7 @@
       "verdict_colors": {
         "correct": "darkgreen",
         "neutral": "#000000",
-        "negative": "#ff0000",
+        "incorrect": "#ff0000",
         "bonus": "#00DDDD"
       },
       "verdict_symbol_colors": {

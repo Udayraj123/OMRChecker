@@ -175,27 +175,55 @@ common_evaluation_schema_properties = {
                 "properties": {
                     "enabled": {"type": "boolean"},
                     "verdict_colors": {
-                        "description": "The mapping from schema verdicts to the corresponding colors",
+                        "description": "The mapping from delta sign notions to the corresponding colors",
                         "type": "object",
                         "additionalProperties": False,
-                        "required": ["correct", "neutral", "negative", "bonus"],
+                        "required": ["correct", "neutral", "incorrect", "bonus"],
                         "properties": {
-                            "correct": matplotlib_color,
-                            "neutral": matplotlib_color,
-                            "negative": matplotlib_color,
-                            "bonus": matplotlib_color,
+                            "correct": {
+                                "description": "The color of the bubble box when delta > 0",
+                                "$ref": "#/$def/matplotlib_color",
+                            },
+                            "neutral": {
+                                "description": "The color of the bubble box when delta == 0 (defaults to incorrect)",
+                                "oneOf": [
+                                    {"$ref": "#/$def/matplotlib_color"},
+                                    # Allow null for default to incorrect color
+                                    {"type": "null"},
+                                ],
+                            },
+                            "incorrect": {
+                                "description": "The color of the bubble box when delta < 0",
+                                "$ref": "#/$def/matplotlib_color",
+                            },
+                            "bonus": {
+                                "description": "The color of the bubble box when delta > 0 and question is part of a bonus scheme",
+                                "$ref": "#/$def/matplotlib_color",
+                            },
                         },
                     },
                     "verdict_symbol_colors": {
-                        "description": "The mapping from verdict symbols to the corresponding colors",
+                        "description": "The mapping from verdict symbols(based on delta sign) to the corresponding colors",
                         "type": "object",
                         "additionalProperties": False,
                         "required": ["positive", "neutral", "negative", "bonus"],
                         "properties": {
-                            "positive": matplotlib_color,
-                            "neutral": matplotlib_color,
-                            "negative": matplotlib_color,
-                            "bonus": matplotlib_color,
+                            "positive": {
+                                "description": "The color of '+' symbol when delta > 0",
+                                "$ref": "#/$def/matplotlib_color",
+                            },
+                            "neutral": {
+                                "description": "The color of 'o' symbol when delta == 0",
+                                "$ref": "#/$def/matplotlib_color",
+                            },
+                            "negative": {
+                                "description": "The color of '-' symbol when delta < 0",
+                                "$ref": "#/$def/matplotlib_color",
+                            },
+                            "bonus": {
+                                "description": "The color of '*' symbol when delta > 0 and question is part of a bonus scheme",
+                                "$ref": "#/$def/matplotlib_color",
+                            },
                         },
                     },
                     "draw_answer_groups": {
@@ -312,6 +340,10 @@ common_evaluation_schema_conditions = [
 EVALUATION_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/Udayraj123/OMRChecker/tree/master/src/schemas/evaluation-schema.json",
+    "$def": {
+        # The common definitions go here
+        "matplotlib_color": matplotlib_color,
+    },
     "title": "Evaluation Schema",
     "description": "The OMRChecker evaluation schema",
     "type": "object",

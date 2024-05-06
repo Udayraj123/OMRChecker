@@ -25,6 +25,7 @@ from src.schemas.constants import (
     SchemaVerdict,
     Verdict,
 )
+from src.utils.constants import CLR_BLACK, CLR_WHITE
 from src.utils.image import ImageUtils
 from src.utils.logger import console, logger
 from src.utils.math import MathUtils
@@ -153,7 +154,7 @@ class AnswerMatcher:
         if marked_answer == self.empty_val:
             return Verdict.UNMARKED
         elif marked_answer in allowed_answers:
-            # ANSWER-MATCH-BC
+            # e.g. ANSWER-MATCH-BC
             return f"{Verdict.ANSWER_MATCH}-{marked_answer}"
         else:
             return Verdict.NO_ANSWER_MATCH
@@ -211,13 +212,6 @@ class SectionMarkingScheme:
             parsed_marking[verdict] = schema_verdict_marking
 
         return parsed_marking
-
-    def match_answer(self, marked_answer, answer_matcher):
-        question_verdict, verdict_marking = answer_matcher.get_verdict_marking(
-            marked_answer
-        )
-
-        return verdict_marking, question_verdict
 
     def get_bonus_type(self):
         if self.marking[Verdict.NO_ANSWER_MATCH] <= 0:
@@ -415,8 +409,13 @@ class EvaluationConfig:
 
         self.verdict_colors = {
             "correct": MathUtils.to_bgr(verdict_colors["correct"]),
-            "neutral": MathUtils.to_bgr(verdict_colors["neutral"]),
-            "negative": MathUtils.to_bgr(verdict_colors["negative"]),
+            # Note: neutral value will default to incorrect value
+            "neutral": MathUtils.to_bgr(
+                verdict_colors["neutral"]
+                if verdict_colors["neutral"] is not None
+                else verdict_colors["incorrect"]
+            ),
+            "incorrect": MathUtils.to_bgr(verdict_colors["incorrect"]),
             "bonus": MathUtils.to_bgr(verdict_colors["bonus"]),
         }
         self.verdict_symbol_colors = {
@@ -619,7 +618,7 @@ class EvaluationConfig:
                     question,
                     marked_answer,
                     str(answer_matcher),
-                    f"{question_schema_verdict.title()} ({question_verdict.title()})",
+                    f"{question_schema_verdict.title()} ({question_verdict})",
                     str(round(delta, 2)),
                     str(round(next_score, 2)),
                     (
@@ -698,18 +697,97 @@ class EvaluationConfig:
             table.add_column("Marking Scheme")
         self.explanation_table = table
 
+    def get_evaluation_meta_for_question(
+        self, question_meta, bubble_detection, image_type
+    ):
+        # TODO: take config for CROSS_TICKS vs BUBBLE_BOUNDARY and call appropriate util
+        (
+            symbol_positive,
+            symbol_negative,
+            symbol_neutral,
+            symbol_bonus,
+            symbol_unmarked,
+        ) = ("+", "-", "o", "*", "")
+        thickness_factor = 1 / 12
 
-def get_evaluation_meta_for_question(
-    question_meta, verdict_colors, verdict_symbol_colors
-):
-    if question_meta["bonus_type"] is not None:
-        return "+", verdict_colors["correct"], verdict_symbol_colors["positive"]
-    if question_meta["delta"] > 0:
-        return "+", verdict_colors["correct"], verdict_symbol_colors["positive"]
-    if question_meta["delta"] < 0:
-        return "-", verdict_colors["negative"], verdict_symbol_colors["negative"]
-    else:
-        return "o", verdict_colors["neutral"], verdict_symbol_colors["neutral"]
+        bonus_type, question_verdict, question_schema_verdict = map(
+            question_meta.get,
+            ["bonus_type", "question_verdict", "question_schema_verdict"],
+        )
+
+        color_correct, color_incorrect, color_neutral, color_bonus = map(
+            self.verdict_colors.get, ["correct", "incorrect", "neutral", "bonus"]
+        )
+        (
+            symbol_color_positive,
+            symbol_color_negative,
+            symbol_color_neutral,
+            symbol_color_bonus,
+        ) = map(
+            self.verdict_symbol_colors.get,
+            ["correct", "incorrect", "neutral", "bonus"],
+        )
+        if bubble_detection.is_marked:
+            # Always render symbol as per delta (regardless of bonus) for marked bubbles
+            if question_meta["delta"] > 0:
+                symbol = symbol_positive
+            elif question_meta["delta"] < 0:
+                symbol = symbol_negative
+            else:
+                symbol = symbol_neutral
+
+            # Update colors for marked bubbles
+            if image_type == "GRAYSCALE":
+                color = CLR_WHITE
+                symbol_color = CLR_BLACK
+            else:
+                # Apply colors as per delta
+                if question_meta["delta"] > 0:
+                    color, symbol_color = (
+                        color_correct,
+                        symbol_color_positive,
+                    )
+                elif question_meta["delta"] < 0:
+                    color, symbol_color = (
+                        color_incorrect,
+                        symbol_color_negative,
+                    )
+                else:
+                    color, symbol_color = (
+                        color_neutral,
+                        symbol_color_neutral,
+                    )
+
+                # Override bonus colors if bubble was marked but verdict was not correct
+                if bonus_type is not None and question_verdict in [
+                    Verdict.UNMARKED,
+                    Verdict.NO_ANSWER_MATCH,
+                ]:
+                    color, symbol_color = (
+                        color_bonus,
+                        symbol_color_bonus,
+                    )
+        else:
+            symbol = symbol_unmarked
+            # In case of unmarked bubbles, we draw the symbol only if bonus type is BONUS_FOR_ALL
+            if bonus_type == "BONUS_FOR_ALL":
+                symbol = symbol_positive
+            elif bonus_type == "BONUS_ON_ATTEMPT":
+                if question_schema_verdict == Verdict.UNMARKED:
+                    # Case of bonus on attempt with blank question - show neutral symbol on all bubbles(on attempt)
+                    symbol = symbol_neutral
+                else:
+                    # Case of bonus on attempt with one or more marked bubbles - show bonus symbol on remaining bubbles
+                    symbol = symbol_bonus
+
+            # Apply bonus colors for all bubbles
+            if bonus_type is not None:
+                color, symbol_color = (
+                    color_bonus,
+                    symbol_color_bonus,
+                )
+
+        return symbol, color, symbol_color, thickness_factor
 
 
 def evaluate_concatenated_response(concatenated_response, evaluation_config):
@@ -741,10 +819,11 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
         }
 
     evaluation_config.conditionally_print_explanation()
+    formatted_answers_summary, *_ = evaluation_config.get_formatted_answers_summary()
     evaluation_meta = {
         "score": current_score,
         "questions_meta": questions_meta,
         # "schema_verdict_counts": evaluation_config.schema_verdict_counts,
-        "formatted_answers_summary": evaluation_config.get_formatted_answers_summary(),
+        "formatted_answers_summary": formatted_answers_summary,
     }
     return current_score, evaluation_meta
