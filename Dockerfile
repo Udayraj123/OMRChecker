@@ -17,7 +17,7 @@ RUN apt-get update -y && \
     apt-get -y autoremove
 
 # Install Python dependencies
-RUN pip3 install --user opencv-python opencv-contrib-python
+RUN pip3 install --user opencv-python-headless opencv-contrib-python-headless
 
 # Copy over the development and production requirements files
 COPY ./requirements.dev.txt /app

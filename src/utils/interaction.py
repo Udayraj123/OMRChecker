@@ -31,6 +31,9 @@ class InteractionUtils:
 
     @staticmethod
     def show(name, origin, pause=1, resize=False, reset_pos=None, config=None):
+        if(os.environ.get("OMR_CHECKER_CONTAINER")):
+            return
+        
         image_metrics = InteractionUtils.image_metrics
         if origin is None:
             logger.info(f"'{name}' - NoneType image to show!")
