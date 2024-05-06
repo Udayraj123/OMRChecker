@@ -35,6 +35,23 @@
     ''',
   })
 # ---
+# name: test_run_answer_key_using_image_grouping
+  dict({
+    'Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+  
+    ''',
+    'Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+  
+    ''',
+    'Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+      "angle-1.jpg","samples/3-answer-key/using-image-grouping/angle-1.jpg","outputs/3-answer-key/using-image-grouping/CheckedOMRs/angle-1.jpg","0.6666666666666685","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
+  
+    ''',
+  })
+# ---
 # name: test_run_answer_key_weighted_answers
   dict({
     'images/Manual/ErrorFiles.csv': '''
@@ -66,8 +83,25 @@
     'Results/Results_05AM.csv': '''
       "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11"
       "IMG_20201116_143512.jpg","samples/3-answer-key/bonus-marking/IMG_20201116_143512.jpg","outputs/3-answer-key/bonus-marking/CheckedOMRs/IMG_20201116_143512.jpg","33.0","B","D","C","B","D","C","BC","A","C","D","C"
-      "IMG_20201116_150717658.jpg","samples/3-answer-key/bonus-marking/IMG_20201116_150717658.jpg","outputs/3-answer-key/bonus-marking/CheckedOMRs/IMG_20201116_150717658.jpg","33.0","B","D","C","B","D","C","BC","A","C","D","C"
-      "IMG_20201116_150750830.jpg","samples/3-answer-key/bonus-marking/IMG_20201116_150750830.jpg","outputs/3-answer-key/bonus-marking/CheckedOMRs/IMG_20201116_150750830.jpg","6.0","A","","D","C","AC","A","D","B","C","D","D"
+  
+    ''',
+  })
+# ---
+# name: test_run_bonus_marking_grouping
+  dict({
+    'Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11"
+  
+    ''',
+    'Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11"
+  
+    ''',
+    'Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11"
+      "IMG_20201116_143512.jpg","samples/3-answer-key/bonus-marking-grouping/IMG_20201116_143512.jpg","outputs/3-answer-key/bonus-marking-grouping/CheckedOMRs/IMG_20201116_143512.jpg","36.0","B","D","C","B","D","C","BC","A","C","D","C"
+      "IMG_20201116_150717658.jpg","samples/3-answer-key/bonus-marking-grouping/IMG_20201116_150717658.jpg","outputs/3-answer-key/bonus-marking-grouping/CheckedOMRs/IMG_20201116_150717658.jpg","36.0","B","D","C","B","D","C","BC","A","C","D","C"
+      "IMG_20201116_150750830.jpg","samples/3-answer-key/bonus-marking-grouping/IMG_20201116_150750830.jpg","outputs/3-answer-key/bonus-marking-grouping/CheckedOMRs/IMG_20201116_150750830.jpg","6.0","A","","D","C","AC","A","D","B","C","D","D"
   
     ''',
   })

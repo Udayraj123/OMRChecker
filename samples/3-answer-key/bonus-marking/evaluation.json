@@ -39,14 +39,6 @@
       ],
       "size": 0.85
     },
-    "draw_question_verdicts": {
-      "enabled": true,
-      "verdict_colors": {
-        "correct": "#00ff00",
-        "incorrect": "#ff0000",
-        "neutral": "#0000ff"
-      }
-    },
     "should_explain_scoring": true
   },
   "marking_schemes": {

@@ -57,6 +57,12 @@ def test_run_bonus_marking(mocker, snapshot):
     assert snapshot == sample_outputs
 
 
+def test_run_bonus_marking_grouping(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "3-answer-key/bonus-marking-grouping")
+    # TODO: image snapshot
+    assert snapshot == sample_outputs
+
+
 def test_run_answer_key_using_csv(mocker, snapshot):
     sample_outputs = run_sample(mocker, "3-answer-key/using-csv")
     assert snapshot == sample_outputs
@@ -64,6 +70,12 @@ def test_run_answer_key_using_csv(mocker, snapshot):
 
 def test_run_answer_key_using_image(mocker, snapshot):
     sample_outputs = run_sample(mocker, "3-answer-key/using-image")
+    assert snapshot == sample_outputs
+
+
+def test_run_answer_key_using_image_grouping(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "3-answer-key/using-image-grouping")
+    # TODO: image snapshot
     assert snapshot == sample_outputs
 
 
