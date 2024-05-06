@@ -6,4 +6,4 @@ pytest-mock==3.14.0
 pytest==8.1.1
 syrupy==4.6.1
 Pillow==10.3.0
-pytest-image-snapshot==0.3.0
+pixelmatch==0.3.0

@@ -115,7 +115,7 @@ matplotlib_color = {
         },
         {
             "type": "string",
-            "description": "This should match with all colors supported by matplotlib",
+            "description": "This should match with all colors supported by matplotlib. Ref: https://matplotlib.org/stable/gallery/color/named_colors.html",
             "enum": list(MATPLOTLIB_COLORS.keys()),
         },
     ]
