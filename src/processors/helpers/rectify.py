@@ -44,8 +44,8 @@ def rectify(
     # given_segments = colored_image.copy()
     # for name, segment in segments.items():
     #     min_x, min_y, max_x, max_y = segment.bounds
-    #     ImageUtils.draw_text(given_segments, name, [min_x - 10, min_y + 10])
-    #     ImageUtils.draw_contour(given_segments, list(segment.coords))
+    #     DrawingUtils.draw_text(given_segments, name, [min_x - 10, min_y + 10])
+    #     DrawingUtils.draw_contour(given_segments, list(segment.coords))
     # InteractionUtils.show("given_segments", given_segments)
 
     output_shape = _get_output_shape_for_segments(edge_contours_map, enable_cropping)

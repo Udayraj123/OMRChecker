@@ -9,14 +9,14 @@ class ImageTemplatePreprocessor(Processor):
     """Base class for an extension that applies some preprocessing to the input image"""
 
     def __init__(
-        self, options, relative_dir, image_instance_ops, default_processing_image_shape
+        self, options, relative_dir, save_image_ops, default_processing_image_shape
     ):
         super().__init__(
             options,
             relative_dir,
         )
-        self.append_save_image = image_instance_ops.append_save_image
-        self.tuning_config = image_instance_ops.tuning_config
+        self.append_save_image = save_image_ops.append_save_image
+        self.tuning_config = save_image_ops.tuning_config
         # Note: we're taking this at preProcessor level because it represents
         # the need of a preProcessor's coordinate system(e.g. area selectors)
         self.processing_image_shape = options.get(

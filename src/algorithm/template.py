@@ -10,6 +10,7 @@
 from src.algorithm.core import ImageInstanceOps
 from src.processors.manager import PROCESSOR_MANAGER
 from src.utils.constants import BUILTIN_FIELD_TYPES
+from src.utils.file import SaveImageOps
 from src.utils.logger import logger
 from src.utils.parsing import (
     custom_sort_output_columns,
@@ -23,6 +24,7 @@ class Template:
     def __init__(self, template_path, tuning_config):
         self.path = template_path
         self.image_instance_ops = ImageInstanceOps(tuning_config)
+        self.save_image_ops = SaveImageOps(tuning_config)
 
         json_object = open_template_with_defaults(template_path)
         (
@@ -85,7 +87,7 @@ class Template:
             pre_processor_instance = ImageTemplateProcessorClass(
                 options=pre_processor["options"],
                 relative_dir=relative_dir,
-                image_instance_ops=self.image_instance_ops,
+                save_image_ops=self.save_image_ops,
                 default_processing_image_shape=self.processing_image_shape,
             )
             self.pre_processors.append(pre_processor_instance)

@@ -7,6 +7,7 @@ from src.processors.helpers.rectify import rectify
 from src.processors.interfaces.ImageTemplatePreprocessor import (
     ImageTemplatePreprocessor,
 )
+from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -28,10 +29,10 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         raise Exception(f"Not implemented")
 
     def __init__(
-        self, options, relative_dir, image_instance_ops, default_processing_image_shape
+        self, options, relative_dir, save_image_ops, default_processing_image_shape
     ):
         # TODO: need to fix this (self attributes will be overridden by parent and may cause inconsistency)
-        self.tuning_config = image_instance_ops.tuning_config
+        self.tuning_config = save_image_ops.tuning_config
 
         parsed_options = self.validate_and_remap_options_schema(options)
         # Processor tuningOptions defaults
@@ -45,7 +46,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         super().__init__(
             parsed_options,
             relative_dir,
-            image_instance_ops,
+            save_image_ops,
             default_processing_image_shape,
         )
         options = self.options
@@ -133,13 +134,13 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             if self.enable_cropping:
                 title_prefix = "Cropped Image"
                 # Draw the convex hull of all control points
-                ImageUtils.draw_contour(
+                DrawingUtils.draw_contour(
                     self.debug_image, cv2.convexHull(parsed_control_points)
                 )
             if config.outputs.show_image_level >= 5:
                 InteractionUtils.show("Anchor Points", self.debug_image, pause=False)
 
-            matched_lines = ImageUtils.draw_matches(
+            matched_lines = DrawingUtils.draw_matches(
                 image,
                 parsed_control_points,
                 warped_image,

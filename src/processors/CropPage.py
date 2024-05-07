@@ -8,6 +8,7 @@ import numpy as np
 from src.processors.constants import EDGE_TYPES_IN_ORDER, WarpMethod
 from src.processors.internal.WarpOnPointsCommon import WarpOnPointsCommon
 from src.utils.constants import CLR_WHITE
+from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -126,10 +127,10 @@ class CropPage(WarpOnPointsCommon):
             if MathUtils.validate_rect(approx):
                 sheet = np.reshape(approx, (4, -1))
                 page_contour = np.vstack(bounding_contour).squeeze()
-                ImageUtils.draw_contour(
+                DrawingUtils.draw_contour(
                     canny_edge, approx, color=CLR_WHITE, thickness=10
                 )
-                ImageUtils.draw_contour(
+                DrawingUtils.draw_contour(
                     self.debug_image, approx, color=CLR_WHITE, thickness=10
                 )
 

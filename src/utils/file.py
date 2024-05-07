@@ -1,11 +1,14 @@
 import argparse
 import json
 import os
+from collections import defaultdict
 from csv import QUOTE_NONNUMERIC
 from time import localtime, strftime
 
+import numpy as np
 import pandas as pd
 
+from src.utils.image import ImageUtils
 from src.utils.logger import logger
 
 
@@ -111,3 +114,45 @@ def setup_outputs_for_template(paths, template):
             ns.files_obj[file_key] = open(file_name, "a")
 
     return ns
+
+
+class SaveImageOps:
+    def __init__(self, tuning_config):
+        self.save_img_list = defaultdict(list)
+        self.tuning_config = tuning_config
+        self.save_image_level = tuning_config.outputs.save_image_level
+
+    def append_save_image(self, key, img):
+        if img is None:
+            return
+        if self.save_image_level >= int(key):
+            self.save_img_list[key].append(img.copy())
+
+    # TODO: call this function appropriately to enable debug stacks again
+    def save_image_stacks(self, key, filename, save_marked_dir):
+        config = self.tuning_config
+        if self.save_image_level >= int(key) and self.save_img_list[key] != []:
+            display_height, display_width = config.outputs.display_image_dimensions
+            name = os.path.splitext(filename)[0]
+            result = np.hstack(
+                tuple(
+                    [
+                        ImageUtils.resize_util(img, u_height=display_height)
+                        for img in self.save_img_list[key]
+                    ]
+                )
+            )
+            result = ImageUtils.resize_util(
+                result,
+                min(
+                    len(self.save_img_list[key]) * display_width // 3,
+                    int(display_width * 2.5),
+                ),
+            )
+            ImageUtils.save_img(
+                f"{save_marked_dir}stack/{name}_{str(key)}_stack.jpg", result
+            )
+
+    def reset_all_save_img(self):
+        for i in range(self.save_image_level):
+            self.save_img_list[i + 1] = []

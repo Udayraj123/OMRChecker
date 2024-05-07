@@ -26,6 +26,7 @@ from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils, Stats
 from src.utils.logger import console, logger
 from src.utils.parsing import get_concatenated_response, open_config_with_defaults
+from src.utils.template_drawing import TemplateDrawing
 
 # Load processors
 STATS = Stats()
@@ -238,8 +239,8 @@ def show_template_layouts(omr_files, template, tuning_config):
         ) = template.image_instance_ops.apply_preprocessors(
             file_path, gray_image, colored_image, template
         )
-        gray_layout, colored_layout = template.image_instance_ops.draw_template_layout(
-            gray_image, colored_image, template, shifted=False, border=2
+        gray_layout, colored_layout = TemplateDrawing.draw_template_layout(
+            gray_image, colored_image, template, tuning_config, shifted=False, border=2
         )
         template_layout = (
             colored_layout
@@ -276,9 +277,10 @@ def process_files(
             f"({files_counter}) Opening image: \t'{file_path}'\tResolution: {gray_image.shape}"
         )
 
-        template.image_instance_ops.reset_all_save_img()
+        template.save_image_ops.reset_all_save_img()
 
-        template.image_instance_ops.append_save_image(1, gray_image)
+        template.save_image_ops.append_save_image(1, gray_image)
+        # template.save_image_ops.append_save_image(1, colored_image)
 
         # TODO: use try catch here and store paths to error files
         # Note: the returned template is a copy
@@ -357,10 +359,11 @@ def process_files(
         (
             final_marked,
             colored_final_marked,
-        ) = template.image_instance_ops.draw_template_layout(
+        ) = TemplateDrawing.draw_template_layout(
             gray_image,
             colored_image,
             template,
+            tuning_config,
             file_id,
             field_number_to_field_bubble_means,
             save_marked_dir=save_marked_dir,

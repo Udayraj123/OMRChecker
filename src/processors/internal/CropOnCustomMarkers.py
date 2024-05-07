@@ -10,6 +10,7 @@ from src.processors.constants import (
     WarpMethod,
 )
 from src.processors.internal.CropOnPatchesCommon import CropOnPatchesCommon
+from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -257,7 +258,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         )
 
         if config.outputs.show_image_level >= 1:
-            ImageUtils.draw_contour(self.debug_image, absolute_corners)
+            DrawingUtils.draw_contour(self.debug_image, absolute_corners)
 
         return absolute_corners
 

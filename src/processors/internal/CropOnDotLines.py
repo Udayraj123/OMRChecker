@@ -12,6 +12,7 @@ from src.processors.constants import (
     WarpMethod,
 )
 from src.processors.internal.CropOnPatchesCommon import CropOnPatchesCommon
+from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.math import MathUtils
@@ -371,7 +372,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         if config.outputs.show_image_level >= 5:
             h, w = canny_edges.shape[:2]
             contour_overlay = 255 * np.ones((h, w), np.uint8)
-            ImageUtils.draw_contour(contour_overlay, largest_contour)
+            DrawingUtils.draw_contour(contour_overlay, largest_contour)
             self.debug_hstack.append(contour_overlay)
 
         # Convert to list of 2d points
@@ -409,7 +410,9 @@ class CropOnDotLines(CropOnPatchesCommon):
         if config.outputs.show_image_level >= 5:
             if ordered_patch_corners is not None:
                 corners_contour_overlay = canny_edges.copy()
-                ImageUtils.draw_contour(corners_contour_overlay, ordered_patch_corners)
+                DrawingUtils.draw_contour(
+                    corners_contour_overlay, ordered_patch_corners
+                )
                 self.debug_hstack.append(corners_contour_overlay)
 
             InteractionUtils.show(
