@@ -60,7 +60,7 @@ class ImageInstanceOps:
         gray_image = ImageUtils.resize_to_shape(
             gray_image, template.processing_image_shape
         )
-        if config.outputs.show_colored_outputs:
+        if config.outputs.colored_outputs_enabled:
             colored_image = ImageUtils.resize_to_shape(
                 colored_image, template.processing_image_shape
             )
@@ -82,7 +82,7 @@ class ImageInstanceOps:
             gray_image = ImageUtils.resize_to_shape(
                 gray_image, template.output_image_shape
             )
-            if config.outputs.show_colored_outputs:
+            if config.outputs.colored_outputs_enabled:
                 colored_image = ImageUtils.resize_to_shape(
                     colored_image, template.output_image_shape
                 )
@@ -511,7 +511,7 @@ class ImageInstanceOps:
         )
 
         colored_final_marked = colored_image
-        if config.outputs.show_colored_outputs:
+        if config.outputs.colored_outputs_enabled:
             save_marked_dir = kwargs.get("save_marked_dir", None)
             kwargs["save_marked_dir"] = (
                 save_marked_dir.joinpath("colored")
@@ -608,7 +608,7 @@ class ImageInstanceOps:
             image_path = str(save_marked_dir.joinpath(file_id))
             ImageUtils.save_img(image_path, marked_image)
 
-        # if config.outputs.show_colored_outputs:
+        # if config.outputs.colored_outputs_enabled:
         # TODO: add colored counterparts
 
         if should_draw_question_verdicts:

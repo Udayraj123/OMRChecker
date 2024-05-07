@@ -35,7 +35,7 @@ class ImageTemplatePreprocessor(Processor):
 
         in_image = ImageUtils.resize_to_shape(in_image, self.processing_image_shape)
 
-        if config.outputs.show_colored_outputs:
+        if config.outputs.colored_outputs_enabled:
             colored_image = ImageUtils.resize_to_shape(
                 colored_image,
                 self.processing_image_shape,

@@ -243,7 +243,7 @@ def show_template_layouts(omr_files, template, tuning_config):
         )
         template_layout = (
             colored_layout
-            if tuning_config.outputs.show_colored_outputs
+            if tuning_config.outputs.colored_outputs_enabled
             else gray_layout
         )
         InteractionUtils.show(

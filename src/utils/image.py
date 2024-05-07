@@ -24,7 +24,7 @@ class ImageUtils:
 
     @staticmethod
     def read_image_util(file_path, tuning_config):
-        if tuning_config.outputs.show_colored_outputs:
+        if tuning_config.outputs.colored_outputs_enabled:
             colored_image = cv2.imread(file_path, cv2.IMREAD_COLOR)
             gray_image = cv2.cvtColor(colored_image, cv2.COLOR_BGR2GRAY)
         else:

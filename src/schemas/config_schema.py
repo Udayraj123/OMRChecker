@@ -100,7 +100,7 @@ CONFIG_SCHEMA = {
                     "minimum": 0,
                     "maximum": 6,
                 },
-                "show_colored_outputs": {
+                "colored_outputs_enabled": {
                     "description": "This option shows colored outputs while taking a small toll on the processing speeds",
                     "type": "boolean",
                 },

@@ -211,7 +211,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         # TODO: Save intuitive meta data
         # self.append_save_image(3,warped_image)
         warped_colored_image = None
-        if config.outputs.show_colored_outputs:
+        if config.outputs.colored_outputs_enabled:
             warped_colored_image = cv2.warpPerspective(
                 colored_image, transform_matrix, warped_dimensions
             )
@@ -308,7 +308,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             image, map1=grid_z, map2=None, interpolation=cv2.INTER_CUBIC
         )
         warped_colored_image = None
-        if config.outputs.show_colored_outputs:
+        if config.outputs.colored_outputs_enabled:
             warped_colored_image = cv2.remap(
                 colored_image,
                 map1=grid_z,
@@ -340,7 +340,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             InteractionUtils.show("warped_image", warped_image, 0)
 
         warped_colored_image = None
-        if config.outputs.show_colored_outputs:
+        if config.outputs.colored_outputs_enabled:
             warped_colored_image = cv2.remap(
                 colored_image, map1=scaled_map, map2=None, interpolation=cv2.INTER_CUBIC
             )
