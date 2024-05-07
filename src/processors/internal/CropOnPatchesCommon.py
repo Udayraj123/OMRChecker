@@ -303,7 +303,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
 
         if area_start[0] < 0 or area_start[1] < 0 or area_end[0] > w or area_end[1] > h:
             logger.warning(
-                f"Clipping label {area_label} with scan rectangle: {[area_start, area_end]} to image boundary."
+                f"Clipping label {area_label} with scan rectangle: {[area_start, area_end]} to image boundary {[w, h]}."
             )
 
             area_start = [max(0, area_start[0]), max(0, area_start[1])]

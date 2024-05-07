@@ -55,6 +55,7 @@ def extend_to_match_size(img1, img2):
 
 
 def image_diff(img1, img2):
+    # TODO: try out cv2.diff() or channel-wise diff
     match_result = cv2.matchTemplate(img1, img2, cv2.TM_CCOEFF_NORMED)
 
     return 1 - match_result.max()

@@ -34,7 +34,6 @@ class Template:
             self.global_empty_val,
             self.template_dimensions,
             self.options,
-            self.processing_image_shape,
             self.output_image_shape,
         ) = map(
             json_object.get,
@@ -47,10 +46,14 @@ class Template:
                 "emptyValue",
                 "templateDimensions",
                 "options",
-                "processingImageShape",
                 "outputImageShape",
                 # TODO: support for "sortFiles" key
             ],
+        )
+        page_width, page_height = self.template_dimensions
+
+        self.processing_image_shape = json_object.get(
+            "processingImageShape", [page_height, page_width]
         )
 
         self.parse_output_columns(output_columns_array)

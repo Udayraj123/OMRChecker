@@ -95,6 +95,7 @@ point_selector_patch_area_def = {
 
 marker_area_description_def = {
     **point_selector_patch_area_def,
+    "required": ["origin", "margins"],
     "description": "The detailed description of a patch area for a custom marker",
     "additionalProperties": False,
     "properties": {
