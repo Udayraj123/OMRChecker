@@ -336,7 +336,8 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             map2=None,
             interpolation=cv2.INTER_NEAREST,  # cv2.INTER_CUBIC
         )
-        InteractionUtils.show("warped_image", warped_image, 0)
+        if config.outputs.show_image_level >= 1:
+            InteractionUtils.show("warped_image", warped_image, 0)
 
         warped_colored_image = None
         if config.outputs.show_colored_outputs:
@@ -344,6 +345,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
                 colored_image, map1=scaled_map, map2=None, interpolation=cv2.INTER_CUBIC
             )
             logger.info("warped_colored_image.shape", warped_colored_image.shape)
-            InteractionUtils.show("warped_colored_image", warped_colored_image, 0)
+            if config.outputs.show_image_level >= 1:
+                InteractionUtils.show("warped_colored_image", warped_colored_image, 0)
 
         return warped_image, warped_colored_image

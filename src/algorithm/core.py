@@ -527,22 +527,22 @@ class ImageInstanceOps:
                 *args,
                 **kwargs,
             )
-
-            InteractionUtils.show(
-                "Final Marked Bubbles",
-                final_marked,
-                0,
-                resize_to_height=True,
-                config=config,
-            )
-            InteractionUtils.show(
-                "Final Marked Bubbles (Colored)",
-                colored_final_marked,
-                1,
-                resize_to_height=True,
-                config=config,
-            )
-        else:
+            if config.outputs.show_image_level >= 1:
+                InteractionUtils.show(
+                    "Final Marked Bubbles",
+                    final_marked,
+                    0,
+                    resize_to_height=True,
+                    config=config,
+                )
+                InteractionUtils.show(
+                    "Final Marked Bubbles (Colored)",
+                    colored_final_marked,
+                    1,
+                    resize_to_height=True,
+                    config=config,
+                )
+        elif config.outputs.show_image_level >= 1:
             InteractionUtils.show(
                 "Final Marked Bubbles",
                 final_marked,

@@ -327,13 +327,16 @@ class CropOnDotLines(CropOnPatchesCommon):
             area_start, normalised, area_description
         )
         if corners is None:
-            hstack = ImageUtils.get_padded_hstack([self.debug_image, area, thresholded])
-            InteractionUtils.show(
-                f"No patch/dot debug hstack",
-                ImageUtils.get_padded_hstack(self.debug_hstack),
-                pause=0,
-            )
-            InteractionUtils.show(f"No patch/dot found:", hstack, pause=1)
+            if config.outputs.show_image_level >= 1:
+                hstack = ImageUtils.get_padded_hstack(
+                    [self.debug_image, area, thresholded]
+                )
+                InteractionUtils.show(
+                    f"No patch/dot debug hstack",
+                    ImageUtils.get_padded_hstack(self.debug_hstack),
+                    pause=0,
+                )
+                InteractionUtils.show(f"No patch/dot found:", hstack, pause=1)
             raise Exception(
                 f"No patch/dot found at origin: {area_description['origin']} with dimensions: { area_description['dimensions']}"
             )
