@@ -66,57 +66,72 @@ AnswerType = DotMap(
     _dynamic=False,
 )
 
-
-ARRAY_OF_STRINGS = {
-    "type": "array",
-    "items": {"type": "string"},
-}
-
-FIELD_STRING_TYPE = {
-    "type": "string",
-    "pattern": "^([^\\.]+|[^\\.\\d]+\\d+\\.{2,3}\\d+)$",
+ALL_COMMON_DEFS = {
+    "array_of_strings": {
+        "type": "array",
+        "items": {"type": "string"},
+    },
+    "field_string_type": {
+        "type": "string",
+        "pattern": "^([^\\.]+|[^\\.\\d]+\\d+\\.{2,3}\\d+)$",
+    },
+    "positive_number": {"type": "number", "minimum": 0},
+    "positive_integer": {"type": "integer", "minimum": 0},
+    "two_positive_integers": {
+        "type": "array",
+        "prefixItems": [
+            {
+                "$ref": "#/$def/positive_integer",
+            },
+            {
+                "$ref": "#/$def/positive_integer",
+            },
+        ],
+        "maxItems": 2,
+        "minItems": 2,
+    },
+    "two_positive_numbers": {
+        "type": "array",
+        "prefixItems": [
+            {
+                "$ref": "#/$def/positive_number",
+            },
+            {
+                "$ref": "#/$def/positive_number",
+            },
+        ],
+        "maxItems": 2,
+        "minItems": 2,
+    },
+    "zero_to_one_number": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+    },
+    "matplotlib_color": {
+        "oneOf": [
+            {
+                "type": "string",
+                "description": "This should match with #rgb, #rgba, #rrggbb, and #rrggbbaa syntax",
+                "pattern": "^#(?:(?:[\\da-fA-F]{3}){1,2}|(?:[\\da-fA-F]{4}){1,2})$",
+            },
+            {
+                "type": "string",
+                "description": "This should match with all colors supported by matplotlib. Ref: https://matplotlib.org/stable/gallery/color/named_colors.html",
+                "enum": list(MATPLOTLIB_COLORS.keys()),
+            },
+        ]
+    },
 }
 
 FIELD_STRING_REGEX_GROUPS = r"([^\.\d]+)(\d+)\.{2,3}(\d+)"
 
 
-positive_number = {"type": "number", "minimum": 0}
-positive_integer = {"type": "integer", "minimum": 0}
-two_positive_integers = {
-    "type": "array",
-    "prefixItems": [
-        positive_integer,
-        positive_integer,
-    ],
-    "maxItems": 2,
-    "minItems": 2,
-}
-two_positive_numbers = {
-    "type": "array",
-    "prefixItems": [
-        positive_number,
-        positive_number,
-    ],
-    "maxItems": 2,
-    "minItems": 2,
-}
-zero_to_one_number = {
-    "type": "number",
-    "minimum": 0,
-    "maximum": 1,
-}
-
-matplotlib_color = {
-    "oneOf": [
-        {
-            "type": "string",
-            "description": "This should match with #rgb, #rgba, #rrggbb, and #rrggbbaa syntax",
-            "pattern": "^#(?:(?:[\\da-fA-F]{3}){1,2}|(?:[\\da-fA-F]{4}){1,2})$",
-        },
-        {
-            "type": "string",
-            "description": "This should match with all colors supported by matplotlib. Ref: https://matplotlib.org/stable/gallery/color/named_colors.html",
-            "enum": list(MATPLOTLIB_COLORS.keys()),
-        },
-    ]
-}
+def load_common_defs(keys):
+    # inject dependencies
+    if "two_positive_integers" in keys:
+        keys += ["positive_integer"]
+    if "two_positive_numbers" in keys:
+        keys += ["positive_number"]
+    keys = set(keys)
+    return {key: ALL_COMMON_DEFS[key] for key in keys}

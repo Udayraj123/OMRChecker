@@ -1,8 +1,12 @@
-from src.schemas.constants import two_positive_integers
+from src.schemas.constants import load_common_defs
 
 CONFIG_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/Udayraj123/OMRChecker/tree/master/src/schemas/config-schema.json",
+    "$def": {
+        # The common definitions go here
+        **load_common_defs(["two_positive_integers"]),
+    },
     "title": "Config Schema",
     "description": "OMRChecker config schema for custom tuning",
     "type": "object",
@@ -70,7 +74,7 @@ CONFIG_SCHEMA = {
             "additionalProperties": False,
             "properties": {
                 "display_image_dimensions": {
-                    **two_positive_integers,
+                    "$ref": "#/$def/two_positive_integers",
                     "description": "The dimensions (width, height) for images displayed during the execution",
                 },
                 "show_logs_by_type": {
