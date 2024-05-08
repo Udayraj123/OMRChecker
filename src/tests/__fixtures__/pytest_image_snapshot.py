@@ -43,7 +43,6 @@ def resize_util(img, u_width=None, u_height=None):
 
 
 def extend_to_match_size(img1, img2):
-    return img1, img2
     """
     Extend the smaller image to match the size of the larger one.
     """
@@ -74,11 +73,11 @@ def image_snapshot_fixture(request):
         source_image = open_image(source_image_path)
         if not update_snapshots and os.path.exists(snapshot_path):
             current_snapshot = open_image(snapshot_path)
-            img1, img2 = extend_to_match_size(source_image, current_snapshot)
-            diff_score = image_diff(img1, img2)
+            # source_image, current_snapshot = extend_to_match_size(source_image, current_snapshot)
+            diff_score = image_diff(source_image, current_snapshot)
             if diff_score != 0:
                 if show_on_fail is True:
-                    cv2.imshow("diff", cv2.subtract(img1, img2))
+                    cv2.imshow("diff", cv2.subtract(source_image, current_snapshot))
                     cv2.imshow("current_snapshot", current_snapshot)
                     # TODO: fix code is not waiting despite unmocking mocker
                     close_all_on_wait_key()
