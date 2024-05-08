@@ -1,6 +1,6 @@
 # ref: https://github.com/bmihelac/pytest-image-snapshot/blob/main/pytest_image_snapshot.py
 import os
-
+import numpy as np
 # import pytest
 import cv2
 
@@ -54,11 +54,15 @@ def extend_to_match_size(img1, img2):
     )
 
 
-def image_diff(img1, img2):
+def image_diff(image1, image2):
     # TODO: try out cv2.diff() or channel-wise diff
-    match_result = cv2.matchTemplate(img1, img2, cv2.TM_CCOEFF_NORMED)
-
-    return 1 - match_result.max()
+  # Check if images have the same dimensions
+    if image1.shape != image2.shape:
+        raise ValueError("Images must have the same dimensions.")
+    difference=np.absolute(image1 - image2)
+    
+    return difference.any()
+    
 
 
 def image_snapshot_fixture(request):
@@ -71,18 +75,18 @@ def image_snapshot_fixture(request):
             current_snapshot = open_image(snapshot_path)
             img1, img2 = extend_to_match_size(source_image, current_snapshot)
             diff_score = image_diff(img1, img2)
-            if diff_score > threshold:
+            if diff_score!=0:
                 # if config.option.verbose > 2:
                 #     diff.show(title="diff")
                 #     if config.option.verbose > 3:
                 #         current_snapshot.show(title="original")
                 #         img.show(title="new")
                 raise AssertionError(
-                    f"Diff score {diff_score:.2f} > {threshold} for {source_image_path}: Image does not match the snapshot"
+                    f"Diff score {diff_score:.2f} > 0 for {source_image_path}: Image does not match the snapshot"
                 )
             else:
                 print(
-                    f"Diff score {diff_score:.2f} <= {threshold} passed for snapshot: {snapshot_path}"
+                    f"Diff score {diff_score:.2f} == 0 passed for snapshot: {snapshot_path}"
                 )
                 return
         save_image(snapshot_path, source_image)
