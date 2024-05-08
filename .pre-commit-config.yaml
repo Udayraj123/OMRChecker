@@ -1,4 +1,4 @@
-exclude: "__snapshots__/.*$"
+exclude: "(__snapshots__|__image_snapshots__)/.*$"
 default_install_hook_types: [pre-commit, pre-push]
 repos:
   # Convert the pngs to jpgs inside samples folder

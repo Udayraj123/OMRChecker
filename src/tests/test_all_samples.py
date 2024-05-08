@@ -34,6 +34,8 @@ def run_sample(mocker, sample_path, keep_outputs=False):
         # Remove outputs directory after running the sample
         remove_sample_output_dir()
 
+    mocker.resetall()
+
     return sample_outputs, remove_sample_output_dir
 
 
