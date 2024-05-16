@@ -30,7 +30,7 @@
             3
           ],
           "dotThreshold": 120,
-          "warpMethod": "REMAP"
+          "warpMethod": "HOMOGRAPHY"
         },
         "defaultSelector": "OUTER_CORNERS",
         "scanAreas": [
@@ -40,14 +40,14 @@
               "label": "AdditionalPoint",
               "origin": [
                 48,
-                376
+                450
               ],
               "dimensions": [
                 50,
                 50
               ],
               "margins": {
-                "top": 15,
+                "top": 55,
                 "right": 20,
                 "bottom": 15,
                 "left": 2
@@ -118,25 +118,25 @@
     "Roll_No": {
       "fieldType": "QTYPE_INT",
       "origin": [
-        7,
-        235
+        14,
+        220
       ],
       "fieldLabels": [
         "roll1..8"
       ],
-      "bubblesGap": 34.34,
+      "bubblesGap": 33.5,
       "labelsGap": 28.5
     },
     "Booklet_No": {
       "fieldType": "QTYPE_INT",
       "origin": [
-        290,
-        235
+        295,
+        220
       ],
       "fieldLabels": [
         "booklet1..7"
       ],
-      "bubblesGap": 34.34,
+      "bubblesGap": 33.5,
       "labelsGap": 28.5
     },
     "Language_Codes": {
@@ -150,12 +150,12 @@
       "direction": "vertical",
       "origin": [
         800,
-        267
+        260
       ],
       "fieldLabels": [
         "language_code_1..2"
       ],
-      "bubblesGap": 67,
+      "bubblesGap": 66.5,
       "labelsGap": 220
     },
     "MCQBlock1a1": {
@@ -166,8 +166,8 @@
       "bubblesGap": 26.7,
       "labelsGap": 33.7,
       "origin": [
-        235,
-        644
+        237,
+        630
       ]
     },
     "MCQBlock1a2": {
@@ -179,7 +179,7 @@
       "labelsGap": 34.2,
       "origin": [
         232,
-        1150
+        1145
       ]
     },
     "MCQBlock2a1": {
@@ -191,7 +191,7 @@
       "labelsGap": 34.2,
       "origin": [
         435,
-        644
+        630
       ]
     },
     "MCQBlock2a2": {
@@ -202,8 +202,8 @@
       "bubblesGap": 26.7,
       "labelsGap": 34.2,
       "origin": [
-        430,
-        1150
+        435,
+        1145
       ]
     },
     "MCQBlock3a1": {
@@ -215,7 +215,7 @@
       "labelsGap": 34.2,
       "origin": [
         630,
-        640
+        633
       ]
     },
     "MCQBlock3a2": {
@@ -226,8 +226,8 @@
       "bubblesGap": 26.7,
       "labelsGap": 34.2,
       "origin": [
-        625,
-        1150
+        630,
+        1145
       ]
     },
     "MCQBlock4a1": {
@@ -239,7 +239,7 @@
       "labelsGap": 34.2,
       "origin": [
         823,
-        640
+        633
       ]
     },
     "MCQBlock4a2": {
@@ -251,7 +251,7 @@
       "labelsGap": 34.2,
       "origin": [
         823,
-        1150
+        1145
       ]
     },
     "MCQBlock5a1": {
@@ -263,7 +263,7 @@
       "labelsGap": 34.2,
       "origin": [
         1022,
-        640
+        633
       ]
     },
     "MCQBlock5a2": {
@@ -275,7 +275,7 @@
       "labelsGap": 34.2,
       "origin": [
         1022,
-        1150
+        1145
       ]
     }
   }

@@ -288,7 +288,7 @@ _common_field_block_properties = {
     "fieldType": {
         "description": "The field type to use from a list of ready-made types as well as the custom type",
         "type": "string",
-        "enum": [*list(BUILTIN_FIELD_TYPES.keys()), "CUSTOM", "BARCODE"],
+        "enum": [*list(BUILTIN_FIELD_TYPES.keys()), "CUSTOM", "BARCODE", "OCR"],
     },
 }
 
@@ -341,6 +341,7 @@ many_field_blocks_description_def = {
                 "labelsGap",
                 "fieldLabels",
             ],
+            "properties": _common_field_block_properties,
             "allOf": [
                 {
                     "if": {
@@ -351,9 +352,9 @@ many_field_blocks_description_def = {
                                 ]
                             }
                         },
+                        "required": ["fieldType"],
                     },
                     "then": {
-                        "required": ["fieldType"],
                         "additionalProperties": False,
                         "properties": _traditional_field_block_properties,
                     },
@@ -361,13 +362,13 @@ many_field_blocks_description_def = {
                 {
                     "if": {
                         "properties": {"fieldType": {"const": "CUSTOM"}},
-                    },
-                    "then": {
                         "required": [
                             "bubbleValues",
                             "direction",
                             "fieldType",
                         ],
+                    },
+                    "then": {
                         "additionalProperties": False,
                         "properties": _traditional_field_block_properties,
                     },
@@ -375,8 +376,6 @@ many_field_blocks_description_def = {
                 {
                     "if": {
                         "properties": {"fieldType": {"const": "BARCODE"}},
-                    },
-                    "then": {
                         # TODO: move barcode specific properties into this if-else
                         "required": [
                             "scanArea",
@@ -385,6 +384,8 @@ many_field_blocks_description_def = {
                             # TODO: "failIfNotFound"
                             # "emptyValue",
                         ],
+                    },
+                    "then": {
                         "additionalProperties": False,
                         "properties": {
                             **_common_field_block_properties,
@@ -395,7 +396,6 @@ many_field_blocks_description_def = {
                 },
                 # TODO: support for PHOTO_BLOB, OCR custom fields here
             ],
-            "properties": _common_field_block_properties,
         }
     },
 }
@@ -922,12 +922,15 @@ TEMPLATE_SCHEMA = {
                         "required": ["formatString", "matchRegex"],
                         "additionalProperties": False,
                         "properties": {
-                            # Example: "SET_{booklet_No}"
+                            # Example: "SET_{booklet_No}", "{filename}"
                             "formatString": {
                                 "description": "Format string composed of the response variables to apply the regex on e.g. '{roll}-{barcode}'",
                                 "type": "string",
                             },
-                            # Example: match last four characters ".*-SET1", "SET_A", "B",
+                            # Examples:
+                            # Direct string: "SET_A", "B"
+                            # Match last four characters: ".*-SET1"
+                            # For multi-page: "*_1.(jpg|png)"
                             "matchRegex": {
                                 "description": "Mapping to use on the composed field string",
                                 "type": "string",
