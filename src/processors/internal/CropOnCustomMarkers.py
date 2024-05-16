@@ -28,7 +28,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         **{
             area_template: {
                 "scannerType": ScannerType.TEMPLATE_MATCH,
-                "selector": "SELECT_CENTER",
+                # "selector": "SELECT_CENTER",
                 "maxPoints": 2,  # for cropping
                 # Note: all 4 margins are a required property for a patch area
             }
@@ -90,6 +90,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         tuning_options = options.get("tuningOptions", {})
         # Note: options["tuningOptions"] is accessible in self.tuning_options at Processor level
         parsed_options = {
+            "defaultSelector": options.get("defaultSelector", "CENTERS"),
             "pointsLayout": layout_type,
             "enableCropping": True,
             "tuningOptions": {
@@ -295,7 +296,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 "bottom": margin_vertical,
                 "left": margin_horizontal,
             },
-            "selector": "SELECT_CENTER",
+            # "selector": "SELECT_CENTER",
             "scannerType": "TEMPLATE_MARKER",
         }
 
@@ -335,6 +336,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         )
         optimal_match_max = 0
 
+        patch_height, patch_width = patch_area.shape[:2]
         for r0 in np.arange(
             self.marker_rescale_range[1],
             self.marker_rescale_range[0],
@@ -343,11 +345,17 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             scale = float(r0 * 1 / 100)
             if scale <= 0.0:
                 continue
+
             rescaled_marker = ImageUtils.resize_util(
                 marker,
                 u_width=int(marker_width * scale),
                 u_height=int(marker_height * scale),
             )
+
+            # Skip if resized marker is larger than the patch area.
+            r_marker_height, r_marker_width = rescaled_marker.shape[:2]
+            if r_marker_height > patch_height or r_marker_width > patch_width:
+                continue
 
             # res is the black image with white dots
             match_result = cv2.matchTemplate(
@@ -404,7 +412,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 f"{area_label}:\toptimal_match_max={str(round(optimal_match_max, 2))}\t optimal_scale={optimal_scale}\t"
             )
 
-        if config.outputs.show_image_level >= 5 or (
+        if config.outputs.show_image_level >= 4 or (
             is_not_matching and config.outputs.show_image_level >= 1
         ):
             hstack = ImageUtils.get_padded_hstack(

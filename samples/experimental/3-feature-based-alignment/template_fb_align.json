@@ -20,6 +20,13 @@
       }
     },
     {
+      "name": "AutoAlign",
+      "options": {
+        "image": "symbol.jpg",
+        "position": "topRight"
+      }
+    },
+    {
       "name": "FeatureBasedAlignment",
       "options": {
         "reference": "reference.png",

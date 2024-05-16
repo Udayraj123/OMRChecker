@@ -6,7 +6,7 @@ repos:
     hooks:
       - id: convert-images
         name: Convert png to jpg in samples
-        entry: scripts/convert_images_hook.py
+        entry: scripts/hooks/convert_images_hook.py
         args: ["--trigger-size", "150"]
         files: ^samples.*\.(png|PNG)$
         pass_filenames: true
@@ -22,7 +22,7 @@ repos:
     hooks:
       - id: resize-images
         name: Resize images
-        entry: scripts/resize_images_hook.py
+        entry: scripts/hooks/resize_images_hook.py
         args: ["--max-width", "1500", "--max-height", "1500", "--trigger-size", "150"]
         files: \.(png|jpg|jpeg|PNG|JPG|JPEG)$
         pass_filenames: true
@@ -74,10 +74,12 @@ repos:
     hooks:
       - id: flake8
         args:
-          - "--ignore=E203,E501,E741,E731,F403,F405,F541,W503"
+          - "--ignore=E203,E231,E501,E713,E731,E741,F403,F405,F541,W503"
           # https://www.flake8rules.com/
           # E203: Whitespace before ':'
+          # E231: missing whitespace after ':'
           # E501: Line too long
+          # E713: test for membership should be 'not in'
           # E731: do not assign a lambda expression, use a def
           # E741: Do not use variables named 'I', 'O', or 'l'
           # F403: unable to detect undefined names

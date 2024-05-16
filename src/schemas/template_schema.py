@@ -7,7 +7,7 @@ from src.processors.constants import (
     WarpMethodFlags,
 )
 from src.schemas.constants import load_common_defs
-from src.utils.constants import BUILTIN_FIELD_TYPES
+from src.utils.constants import BUILTIN_FIELD_TYPES, CUSTOM_FIELD_TYPE
 
 margins_schema_def = {
     "description": "The margins to use around a box",
@@ -288,20 +288,11 @@ _common_field_block_properties = {
     "fieldType": {
         "description": "The field type to use from a list of ready-made types as well as the custom type",
         "type": "string",
-        "enum": [*list(BUILTIN_FIELD_TYPES.keys()), "CUSTOM", "BARCODE"],
+        # Note: moved enum validation into setup code
     },
 }
 
-_traditional_field_block_properties = {
-    **_common_field_block_properties,
-    "bubbleDimensions": {
-        "$ref": "#/$def/two_positive_numbers",
-        "description": "The custom dimensions for the bubbles in the current field block: [width, height]",
-    },
-    "bubblesGap": {
-        "$ref": "#/$def/positive_number",
-        "description": "The gap between two bubbles(top-left to top-left) in the current field block",
-    },
+_field_type_properties = {
     "bubbleValues": {
         "$ref": "#/$def/array_of_strings",
         "description": "The ordered array of values to use for given bubbles per field in this field block",
@@ -310,6 +301,19 @@ _traditional_field_block_properties = {
         "description": "The direction of expanding the bubbles layout in this field block",
         "type": "string",
         "enum": ["horizontal", "vertical"],
+    },
+}
+
+_traditional_field_block_properties = {
+    **_common_field_block_properties,
+    **_field_type_properties,
+    "bubbleDimensions": {
+        "$ref": "#/$def/two_positive_numbers",
+        "description": "The custom dimensions for the bubbles in the current field block: [width, height]",
+    },
+    "bubblesGap": {
+        "$ref": "#/$def/positive_number",
+        "description": "The gap between two bubbles(top-left to top-left) in the current field block",
     },
     "fieldLabels": {
         "description": "The ordered array of labels to use for given fields in this field block",
@@ -340,7 +344,9 @@ many_field_blocks_description_def = {
                 "bubblesGap",
                 "labelsGap",
                 "fieldLabels",
+                "fieldType",
             ],
+            "properties": _common_field_block_properties,
             "allOf": [
                 {
                     "if": {
@@ -351,23 +357,23 @@ many_field_blocks_description_def = {
                                 ]
                             }
                         },
+                        "required": ["fieldType"],
                     },
                     "then": {
-                        "required": ["fieldType"],
                         "additionalProperties": False,
                         "properties": _traditional_field_block_properties,
                     },
                 },
                 {
                     "if": {
-                        "properties": {"fieldType": {"const": "CUSTOM"}},
-                    },
-                    "then": {
+                        "properties": {"fieldType": {"const": CUSTOM_FIELD_TYPE}},
                         "required": [
                             "bubbleValues",
                             "direction",
                             "fieldType",
                         ],
+                    },
+                    "then": {
                         "additionalProperties": False,
                         "properties": _traditional_field_block_properties,
                     },
@@ -375,8 +381,6 @@ many_field_blocks_description_def = {
                 {
                     "if": {
                         "properties": {"fieldType": {"const": "BARCODE"}},
-                    },
-                    "then": {
                         # TODO: move barcode specific properties into this if-else
                         "required": [
                             "scanArea",
@@ -385,6 +389,8 @@ many_field_blocks_description_def = {
                             # TODO: "failIfNotFound"
                             # "emptyValue",
                         ],
+                    },
+                    "then": {
                         "additionalProperties": False,
                         "properties": {
                             **_common_field_block_properties,
@@ -395,7 +401,6 @@ many_field_blocks_description_def = {
                 },
                 # TODO: support for PHOTO_BLOB, OCR custom fields here
             ],
-            "properties": _common_field_block_properties,
         }
     },
 }
@@ -412,6 +417,7 @@ TEMPLATE_SCHEMA = {
                 "field_string_type",
                 "positive_integer",
                 "positive_number",
+                "two_integers",
                 "two_positive_integers",
                 "two_positive_numbers",
                 "zero_to_one_number",
@@ -529,6 +535,10 @@ TEMPLATE_SCHEMA = {
                                         "morphKernel": {
                                             "$ref": "#/$def/two_positive_numbers",
                                             "description": "The size of the morph kernel used for smudging the page",
+                                        },
+                                        "useColoredCanny": {
+                                            "description": "Whether to separate 'white' from other colors during page detection. Requires config.colored_outputs_enabled == True",
+                                            "type": "boolean",
                                         },
                                         # TODO: support for maxPointsPerEdge
                                         "maxPointsPerEdge": {
@@ -902,6 +912,25 @@ TEMPLATE_SCHEMA = {
                 ],
             },
         },
+        "customFieldTypes": {
+            "type": "object",
+            "patternProperties": {
+                "^CUSTOM_.*$": {
+                    "description": "The key is a unique name for the custom field type. It can override built-in field types as well.",
+                    "type": "object",
+                    "required": [
+                        "bubbleValues",
+                        "direction",
+                    ],
+                    "additionalProperties": False,
+                    "properties": _field_type_properties,
+                },
+            },
+        },
+        "fieldBlocksOffset": {
+            "$ref": "#/$def/two_integers",
+            "description": "The offset to apply for each field block. This makes changing pointsSelectors convenient on a ready template",
+        },
         "fieldBlocks": {
             "$ref": "#/$def/many_field_blocks_description",
             "description": "The default field block to apply and read before applying any matcher on the fields response.",
@@ -922,12 +951,15 @@ TEMPLATE_SCHEMA = {
                         "required": ["formatString", "matchRegex"],
                         "additionalProperties": False,
                         "properties": {
-                            # Example: "SET_{booklet_No}"
+                            # Example: "SET_{booklet_No}", "{filename}"
                             "formatString": {
                                 "description": "Format string composed of the response variables to apply the regex on e.g. '{roll}-{barcode}'",
                                 "type": "string",
                             },
-                            # Example: match last four characters ".*-SET1", "SET_A", "B",
+                            # Examples:
+                            # Direct string: "SET_A", "B"
+                            # Match last four characters: ".*-SET1"
+                            # For multi-page: "*_1.(jpg|png)"
                             "matchRegex": {
                                 "description": "Mapping to use on the composed field string",
                                 "type": "string",

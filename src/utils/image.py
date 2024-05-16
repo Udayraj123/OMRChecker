@@ -240,7 +240,7 @@ class ImageUtils:
             ]
             min_distance, nearest_edge_type = min(edge_distances)
             distance_warning = "*" if min_distance > 10 else ""
-            logger.info(
+            logger.debug(
                 f"boundary_point={boundary_point}\t nearest_edge_type={nearest_edge_type}\t min_distance={min_distance:.2f}{distance_warning}"
             )
             # TODO: Each edge contour's points should be in the clockwise order
@@ -339,3 +339,15 @@ class ImageUtils:
         white_image[pad_range[0] : pad_range[1], pad_range[2] : pad_range[3]] = image
 
         return white_image, pad_range
+
+    @staticmethod
+    def clip_area_to_image_bounds(rectangle, image):
+        h, w = image.shape[:2]
+        area_start, area_end = rectangle
+        # Clip to Image top left
+        area_start = [max(0, area_start[0]), max(0, area_start[1])]
+        area_end = [max(0, area_end[0]), max(0, area_end[1])]
+        # Clip to Image bottom right
+        area_start = [min(w, area_start[0]), min(h, area_start[1])]
+        area_end = [min(w, area_end[0]), min(h, area_end[1])]
+        return [area_start, area_end]

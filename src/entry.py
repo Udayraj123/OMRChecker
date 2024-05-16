@@ -200,6 +200,7 @@ def process_dir(
         if args["setLayout"]:
             show_template_layouts(omr_files, template, tuning_config)
         else:
+            # TODO: pick these args from self/class instead of prop forwarding
             process_files(
                 omr_files,
                 template,
@@ -240,15 +241,22 @@ def show_template_layouts(omr_files, template, tuning_config):
             file_path, gray_image, colored_image, template
         )
         gray_layout, colored_layout = TemplateDrawing.draw_template_layout(
-            gray_image, colored_image, template, tuning_config, shifted=False, border=2
+            gray_image,
+            colored_image,
+            template,
+            tuning_config,
+            shifted=False,
+            border=2,
         )
         template_layout = (
             colored_layout
             if tuning_config.outputs.colored_outputs_enabled
             else gray_layout
         )
-        InteractionUtils.show(
-            f"Template Layout: {file_name}", template_layout, 1, 1, config=tuning_config
+        # Size is template_dimensions
+        InteractionUtils.show_for_roi(
+            f"Template Layout: {file_name}",
+            template_layout,
         )
 
 
@@ -330,22 +338,27 @@ def process_files(
         # TODO: move inner try catch here
         # concatenate roll nos, set unmarked responses, etc
         omr_response = get_concatenated_response(response_dict, template)
+        evaluation_config_for_set = (
+            None
+            if evaluation_config is None
+            else evaluation_config.get_evaluation_config_for_set(omr_response)
+        )
 
         if (
-            evaluation_config is None
-            or not evaluation_config.get_should_explain_scoring()
+            evaluation_config_for_set is None
+            or not evaluation_config_for_set.get_should_explain_scoring()
         ):
             logger.info(f"Read Response: \n{omr_response}")
 
         score, evaluation_meta = 0, None
-        if evaluation_config is not None:
+        if evaluation_config_for_set is not None:
             score, evaluation_meta = evaluate_concatenated_response(
-                omr_response, evaluation_config
+                omr_response, evaluation_config_for_set
             )
             (
                 default_answers_summary,
                 *_,
-            ) = evaluation_config.get_formatted_answers_summary(
+            ) = evaluation_config_for_set.get_formatted_answers_summary(
                 DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING
             )
             logger.info(
@@ -368,7 +381,7 @@ def process_files(
             field_number_to_field_bubble_means,
             save_marked_dir=save_marked_dir,
             evaluation_meta=evaluation_meta,
-            evaluation_config=evaluation_config,
+            evaluation_config_for_set=evaluation_config_for_set,
         )
 
         # Save output metrics
@@ -449,10 +462,10 @@ def print_stats(start_time, files_counter, tuning_config):
 
     if tuning_config.outputs.show_image_level <= 0:
         log(
-            f"\nFinished Checking {files_counter} file(s) in {round(time_checking, 1)} seconds i.e. ~{round(time_checking/60, 1)} minute(s)."
+            f"\nFinished Checking {files_counter} file(s) in {round(time_checking, 1)} seconds i.e. ~{round(time_checking / 60, 1)} minute(s)."
         )
         log(
-            f"{'OMR Processing Rate':<27}:\t ~ {round(time_checking/files_counter,2)} seconds/OMR"
+            f"{'OMR Processing Rate':<27}:\t ~ {round(time_checking / files_counter,2)} seconds/OMR"
         )
         log(
             f"{'OMR Processing Speed':<27}:\t ~ {round((files_counter * 60) / time_checking, 2)} OMRs/minute"

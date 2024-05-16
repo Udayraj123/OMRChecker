@@ -1,6 +1,7 @@
 TEMPLATE_DEFAULTS = {
     "customLabels": {},
     "emptyValue": "",
+    "fieldBlocksOffset": [0, 0],
     "fieldBlocks": {},
     "conditionalSets": [],
     "outputColumns": [],

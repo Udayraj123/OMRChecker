@@ -8,6 +8,7 @@ from src.processors.constants import (
     TARGET_ENDPOINTS_FOR_EDGES,
     EdgeType,
     ScannerType,
+    SelectorType,
     WarpMethod,
 )
 from src.processors.internal.WarpOnPointsCommon import WarpOnPointsCommon
@@ -30,7 +31,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         options = self.options
         # Default to select centers for roi
         self.default_points_selector = self.default_points_selector_map[
-            options.get("defaultSelector", "CENTERS")
+            options.get("defaultSelector")
         ]
 
     def exclude_files(self):
@@ -241,7 +242,11 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
     def find_and_select_point_from_dot(self, image, area_description, file_path):
         area_label = area_description["label"]
         points_selector = area_description.get(
-            "selector", self.default_points_selector.get(area_label, None)
+            "selector",
+            self.default_points_selector.get(area_label, SelectorType.SELECT_CENTER),
+        )
+        logger.warning(
+            area_label, points_selector, area_description, self.default_points_selector
         )
 
         dot_rect = self.find_dot_corners_from_options(
@@ -278,7 +283,8 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             ]
         return None
 
-    def compute_scan_area_destination_rect(self, area_description):
+    @staticmethod
+    def compute_scan_area_destination_rect(area_description):
         x, y = area_description["origin"]
         w, h = area_description["dimensions"]
         return np.intp(MathUtils.get_rectangle_points(x, y, w, h))
@@ -290,6 +296,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         origin, dimensions, margins = map(
             area_description.get, ["origin", "dimensions", "margins"]
         )
+        # TODO: check bug in margins for scan area
 
         # compute area and clip to image dimensions
         area_start = [
@@ -305,7 +312,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             logger.warning(
                 f"Clipping label {area_label} with scan rectangle: {[area_start, area_end]} to image boundary {[w, h]}."
             )
-
+            # area_start, area_end = ImageUtils.clip_area_to_image_bounds([area_start, area_end], image)
             area_start = [max(0, area_start[0]), max(0, area_start[1])]
             area_end = [min(w, area_end[0]), min(h, area_end[1])]
 

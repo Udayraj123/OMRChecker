@@ -9,7 +9,7 @@
 
 from src.algorithm.core import ImageInstanceOps
 from src.processors.manager import PROCESSOR_MANAGER
-from src.utils.constants import BUILTIN_FIELD_TYPES
+from src.utils.constants import BUILTIN_FIELD_TYPES, CUSTOM_FIELD_TYPE
 from src.utils.file import SaveImageOps
 from src.utils.logger import logger
 from src.utils.parsing import (
@@ -37,6 +37,8 @@ class Template:
             self.template_dimensions,
             self.options,
             self.output_image_shape,
+            self.field_blocks_offset,
+            custom_field_types,
         ) = map(
             json_object.get,
             [
@@ -49,9 +51,12 @@ class Template:
                 "templateDimensions",
                 "options",
                 "outputImageShape",
+                "fieldBlocksOffset",
+                "customFieldTypes",
                 # TODO: support for "sortFiles" key
             ],
         )
+
         page_width, page_height = self.template_dimensions
 
         self.processing_image_shape = json_object.get(
@@ -60,7 +65,11 @@ class Template:
 
         self.parse_output_columns(output_columns_array)
         self.setup_pre_processors(pre_processors_object, template_path.parent)
+
+        self.parse_custom_field_types(custom_field_types)
+        self.validate_field_blocks(field_blocks_object)
         self.setup_field_blocks(field_blocks_object)
+
         self.parse_custom_labels(custom_labels_object)
 
         non_custom_columns, all_custom_columns = (
@@ -91,6 +100,29 @@ class Template:
                 default_processing_image_shape=self.processing_image_shape,
             )
             self.pre_processors.append(pre_processor_instance)
+
+    def parse_custom_field_types(self, custom_field_types):
+        if custom_field_types is None:
+            self.field_types_data = BUILTIN_FIELD_TYPES
+        else:
+            self.field_types_data = {
+                **BUILTIN_FIELD_TYPES,
+                **custom_field_types,
+            }
+
+    def validate_field_blocks(self, field_blocks_object):
+        for block_name, field_block_object in field_blocks_object.items():
+            field_type = field_block_object["fieldType"]
+            if (
+                field_type not in self.field_types_data
+                and field_type != CUSTOM_FIELD_TYPE
+            ):
+                logger.critical(
+                    f"Cannot find definition for {field_type} in customFieldTypes"
+                )
+                raise Exception(
+                    f"Invalid field type: {field_type} in block {block_name}"
+                )
 
     def setup_field_blocks(self, field_blocks_object):
         # Add field_blocks
@@ -167,7 +199,9 @@ class Template:
 
     def parse_and_add_field_block(self, block_name, field_block_object):
         field_block_object = self.pre_fill_field_block(field_block_object)
-        block_instance = FieldBlock(block_name, field_block_object)
+        block_instance = FieldBlock(
+            block_name, field_block_object, self.field_blocks_offset
+        )
         # TODO: support custom field types like Barcode and OCR
         self.field_blocks.append(block_instance)
         self.validate_parsed_labels(field_block_object["fieldLabels"], block_instance)
@@ -176,14 +210,16 @@ class Template:
         field_type = field_block_object["fieldType"]
         #  TODO: support for if field_type == "BARCODE":
 
-        if field_type in BUILTIN_FIELD_TYPES:
+        if field_type in self.field_types_data:
+            field_type_data = self.field_types_data[field_type]
             field_block_object = {
                 **field_block_object,
-                **BUILTIN_FIELD_TYPES[field_type],
+                **field_type_data,
             }
 
         return {
-            "direction": "vertical",
+            "fieldType": field_type,
+            # "direction": "vertical",
             "emptyValue": self.global_empty_val,
             "bubbleDimensions": self.bubble_dimensions,
             **field_block_object,
@@ -244,11 +280,11 @@ class Template:
 
 
 class FieldBlock:
-    def __init__(self, block_name, field_block_object):
+    def __init__(self, block_name, field_block_object, field_blocks_offset):
         self.name = block_name
         # TODO: Move plot_bin_name into child class
         self.plot_bin_name = block_name
-        self.setup_field_block(field_block_object)
+        self.setup_field_block(field_block_object, field_blocks_offset)
         self.shifts = [0, 0]
 
     # Need this at runtime as we have allowed mutation of template via pre-processors
@@ -272,7 +308,7 @@ class FieldBlock:
             ]
         }
 
-    def setup_field_block(self, field_block_object):
+    def setup_field_block(self, field_block_object, field_blocks_offset):
         # case mapping
         (
             bubble_dimensions,
@@ -301,7 +337,8 @@ class FieldBlock:
         self.parsed_field_labels = parse_fields(
             f"Field Block Labels: {self.name}", field_labels
         )
-        self.origin = origin
+        offset_x, offset_y = field_blocks_offset
+        self.origin = [origin[0] + offset_x, origin[1] + offset_y]
         self.bubble_dimensions = bubble_dimensions
         # TODO: support barcode, ocr, etc custom field types
         self.field_type = field_type
@@ -341,6 +378,7 @@ class FieldBlock:
             if (direction == "vertical")
             else [values_dimension, fields_dimension]
         )
+        # TODO: validate for field block overflow outside template dimensions
 
     def generate_bubble_grid(
         self,

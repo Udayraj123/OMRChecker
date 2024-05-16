@@ -18,6 +18,7 @@ from rich.table import Table
 from src.schemas.constants import (
     BONUS_SECTION_PREFIX,
     DEFAULT_SECTION_KEY,
+    DEFAULT_SET_NAME,
     SCHEMA_VERDICTS_IN_ORDER,
     VERDICT_TO_SCHEMA_VERDICT,
     VERDICTS_IN_ORDER,
@@ -30,6 +31,7 @@ from src.utils.image import ImageUtils
 from src.utils.logger import console, logger
 from src.utils.math import MathUtils
 from src.utils.parsing import (
+    OVERRIDE_MERGER,
     get_concatenated_response,
     open_evaluation_with_defaults,
     parse_fields,
@@ -119,8 +121,8 @@ class AnswerMatcher:
                     f"{Verdict.ANSWER_MATCH}-{allowed_answer}"
                 ] = parsed_answer_score
 
-    def get_marking_scheme(self):
-        return self.section_marking_scheme
+    # def get_marking_scheme(self):
+    #     return self.section_marking_scheme
 
     def get_section_explanation(self):
         answer_type = self.answer_type
@@ -128,6 +130,9 @@ class AnswerMatcher:
             return self.section_marking_scheme.section_key
         elif answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
             return f"Custom Weights: {self.marking}"
+
+    def get_matched_set_name(self):
+        return self.section_marking_scheme.set_name
 
     def get_verdict_marking(self, marked_answer):
         answer_type = self.answer_type
@@ -175,10 +180,11 @@ class AnswerMatcher:
 
 
 class SectionMarkingScheme:
-    def __init__(self, section_key, section_scheme, empty_val):
+    def __init__(self, section_key, section_scheme, set_name, empty_val):
         # TODO: get local empty_val from qblock
         self.empty_val = empty_val
         self.section_key = section_key
+        self.set_name = set_name
         # DEFAULT marking scheme follows a shorthand
         if section_key == DEFAULT_SECTION_KEY:
             self.questions = None
@@ -188,6 +194,14 @@ class SectionMarkingScheme:
             self.marking = self.parse_verdict_marking_from_scheme(
                 section_scheme["marking"]
             )
+
+    def deepcopy_with_questions(self, questions):
+        clone = deepcopy(self)
+        clone.update_questions(questions)
+        return clone
+
+    def update_questions(self, questions):
+        self.questions = questions
 
     def __str__(self):
         return self.section_key
@@ -225,19 +239,110 @@ class SectionMarkingScheme:
 
 
 class EvaluationConfig:
+    def __init__(self, curr_dir, local_evaluation_path, template, tuning_config):
+        self.path = local_evaluation_path
+        default_evaluation_json = open_evaluation_with_defaults(local_evaluation_path)
+        # .pop() will delete the conditional_sets key from the default json if it exists
+        conditional_sets = default_evaluation_json.pop("conditional_sets", [])
+
+        self.conditional_sets = []
+        for conditional_set in conditional_sets:
+            name, matcher = conditional_set["name"], conditional_set["matcher"]
+            self.conditional_sets.append([name, matcher])
+        self.validate_conditional_sets()
+
+        self.has_conditional_sets = len(self.conditional_sets) > 0
+
+        # TODO: allow default evaluation to not contain any question/answer/config
+        self.default_evaluation_config = EvaluationConfigForSet(
+            DEFAULT_SET_NAME, curr_dir, default_evaluation_json, template, tuning_config
+        )
+        # Currently source_type + options + marking_schemes need to be completely parsed before merging
+        # This is due to:
+        # 1. multiple ways to denote same questions i.e. field strings
+        # 2. The child marking_schemes may want to override parent's questions partially over different schemes.
+        # 3. merging schemas in the case of different source_type in child can result in an unexpected state in child schema.
+        partial_default_evaluation_json = {
+            "outputs_configuration": default_evaluation_json["outputs_configuration"],
+        }
+        self.exclude_files = self.default_evaluation_config.get_exclude_files()
+        self.set_mapping = {}
+        for conditional_set in conditional_sets:
+            set_name, evaluation_json_for_set = map(
+                conditional_set.get, ["name", "evaluation"]
+            )
+
+            logger.debug("evaluation_json_for_set", set_name, evaluation_json_for_set)
+            # Merge two jsons, override the arrays(if any) instead of appending
+            merged_evaluation_json = OVERRIDE_MERGER.merge(
+                partial_default_evaluation_json, evaluation_json_for_set
+            )
+            logger.debug("merged_evaluation_json", merged_evaluation_json)
+            evaluation_config_for_set = EvaluationConfigForSet(
+                set_name,
+                curr_dir,
+                merged_evaluation_json,
+                template,
+                tuning_config,
+                self.default_evaluation_config,
+            )
+            self.set_mapping[set_name] = evaluation_config_for_set
+            self.exclude_files += evaluation_config_for_set.get_exclude_files()
+
+    def __str__(self):
+        return str(self.path)
+
+    def get_exclude_files(self):
+        return self.exclude_files
+
+    def validate_conditional_sets(self):
+        all_names = set()
+        for name, _ in self.conditional_sets:
+            if name in all_names:
+                raise Exception(
+                    f"Repeated set name {name} in conditional_sets in the given evaluation.json: {self.path}"
+                )
+            all_names.add(name)
+
+    def get_evaluation_config_for_set(self, concatenated_response):
+        matched_key = self.get_matching_set(concatenated_response)
+        if matched_key is None:
+            return self.default_evaluation_config
+        return self.set_mapping[matched_key]
+
+    def get_matching_set(self, concatenated_response):
+        # loop on all sets and return first matched set
+        for name, matcher in self.conditional_sets:
+            format_string, match_regex = matcher["formatString"], matcher["matchRegex"]
+            try:
+                formatted_string = format_string.format(**concatenated_response)
+                if re.search(match_regex, formatted_string) is not None:
+                    return name
+            except:  # NOQA
+                return None
+        return None
+
+
+class EvaluationConfigForSet:
     """Note: this instance will be reused for multiple omr sheets"""
 
-    def __init__(self, curr_dir, evaluation_path, template, tuning_config):
-        self.path = evaluation_path
-        evaluation_json = open_evaluation_with_defaults(evaluation_path)
-
+    def __init__(
+        self,
+        set_name,
+        curr_dir,
+        merged_evaluation_json,
+        template,
+        tuning_config,
+        parent_evaluation_config=None,
+    ):
+        self.set_name = set_name
         (
             options,
             outputs_configuration,
             marking_schemes,
             source_type,
         ) = map(
-            evaluation_json.get,
+            merged_evaluation_json.get,
             [
                 "options",
                 "outputs_configuration",
@@ -266,117 +371,145 @@ class EvaluationConfig:
             self.parse_draw_question_verdicts()
 
         self.has_custom_marking = False
+
+        # TODO: Find a place for has_conditional_sets (parent class?)
+        self.has_conditional_sets = True
         self.exclude_files = []
-
         # TODO: separate handlers for these two type
-        if source_type == "image_and_csv" or source_type == "csv":
-            csv_path = curr_dir.joinpath(options["answer_key_csv_path"])
-            if not os.path.exists(csv_path):
-                logger.warning(f"Answer key csv does not exist at: '{csv_path}'.")
-
-            answer_key_image_path = options.get("answer_key_image_path", None)
-            if os.path.exists(csv_path):
-                # TODO: CSV parsing/validation for each row with a (qNo, <ans string/>) pair
-                answer_key = pd.read_csv(
-                    csv_path,
-                    header=None,
-                    names=["question", "answer"],
-                    converters={
-                        "question": lambda question: question.strip(),
-                        "answer": self.parse_answer_column,
-                    },
-                )
-
-                self.questions_in_order = answer_key["question"].to_list()
-                answers_in_order = answer_key["answer"].to_list()
-            elif not answer_key_image_path:
-                raise Exception(
-                    f"Answer key csv not found at '{csv_path}' and answer key image not provided to generate the csv"
-                )
-            else:
-                # Attempt answer key image to generate the csv
-                image_path = str(curr_dir.joinpath(answer_key_image_path))
-                if not os.path.exists(image_path):
-                    raise Exception(f"Answer key image not found at '{image_path}'")
-
-                self.exclude_files.append(image_path)
-
-                logger.info(
-                    f"Attempting to generate answer key from image: '{image_path}'"
-                )
-                # TODO: use a common function for below changes?
-                gray_image, _colored_image = ImageUtils.read_image_util(
-                    image_path, tuning_config
-                )
-                (
-                    gray_image,
-                    _colored_image,
-                    template,
-                ) = template.image_instance_ops.apply_preprocessors(
-                    image_path, gray_image, _colored_image, template
-                )
-                if gray_image is None:
-                    raise Exception(
-                        f"Could not read answer key from image {image_path}"
-                    )
-
-                (response_dict, *_) = template.image_instance_ops.read_omr_response(
-                    gray_image, template, image_path
-                )
-                omr_response = get_concatenated_response(response_dict, template)
-
-                empty_val = template.global_empty_val
-                empty_answer_regex = (
-                    rf"{re.escape(empty_val)}+" if empty_val != "" else r"^$"
-                )
-
-                if "questions_in_order" in options:
-                    self.questions_in_order = self.parse_questions_in_order(
-                        options["questions_in_order"]
-                    )
-                    empty_answered_questions = [
-                        question
-                        for question in self.questions_in_order
-                        if re.search(empty_answer_regex, omr_response[question])
-                    ]
-                    if len(empty_answered_questions) > 0:
-                        logger.error(
-                            f"Found empty answers for the questions: {empty_answered_questions}, empty value used: '{empty_val}'"
-                        )
-                        raise Exception(
-                            f"Found empty answers in file '{image_path}'. Please check your template again in the --setLayout mode."
-                        )
-                else:
-                    logger.warning(
-                        f"questions_in_order not provided, proceeding to use non-empty values as answer key"
-                    )
-                    self.questions_in_order = sorted(
-                        question
-                        for (question, answer) in omr_response.items()
-                        if not re.search(empty_answer_regex, answer)
-                    )
-                answers_in_order = [
-                    omr_response[question] for question in self.questions_in_order
-                ]
-                # TODO: save the CSV
-        else:
-            self.questions_in_order = self.parse_questions_in_order(
-                options["questions_in_order"]
+        if source_type == "local":
+            # Assign self answers_in_order so that child configs can refer for merging
+            (
+                local_questions_in_order,
+                local_answers_in_order,
+            ) = self.parse_local_question_answers(options)
+        elif source_type == "image_and_csv" or source_type == "csv":
+            (
+                local_questions_in_order,
+                local_answers_in_order,
+            ) = self.parse_csv_question_answers(
+                curr_dir, options, tuning_config, template
             )
-            answers_in_order = options["answers_in_order"]
 
-        self.validate_questions(answers_in_order)
+        # Merge set's questions with parent questions(if any)
+        (
+            self.questions_in_order,
+            self.answers_in_order,
+        ) = self.merge_parsed_questions_and_schemes_with_parent(
+            parent_evaluation_config, local_questions_in_order, local_answers_in_order
+        )
 
-        self.set_marking_schemes(marking_schemes, template)
+        self.validate_questions()
+
+        self.set_parsed_marking_schemes(
+            marking_schemes, parent_evaluation_config, template
+        )
 
         self.validate_marking_schemes()
 
-        self.question_to_answer_matcher = self.parse_answers_and_map_questions(
-            answers_in_order
-        )
-        self.validate_answers(answers_in_order, tuning_config)
+        self.question_to_answer_matcher = self.parse_answers_and_map_questions()
+        self.validate_answers(tuning_config)
         self.reset_evaluation()
         self.validate_format_strings()
+
+    def get_exclude_files(self):
+        return self.exclude_files
+
+    @staticmethod
+    def parse_local_question_answers(options):
+        questions_in_order = EvaluationConfigForSet.parse_questions_in_order(
+            options["questions_in_order"]
+        )
+        answers_in_order = options["answers_in_order"]
+        return questions_in_order, answers_in_order
+
+    def parse_csv_question_answers(self, curr_dir, options, tuning_config, template):
+        questions_in_order = None
+        csv_path = curr_dir.joinpath(options["answer_key_csv_path"])
+        if not os.path.exists(csv_path):
+            logger.warning(f"Answer key csv does not exist at: '{csv_path}'.")
+
+        answer_key_image_path = options.get("answer_key_image_path", None)
+        if os.path.exists(csv_path):
+            # TODO: CSV parsing/validation for each row with a (qNo, <ans string/>) pair
+            answer_key = pd.read_csv(
+                csv_path,
+                header=None,
+                names=["question", "answer"],
+                converters={
+                    "question": lambda question: question.strip(),
+                    "answer": self.parse_answer_column,
+                },
+            )
+
+            questions_in_order = answer_key["question"].to_list()
+            answers_in_order = answer_key["answer"].to_list()
+        elif not answer_key_image_path:
+            raise Exception(
+                f"Answer key csv not found at '{csv_path}' and answer key image not provided to generate the csv"
+            )
+        else:
+            # Attempt answer key image to generate the csv
+            image_path = str(curr_dir.joinpath(answer_key_image_path))
+            if not os.path.exists(image_path):
+                raise Exception(f"Answer key image not found at '{image_path}'")
+
+            self.exclude_files.append(image_path)
+
+            logger.info(f"Attempting to generate answer key from image: '{image_path}'")
+            # TODO: use a common function for below changes?
+            gray_image, _colored_image = ImageUtils.read_image_util(
+                image_path, tuning_config
+            )
+            (
+                gray_image,
+                _colored_image,
+                template,
+            ) = template.image_instance_ops.apply_preprocessors(
+                image_path, gray_image, _colored_image, template
+            )
+            if gray_image is None:
+                raise Exception(f"Could not read answer key from image {image_path}")
+
+            (response_dict, *_) = template.image_instance_ops.read_omr_response(
+                gray_image, template, image_path
+            )
+            omr_response = get_concatenated_response(response_dict, template)
+
+            empty_val = template.global_empty_val
+            empty_answer_regex = (
+                rf"{re.escape(empty_val)}+" if empty_val != "" else r"^$"
+            )
+
+            if "questions_in_order" in options:
+                questions_in_order = self.parse_questions_in_order(
+                    options["questions_in_order"]
+                )
+                empty_answered_questions = [
+                    question
+                    for question in questions_in_order
+                    if re.search(empty_answer_regex, omr_response[question])
+                ]
+                if len(empty_answered_questions) > 0:
+                    logger.error(
+                        f"Found empty answers for the questions: {empty_answered_questions}, empty value used: '{empty_val}'"
+                    )
+                    raise Exception(
+                        f"Found empty answers in file '{image_path}'. Please check your template again in the --setLayout mode."
+                    )
+            else:
+                logger.warning(
+                    f"questions_in_order not provided, proceeding to use non-empty values as answer key"
+                )
+                questions_in_order = sorted(
+                    question
+                    for (question, answer) in omr_response.items()
+                    if not re.search(empty_answer_regex, answer)
+                )
+            answers_in_order = [
+                omr_response[question] for question in questions_in_order
+            ]
+            # TODO: save the CSV
+        return questions_in_order, answers_in_order
 
     @staticmethod
     def parse_answer_column(answer_column):
@@ -425,19 +558,67 @@ class EvaluationConfig:
             "bonus": MathUtils.to_bgr(verdict_symbol_colors["bonus"]),
         }
 
-        self.draw_answer_groups = draw_answer_groups
+        # Shallow copy
+        self.draw_answer_groups = {**draw_answer_groups}
         self.draw_answer_groups["color_sequence"] = list(
             map(MathUtils.to_bgr, draw_answer_groups["color_sequence"])
         )
 
-    def parse_questions_in_order(self, questions_in_order):
+    @staticmethod
+    def parse_questions_in_order(questions_in_order):
         return parse_fields("questions_in_order", questions_in_order)
 
-    def validate_questions(self, answers_in_order):
-        questions_in_order = self.questions_in_order
+    @staticmethod
+    def merge_parsed_questions_and_schemes_with_parent(
+        parent_evaluation_config, local_questions_in_order, local_answers_in_order
+    ):
+        if parent_evaluation_config is None:
+            return local_questions_in_order, local_answers_in_order
+        parent_questions_in_order, parent_answers_in_order = (
+            parent_evaluation_config.questions_in_order,
+            parent_evaluation_config.answers_in_order,
+        )
+        local_question_to_answer_item = {
+            question: answer_item
+            for question, answer_item in zip(
+                local_questions_in_order, local_answers_in_order
+            )
+        }
+
+        merged_questions_in_order, merged_answers_in_order = [], []
+        # Append existing questions from parent
+        for parent_question, parent_answer_item in zip(
+            parent_questions_in_order, parent_answers_in_order
+        ):
+            merged_questions_in_order.append(parent_question)
+            # override from child set if present
+            if parent_question in local_question_to_answer_item:
+                merged_answers_in_order.append(
+                    local_question_to_answer_item[parent_question]
+                )
+            else:
+                merged_answers_in_order.append(parent_answer_item)
+
+        parent_questions_set = set(parent_questions_in_order)
+
+        # Append new questions from child set at the end
+        for question, answer_item in zip(
+            local_questions_in_order, local_answers_in_order
+        ):
+            if question not in parent_questions_set:
+                merged_questions_in_order.append(question)
+                merged_answers_in_order.append(answer_item)
+
+        return merged_questions_in_order, merged_answers_in_order
+
+    def validate_questions(self):
+        questions_in_order, answers_in_order = (
+            self.questions_in_order,
+            self.answers_in_order,
+        )
 
         # for question, answer in zip(questions_in_order, answers_in_order):
-        #     if question in template.custom_label:
+        #     if question in template.custom_labels:
         #         # TODO: get all bubble values for the custom label
         #         if len(answer) != len(firstBubbleValues):
         #           logger.warning(f"The question {question} is a custom label and its answer does not have same length as the custom label")
@@ -453,19 +634,60 @@ class EvaluationConfig:
                 f"Unequal lengths for questions_in_order and answers_in_order ({len_questions_in_order} != {len_answers_in_order})"
             )
 
-    def set_marking_schemes(self, marking_schemes, template):
+    def set_parsed_marking_schemes(
+        self, marking_schemes, parent_evaluation_config, template
+    ):
         self.section_marking_schemes, self.question_to_scheme = {}, {}
+
+        # Precedence to local marking schemes (Note: default scheme is compulsory)
         for section_key, section_scheme in marking_schemes.items():
             section_marking_scheme = SectionMarkingScheme(
-                section_key, section_scheme, template.global_empty_val
+                section_key, section_scheme, self.set_name, template.global_empty_val
             )
-            if section_key != DEFAULT_SECTION_KEY:
+            if section_key == DEFAULT_SECTION_KEY:
+                self.default_marking_scheme = section_marking_scheme
+            else:
                 self.section_marking_schemes[section_key] = section_marking_scheme
                 for q in section_marking_scheme.questions:
                     self.question_to_scheme[q] = section_marking_scheme
                 self.has_custom_marking = True
-            else:
-                self.default_marking_scheme = section_marking_scheme
+
+        if parent_evaluation_config is not None:
+            self.update_marking_schemes_from_parent(parent_evaluation_config)
+
+    def update_marking_schemes_from_parent(self, parent_evaluation_config):
+        # Parse parents schemes to inject the question_to_scheme map
+        parent_marking_schemes = parent_evaluation_config.section_marking_schemes
+        # Loop over parent's custom marking schemes to map remaining questions if any
+        for (
+            parent_section_key,
+            parent_section_marking_scheme,
+        ) in parent_marking_schemes.items():
+            # Skip the default marking scheme (as it won't have any questions)
+            if parent_section_key == DEFAULT_SECTION_KEY:
+                continue
+
+            section_key = f"parent-{parent_section_key}"
+            questions_subset = [
+                question
+                for question in parent_section_marking_scheme.questions
+                if question not in self.question_to_scheme
+            ]
+
+            if len(questions_subset) == 0:
+                continue
+
+            # Override the custom marking flag
+            self.has_custom_marking = True
+
+            # Make a deepclone with updated questions array
+            subset_marking_scheme = (
+                parent_section_marking_scheme.deepcopy_with_questions(questions_subset)
+            )
+            self.section_marking_schemes[section_key] = subset_marking_scheme
+
+            for q in parent_section_marking_scheme.questions:
+                self.question_to_scheme[q] = subset_marking_scheme
 
     def validate_marking_schemes(self):
         section_marking_schemes = self.section_marking_schemes
@@ -476,7 +698,7 @@ class EvaluationConfig:
             current_set = set(section_scheme.questions)
             if not section_questions.isdisjoint(current_set):
                 raise Exception(
-                    f"Section '{section_key}' has overlapping question(s) with other sections"
+                    f"Section '{section_key}' has overlapping question(s) with other sections locally"
                 )
             section_questions = section_questions.union(current_set)
 
@@ -485,10 +707,11 @@ class EvaluationConfig:
         if len(missing_questions) > 0:
             logger.critical(f"Missing answer key for: {missing_questions}")
             raise Exception(
-                f"Some questions are missing in the answer key for the given marking scheme"
+                f"Some questions are missing in the answer key for the given marking scheme(s)"
             )
 
-    def parse_answers_and_map_questions(self, answers_in_order):
+    def parse_answers_and_map_questions(self):
+        answers_in_order = self.answers_in_order
         question_to_answer_matcher = {}
         for question, answer_item in zip(self.questions_in_order, answers_in_order):
             section_marking_scheme = self.get_marking_scheme_for_question(question)
@@ -505,8 +728,11 @@ class EvaluationConfig:
     def get_marking_scheme_for_question(self, question):
         return self.question_to_scheme.get(question, self.default_marking_scheme)
 
-    def validate_answers(self, answers_in_order, tuning_config):
-        answer_matcher_map = self.question_to_answer_matcher
+    def validate_answers(self, tuning_config):
+        answer_matcher_map, answers_in_order = (
+            self.question_to_answer_matcher,
+            self.answers_in_order,
+        )
         if tuning_config.outputs.filter_out_multimarked_files:
             contains_multi_marked_answer = False
             for question, answer_item in zip(self.questions_in_order, answers_in_order):
@@ -548,23 +774,19 @@ class EvaluationConfig:
                 f"The format string should contain only allowed variables ['score']. score_format_string={score_format_string}"
             )
 
-    def __str__(self):
-        return str(self.path)
-
-    def get_exclude_files(self):
-        return self.exclude_files
-
     # Externally called methods have higher abstraction level.
     def prepare_and_validate_omr_response(self, omr_response):
         self.reset_evaluation()
 
-        omr_response_questions = set(omr_response.keys())
+        omr_response_keys = set(omr_response.keys())
         all_questions = set(self.questions_in_order)
-        missing_questions = sorted(all_questions.difference(omr_response_questions))
+        missing_questions = sorted(all_questions.difference(omr_response_keys))
         if len(missing_questions) > 0:
-            logger.critical(f"Missing OMR response for: {missing_questions}")
+            logger.critical(
+                f"Missing OMR response for: {missing_questions} in omr response keys: {omr_response_keys}"
+            )
             raise Exception(
-                f"Some questions are missing in the OMR response for the given answer key"
+                f"Some question keys are missing in the OMR response for the given answer key"
             )
 
         prefixed_omr_response_questions = set(
@@ -623,12 +845,18 @@ class EvaluationConfig:
                         if self.has_custom_marking
                         else None
                     ),
+                    (
+                        answer_matcher.get_matched_set_name()
+                        if self.has_conditional_sets
+                        else None
+                    ),
                 ]
                 if item is not None
             ]
             self.explanation_table.add_row(*row)
 
-    def get_schema_verdict(self, answer_matcher, question_verdict, delta):
+    @staticmethod
+    def get_schema_verdict(answer_matcher, question_verdict, delta):
         # Note: Negative custom weights should be considered as incorrect schema verdict(special case)
         if (
             delta < 0
@@ -692,6 +920,8 @@ class EvaluationConfig:
         # TODO: Add max and min score in explanation (row-wise and total)
         if self.has_custom_marking:
             table.add_column("Marking Scheme")
+        if self.has_conditional_sets:
+            table.add_column("Set Mapping")
         self.explanation_table = table
 
     def get_evaluation_meta_for_question(
@@ -787,21 +1017,23 @@ class EvaluationConfig:
         return symbol, color, symbol_color, thickness_factor
 
 
-def evaluate_concatenated_response(concatenated_response, evaluation_config):
-    evaluation_config.prepare_and_validate_omr_response(concatenated_response)
+def evaluate_concatenated_response(concatenated_response, evaluation_config_for_set):
+    evaluation_config_for_set.prepare_and_validate_omr_response(concatenated_response)
     current_score = 0.0
     questions_meta = {}
-    for question in evaluation_config.questions_in_order:
+    for question in evaluation_config_for_set.questions_in_order:
         marked_answer = concatenated_response[question]
         (
             delta,
             question_verdict,
             answer_matcher,
             question_schema_verdict,
-        ) = evaluation_config.match_answer_for_question(
+        ) = evaluation_config_for_set.match_answer_for_question(
             current_score, question, marked_answer
         )
-        marking_scheme = evaluation_config.get_marking_scheme_for_question(question)
+        marking_scheme = evaluation_config_for_set.get_marking_scheme_for_question(
+            question
+        )
         bonus_type = marking_scheme.get_bonus_type()
         current_score += delta
         questions_meta[question] = {
@@ -815,12 +1047,15 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
             "question_schema_verdict": question_schema_verdict,
         }
 
-    evaluation_config.conditionally_print_explanation()
-    formatted_answers_summary, *_ = evaluation_config.get_formatted_answers_summary()
+    evaluation_config_for_set.conditionally_print_explanation()
+    (
+        formatted_answers_summary,
+        *_,
+    ) = evaluation_config_for_set.get_formatted_answers_summary()
     evaluation_meta = {
         "score": current_score,
         "questions_meta": questions_meta,
-        # "schema_verdict_counts": evaluation_config.schema_verdict_counts,
+        # "schema_verdict_counts": evaluation_config_for_set.schema_verdict_counts,
         "formatted_answers_summary": formatted_answers_summary,
     }
     return current_score, evaluation_meta

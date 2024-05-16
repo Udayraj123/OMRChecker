@@ -1,5 +1,5 @@
 {
-  "source_type": "custom",
+  "source_type": "local",
   "options": {
     "questions_in_order": [
       "q1..100"

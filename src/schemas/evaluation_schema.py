@@ -56,8 +56,58 @@ image_and_csv_options = {
     },
 }
 
+local_questions_and_answers_options = {
+    "description": "This method allows setting questions and their answers within the evaluation file itself",
+    "additionalProperties": False,
+    "required": ["answers_in_order", "questions_in_order"],
+    "type": "object",
+    "properties": {
+        "questions_in_order": {
+            "$ref": "#/$def/array_of_strings",
+            "description": "An array of fields to treat as questions specified in an order to apply evaluation",
+        },
+        "answers_in_order": {
+            "oneOf": [
+                {
+                    "description": "An array of answers in the same order as provided array of questions",
+                    "type": "array",
+                    "items": {
+                        "oneOf": [
+                            # Standard answer type allows single correct answers. They can have multiple characters(multi-marked) as well.
+                            # Useful for any standard response e.g. 'A', '01', '99', 'AB', etc
+                            {"type": "string"},
+                            # Multiple correct answer type covers multiple correct answers
+                            # Useful for ambiguous/bonus questions e.g. ['A', 'B'], ['1', '01'], ['A', 'B', 'AB'], etc
+                            {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "minItems": 2,
+                            },
+                            # Multiple correct weighted answer covers multiple answers with weights
+                            # Useful for partial marking e.g. [['A', 2], ['B', 0.5], ['AB', 2.5]], [['1', 0.5], ['01', 1]], etc
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "array",
+                                    "items": False,
+                                    "minItems": 2,
+                                    "maxItems": 2,
+                                    "prefixItems": [
+                                        {"type": "string"},
+                                        marking_score,
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                },
+            ]
+        },
+    },
+}
+
 common_evaluation_schema_properties = {
-    "source_type": {"type": "string", "enum": ["csv", "image_and_csv", "custom"]},
+    "source_type": {"type": "string", "enum": ["csv", "image_and_csv", "local"]},
     "options": {"type": "object"},
     "marking_schemes": {
         "type": "object",
@@ -270,6 +320,7 @@ common_evaluation_schema_properties = {
         },
     },
 }
+
 common_evaluation_schema_conditions = [
     {
         "if": {"properties": {"source_type": {"const": "csv"}}},
@@ -280,58 +331,11 @@ common_evaluation_schema_conditions = [
         "then": {"properties": {"options": {"$ref": "#/$def/image_and_csv_options"}}},
     },
     {
-        "if": {"properties": {"source_type": {"const": "custom"}}},
+        "if": {"properties": {"source_type": {"const": "local"}}},
         "then": {
             "properties": {
-                "options": {
-                    "additionalProperties": False,
-                    "required": ["answers_in_order", "questions_in_order"],
-                    "type": "object",
-                    "properties": {
-                        "questions_in_order": {
-                            "$ref": "#/$def/array_of_strings",
-                            "description": "An array of fields to treat as questions specified in an order to apply evaluation",
-                        },
-                        "answers_in_order": {
-                            "oneOf": [
-                                {
-                                    "description": "An array of answers in the same order as provided array of questions",
-                                    "type": "array",
-                                    "items": {
-                                        "oneOf": [
-                                            # Standard answer type allows single correct answers. They can have multiple characters(multi-marked) as well.
-                                            # Useful for any standard response e.g. 'A', '01', '99', 'AB', etc
-                                            {"type": "string"},
-                                            # Multiple correct answer type covers multiple correct answers
-                                            # Useful for ambiguous/bonus questions e.g. ['A', 'B'], ['1', '01'], ['A', 'B', 'AB'], etc
-                                            {
-                                                "type": "array",
-                                                "items": {"type": "string"},
-                                                "minItems": 2,
-                                            },
-                                            # Multiple correct weighted answer covers multiple answers with weights
-                                            # Useful for partial marking e.g. [['A', 2], ['B', 0.5], ['AB', 2.5]], [['1', 0.5], ['01', 1]], etc
-                                            {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "array",
-                                                    "items": False,
-                                                    "minItems": 2,
-                                                    "maxItems": 2,
-                                                    "prefixItems": [
-                                                        {"type": "string"},
-                                                        marking_score,
-                                                    ],
-                                                },
-                                            },
-                                        ],
-                                    },
-                                },
-                            ]
-                        },
-                    },
-                }
-            }
+                "options": {"$ref": "#/$def/local_questions_and_answers_options"}
+            },
         },
     },
 ]
@@ -352,6 +356,7 @@ EVALUATION_SCHEMA = {
         "marking_object_properties": marking_object_properties,
         "marking_score": marking_score,
         "image_and_csv_options": image_and_csv_options,
+        "local_questions_and_answers_options": local_questions_and_answers_options,
     },
     "title": "Evaluation Schema",
     "description": "The OMRChecker evaluation schema",
@@ -360,8 +365,9 @@ EVALUATION_SCHEMA = {
     "additionalProperties": False,
     "properties": {
         "additionalProperties": False,
+        # TODO: check if common_evaluation_schema_properties can be picked and overridden using a $ref
         **common_evaluation_schema_properties,
-        "conditionalSets": {
+        "conditional_sets": {
             "description": "An array of answer sets with their conditions. These will override the default values in case of any conflict",
             "type": "array",
             "items": {
@@ -378,12 +384,11 @@ EVALUATION_SCHEMA = {
                         "additionalProperties": False,
                         "properties": {
                             "formatString": {
-                                "description": "Format string composed of the response variables to apply the regex on e.g. '{roll}-{barcode}'",
+                                "description": "Format string composed of the response variables to apply the regex on e.g. '{Roll}' or '{Roll}-{barcode}'",
                                 "type": "string",
                             },
-                            # Example: match last four characters ".*-SET1"
                             "matchRegex": {
-                                "description": "Mapping to use on the composed field string",
+                                "description": "The regex to match on the composed field string e.g. to match a suffix value: '.*-SET1'",
                                 "type": "string",
                                 "format": "regex",
                             },

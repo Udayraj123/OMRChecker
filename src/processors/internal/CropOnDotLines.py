@@ -9,6 +9,7 @@ from src.processors.constants import (
     AreaTemplate,
     EdgeType,
     ScannerType,
+    SelectorType,
     WarpMethod,
 )
 from src.processors.internal.CropOnPatchesCommon import CropOnPatchesCommon
@@ -126,6 +127,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         layout_type = options["type"]
         tuning_options = options.get("tuningOptions", {})
         parsed_options = {
+            "defaultSelector": options.get("defaultSelector", "CENTERS"),
             "pointsLayout": layout_type,
             "enableCropping": True,
             "tuningOptions": {
@@ -188,7 +190,8 @@ class CropOnDotLines(CropOnPatchesCommon):
     ):
         area_label = area_description["label"]
         points_selector = area_description.get(
-            "selector", self.default_points_selector.get(area_label, None)
+            "selector",
+            self.default_points_selector.get(area_label, SelectorType.LINE_OUTER_EDGE),
         )
 
         line_edge_contours_map = self.find_line_corners_and_contours(
@@ -289,7 +292,7 @@ class CropOnDotLines(CropOnPatchesCommon):
 
         if edge_contours_map is None:
             raise Exception(
-                f"No line match found at origin: {area_description['origin']} with dimensions: { area_description['dimensions']}"
+                f"No line match found at origin: {area_description['origin']} with dimensions: {area_description['dimensions']}"
             )
         return edge_contours_map
 
@@ -339,7 +342,7 @@ class CropOnDotLines(CropOnPatchesCommon):
                 )
                 InteractionUtils.show(f"No patch/dot found:", hstack, pause=1)
             raise Exception(
-                f"No patch/dot found at origin: {area_description['origin']} with dimensions: { area_description['dimensions']}"
+                f"No patch/dot found at origin: {area_description['origin']} with dimensions: {area_description['dimensions']}"
             )
 
         return corners

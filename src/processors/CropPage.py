@@ -7,7 +7,7 @@ import numpy as np
 
 from src.processors.constants import EDGE_TYPES_IN_ORDER, WarpMethod
 from src.processors.internal.WarpOnPointsCommon import WarpOnPointsCommon
-from src.utils.constants import CLR_WHITE
+from src.utils.constants import CLR_WHITE, hsv_white_high, hsv_white_low
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
@@ -24,6 +24,8 @@ class CropPage(WarpOnPointsCommon):
         tuning_options = options.get("tuningOptions", {})
 
         parsed_options = {
+            "morphKernel": options.get("morphKernel"),
+            "useColoredCanny": options.get("useColoredCanny"),
             "enableCropping": True,
             "tuningOptions": {
                 "warpMethod": tuning_options.get(
@@ -36,6 +38,8 @@ class CropPage(WarpOnPointsCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         options = self.options
+        self.use_colored_canny = options.get("useColoredCanny", False)
+
         self.morph_kernel = cv2.getStructuringElement(
             cv2.MORPH_RECT, tuple(options.get("morphKernel", (10, 10)))
         )
@@ -48,7 +52,9 @@ class CropPage(WarpOnPointsCommon):
 
     def extract_control_destination_points(self, image, colored_image, file_path):
         options = self.options
-        sheet, page_contour = self.find_page_contour_and_corners(image, file_path)
+        sheet, page_contour = self.find_page_contour_and_corners(
+            image, colored_image, file_path
+        )
         (
             ordered_page_corners,
             edge_contours_map,
@@ -88,19 +94,40 @@ class CropPage(WarpOnPointsCommon):
 
             return control_points, destination_points, edge_contours_map
 
-    def find_page_contour_and_corners(self, image, file_path):
+    def find_page_contour_and_corners(self, image, colored_image, file_path):
         config = self.tuning_config
 
-        _ret, image = cv2.threshold(image, 200, 255, cv2.THRESH_TRUNC)
-        image = ImageUtils.normalize(image)
+        if self.use_colored_canny and not config.outputs.colored_outputs_enabled:
+            logger.warning(
+                f"Cannot process colored image for CropPage. useColoredCanny is true but colored_outputs_enabled is false."
+            )
 
-        # Close the small holes, i.e. Complete the edges on canny image
-        closed = cv2.morphologyEx(image, cv2.MORPH_CLOSE, self.morph_kernel)
+        if self.use_colored_canny and config.outputs.colored_outputs_enabled:
+            hsv = cv2.cvtColor(colored_image, cv2.COLOR_BGR2HSV)
+            # Mask image to only select white-ish area
+            mask = cv2.inRange(hsv, hsv_white_low, hsv_white_high)
+            mask_result = cv2.bitwise_and(image, image, mask=mask)
+            # TODO: test this on more samples
+            # InteractionUtils.show("hsv", hsv, 0)
+            # InteractionUtils.show("colored_image", colored_image, 0)
+            # InteractionUtils.show("mask_result", mask_result, 1)
 
-        # TODO: self.append_save_image(2, closed)
+            # TODO: self.append_save_image(2, mask_result)
 
-        # TODO: parametrize these tuning params
-        canny_edge = cv2.Canny(closed, 185, 55)
+            canny_edge = cv2.Canny(mask_result, 185, 55)
+
+        else:
+            _ret, image = cv2.threshold(image, 200, 255, cv2.THRESH_TRUNC)
+
+            image = ImageUtils.normalize(image)
+
+            # Close the small holes, i.e. Complete the edges on canny image
+            closed = cv2.morphologyEx(image, cv2.MORPH_CLOSE, self.morph_kernel)
+
+            # TODO: self.append_save_image(2, closed)
+
+            # TODO: parametrize these tuning params
+            canny_edge = cv2.Canny(closed, 185, 55)
 
         # TODO: self.append_save_image(3, canny_edge)
 
@@ -137,7 +164,9 @@ class CropPage(WarpOnPointsCommon):
                 # TODO: self.append_save_image(2, canny_edge)
                 break
 
-        if config.outputs.show_image_level >= 6:
+        if config.outputs.show_image_level >= 6 or (
+            page_contour is None and config.outputs.show_image_level >= 1
+        ):
             hstack = ImageUtils.get_padded_hstack([image, closed, canny_edge])
 
             InteractionUtils.show("Page edges detection", hstack)

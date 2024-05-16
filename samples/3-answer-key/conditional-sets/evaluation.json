@@ -2,7 +2,7 @@
   "source_type": "local",
   "options": {
     "questions_in_order": [
-      "q1..11"
+      "q1..20"
     ],
     "answers_in_order": [
       "B",
@@ -10,16 +10,21 @@
       "C",
       "B",
       "D",
-      "C",
-      [
-        "B",
-        "C",
-        "BC"
-      ],
-      "A",
-      "C",
+      "B",
       "D",
-      "C"
+      "C",
+      "B",
+      "D",
+      "01",
+      "02",
+      "11",
+      "21",
+      "31",
+      "41",
+      "51",
+      "61",
+      "71",
+      "81"
     ]
   },
   "outputs_configuration": {
@@ -47,15 +52,23 @@
       "incorrect": "0",
       "unmarked": "0"
     },
+    "MR_INCREDIBLE": {
+      "marking": {
+        "correct": 4,
+        "incorrect": 0,
+        "unmarked": 0
+      },
+      "questions": [
+        "q1..3"
+      ]
+    },
     "BONUS_MARKS_ON_ATTEMPT": {
       "marking": {
         "correct": "3",
         "incorrect": "3",
         "unmarked": "0"
       },
-      "questions": [
-        "q7"
-      ]
+      "questions": []
     },
     "BONUS_MARKS_FOR_ALL": {
       "marking": {
@@ -63,9 +76,30 @@
         "incorrect": "3",
         "unmarked": "3"
       },
-      "questions": [
-        "q8"
-      ]
+      "questions": []
     }
-  }
+  },
+  "conditional_sets": [
+    {
+      "name": "Set A",
+      "matcher": {
+        "formatString": "{q21}",
+        "matchRegex": "A"
+      },
+      "evaluation": {
+        "source_type": "local",
+        "options": {
+          "answers_in_order": [],
+          "questions_in_order": []
+        },
+        "marking_schemes": {
+          "DEFAULT": {
+            "correct": "4",
+            "incorrect": "0",
+            "unmarked": "0"
+          }
+        }
+      }
+    }
+  ]
 }
