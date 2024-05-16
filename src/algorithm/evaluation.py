@@ -30,6 +30,7 @@ from src.utils.image import ImageUtils
 from src.utils.logger import console, logger
 from src.utils.math import MathUtils
 from src.utils.parsing import (
+    OVERRIDE_MERGER,
     get_concatenated_response,
     open_evaluation_with_defaults,
     parse_fields,
@@ -225,12 +226,75 @@ class SectionMarkingScheme:
 
 
 class EvaluationConfig:
+    def __init__(self, curr_dir, local_evaluation_path, template, tuning_config):
+        self.path = local_evaluation_path
+        default_evaluation_json = open_evaluation_with_defaults(local_evaluation_path)
+        # .pop() will delete the conditionalSets key from the description if it exists
+        conditional_sets = default_evaluation_json.pop("conditionalSets", [])
+
+        self.conditional_sets = []
+        for conditional_set in conditional_sets:
+            name, matcher = conditional_set["name"], conditional_set["matcher"]
+            self.conditional_sets.append([name, matcher])
+        self.validate_conditional_sets()
+
+        self.set_mapping = {}
+        self.default_evaluation_config = EvaluationConfigForSet(
+            curr_dir, default_evaluation_json, template, tuning_config
+        )
+        self.exclude_files = self.default_evaluation_config.get_exclude_files()
+        for conditional_set in conditional_sets:
+            name, evaluation_json_for_set = map(
+                conditional_set.get, ["name", "evaluation"]
+            )
+
+            merged_evaluation_json = OVERRIDE_MERGER.merge(
+                default_evaluation_json, evaluation_json_for_set
+            )
+            evaluation_config_for_set = EvaluationConfigForSet(
+                curr_dir, merged_evaluation_json, template, tuning_config
+            )
+            self.set_mapping[name] = evaluation_config_for_set
+            self.exclude_files += evaluation_config_for_set.get_exclude_files()
+
+    def __str__(self):
+        return str(self.path)
+
+    def get_exclude_files(self):
+        return self.exclude_files
+
+    def validate_conditional_sets(self):
+        all_names = set()
+        for name, _ in self.conditional_sets:
+            if name in all_names:
+                raise Exception(
+                    f"Repeated set name {name} in conditionalSets in the given evaluation.json: {self.path}"
+                )
+            all_names.add(name)
+
+    def get_evaluation_config_for_set(self, concatenated_response):
+        matched_key = self.get_matching_set(concatenated_response)
+        if matched_key is None:
+            return self.default_evaluation_config
+        return self.set_mapping[matched_key]
+
+    def get_matching_set(self, concatenated_response):
+        # loop on all sets and return first matched set
+        for name, matcher in self.conditional_sets:
+            format_string, match_regex = matcher["formatString"], matcher["matchRegex"]
+            try:
+                formatted_string = format_string.format(**concatenated_response)
+                if re.search(match_regex, formatted_string) is not None:
+                    return name
+            except:  # NOQA
+                return None
+        return None
+
+
+class EvaluationConfigForSet:
     """Note: this instance will be reused for multiple omr sheets"""
 
-    def __init__(self, curr_dir, evaluation_path, template, tuning_config):
-        self.path = evaluation_path
-        evaluation_json = open_evaluation_with_defaults(evaluation_path)
-
+    def __init__(self, curr_dir, evaluation_json, template, tuning_config):
         (
             options,
             outputs_configuration,
@@ -377,6 +441,9 @@ class EvaluationConfig:
         self.validate_answers(answers_in_order, tuning_config)
         self.reset_evaluation()
         self.validate_format_strings()
+
+    def get_exclude_files(self):
+        return self.exclude_files
 
     @staticmethod
     def parse_answer_column(answer_column):
@@ -548,12 +615,6 @@ class EvaluationConfig:
                 f"The format string should contain only allowed variables ['score']. score_format_string={score_format_string}"
             )
 
-    def __str__(self):
-        return str(self.path)
-
-    def get_exclude_files(self):
-        return self.exclude_files
-
     # Externally called methods have higher abstraction level.
     def prepare_and_validate_omr_response(self, omr_response):
         self.reset_evaluation()
@@ -564,7 +625,7 @@ class EvaluationConfig:
         if len(missing_questions) > 0:
             logger.critical(f"Missing OMR response for: {missing_questions}")
             raise Exception(
-                f"Some questions are missing in the OMR response for the given answer key"
+                f"Some question keys are missing in the OMR response for the given answer key"
             )
 
         prefixed_omr_response_questions = set(
@@ -628,7 +689,8 @@ class EvaluationConfig:
             ]
             self.explanation_table.add_row(*row)
 
-    def get_schema_verdict(self, answer_matcher, question_verdict, delta):
+    @staticmethod
+    def get_schema_verdict(answer_matcher, question_verdict, delta):
         # Note: Negative custom weights should be considered as incorrect schema verdict(special case)
         if (
             delta < 0
@@ -787,21 +849,23 @@ class EvaluationConfig:
         return symbol, color, symbol_color, thickness_factor
 
 
-def evaluate_concatenated_response(concatenated_response, evaluation_config):
-    evaluation_config.prepare_and_validate_omr_response(concatenated_response)
+def evaluate_concatenated_response(concatenated_response, evaluation_config_for_set):
+    evaluation_config_for_set.prepare_and_validate_omr_response(concatenated_response)
     current_score = 0.0
     questions_meta = {}
-    for question in evaluation_config.questions_in_order:
+    for question in evaluation_config_for_set.questions_in_order:
         marked_answer = concatenated_response[question]
         (
             delta,
             question_verdict,
             answer_matcher,
             question_schema_verdict,
-        ) = evaluation_config.match_answer_for_question(
+        ) = evaluation_config_for_set.match_answer_for_question(
             current_score, question, marked_answer
         )
-        marking_scheme = evaluation_config.get_marking_scheme_for_question(question)
+        marking_scheme = evaluation_config_for_set.get_marking_scheme_for_question(
+            question
+        )
         bonus_type = marking_scheme.get_bonus_type()
         current_score += delta
         questions_meta[question] = {
@@ -815,12 +879,15 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
             "question_schema_verdict": question_schema_verdict,
         }
 
-    evaluation_config.conditionally_print_explanation()
-    formatted_answers_summary, *_ = evaluation_config.get_formatted_answers_summary()
+    evaluation_config_for_set.conditionally_print_explanation()
+    (
+        formatted_answers_summary,
+        *_,
+    ) = evaluation_config_for_set.get_formatted_answers_summary()
     evaluation_meta = {
         "score": current_score,
         "questions_meta": questions_meta,
-        # "schema_verdict_counts": evaluation_config.schema_verdict_counts,
+        # "schema_verdict_counts": evaluation_config_for_set.schema_verdict_counts,
         "formatted_answers_summary": formatted_answers_summary,
     }
     return current_score, evaluation_meta

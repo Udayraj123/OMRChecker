@@ -74,9 +74,10 @@ repos:
     hooks:
       - id: flake8
         args:
-          - "--ignore=E203,E501,E713,E731,E741,F403,F405,F541,W503"
+          - "--ignore=E203,E231,E501,E713,E731,E741,F403,F405,F541,W503"
           # https://www.flake8rules.com/
           # E203: Whitespace before ':'
+          # E231: missing whitespace after ':'
           # E501: Line too long
           # E713: test for membership should be 'not in'
           # E731: do not assign a lambda expression, use a def
