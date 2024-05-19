@@ -534,6 +534,7 @@ class EvaluationConfig:
             "answers_summary_format_string"
         ]
         try:
+            # [later] Support for section-wise correct/incorrect verdict counts in formatted_answers_summary
             answers_summary_format_string.format(**self.schema_verdict_counts)
         except:  # NOQA
             raise Exception(

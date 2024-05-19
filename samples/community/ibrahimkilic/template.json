@@ -11,7 +11,7 @@
   "preProcessors": [],
   "fieldBlocks": {
     "YesNoBlock1": {
-      "fieldType": "CUSTOM",
+      "fieldType": "CUSTOM_BUBBLES",
       "bubbleValues": [
         "yes"
       ],

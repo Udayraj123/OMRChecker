@@ -288,7 +288,7 @@ _common_field_block_properties = {
     "fieldType": {
         "description": "The field type to use from a list of ready-made types as well as the custom type",
         "type": "string",
-        "enum": [*list(BUILTIN_FIELD_TYPES.keys()), "CUSTOM", "BARCODE", "OCR"],
+        "enum": [*list(BUILTIN_FIELD_TYPES.keys()), "CUSTOM_BUBBLES", "BARCODE", "OCR"],
     },
 }
 
@@ -361,7 +361,7 @@ many_field_blocks_description_def = {
                 },
                 {
                     "if": {
-                        "properties": {"fieldType": {"const": "CUSTOM"}},
+                        "properties": {"fieldType": {"const": "CUSTOM_BUBBLES"}},
                         "required": [
                             "bubbleValues",
                             "direction",

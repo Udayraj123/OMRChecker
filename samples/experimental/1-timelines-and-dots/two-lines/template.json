@@ -89,7 +89,7 @@
   },
   "fieldBlocks": {
     "NameBlock": {
-      "fieldType": "CUSTOM",
+      "fieldType": "CUSTOM_BUBBLES",
       "bubbleValues": [
         "A",
         "B",
