@@ -278,7 +278,8 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             ]
         return None
 
-    def compute_scan_area_destination_rect(self, area_description):
+    @staticmethod
+    def compute_scan_area_destination_rect(area_description):
         x, y = area_description["origin"]
         w, h = area_description["dimensions"]
         return np.intp(MathUtils.get_rectangle_points(x, y, w, h))
@@ -290,6 +291,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         origin, dimensions, margins = map(
             area_description.get, ["origin", "dimensions", "margins"]
         )
+        # TODO: check bug in margins for scan area
 
         # compute area and clip to image dimensions
         area_start = [

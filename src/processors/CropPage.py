@@ -137,7 +137,9 @@ class CropPage(WarpOnPointsCommon):
                 # TODO: self.append_save_image(2, canny_edge)
                 break
 
-        if config.outputs.show_image_level >= 6:
+        if config.outputs.show_image_level >= 6 or (
+            page_contour is None and config.outputs.show_image_level >= 1
+        ):
             hstack = ImageUtils.get_padded_hstack([image, closed, canny_edge])
 
             InteractionUtils.show("Page edges detection", hstack)
