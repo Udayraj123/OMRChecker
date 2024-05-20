@@ -5,11 +5,11 @@ from collections import defaultdict
 from csv import QUOTE_NONNUMERIC
 from time import localtime, strftime
 
-import numpy as np
 import pandas as pd
 
 from src.utils.image import ImageUtils
 from src.utils.logger import logger
+from src.utils.math import MathUtils
 
 
 def load_json(path, **rest):
@@ -41,10 +41,10 @@ def setup_dirs_for_paths(paths):
         os.makedirs(paths.save_marked_dir)
     # Main output directories
     for save_output_dir in [
-        paths.save_marked_dir.joinpath("stack"),
         paths.save_marked_dir.joinpath("colored"),
+        paths.save_marked_dir.joinpath("stack"),
+        paths.save_marked_dir.joinpath("stack", "colored"),
         paths.save_marked_dir.joinpath("_MULTI_"),
-        paths.save_marked_dir.joinpath("_MULTI_", "stack"),
         paths.save_marked_dir.joinpath("_MULTI_", "colored"),
     ]:
         if not os.path.exists(save_output_dir):
@@ -118,41 +118,86 @@ def setup_outputs_for_template(paths, template):
 
 class SaveImageOps:
     def __init__(self, tuning_config):
-        self.save_img_list = defaultdict(list)
+        self.gray_images = defaultdict(list)
+        self.colored_images = defaultdict(list)
         self.tuning_config = tuning_config
         self.save_image_level = tuning_config.outputs.save_image_level
 
-    def append_save_image(self, key, img):
-        if img is None:
-            return
-        if self.save_image_level >= int(key):
-            self.save_img_list[key].append(img.copy())
+    def append_save_image(self, title, keys, gray_image=None, colored_image=None):
+        assert type(title) == str
+        if type(keys) == int:
+            keys = [keys]
+        gray_image_copy, colored_image_copy = None, None
+        if gray_image is not None:
+            gray_image_copy = gray_image.copy()
+        if colored_image is not None:
+            colored_image_copy = colored_image.copy()
+        for key in keys:
+            if int(key) > self.save_image_level:
+                continue
+            if gray_image_copy is not None:
+                self.gray_images[key].append([title, gray_image_copy])
+            if colored_image_copy is not None:
+                self.colored_images[key].append([title, colored_image_copy])
 
-    # TODO: call this function appropriately to enable debug stacks again
-    def save_image_stacks(self, key, filename, save_marked_dir):
-        config = self.tuning_config
-        if self.save_image_level >= int(key) and self.save_img_list[key] != []:
-            display_height, display_width = config.outputs.display_image_dimensions
-            name = os.path.splitext(filename)[0]
-            result = np.hstack(
-                tuple(
-                    [
-                        ImageUtils.resize_util(img, u_height=display_height)
-                        for img in self.save_img_list[key]
-                    ]
+    def save_image_stacks(self, filename, save_marked_dir, key=None, images_per_row=4):
+        key = self.save_image_level if key is None else key
+        if self.save_image_level >= int(key):
+            name, _ext = os.path.splitext(filename)
+            logger.info(
+                f"Stack level: {key}", [title for title, _ in self.gray_images[key]]
+            )
+
+            if len(self.gray_images[key]) > 0:
+                result = self.get_result_hstack(self.gray_images[key], images_per_row)
+                stack_path = f"{save_marked_dir}/stack/{name}_{str(key)}_stack.jpg"
+                logger.info(f"Saved stack image to: {stack_path}")
+                ImageUtils.save_img(stack_path, result)
+            else:
+                logger.info(
+                    f"Note: Nothing to save for gray image. Stack level: {self.save_image_level}"
                 )
-            )
-            result = ImageUtils.resize_util(
-                result,
-                min(
-                    len(self.save_img_list[key]) * display_width // 3,
-                    int(display_width * 2.5),
-                ),
-            )
-            ImageUtils.save_img(
-                f"{save_marked_dir}stack/{name}_{str(key)}_stack.jpg", result
-            )
+
+            if len(self.colored_images[key]) > 0:
+                colored_result = self.get_result_hstack(
+                    self.colored_images[key], images_per_row
+                )
+                colored_stack_path = (
+                    f"{save_marked_dir}/stack/colored/{name}_{str(key)}_stack.jpg"
+                )
+                logger.info(f"Saved colored stack image to: {colored_stack_path}")
+
+                ImageUtils.save_img(
+                    colored_stack_path,
+                    colored_result,
+                )
+            else:
+                logger.info(
+                    f"Note: Nothing to save for colored image. Stack level: {self.save_image_level}"
+                )
+
+    def get_result_hstack(self, titles_and_images, images_per_row):
+        config = self.tuning_config
+        _display_height, display_width = config.outputs.display_image_dimensions
+
+        # TODO: attach title text as header to each stack image!
+        images = [
+            ImageUtils.resize_util(image, display_width)
+            for _title, image in titles_and_images
+        ]
+        grid_images = MathUtils.chunks(images, images_per_row)
+        result = ImageUtils.get_vstack_image_grid(grid_images)
+        result = ImageUtils.resize_util(
+            result,
+            min(
+                len(titles_and_images) * display_width // 3,
+                int(display_width * 2.5),
+            ),
+        )
+        return result
 
     def reset_all_save_img(self):
-        for i in range(self.save_image_level):
-            self.save_img_list[i + 1] = []
+        # Max save image level is 6
+        for i in range(7):
+            self.gray_images[i + 1] = []
+            self.colored_images[i + 1] = []

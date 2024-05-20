@@ -17,6 +17,7 @@ class ImageTemplatePreprocessor(Processor):
         )
         self.append_save_image = save_image_ops.append_save_image
         self.tuning_config = save_image_ops.tuning_config
+
         # Note: we're taking this at preProcessor level because it represents
         # the need of a preProcessor's coordinate system(e.g. area selectors)
         self.processing_image_shape = options.get(

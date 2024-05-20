@@ -37,7 +37,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         return []
 
     def __str__(self):
-        return f"CropOnMarkers[\"{self.options['type']}\"]"
+        return f"CropOnMarkers[\"{self.options['pointsLayout']}\"]"
 
     def prepare_image(self, image):
         return image

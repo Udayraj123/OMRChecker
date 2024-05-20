@@ -305,15 +305,15 @@ class EvaluationConfig:
                     f"Attempting to generate answer key from image: '{image_path}'"
                 )
                 # TODO: use a common function for below changes?
-                gray_image, _colored_image = ImageUtils.read_image_util(
+                gray_image, colored_image = ImageUtils.read_image_util(
                     image_path, tuning_config
                 )
                 (
                     gray_image,
-                    _colored_image,
+                    colored_image,
                     template,
                 ) = template.image_instance_ops.apply_preprocessors(
-                    image_path, gray_image, _colored_image, template
+                    image_path, gray_image, colored_image, template
                 )
                 if gray_image is None:
                     raise Exception(
@@ -321,7 +321,7 @@ class EvaluationConfig:
                     )
 
                 (response_dict, *_) = template.image_instance_ops.read_omr_response(
-                    gray_image, template, image_path
+                    gray_image, colored_image, template, image_path
                 )
                 omr_response = get_concatenated_response(response_dict, template)
 

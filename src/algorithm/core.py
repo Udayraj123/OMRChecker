@@ -74,14 +74,25 @@ class ImageInstanceOps:
         return gray_image, colored_image, template
 
     # TODO: move algorithm to detection.py
-    def read_omr_response(self, image, template, file_path):
+    def read_omr_response(self, input_gray_image, colored_image, template, file_path):
         config = self.tuning_config
 
-        img = image.copy()
-        # origDim = img.shape[:2]
-        img = ImageUtils.resize_to_dimensions(img, template.template_dimensions)
-        if img.max() > img.min():
-            img = ImageUtils.normalize(img)
+        gray_image = input_gray_image.copy()
+
+        gray_image = ImageUtils.resize_to_dimensions(
+            gray_image, template.template_dimensions
+        )
+        if colored_image is not None:
+            colored_image = ImageUtils.resize_to_dimensions(
+                colored_image, template.template_dimensions
+            )
+        # Resize to template dimensions for saved outputs
+        template.save_image_ops.append_save_image(
+            f"Resized Image", range(3, 7), gray_image, colored_image
+        )
+
+        if gray_image.max() > gray_image.min():
+            gray_image = ImageUtils.normalize(gray_image)
 
         # Move them to data class if needed
         omr_response = {}
@@ -109,11 +120,13 @@ class ImageInstanceOps:
                     x, y = unit_bubble.get_shifted_position(field_block.shifts)
                     rect = [y, y + box_h, x, x + box_w]
                     # TODO: get this from within the BubbleDetection class
-                    mean_value = cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]
+                    mean_value = cv2.mean(
+                        gray_image[rect[0] : rect[1], rect[2] : rect[3]]
+                    )[0]
                     field_bubble_means.append(
                         BubbleMeanValue(mean_value, unit_bubble)
                         # TODO: cross/check mark detection support (#167)
-                        # detectCross(img, rect) ? 0 : 255
+                        # detectCross(gray_image, rect) ? 0 : 255
                     )
 
                 # TODO: move std calculation inside the class
@@ -337,7 +350,7 @@ class ImageInstanceOps:
         # TODO: deprecate thr2 and thus JUMP_DELTA (used only in the plotting)
         # global_threshold_for_template = min(thr1,thr2)
 
-        # TODO: maybe use plot_create flag when using plots in append_save_image
+        # TODO: maybe use plot_create flag to add plots in append_save_image
         if plot_show:
             plot_means_and_refs = (
                 sorted_bubble_means_and_refs if sort_in_plot else bubble_means_and_refs

@@ -338,6 +338,7 @@ class CropOnDotLines(CropOnPatchesCommon):
                     pause=0,
                 )
                 InteractionUtils.show(f"No patch/dot found:", hstack, pause=1)
+
             raise Exception(
                 f"No patch/dot found at origin: {area_description['origin']} with dimensions: {area_description['dimensions']}"
             )

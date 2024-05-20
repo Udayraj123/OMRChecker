@@ -277,10 +277,12 @@ def process_files(
             f"({files_counter}) Opening image: \t'{file_path}'\tResolution: {gray_image.shape}"
         )
 
+        # Start with blank saved images list
         template.save_image_ops.reset_all_save_img()
 
-        template.save_image_ops.append_save_image(1, gray_image)
-        # template.save_image_ops.append_save_image(1, colored_image)
+        template.save_image_ops.append_save_image(
+            "Input Image", range(1, 7), gray_image, colored_image
+        )
 
         # TODO: use try catch here and store paths to error files
         # Note: the returned template is a copy
@@ -324,7 +326,7 @@ def process_files(
             global_threshold_for_template,
             global_field_confidence_metrics,
         ) = template.image_instance_ops.read_omr_response(
-            gray_image, template, file_path
+            gray_image, colored_image, template, file_path
         )
 
         # TODO: move inner try catch here
@@ -354,8 +356,9 @@ def process_files(
         else:
             logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
 
-        # Save output images
         save_marked_dir = outputs_namespace.paths.save_marked_dir
+
+        # Save output image with bubble values and evaluation meta
         (
             final_marked,
             colored_final_marked,
@@ -369,6 +372,14 @@ def process_files(
             save_marked_dir=save_marked_dir,
             evaluation_meta=evaluation_meta,
             evaluation_config=evaluation_config,
+        )
+
+        # Save output stack images
+        template.save_image_ops.save_image_stacks(
+            file_id,
+            save_marked_dir,
+            key=None,
+            images_per_row=5 if tuning_config.outputs.show_image_level >= 5 else 4,
         )
 
         # Save output metrics
@@ -386,7 +397,7 @@ def process_files(
                 evaluation_meta,
             )
 
-        # Save output results
+        # Save output CSV results
         resp_array = []
         for k in template.output_columns:
             resp_array.append(omr_response[k])
@@ -449,10 +460,10 @@ def print_stats(start_time, files_counter, tuning_config):
 
     if tuning_config.outputs.show_image_level <= 0:
         log(
-            f"\nFinished Checking {files_counter} file(s) in {round(time_checking, 1)} seconds i.e. ~{round(time_checking/60, 1)} minute(s)."
+            f"\nFinished Checking {files_counter} file(s) in {round(time_checking, 1)} seconds i.e. ~{round(time_checking / 60, 1)} minute(s)."
         )
         log(
-            f"{'OMR Processing Rate':<27}:\t ~ {round(time_checking/files_counter,2)} seconds/OMR"
+            f"{'OMR Processing Rate':<27}:\t ~ {round(time_checking / files_counter,2)} seconds/OMR"
         )
         log(
             f"{'OMR Processing Speed':<27}:\t ~ {round((files_counter * 60) / time_checking, 2)} OMRs/minute"

@@ -46,6 +46,8 @@ class InteractionUtils:
                 image_to_show = ImageUtils.resize_util(image, u_width=display_width)
             elif resize_to_height:
                 image_to_show = ImageUtils.resize_util(image, u_height=display_height)
+            else:
+                image_to_show = image
         else:
             image_to_show = image
 

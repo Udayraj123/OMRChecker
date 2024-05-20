@@ -130,3 +130,8 @@ class MathUtils:
     def to_bgr(any_color):
         r, g, b = tuple(int(x * 255) for x in colors.to_rgb(any_color))
         return (b, g, r)
+
+    @staticmethod
+    def chunks(list, chunk_size):
+        chunk_size = max(1, chunk_size)
+        return (list[i : i + chunk_size] for i in range(0, len(list), chunk_size))

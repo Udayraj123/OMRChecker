@@ -151,8 +151,24 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
                 f"{title_prefix} with Match Lines: {file_path}",
                 matched_lines,
                 pause=True,
-                resize_to_height=True,
+                # resize_to_height=True,
                 config=config,
+            )
+
+        self.append_save_image(
+            f"Warped Image(no resize): {self}",
+            range(4, 7),
+            warped_image,
+            warped_colored_image,
+        )
+
+        if str(self) == "CropPage":
+            self.append_save_image(
+                f"Anchor Points: {self}", range(6, 7), self.debug_image
+            )
+        else:
+            self.append_save_image(
+                f"Anchor Points: {self}", range(3, 7), self.debug_image
             )
 
         return warped_image, warped_colored_image, _template
@@ -209,15 +225,11 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             image, transform_matrix, warped_dimensions, flags=self.warp_method_flag
         )
 
-        # TODO: Save intuitive meta data
-        # self.append_save_image(3,warped_image)
         warped_colored_image = None
         if config.outputs.colored_outputs_enabled:
             warped_colored_image = cv2.warpPerspective(
                 colored_image, transform_matrix, warped_dimensions
             )
-
-        # self.append_save_image(1,warped_image)
 
         return warped_image, warped_colored_image
 
