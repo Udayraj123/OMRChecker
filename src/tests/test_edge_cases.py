@@ -1,27 +1,20 @@
 import os
-from pathlib import Path
 
-import pandas as pd
-
+from src.tests.constants import (
+    BASE_MULTIMARKED_CSV_PATH,
+    BASE_RESULTS_CSV_PATH,
+    BASE_SAMPLE_PATH,
+)
 from src.tests.test_samples.sample2.boilerplate import (
     CONFIG_BOILERPLATE,
     TEMPLATE_BOILERPLATE,
 )
 from src.tests.utils import (
+    extract_output_data,
     generate_write_jsons_and_run,
     remove_file,
     run_entry_point,
     setup_mocker_patches,
-)
-
-FROZEN_TIMESTAMP = "1970-01-01"
-CURRENT_DIR = Path("src/tests")
-BASE_SAMPLE_PATH = CURRENT_DIR.joinpath("test_samples", "sample2")
-BASE_RESULTS_CSV_PATH = os.path.join(
-    "outputs", BASE_SAMPLE_PATH, "Results", "Results_05AM.csv"
-)
-BASE_MULTIMARKED_CSV_PATH = os.path.join(
-    "outputs", BASE_SAMPLE_PATH, "Manual", "MultiMarkedFiles.csv"
 )
 
 
@@ -29,11 +22,7 @@ def run_sample(mocker, input_path):
     setup_mocker_patches(mocker)
     output_dir = os.path.join("outputs", input_path)
     run_entry_point(input_path, output_dir)
-
-
-def extract_output_data(path):
-    output_data = pd.read_csv(path, keep_default_na=False)
-    return output_data
+    mocker.resetall()
 
 
 write_jsons_and_run = generate_write_jsons_and_run(

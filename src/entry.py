@@ -26,6 +26,7 @@ from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils, Stats
 from src.utils.logger import console, logger
 from src.utils.parsing import get_concatenated_response, open_config_with_defaults
+from src.utils.template_drawing import TemplateDrawing
 
 # Load processors
 STATS = Stats()
@@ -238,12 +239,12 @@ def show_template_layouts(omr_files, template, tuning_config):
         ) = template.image_instance_ops.apply_preprocessors(
             file_path, gray_image, colored_image, template
         )
-        gray_layout, colored_layout = template.image_instance_ops.draw_template_layout(
-            gray_image, colored_image, template, shifted=False, border=2
+        gray_layout, colored_layout = TemplateDrawing.draw_template_layout(
+            gray_image, colored_image, template, tuning_config, shifted=False, border=2
         )
         template_layout = (
             colored_layout
-            if tuning_config.outputs.show_colored_outputs
+            if tuning_config.outputs.colored_outputs_enabled
             else gray_layout
         )
         InteractionUtils.show(
@@ -276,9 +277,12 @@ def process_files(
             f"({files_counter}) Opening image: \t'{file_path}'\tResolution: {gray_image.shape}"
         )
 
-        template.image_instance_ops.reset_all_save_img()
+        # Start with blank saved images list
+        template.save_image_ops.reset_all_save_img()
 
-        template.image_instance_ops.append_save_image(1, gray_image)
+        template.save_image_ops.append_save_image(
+            "Input Image", range(1, 7), gray_image, colored_image
+        )
 
         # TODO: use try catch here and store paths to error files
         # Note: the returned template is a copy
@@ -322,7 +326,7 @@ def process_files(
             global_threshold_for_template,
             global_field_confidence_metrics,
         ) = template.image_instance_ops.read_omr_response(
-            gray_image, template, file_path
+            gray_image, colored_image, template, file_path
         )
 
         # TODO: move inner try catch here
@@ -352,20 +356,30 @@ def process_files(
         else:
             logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
 
-        # Save output images
         save_marked_dir = outputs_namespace.paths.save_marked_dir
+
+        # Save output image with bubble values and evaluation meta
         (
             final_marked,
             colored_final_marked,
-        ) = template.image_instance_ops.draw_template_layout(
+        ) = TemplateDrawing.draw_template_layout(
             gray_image,
             colored_image,
             template,
+            tuning_config,
             file_id,
             field_number_to_field_bubble_means,
             save_marked_dir=save_marked_dir,
             evaluation_meta=evaluation_meta,
             evaluation_config=evaluation_config,
+        )
+
+        # Save output stack images
+        template.save_image_ops.save_image_stacks(
+            file_id,
+            save_marked_dir,
+            key=None,
+            images_per_row=5 if tuning_config.outputs.show_image_level >= 5 else 4,
         )
 
         # Save output metrics
@@ -383,7 +397,7 @@ def process_files(
                 evaluation_meta,
             )
 
-        # Save output results
+        # Save output CSV results
         resp_array = []
         for k in template.output_columns:
             resp_array.append(omr_response[k])
@@ -446,10 +460,10 @@ def print_stats(start_time, files_counter, tuning_config):
 
     if tuning_config.outputs.show_image_level <= 0:
         log(
-            f"\nFinished Checking {files_counter} file(s) in {round(time_checking, 1)} seconds i.e. ~{round(time_checking/60, 1)} minute(s)."
+            f"\nFinished Checking {files_counter} file(s) in {round(time_checking, 1)} seconds i.e. ~{round(time_checking / 60, 1)} minute(s)."
         )
         log(
-            f"{'OMR Processing Rate':<27}:\t ~ {round(time_checking/files_counter,2)} seconds/OMR"
+            f"{'OMR Processing Rate':<27}:\t ~ {round(time_checking / files_counter,2)} seconds/OMR"
         )
         log(
             f"{'OMR Processing Speed':<27}:\t ~ {round((files_counter * 60) / time_checking, 2)} OMRs/minute"

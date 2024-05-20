@@ -1,10 +1,7 @@
 from src.schemas.constants import (
-    ARRAY_OF_STRINGS,
     DEFAULT_SECTION_KEY,
-    FIELD_STRING_TYPE,
     SCHEMA_VERDICTS_IN_ORDER,
-    matplotlib_color,
-    two_positive_integers,
+    load_common_defs,
 )
 
 marking_score_regex = "-?(\\d+)(/(\\d+))?"
@@ -45,15 +42,15 @@ image_and_csv_options = {
     "additionalProperties": False,
     "properties": {
         "answer_key_csv_path": {
-            "description": "The path to the answer key csv relative to the evalution.json file",
+            "description": "The path to the answer key csv relative to the evaluation.json file",
             "type": "string",
         },
         "answer_key_image_path": {
-            "description": "The path to the answer key image relative to the evalution.json file",
+            "description": "The path to the answer key image relative to the evaluation.json file",
             "type": "string",
         },
         "questions_in_order": {
-            **ARRAY_OF_STRINGS,
+            "$ref": "#/$def/array_of_strings",
             "description": "An array of fields to treat as questions when the answer key image is provided",
         },
     },
@@ -66,7 +63,7 @@ common_evaluation_schema_properties = {
         "type": "object",
         "required": [DEFAULT_SECTION_KEY],
         "patternProperties": {
-            f"^{DEFAULT_SECTION_KEY}$": marking_object_properties,
+            f"^{DEFAULT_SECTION_KEY}$": {"$ref": "#/$def/marking_object_properties"},
             f"^(?!{DEFAULT_SECTION_KEY}$).*": {
                 "description": "A section that defines custom marking for a subset of the questions",
                 "additionalProperties": False,
@@ -75,14 +72,14 @@ common_evaluation_schema_properties = {
                 "properties": {
                     "questions": {
                         "oneOf": [
-                            FIELD_STRING_TYPE,
+                            {"$ref": "#/$def/field_string_type"},
                             {
                                 "type": "array",
-                                "items": FIELD_STRING_TYPE,
+                                "items": {"$ref": "#/$def/field_string_type"},
                             },
                         ]
                     },
-                    "marking": marking_object_properties,
+                    "marking": {"$ref": "#/$def/marking_object_properties"},
                 },
             },
         },
@@ -111,7 +108,7 @@ common_evaluation_schema_properties = {
                     },
                     "position": {
                         "description": "The position of the score box",
-                        **two_positive_integers,
+                        "$ref": "#/$def/two_positive_integers",
                     },
                     "score_format_string": {
                         "description": "The format string to compose the score string. Supported variables - {score}",
@@ -145,7 +142,7 @@ common_evaluation_schema_properties = {
                     },
                     "position": {
                         "description": "The position of the answers summary box",
-                        **two_positive_integers,
+                        "$ref": "#/$def/two_positive_integers",
                     },
                     "answers_summary_format_string": {
                         "description": "The format string to compose the answer summary. Supported variables - {correct}, {incorrect}, {unmarked} ",
@@ -234,7 +231,9 @@ common_evaluation_schema_properties = {
                             "enabled": {"type": "boolean"},
                             "color_sequence": {
                                 "type": "array",
-                                "items": matplotlib_color,
+                                "items": {
+                                    "$ref": "#/$def/matplotlib_color",
+                                },
                                 "minItems": 4,
                                 "maxItems": 4,
                             },
@@ -274,11 +273,11 @@ common_evaluation_schema_properties = {
 common_evaluation_schema_conditions = [
     {
         "if": {"properties": {"source_type": {"const": "csv"}}},
-        "then": {"properties": {"options": image_and_csv_options}},
+        "then": {"properties": {"options": {"$ref": "#/$def/image_and_csv_options"}}},
     },
     {
         "if": {"properties": {"source_type": {"const": "image_and_csv"}}},
-        "then": {"properties": {"options": image_and_csv_options}},
+        "then": {"properties": {"options": {"$ref": "#/$def/image_and_csv_options"}}},
     },
     {
         "if": {"properties": {"source_type": {"const": "custom"}}},
@@ -290,7 +289,7 @@ common_evaluation_schema_conditions = [
                     "type": "object",
                     "properties": {
                         "questions_in_order": {
-                            **ARRAY_OF_STRINGS,
+                            "$ref": "#/$def/array_of_strings",
                             "description": "An array of fields to treat as questions specified in an order to apply evaluation",
                         },
                         "answers_in_order": {
@@ -342,7 +341,17 @@ EVALUATION_SCHEMA = {
     "$id": "https://github.com/Udayraj123/OMRChecker/tree/master/src/schemas/evaluation-schema.json",
     "$def": {
         # The common definitions go here
-        "matplotlib_color": matplotlib_color,
+        **load_common_defs(
+            [
+                "array_of_strings",
+                "two_positive_integers",
+                "field_string_type",
+                "matplotlib_color",
+            ]
+        ),
+        "marking_object_properties": marking_object_properties,
+        "marking_score": marking_score,
+        "image_and_csv_options": image_and_csv_options,
     },
     "title": "Evaluation Schema",
     "description": "The OMRChecker evaluation schema",

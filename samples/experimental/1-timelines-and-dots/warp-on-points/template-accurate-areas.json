@@ -118,7 +118,7 @@
       "labelsGap": 28.5
     },
     "Language_Codes": {
-      "fieldType": "CUSTOM",
+      "fieldType": "CUSTOM_BUBBLES",
       "bubbleValues": [
         "M",
         "N",

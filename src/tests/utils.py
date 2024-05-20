@@ -1,12 +1,13 @@
 import json
 import os
 from copy import deepcopy
+from glob import glob
 
+import pandas as pd
 from freezegun import freeze_time
 
 from main import entry_point_for_args
-
-FROZEN_TIMESTAMP = "1970-01-01"
+from src.tests.constants import FROZEN_TIMESTAMP, IMAGE_SNAPSHOTS_PATH
 
 
 def setup_mocker_patches(mocker):
@@ -22,7 +23,6 @@ def setup_mocker_patches(mocker):
 
 def run_entry_point(input_path, output_dir):
     args = {
-        "autoAlign": False,
         "debug": True,
         "input_paths": [input_path],
         "output_dir": output_dir,
@@ -94,3 +94,25 @@ def generate_write_jsons_and_run(
         return sample_outputs, exception
 
     return write_jsons_and_run
+
+
+def extract_all_csv_outputs(output_dir):
+    sample_outputs = {}
+    for _dir, _subdir, _files in os.walk(output_dir):
+        for file in glob(os.path.join(_dir, "*.csv")):
+            relative_path = os.path.relpath(file, output_dir)
+            output_df = extract_output_data(file)
+            # pandas pretty print complete df
+            sample_outputs[relative_path] = output_df.to_string()
+    return sample_outputs
+
+
+def extract_output_data(path):
+    output_data = pd.read_csv(path, keep_default_na=False)
+    return output_data
+
+
+def assert_image_snapshot(output_dir, image_path, image_snapshot):
+    output_path = str(os.path.join(output_dir, image_path))
+    # Note: image snapshots are updated using the --image-snapshot-update flag
+    image_snapshot(output_path, IMAGE_SNAPSHOTS_PATH.joinpath(image_path))

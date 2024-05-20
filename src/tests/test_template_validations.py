@@ -18,6 +18,7 @@ def run_sample(mocker, input_path):
     setup_mocker_patches(mocker)
     output_dir = os.path.join("outputs", input_path)
     run_entry_point(input_path, output_dir)
+    mocker.resetall()
 
 
 write_jsons_and_run = generate_write_jsons_and_run(

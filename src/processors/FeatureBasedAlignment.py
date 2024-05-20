@@ -104,7 +104,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
 
             warped_image = cv2.warpAffine(image, m, (width, height))
 
-            if config.outputs.show_colored_outputs:
+            if config.outputs.colored_outputs_enabled:
                 colored_image = cv2.warpAffine(colored_image, m, (width, height))
         else:
             # Use homography
@@ -112,7 +112,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
             # 3D == perspective from out of plane:
             warped_image = cv2.warpPerspective(image, h, (width, height))
 
-            if config.outputs.show_colored_outputs:
+            if config.outputs.colored_outputs_enabled:
                 colored_image = cv2.warpPerspective(colored_image, h, (width, height))
 
         return warped_image, colored_image, _template

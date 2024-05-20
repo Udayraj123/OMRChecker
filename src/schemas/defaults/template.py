@@ -5,7 +5,7 @@ TEMPLATE_DEFAULTS = {
     "conditionalSets": [],
     "outputColumns": [],
     "preProcessors": [],
-    "processingImageShape": [820, 666],
+    "processingImageShape": [900, 650],
     "sortFiles": {
         "enabled": False,
     },

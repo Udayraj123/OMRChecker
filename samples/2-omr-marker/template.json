@@ -48,7 +48,7 @@
   },
   "fieldBlocks": {
     "Medium": {
-      "fieldType": "CUSTOM",
+      "fieldType": "CUSTOM_BUBBLES",
       "bubbleValues": [
         "E",
         "H"

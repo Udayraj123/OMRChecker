@@ -49,7 +49,7 @@
       "fieldLabels": [
         "check_1"
       ],
-      "fieldType": "CUSTOM",
+      "fieldType": "CUSTOM_BUBBLES",
       "bubbleValues": [
         "A",
         "B",
@@ -71,7 +71,7 @@
       "fieldLabels": [
         "check_2"
       ],
-      "fieldType": "CUSTOM",
+      "fieldType": "CUSTOM_BUBBLES",
       "bubbleValues": [
         "N",
         "R",
@@ -92,7 +92,7 @@
       "fieldLabels": [
         "stu"
       ],
-      "fieldType": "CUSTOM",
+      "fieldType": "CUSTOM_BUBBLES",
       "bubbleValues": [
         "U",
         "A",

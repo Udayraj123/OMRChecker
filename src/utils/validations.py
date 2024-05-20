@@ -34,7 +34,7 @@ def validate_evaluation_json(json_data, evaluation_path):
                     key in ["outputs_configuration", "marking_schemes"]
                     and len(error.path) > 1
                 ):
-                    path = ".".join(list(error.path))
+                    path = ".".join(list(map(str, error.path)))
                     key = path
                     if "color" in path and validator == "oneOf":
                         color = re.findall(r"'(.*?)'", msg)[0]

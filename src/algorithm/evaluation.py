@@ -268,7 +268,7 @@ class EvaluationConfig:
         self.has_custom_marking = False
         self.exclude_files = []
 
-        # TODO: separate handlers for these two type
+        # TODO: separate handlers for these two types
         if source_type == "image_and_csv" or source_type == "csv":
             csv_path = curr_dir.joinpath(options["answer_key_csv_path"])
             if not os.path.exists(csv_path):
@@ -305,15 +305,15 @@ class EvaluationConfig:
                     f"Attempting to generate answer key from image: '{image_path}'"
                 )
                 # TODO: use a common function for below changes?
-                gray_image, _colored_image = ImageUtils.read_image_util(
+                gray_image, colored_image = ImageUtils.read_image_util(
                     image_path, tuning_config
                 )
                 (
                     gray_image,
-                    _colored_image,
+                    colored_image,
                     template,
                 ) = template.image_instance_ops.apply_preprocessors(
-                    image_path, gray_image, _colored_image, template
+                    image_path, gray_image, colored_image, template
                 )
                 if gray_image is None:
                     raise Exception(
@@ -321,7 +321,7 @@ class EvaluationConfig:
                     )
 
                 (response_dict, *_) = template.image_instance_ops.read_omr_response(
-                    gray_image, template, image_path
+                    gray_image, colored_image, template, image_path
                 )
                 omr_response = get_concatenated_response(response_dict, template)
 
@@ -424,14 +424,11 @@ class EvaluationConfig:
             "negative": MathUtils.to_bgr(verdict_symbol_colors["negative"]),
             "bonus": MathUtils.to_bgr(verdict_symbol_colors["bonus"]),
         }
-        draw_answer_groups_dict = {
-            "enabled": draw_answer_groups["enabled"],
-        }
-        if draw_answer_groups["enabled"]:
-            draw_answer_groups_dict["color_sequence"] = [
-                MathUtils.to_bgr(hex) for hex in draw_answer_groups["color_sequence"]
-            ]
-        self.draw_answer_groups = draw_answer_groups_dict
+
+        self.draw_answer_groups = draw_answer_groups
+        self.draw_answer_groups["color_sequence"] = list(
+            map(MathUtils.to_bgr, draw_answer_groups["color_sequence"])
+        )
 
     def parse_questions_in_order(self, questions_in_order):
         return parse_fields("questions_in_order", questions_in_order)
@@ -537,6 +534,8 @@ class EvaluationConfig:
             "answers_summary_format_string"
         ]
         try:
+            # TODO: Support for total_positive, total_negative,
+            # TODO: Same aggregates section-wise: correct/incorrect verdict counts in formatted_answers_summary
             answers_summary_format_string.format(**self.schema_verdict_counts)
         except:  # NOQA
             raise Exception(

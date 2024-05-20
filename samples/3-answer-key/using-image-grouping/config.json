@@ -4,6 +4,7 @@
       2400,
       1800
     ],
-    "show_image_level": 0
+    "show_image_level": 0,
+    "save_image_level": 0
   }
 }

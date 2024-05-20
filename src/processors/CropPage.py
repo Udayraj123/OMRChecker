@@ -8,6 +8,7 @@ import numpy as np
 from src.processors.constants import EDGE_TYPES_IN_ORDER, WarpMethod
 from src.processors.internal.WarpOnPointsCommon import WarpOnPointsCommon
 from src.utils.constants import CLR_WHITE
+from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -53,7 +54,7 @@ class CropPage(WarpOnPointsCommon):
             edge_contours_map,
         ) = ImageUtils.split_patch_contour_on_corners(sheet, page_contour)
 
-        logger.info(f"Found page corners: \t {ordered_page_corners}")
+        logger.debug(f"Found page corners: \t {ordered_page_corners}")
         (
             destination_page_corners,
             _,
@@ -92,16 +93,17 @@ class CropPage(WarpOnPointsCommon):
 
         _ret, image = cv2.threshold(image, 200, 255, cv2.THRESH_TRUNC)
         image = ImageUtils.normalize(image)
+        self.append_save_image("Truncate Threshold", [1, 4, 5, 6], image)
 
         # Close the small holes, i.e. Complete the edges on canny image
         closed = cv2.morphologyEx(image, cv2.MORPH_CLOSE, self.morph_kernel)
 
-        # TODO: self.append_save_image(2, closed)
+        self.append_save_image("Morph Page", range(3, 7), closed)
 
         # TODO: parametrize these tuning params
         canny_edge = cv2.Canny(closed, 185, 55)
 
-        # TODO: self.append_save_image(3, canny_edge)
+        self.append_save_image("Canny Edges", range(5, 7), canny_edge)
 
         # findContours returns outer boundaries in CW and inner ones, ACW.
         all_contours = ImageUtils.grab_contours(
@@ -126,17 +128,19 @@ class CropPage(WarpOnPointsCommon):
             if MathUtils.validate_rect(approx):
                 sheet = np.reshape(approx, (4, -1))
                 page_contour = np.vstack(bounding_contour).squeeze()
-                ImageUtils.draw_contour(
+                DrawingUtils.draw_contour(
                     canny_edge, approx, color=CLR_WHITE, thickness=10
                 )
-                ImageUtils.draw_contour(
+                DrawingUtils.draw_contour(
                     self.debug_image, approx, color=CLR_WHITE, thickness=10
                 )
 
-                # TODO: self.append_save_image(2, canny_edge)
+                self.append_save_image("Bounding Contour", range(1, 7), canny_edge)
                 break
 
-        if config.outputs.show_image_level >= 6:
+        if config.outputs.show_image_level >= 6 or (
+            page_contour is None and config.outputs.show_image_level >= 1
+        ):
             hstack = ImageUtils.get_padded_hstack([image, closed, canny_edge])
 
             InteractionUtils.show("Page edges detection", hstack)

@@ -7,6 +7,7 @@ from src.processors.helpers.rectify import rectify
 from src.processors.interfaces.ImageTemplatePreprocessor import (
     ImageTemplatePreprocessor,
 )
+from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -28,10 +29,10 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         raise Exception(f"Not implemented")
 
     def __init__(
-        self, options, relative_dir, image_instance_ops, default_processing_image_shape
+        self, options, relative_dir, save_image_ops, default_processing_image_shape
     ):
         # TODO: need to fix this (self attributes will be overridden by parent and may cause inconsistency)
-        self.tuning_config = image_instance_ops.tuning_config
+        self.tuning_config = save_image_ops.tuning_config
 
         parsed_options = self.validate_and_remap_options_schema(options)
         # Processor tuningOptions defaults
@@ -45,7 +46,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         super().__init__(
             parsed_options,
             relative_dir,
-            image_instance_ops,
+            save_image_ops,
             default_processing_image_shape,
         )
         options = self.options
@@ -92,7 +93,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             image, control_points, destination_points
         )
 
-        logger.info(
+        logger.debug(
             f"Cropping Enabled: {self.enable_cropping}\n parsed_control_points={parsed_control_points} \n parsed_destination_points={parsed_destination_points} \n warped_dimensions={warped_dimensions}"
         )
 
@@ -133,13 +134,13 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             if self.enable_cropping:
                 title_prefix = "Cropped Image"
                 # Draw the convex hull of all control points
-                ImageUtils.draw_contour(
+                DrawingUtils.draw_contour(
                     self.debug_image, cv2.convexHull(parsed_control_points)
                 )
             if config.outputs.show_image_level >= 5:
                 InteractionUtils.show("Anchor Points", self.debug_image, pause=False)
 
-            matched_lines = ImageUtils.draw_matches(
+            matched_lines = DrawingUtils.draw_matches(
                 image,
                 parsed_control_points,
                 warped_image,
@@ -150,8 +151,24 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
                 f"{title_prefix} with Match Lines: {file_path}",
                 matched_lines,
                 pause=True,
-                resize_to_height=True,
+                # resize_to_height=True,
                 config=config,
+            )
+
+        self.append_save_image(
+            f"Warped Image(no resize): {self}",
+            range(4, 7),
+            warped_image,
+            warped_colored_image,
+        )
+
+        if str(self) == "CropPage":
+            self.append_save_image(
+                f"Anchor Points: {self}", range(6, 7), self.debug_image
+            )
+        else:
+            self.append_save_image(
+                f"Anchor Points: {self}", range(3, 7), self.debug_image
             )
 
         return warped_image, warped_colored_image, _template
@@ -208,15 +225,11 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             image, transform_matrix, warped_dimensions, flags=self.warp_method_flag
         )
 
-        # TODO: Save intuitive meta data
-        # self.append_save_image(3,warped_image)
         warped_colored_image = None
-        if config.outputs.show_colored_outputs:
+        if config.outputs.colored_outputs_enabled:
             warped_colored_image = cv2.warpPerspective(
                 colored_image, transform_matrix, warped_dimensions
             )
-
-        # self.append_save_image(1,warped_image)
 
         return warped_image, warped_colored_image
 
@@ -308,7 +321,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             image, map1=grid_z, map2=None, interpolation=cv2.INTER_CUBIC
         )
         warped_colored_image = None
-        if config.outputs.show_colored_outputs:
+        if config.outputs.colored_outputs_enabled:
             warped_colored_image = cv2.remap(
                 colored_image,
                 map1=grid_z,
@@ -326,24 +339,21 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             edge_contours_map=edge_contours_map, enable_cropping=self.enable_cropping
         )
 
-        # logger.info("scaled_map parts", scaled_map[::120, ::120, :])
-        # logger.info("rectified_image", rectified_image)
-        logger.info("scaled_map.shape", scaled_map.shape)
-
         warped_image = cv2.remap(
             image,
             map1=scaled_map,
             map2=None,
             interpolation=cv2.INTER_NEAREST,  # cv2.INTER_CUBIC
         )
-        InteractionUtils.show("warped_image", warped_image, 0)
+        if config.outputs.show_image_level >= 1:
+            InteractionUtils.show("warped_image", warped_image, 0)
 
         warped_colored_image = None
-        if config.outputs.show_colored_outputs:
+        if config.outputs.colored_outputs_enabled:
             warped_colored_image = cv2.remap(
                 colored_image, map1=scaled_map, map2=None, interpolation=cv2.INTER_CUBIC
             )
-            logger.info("warped_colored_image.shape", warped_colored_image.shape)
-            InteractionUtils.show("warped_colored_image", warped_colored_image, 0)
+            if config.outputs.show_image_level >= 1:
+                InteractionUtils.show("warped_colored_image", warped_colored_image, 0)
 
         return warped_image, warped_colored_image

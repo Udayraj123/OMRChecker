@@ -64,7 +64,7 @@
   "fieldBlocks": {
     "Medium": {
       "bubblesGap": 41,
-      "fieldType": "CUSTOM",
+      "fieldType": "CUSTOM_BUBBLES",
       "bubbleValues": [
         "E",
         "H"
