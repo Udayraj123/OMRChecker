@@ -93,7 +93,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             image, control_points, destination_points
         )
 
-        logger.info(
+        logger.debug(
             f"Cropping Enabled: {self.enable_cropping}\n parsed_control_points={parsed_control_points} \n parsed_destination_points={parsed_destination_points} \n warped_dimensions={warped_dimensions}"
         )
 
@@ -327,10 +327,6 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             edge_contours_map=edge_contours_map, enable_cropping=self.enable_cropping
         )
 
-        # logger.info("scaled_map parts", scaled_map[::120, ::120, :])
-        # logger.info("rectified_image", rectified_image)
-        logger.info("scaled_map.shape", scaled_map.shape)
-
         warped_image = cv2.remap(
             image,
             map1=scaled_map,
@@ -345,7 +341,6 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             warped_colored_image = cv2.remap(
                 colored_image, map1=scaled_map, map2=None, interpolation=cv2.INTER_CUBIC
             )
-            logger.info("warped_colored_image.shape", warped_colored_image.shape)
             if config.outputs.show_image_level >= 1:
                 InteractionUtils.show("warped_colored_image", warped_colored_image, 0)
 

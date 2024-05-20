@@ -17,7 +17,7 @@ CONFIG_SCHEMA = {
             "type": "object",
             "additionalProperties": False,
             "properties": {
-                # TODO: rename these variables for better usability
+                # TODO: rename all of these variables for better usability
                 "MIN_GAP_TWO_BUBBLES": {
                     "description": "Minimum difference between all mean values of the bubbles. Used for local thresholding of 2 or 1 bubbles",
                     "type": "integer",

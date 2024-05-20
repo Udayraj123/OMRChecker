@@ -103,7 +103,6 @@ class TemplateDrawing:
             )
             return marked_image
 
-        # TODO: move indent into smaller function
         if should_draw_marked_bubbles:
             marked_image = TemplateDrawing.draw_marked_bubbles_with_evaluation_meta(
                 marked_image,
@@ -115,14 +114,11 @@ class TemplateDrawing:
             )
 
         if should_save_detections:
-            # TODO: migrate support for multi_marked bucket based on identifier config
+            # TODO: migrate after support for multi_marked bucket based on identifier config
             # if multi_roll:
             #     save_marked_dir = save_marked_dir.joinpath("_MULTI_")
             image_path = str(save_marked_dir.joinpath(file_id))
             ImageUtils.save_img(image_path, marked_image)
-
-        # if config.outputs.colored_outputs_enabled:
-        # TODO: add colored counterparts
 
         if should_draw_question_verdicts:
             marked_image = TemplateDrawing.draw_evaluation_summary(

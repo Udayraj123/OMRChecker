@@ -148,7 +148,6 @@ class ImageUtils:
     def get_control_destination_points_from_contour(
         source_contour, destination_line, max_points=None
     ):
-        # TODO: can use shapely intersections too?
         total_points = len(source_contour)
         if max_points is None:
             max_points = total_points
@@ -163,12 +162,12 @@ class ImageUtils:
             )
 
         # TODO: replace with this if the assertion passes on more samples
-        cv2_arclength = cv2.arcLength(
-            np.array(source_contour, dtype="float32"), closed=False
-        )
-        assert (
-            abs(cv2_arclength - contour_length) < 0.001
-        ), f"{contour_length:.3f} != {cv2_arclength:.3f}"
+        # cv2_arclength = cv2.arcLength(
+        #     np.array(source_contour, dtype="float32"), closed=False
+        # )
+        # assert (
+        #     abs(cv2_arclength - contour_length) < 0.001
+        # ), f"{contour_length:.3f} != {cv2_arclength:.3f}"
 
         # average_min_gap = (contour_length / (max_points - 1)) - 1
 
@@ -240,7 +239,7 @@ class ImageUtils:
             ]
             min_distance, nearest_edge_type = min(edge_distances)
             distance_warning = "*" if min_distance > 10 else ""
-            logger.info(
+            logger.debug(
                 f"boundary_point={boundary_point}\t nearest_edge_type={nearest_edge_type}\t min_distance={min_distance:.2f}{distance_warning}"
             )
             # TODO: Each edge contour's points should be in the clockwise order

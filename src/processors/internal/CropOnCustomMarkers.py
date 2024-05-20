@@ -392,7 +392,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             logger.error(
                 f"Error: No marker found in patch {area_label}, (match_max={optimal_match_max:.2f} < {self.min_matching_threshold:.2f}) for {area_label}! Recheck tuningOptions or output of previous preProcessor."
             )
-            logger.info(
+            logger.debug(
                 f"Sizes: optimal_marker:{None if optimal_marker is None else optimal_marker.shape[:2]}, patch_area: {patch_area.shape[:2]}"
             )
 

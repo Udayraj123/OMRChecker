@@ -85,7 +85,7 @@ class ImageInstanceOps:
 
         # Move them to data class if needed
         omr_response = {}
-        multi_marked, multi_roll = 0, 0
+        multi_marked, multi_roll = False, False
 
         # Get mean bubbleValues n other stats
         (
@@ -170,7 +170,7 @@ class ImageInstanceOps:
         )
         global_max_jump = j_high - j_low
 
-        logger.info(
+        logger.debug(
             f"Thresholding: \t global_threshold_for_template: {round(global_threshold_for_template, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_threshold_for_template == 255) else ''}"
         )
 
@@ -237,10 +237,8 @@ class ImageInstanceOps:
                         if multi_marked_local
                         else field_value
                     )
-                    # TODO: generalize this into rolls -> identifier
-                    # Only send rolls multi-marked in the directory ()
+                    # TODO: support for multi_marked bucket based on identifier config
                     # multi_roll = multi_marked_local and "Roll" in str(q)
-
                     multi_marked = multi_marked or multi_marked_local
 
                 # Empty value logic
@@ -375,11 +373,9 @@ class ImageInstanceOps:
         shuffled_color_indices = random.sample(
             list(unique_label_indices), len(unique_label_indices)
         )
-        # logger.info(list(zip(original_bin_names, shuffled_color_indices)))
         plot_colors = plot_color_sampler(
             [shuffled_color_indices[i] for i in unique_label_indices]
         )
-        # plot_colors = plot_color_sampler(unique_label_indices)
         bar_container = ax.bar(
             range(len(plot_means_and_refs)),
             plot_values,

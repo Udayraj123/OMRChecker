@@ -268,7 +268,7 @@ class EvaluationConfig:
         self.has_custom_marking = False
         self.exclude_files = []
 
-        # TODO: separate handlers for these two type
+        # TODO: separate handlers for these two types
         if source_type == "image_and_csv" or source_type == "csv":
             csv_path = curr_dir.joinpath(options["answer_key_csv_path"])
             if not os.path.exists(csv_path):
@@ -534,7 +534,8 @@ class EvaluationConfig:
             "answers_summary_format_string"
         ]
         try:
-            # [later] Support for section-wise correct/incorrect verdict counts in formatted_answers_summary
+            # TODO: Support for total_positive, total_negative,
+            # TODO: Same aggregates section-wise: correct/incorrect verdict counts in formatted_answers_summary
             answers_summary_format_string.format(**self.schema_verdict_counts)
         except:  # NOQA
             raise Exception(

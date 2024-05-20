@@ -36,7 +36,7 @@ class InteractionUtils:
     ):
         image_metrics = InteractionUtils.image_metrics
         if image is None:
-            logger.info(f"'{name}' - NoneType image to show!")
+            logger.warning(f"'{name}' - NoneType image to show!")
             if pause:
                 cv2.destroyAllWindows()
             return
@@ -92,9 +92,8 @@ class InteractionUtils:
 
 class Stats:
     # TODO Fill these for stats
-    # Move qbox_vals here?
-    # badThresholds = []
-    # veryBadPoints = []
+    # multiMarkedFilesCount = 0
+    # errorFilesCount = 0
     files_moved = 0
     files_not_moved = 0
 

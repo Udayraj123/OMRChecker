@@ -54,7 +54,7 @@ class CropPage(WarpOnPointsCommon):
             edge_contours_map,
         ) = ImageUtils.split_patch_contour_on_corners(sheet, page_contour)
 
-        logger.info(f"Found page corners: \t {ordered_page_corners}")
+        logger.debug(f"Found page corners: \t {ordered_page_corners}")
         (
             destination_page_corners,
             _,

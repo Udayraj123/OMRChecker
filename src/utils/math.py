@@ -10,7 +10,6 @@ from src.utils.logger import logger
 class MathUtils:
     """A Static-only Class to hold common math utilities & wrappers for easy integration with OpenCV and OMRChecker"""
 
-    # TODO: move into math utils
     @staticmethod
     def distance(point1, point2):
         return math.hypot(point1[0] - point2[0], point1[1] - point2[1])

@@ -289,7 +289,7 @@ class CropOnDotLines(CropOnPatchesCommon):
 
         if edge_contours_map is None:
             raise Exception(
-                f"No line match found at origin: {area_description['origin']} with dimensions: { area_description['dimensions']}"
+                f"No line match found at origin: {area_description['origin']} with dimensions: {area_description['dimensions']}"
             )
         return edge_contours_map
 
@@ -339,7 +339,7 @@ class CropOnDotLines(CropOnPatchesCommon):
                 )
                 InteractionUtils.show(f"No patch/dot found:", hstack, pause=1)
             raise Exception(
-                f"No patch/dot found at origin: {area_description['origin']} with dimensions: { area_description['dimensions']}"
+                f"No patch/dot found at origin: {area_description['origin']} with dimensions: {area_description['dimensions']}"
             )
 
         return corners
@@ -378,7 +378,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         # Convert to list of 2d points
         bounding_contour = np.vstack(largest_contour).squeeze()
 
-        # TODO: >> see if bounding_hull is still needed
+        # TODO: see if bounding_hull is still needed
         bounding_hull = cv2.convexHull(bounding_contour)
 
         if scanner_type == ScannerType.PATCH_DOT:
