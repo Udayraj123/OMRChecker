@@ -495,6 +495,7 @@ TEMPLATE_SCHEMA = {
                             "GaussianBlur",
                             "Levels",
                             "MedianBlur",
+                            "AutoAlign"
                         ],
                     },
                     "options": {
@@ -653,6 +654,26 @@ TEMPLATE_SCHEMA = {
                                         **pre_processor_options_available_keys,
                                         "kSize": {"type": "integer"},
                                     },
+                                }
+                            }
+                        },
+                    },
+                    {
+                        "if": {
+                            "properties": {"name": {"const": "AutoAlign"}},     
+                        },
+                        "then": {
+                            "properties": {
+                                "options": {
+                                    "description": "Options for the AutoAlign pre-processor",
+                                    "type": "object",
+                                    "additionalProperties": False,
+                                    "properties":{
+                                    "referenceImage": {
+                                    "description": "The relative path to reference image of the omr marker",
+                                    "type": "string",
+                                    }
+                                    }
                                 }
                             }
                         },
