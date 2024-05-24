@@ -311,6 +311,7 @@ class ImageUtils:
 
     @staticmethod
     def pad_image_to_width(image, max_width, value=CLR_WHITE):
+        # Pads from the right side
         return cv2.copyMakeBorder(
             image,
             0,
