@@ -9,6 +9,12 @@
   ],
   "preProcessors": [
     {
+      "name":"AutoAlign",
+      "options":{
+        "referenceImage":"reference.jpg"
+      }
+    },
+    {
       "name": "CropOnMarkers",
       "options": {
         "type": "FOUR_MARKERS",
