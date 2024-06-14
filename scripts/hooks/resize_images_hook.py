@@ -18,17 +18,38 @@ def get_size_reduction(old_size, new_size):
     return f"({percent:.2f}%)"
 
 
-def resize_util(image, u_width=None, u_height=None):
+def get_resized_size(image, u_width, u_height):
     w, h = image.size[:2]
     if u_height is None:
+        if u_width is None:
+            raise Exception(f"Both u_width and u_height unavailable")
+
         u_height = int(h * u_width / w)
+
     if u_width is None:
         u_width = int(w * u_height / h)
 
-    if u_height == h and u_width == w:
+    return u_width, u_height
+
+
+def resize_util(image, u_width=None, u_height=None):
+    w, h = image.size[:2]
+    # Resize by width
+    resized_width, resized_height = get_resized_size(
+        image, u_width=u_width, u_height=None
+    )
+
+    if resized_height >= u_height:
+        # Resize by height
+        resized_width, resized_height = get_resized_size(
+            image, u_width=None, u_height=u_height
+        )
+
+    if resized_height == h and resized_width == w:
         # No need to resize
         return image
-    return image.resize((int(u_width), int(u_height)), Image.LANCZOS)
+
+    return image.resize((int(resized_width), int(resized_height)), Image.LANCZOS)
 
 
 def resize_image_and_save(image_path, max_width, max_height):
@@ -39,20 +60,12 @@ def resize_image_and_save(image_path, max_width, max_height):
         w, h = old_image_size
         resized = False
 
-        if h > max_height:
-            image = resize_util(image, u_height=max_height)
+        if h > max_height or w > max_width:
+            image = resize_util(image, u_width=max_width, u_height=max_height)
             resized = True
-
-        if w > max_width:
-            image = resize_util(image, u_width=max_width)
-            w, h = image.size[:2]
-            resized = True
-
-        if resized:
             image.save(temp_image_path)
-            return True, temp_image_path, old_image_size, image.size
 
-        return False, temp_image_path, old_image_size, image.size
+        return resized, temp_image_path, old_image_size, image.size
 
 
 def resize_images_in_tree(args):

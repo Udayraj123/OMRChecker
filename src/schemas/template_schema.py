@@ -530,6 +530,10 @@ TEMPLATE_SCHEMA = {
                                             "$ref": "#/$def/two_positive_numbers",
                                             "description": "The size of the morph kernel used for smudging the page",
                                         },
+                                        "useColoredCanny": {
+                                            "description": "Whether to separate 'white' from other colors during page detection. Requires config.colored_outputs_enabled == True",
+                                            "type": "boolean",
+                                        },
                                         # TODO: support for maxPointsPerEdge
                                         "maxPointsPerEdge": {
                                             "$ref": "#/$def/two_positive_numbers",

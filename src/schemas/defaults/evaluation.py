@@ -6,7 +6,7 @@ from src.schemas.constants import (
 EVALUATION_CONFIG_DEFAULTS = {
     "options": {},
     "marking_schemes": {},
-    "conditionalSets": [],
+    "conditional_sets": [],
     "outputs_configuration": {
         "should_explain_scoring": False,
         "draw_score": {

@@ -307,7 +307,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             logger.warning(
                 f"Clipping label {area_label} with scan rectangle: {[area_start, area_end]} to image boundary {[w, h]}."
             )
-
+            # area_start, area_end = ImageUtils.clip_area_to_image_bounds([area_start, area_end], image)
             area_start = [max(0, area_start[0]), max(0, area_start[1])]
             area_end = [min(w, area_end[0]), min(h, area_end[1])]
 

@@ -241,15 +241,22 @@ def show_template_layouts(omr_files, template, tuning_config):
             file_path, gray_image, colored_image, template
         )
         gray_layout, colored_layout = TemplateDrawing.draw_template_layout(
-            gray_image, colored_image, template, tuning_config, shifted=False, border=2
+            gray_image,
+            colored_image,
+            template,
+            tuning_config,
+            shifted=False,
+            border=2,
         )
         template_layout = (
             colored_layout
             if tuning_config.outputs.colored_outputs_enabled
             else gray_layout
         )
-        InteractionUtils.show(
-            f"Template Layout: {file_name}", template_layout, 1, 1, config=tuning_config
+        # Size is template_dimensions
+        InteractionUtils.show_for_roi(
+            f"Template Layout: {file_name}",
+            template_layout,
         )
 
 

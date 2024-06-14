@@ -6,7 +6,7 @@ repos:
     hooks:
       - id: convert-images
         name: Convert png to jpg in samples
-        entry: scripts/convert_images_hook.py
+        entry: scripts/hooks/convert_images_hook.py
         args: ["--trigger-size", "150"]
         files: ^samples.*\.(png|PNG)$
         pass_filenames: true
@@ -22,7 +22,7 @@ repos:
     hooks:
       - id: resize-images
         name: Resize images
-        entry: scripts/resize_images_hook.py
+        entry: scripts/hooks/resize_images_hook.py
         args: ["--max-width", "1500", "--max-height", "1500", "--trigger-size", "150"]
         files: \.(png|jpg|jpeg|PNG|JPG|JPEG)$
         pass_filenames: true

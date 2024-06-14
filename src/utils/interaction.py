@@ -4,6 +4,8 @@ import cv2
 from matplotlib import pyplot
 from screeninfo import get_monitors
 
+from src.utils.constants import WAIT_KEYS
+from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.logger import logger
 
@@ -19,10 +21,86 @@ class ImageMetrics:
     reset_pos = [0, 0]
 
 
+class SelectROI:
+    draw_color = (255, 0, 0)
+
+    def __init__(self):
+        # Our ROI, defined by two points
+        self.rectangle_tl, self.rectangle_br = (0, 0), (0, 0)
+        # True while ROI is actively being drawn by mouse
+        self.drawing = False
+        # True while ROI is drawn but is pending use or cancel
+        self.show_drawing = False
+
+    def on_mouse(self, event, x, y, flags, userdata):
+        # logger.debug(event, x,y)
+        if event == cv2.EVENT_LBUTTONDOWN:
+            # Left click down (select first point)
+            self.drawing = self.show_drawing = True
+            self.rectangle_tl = self.rectangle_br = x, y
+        elif event == cv2.EVENT_MOUSEMOVE:
+            # Drag to second point
+            if self.drawing:
+                self.rectangle_br = x, y
+        elif event == cv2.EVENT_LBUTTONUP:
+            # Left click up (select second point)
+            self.drawing = False
+            self.rectangle_br = x, y
+
+    def run_selector_gui(self, name, image_to_show):
+        # Make a copy for drawing ROIs
+        image_copy = image_to_show.copy()
+        cv2.imshow(name, image_copy)
+
+        while True:
+            if self.drawing:
+                # Reset to source image
+                image_copy = image_to_show.copy()
+                tl = self.rectangle_tl
+
+                # TODO: debug the GUI lag here -
+                # tl, br = self.rectangle_tl, self.rectangle_br
+                # if tl != br:
+                #     tl, br = ImageUtils.clip_area_to_image_bounds([tl, br], image_copy)
+                #     # Re-draw the rectangle
+                #     cv2.rectangle(image_copy, tl, br, SelectROI.draw_color, 2)
+
+                DrawingUtils.draw_symbol(image_copy, "x", tl, tl)
+                DrawingUtils.draw_text(image_copy, str(tl), tl)
+
+                cv2.imshow(name, image_copy)
+
+            pressed = cv2.waitKey(1)
+            if pressed in [WAIT_KEYS.ENTER, WAIT_KEYS.SPACE]:
+                # Pressed Enter or Space to use ROI
+                self.drawing = False
+                self.show_drawing = False
+                # here do something with ROI points values (rectangle_tl and rectangle_br)
+            elif pressed in [ord("c"), ord("C"), WAIT_KEYS.ESCAPE]:
+                # Pressed C or Esc to cancel ROI
+                self.drawing = False
+                self.show_drawing = False
+            elif pressed in [ord("q"), ord("Q")]:
+                # Pressed Q to exit
+                break
+
+    def show(self, name, image_to_show):
+        # Enable status bar in the named window window
+        cv2.namedWindow(name, cv2.WINDOW_GUI_EXPANDED)
+
+        # Register the mouse callback
+        cv2.setMouseCallback(name, self.on_mouse)
+
+        # Run the GUI
+        self.run_selector_gui(name, image_to_show)
+
+
 class InteractionUtils:
     """Perform primary functions such as displaying images and reading responses"""
 
     image_metrics = ImageMetrics()
+
+    select_roi = SelectROI()
 
     @staticmethod
     def show(
@@ -49,6 +127,9 @@ class InteractionUtils:
         else:
             image_to_show = image
 
+        # Enable status bar in the named window window
+        cv2.namedWindow(name, cv2.WINDOW_GUI_EXPANDED)
+        # Show the image in the named window
         cv2.imshow(name, image_to_show)
 
         if reset_pos:
@@ -89,6 +170,9 @@ class InteractionUtils:
             InteractionUtils.image_metrics.window_x = 0
             InteractionUtils.image_metrics.window_y = 0
 
+    def show_for_roi(name, image_to_show):
+        InteractionUtils.select_roi.show(name, image_to_show)
+
 
 class Stats:
     # TODO Fill these for stats
@@ -100,8 +184,7 @@ class Stats:
 
 
 def close_all_on_wait_key(key="q"):
-    esc_key = 27
-    while cv2.waitKey(1) & 0xFF not in [ord(key), esc_key]:
+    while cv2.waitKey(1) & 0xFF not in [ord(key), WAIT_KEYS.ESCAPE]:
         pass
     cv2.destroyAllWindows()
     # also close open plots!

@@ -367,7 +367,7 @@ EVALUATION_SCHEMA = {
         "additionalProperties": False,
         # TODO: check if common_evaluation_schema_properties can be picked and overridden using a $ref
         **common_evaluation_schema_properties,
-        "conditionalSets": {
+        "conditional_sets": {
             "description": "An array of answer sets with their conditions. These will override the default values in case of any conflict",
             "type": "array",
             "items": {
@@ -399,7 +399,7 @@ EVALUATION_SCHEMA = {
                         # Note: even outputs_configuration is going to be different as per the set, allowing custom colors for different sets!
                         "description": "The custom evaluation schema to apply if given matcher is satisfied",
                         "type": "object",
-                        "required": ["source_type", "options", "marking_schemes"],
+                        # "required": ["source_type", "options", "marking_schemes"],
                         "additionalProperties": False,
                         "properties": {
                             **common_evaluation_schema_properties,

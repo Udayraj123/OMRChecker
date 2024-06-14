@@ -1,4 +1,5 @@
 import matplotlib
+import numpy as np
 from dotmap import DotMap
 
 # Filenames
@@ -46,5 +47,15 @@ CLR_LIGHT_GRAY = (200, 200, 200)
 CLR_GREEN = (100, 200, 100)
 CLR_WHITE = (255, 255, 255)
 MARKED_TEMPLATE_TRANSPARENCY = 0.65
+hsv_white_low, hsv_white_high = np.array([0, 0, 100]), np.array([180, 150, 255])
 
 MATPLOTLIB_COLORS = matplotlib.colors.get_named_colors_mapping()
+
+WAIT_KEYS = DotMap(
+    {
+        "ENTER": 13,
+        "ESCAPE": 27,
+        "SPACE": 32,
+    },
+    _dynamic=False,
+)

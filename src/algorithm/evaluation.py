@@ -130,6 +130,10 @@ class AnswerMatcher:
         elif answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
             return f"Custom Weights: {self.marking}"
 
+    def get_matched_set_name(self):
+        # TODO: pass set's name and marking scheme upto answer matcher
+        return "TODO"
+
     def get_verdict_marking(self, marked_answer):
         answer_type = self.answer_type
         question_verdict = Verdict.NO_ANSWER_MATCH
@@ -236,14 +240,16 @@ class EvaluationConfig:
     def __init__(self, curr_dir, local_evaluation_path, template, tuning_config):
         self.path = local_evaluation_path
         default_evaluation_json = open_evaluation_with_defaults(local_evaluation_path)
-        # .pop() will delete the conditionalSets key from the description if it exists
-        conditional_sets = default_evaluation_json.pop("conditionalSets", [])
+        # .pop() will delete the conditional_sets key from the default json if it exists
+        conditional_sets = default_evaluation_json.pop("conditional_sets", [])
 
         self.conditional_sets = []
         for conditional_set in conditional_sets:
             name, matcher = conditional_set["name"], conditional_set["matcher"]
             self.conditional_sets.append([name, matcher])
         self.validate_conditional_sets()
+
+        self.has_conditional_sets = len(self.conditional_sets) > 0
 
         # TODO: allow default evaluation to not contain any question/answer/config
         self.default_evaluation_config = EvaluationConfigForSet(
@@ -260,10 +266,12 @@ class EvaluationConfig:
                 conditional_set.get, ["name", "evaluation"]
             )
 
+            logger.info("evaluation_json_for_set", evaluation_json_for_set)
+            # Merge two jsons, override the arrays(if any) instead of appending
             merged_evaluation_json = OVERRIDE_MERGER.merge(
                 partial_default_evaluation_json, evaluation_json_for_set
             )
-
+            logger.info("merged_evaluation_json", merged_evaluation_json)
             evaluation_config_for_set = EvaluationConfigForSet(
                 curr_dir,
                 merged_evaluation_json,
@@ -285,7 +293,7 @@ class EvaluationConfig:
         for name, _ in self.conditional_sets:
             if name in all_names:
                 raise Exception(
-                    f"Repeated set name {name} in conditionalSets in the given evaluation.json: {self.path}"
+                    f"Repeated set name {name} in conditional_sets in the given evaluation.json: {self.path}"
                 )
             all_names.add(name)
 
@@ -354,28 +362,35 @@ class EvaluationConfigForSet:
             self.parse_draw_question_verdicts()
 
         self.has_custom_marking = False
+
+        # TODO: Find a place for has_conditional_sets (parent class?)
+        self.has_conditional_sets = True
         self.exclude_files = []
 
         # TODO: separate handlers for these two type
         if source_type == "local":
+            # Assign self answers_in_order so that child configs can refer for merging
             (
-                self.questions_in_order,
-                answers_in_order,
+                local_questions_in_order,
+                local_answers_in_order,
             ) = self.parse_local_question_answers(options)
         elif source_type == "image_and_csv" or source_type == "csv":
-            self.questions_in_order, answers_in_order = self.parse_csv_question_answers(
+            (
+                local_questions_in_order,
+                local_answers_in_order,
+            ) = self.parse_csv_question_answers(
                 curr_dir, options, tuning_config, template
             )
 
         # Merge set's questions with parent questions(if any)
         (
             self.questions_in_order,
-            answers_in_order,
+            self.answers_in_order,
         ) = self.merge_parsed_questions_and_schemes_with_parent(
-            parent_evaluation_config, self.questions_in_order, answers_in_order
+            parent_evaluation_config, local_questions_in_order, local_answers_in_order
         )
 
-        self.validate_questions(answers_in_order)
+        self.validate_questions()
 
         self.set_parsed_marking_schemes(
             marking_schemes, parent_evaluation_config, template
@@ -383,10 +398,8 @@ class EvaluationConfigForSet:
 
         self.validate_marking_schemes()
 
-        self.question_to_answer_matcher = self.parse_answers_and_map_questions(
-            answers_in_order
-        )
-        self.validate_answers(answers_in_order, tuning_config)
+        self.question_to_answer_matcher = self.parse_answers_and_map_questions()
+        self.validate_answers(tuning_config)
         self.reset_evaluation()
         self.validate_format_strings()
 
@@ -537,7 +550,8 @@ class EvaluationConfigForSet:
             "bonus": MathUtils.to_bgr(verdict_symbol_colors["bonus"]),
         }
 
-        self.draw_answer_groups = draw_answer_groups
+        # Shallow copy
+        self.draw_answer_groups = {**draw_answer_groups}
         self.draw_answer_groups["color_sequence"] = list(
             map(MathUtils.to_bgr, draw_answer_groups["color_sequence"])
         )
@@ -548,42 +562,52 @@ class EvaluationConfigForSet:
 
     @staticmethod
     def merge_parsed_questions_and_schemes_with_parent(
-        parent_evaluation_config, questions_in_order, answers_in_order
+        parent_evaluation_config, local_questions_in_order, local_answers_in_order
     ):
         if parent_evaluation_config is None:
-            return questions_in_order, answers_in_order
+            return local_questions_in_order, local_answers_in_order
         parent_questions_in_order, parent_answers_in_order = (
             parent_evaluation_config.questions_in_order,
             parent_evaluation_config.answers_in_order,
         )
         local_question_to_answer_item = {
             question: answer_item
-            for question, answer_item in zip(questions_in_order, answers_in_order)
+            for question, answer_item in zip(
+                local_questions_in_order, local_answers_in_order
+            )
         }
 
         merged_questions_in_order, merged_answers_in_order = [], []
         # Append existing questions from parent
-        for question, answer_item in zip(
+        for parent_question, parent_answer_item in zip(
             parent_questions_in_order, parent_answers_in_order
         ):
-            merged_questions_in_order.append(question)
+            merged_questions_in_order.append(parent_question)
             # override from child set if present
-            if question in local_question_to_answer_item:
-                merged_answers_in_order.append(local_question_to_answer_item[question])
+            if parent_question in local_question_to_answer_item:
+                merged_answers_in_order.append(
+                    local_question_to_answer_item[parent_question]
+                )
             else:
-                merged_answers_in_order.append(answer_item)
+                merged_answers_in_order.append(parent_answer_item)
 
         parent_questions_set = set(parent_questions_in_order)
+
         # Append new questions from child set at the end
-        for question, answer_item in zip(questions_in_order, answers_in_order):
+        for question, answer_item in zip(
+            local_questions_in_order, local_answers_in_order
+        ):
             if question not in parent_questions_set:
                 merged_questions_in_order.append(question)
                 merged_answers_in_order.append(answer_item)
 
         return merged_questions_in_order, merged_answers_in_order
 
-    def validate_questions(self, answers_in_order):
-        questions_in_order = self.questions_in_order
+    def validate_questions(self):
+        questions_in_order, answers_in_order = (
+            self.questions_in_order,
+            self.answers_in_order,
+        )
 
         # for question, answer in zip(questions_in_order, answers_in_order):
         #     if question in template.custom_labels:
@@ -668,7 +692,8 @@ class EvaluationConfigForSet:
                 f"Some questions are missing in the answer key for the given marking scheme(s)"
             )
 
-    def parse_answers_and_map_questions(self, answers_in_order):
+    def parse_answers_and_map_questions(self):
+        answers_in_order = self.answers_in_order
         question_to_answer_matcher = {}
         for question, answer_item in zip(self.questions_in_order, answers_in_order):
             section_marking_scheme = self.get_marking_scheme_for_question(question)
@@ -685,8 +710,11 @@ class EvaluationConfigForSet:
     def get_marking_scheme_for_question(self, question):
         return self.question_to_scheme.get(question, self.default_marking_scheme)
 
-    def validate_answers(self, answers_in_order, tuning_config):
-        answer_matcher_map = self.question_to_answer_matcher
+    def validate_answers(self, tuning_config):
+        answer_matcher_map, answers_in_order = (
+            self.question_to_answer_matcher,
+            self.answers_in_order,
+        )
         if tuning_config.outputs.filter_out_multimarked_files:
             contains_multi_marked_answer = False
             for question, answer_item in zip(self.questions_in_order, answers_in_order):
@@ -732,11 +760,13 @@ class EvaluationConfigForSet:
     def prepare_and_validate_omr_response(self, omr_response):
         self.reset_evaluation()
 
-        omr_response_questions = set(omr_response.keys())
+        omr_response_keys = set(omr_response.keys())
         all_questions = set(self.questions_in_order)
-        missing_questions = sorted(all_questions.difference(omr_response_questions))
+        missing_questions = sorted(all_questions.difference(omr_response_keys))
         if len(missing_questions) > 0:
-            logger.critical(f"Missing OMR response for: {missing_questions}")
+            logger.critical(
+                f"Missing OMR response for: {missing_questions} in omr response keys: {omr_response_keys}"
+            )
             raise Exception(
                 f"Some question keys are missing in the OMR response for the given answer key"
             )
@@ -795,6 +825,11 @@ class EvaluationConfigForSet:
                     (
                         answer_matcher.get_section_explanation()
                         if self.has_custom_marking
+                        else None
+                    ),
+                    (
+                        answer_matcher.get_matched_set_name()
+                        if self.has_conditional_sets
                         else None
                     ),
                 ]
@@ -867,6 +902,8 @@ class EvaluationConfigForSet:
         # TODO: Add max and min score in explanation (row-wise and total)
         if self.has_custom_marking:
             table.add_column("Marking Scheme")
+        if self.has_conditional_sets:
+            table.add_column("Set Mapping")
         self.explanation_table = table
 
     def get_evaluation_meta_for_question(

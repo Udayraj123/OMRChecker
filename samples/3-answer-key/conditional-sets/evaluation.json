@@ -1,0 +1,63 @@
+{
+  "source_type": "local",
+  "options": {
+    "questions_in_order": [
+      "q1..20"
+    ],
+    "answers_in_order": [
+      "B",
+      "D",
+      "A",
+      "B",
+      "B",
+      "C",
+      "C",
+      "D",
+      "B",
+      "A",
+      "2",
+      "9",
+      "2",
+      "9",
+      "0",
+      "9",
+      "5",
+      "0",
+      "8",
+      "3"
+    ]
+  },
+  "marking_schemes": {
+    "DEFAULT": {
+      "correct": "1",
+      "incorrect": "0",
+      "unmarked": "0"
+    }
+  },
+  "outputs_configuration": {
+    "should_explain_scoring": true
+  },
+  "conditional_sets": [
+    {
+      "name": "set-B",
+      "matcher": {
+        "formatString": "{q21}",
+        "matchRegex": "B"
+      },
+      "evaluation": {
+        "source_type": "local",
+        "options": {
+          "questions_in_order": [],
+          "answers_in_order": []
+        },
+        "marking_schemes": {
+          "DEFAULT": {
+            "correct": "3",
+            "incorrect": "-1",
+            "unmarked": "0"
+          }
+        }
+      }
+    }
+  ]
+}
