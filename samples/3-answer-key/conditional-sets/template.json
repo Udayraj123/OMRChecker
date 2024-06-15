@@ -38,7 +38,7 @@
     "Roll": [
       "Squad",
       "Medium",
-      "FNCode",
+      "RNCode",
       "roll1..9"
     ],
     "q11": [
@@ -117,10 +117,10 @@
         "Medium"
       ]
     },
-    "FNCode": {
+    "RNCode": {
       "fieldType": "CUSTOM",
       "bubbleValues": [
-        "F",
+        "R",
         "N"
       ],
       "direction": "vertical",
@@ -131,7 +131,7 @@
       "bubblesGap": 40.95,
       "labelsGap": 0,
       "fieldLabels": [
-        "FNCode"
+        "RNCode"
       ]
     },
     "Roll": {

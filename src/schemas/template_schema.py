@@ -412,6 +412,7 @@ TEMPLATE_SCHEMA = {
                 "field_string_type",
                 "positive_integer",
                 "positive_number",
+                "two_integers",
                 "two_positive_integers",
                 "two_positive_numbers",
                 "zero_to_one_number",
@@ -905,6 +906,10 @@ TEMPLATE_SCHEMA = {
                     },
                 ],
             },
+        },
+        "fieldBlocksOffset": {
+            "$ref": "#/$def/two_integers",
+            "description": "The offset to apply for each field block. This makes changing pointsSelectors convenient on a ready template",
         },
         "fieldBlocks": {
             "$ref": "#/$def/many_field_blocks_description",

@@ -37,6 +37,7 @@ class Template:
             self.template_dimensions,
             self.options,
             self.output_image_shape,
+            self.field_blocks_offset,
         ) = map(
             json_object.get,
             [
@@ -49,6 +50,7 @@ class Template:
                 "templateDimensions",
                 "options",
                 "outputImageShape",
+                "fieldBlocksOffset",
                 # TODO: support for "sortFiles" key
             ],
         )
@@ -167,7 +169,9 @@ class Template:
 
     def parse_and_add_field_block(self, block_name, field_block_object):
         field_block_object = self.pre_fill_field_block(field_block_object)
-        block_instance = FieldBlock(block_name, field_block_object)
+        block_instance = FieldBlock(
+            block_name, field_block_object, self.field_blocks_offset
+        )
         # TODO: support custom field types like Barcode and OCR
         self.field_blocks.append(block_instance)
         self.validate_parsed_labels(field_block_object["fieldLabels"], block_instance)
@@ -245,11 +249,11 @@ class Template:
 
 
 class FieldBlock:
-    def __init__(self, block_name, field_block_object):
+    def __init__(self, block_name, field_block_object, field_blocks_offset):
         self.name = block_name
         # TODO: Move plot_bin_name into child class
         self.plot_bin_name = block_name
-        self.setup_field_block(field_block_object)
+        self.setup_field_block(field_block_object, field_blocks_offset)
         self.shifts = [0, 0]
 
     # Need this at runtime as we have allowed mutation of template via pre-processors
@@ -273,7 +277,7 @@ class FieldBlock:
             ]
         }
 
-    def setup_field_block(self, field_block_object):
+    def setup_field_block(self, field_block_object, field_blocks_offset):
         # case mapping
         (
             bubble_dimensions,
@@ -302,7 +306,8 @@ class FieldBlock:
         self.parsed_field_labels = parse_fields(
             f"Field Block Labels: {self.name}", field_labels
         )
-        self.origin = origin
+        offset_x, offset_y = field_blocks_offset
+        self.origin = [origin[0] + offset_x, origin[1] + offset_y]
         self.bubble_dimensions = bubble_dimensions
         # TODO: support barcode, ocr, etc custom field types
         self.field_type = field_type
@@ -342,6 +347,7 @@ class FieldBlock:
             if (direction == "vertical")
             else [values_dimension, fields_dimension]
         )
+        # TODO: validate for field block overflow outside template dimensions
 
     def generate_bubble_grid(
         self,

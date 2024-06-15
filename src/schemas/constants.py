@@ -77,6 +77,19 @@ ALL_COMMON_DEFS = {
     },
     "positive_number": {"type": "number", "minimum": 0},
     "positive_integer": {"type": "integer", "minimum": 0},
+    "two_integers": {
+        "type": "array",
+        "prefixItems": [
+            {
+                "type": "integer",
+            },
+            {
+                "type": "integer",
+            },
+        ],
+        "maxItems": 2,
+        "minItems": 2,
+    },
     "two_positive_integers": {
         "type": "array",
         "prefixItems": [

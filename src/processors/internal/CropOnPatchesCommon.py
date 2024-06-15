@@ -8,6 +8,7 @@ from src.processors.constants import (
     TARGET_ENDPOINTS_FOR_EDGES,
     EdgeType,
     ScannerType,
+    SelectorType,
     WarpMethod,
 )
 from src.processors.internal.WarpOnPointsCommon import WarpOnPointsCommon
@@ -30,7 +31,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         options = self.options
         # Default to select centers for roi
         self.default_points_selector = self.default_points_selector_map[
-            options.get("defaultSelector", "CENTERS")
+            options.get("defaultSelector")
         ]
 
     def exclude_files(self):
@@ -241,7 +242,11 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
     def find_and_select_point_from_dot(self, image, area_description, file_path):
         area_label = area_description["label"]
         points_selector = area_description.get(
-            "selector", self.default_points_selector.get(area_label, None)
+            "selector",
+            self.default_points_selector.get(area_label, SelectorType.SELECT_CENTER),
+        )
+        logger.warning(
+            area_label, points_selector, area_description, self.default_points_selector
         )
 
         dot_rect = self.find_dot_corners_from_options(

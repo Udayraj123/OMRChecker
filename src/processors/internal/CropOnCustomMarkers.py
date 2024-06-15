@@ -28,7 +28,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         **{
             area_template: {
                 "scannerType": ScannerType.TEMPLATE_MATCH,
-                "selector": "SELECT_CENTER",
+                # "selector": "SELECT_CENTER",
                 "maxPoints": 2,  # for cropping
                 # Note: all 4 margins are a required property for a patch area
             }
@@ -90,6 +90,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         tuning_options = options.get("tuningOptions", {})
         # Note: options["tuningOptions"] is accessible in self.tuning_options at Processor level
         parsed_options = {
+            "defaultSelector": options.get("defaultSelector", "CENTERS"),
             "pointsLayout": layout_type,
             "enableCropping": True,
             "tuningOptions": {
@@ -295,7 +296,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 "bottom": margin_vertical,
                 "left": margin_horizontal,
             },
-            "selector": "SELECT_CENTER",
+            # "selector": "SELECT_CENTER",
             "scannerType": "TEMPLATE_MARKER",
         }
 
