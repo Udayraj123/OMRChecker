@@ -7,7 +7,7 @@ from src.processors.constants import (
     WarpMethodFlags,
 )
 from src.schemas.constants import load_common_defs
-from src.utils.constants import BUILTIN_FIELD_TYPES
+from src.utils.constants import BUILTIN_FIELD_TYPES, CUSTOM_FIELD_TYPE
 
 margins_schema_def = {
     "description": "The margins to use around a box",
@@ -288,20 +288,11 @@ _common_field_block_properties = {
     "fieldType": {
         "description": "The field type to use from a list of ready-made types as well as the custom type",
         "type": "string",
-        "enum": [*list(BUILTIN_FIELD_TYPES.keys()), "CUSTOM", "BARCODE", "OCR"],
+        # Note: moved enum validation into setup code
     },
 }
 
-_traditional_field_block_properties = {
-    **_common_field_block_properties,
-    "bubbleDimensions": {
-        "$ref": "#/$def/two_positive_numbers",
-        "description": "The custom dimensions for the bubbles in the current field block: [width, height]",
-    },
-    "bubblesGap": {
-        "$ref": "#/$def/positive_number",
-        "description": "The gap between two bubbles(top-left to top-left) in the current field block",
-    },
+_field_type_properties = {
     "bubbleValues": {
         "$ref": "#/$def/array_of_strings",
         "description": "The ordered array of values to use for given bubbles per field in this field block",
@@ -310,6 +301,19 @@ _traditional_field_block_properties = {
         "description": "The direction of expanding the bubbles layout in this field block",
         "type": "string",
         "enum": ["horizontal", "vertical"],
+    },
+}
+
+_traditional_field_block_properties = {
+    **_common_field_block_properties,
+    **_field_type_properties,
+    "bubbleDimensions": {
+        "$ref": "#/$def/two_positive_numbers",
+        "description": "The custom dimensions for the bubbles in the current field block: [width, height]",
+    },
+    "bubblesGap": {
+        "$ref": "#/$def/positive_number",
+        "description": "The gap between two bubbles(top-left to top-left) in the current field block",
     },
     "fieldLabels": {
         "description": "The ordered array of labels to use for given fields in this field block",
@@ -340,6 +344,7 @@ many_field_blocks_description_def = {
                 "bubblesGap",
                 "labelsGap",
                 "fieldLabels",
+                "fieldType",
             ],
             "properties": _common_field_block_properties,
             "allOf": [
@@ -361,7 +366,7 @@ many_field_blocks_description_def = {
                 },
                 {
                     "if": {
-                        "properties": {"fieldType": {"const": "CUSTOM"}},
+                        "properties": {"fieldType": {"const": CUSTOM_FIELD_TYPE}},
                         "required": [
                             "bubbleValues",
                             "direction",
@@ -905,6 +910,21 @@ TEMPLATE_SCHEMA = {
                         },
                     },
                 ],
+            },
+        },
+        "customFieldTypes": {
+            "type": "object",
+            "patternProperties": {
+                "^CUSTOM_.*$": {
+                    "description": "The key is a unique name for the custom field type. It can override built-in field types as well.",
+                    "type": "object",
+                    "required": [
+                        "bubbleValues",
+                        "direction",
+                    ],
+                    "additionalProperties": False,
+                    "properties": _field_type_properties,
+                },
             },
         },
         "fieldBlocksOffset": {

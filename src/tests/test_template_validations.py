@@ -65,10 +65,7 @@ def test_invalid_field_type(mocker):
 
     print("\nExpecting invalid template json error logs:")
     _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
-    assert (
-        str(exception)
-        == f"Provided Template JSON is Invalid: '{BASE_SAMPLE_TEMPLATE_PATH}'"
-    )
+    assert str(exception) == f"Invalid field type: X in block MCQ_Block_1"
 
 
 def test_overflow_labels(mocker):

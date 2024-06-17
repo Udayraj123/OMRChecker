@@ -31,10 +31,10 @@ BUILTIN_FIELD_TYPES = {
         "bubbleValues": ["A", "B", "C", "D", "E"],
         "direction": "horizontal",
     },
-    #
-    # You can create and append custom field types here-
-    #
+    # Note: you can put custom field types in template.json in the "customFieldTypes" key.
 }
+
+CUSTOM_FIELD_TYPE = "CUSTOM"
 
 # TODO: Move TEXT_SIZE, etc into a class
 TEXT_SIZE = 0.95

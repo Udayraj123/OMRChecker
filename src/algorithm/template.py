@@ -9,7 +9,7 @@
 
 from src.algorithm.core import ImageInstanceOps
 from src.processors.manager import PROCESSOR_MANAGER
-from src.utils.constants import BUILTIN_FIELD_TYPES
+from src.utils.constants import BUILTIN_FIELD_TYPES, CUSTOM_FIELD_TYPE
 from src.utils.file import SaveImageOps
 from src.utils.logger import logger
 from src.utils.parsing import (
@@ -38,6 +38,7 @@ class Template:
             self.options,
             self.output_image_shape,
             self.field_blocks_offset,
+            custom_field_types,
         ) = map(
             json_object.get,
             [
@@ -51,9 +52,11 @@ class Template:
                 "options",
                 "outputImageShape",
                 "fieldBlocksOffset",
+                "customFieldTypes",
                 # TODO: support for "sortFiles" key
             ],
         )
+
         page_width, page_height = self.template_dimensions
 
         self.processing_image_shape = json_object.get(
@@ -62,7 +65,11 @@ class Template:
 
         self.parse_output_columns(output_columns_array)
         self.setup_pre_processors(pre_processors_object, template_path.parent)
+
+        self.parse_custom_field_types(custom_field_types)
+        self.validate_field_blocks(field_blocks_object)
         self.setup_field_blocks(field_blocks_object)
+
         self.parse_custom_labels(custom_labels_object)
 
         non_custom_columns, all_custom_columns = (
@@ -93,6 +100,29 @@ class Template:
                 default_processing_image_shape=self.processing_image_shape,
             )
             self.pre_processors.append(pre_processor_instance)
+
+    def parse_custom_field_types(self, custom_field_types):
+        if custom_field_types is None:
+            self.field_types_data = BUILTIN_FIELD_TYPES
+        else:
+            self.field_types_data = {
+                **BUILTIN_FIELD_TYPES,
+                **custom_field_types,
+            }
+
+    def validate_field_blocks(self, field_blocks_object):
+        for block_name, field_block_object in field_blocks_object.items():
+            field_type = field_block_object["fieldType"]
+            if (
+                field_type not in self.field_types_data
+                and field_type != CUSTOM_FIELD_TYPE
+            ):
+                logger.critical(
+                    f"Cannot find definition for {field_type} in customFieldTypes"
+                )
+                raise Exception(
+                    f"Invalid field type: {field_type} in block {block_name}"
+                )
 
     def setup_field_blocks(self, field_blocks_object):
         # Add field_blocks
@@ -177,18 +207,19 @@ class Template:
         self.validate_parsed_labels(field_block_object["fieldLabels"], block_instance)
 
     def pre_fill_field_block(self, field_block_object):
-        field_type = field_block_object.get("fieldType", "CUSTOM")
+        field_type = field_block_object["fieldType"]
         #  TODO: support for if field_type == "BARCODE":
 
-        if field_type in BUILTIN_FIELD_TYPES:
+        if field_type in self.field_types_data:
+            field_type_data = self.field_types_data[field_type]
             field_block_object = {
                 **field_block_object,
-                **BUILTIN_FIELD_TYPES[field_type],
+                **field_type_data,
             }
 
         return {
             "fieldType": field_type,
-            "direction": "vertical",
+            # "direction": "vertical",
             "emptyValue": self.global_empty_val,
             "bubbleDimensions": self.bubble_dimensions,
             **field_block_object,
