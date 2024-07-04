@@ -56,7 +56,8 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
         # Convert images to grayscale
         # im1Gray = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
         # im2Gray = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
-
+        if self.tuning_config.outputs.show_preview:
+            InteractionUtils.show("Before feature based alignment",image)
         image = cv2.normalize(image, 0, 255, norm_type=cv2.NORM_MINMAX)
 
         # Detect Oriented Fast and Rotated Brief (ORB) features and compute descriptors.
@@ -114,5 +115,8 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
 
             if config.outputs.colored_outputs_enabled:
                 colored_image = cv2.warpPerspective(colored_image, h, (width, height))
+
+        if config.outputs.show_preview:
+            InteractionUtils.show("FeatureBasedAlignment",image)
 
         return warped_image, colored_image, _template

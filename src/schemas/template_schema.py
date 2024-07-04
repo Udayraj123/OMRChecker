@@ -436,6 +436,7 @@ TEMPLATE_SCHEMA = {
     ],
     "additionalProperties": False,
     "properties": {
+        "output":{"type": "boolean"},
         "bubbleDimensions": {
             "$ref": "#/$def/two_positive_numbers",
             "description": "The default dimensions for the bubbles in the template overlay: [width, height]",

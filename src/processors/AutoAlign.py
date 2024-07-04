@@ -30,27 +30,29 @@ class AutoAlign(ImageTemplatePreprocessor):
         best_val,best_rotation=max_val,None
         rotations=[cv2.ROTATE_90_CLOCKWISE,cv2.ROTATE_180,cv2.ROTATE_90_COUNTERCLOCKWISE]
         values=[best_val]
-        for angle in range(0,20,5):
-            logger.info(angle)
-            logger.info("SHOW SOMETHING HERE")
-            reference_image=self.rotate_image(self.reference_image,angle)
-            InteractionUtils.show("reference",reference_image,pause=True)
-            for rotation in rotations:
-                rotated_img=cv2.rotate(image,rotation)
-                res=cv2.matchTemplate(rotated_img,reference_image,cv2.TM_CCOEFF)
-                min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-                logger.info(rotation,max_val)
-                if max_val>best_val:
-                    best_val=max_val
-                    best_rotation=rotation
-                    values.append(max_val)
-        logger.info("AutoRotate Applied with rotation",best_rotation,"best value",best_val,"having values",values)
-        # best_rotation=self.get_best_match(image)
-        if best_rotation is None:
-            return image,colored_image,_template
         
+        # image_path=str(file_path)+str(file_path).split("\\")[-1]
+        # ImageUtils.save_img(str(image_path),image)
+        if self.tuning_config.outputs.show_preview:
+            InteractionUtils.show("Before AutoAlign",image)
+        for rotation in rotations:
+            rotated_img=cv2.rotate(image,rotation)
+            res=cv2.matchTemplate(rotated_img,self.reference_image,cv2.TM_CCOEFF)
+            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+            logger.info(rotation,max_val)
+            if max_val>best_val:
+                best_val=max_val
+                best_rotation=rotation
+                values.append(max_val)
+        logger.info("AutoRotate Applied with rotation",best_rotation,"best value",best_val,"having values",values)
+        if best_rotation is None:
+            if self.tuning_config.outputs.show_preview:
+                InteractionUtils.show("AutoAlign",image)
+            return image,colored_image,_template
         image=cv2.rotate(image,best_rotation)
         colored_image=cv2.rotate(colored_image,best_rotation)
+        if self.tuning_config.outputs.show_preview:
+            InteractionUtils.show("AutoAlign",image)
         return image,colored_image,_template
     
     def exclude_files(self):
@@ -91,16 +93,21 @@ class AutoAlign(ImageTemplatePreprocessor):
                 u_width=int(self.reference_image.shape[0] * applied_scale),
                 u_height=int(self.reference_image.shape[1] * applied_scale),
                 )
-            for rotation in rotations:
-                rotated_img=image
-                if rotation is not None:
+            for angle in range(0,20,5):
+                logger.info(angle)
+                logger.info("SHOW SOMETHING HERE")
+                reference_image=self.rotate_image(self.reference_image,angle)
+                InteractionUtils.show("reference",reference_image,pause=True)
+                for rotation in rotations:
                     rotated_img=cv2.rotate(image,rotation)
-                res=cv2.matchTemplate(rotated_img,rescaled_marker,cv2.TM_CCOEFF)
-                min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-                if max_val>best_val:
-                    best_val=max_val
-                    best_rotation=rotation
-                    values.append(max_val)
+                    res=cv2.matchTemplate(rotated_img,reference_image,cv2.TM_CCOEFF)
+                    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+                    logger.info(rotation,max_val)
+                    if max_val>best_val:
+                        best_val=max_val
+                        best_rotation=rotation
+                        values.append(max_val)
+        logger.info("AutoRotate Applied with rotation",best_rotation,"best value",best_val,"having values",values)
         logger.info("AutoRotate Applied with rotation",best_rotation,"having value",best_val,"having values",values)
         return best_rotation
             

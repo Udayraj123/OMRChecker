@@ -134,6 +134,10 @@ CONFIG_SCHEMA = {
                     "description": "This option moves files having multi-marked responses into a separate folder for manual checking, skipping evaluation",
                     "type": "boolean",
                 },
+                "show_preview":{
+                    "description": "This option shows a preview of the processed image for every preprocessor",
+                    "type":"boolean"
+                }
             },
         },
     },
