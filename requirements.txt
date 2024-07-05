@@ -10,6 +10,6 @@ screeninfo==0.8.1
 scipy==1.12.0
 shapely==2.0.3
 # Note: opencv is excluded from requirements.txt because the installation steps
-# may be different as per your OS. Windows/MacOS users can uncomment the following
-# opencv-python==4.9.0.80
-# opencv-contrib-python==4.9.0.80
+# may be different as per your OS. Linux users may want to comment the following two lines
+opencv-python==4.9.0.80
+opencv-contrib-python==4.9.0.80
