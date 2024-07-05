@@ -12,6 +12,7 @@ from src.utils.constants import (
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
+from src.utils.logger import logger
 
 
 class TemplateDrawing:
@@ -26,12 +27,12 @@ class TemplateDrawing:
         colored_final_marked = colored_image
         if config.outputs.colored_outputs_enabled:
             save_marked_dir = kwargs.get("save_marked_dir", None)
+            # TODO: get dedicated path from top args
             kwargs["save_marked_dir"] = (
                 save_marked_dir.joinpath("colored")
                 if save_marked_dir is not None
                 else None
             )
-            template.save_image_ops.reset_all_save_img()
 
             colored_final_marked = TemplateDrawing.draw_template_layout_util(
                 colored_final_marked,
@@ -65,6 +66,10 @@ class TemplateDrawing:
                 config=config,
             )
 
+        template.save_image_ops.append_save_image(
+            "Marked Template", range(1, 7), final_marked, colored_final_marked
+        )
+
         return final_marked, colored_final_marked
 
     @staticmethod
@@ -84,6 +89,7 @@ class TemplateDrawing:
         marked_image = ImageUtils.resize_to_dimensions(
             image, template.template_dimensions
         )
+
         transparent_layer = marked_image.copy()
         should_draw_field_block_rectangles = field_number_to_field_bubble_means is None
         should_draw_marked_bubbles = field_number_to_field_bubble_means is not None
@@ -92,9 +98,7 @@ class TemplateDrawing:
         )
 
         should_save_detections = (
-            (image_type == "COLORED" or image_type == "GRAYSCALE")
-            and config.outputs.save_detections
-            and save_marked_dir is not None
+            config.outputs.save_detections and save_marked_dir is not None
         )
 
         if should_draw_field_block_rectangles:
@@ -103,35 +107,49 @@ class TemplateDrawing:
             )
             return marked_image
 
-        # TODO: move indent into smaller function
         if should_draw_marked_bubbles:
+            if config.outputs.save_image_level >= 1:
+                marked_image_copy = marked_image.copy()
+                marked_image_copy = (
+                    TemplateDrawing.draw_marked_bubbles_with_evaluation_meta(
+                        marked_image_copy,
+                        image_type,
+                        template,
+                        field_number_to_field_bubble_means,
+                        evaluation_meta=None,
+                        evaluation_config_for_set=None,
+                    )
+                )
+                if image_type == "GRAYSCALE":
+                    template.save_image_ops.append_save_image(
+                        f"Marked Image", range(2, 7), marked_image_copy
+                    )
+                else:
+                    template.save_image_ops.append_save_image(
+                        f"Marked Image", range(2, 7), colored_image=marked_image_copy
+                    )
+
             marked_image = TemplateDrawing.draw_marked_bubbles_with_evaluation_meta(
                 marked_image,
                 image_type,
                 template,
+                field_number_to_field_bubble_means,
                 evaluation_meta,
                 evaluation_config_for_set,
-                field_number_to_field_bubble_means,
             )
 
         if should_save_detections:
-            # TODO: migrate support for multi_marked bucket based on identifier config
+            # TODO: migrate after support for multi_marked bucket based on identifier config
             # if multi_roll:
             #     save_marked_dir = save_marked_dir.joinpath("_MULTI_")
             image_path = str(save_marked_dir.joinpath(file_id))
+            logger.info(f"Saving Image to '{image_path}'")
             ImageUtils.save_img(image_path, marked_image)
-
-        # if config.outputs.colored_outputs_enabled:
-        # TODO: add colored counterparts
 
         if should_draw_question_verdicts:
             marked_image = TemplateDrawing.draw_evaluation_summary(
                 marked_image, evaluation_meta, evaluation_config_for_set
             )
-
-        # Prepare save images
-        if should_save_detections:
-            template.save_image_ops.append_save_image(2, marked_image)
 
         # Translucent
         cv2.addWeighted(
@@ -142,12 +160,6 @@ class TemplateDrawing:
             0,
             marked_image,
         )
-
-        if should_save_detections:
-            for i in range(config.outputs.save_image_level):
-                template.save_image_ops.save_image_stacks(
-                    i + 1, file_id, save_marked_dir
-                )
 
         return marked_image
 
@@ -208,9 +220,9 @@ class TemplateDrawing:
         marked_image,
         image_type,
         template,
+        field_number_to_field_bubble_means,
         evaluation_meta,
         evaluation_config_for_set,
-        field_number_to_field_bubble_means,
     ):
         should_draw_question_verdicts = (
             evaluation_meta is not None and evaluation_config_for_set is not None

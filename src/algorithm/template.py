@@ -20,6 +20,7 @@ from src.utils.parsing import (
 )
 
 
+# TODO: make a child class TemplateLayout to keep template only about the layouts & json data?
 class Template:
     def __init__(self, template_path, tuning_config):
         self.path = template_path
@@ -85,7 +86,6 @@ class Template:
     def parse_output_columns(self, output_columns_array):
         self.output_columns = parse_fields(f"Output Columns", output_columns_array)
 
-    # TODO: make a child class TemplateLayout to keep template only about the layouts & json data?
     def setup_pre_processors(self, pre_processors_object, relative_dir):
         # load image pre_processors
         self.pre_processors = []
@@ -207,7 +207,7 @@ class Template:
         self.validate_parsed_labels(field_block_object["fieldLabels"], block_instance)
 
     def pre_fill_field_block(self, field_block_object):
-        field_type = field_block_object["fieldType"]
+        field_type = field_block_object.get("fieldType", CUSTOM_FIELD_TYPE)
         #  TODO: support for if field_type == "BARCODE":
 
         if field_type in self.field_types_data:

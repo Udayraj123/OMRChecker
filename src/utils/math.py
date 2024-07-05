@@ -10,7 +10,6 @@ from src.utils.logger import logger
 class MathUtils:
     """A Static-only Class to hold common math utilities & wrappers for easy integration with OpenCV and OMRChecker"""
 
-    # TODO: move into math utils
     @staticmethod
     def distance(point1, point2):
         return math.hypot(point1[0] - point2[0], point1[1] - point2[1])
@@ -131,3 +130,8 @@ class MathUtils:
     def to_bgr(any_color):
         r, g, b = tuple(int(x * 255) for x in colors.to_rgb(any_color))
         return (b, g, r)
+
+    @staticmethod
+    def chunks(list, chunk_size):
+        chunk_size = max(1, chunk_size)
+        return (list[i : i + chunk_size] for i in range(0, len(list), chunk_size))

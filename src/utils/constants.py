@@ -34,7 +34,7 @@ BUILTIN_FIELD_TYPES = {
     # Note: you can put custom field types in template.json in the "customFieldTypes" key.
 }
 
-CUSTOM_FIELD_TYPE = "CUSTOM"
+CUSTOM_FIELD_TYPE = "CUSTOM_BUBBLES"
 
 # TODO: Move TEXT_SIZE, etc into a class
 TEXT_SIZE = 0.95

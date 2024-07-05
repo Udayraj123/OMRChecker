@@ -17,7 +17,7 @@ CONFIG_SCHEMA = {
             "type": "object",
             "additionalProperties": False,
             "properties": {
-                # TODO: rename these variables for better usability
+                # TODO: rename all of these variables for better usability
                 "MIN_GAP_TWO_BUBBLES": {
                     "description": "Minimum difference between all mean values of the bubbles. Used for local thresholding of 2 or 1 bubbles",
                     "type": "integer",
@@ -29,6 +29,12 @@ CONFIG_SCHEMA = {
                     "type": "integer",
                     "minimum": 10,
                     "maximum": 100,
+                },
+                "MIN_JUMP_STD": {
+                    "description": "The MIN_JUMP for the standard deviation plot",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50,
                 },
                 "MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK": {
                     "description": "This value is added to jump value, underconfident bubbles fallback to global_threshold_for_template",
@@ -48,6 +54,12 @@ CONFIG_SCHEMA = {
                     "minimum": 10,
                     "maximum": 100,
                 },
+                "JUMP_DELTA_STD": {
+                    "description": "JUMP_DELTA_STD is the minimum delta to be considered as a jump in the std plot",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50,
+                },
                 "CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY": {
                     "description": "This value is added to jump value to distinguish safe detections vs underconfident detections",
                     "type": "integer",
@@ -59,6 +71,12 @@ CONFIG_SCHEMA = {
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 255,
+                },
+                "GLOBAL_PAGE_THRESHOLD_STD": {
+                    "description": "This option decides the starting value to use for standard deviation threshold which determines outliers",
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 60,
                 },
                 "GAMMA_LOW": {
                     "description": "Used in the CropOnDotLines processor to create a darker image for enhanced line detection (darker boxes)",

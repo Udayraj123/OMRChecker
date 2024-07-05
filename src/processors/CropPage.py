@@ -60,7 +60,7 @@ class CropPage(WarpOnPointsCommon):
             edge_contours_map,
         ) = ImageUtils.split_patch_contour_on_corners(sheet, page_contour)
 
-        logger.info(f"Found page corners: \t {ordered_page_corners}")
+        logger.debug(f"Found page corners: \t {ordered_page_corners}")
         (
             destination_page_corners,
             _,
@@ -102,11 +102,18 @@ class CropPage(WarpOnPointsCommon):
                 f"Cannot process colored image for CropPage. useColoredCanny is true but colored_outputs_enabled is false."
             )
 
+        _ret, image = cv2.threshold(image, 200, 255, cv2.THRESH_TRUNC)
+        image = ImageUtils.normalize(image)
+        self.append_save_image("Truncate Threshold", [1, 4, 5, 6], image)
+
         if self.use_colored_canny and config.outputs.colored_outputs_enabled:
             hsv = cv2.cvtColor(colored_image, cv2.COLOR_BGR2HSV)
             # Mask image to only select white-ish area
             mask = cv2.inRange(hsv, hsv_white_low, hsv_white_high)
             mask_result = cv2.bitwise_and(image, image, mask=mask)
+            self.append_save_image("Mask Result", range(3, 7), mask_result)
+
+            # TODO: get hsv mask working for colored separation
             # TODO: test this on more samples
             # InteractionUtils.show("hsv", hsv, 0)
             # InteractionUtils.show("colored_image", colored_image, 0)
@@ -115,7 +122,6 @@ class CropPage(WarpOnPointsCommon):
             # TODO: self.append_save_image(2, mask_result)
 
             canny_edge = cv2.Canny(mask_result, 185, 55)
-
         else:
             _ret, image = cv2.threshold(image, 200, 255, cv2.THRESH_TRUNC)
 
@@ -124,12 +130,14 @@ class CropPage(WarpOnPointsCommon):
             # Close the small holes, i.e. Complete the edges on canny image
             closed = cv2.morphologyEx(image, cv2.MORPH_CLOSE, self.morph_kernel)
 
+            self.append_save_image("Morph Page", range(3, 7), closed)
+
             # TODO: self.append_save_image(2, closed)
 
             # TODO: parametrize these tuning params
             canny_edge = cv2.Canny(closed, 185, 55)
 
-        # TODO: self.append_save_image(3, canny_edge)
+        self.append_save_image("Canny Edges", range(5, 7), canny_edge)
 
         # findContours returns outer boundaries in CW and inner ones, ACW.
         all_contours = ImageUtils.grab_contours(
@@ -161,7 +169,7 @@ class CropPage(WarpOnPointsCommon):
                     self.debug_image, approx, color=CLR_WHITE, thickness=10
                 )
 
-                # TODO: self.append_save_image(2, canny_edge)
+                self.append_save_image("Bounding Contour", range(1, 7), canny_edge)
                 break
 
         if config.outputs.show_image_level >= 6 or (

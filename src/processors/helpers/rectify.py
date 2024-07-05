@@ -112,7 +112,6 @@ def _create_backward_output_map(
         name: transform_line(segments[name], M) for name in segments.keys()
     }
 
-    logger.info("output_shape", output_shape)
     combined_segments = Polygon(linemerge(segments.values()))
 
     # Reshape to match with perspectiveTransform() expected input
@@ -141,7 +140,7 @@ def _create_backward_output_map(
         f"Contours Approx Transform", control_points, destination_points
     )
 
-    logger.info(
+    logger.debug(
         f"Approx Transformed Bounds: ({cropped_page_min_x:.2f},{cropped_page_min_y:.2f}) -> ({cropped_page_max_x:.2f},{cropped_page_max_y:.2f})",
     )
 
@@ -253,8 +252,6 @@ def _create_backward_output_map(
 
     # flip x and y coordinate: first y, then x
     # backward_points_map = np.roll(backward_points_map, shift=1, axis=-1)
-
-    logger.info("backward_points_map.shape", backward_points_map.shape)
     backward_points_map = np.float32(backward_points_map)
     return backward_points_map
 

@@ -341,6 +341,7 @@ class CropOnDotLines(CropOnPatchesCommon):
                     pause=0,
                 )
                 InteractionUtils.show(f"No patch/dot found:", hstack, pause=1)
+
             raise Exception(
                 f"No patch/dot found at origin: {area_description['origin']} with dimensions: {area_description['dimensions']}"
             )
@@ -381,7 +382,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         # Convert to list of 2d points
         bounding_contour = np.vstack(largest_contour).squeeze()
 
-        # TODO: >> see if bounding_hull is still needed
+        # TODO: see if bounding_hull is still needed
         bounding_hull = cv2.convexHull(bounding_contour)
 
         if scanner_type == ScannerType.PATCH_DOT:
