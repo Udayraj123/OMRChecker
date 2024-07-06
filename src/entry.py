@@ -340,27 +340,29 @@ def process_files(
         # TODO: move inner try catch here
         # concatenate roll nos, set unmarked responses, etc
         omr_response = get_concatenated_response(response_dict, template)
-        evaluation_config_for_set = (
+        evaluation_config_for_response = (
             None
             if evaluation_config is None
-            else evaluation_config.get_evaluation_config_for_set(omr_response)
+            else evaluation_config.get_evaluation_config_for_response(
+                omr_response, file_path
+            )
         )
 
         if (
-            evaluation_config_for_set is None
-            or not evaluation_config_for_set.get_should_explain_scoring()
+            evaluation_config_for_response is None
+            or not evaluation_config_for_response.get_should_explain_scoring()
         ):
             logger.info(f"Read Response: \n{omr_response}")
 
         score, evaluation_meta = 0, None
-        if evaluation_config_for_set is not None:
+        if evaluation_config_for_response is not None:
             score, evaluation_meta = evaluate_concatenated_response(
-                omr_response, evaluation_config_for_set
+                omr_response, evaluation_config_for_response
             )
             (
                 default_answers_summary,
                 *_,
-            ) = evaluation_config_for_set.get_formatted_answers_summary(
+            ) = evaluation_config_for_response.get_formatted_answers_summary(
                 DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING
             )
             logger.info(
@@ -384,7 +386,7 @@ def process_files(
             field_number_to_field_bubble_means,
             save_marked_dir=save_marked_dir,
             evaluation_meta=evaluation_meta,
-            evaluation_config_for_set=evaluation_config_for_set,
+            evaluation_config_for_response=evaluation_config_for_response,
         )
 
         # Save output stack images
