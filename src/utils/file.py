@@ -3,6 +3,7 @@ import json
 import os
 from collections import defaultdict
 from csv import QUOTE_NONNUMERIC
+from pathlib import PureWindowsPath
 from time import localtime, strftime
 
 import pandas as pd
@@ -24,6 +25,13 @@ def load_json(path, **rest):
 
 
 class Paths:
+    @staticmethod
+    def to_posix_path(path):
+        path = os.path.normpath(path)
+        if os.path.sep == "\\":
+            path = PureWindowsPath(path).as_posix()
+        return path
+
     def __init__(self, output_dir):
         self.output_dir = output_dir
         self.save_marked_dir = output_dir.joinpath("CheckedOMRs")
@@ -32,7 +40,7 @@ class Paths:
         self.manual_dir = output_dir.joinpath("Manual")
         self.errors_dir = self.manual_dir.joinpath("ErrorFiles")
         self.multi_marked_dir = self.manual_dir.joinpath("MultiMarkedFiles")
-        self.debug_dir=output_dir.joinpath("Debug")
+        self.debug_dir = output_dir.joinpath("Debug")
 
 
 def setup_dirs_for_paths(paths):

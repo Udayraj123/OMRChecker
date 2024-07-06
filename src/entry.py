@@ -304,17 +304,17 @@ def process_files(
 
         if gray_image is None:
             # Error OMR case
-            new_file_path = outputs_namespace.paths.errors_dir.joinpath(file_name)
+            output_file_path = outputs_namespace.paths.errors_dir.joinpath(file_name)
             outputs_namespace.OUTPUT_SET.append(
                 [file_name] + outputs_namespace.empty_resp
             )
             if check_and_move(
-                constants.ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path
+                constants.ERROR_CODES.NO_MARKER_ERR, file_path, output_file_path
             ):
                 err_line = [
                     file_name,
                     file_path,
-                    new_file_path,
+                    output_file_path,
                     "NA",
                 ] + outputs_namespace.empty_resp
                 pd.DataFrame(err_line, dtype=str).T.to_csv(
@@ -416,12 +416,20 @@ def process_files(
             resp_array.append(omr_response[k])
 
         outputs_namespace.OUTPUT_SET.append([file_name] + resp_array)
+        posix_file_path = Paths.to_posix_path(file_path)
 
         if multi_marked == 0 or not tuning_config.outputs.filter_out_multimarked_files:
             STATS.files_not_moved += 1
-            new_file_path = save_marked_dir.joinpath(file_id)
+
+            # Normalize path and convert to posix style
+            output_file_path = Paths.to_posix_path(save_marked_dir.joinpath(file_id))
             # Enter into Results sheet-
-            results_line = [file_name, file_path, new_file_path, score] + resp_array
+            results_line = [
+                file_name,
+                posix_file_path,
+                output_file_path,
+                score,
+            ] + resp_array
             # Write/Append to results_line file(opened in append mode)
             pd.DataFrame(results_line, dtype=str).T.to_csv(
                 outputs_namespace.files_obj["Results"],
@@ -433,11 +441,18 @@ def process_files(
         else:
             # multi_marked file
             logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
-            new_file_path = outputs_namespace.paths.multi_marked_dir.joinpath(file_name)
+            output_file_path = Paths.to_posix_path(
+                outputs_namespace.paths.multi_marked_dir.joinpath(file_name)
+            )
             if check_and_move(
-                constants.ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path
+                constants.ERROR_CODES.MULTI_BUBBLE_WARN, file_path, output_file_path
             ):
-                mm_line = [file_name, file_path, new_file_path, "NA"] + resp_array
+                mm_line = [
+                    file_name,
+                    posix_file_path,
+                    output_file_path,
+                    "NA",
+                ] + resp_array
                 pd.DataFrame(mm_line, dtype=str).T.to_csv(
                     outputs_namespace.files_obj["MultiMarked"],
                     mode="a",
