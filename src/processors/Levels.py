@@ -7,6 +7,9 @@ from src.processors.interfaces.ImageTemplatePreprocessor import (
 
 
 class Levels(ImageTemplatePreprocessor):
+    def get_class_name(self):
+        return f"Levels"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         options = self.options

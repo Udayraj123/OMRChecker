@@ -16,6 +16,9 @@ from src.utils.interaction import InteractionUtils
 
 
 class FeatureBasedAlignment(ImageTemplatePreprocessor):
+    def get_class_name(self):
+        return f"FeatureBasedAlignment"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         options = self.options
@@ -56,7 +59,6 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
         # Convert images to grayscale
         # im1Gray = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
         # im2Gray = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
-
         image = cv2.normalize(image, 0, 255, norm_type=cv2.NORM_MINMAX)
 
         # Detect Oriented Fast and Rotated Brief (ORB) features and compute descriptors.

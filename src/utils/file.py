@@ -32,6 +32,7 @@ class Paths:
         self.manual_dir = output_dir.joinpath("Manual")
         self.errors_dir = self.manual_dir.joinpath("ErrorFiles")
         self.multi_marked_dir = self.manual_dir.joinpath("MultiMarkedFiles")
+        self.debug_dir=output_dir.joinpath("Debug")
 
 
 def setup_dirs_for_paths(paths):

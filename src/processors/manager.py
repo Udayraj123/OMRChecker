@@ -1,11 +1,13 @@
 from dotmap import DotMap
 
+from src.processors.AutoAlign import AutoAlign
 from src.processors.CropOnMarkers import CropOnMarkers
 from src.processors.CropPage import CropPage
 from src.processors.FeatureBasedAlignment import FeatureBasedAlignment
 from src.processors.GaussianBlur import GaussianBlur
 from src.processors.Levels import Levels
 from src.processors.MedianBlur import MedianBlur
+from src.utils.constants import SUPPORTED_PROCESSOR_NAMES
 
 # Note: we're now hard coding the processors mapping to support working export of PyInstaller
 PROCESSOR_MANAGER = DotMap(
@@ -18,7 +20,10 @@ PROCESSOR_MANAGER = DotMap(
             "GaussianBlur": GaussianBlur,
             "Levels": Levels,
             "MedianBlur": MedianBlur,
+            "AutoAlign": AutoAlign,
         }
     },
     _dynamic=False,
 )
+
+assert set(PROCESSOR_MANAGER.processors.keys()) == set(SUPPORTED_PROCESSOR_NAMES)

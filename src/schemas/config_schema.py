@@ -1,4 +1,5 @@
 from src.schemas.constants import load_common_defs
+from src.utils.constants import SUPPORTED_PROCESSOR_NAMES
 
 CONFIG_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -133,6 +134,20 @@ CONFIG_SCHEMA = {
                 "filter_out_multimarked_files": {
                     "description": "This option moves files having multi-marked responses into a separate folder for manual checking, skipping evaluation",
                     "type": "boolean",
+                },
+                "show_preprocessors_diff": {
+                    "description": "This option shows a preview of the processed image for every preprocessor. Also granular at preprocessor level using a map",
+                    "oneOf": [
+                        {
+                            "type": "object",
+                            "patternProperties": {
+                                f"^({'|'.join(SUPPORTED_PROCESSOR_NAMES)})$": {
+                                    "type": "boolean"
+                                }
+                            },
+                        },
+                        {"type": "boolean"},
+                    ],
                 },
             },
         },
