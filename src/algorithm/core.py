@@ -322,6 +322,21 @@ class ImageInstanceOps:
 
             for field in field_block.fields:
                 field_bubbles = field.field_bubbles
+                for unit_bubble in field_bubbles:
+                    x, y = unit_bubble.get_shifted_position(field_block.shifts)
+                    rect = [y, y + box_h, x, x + box_w]
+                    question_number = field.field_label
+                    image_area = gray_image[rect[0] : rect[1], rect[2] : rect[3]]
+                    # DO OCR on image_area
+                    detected_text = "X"
+                    omr_response[question_number] = detected_text
+
+                block_field_number += 1
+                absolute_field_number += 1
+
+            for field in field_block.fields:
+                break
+                field_bubbles = field.field_bubbles
                 # All Black or All White case
                 no_outliers = (
                     # TODO: rename mean_value in parent class to suit better
