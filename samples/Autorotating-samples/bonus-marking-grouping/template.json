@@ -7,7 +7,7 @@
     30,
     30
   ],
-  "output":true,
+  "output": true,
   "preProcessors": [
     {
       "name": "GaussianBlur",
@@ -29,9 +29,9 @@
       }
     },
     {
-      "name":"AutoAlign",
-      "options":{
-        "referenceImage":"reference.jpg"
+      "name": "AutoAlign",
+      "options": {
+        "referenceImage": "reference.jpg"
       }
     }
   ],

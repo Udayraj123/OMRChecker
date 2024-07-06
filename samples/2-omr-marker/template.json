@@ -9,9 +9,9 @@
   ],
   "preProcessors": [
     {
-      "name":"AutoAlign",
-      "options":{
-        "referenceImage":"reference.jpg"
+      "name": "AutoAlign",
+      "options": {
+        "referenceImage": "reference.jpg"
       }
     },
     {
