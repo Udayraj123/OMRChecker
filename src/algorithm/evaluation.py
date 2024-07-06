@@ -311,11 +311,13 @@ class EvaluationConfig:
         return self.set_mapping[matched_key]
 
     def get_matching_set(self, concatenated_response):
+        # TODO: support passing file_path and file_name in this
+        formatting_fields = {**concatenated_response}
         # loop on all sets and return first matched set
         for name, matcher in self.conditional_sets:
             format_string, match_regex = matcher["formatString"], matcher["matchRegex"]
             try:
-                formatted_string = format_string.format(**concatenated_response)
+                formatted_string = format_string.format(**formatting_fields)
                 if re.search(match_regex, formatted_string) is not None:
                     return name
             except:  # NOQA
@@ -373,7 +375,7 @@ class EvaluationConfigForSet:
         self.has_custom_marking = False
 
         # TODO: Find a place for has_conditional_sets (parent class?)
-        self.has_conditional_sets = True
+        self.has_conditional_sets = False
         self.exclude_files = []
         # TODO: separate handlers for these two type
         if source_type == "local":
@@ -820,6 +822,7 @@ class EvaluationConfigForSet:
         )
         return delta, question_verdict, answer_matcher, question_schema_verdict
 
+    # TODO: move has_conditional_sets into parent?
     def conditionally_add_explanation(
         self,
         answer_matcher,

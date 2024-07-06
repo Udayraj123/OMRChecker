@@ -8,6 +8,12 @@ from src.tests.utils import (
 )
 
 
+def run_sample_parser_hook(parser):
+    parser.addoption(
+        "--keep-outputs", action="store_true", help="Keep outputs after running sample"
+    )
+
+
 def run_sample_core(mocker, sample_path):
     setup_mocker_patches(mocker)
 
@@ -35,10 +41,16 @@ def run_sample_core(mocker, sample_path):
 
 
 def run_sample_fixture(request):
-    # https://docs.pytest.org/en/6.2.x/fixture.html#adding-finalizers-directly
     def run_sample(*args, **kwargs):
+        config = request.config
+        keep_outputs = config.getoption("--keep-outputs")
         sample_outputs, remove_sample_output_dir = run_sample_core(*args, **kwargs)
-        request.addfinalizer(remove_sample_output_dir)
+
+        # https://docs.pytest.org/en/6.2.x/fixture.html#adding-finalizers-directly
+        if not keep_outputs:
+            request.addfinalizer(remove_sample_output_dir)
+        else:
+            print("Note: keeping outputs of the test since --keep-outputs is passed")
         return sample_outputs
 
     return run_sample

@@ -13,3 +13,4 @@ outputs/*
 **/__pycache__
 venv/
 OMRChecker.wiki/
+pytestdebug.log

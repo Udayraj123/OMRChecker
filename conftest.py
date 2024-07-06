@@ -5,7 +5,7 @@ from src.tests.__fixtures__.pytest_image_snapshot import (
     image_snapshot_fixture,
     image_snapshot_parser_hook,
 )
-from src.tests.__fixtures__.run_sample import run_sample_fixture
+from src.tests.__fixtures__.run_sample import run_sample_fixture, run_sample_parser_hook
 
 
 # Register a custom image_snapshot fixture
@@ -22,4 +22,5 @@ def run_sample(request):
 
 # Add hook
 def pytest_addoption(parser):
-    return image_snapshot_parser_hook(parser)
+    run_sample_parser_hook(parser)
+    image_snapshot_parser_hook(parser)

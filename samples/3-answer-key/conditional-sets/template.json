@@ -84,7 +84,7 @@
   },
   "fieldBlocks": {
     "Squad": {
-      "fieldType": "CUSTOM",
+      "fieldType": "CUSTOM_BUBBLES",
       "bubbleValues": [
         "J",
         "H"
@@ -101,7 +101,7 @@
       ]
     },
     "Medium_1": {
-      "fieldType": "CUSTOM",
+      "fieldType": "CUSTOM_BUBBLES",
       "bubbleValues": [
         "E",
         "H"
@@ -118,7 +118,7 @@
       ]
     },
     "Medium_2": {
-      "fieldType": "CUSTOM",
+      "fieldType": "CUSTOM_BUBBLES",
       "bubbleValues": [
         "R",
         "E"
@@ -248,7 +248,7 @@
       ]
     },
     "Mcq4": {
-      "fieldType": "CUSTOM",
+      "fieldType": "CUSTOM_BUBBLES",
       "bubbleValues": [
         "A",
         "B"
