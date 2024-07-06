@@ -31,7 +31,10 @@ class AutoAlign(ImageTemplatePreprocessor):
         #     "cv.TM_SQDIFF",
         #     "cv.TM_SQDIFF_NORMED",
         # ]
+
         # resized_reference=self.reference_image
+        # TODO: resize to markerDimensions
+
         res = cv2.matchTemplate(image, self.reference_image, cv2.TM_CCOEFF)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
         best_val, best_rotation = max_val, None

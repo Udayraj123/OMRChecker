@@ -672,6 +672,7 @@ TEMPLATE_SCHEMA = {
                     {
                         "if": {
                             "properties": {"name": {"const": "AutoAlign"}},
+                            **pre_processor_if_required_attrs,
                         },
                         "then": {
                             "properties": {
@@ -679,6 +680,7 @@ TEMPLATE_SCHEMA = {
                                     "description": "Options for the AutoAlign pre-processor",
                                     "type": "object",
                                     "additionalProperties": False,
+                                    "required": ["referenceImage"],
                                     "properties": {
                                         "referenceImage": {
                                             "description": "The relative path to reference image of the omr marker",
