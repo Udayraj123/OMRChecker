@@ -1,0 +1,57 @@
+tools: create_dataset, sys.find, ingest, retrieve, delete_dataset, get_dataset, list_datasets, uuidgen
+
+Create a new Knowledge Base Dataset with a random unique ID, if it doesn't exist yet.
+Ingest all files ending in the directory /Users/dgoade/repos/OMRChecker into the vesper dataset.
+Then, generate two Dockerfiles to containerize the application, one for testing with pytest 
+and the other one, only for running the application. The container should not run as root and the applicaton should run
+as the user vesper.
+
+---
+name: create_dataset
+description: Create a new Dataset in the Knowledge Base
+args: id: ID of the Dataset
+
+#!knowledge create-dataset ${id}
+
+---
+name: ingest
+description: Ingest a file or all files from a directory into a Knowledge Base Dataset
+args: id: ID of the Dataset
+args: filepath: Path to the file or directory to be ingested
+
+#!knowledge ingest -d ${id} ${filepath}
+
+---
+name: retrieve
+description: Retrieve information from a Knowledge Base Dataset
+args: id: ID of the Dataset
+args: query: Query to be executed against the Knowledge Base Dataset
+
+#!knowledge retrieve -k 10 -d ${id} ${query}
+
+---
+name: delete_dataset
+description: Delete a Dataset from the Knowledge Base
+args: id: ID of the Dataset
+
+#!knowledge delete-dataset ${id}
+
+---
+name: get_dataset
+description: Get a Dataset from the Knowledge Base
+args: id: ID of the Dataset
+
+#!knowledge get-dataset ${id}
+
+---
+name: list_datasets
+description: List all Datasets in the Knowledge Base
+
+#!knowledge list-datasets
+
+---
+name: uuidgen
+description: Generate a random UUID
+
+#!uuidgen
+
