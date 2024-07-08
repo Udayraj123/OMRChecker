@@ -9,7 +9,7 @@
   ],
   "preProcessors": [
     {
-      "name": "AutoAlign",
+      "name": "AutoRotate",
       "options": {
         "referenceImage": "reference.jpg"
       }

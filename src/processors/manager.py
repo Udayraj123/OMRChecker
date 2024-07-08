@@ -1,6 +1,6 @@
 from dotmap import DotMap
 
-from src.processors.AutoAlign import AutoAlign
+from src.processors.AutoRotate import AutoRotate
 from src.processors.CropOnMarkers import CropOnMarkers
 from src.processors.CropPage import CropPage
 from src.processors.FeatureBasedAlignment import FeatureBasedAlignment
@@ -20,7 +20,7 @@ PROCESSOR_MANAGER = DotMap(
             "GaussianBlur": GaussianBlur,
             "Levels": Levels,
             "MedianBlur": MedianBlur,
-            "AutoAlign": AutoAlign,
+            "AutoRotate": AutoRotate,
         }
     },
     _dynamic=False,

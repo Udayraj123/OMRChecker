@@ -129,8 +129,7 @@ class InteractionUtils:
         else:
             image_to_show = image
 
-        # Enable status bar in the named window window
-        cv2.namedWindow(name, cv2.WINDOW_GUI_EXPANDED)
+        
         # Show the image in the named window
         cv2.imshow(name, image_to_show)
 

@@ -12,26 +12,28 @@
     1725
   ],
   "preProcessors": [
-    {
-      "name": "AutoRotate",
-      "options": {
-        "referenceImage": "reference.png"
-      }
-    },
+    
     {
       "name": "CropPage",
       "options": {
         "morphKernel": [
           5,
           5
-        ],
-        "useColoredCanny": true
+        ]
+    
+      }
+    },
+    {
+      "name" : "AutoRotate",
+      "options":{
+        "referenceImage": "reference.jpg"
       }
     },
     {
       "name": "CropOnMarkers",
       "options": {
         "type": "FOUR_MARKERS",
+        "defaultSelector": "OUTER_CORNERS",
         "referenceImage": "omr_marker.jpg",
         "markerDimensions": [
           82,
@@ -43,8 +45,8 @@
   "customLabels": {
     "Roll": [
       "Squad",
-      "Medium_1",
-      "Medium_2",
+      "Medium",
+      "RNCode",
       "roll1..9"
     ],
     "q11": [
@@ -106,7 +108,7 @@
         "Squad"
       ]
     },
-    "Medium_1": {
+    "Medium": {
       "fieldType": "CUSTOM_BUBBLES",
       "bubbleValues": [
         "E",
@@ -120,14 +122,14 @@
       "bubblesGap": 40.95,
       "labelsGap": 0,
       "fieldLabels": [
-        "Medium_1"
+        "Medium"
       ]
     },
-    "Medium_2": {
+    "RNCode": {
       "fieldType": "CUSTOM_BUBBLES",
       "bubbleValues": [
         "R",
-        "E"
+        "N"
       ],
       "direction": "vertical",
       "origin": [
@@ -137,7 +139,7 @@
       "bubblesGap": 40.95,
       "labelsGap": 0,
       "fieldLabels": [
-        "Medium_2"
+        "RNCode"
       ]
     },
     "Roll": {
