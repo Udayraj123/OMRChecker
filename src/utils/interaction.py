@@ -129,7 +129,6 @@ class InteractionUtils:
         else:
             image_to_show = image
 
-        
         # Show the image in the named window
         cv2.imshow(name, image_to_show)
 

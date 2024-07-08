@@ -683,7 +683,7 @@ TEMPLATE_SCHEMA = {
                                     "required": ["referenceImage"],
                                     "properties": {
                                         "referenceImage": {
-                                            "description": "The relative path to reference image of the omr marker",
+                                            "description": "The relative path to reference image",
                                             "type": "string",
                                         },
                                         "markerDimensions": {

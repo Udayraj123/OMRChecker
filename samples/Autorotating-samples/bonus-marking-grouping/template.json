@@ -32,7 +32,7 @@
       "options":{
         "referenceImage":"reference.jpg",
         "threshold":{
-          "value":1000000000,
+          "value":10000,
           "passthrough":false
         }
       }
