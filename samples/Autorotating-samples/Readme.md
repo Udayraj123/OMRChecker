@@ -27,11 +27,7 @@ The AutoRotate plugin is designed to automatically rotate an image based on a re
   "options": {
     "referenceImage": "./path/to/reference_image.png",
 
-    "markerDimensions": {
-      "width": 100,
-
-      "height": 150
-    },
+    "markerDimensions": [100,150],
 
     "threshold": {
       "value": 100,
