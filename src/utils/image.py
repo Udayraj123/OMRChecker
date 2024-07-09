@@ -351,10 +351,10 @@ class ImageUtils:
         return [area_start, area_end]
 
     @staticmethod
-    def rotate(image, rotation, keep_orignal_shape):
-        if keep_orignal_shape:
+    def rotate(image, rotation, keep_original_shape):
+        if keep_original_shape:
             image_shape = image.shape[0:2]
             image = cv2.rotate(image, rotation)
-            return ImageUtils.resize_to_shape(image,image_shape)
+            return ImageUtils.resize_to_shape(image, image_shape)
         else:
             return cv2.rotate(image, rotation)

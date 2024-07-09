@@ -4,10 +4,6 @@ import numpy as np
 from src.processors.interfaces.ImageTemplatePreprocessor import (
     ImageTemplatePreprocessor,
 )
-from src.utils.interaction import InteractionUtils
-
-# from src.utils.image import ImageUtils
-# from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 from src.utils.image import ImageUtils
 
@@ -42,7 +38,7 @@ class AutoRotate(ImageTemplatePreprocessor):
             rotated_img = image
             if rotation is not None:
                 rotated_img = ImageUtils.rotate(
-                    image, rotation, keep_orignal_shape=True
+                    image, rotation, keep_original_shape=True
                 )
             res = cv2.matchTemplate(rotated_img, self.resized_reference, cv2.TM_CCOEFF)
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
@@ -66,10 +62,10 @@ class AutoRotate(ImageTemplatePreprocessor):
         )
         if best_rotation is None:
             return image, colored_image, _template
-        image = ImageUtils.rotate(image, best_rotation, keep_orignal_shape=True)
+        image = ImageUtils.rotate(image, best_rotation, keep_original_shape=True)
         if self.tuning_config.outputs.colored_outputs_enabled:
             colored_image = ImageUtils.rotate(
-                colored_image, best_rotation, keep_orignal_shape=True
+                colored_image, best_rotation, keep_original_shape=True
             )
         return image, colored_image, _template
 

@@ -28,12 +28,12 @@
       }
     },
     {
-      "name":"AutoRotate",
-      "options":{
-        "referenceImage":"reference.jpg",
-        "threshold":{
-          "value":10000,
-          "passthrough":false
+      "name": "AutoRotate",
+      "options": {
+        "referenceImage": "reference.jpg",
+        "threshold": {
+          "value": 10000,
+          "passthrough": false
         }
       }
     }
