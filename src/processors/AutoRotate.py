@@ -1,11 +1,10 @@
 import cv2
-import numpy as np
 
 from src.processors.interfaces.ImageTemplatePreprocessor import (
     ImageTemplatePreprocessor,
 )
-from src.utils.logger import logger
 from src.utils.image import ImageUtils
+from src.utils.logger import logger
 
 
 class AutoRotate(ImageTemplatePreprocessor):

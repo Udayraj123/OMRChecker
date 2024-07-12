@@ -688,19 +688,18 @@ TEMPLATE_SCHEMA = {
                                         },
                                         "markerDimensions": {
                                             "description": "Dimensions of reference image",
-                                            "$ref": "#/$def/two_positive_numbers"
+                                            "$ref": "#/$def/two_positive_numbers",
                                         },
-                                        "threshold":{
+                                        "threshold": {
                                             "description": "Threshold for the match score below it will throw error/warning",
                                             "type": "object",
                                             "additionalProperties": False,
-                                            "required": ["value","passthrough"],
+                                            "required": ["value", "passthrough"],
                                             "properties": {
                                                 "value": {"type": "number"},
-                                                "passthrough":{"type": "boolean"}
-                                            }
-                                        }
-                                          
+                                                "passthrough": {"type": "boolean"},
+                                            },
+                                        },
                                     },
                                 }
                             }
