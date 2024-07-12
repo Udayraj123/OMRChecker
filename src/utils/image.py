@@ -349,3 +349,12 @@ class ImageUtils:
         zone_start = [min(w, zone_start[0]), min(h, zone_start[1])]
         zone_end = [min(w, zone_end[0]), min(h, zone_end[1])]
         return [zone_start, zone_end]
+
+    @staticmethod
+    def rotate(image, rotation, keep_original_shape):
+        if keep_original_shape:
+            image_shape = image.shape[0:2]
+            image = cv2.rotate(image, rotation)
+            return ImageUtils.resize_to_shape(image, image_shape)
+        else:
+            return cv2.rotate(image, rotation)
