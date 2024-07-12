@@ -339,13 +339,13 @@ class ImageUtils:
         return white_image, pad_range
 
     @staticmethod
-    def clip_area_to_image_bounds(rectangle, image):
+    def clip_zone_to_image_bounds(rectangle, image):
         h, w = image.shape[:2]
-        area_start, area_end = rectangle
+        zone_start, zone_end = rectangle
         # Clip to Image top left
-        area_start = [max(0, area_start[0]), max(0, area_start[1])]
-        area_end = [max(0, area_end[0]), max(0, area_end[1])]
+        zone_start = [max(0, zone_start[0]), max(0, zone_start[1])]
+        zone_end = [max(0, zone_end[0]), max(0, zone_end[1])]
         # Clip to Image bottom right
-        area_start = [min(w, area_start[0]), min(h, area_start[1])]
-        area_end = [min(w, area_end[0]), min(h, area_end[1])]
-        return [area_start, area_end]
+        zone_start = [min(w, zone_start[0]), min(h, zone_start[1])]
+        zone_end = [min(w, zone_end[0]), min(h, zone_end[1])]
+        return [zone_start, zone_end]

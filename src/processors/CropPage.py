@@ -111,7 +111,7 @@ class CropPage(WarpOnPointsCommon):
 
         if self.use_colored_canny and config.outputs.colored_outputs_enabled:
             hsv = cv2.cvtColor(colored_image, cv2.COLOR_BGR2HSV)
-            # Mask image to only select white-ish area
+            # Mask image to only select white-ish zone
             mask = cv2.inRange(hsv, hsv_white_low, hsv_white_high)
             mask_result = cv2.bitwise_and(image, image, mask=mask)
             self.append_save_image("Mask Result", range(3, 7), mask_result)

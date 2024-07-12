@@ -13,7 +13,7 @@ EdgeType = DotMap(
 EDGE_TYPES_IN_ORDER = [EdgeType.TOP, EdgeType.RIGHT, EdgeType.BOTTOM, EdgeType.LEFT]
 
 
-AreaPreset = DotMap(
+ZonePreset = DotMap(
     {
         "topLeftDot": "topLeftDot",
         "topRightDot": "topRightDot",
@@ -31,71 +31,71 @@ AreaPreset = DotMap(
     _dynamic=False,
 )
 
-DOT_AREA_TYPES_IN_ORDER = [
-    AreaPreset.topLeftDot,
-    AreaPreset.topRightDot,
-    AreaPreset.bottomRightDot,
-    AreaPreset.bottomLeftDot,
+DOT_ZONE_TYPES_IN_ORDER = [
+    ZonePreset.topLeftDot,
+    ZonePreset.topRightDot,
+    ZonePreset.bottomRightDot,
+    ZonePreset.bottomLeftDot,
 ]
 
-MARKER_AREA_TYPES_IN_ORDER = [
-    AreaPreset.topLeftMarker,
-    AreaPreset.topRightMarker,
-    AreaPreset.bottomRightMarker,
-    AreaPreset.bottomLeftMarker,
+MARKER_ZONE_TYPES_IN_ORDER = [
+    ZonePreset.topLeftMarker,
+    ZonePreset.topRightMarker,
+    ZonePreset.bottomRightMarker,
+    ZonePreset.bottomLeftMarker,
 ]
 
-LINE_AREA_TYPES_IN_ORDER = [
-    AreaPreset.topLine,
-    AreaPreset.rightLine,
-    AreaPreset.bottomLine,
-    AreaPreset.leftLine,
+LINE_ZONE_TYPES_IN_ORDER = [
+    ZonePreset.topLine,
+    ZonePreset.rightLine,
+    ZonePreset.bottomLine,
+    ZonePreset.leftLine,
 ]
 
 TARGET_EDGE_FOR_LINE = {
-    AreaPreset.topLine: EdgeType.TOP,
-    AreaPreset.rightLine: EdgeType.RIGHT,
-    AreaPreset.bottomLine: EdgeType.BOTTOM,
-    AreaPreset.leftLine: EdgeType.LEFT,
+    ZonePreset.topLine: EdgeType.TOP,
+    ZonePreset.rightLine: EdgeType.RIGHT,
+    ZonePreset.bottomLine: EdgeType.BOTTOM,
+    ZonePreset.leftLine: EdgeType.LEFT,
 }
 
 # This defines the precedence for composing ordered points in the edge_contours_map
 TARGET_ENDPOINTS_FOR_EDGES = {
     EdgeType.TOP: [
-        [AreaPreset.topLeftDot, 0],
-        [AreaPreset.topLeftMarker, 0],
-        [AreaPreset.leftLine, -1],
-        [AreaPreset.topLine, "ALL"],
-        [AreaPreset.rightLine, 0],
-        [AreaPreset.topRightDot, 0],
-        [AreaPreset.topRightMarker, 0],
+        [ZonePreset.topLeftDot, 0],
+        [ZonePreset.topLeftMarker, 0],
+        [ZonePreset.leftLine, -1],
+        [ZonePreset.topLine, "ALL"],
+        [ZonePreset.rightLine, 0],
+        [ZonePreset.topRightDot, 0],
+        [ZonePreset.topRightMarker, 0],
     ],
     EdgeType.RIGHT: [
-        [AreaPreset.topRightDot, 0],
-        [AreaPreset.topRightMarker, 0],
-        [AreaPreset.topLine, -1],
-        [AreaPreset.rightLine, "ALL"],
-        [AreaPreset.bottomLine, 0],
-        [AreaPreset.bottomRightDot, 0],
-        [AreaPreset.bottomRightMarker, 0],
+        [ZonePreset.topRightDot, 0],
+        [ZonePreset.topRightMarker, 0],
+        [ZonePreset.topLine, -1],
+        [ZonePreset.rightLine, "ALL"],
+        [ZonePreset.bottomLine, 0],
+        [ZonePreset.bottomRightDot, 0],
+        [ZonePreset.bottomRightMarker, 0],
     ],
     EdgeType.LEFT: [
-        [AreaPreset.bottomLeftDot, 0],
-        [AreaPreset.bottomLeftMarker, 0],
-        [AreaPreset.bottomLine, -1],
-        [AreaPreset.leftLine, "ALL"],
-        [AreaPreset.topLine, 0],
-        [AreaPreset.topLeftDot, 0],
-        [AreaPreset.topLeftMarker, 0],
+        [ZonePreset.bottomLeftDot, 0],
+        [ZonePreset.bottomLeftMarker, 0],
+        [ZonePreset.bottomLine, -1],
+        [ZonePreset.leftLine, "ALL"],
+        [ZonePreset.topLine, 0],
+        [ZonePreset.topLeftDot, 0],
+        [ZonePreset.topLeftMarker, 0],
     ],
     EdgeType.BOTTOM: [
-        [AreaPreset.bottomRightDot, 0],
-        [AreaPreset.bottomRightMarker, 0],
-        [AreaPreset.rightLine, -1],
-        [AreaPreset.bottomLine, "ALL"],
-        [AreaPreset.leftLine, 0],
-        [AreaPreset.bottomLeftDot, 0],
-        [AreaPreset.bottomLeftMarker, 0],
+        [ZonePreset.bottomRightDot, 0],
+        [ZonePreset.bottomRightMarker, 0],
+        [ZonePreset.rightLine, -1],
+        [ZonePreset.bottomLine, "ALL"],
+        [ZonePreset.leftLine, 0],
+        [ZonePreset.bottomLeftDot, 0],
+        [ZonePreset.bottomLeftMarker, 0],
     ],
 }
 

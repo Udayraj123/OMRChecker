@@ -24,8 +24,8 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.parse_and_apply_scan_area_presets_and_defaults()
-        self.validate_scan_areas()
+        self.parse_and_apply_scan_zone_presets_and_defaults()
+        self.validate_scan_zones()
         self.validate_points_layouts()
 
         options = self.options
@@ -43,63 +43,63 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
     def prepare_image(self, image):
         return image
 
-    def parse_and_apply_scan_area_presets_and_defaults(self):
+    def parse_and_apply_scan_zone_presets_and_defaults(self):
         options = self.options
-        scan_areas = options["scanAreas"]
-        scan_areas_with_defaults = []
-        for scan_area in scan_areas:
-            area_preset, area_description, custom_options = (
-                scan_area["areaPreset"],
-                scan_area.get("areaDescription", {}),
-                scan_area.get("customOptions", {}),
+        scan_zones = options["scanZones"]
+        scan_zones_with_defaults = []
+        for scan_zone in scan_zones:
+            zone_preset, zone_description, custom_options = (
+                scan_zone["zonePreset"],
+                scan_zone.get("zoneDescription", {}),
+                scan_zone.get("customOptions", {}),
             )
-            area_description["label"] = area_description.get("label", area_preset)
-            scan_areas_with_defaults += [
+            zone_description["label"] = zone_description.get("label", zone_preset)
+            scan_zones_with_defaults += [
                 {
-                    "areaPreset": area_preset,
-                    "areaDescription": OVERRIDE_MERGER.merge(
-                        deepcopy(self.default_scan_area_descriptions[area_preset]),
-                        area_description,
+                    "zonePreset": zone_preset,
+                    "zoneDescription": OVERRIDE_MERGER.merge(
+                        deepcopy(self.default_scan_zone_descriptions[zone_preset]),
+                        zone_description,
                     ),
                     "customOptions": custom_options,
                 }
             ]
-        self.scan_areas = scan_areas_with_defaults
-        # logger.debug(self.scan_areas)
+        self.scan_zones = scan_zones_with_defaults
+        # logger.debug(self.scan_zones)
 
-    def validate_scan_areas(self):
+    def validate_scan_zones(self):
         seen_labels = set()
         repeat_labels = set()
-        for scan_area in self.scan_areas:
-            area_label = scan_area["areaDescription"]["label"]
-            if area_label in seen_labels:
-                repeat_labels.add(area_label)
-            seen_labels.add(area_label)
+        for scan_zone in self.scan_zones:
+            zone_label = scan_zone["zoneDescription"]["label"]
+            if zone_label in seen_labels:
+                repeat_labels.add(zone_label)
+            seen_labels.add(zone_label)
         if len(repeat_labels) > 0:
-            raise Exception(f"Found repeated labels in scanAreas: {repeat_labels}")
+            raise Exception(f"Found repeated labels in scanZones: {repeat_labels}")
 
     # TODO: check if this needs to move into child for working properly (accessing self attributes declared in child in parent's constructor)
     def validate_points_layouts(self):
         options = self.options
         points_layout = options["pointsLayout"]
         if (
-            points_layout not in self.scan_area_presets_for_layout
+            points_layout not in self.scan_zone_presets_for_layout
             and points_layout != "CUSTOM"
         ):
             raise Exception(
                 f"Invalid pointsLayout provided: {points_layout} for {self}"
             )
 
-        expected_templates = set(self.scan_area_presets_for_layout[points_layout])
+        expected_templates = set(self.scan_zone_presets_for_layout[points_layout])
         provided_templates = set(
-            [scan_area["areaPreset"] for scan_area in self.scan_areas]
+            [scan_zone["zonePreset"] for scan_zone in self.scan_zones]
         )
-        not_provided_area_presets = expected_templates.difference(provided_templates)
+        not_provided_zone_presets = expected_templates.difference(provided_templates)
 
-        if len(not_provided_area_presets) > 0:
-            logger.error(f"not_provided_area_presets={not_provided_area_presets}")
+        if len(not_provided_zone_presets) > 0:
+            logger.error(f"not_provided_zone_presets={not_provided_zone_presets}")
             raise Exception(
-                f"Missing a few areaPresets for the pointsLayout {points_layout}"
+                f"Missing a few zonePresets for the pointsLayout {points_layout}"
             )
 
     def extract_control_destination_points(self, image, _colored_image, file_path):
@@ -115,56 +115,56 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
 
         # TODO: use shapely and corner points to split easily?
 
-        area_preset_points = {}
+        zone_preset_points = {}
         page_corners, destination_page_corners = [], []
-        for scan_area in self.scan_areas:
-            area_preset = scan_area["areaPreset"]
-            area_description = self.get_runtime_area_description_with_defaults(
-                image, scan_area
+        for scan_zone in self.scan_zones:
+            zone_preset = scan_zone["zonePreset"]
+            zone_description = self.get_runtime_zone_description_with_defaults(
+                image, scan_zone
             )
-            scanner_type = area_description["scannerType"]
-            # Note: area_description is computed at runtime(e.g. for CropOnCustomMarkers with default quadrants)
+            scanner_type = zone_description["scannerType"]
+            # Note: zone_description is computed at runtime(e.g. for CropOnCustomMarkers with default quadrants)
             if (
                 scanner_type == ScannerType.PATCH_DOT
                 or scanner_type == ScannerType.TEMPLATE_MATCH
             ):
                 dot_point, destination_point = self.find_and_select_point_from_dot(
-                    image, area_description, file_path
+                    image, zone_description, file_path
                 )
-                area_control_points, area_destination_points = [dot_point], [
+                zone_control_points, zone_destination_points = [dot_point], [
                     destination_point
                 ]
-                area_preset_points[area_preset] = area_control_points
+                zone_preset_points[zone_preset] = zone_control_points
 
                 page_corners.append(dot_point)
                 destination_page_corners.append(destination_point)
 
             elif scanner_type == ScannerType.PATCH_LINE:
                 (
-                    area_control_points,
-                    area_destination_points,
+                    zone_control_points,
+                    zone_destination_points,
                     selected_contour,
                 ) = self.find_and_select_points_from_line(
-                    image, area_preset, area_description, file_path
+                    image, zone_preset, zone_description, file_path
                 )
-                area_preset_points[area_preset] = selected_contour
-                page_corners += [area_control_points[0], area_control_points[-1]]
+                zone_preset_points[zone_preset] = selected_contour
+                page_corners += [zone_control_points[0], zone_control_points[-1]]
                 destination_page_corners += [
-                    area_destination_points[0],
-                    area_destination_points[-1],
+                    zone_destination_points[0],
+                    zone_destination_points[-1],
                 ]
             # TODO: support DASHED_LINE here later
-            control_points += area_control_points
-            destination_points += area_destination_points
+            control_points += zone_control_points
+            destination_points += zone_destination_points
 
             if config.outputs.show_image_level >= 4:
-                self.draw_area_contours_and_anchor_shifts(
-                    area_control_points, area_destination_points
+                self.draw_zone_contours_and_anchor_shifts(
+                    zone_control_points, zone_destination_points
                 )
 
         # Fill edge contours
-        edge_contours_map = self.get_edge_contours_map_from_area_points(
-            area_preset_points
+        edge_contours_map = self.get_edge_contours_map_from_zone_points(
+            zone_preset_points
         )
 
         if self.warp_method in [
@@ -181,10 +181,10 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         # TODO: sort edge_contours_map manually?
         return control_points, destination_points, edge_contours_map
 
-    def get_runtime_area_description_with_defaults(self, image, scan_area):
-        return scan_area["areaDescription"]
+    def get_runtime_zone_description_with_defaults(self, image, scan_zone):
+        return scan_zone["zoneDescription"]
 
-    def get_edge_contours_map_from_area_points(self, area_preset_points):
+    def get_edge_contours_map_from_zone_points(self, zone_preset_points):
         edge_contours_map = {
             EdgeType.TOP: [],
             EdgeType.RIGHT: [],
@@ -193,41 +193,41 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         }
 
         for edge_type in EDGE_TYPES_IN_ORDER:
-            for area_preset, contour_point_index in TARGET_ENDPOINTS_FOR_EDGES[
+            for zone_preset, contour_point_index in TARGET_ENDPOINTS_FOR_EDGES[
                 edge_type
             ]:
-                if area_preset in area_preset_points:
-                    area_points = area_preset_points[area_preset]
+                if zone_preset in zone_preset_points:
+                    zone_points = zone_preset_points[zone_preset]
                     if contour_point_index == "ALL":
-                        edge_contours_map[edge_type] += area_points
+                        edge_contours_map[edge_type] += zone_points
                     else:
                         edge_contours_map[edge_type].append(
-                            area_points[contour_point_index]
+                            zone_points[contour_point_index]
                         )
         return edge_contours_map
 
-    def draw_area_contours_and_anchor_shifts(
-        self, area_control_points, area_destination_points
+    def draw_zone_contours_and_anchor_shifts(
+        self, zone_control_points, zone_destination_points
     ):
-        if len(area_control_points) > 1:
-            if len(area_control_points) == 2:
+        if len(zone_control_points) > 1:
+            if len(zone_control_points) == 2:
                 # Draw line if it's just two points
-                DrawingUtils.draw_contour(self.debug_image, area_control_points)
+                DrawingUtils.draw_contour(self.debug_image, zone_control_points)
             else:
                 # Draw convex hull of the found control points
                 DrawingUtils.draw_contour(
                     self.debug_image,
-                    cv2.convexHull(np.intp(area_control_points)),
+                    cv2.convexHull(np.intp(zone_control_points)),
                 )
 
         # Helper for alignment
         DrawingUtils.draw_arrows(
             self.debug_image,
-            area_control_points,
-            area_destination_points,
+            zone_control_points,
+            zone_destination_points,
             tip_length=0.4,
         )
-        for control_point in area_control_points:
+        for control_point in zone_control_points:
             # Show current detections too
             DrawingUtils.draw_box(
                 self.debug_image,
@@ -239,26 +239,26 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                 centered=True,
             )
 
-    def find_and_select_point_from_dot(self, image, area_description, file_path):
-        area_label = area_description["label"]
-        points_selector = area_description.get(
+    def find_and_select_point_from_dot(self, image, zone_description, file_path):
+        zone_label = zone_description["label"]
+        points_selector = zone_description.get(
             "selector",
-            self.default_points_selector.get(area_label, SelectorType.SELECT_CENTER),
+            self.default_points_selector.get(zone_label, SelectorType.SELECT_CENTER),
         )
         logger.warning(
-            area_label, points_selector, area_description, self.default_points_selector
+            zone_label, points_selector, zone_description, self.default_points_selector
         )
 
         dot_rect = self.find_dot_corners_from_options(
-            image, area_description, file_path
+            image, zone_description, file_path
         )
 
         dot_point = self.select_point_from_rectangle(dot_rect, points_selector)
 
         if dot_point is None:
-            raise Exception(f"No dot found for area {area_label}")
+            raise Exception(f"No dot found for zone {zone_label}")
 
-        destination_rect = self.compute_scan_area_destination_rect(area_description)
+        destination_rect = self.compute_scan_zone_destination_rect(zone_description)
         destination_point = self.select_point_from_rectangle(
             destination_rect, points_selector
         )
@@ -284,48 +284,48 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         return None
 
     @staticmethod
-    def compute_scan_area_destination_rect(area_description):
-        x, y = area_description["origin"]
-        w, h = area_description["dimensions"]
+    def compute_scan_zone_destination_rect(zone_description):
+        x, y = zone_description["origin"]
+        w, h = zone_description["dimensions"]
         return np.intp(MathUtils.get_rectangle_points(x, y, w, h))
 
-    def compute_scan_area_util(self, image, area_description):
-        area_label = area_description["label"]
+    def compute_scan_zone_util(self, image, zone_description):
+        zone_label = zone_description["label"]
         # parse arguments
         h, w = image.shape[:2]
         origin, dimensions, margins = map(
-            area_description.get, ["origin", "dimensions", "margins"]
+            zone_description.get, ["origin", "dimensions", "margins"]
         )
-        # TODO: check bug in margins for scan area
+        # TODO: check bug in margins for scan zone
 
-        # compute area and clip to image dimensions
-        area_start = [
+        # compute zone and clip to image dimensions
+        zone_start = [
             int(origin[0] - margins["left"]),
             int(origin[1] - margins["top"]),
         ]
-        area_end = [
+        zone_end = [
             int(origin[0] + margins["right"] + dimensions[0]),
             int(origin[1] + margins["bottom"] + dimensions[1]),
         ]
 
-        if area_start[0] < 0 or area_start[1] < 0 or area_end[0] > w or area_end[1] > h:
+        if zone_start[0] < 0 or zone_start[1] < 0 or zone_end[0] > w or zone_end[1] > h:
             logger.warning(
-                f"Clipping label {area_label} with scan rectangle: {[area_start, area_end]} to image boundary {[w, h]}."
+                f"Clipping label {zone_label} with scan rectangle: {[zone_start, zone_end]} to image boundary {[w, h]}."
             )
-            # area_start, area_end = ImageUtils.clip_area_to_image_bounds([area_start, area_end], image)
-            area_start = [max(0, area_start[0]), max(0, area_start[1])]
-            area_end = [min(w, area_end[0]), min(h, area_end[1])]
+            # zone_start, zone_end = ImageUtils.clip_zone_to_image_bounds([zone_start, zone_end], image)
+            zone_start = [max(0, zone_start[0]), max(0, zone_start[1])]
+            zone_end = [min(w, zone_end[0]), min(h, zone_end[1])]
 
-        # Extract image area
-        area = image[area_start[1] : area_end[1], area_start[0] : area_end[0]]
+        # Extract image zone
+        zone = image[zone_start[1] : zone_end[1], zone_start[0] : zone_end[0]]
 
         config = self.tuning_config
         if config.outputs.show_image_level >= 1:
             DrawingUtils.draw_box_diagonal(
                 self.debug_image,
-                area_start,
-                area_end,
+                zone_start,
+                zone_end,
                 color=CLR_DARK_GREEN,
                 border=2,
             )
-        return area, np.array(area_start)
+        return zone, np.array(zone_start)

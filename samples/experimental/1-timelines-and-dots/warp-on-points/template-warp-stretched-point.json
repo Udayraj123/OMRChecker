@@ -33,10 +33,10 @@
           "warpMethod": "HOMOGRAPHY"
         },
         "defaultSelector": "OUTER_CORNERS",
-        "scanAreas": [
+        "scanZones": [
           {
-            "areaPreset": "topLeftDot",
-            "areaDescription": {
+            "zonePreset": "topLeftDot",
+            "zoneDescription": {
               "label": "AdditionalPoint",
               "origin": [
                 48,

@@ -283,7 +283,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             )
             # Note: control points remain the same (wrt image shape!)
 
-        # Note: the inner elements may already be floats returned by scan area detections
+        # Note: the inner elements may already be floats returned by scan zone detections
         parsed_control_points = np.float32(parsed_control_points)
         parsed_destination_points = np.float32(parsed_destination_points)
 
@@ -301,7 +301,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         assert image.shape[:2] == colored_image.shape[:2]
 
         if self.enable_cropping:
-            # TODO: >> get this more reliably - use minAreaRect instead?
+            # TODO: >> get this more reliably - use minZoneRect instead?
             _, (w, h) = MathUtils.get_bounding_box_of_points(parsed_destination_points)
         else:
             h, w = image.shape[:2]
