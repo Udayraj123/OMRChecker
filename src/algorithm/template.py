@@ -7,10 +7,14 @@
 
 """
 
+import os
+
 from src.algorithm.core import ImageInstanceOps
 from src.processors.manager import PROCESSOR_MANAGER
 from src.utils.constants import BUILTIN_FIELD_TYPES, CUSTOM_FIELD_TYPE
 from src.utils.file import SaveImageOps
+from src.utils.image import ImageUtils
+from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 from src.utils.parsing import (
     custom_sort_output_columns,
@@ -31,6 +35,7 @@ class Template:
         (
             custom_labels_object,
             field_blocks_object,
+            alignment_object,
             output_columns_array,
             pre_processors_object,
             self.bubble_dimensions,
@@ -45,6 +50,7 @@ class Template:
             [
                 "customLabels",
                 "fieldBlocks",
+                "alignment",
                 "outputColumns",
                 "preProcessors",
                 "bubbleDimensions",
@@ -82,6 +88,9 @@ class Template:
             self.fill_output_columns(non_custom_columns, all_custom_columns)
 
         self.validate_template_columns(non_custom_columns, all_custom_columns)
+
+        # TODO: this is dependent on other calls to finish
+        self.setup_alignment(alignment_object, template_path.parent, tuning_config)
 
     def parse_output_columns(self, output_columns_array):
         self.output_columns = parse_fields(f"Output Columns", output_columns_array)
@@ -123,6 +132,38 @@ class Template:
                 raise Exception(
                     f"Invalid field type: {field_type} in block {block_name}"
                 )
+
+    # TODO: move out to template_alignment.py
+    def setup_alignment(self, alignment_object, relative_dir, tuning_config):
+        self.alignment = alignment_object
+        self.alignment["reference_image_path"] = None
+        relative_path = self.alignment.get("referenceImage", None)
+
+        # TODO: add more setup steps here
+
+        if relative_path is not None:
+            self.alignment["reference_image_path"] = os.path.join(
+                relative_dir, relative_path
+            )
+            logger.debug(self.alignment)
+            gray_alignment_image, colored_alignment_image = ImageUtils.read_image_util(
+                self.alignment["reference_image_path"], tuning_config
+            )
+            # InteractionUtils.show("gray_alignment_image", gray_alignment_image)
+
+            # TODO: shouldn't pass self
+            gray_alignment_image,
+            colored_alignment_image,
+            _ = self.image_instance_ops.apply_preprocessors(
+                self.alignment["reference_image_path"],
+                gray_alignment_image,
+                colored_alignment_image,
+                self,
+            )
+
+            # Pre-processed alignment image
+            self.alignment["gray_alignment_image"] = gray_alignment_image
+            self.alignment["colored_alignment_image"] = colored_alignment_image
 
     def setup_field_blocks(self, field_blocks_object):
         # Add field_blocks

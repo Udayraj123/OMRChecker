@@ -197,6 +197,7 @@ class ImageInstanceOps:
 
         gray_image = input_gray_image.copy()
 
+        # TODO: mini util for colored image case.
         gray_image = ImageUtils.resize_to_dimensions(
             gray_image, template.template_dimensions
         )

@@ -8,21 +8,19 @@
     15
   ],
   "processingImageShape": [
-    820,
-    666
+    1000,
+    662
   ],
-  "preProcessors": [
-    {
-      "name": "GaussianBlur",
-      "options": {
-        "kSize": [
-          3,
-          3
-        ],
-        "sigmaX": 0
-      }
+  "alignment": {
+    "referenceImage": "reference.png",
+    "margins": {
+      "top": 80,
+      "right": 70,
+      "bottom": 60,
+      "left": 50
     }
-  ],
+  },
+  "preProcessors": [],
   "customLabels": {
     "Booklet_No": [
       "b1..7"

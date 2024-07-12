@@ -18,6 +18,7 @@ from rich.table import Table
 
 from src.algorithm.evaluation import EvaluationConfig, evaluate_concatenated_response
 from src.algorithm.template import Template
+from src.algorithm.template_alignment import apply_template_alignment
 from src.schemas.constants import DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING
 from src.schemas.defaults import CONFIG_DEFAULTS
 from src.utils import constants
@@ -150,6 +151,9 @@ def process_dir(
     # Exclude images (take union over all pre_processors)
     excluded_files = []
     if template:
+        if template.alignment["reference_image_path"] is not None:
+            excluded_files.extend(template.alignment["reference_image_path"])
+
         for pp in template.pre_processors:
             excluded_files.extend(Path(p) for p in pp.exclude_files())
 
@@ -300,6 +304,12 @@ def process_files(
             template,
         ) = template.image_instance_ops.apply_preprocessors(
             file_path, gray_image, colored_image, template
+        )
+
+        # TODO[later]: template as a "Processor"
+        # TODO: apply template alignment
+        gray_image, colored_image = apply_template_alignment(
+            template, gray_image, colored_image
         )
 
         if gray_image is None:

@@ -290,6 +290,15 @@ _common_field_block_properties = {
         "type": "string",
         # Note: moved enum validation into setup code
     },
+    "alignment": {
+        "type": "object",
+        # TODO: description and colocation etc
+        "additionalProperties": False,
+        "properties": {
+            "margins": {"$ref": "#/$def/margins_schema"},
+            "maxDisplacement": {"$ref": "#/$def/positive_integer"},
+        },
+    },
 }
 
 _field_type_properties = {
@@ -443,6 +452,23 @@ TEMPLATE_SCHEMA = {
     "additionalProperties": False,
     "properties": {
         "output": {"type": "boolean"},
+        # TODO: figure out if alignment needs to be nested somewhere
+        "alignment": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "referenceImage": {
+                    "description": "The relative path to reference image",
+                    "type": "string",
+                },
+                "margins": {"$ref": "#/$def/margins_schema"},
+                "maxDisplacement": {"$ref": "#/$def/positive_integer"},
+                "anchorWindowSize": {
+                    "$ref": "#/$def/two_positive_numbers",
+                    "description": "The size of the anchor window for picking best local anchor points",
+                },
+            },
+        },
         "bubbleDimensions": {
             "$ref": "#/$def/two_positive_numbers",
             "description": "The default dimensions for the bubbles in the template overlay: [width, height]",
