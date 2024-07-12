@@ -7,7 +7,6 @@
     30,
     30
   ],
-  "output": true,
   "preProcessors": [
     {
       "name": "GaussianBlur",
@@ -29,9 +28,13 @@
       }
     },
     {
-      "name": "AutoAlign",
+      "name": "AutoRotate",
       "options": {
-        "referenceImage": "reference.jpg"
+        "referenceImage": "reference.jpg",
+        "threshold": {
+          "value": 10000,
+          "passthrough": false
+        }
       }
     }
   ],

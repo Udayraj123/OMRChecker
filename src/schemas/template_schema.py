@@ -502,7 +502,7 @@ TEMPLATE_SCHEMA = {
                             "GaussianBlur",
                             "Levels",
                             "MedianBlur",
-                            "AutoAlign",
+                            "AutoRotate",
                         ],
                     },
                     "options": {
@@ -671,21 +671,36 @@ TEMPLATE_SCHEMA = {
                     },
                     {
                         "if": {
-                            "properties": {"name": {"const": "AutoAlign"}},
+                            "properties": {"name": {"const": "AutoRotate"}},
                             **pre_processor_if_required_attrs,
                         },
                         "then": {
                             "properties": {
                                 "options": {
-                                    "description": "Options for the AutoAlign pre-processor",
+                                    "description": "Options for the AutoRotate pre-processor",
                                     "type": "object",
                                     "additionalProperties": False,
                                     "required": ["referenceImage"],
                                     "properties": {
                                         "referenceImage": {
-                                            "description": "The relative path to reference image of the omr marker",
+                                            "description": "The relative path to reference image",
                                             "type": "string",
+                                        },
+                                        "markerDimensions": {
+                                            "description": "Dimensions of reference image",
+                                            "$ref": "#/$def/two_positive_numbers"
+                                        },
+                                        "threshold":{
+                                            "description": "Threshold for the match score below it will throw error/warning",
+                                            "type": "object",
+                                            "additionalProperties": False,
+                                            "required": ["value","passthrough"],
+                                            "properties": {
+                                                "value": {"type": "number"},
+                                                "passthrough":{"type": "boolean"}
+                                            }
                                         }
+                                          
                                     },
                                 }
                             }
