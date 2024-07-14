@@ -231,6 +231,8 @@ class ImageInstanceOps:
             #  TODO: support for if field_block.field_type == "BARCODE":
             field_bubble_means_stds = []
             box_w, box_h = field_block.bubble_dimensions
+            logger.info(field_block.name, field_block.shifts)
+
             for field in field_block.fields:
                 field_bubbles = field.field_bubbles
                 field_bubble_means = []

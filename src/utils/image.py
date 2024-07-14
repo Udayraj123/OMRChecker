@@ -52,7 +52,7 @@ class ImageUtils:
         return cv2.resize(img, (int(u_width), int(u_height)))
 
     @staticmethod
-    def get_cropped_rectangle_destination_points(ordered_page_corners):
+    def get_cropped_rectangle_warped_points(ordered_page_corners):
         # Note: This utility would just find a good size ratio for the cropped image to look more realistic
         # but since we're anyway resizing the image, it doesn't make much sense to use these calculations
         (tl, tr, br, bl) = ordered_page_corners
@@ -72,7 +72,7 @@ class ImageUtils:
         # the set of destination points to obtain a "birds eye view",
         # (i.e. top-down view) of the image
 
-        destination_points = np.array(
+        warped_points = np.array(
             [
                 [0, 0],
                 [max_width - 1, 0],
@@ -81,8 +81,8 @@ class ImageUtils:
             ],
             dtype="float32",
         )
-        warped_dimensions = (max_width, max_height)
-        return destination_points, warped_dimensions
+        warped_box_dimensions = (max_width, max_height)
+        return warped_points, warped_box_dimensions
 
     @staticmethod
     def grab_contours(cnts):
@@ -144,16 +144,16 @@ class ImageUtils:
         return cv2.LUT(image, table)
 
     @staticmethod
-    def get_control_destination_points_from_contour(
-        source_contour, destination_line, max_points=None
+    def get_control_warped_points_from_contour(
+        source_contour, warped_line, max_points=None
     ):
         total_points = len(source_contour)
         if max_points is None:
             max_points = total_points
         assert max_points >= 2
-        start, end = destination_line
+        start, end = warped_line
 
-        destination_line_length = MathUtils.distance(start, end)
+        warped_line_length = MathUtils.distance(start, end)
         contour_length = 0
         for i in range(1, total_points):
             contour_length += MathUtils.distance(
@@ -171,7 +171,7 @@ class ImageUtils:
         # average_min_gap = (contour_length / (max_points - 1)) - 1
 
         # Initialize with first point mapping
-        control_points, destination_points = [source_contour[0]], [start]
+        control_points, warped_points = [source_contour[0]], [start]
         current_arc_length = 0
         # current_arc_gap = 0
         previous_point = None
@@ -188,21 +188,20 @@ class ImageUtils:
             # Including all points for now -
             current_arc_length += edge_length
             length_ratio = current_arc_length / contour_length
-            destination_point = MathUtils.get_point_on_line_by_ratio(
-                destination_line, length_ratio
+            warped_point = MathUtils.get_point_on_line_by_ratio(
+                warped_line, length_ratio
             )
             control_points.append(boundary_point)
-            destination_points.append(destination_point)
+            warped_points.append(warped_point)
 
-        assert len(destination_points) <= max_points
+        assert len(warped_points) <= max_points
 
         # Assert that the float error is not skewing the estimations badly
         assert (
-            MathUtils.distance(destination_points[-1], end) / destination_line_length
-            < 0.02
-        ), f"{destination_points[-1]} != {end}"
+            MathUtils.distance(warped_points[-1], end) / warped_line_length < 0.02
+        ), f"{warped_points[-1]} != {end}"
 
-        return control_points, destination_points
+        return control_points, warped_points
 
     @staticmethod
     def split_patch_contour_on_corners(patch_corners, source_contour):
@@ -358,3 +357,115 @@ class ImageUtils:
             return ImageUtils.resize_to_shape(image, image_shape)
         else:
             return cv2.rotate(image, rotation)
+
+
+class ImageWarpUtils:
+    # TODO: add subclasses/submodules to ImageUtils to organize better.
+    @staticmethod
+    def warp_triangle_inplace(image, warped_image, source_triangle, warped_triangle):
+        # Support for both colored and grayscale images.
+        h, w, channels = image.shape
+
+        # Find bounding box and crop input image
+        (
+            source_tl,
+            _source_tr,
+            source_br,
+            _source_bl,
+        ), source_box_dimensions = MathUtils.get_bounding_box_of_points(source_triangle)
+        (
+            warped_tl,
+            _warped_tr,
+            warped_br,
+            _warped_bl,
+        ), warped_box_dimensions = MathUtils.get_bounding_box_of_points(warped_triangle)
+
+        source_shifted_triangle = MathUtils.shift_points_from_origin(
+            source_tl, source_triangle
+        )
+        warped_shifted_triangle = MathUtils.shift_points_from_origin(
+            warped_tl, warped_triangle
+        )
+
+        # Given a pair of triangles, find the affine transform.
+        triangle_affine_matrix = cv2.getAffineTransform(
+            np.float32(source_shifted_triangle),
+            np.float32(warped_shifted_triangle),
+        )
+
+        # Crop input image
+        source_triangle_box = image[
+            source_tl[1] : source_br[1], source_tl[0] : source_br[0]
+        ]
+
+        # Apply the Affine Transform just found to the src image
+        warped_triangle_box = cv2.warpAffine(
+            source_triangle_box,
+            triangle_affine_matrix,
+            warped_box_dimensions,
+            None,
+            flags=cv2.INTER_LINEAR,
+            borderMode=cv2.BORDER_REFLECT_101,
+        )
+        # Note: the warped image dimensions will match to that of the warped triangle's bounding box(with black filling)
+        assert warped_triangle_box.shape[:2] == [
+            warped_box_dimensions[1],
+            warped_box_dimensions[0],
+        ]
+
+        ImageWarpUtils.replace_triangle_inplace(
+            warped_image,
+            warped_shifted_triangle,
+            warped_triangle_box,
+            warped_tl,
+            warped_br,
+            warped_box_dimensions,
+        )
+
+        return
+
+    @staticmethod
+    def replace_triangle_inplace(
+        warped_image,
+        shifted_triangle,
+        warped_triangle_box,
+        warped_tl,
+        warped_br,
+        warped_box_dimensions,
+    ):
+        _h, _w, channels = warped_triangle_box.shape
+        tl, br, dest_w, dest_h = (
+            warped_tl,
+            warped_br,
+            warped_box_dimensions[0],
+            warped_box_dimensions[1],
+        )
+        if channels == 3:
+            # Get a white triangle mask
+            # Note: we use shifted triangle to reduce mask size (as outside the box will have zeroes anyway)
+            white_triangle = np.zeros((dest_h, dest_w, channels), dtype=np.float32)
+            cv2.fillConvexPoly(
+                white_triangle,
+                np.int32(shifted_triangle),
+                (1.0, 1.0, 1.0),
+                cv2.LINE_AA,
+                shift=0,
+            )
+
+            # Extract the triangle-only warped_triangle_box using the mask
+            triangle_only_image_area = warped_triangle_box * white_triangle
+
+            # Get a black triangle mask
+            black_triangle = (1.0, 1.0, 1.0) - white_triangle
+
+            # Overwrite the triangle area
+            warped_image[tl[1] : br[1], tl[0] : br[0]] = (
+                warped_image[tl[1] : br[1], tl[0] : br[0]] * black_triangle
+            )
+
+            # Add the triangle-only area with the non-masked triangle image
+            warped_image[tl[1] : br[1], tl[0] : br[0]] = (
+                warped_image[tl[1] : br[1], tl[0] : br[0]] + triangle_only_image_area
+            )
+
+        # TODO: Support grayscale images

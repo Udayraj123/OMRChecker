@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 
-from src.utils.image import ImageUtils
+from src.algorithm.phase_correlation import get_phase_correlation_shifts
+from src.utils.image import ImageUtils, ImageWarpUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 
@@ -23,33 +24,21 @@ class SiftMatcher:
         SiftMatcher.flann = cv2.FlannBasedMatcher(index_params, search_params)
 
     @staticmethod
-    def get_matches(
-        field_block_name, img1, img2, origin, dimensions, margins, max_displacement
-    ):
-        # compute zone and clip to image dimensions
-        zone_start = [
-            int(origin[0] - margins["left"]),
-            int(origin[1] - margins["top"]),
-        ]
-        zone_end = [
-            int(origin[0] + margins["right"] + dimensions[0]),
-            int(origin[1] + margins["bottom"] + dimensions[1]),
-        ]
-
+    def get_matches(field_block_name, gray_image, alignment_image, max_displacement):
         # Initiate SIFT detector
-        img1 = img1[zone_start[1] : zone_end[1], zone_start[0] : zone_end[0]]
-        img2 = img2[zone_start[1] : zone_end[1], zone_start[0] : zone_end[0]]
-
         # Resize to same (redundant)
         # temp resize 250, 133
+
         # TODO: fix this size dependency
-        img1 = ImageUtils.resize_util(img1, u_height=250, u_width=133)
-        img2 = ImageUtils.resize_util(img2, u_height=250, u_width=133)
-        logger.info(img1.shape, "img1.shape")
+        alignment_image = ImageUtils.resize_util(
+            alignment_image, u_height=250, u_width=133
+        )
+        gray_image = ImageUtils.resize_util(gray_image, u_height=250, u_width=133)
+        logger.info(alignment_image.shape, "alignment_image.shape")
 
         # find the keypoints and descriptors with SIFT
-        kp1, des1 = SiftMatcher.sift.detectAndCompute(img1, None)
-        kp2, des2 = SiftMatcher.sift.detectAndCompute(img2, None)
+        kp1, des1 = SiftMatcher.sift.detectAndCompute(alignment_image, None)
+        kp2, des2 = SiftMatcher.sift.detectAndCompute(gray_image, None)
 
         matches = SiftMatcher.flann.knnMatch(des1, des2, k=2)
         MIN_MATCH_COUNT = 10
@@ -74,13 +63,15 @@ class SiftMatcher:
             M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 10.0)
             matchesMask = mask.ravel().tolist()
 
-            h, w = img1.shape
+            h, w = alignment_image.shape
             pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]]).reshape(
                 -1, 1, 2
             )
             dst = cv2.perspectiveTransform(pts, M)
 
-            img2 = cv2.polylines(img2, [np.int32(dst)], True, 155, 3, cv2.LINE_AA)
+            gray_image = cv2.polylines(
+                gray_image, [np.int32(dst)], True, 155, 3, cv2.LINE_AA
+            )
 
         else:
             print(f"Not enough matches are found - {len(good)}/{MIN_MATCH_COUNT}")
@@ -89,14 +80,17 @@ class SiftMatcher:
         draw_params = dict(
             matchColor=(0, 255, 0),  # draw matches in green color
             singlePointColor=None,
-            # matchesMask=matchesMask,  # draw only inliers
+            # TODO: debug how to filter good_points using matchesMask
+            matchesMask=matchesMask,  # draw only inliers
             flags=2,
         )
 
-        img3 = cv2.drawMatches(img1, kp1, img2, kp2, good, None, **draw_params)
+        img3 = cv2.drawMatches(
+            alignment_image, kp1, gray_image, kp2, good, None, **draw_params
+        )
 
         InteractionUtils.show(f"Matches for {field_block_name}", img3)
-
+        return good
         # TODO: apply triangulation or approach 1
 
 
@@ -105,7 +99,37 @@ class SiftMatcher:
 SiftMatcher.singleton_init()
 
 
-def apply_template_alignment(template, gray_image, colored_image):
+def piecewise_affine(gray_image, colored_image, sift_displacement_pairs, rect):
+    # Make a copy for warping
+    warped_image, warped_colored_image = gray_image.copy(), colored_image.copy()
+
+    # get DN triangles
+    subdiv = cv2.Subdiv2D(rect)
+    for [_source_point, destination_point] in sift_displacement_pairs:
+        subdiv.insert((int(destination_point[0]), int(destination_point[1])))
+
+    # Insert points into subdiv
+    # for p in points:
+
+    delaunay_triangles = subdiv.getTriangleList()
+    # Get reverse-index mapping
+
+    # TODO: filter the list of triangles based on the rectangle boundary
+    # if rectContains(rect, pt1) and rectContains(rect, pt2) and rectContains(rect, pt3):
+
+    #  then loop over triangles
+    for source_points, destination_points in delaunay_triangles:
+        # TODO: modify this loop to support 4-point transforms too!
+        # if len(source_points == 4):
+        # TODO: warp in colored image as well.
+        ImageWarpUtils.warp_triangle(
+            gray_image, warped_image, source_points, destination_points
+        )
+
+    return warped_image, warped_colored_image
+
+
+def apply_template_alignment(gray_image, colored_image, template):
     if "gray_alignment_image" not in template.alignment:
         logger.info(f"Note: Alignment not enabled for template {template}")
         return gray_image, colored_image
@@ -134,21 +158,98 @@ def apply_template_alignment(template, gray_image, colored_image):
             lambda attr: getattr(field_block, attr),
             ["name", "origin", "dimensions", "alignment"],
         )
+        # TODO: wrap this loop body into a function and generalize into passing *any* scanZone in this.
+
         local_max_displacement = field_block_alignment.get(
             "maxDisplacement", max_displacement
         )
-        if local_max_displacement == 0: 
-            # Don't compute alignment if allowed displacement is zero
-            continue
-        SiftMatcher.get_matches(
-            field_block_name,
-            gray_alignment_image,
-            gray_image,
-            origin,
-            dimensions,
-            margins,
-            local_max_displacement,
-        )
+
+        # TODO: uncomment this
+        # if local_max_displacement == 0:
+        #     # Skip alignment computation if allowed displacement is zero
+        #     continue
+
+        # compute zone and clip to image dimensions
+        zone_start = [
+            int(origin[0] - margins["left"]),
+            int(origin[1] - margins["top"]),
+        ]
+        zone_end = [
+            int(origin[0] + margins["right"] + dimensions[0]),
+            int(origin[1] + margins["bottom"] + dimensions[1]),
+        ]
+
+        block_image = gray_image[
+            zone_start[1] : zone_end[1], zone_start[0] : zone_end[0]
+        ]
+        block_alignment_image = gray_alignment_image[
+            zone_start[1] : zone_end[1], zone_start[0] : zone_end[0]
+        ]
+        apply_phase_correlation_shifts(field_block, block_alignment_image, block_image)
+
+        # sift_displacement_pairs = SiftMatcher.get_matches(
+        #     field_block_name,
+        #     gray_image,
+        #     gray_alignment_image,
+        #     origin,
+        #     dimensions,
+        #     margins,
+        #     local_max_displacement,
+        # )
+
+        # # rect	Rectangle that includes all of the 2D points that are to be added to the subdivision.
+
+        # rect = (zone_start[0], zone_start[1], zone_end[0], zone_end[1])
+        # warped_image, warped_colored_image = piecewise_affine(
+        #     gray_image, colored_image, sift_displacement_pairs, rect
+        # )
+
         # MathUtils.get_rectangle_points_from_box(origin, dimensions)
 
-    return gray_image, colored_image
+    return gray_image, colored_image, template
+
+
+def apply_phase_correlation_shifts(field_block, block_alignment_image, block_image):
+    field_block.shifts, corr_image = get_phase_correlation_shifts(
+        block_alignment_image, block_image
+    )
+    logger.info(field_block.name, field_block.shifts)
+
+    # Translucent
+    overlay = block_alignment_image.copy()
+    overlay_shifted = block_alignment_image.copy()
+    transparency = 0.5
+    cv2.addWeighted(
+        overlay,
+        transparency,
+        block_image,
+        1 - transparency,
+        0,
+        overlay,
+    )
+    M = np.float32(
+        [[1, 0, -1 * field_block.shifts[0]], [0, 1, -1 * field_block.shifts[1]]]
+    )
+    shifted_block_image = cv2.warpAffine(
+        block_image, M, (block_image.shape[1], block_image.shape[0])
+    )
+    cv2.addWeighted(
+        overlay_shifted,
+        transparency,
+        shifted_block_image,
+        1 - transparency,
+        0,
+        overlay_shifted,
+    )
+    InteractionUtils.show("Correlation", corr_image, 0)
+
+    InteractionUtils.show(
+        "Alignment + Input Field Block",
+        ImageUtils.get_padded_hstack([block_alignment_image, block_image]),
+        0,
+    )
+
+    InteractionUtils.show(
+        "Shifts Overlay",
+        ImageUtils.get_padded_hstack([overlay, overlay_shifted]),
+    )

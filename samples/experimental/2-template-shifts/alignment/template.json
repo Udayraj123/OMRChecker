@@ -18,7 +18,8 @@
       "right": 70,
       "bottom": 60,
       "left": 50
-    }
+    },
+    "maxDisplacement": 0
   },
   "preProcessors": [],
   "customLabels": {

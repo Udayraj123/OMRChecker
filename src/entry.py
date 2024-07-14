@@ -308,8 +308,8 @@ def process_files(
 
         # TODO[later]: template as a "Processor"
         # TODO: apply template alignment
-        gray_image, colored_image = apply_template_alignment(
-            template, gray_image, colored_image
+        gray_image, colored_image, template = apply_template_alignment(
+            gray_image, colored_image, template
         )
 
         if gray_image is None:

@@ -14,7 +14,6 @@ from src.processors.manager import PROCESSOR_MANAGER
 from src.utils.constants import BUILTIN_FIELD_TYPES, CUSTOM_FIELD_TYPE
 from src.utils.file import SaveImageOps
 from src.utils.image import ImageUtils
-from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 from src.utils.parsing import (
     custom_sort_output_columns,
@@ -136,6 +135,7 @@ class Template:
     # TODO: move out to template_alignment.py
     def setup_alignment(self, alignment_object, relative_dir, tuning_config):
         self.alignment = alignment_object
+        self.alignment["margins"] = alignment_object["margins"]
         self.alignment["reference_image_path"] = None
         relative_path = self.alignment.get("referenceImage", None)
 
@@ -145,7 +145,7 @@ class Template:
             self.alignment["reference_image_path"] = os.path.join(
                 relative_dir, relative_path
             )
-            logger.debug(self.alignment)
+            # logger.debug(self.alignment)
             gray_alignment_image, colored_alignment_image = ImageUtils.read_image_util(
                 self.alignment["reference_image_path"], tuning_config
             )
@@ -352,6 +352,7 @@ class FieldBlock:
     def setup_field_block(self, field_block_object, field_blocks_offset):
         # case mapping
         (
+            alignment_object,
             bubble_dimensions,
             bubble_values,
             bubbles_gap,
@@ -364,6 +365,7 @@ class FieldBlock:
         ) = map(
             field_block_object.get,
             [
+                "alignment",
                 "bubbleDimensions",
                 "bubbleValues",
                 "bubblesGap",
@@ -385,6 +387,8 @@ class FieldBlock:
         self.labels_gap = labels_gap
         # TODO: support barcode, ocr, etc custom field types
         self.field_type = field_type
+        self.setup_alignment(alignment_object)
+
         self.calculate_block_dimensions(
             bubble_dimensions,
             bubble_values,
@@ -398,6 +402,22 @@ class FieldBlock:
             direction,
             field_type,
             labels_gap,
+        )
+
+    def setup_alignment(self, alignment_object):
+        # TODO: move to constants?
+        DEFAULT_ALIGNMENT = {
+            "margins": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0,
+            },
+            # TODO: get default from template's maxDisplacement value
+            "maxDisplacement": 0,
+        }
+        self.alignment = (
+            alignment_object if alignment_object is not None else DEFAULT_ALIGNMENT
         )
 
     def calculate_block_dimensions(
