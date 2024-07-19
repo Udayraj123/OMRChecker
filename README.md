@@ -95,11 +95,11 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 		<img alt="csv_output" width="550" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/Progress/2019-04-26/images/csv_output.PNG">
 	</a>
 </p>
-Get coloured output for better feedback:
 
+We now support [colored outputs](https://github.com/Udayraj123/OMRChecker/wiki/%5Bv2%5D-About-Evaluation) as well. Here's a sample output on another image -
 <p align="center">
 	<a href="https://github.com/Udayraj123/OMRChecker/wiki/%5Bv2%5D-About-Evaluation">
-		<img alt="coloured_output" width="550" src="https://github.com/Udayraj123/OMRChecker/blob/master/docs/assets/coloured_output.jpg">
+		<img alt="colored_output" width="550" src="./docs/assets/colored_output.jpg">
 	</a>
 </p>
 
