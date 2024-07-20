@@ -189,7 +189,7 @@ class DrawingUtils:
         cv2.line(image, start, end, color, thickness)
 
     @staticmethod
-    def draw_polygon(image, points, color=CLR_BLACK, thickness=3, closed=True):
+    def draw_polygon(image, points, color=CLR_BLACK, thickness=1, closed=True):
         n = len(points)
         for i in range(n):
             if not closed and i == n - 1:

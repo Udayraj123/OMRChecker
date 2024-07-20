@@ -27,6 +27,18 @@ class MathUtils:
         )
 
     @staticmethod
+    def shift_points_to_origin(new_origin, list_of_points):
+        return list(
+            map(
+                lambda point: [
+                    point[0] - new_origin[0],
+                    point[1] - new_origin[1],
+                ],
+                list_of_points,
+            )
+        )
+
+    @staticmethod
     def get_point_on_line_by_ratio(edge_line, length_ratio):
         start, end = edge_line
         return [

@@ -14,7 +14,6 @@ from src.processors.manager import PROCESSOR_MANAGER
 from src.utils.constants import BUILTIN_FIELD_TYPES, CUSTOM_FIELD_TYPE
 from src.utils.file import SaveImageOps
 from src.utils.image import ImageUtils
-from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 from src.utils.parsing import (
     custom_sort_output_columns,
@@ -409,15 +408,15 @@ class FieldBlock:
         )
 
     def setup_alignment(self, alignment_object):
-        # TODO: move to constants?
         DEFAULT_ALIGNMENT = {
+            # TODO: copy defaults from template's maxDisplacement value
+            # TODO: remove this temp
             "margins": {
                 "top": 0,
                 "bottom": 0,
                 "left": 0,
                 "right": 0,
             },
-            # TODO: get default from template's maxDisplacement value
             "maxDisplacement": 10,
         }
         self.alignment = (

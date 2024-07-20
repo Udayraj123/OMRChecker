@@ -4,9 +4,10 @@ import cv2
 import numpy as np
 
 from src.algorithm.phase_correlation import get_phase_correlation_shifts
-from src.utils.constants import CLR_DARK_GREEN, CLR_DARK_RED
+from src.utils.constants import CLR_DARK_BLUE, CLR_DARK_GREEN, CLR_DARK_RED
 from src.utils.drawing import DrawingUtils
-from src.utils.image import ImageUtils, ImageWarpUtils
+from src.utils.image import ImageUtils
+from src.utils.image_warp import ImageWarpUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 from src.utils.math import MathUtils
@@ -59,7 +60,8 @@ class SiftMatcher:
                 <= max_displacement
             ):
                 good.append(m)
-                good_points.append([source_feature_point, destination_feature_point])
+                # the "destination" matchers from sift are actually "source" for warping because we want to reverse the matching positions
+                good_points.append([destination_feature_point, source_feature_point])
 
         if len(good) > MIN_MATCH_COUNT:
             # store all if len(good)>MIN_MATCH_COUNT:
@@ -70,6 +72,7 @@ class SiftMatcher:
                 [destination_features[m.trainIdx].pt for m in good]
             ).reshape(-1, 1, 2)
 
+            # TODO: understand matchesMask and need of homography for SIFT
             M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 10.0)
             matchesMask = mask.ravel().tolist()
 
@@ -111,7 +114,6 @@ class SiftMatcher:
             f"Matches for {field_block_name}", display_feature_matches, 0
         )
         return good_points
-        # TODO: apply triangulation or approach 1
 
 
 # TODO: check static class
@@ -158,8 +160,8 @@ def apply_piecewise_affine(
             for [_source_point, destination_point] in parsed_displacement_pairs
         ]
     )
-    voronoi_image = draw_voronoi(warped_block_image, destination_subdiv)
-    InteractionUtils.show("voronoi_image", voronoi_image, 0)
+    initial_voronoi_image = draw_voronoi(warped_block_image, destination_subdiv)
+    InteractionUtils.show("initial_voronoi_image", initial_voronoi_image, 0)
 
     destination_delaunay_triangles_list = [
         [(round(triangle[2 * i]), round(triangle[2 * i + 1])) for i in range(3)]
@@ -201,45 +203,76 @@ def apply_piecewise_affine(
     ]
     # TODO: visualise the triangles here
     #  then loop over triangles
+
+    # Temp
+    show_image_level = 2
+
     for source_points, destination_points in zip(
         source_delaunay_triangles, destination_delaunay_triangles
     ):
         # TODO: modify this loop to support 4-point transforms too!
         # if len(source_points == 4):
+
+        # TODO: remove this debug snippet
         logger.info(source_points, destination_points)
-        # TODO: remove this
-        warped_block_image_before = cv2.cvtColor(warped_block_image, cv2.COLOR_GRAY2BGR)
+        if show_image_level >= 5:
+            gray_block_image_before = cv2.cvtColor(gray_block_image, cv2.COLOR_GRAY2BGR)
+            warped_block_image_before = cv2.cvtColor(
+                warped_block_image, cv2.COLOR_GRAY2BGR
+            )
+
         ImageWarpUtils.warp_triangle_inplace(
-            gray_block_image, warped_block_image, source_points, destination_points
+            gray_block_image,
+            warped_block_image,
+            source_points,
+            destination_points,
+            show_image_level,
         )
+
         # TODO: modify warped_colored_image as well
         # ImageWarpUtils.warp_triangle_inplace(
         #     colored_image, warped_colored_image, source_points, destination_points
         # )
 
-        DrawingUtils.draw_polygon(gray_block_image, source_points, color=CLR_DARK_RED)
-        DrawingUtils.draw_polygon(
-            warped_block_image_before, source_points, color=CLR_DARK_RED
-        )
-        warped_block_image_after = cv2.cvtColor(warped_block_image, cv2.COLOR_GRAY2BGR)
-        DrawingUtils.draw_polygon(
-            warped_block_image_after, destination_points, color=CLR_DARK_GREEN
-        )
-        overlay = ImageUtils.overlay_image(
-            warped_block_image_before, warped_block_image_after
-        )
+        if show_image_level >= 5:
+            warped_block_image_after = cv2.cvtColor(
+                warped_block_image, cv2.COLOR_GRAY2BGR
+            )
 
-        InteractionUtils.show(
-            f"warped_block_image-{destination_points}",
-            ImageUtils.get_padded_hstack(
-                [
-                    warped_block_image_before,
-                    overlay,
-                    warped_block_image_after,
-                ]
-            ),
-            0,
-        )
+            # TODO: remove - Mutates input image box
+            DrawingUtils.draw_polygon(
+                gray_block_image, source_points, color=CLR_DARK_RED
+            )
+            # DrawingUtils.draw_polygon(gray_block_image, destination_points, color=CLR_DARK_GREEN)
+
+            DrawingUtils.draw_polygon(
+                gray_block_image_before, source_points, color=CLR_DARK_RED
+            )
+            DrawingUtils.draw_polygon(
+                gray_block_image_before, destination_points, color=CLR_DARK_GREEN
+            )
+            DrawingUtils.draw_polygon(
+                warped_block_image_before, destination_points, color=CLR_DARK_BLUE
+            )
+            DrawingUtils.draw_polygon(
+                warped_block_image_after, destination_points, color=CLR_DARK_GREEN
+            )
+            overlay = ImageUtils.overlay_image(
+                gray_block_image_before, warped_block_image_after
+            )
+
+            InteractionUtils.show(
+                f"warped_block_image-{destination_points}",
+                ImageUtils.get_padded_hstack(
+                    [
+                        gray_block_image_before,
+                        warped_block_image_before,
+                        warped_block_image_after,
+                        overlay,
+                    ]
+                ),
+                0,
+            )
 
     return warped_block_image, warped_colored_image
 
@@ -282,7 +315,6 @@ def apply_template_alignment(gray_image, colored_image, template):
             "maxDisplacement", template_max_displacement
         )
 
-        # TODO: uncomment this
         if max_displacement == 0:
             # Skip alignment computation if allowed displacement is zero
             continue
@@ -320,10 +352,6 @@ def apply_template_alignment(gray_image, colored_image, template):
             max_displacement,
             margins,
             dimensions,
-        )
-
-        show_displacement_overlay(
-            block_gray_alignment_image, block_gray_image, warped_block_image
         )
 
         # TODO: assignment outside loop?
@@ -382,6 +410,10 @@ def apply_sift_shifts(
     )
     assert warped_block_image.shape == block_gray_image.shape
 
+    show_displacement_overlay(
+        block_gray_alignment_image, block_gray_image, warped_block_image
+    )
+
     return warped_block_image, warped_colored_image
 
 
@@ -411,12 +443,6 @@ def apply_phase_correlation_shifts(
 def show_displacement_overlay(
     block_gray_alignment_image, block_gray_image, shifted_block_image
 ):
-    # InteractionUtils.show(
-    #     "Reference + Input Field Block",
-    #     ImageUtils.get_padded_hstack([block_gray_alignment_image, block_gray_image]),
-    #     0,
-    # )
-
     # ..
     overlay = ImageUtils.overlay_image(block_gray_alignment_image, block_gray_image)
     overlay_shifted = ImageUtils.overlay_image(
@@ -424,8 +450,16 @@ def show_displacement_overlay(
     )
 
     InteractionUtils.show(
-        "Alignment Overlays",
-        ImageUtils.get_padded_hstack([overlay, overlay_shifted]),
+        "Alignment For Field Block",
+        ImageUtils.get_padded_hstack(
+            [
+                block_gray_alignment_image,
+                block_gray_image,
+                shifted_block_image,
+                overlay,
+                overlay_shifted,
+            ]
+        ),
     )
 
 
@@ -446,7 +480,6 @@ def draw_voronoi(image, subdiv):
         cv2.fillConvexPoly(voronoi_image, ifacet, color, cv2.LINE_AA, 0)
         ifacets = np.array([ifacet])
         cv2.polylines(voronoi_image, ifacets, True, (0, 0, 0), 1, cv2.LINE_AA, 0)
-        logger.info("center", (centers[i][0], centers[i][1]))
         cv2.circle(
             voronoi_image,
             (int(centers[i][0]), int(centers[i][1])),
