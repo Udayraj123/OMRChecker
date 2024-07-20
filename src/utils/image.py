@@ -358,6 +358,19 @@ class ImageUtils:
         else:
             return cv2.rotate(image, rotation)
 
+    @staticmethod
+    def overlay_image(image1, image2, transparency=0.5):
+        overlay = image1.copy()
+        cv2.addWeighted(
+            overlay,
+            transparency,
+            image2,
+            1 - transparency,
+            0,
+            overlay,
+        )
+        return overlay
+
 
 class ImageWarpUtils:
     # TODO: add subclasses/submodules to ImageUtils to organize better.

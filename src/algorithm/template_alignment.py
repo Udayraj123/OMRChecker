@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 
 from src.algorithm.phase_correlation import get_phase_correlation_shifts
+from src.utils.constants import CLR_DARK_GREEN, CLR_DARK_RED
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils, ImageWarpUtils
 from src.utils.interaction import InteractionUtils
@@ -206,19 +207,39 @@ def apply_piecewise_affine(
         # TODO: modify this loop to support 4-point transforms too!
         # if len(source_points == 4):
         logger.info(source_points, destination_points)
-        # TODO: modify warped_colored_image
+        # TODO: remove this
+        warped_block_image_before = cv2.cvtColor(warped_block_image, cv2.COLOR_GRAY2BGR)
         ImageWarpUtils.warp_triangle_inplace(
             gray_block_image, warped_block_image, source_points, destination_points
         )
+        # TODO: modify warped_colored_image as well
         # ImageWarpUtils.warp_triangle_inplace(
         #     colored_image, warped_colored_image, source_points, destination_points
         # )
 
-        DrawingUtils.draw_polygon(gray_block_image, source_points)
-        DrawingUtils.draw_polygon(warped_block_image, destination_points)
-        # InteractionUtils.show(
-        #     f"warped_block_image-{destination_points}", warped_block_image, 0
-        # )
+        DrawingUtils.draw_polygon(gray_block_image, source_points, color=CLR_DARK_RED)
+        DrawingUtils.draw_polygon(
+            warped_block_image_before, source_points, color=CLR_DARK_RED
+        )
+        warped_block_image_after = cv2.cvtColor(warped_block_image, cv2.COLOR_GRAY2BGR)
+        DrawingUtils.draw_polygon(
+            warped_block_image_after, destination_points, color=CLR_DARK_GREEN
+        )
+        overlay = ImageUtils.overlay_image(
+            warped_block_image_before, warped_block_image_after
+        )
+
+        InteractionUtils.show(
+            f"warped_block_image-{destination_points}",
+            ImageUtils.get_padded_hstack(
+                [
+                    warped_block_image_before,
+                    overlay,
+                    warped_block_image_after,
+                ]
+            ),
+            0,
+        )
 
     return warped_block_image, warped_colored_image
 
@@ -349,7 +370,7 @@ def apply_sift_shifts(
     local_displacement_pairs += [
         [tuple(point), tuple(point)]
         for point in MathUtils.get_rectangle_points(
-            2, 2, warped_rectangle[2] - 4, warped_rectangle[3] - 4
+            1, 1, warped_rectangle[2] - 2, warped_rectangle[3] - 2
         )
     ]
 
@@ -396,26 +417,10 @@ def show_displacement_overlay(
     #     0,
     # )
 
-    transparency = 0.5
-    overlay = block_gray_alignment_image.copy()
-    cv2.addWeighted(
-        overlay,
-        transparency,
-        block_gray_image,
-        1 - transparency,
-        0,
-        overlay,
-    )
-
-    transparency = 0.5
-    overlay_shifted = block_gray_alignment_image.copy()
-    cv2.addWeighted(
-        overlay_shifted,
-        transparency,
-        shifted_block_image,
-        1 - transparency,
-        0,
-        overlay_shifted,
+    # ..
+    overlay = ImageUtils.overlay_image(block_gray_alignment_image, block_gray_image)
+    overlay_shifted = ImageUtils.overlay_image(
+        block_gray_alignment_image, shifted_block_image
     )
 
     InteractionUtils.show(
