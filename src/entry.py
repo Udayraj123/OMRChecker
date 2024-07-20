@@ -296,7 +296,6 @@ def process_files(
             "Input Image", range(1, 7), gray_image, colored_image
         )
 
-        logger.info("gray_image-before", gray_image.shape)
         # TODO: use try catch here and store paths to error files
         # Note: the returned template is a copy
         (
@@ -306,7 +305,6 @@ def process_files(
         ) = template.image_instance_ops.apply_preprocessors(
             file_path, gray_image, colored_image, template
         )
-        logger.info("gray_image-after", gray_image.shape)
 
         # TODO[later]: template as a "Processor"
         # TODO: apply template alignment

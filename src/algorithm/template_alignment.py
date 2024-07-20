@@ -1,3 +1,5 @@
+import random
+
 import cv2
 import numpy as np
 
@@ -81,7 +83,9 @@ class SiftMatcher:
             )
 
         else:
-            print(f"Not enough matches are found - {len(good)}/{MIN_MATCH_COUNT}")
+            logger.critical(
+                f"Not enough matches are found - {len(good)}/{MIN_MATCH_COUNT}"
+            )
             matchesMask = None
 
         draw_params = dict(
@@ -115,21 +119,26 @@ SiftMatcher.singleton_init()
 
 
 def apply_piecewise_affine(
-    gray_block_image, colored_block_image, displacement_pairs, rect
+    gray_block_image, colored_block_image, displacement_pairs, warped_rectangle
 ):
-    # ## TODO: remove this filter
-    filtered_displacement_pairs = [
+    # ## TODO: remove/update this filter
+    # Can we somehow allow displacements in one direction(majority) and eliminate the ones going the other way too?
+
+    parsed_displacement_pairs = [
         [list(map(round, source_point)), list(map(round, destination_point))]
         for [source_point, destination_point] in displacement_pairs
-        if MathUtils.rectangle_contains(source_point, rect)
-        and MathUtils.rectangle_contains(destination_point, rect)
+        if MathUtils.rectangle_contains(source_point, warped_rectangle)
+        and MathUtils.rectangle_contains(destination_point, warped_rectangle)
     ]
-    print(
-        f"displacement_pairs: {len(displacement_pairs)} -> {len(filtered_displacement_pairs)}"
+    logger.info(
+        "parsed_displacement_pairs", parsed_displacement_pairs, warped_rectangle
     )
-    if len(filtered_displacement_pairs) == 0:
+    logger.info(
+        f"displacement_pairs: {len(displacement_pairs)} -> {len(parsed_displacement_pairs)}"
+    )
+    if len(parsed_displacement_pairs) == 0:
         logger.warning(
-            f"Invalid displacement points, no point-pair found in the given rectangle: {rect}"
+            f"Invalid displacement points, no point-pair found in the given rectangle: {warped_rectangle}"
         )
         logger.info(displacement_pairs)
         return gray_block_image, colored_block_image
@@ -141,13 +150,15 @@ def apply_piecewise_affine(
     )
 
     # Bulk insert all destination points
-    destination_subdiv = cv2.Subdiv2D(rect)
+    destination_subdiv = cv2.Subdiv2D(warped_rectangle)
     destination_subdiv.insert(
         [
             (int(destination_point[0]), int(destination_point[1]))
-            for [_source_point, destination_point] in filtered_displacement_pairs
+            for [_source_point, destination_point] in parsed_displacement_pairs
         ]
     )
+    voronoi_image = draw_voronoi(warped_block_image, destination_subdiv)
+    InteractionUtils.show("voronoi_image", voronoi_image, 0)
 
     destination_delaunay_triangles_list = [
         [(round(triangle[2 * i]), round(triangle[2 * i + 1])) for i in range(3)]
@@ -159,14 +170,16 @@ def apply_piecewise_affine(
         for triangle in destination_delaunay_triangles_list
         # TODO[think]: why exactly do we need to filter outside triangles at start?
         # How to get rid of "zero-sized triangles" e.g. lines
-        if all(MathUtils.rectangle_contains(point, rect) for point in triangle)
+        if all(
+            MathUtils.rectangle_contains(point, warped_rectangle) for point in triangle
+        )
     ]
-    print(
-        f"destination_delaunay_triangles: {len(destination_delaunay_triangles_list)} -> {len(destination_delaunay_triangles)}"
+    logger.info(
+        f"destination_delaunay_triangles: {len(destination_delaunay_triangles_list)} -> {len(destination_delaunay_triangles)} inside rectangle {warped_rectangle}"
     )
     if len(destination_delaunay_triangles) == 0:
         logger.warning(
-            f"Invalid displacement points, no point-pair found in the given rectangle: {rect}"
+            f"Invalid displacement points, no point-pair found in the given rectangle: {warped_rectangle}"
         )
         logger.info(destination_delaunay_triangles)
         return warped_block_image, warped_colored_image
@@ -174,9 +187,9 @@ def apply_piecewise_affine(
     # Store the reverse point mapping
     destination_to_source_point_map = {
         tuple(destination_point): source_point
-        for [source_point, destination_point] in filtered_displacement_pairs
+        for [source_point, destination_point] in parsed_displacement_pairs
     }
-    logger.info("filtered_displacement_pairs", filtered_displacement_pairs)
+    logger.info("parsed_displacement_pairs", parsed_displacement_pairs)
     logger.info("destination_delaunay_triangles", destination_delaunay_triangles)
     logger.info("destination_to_source_point_map", destination_to_source_point_map)
 
@@ -185,7 +198,6 @@ def apply_piecewise_affine(
         list(map(destination_to_source_point_map.get, destination_triangle))
         for destination_triangle in destination_delaunay_triangles
     ]
-
     # TODO: visualise the triangles here
     #  then loop over triangles
     for source_points, destination_points in zip(
@@ -198,12 +210,14 @@ def apply_piecewise_affine(
         ImageWarpUtils.warp_triangle_inplace(
             gray_block_image, warped_block_image, source_points, destination_points
         )
+        # ImageWarpUtils.warp_triangle_inplace(
+        #     colored_image, warped_colored_image, source_points, destination_points
+        # )
 
         DrawingUtils.draw_polygon(gray_block_image, source_points)
         DrawingUtils.draw_polygon(warped_block_image, destination_points)
-
-        # ImageWarpUtils.warp_triangle_inplace(
-        #     colored_image, warped_colored_image, source_points, destination_points
+        # InteractionUtils.show(
+        #     f"warped_block_image-{destination_points}", warped_block_image, 0
         # )
 
     return warped_block_image, warped_colored_image
@@ -271,16 +285,6 @@ def apply_template_alignment(gray_image, colored_image, template):
             [gray_image, colored_image, gray_alignment_image],
         )
 
-        InteractionUtils.show("block_gray_image-before", block_gray_image)
-        block_gray_image = hough_circles(block_gray_image)
-        InteractionUtils.show("block_gray_image", block_gray_image)
-
-        InteractionUtils.show(
-            "block_gray_alignment_image-before", block_gray_alignment_image
-        )
-        block_gray_alignment_image = hough_circles(block_gray_alignment_image)
-        InteractionUtils.show("block_gray_alignment_image", block_gray_alignment_image)
-
         # TODO: move to a processor:
         # warped_block_image = apply_phase_correlation_shifts(
         #     field_block, block_gray_alignment_image, block_gray_image
@@ -333,18 +337,27 @@ def apply_sift_shifts(
         max_displacement,
     )
 
-    # rect:	Rectangle that includes all of the 2D points that are to be added to the subdivision.
-    shifted_rect = (
+    # Rectangle that includes all of the 2D points that are to be added to the subdivision.
+    warped_rectangle = (
         0,
         0,
         margins["left"] + margins["right"] + dimensions[0],
         margins["top"] + margins["bottom"] + dimensions[1],
     )
+
+    # Add rectangle corner pairs for complete triangulation
+    local_displacement_pairs += [
+        [tuple(point), tuple(point)]
+        for point in MathUtils.get_rectangle_points(
+            2, 2, warped_rectangle[2] - 4, warped_rectangle[3] - 4
+        )
+    ]
+
     warped_block_image, warped_colored_image = apply_piecewise_affine(
         block_gray_image,
         block_colored_image,
         local_displacement_pairs,
-        shifted_rect,
+        warped_rectangle,
     )
     assert warped_block_image.shape == block_gray_image.shape
 
@@ -413,29 +426,32 @@ def show_displacement_overlay(
 
 # TODO: move this into drawing utils
 # TODO: use this and display the facets
-def draw_voronoi(img, subdiv):
+def draw_voronoi(image, subdiv):
+    voronoi_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     (facets, centers) = subdiv.getVoronoiFacetList([])
 
-    for i in xrange(0, len(facets)):
+    for i in range(0, len(facets)):
         ifacet_arr = []
         for f in facets[i]:
             ifacet_arr.append(f)
 
-        ifacet = np.array(ifacet_arr, np.int)
+        ifacet = np.array(ifacet_arr, int)
         color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
-        cv2.fillConvexPoly(img, ifacet, color, cv2.CV_AA, 0)
+        cv2.fillConvexPoly(voronoi_image, ifacet, color, cv2.LINE_AA, 0)
         ifacets = np.array([ifacet])
-        cv2.polylines(img, ifacets, True, (0, 0, 0), 1, cv2.CV_AA, 0)
+        cv2.polylines(voronoi_image, ifacets, True, (0, 0, 0), 1, cv2.LINE_AA, 0)
+        logger.info("center", (centers[i][0], centers[i][1]))
         cv2.circle(
-            img,
-            (centers[i][0], centers[i][1]),
+            voronoi_image,
+            (int(centers[i][0]), int(centers[i][1])),
             3,
             (0, 0, 0),
-            cv2.cv.CV_FILLED,
-            cv2.CV_AA,
+            cv2.FILLED,
+            cv2.LINE_AA,
             0,
         )
+    return voronoi_image
 
 
 def hough_circles(gray):
@@ -454,7 +470,7 @@ def hough_circles(gray):
 
     if circles is not None:
         circles = np.uint16(np.around(circles))
-        logger.info("circles", circles)
+        # logger.info("circles", circles)
         for i in circles[0, :]:
             center = (i[0], i[1])
             # circle center

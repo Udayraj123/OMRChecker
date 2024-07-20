@@ -189,9 +189,14 @@ class DrawingUtils:
         cv2.line(image, start, end, color, thickness)
 
     @staticmethod
-    def draw_polygon(image, points, color=CLR_BLACK, thickness=3):
-        for i in range(len(points) - 1):
-            DrawingUtils.draw_line(image, points[i], points[i + 1], color, thickness)
+    def draw_polygon(image, points, color=CLR_BLACK, thickness=3, closed=True):
+        n = len(points)
+        for i in range(n):
+            if not closed and i == n - 1:
+                continue
+            DrawingUtils.draw_line(
+                image, points[i % n], points[(i + 1) % n], color, thickness
+            )
 
     @staticmethod
     def draw_group(
