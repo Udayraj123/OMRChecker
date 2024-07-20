@@ -14,6 +14,7 @@ from src.processors.manager import PROCESSOR_MANAGER
 from src.utils.constants import BUILTIN_FIELD_TYPES, CUSTOM_FIELD_TYPE
 from src.utils.file import SaveImageOps
 from src.utils.image import ImageUtils
+from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 from src.utils.parsing import (
     custom_sort_output_columns,
@@ -152,18 +153,21 @@ class Template:
             # InteractionUtils.show("gray_alignment_image", gray_alignment_image)
 
             # TODO: shouldn't pass self
-            gray_alignment_image,
-            colored_alignment_image,
-            _ = self.image_instance_ops.apply_preprocessors(
+            (
+                processed_gray_alignment_image,
+                processed_colored_alignment_image,
+                _,
+            ) = self.image_instance_ops.apply_preprocessors(
                 self.alignment["reference_image_path"],
                 gray_alignment_image,
                 colored_alignment_image,
                 self,
             )
-
             # Pre-processed alignment image
-            self.alignment["gray_alignment_image"] = gray_alignment_image
-            self.alignment["colored_alignment_image"] = colored_alignment_image
+            self.alignment["gray_alignment_image"] = processed_gray_alignment_image
+            self.alignment[
+                "colored_alignment_image"
+            ] = processed_colored_alignment_image
 
     def setup_field_blocks(self, field_blocks_object):
         # Add field_blocks
@@ -414,7 +418,7 @@ class FieldBlock:
                 "right": 0,
             },
             # TODO: get default from template's maxDisplacement value
-            "maxDisplacement": 0,
+            "maxDisplacement": 10,
         }
         self.alignment = (
             alignment_object if alignment_object is not None else DEFAULT_ALIGNMENT

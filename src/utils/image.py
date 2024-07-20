@@ -52,7 +52,7 @@ class ImageUtils:
         return cv2.resize(img, (int(u_width), int(u_height)))
 
     @staticmethod
-    def get_cropped_rectangle_warped_points(ordered_page_corners):
+    def get_cropped_warped_rectangle_points(ordered_page_corners):
         # Note: This utility would just find a good size ratio for the cropped image to look more realistic
         # but since we're anyway resizing the image, it doesn't make much sense to use these calculations
         (tl, tr, br, bl) = ordered_page_corners
@@ -363,8 +363,16 @@ class ImageWarpUtils:
     # TODO: add subclasses/submodules to ImageUtils to organize better.
     @staticmethod
     def warp_triangle_inplace(image, warped_image, source_triangle, warped_triangle):
-        # Support for both colored and grayscale images.
-        h, w, channels = image.shape
+        if MathUtils.check_collinear_points(*source_triangle):
+            logger.critical(
+                f"Found collinear points. Skipping warp step for the source triangle {source_triangle}"
+            )
+            return
+        if MathUtils.check_collinear_points(*warped_triangle):
+            logger.critical(
+                f"Found collinear points. Skipping warp step for the warped triangle {source_triangle}"
+            )
+            return
 
         # Find bounding box and crop input image
         (
@@ -397,7 +405,10 @@ class ImageWarpUtils:
         source_triangle_box = image[
             source_tl[1] : source_br[1], source_tl[0] : source_br[0]
         ]
-
+        logger.info("source_triangle_box", source_triangle_box.shape)
+        logger.info("source_triangle", source_triangle)
+        logger.info("warped_triangle", warped_triangle)
+        logger.info("triangle_affine_matrix", triangle_affine_matrix)
         # Apply the Affine Transform just found to the src image
         warped_triangle_box = cv2.warpAffine(
             source_triangle_box,
@@ -408,12 +419,11 @@ class ImageWarpUtils:
             borderMode=cv2.BORDER_REFLECT_101,
         )
         # Note: the warped image dimensions will match to that of the warped triangle's bounding box(with black filling)
-        assert warped_triangle_box.shape[:2] == [
-            warped_box_dimensions[1],
-            warped_box_dimensions[0],
-        ]
+        assert warped_triangle_box.shape == tuple(
+            reversed(warped_box_dimensions)
+        ), f"{warped_triangle_box.shape} != {tuple(reversed(warped_box_dimensions))}"
 
-        ImageWarpUtils.replace_triangle_inplace(
+        return ImageWarpUtils.replace_triangle_inplace(
             warped_image,
             warped_shifted_triangle,
             warped_triangle_box,
@@ -421,8 +431,6 @@ class ImageWarpUtils:
             warped_br,
             warped_box_dimensions,
         )
-
-        return
 
     @staticmethod
     def replace_triangle_inplace(
@@ -433,7 +441,10 @@ class ImageWarpUtils:
         warped_br,
         warped_box_dimensions,
     ):
-        _h, _w, channels = warped_triangle_box.shape
+        # TODO: Support for both colored and grayscale images.
+        channels = (
+            2 if len(warped_triangle_box.shape) == 2 else warped_triangle_box.shape[2]
+        )
         tl, br, dest_w, dest_h = (
             warped_tl,
             warped_br,
@@ -467,5 +478,7 @@ class ImageWarpUtils:
             warped_image[tl[1] : br[1], tl[0] : br[0]] = (
                 warped_image[tl[1] : br[1], tl[0] : br[0]] + triangle_only_image_area
             )
-
+            return
+        # else:
         # TODO: Support grayscale images
+        return

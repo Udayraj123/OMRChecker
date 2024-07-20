@@ -297,6 +297,7 @@ _common_field_block_properties = {
         "properties": {
             "margins": {"$ref": "#/$def/margins_schema"},
             "maxDisplacement": {"$ref": "#/$def/positive_integer"},
+            "maxMatchCount": {"$ref": "#/$def/positive_integer"},
         },
     },
 }
@@ -461,8 +462,10 @@ TEMPLATE_SCHEMA = {
                     "description": "The relative path to reference image",
                     "type": "string",
                 },
+                # TODO: add "method" and move below items to "options"
                 "margins": {"$ref": "#/$def/margins_schema"},
                 "maxDisplacement": {"$ref": "#/$def/positive_integer"},
+                "maxMatchCount": {"$ref": "#/$def/positive_integer"},
                 "anchorWindowSize": {
                     "$ref": "#/$def/two_positive_numbers",
                     "description": "The size of the anchor window for picking best local anchor points",

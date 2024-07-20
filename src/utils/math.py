@@ -102,6 +102,17 @@ class MathUtils:
         return [tl, tr]
 
     @staticmethod
+    def rectangle_contains(point, rect):
+        # Note: this function accepts a rectangle in a 4-tuple
+        rect_start, rect_end = rect[0:2], rect[2:4]
+        return not (
+            point[0] < rect_start[0]
+            or point[1] < rect_start[1]
+            or point[0] > rect_end[0]
+            or point[1] > rect_end[1]
+        )
+
+    @staticmethod
     def check_max_cosine(approx):
         # assumes 4 points present
         max_cosine = 0
@@ -125,6 +136,19 @@ class MathUtils:
         return (dx1 * dx2 + dy1 * dy2) / np.sqrt(
             (dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2) + 1e-10
         )
+
+    @staticmethod
+    def check_collinear_points(point1, point2, point3):
+        (
+            [x1, y1],
+            [x2, y2],
+            [x3, y3],
+        ) = (
+            point1,
+            point2,
+            point3,
+        )
+        return (y1 - y2) * (x1 - x3) == (y1 - y3) * (x1 - x2)
 
     @staticmethod
     def to_bgr(any_color):

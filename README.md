@@ -19,7 +19,6 @@ OMR stands for Optical Mark Recognition, used to detect and interpret human-mark
 [![GitHub pull-requests closed](https://img.shields.io/github/issues-pr-closed/Udayraj123/OMRChecker.svg)](https://github.com/Udayraj123/OMRChecker/pulls?q=is%3Aclosed)
 [![GitHub issues-closed](https://img.shields.io/github/issues-closed/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/issues?q=is%3Aissue+is%3Aclosed)
 [![Ask me](https://img.shields.io/badge/Discuss-on_Github-purple.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/issues/5)
-<!-- [![GitHub contributors](https://img.shields.io/github/contributors/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/graphs/contributors/) -->
 
 [![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FUdayraj123%2FOMRChecker&count_bg=%2379C83D&title_bg=%23555555&icon=googlecast.svg&icon_color=%23E7E7E7&title=hits%2829.09.2022%29&edge_flat=false)](https://hits.seeyoufarm.com)
@@ -336,6 +335,12 @@ Here's a snapshot of the [Android OMR Helper App (archived)](https://github.com/
 <a href="https://github.com/Udayraj123/OMRChecker/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=Udayraj123/OMRChecker" />
 </a>
+
+<p align="center">
+
+[![GitHub contributors](https://img.shields.io/github/contributors/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/graphs/contributors/)
+
+</p>
 
 ---
 

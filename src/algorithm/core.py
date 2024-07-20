@@ -153,7 +153,7 @@ class ImageInstanceOps:
             # Show Before Preview
             if show_preprocessors_diff[pre_processor_name]:
                 InteractionUtils.show(
-                    f"Before {pre_processor_name}",
+                    f"Before {pre_processor_name}: {file_path}",
                     colored_image
                     if config.outputs.colored_outputs_enabled
                     else gray_image,
@@ -173,7 +173,7 @@ class ImageInstanceOps:
             # Show After Preview
             if show_preprocessors_diff[pre_processor_name]:
                 InteractionUtils.show(
-                    f"After {pre_processor_name}",
+                    f"After {pre_processor_name}: {file_path}",
                     colored_image
                     if config.outputs.colored_outputs_enabled
                     else gray_image,

@@ -197,7 +197,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         (
             parsed_destination_points,
             warped_dimensions,
-        ) = ImageUtils.get_cropped_rectangle_destination_points(parsed_control_points)
+        ) = ImageUtils.get_cropped_warped_rectangle_points(parsed_control_points)
 
         transform_matrix = cv2.getPerspectiveTransform(
             parsed_control_points, parsed_destination_points

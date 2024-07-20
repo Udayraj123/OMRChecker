@@ -67,7 +67,7 @@ class CropPage(WarpOnPointsCommon):
         (
             destination_page_corners,
             _,
-        ) = ImageUtils.get_cropped_rectangle_destination_points(ordered_page_corners)
+        ) = ImageUtils.get_cropped_warped_rectangle_points(ordered_page_corners)
 
         if self.warp_method in [
             WarpMethod.DOC_REFINE,
