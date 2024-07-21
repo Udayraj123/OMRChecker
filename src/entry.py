@@ -16,9 +16,9 @@ from time import time
 import pandas as pd
 from rich.table import Table
 
+from src.algorithm.alignment.template_alignment import apply_template_alignment
 from src.algorithm.evaluation import EvaluationConfig, evaluate_concatenated_response
 from src.algorithm.template import Template
-from src.algorithm.template_alignment import apply_template_alignment
 from src.schemas.constants import DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING
 from src.schemas.defaults import CONFIG_DEFAULTS
 from src.utils import constants
@@ -309,7 +309,7 @@ def process_files(
         # TODO[later]: template as a "Processor"
         # TODO: apply template alignment
         gray_image, colored_image, template = apply_template_alignment(
-            gray_image, colored_image, template
+            gray_image, colored_image, template, tuning_config
         )
 
         if gray_image is None:

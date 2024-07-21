@@ -169,51 +169,61 @@ class TemplateDrawing:
     ):
         marked_image = image.copy() if shouldCopy else image
         for field_block in template.field_blocks:
-            field_block_name, origin, dimensions, bubble_dimensions = map(
-                lambda attr: getattr(field_block, attr),
-                [
-                    "name",
-                    "origin",
-                    "dimensions",
-                    "bubble_dimensions",
-                ],
+            TemplateDrawing.draw_field_block(
+                field_block, marked_image, shifted, thickness, border
             )
-            block_position = field_block.get_shifted_origin() if shifted else origin
-
-            # Field block bounding rectangle
-            DrawingUtils.draw_box(
-                marked_image,
-                block_position,
-                dimensions,
-                color=CLR_BLACK,
-                style="BOX_HOLLOW",
-                thickness_factor=0,
-                border=border,
-            )
-
-            for field in field_block.fields:
-                field_bubbles = field.field_bubbles
-                for unit_bubble in field_bubbles:
-                    shifted_position = unit_bubble.get_shifted_position(
-                        field_block.shifts
-                    )
-                    DrawingUtils.draw_box(
-                        marked_image,
-                        shifted_position,
-                        bubble_dimensions,
-                        thickness_factor=1 / 10,
-                        border=border,
-                    )
-
-            if shifted:
-                text_position = lambda size_x, size_y: (
-                    int(block_position[0] + dimensions[0] - size_x),
-                    int(block_position[1] - size_y),
-                )
-                text = f"({field_block.shifts}){field_block_name}"
-                DrawingUtils.draw_text(marked_image, text, text_position, thickness)
 
         return marked_image
+
+    @staticmethod
+    def draw_field_block(
+        field_block, marked_image, shifted=True, thickness=3, border=3
+    ):
+        field_block_name, origin, dimensions, bubble_dimensions = map(
+            lambda attr: getattr(field_block, attr),
+            [
+                "name",
+                "origin",
+                "dimensions",
+                "bubble_dimensions",
+            ],
+        )
+        block_position = field_block.get_shifted_origin() if shifted else origin
+
+        # Field block bounding rectangle
+        DrawingUtils.draw_box(
+            marked_image,
+            block_position,
+            dimensions,
+            color=CLR_BLACK,
+            style="BOX_HOLLOW",
+            thickness_factor=0,
+            border=border,
+        )
+
+        for field in field_block.fields:
+            field_bubbles = field.field_bubbles
+            for unit_bubble in field_bubbles:
+                shifted_position = unit_bubble.get_shifted_position(field_block.shifts)
+                DrawingUtils.draw_box(
+                    marked_image,
+                    shifted_position,
+                    bubble_dimensions,
+                    thickness_factor=1 / 10,
+                    border=border,
+                )
+
+        if shifted:
+            text_position = lambda size_x, size_y: (
+                int(block_position[0] + dimensions[0] - size_x),
+                int(block_position[1] - size_y),
+            )
+            text = f"({field_block.shifts}){field_block_name}"
+            DrawingUtils.draw_text(
+                marked_image, text, text_position, thickness=thickness
+            )
+
+        return
 
     @staticmethod
     def draw_marked_bubbles_with_evaluation_meta(

@@ -132,9 +132,11 @@ class ImageInstanceOps:
 
         # Copy template for this instance op
         template = shallowcopy(original_template)
-
         # Make deepcopy for only parts that are mutated by Processor
         template.field_blocks = deepcopy(template.field_blocks)
+
+        # Reset the shifts in the copied template
+        template.reset_all_shifts()
 
         # resize to conform to common preprocessor input requirements
         gray_image = ImageUtils.resize_to_shape(
@@ -231,7 +233,6 @@ class ImageInstanceOps:
             #  TODO: support for if field_block.field_type == "BARCODE":
             field_bubble_means_stds = []
             box_w, box_h = field_block.bubble_dimensions
-            logger.info(field_block.name, field_block.shifts)
 
             for field in field_block.fields:
                 field_bubbles = field.field_bubbles

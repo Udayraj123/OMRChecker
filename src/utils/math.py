@@ -27,13 +27,17 @@ class MathUtils:
         )
 
     @staticmethod
+    def get_relative_position(new_origin, point):
+        return [
+            point[0] - new_origin[0],
+            point[1] - new_origin[1],
+        ]
+
+    @staticmethod
     def shift_points_to_origin(new_origin, list_of_points):
         return list(
             map(
-                lambda point: [
-                    point[0] - new_origin[0],
-                    point[1] - new_origin[1],
-                ],
+                lambda point: MathUtils.get_relative_position(new_origin, point),
                 list_of_points,
             )
         )

@@ -305,6 +305,11 @@ class Template:
                 f"Overflowing field block '{block_name}' with origin {block_instance.origin} and dimensions {block_instance.dimensions} in template with dimensions {self.template_dimensions}"
             )
 
+    def reset_all_shifts(self):
+        # Note: field blocks offset is static and independent of "shifts"
+        for field_block in self.field_blocks:
+            field_block.reset_all_shifts()
+
     def __str__(self):
         return str(self.path)
 
@@ -330,6 +335,10 @@ class FieldBlock:
         self.plot_bin_name = block_name
         self.setup_field_block(field_block_object, field_blocks_offset)
         self.shifts = [0, 0]
+
+    def reset_all_shifts(self):
+        self.shifts = [0, 0]
+        # TODO: reset bubble shifts when supported
 
     # Need this at runtime as we have allowed mutation of template via pre-processors
     def get_shifted_origin(self):
@@ -410,14 +419,6 @@ class FieldBlock:
     def setup_alignment(self, alignment_object):
         DEFAULT_ALIGNMENT = {
             # TODO: copy defaults from template's maxDisplacement value
-            # TODO: remove this temp
-            "margins": {
-                "top": 0,
-                "bottom": 0,
-                "left": 0,
-                "right": 0,
-            },
-            "maxDisplacement": 10,
         }
         self.alignment = (
             alignment_object if alignment_object is not None else DEFAULT_ALIGNMENT
@@ -530,6 +531,7 @@ class FieldBubble:
     def __str__(self):
         return self.name  # f"{self.field_label}: [{self.x}, {self.y}]"
 
+    # TODO: support for bubble level shifts?
     def get_shifted_position(self, shifts):
         return [self.x + shifts[0], self.y + shifts[1]]
 

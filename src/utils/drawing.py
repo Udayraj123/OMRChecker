@@ -138,16 +138,18 @@ class DrawingUtils:
         image,
         text_value,
         position,
-        centered=False,
-        font_face=cv2.FONT_HERSHEY_SIMPLEX,
         text_size=TEXT_SIZE,
-        color=CLR_BLACK,
         thickness=2,
+        centered=False,
+        color=CLR_BLACK,
         # available LineTypes: FILLED, LINE_4, LINE_8, LINE_AA
         line_type=cv2.LINE_AA,
+        font_face=cv2.FONT_HERSHEY_SIMPLEX,
     ):
         if centered:
-            assert not callable(position)
+            assert not callable(
+                position
+            ), f"centered={centered} but position={position}"
             text_position = position
             position = lambda size_x, size_y: (
                 text_position[0] - size_x // 2,
