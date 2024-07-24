@@ -13,6 +13,7 @@ from time import time
 
 import cv2
 import pandas as pd
+from PIL import Image ,ImageEnhance
 from rich.table import Table
 
 from src import constants
@@ -70,6 +71,72 @@ def print_config_summary(
     console.print(table, justify="center")
 
 
+
+# Function to split the image in quadrants
+def split_into_quadrants(image):
+    width, height = image.size
+    half_width = width // 2
+    half_height = height // 2
+    quadrants = [
+        (0, 0, half_width, half_height),
+        (half_width, 0, width, half_height),
+        (0, half_height, half_width, height),
+        (half_width, half_height, width, height)
+    ]
+    return [image.crop(box) for box in quadrants]
+# Function to combine the quadrantss of the image
+def combine_quadrants(quadrants):
+    width, height = quadrants[0].size
+    combined_image = Image.new('RGB', (2 * width, 2 * height))
+    combined_image.paste(quadrants[0], (0, 0))
+    combined_image.paste(quadrants[1], (width, 0))
+    combined_image.paste(quadrants[2], (0, height))
+    combined_image.paste(quadrants[3], (width, height))
+    return combined_image
+
+# Function to calculate the brightness of the image 
+def calculate_brightness(image):
+    # Convert image to grayscale
+    grayscale_image = image.convert('L')
+    # Calculate average brightness
+    histogram = grayscale_image.histogram()
+    pixels = sum(histogram)
+    brightness = sum(index * count for index, count in enumerate(histogram)) / pixels
+    return brightness
+
+
+# Function to change the brightness of an image 
+def adjust_brightness(image, target_brightness):
+    current_brightness = calculate_brightness(image)
+    global new_brightness
+    new_brightness = current_brightness
+    if current_brightness < target_brightness:
+        enhancer = ImageEnhance.Brightness(image)
+        factor = target_brightness / current_brightness
+        image = enhancer.enhance(factor)
+    return image
+
+# Function to check and change the brightness
+def check_and_change_brightness(files):
+    global prev_brightness
+    global new_brightness
+    original_image = Image.open(files)
+    brightness = calculate_brightness(original_image)
+    if(brightness<200):
+        prev_brightness = brightness
+        quadrants = split_into_quadrants(original_image)
+        adjusted_quadrants = []
+        for quadrant in quadrants:
+            adjusted_quadrant = adjust_brightness(quadrant, 200)  # Adjust to brightness threshold 200
+            adjusted_quadrants.append(adjusted_quadrant)
+        final_image = combine_quadrants(adjusted_quadrants)
+        final_image.save(files)
+    else:
+        prev_brightness = brightness
+        new_brightness = brightness
+
+
+
 def process_dir(
     root_dir,
     curr_dir,
@@ -100,7 +167,9 @@ def process_dir(
     # look for images in current dir to process
     exts = ("*.[pP][nN][gG]", "*.[jJ][pP][gG]", "*.[jJ][pP][eE][gG]")
     omr_files = sorted([f for ext in exts for f in curr_dir.glob(ext)])
-
+    # checking brightness of dull images and changing accordingly
+    for files in omr_files:
+        check_and_change_brightness(files)
     # Exclude images (take union over all pre_processors)
     excluded_files = []
     if template:
