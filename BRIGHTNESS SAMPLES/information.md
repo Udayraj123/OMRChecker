@@ -1,0 +1,1 @@
+--this situation could have been handeled also by changing white threshold but if in imput some images have good brightness and some have bad brightness (like in this example) then threshold for white can not be changed dynamically 
