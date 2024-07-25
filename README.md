@@ -279,9 +279,7 @@ We believe in the power of open source! Currently, OMRChecker is in an intermedi
 
 OMRChecker can be forked and modified. You are encouraged to play with it and we would love to see your own projects in action!
 
-The only requirement is **disclose usage** of this software in your (public) code.
-
-It is published under the [GPLv3 license](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE).
+It is published under the [MIT license](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE).
 
 </details>
 
