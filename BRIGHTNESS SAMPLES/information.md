@@ -1,1 +1,1 @@
---this situation could have been handeled also by changing white threshold but if in imput some images have good brightness and some have bad brightness (like in this example) then threshold for white can not be changed dynamically 
+This situation could have also been addressed by adjusting the global white threshold. However, if the images in the input folder vary in brightness—some being bright (high brightness) and others dark (low brightness)—changing the white threshold globally would affect all images in the input folder, not just the dark ones.
