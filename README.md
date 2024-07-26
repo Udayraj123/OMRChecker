@@ -219,6 +219,58 @@ Command: <code>python3 -m pip install --user --upgrade pip</code>
 	Link to Solution: <a href="https://github.com/Udayraj123/OMRChecker/issues/70#issuecomment-1268094136">#70</a>
 </details>
 
+## Running OMRChecker in a Docker Container
+
+If you prefer to run OMRChecker in isolation without impacting your system's Python environment, you can utilize Docker. Follow the steps below to set it up:
+
+### Docker Installation
+
+1. **Install Docker Desktop:**
+   - For Windows and macOS users, download and install Docker Desktop from [Docker Hub](https://docs.docker.com/desktop/).
+   - For Linux users, follow the instructions provided in the official [Docker documentation](https://docs.docker.com/desktop/install/linux-install/) for your specific distribution.
+
+2. **Verify Installation:**
+   - After installation, open a terminal (or command prompt) and run the following command to verify that Docker is installed correctly:
+     ```bash
+     docker --version
+     ```
+   - This should display the installed Docker version, indicating that Docker is installed successfully.
+
+
+### Running OMRChecker in Docker
+
+Once Docker is installed, you can run OMRChecker within a Docker container by following these steps:
+
+1. Clone the repository and navigate into it:
+
+    ```bash
+    git clone https://github.com/Udayraj123/OMRChecker
+    cd OMRChecker/
+    ```
+
+2. Build the Docker container image (Initial build may take up to 2 minutes depending on your network connection):
+
+    ```bash
+    docker buildx build -t omrchecker:1.0 .
+    ```
+
+3. Run the Docker container to process the exam images:
+
+    - First, ensure you have your exam images, target image, and `template.json` file ready in the `inputs` directory.
+
+    - Now, run the container, which will automatically mark the exams and place the results in the `outputs/` directory:
+
+    ```bash
+    docker run -t --rm -v $(pwd)/inputs/:/app/inputs/ -v $(pwd)/outputs/:/app/outputs/ omrchecker:1.0
+    ```
+
+    This command mounts the `inputs/` and `outputs/` directories from your host machine to the respective directories inside the container, allowing data exchange.
+
+4. After the process completes, you can find the marked exams in the `outputs/` directory.
+
+By following these steps, you can efficiently use OMRChecker within a Docker container without affecting your local Python environment.
+
+
 ## OMRChecker for custom OMR Sheets
 
 1. First, [create your own template.json](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide).
