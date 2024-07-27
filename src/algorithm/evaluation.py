@@ -94,7 +94,10 @@ class AnswerMatcher:
         if answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
             # parse answer scores for weighted answers
             self.answer_item = [
-                [allowed_answer, parse_float_or_fraction(answer_score)]
+                [
+                    allowed_answer,
+                    SectionMarkingScheme.parse_verdict_marking(answer_score),
+                ]
                 for allowed_answer, answer_score in answer_item
             ]
         else:
@@ -134,15 +137,22 @@ class AnswerMatcher:
     def get_matched_set_name(self):
         return self.section_marking_scheme.set_name
 
-    def get_verdict_marking(self, marked_answer):
+    def get_verdict_marking(self, marked_answer, allow_streak):
         answer_type = self.answer_type
         question_verdict = Verdict.NO_ANSWER_MATCH
         if answer_type == AnswerType.STANDARD:
-            question_verdict = self.get_standard_verdict(marked_answer)
+            question_verdict = self.get_standard_verdict(marked_answer, allow_streak)
         elif answer_type == AnswerType.MULTIPLE_CORRECT:
             question_verdict = self.get_multiple_correct_verdict(marked_answer)
         elif answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
             question_verdict = self.get_multiple_correct_weighted_verdict(marked_answer)
+
+        if allow_streak:
+            delta = self.section_marking_scheme.get_marking_with_streak(
+                answer_type, question_verdict
+            )
+            return question_verdict, delta
+
         return question_verdict, self.marking[question_verdict]
 
     def get_standard_verdict(self, marked_answer):
@@ -185,6 +195,10 @@ class SectionMarkingScheme:
         self.empty_val = empty_val
         self.section_key = section_key
         self.set_name = set_name
+        # TODO: parse using "type"
+        # self.type = section_scheme.type
+        self.reset_streaks()
+
         # DEFAULT marking scheme follows a shorthand
         if section_key == DEFAULT_SECTION_KEY:
             self.questions = None
@@ -194,6 +208,24 @@ class SectionMarkingScheme:
             self.marking = self.parse_verdict_marking_from_scheme(
                 section_scheme["marking"]
             )
+
+    def reset_streaks(self):
+        self.streaks = {SchemaVerdict.CORRECT: 0, SchemaVerdict.INCORRECT: 0}
+
+    def get_marking_with_streak(self, answer_type, question_verdict):
+        schema_verdict = EvaluationConfigForSet.get_schema_verdict(
+            answer_type, question_verdict, 0
+        )
+
+        streak = self.streaks[schema_verdict]
+        # reset all
+        self.reset_streaks()
+
+        # increase only current verdict streak
+        if schema_verdict != SchemaVerdict.UNMARKED:
+            self.streaks[schema_verdict] = streak + 1
+
+        return self.marking[schema_verdict][streak]
 
     def deepcopy_with_questions(self, questions):
         clone = deepcopy(self)
@@ -206,11 +238,18 @@ class SectionMarkingScheme:
     def __str__(self):
         return self.section_key
 
+    @staticmethod
+    def parse_verdict_marking(marking):
+        if type(marking) == list:
+            return list(map(parse_float_or_fraction, marking))
+
+        return parse_float_or_fraction(marking)
+
     def parse_verdict_marking_from_scheme(self, section_scheme):
         parsed_marking = {}
         for verdict in VERDICTS_IN_ORDER:
             schema_verdict = VERDICT_TO_SCHEMA_VERDICT[verdict]
-            schema_verdict_marking = parse_float_or_fraction(
+            schema_verdict_marking = self.parse_verdict_marking(
                 section_scheme[schema_verdict]
             )
             if (
@@ -685,6 +724,7 @@ class EvaluationConfigForSet:
 
             # Make a deepclone with updated questions array
             subset_marking_scheme = (
+                # TODO: does deepcopy affect streak of SectionScheme
                 parent_section_marking_scheme.deepcopy_with_questions(questions_subset)
             )
             self.section_marking_schemes[section_key] = subset_marking_scheme
@@ -806,11 +846,15 @@ class EvaluationConfigForSet:
             )
 
     # Public function
-    def match_answer_for_question(self, current_score, question, marked_answer):
+    def match_answer_for_question(
+        self, current_score, question, marked_answer, allow_streak=False
+    ):
         answer_matcher = self.question_to_answer_matcher[question]
-        question_verdict, delta = answer_matcher.get_verdict_marking(marked_answer)
+        question_verdict, delta = answer_matcher.get_verdict_marking(
+            marked_answer, allow_streak
+        )
         question_schema_verdict = self.get_schema_verdict(
-            answer_matcher, question_verdict, delta
+            answer_matcher.answer_type, question_verdict, delta
         )
         self.schema_verdict_counts[question_schema_verdict] += 1
         self.conditionally_add_explanation(
@@ -862,12 +906,9 @@ class EvaluationConfigForSet:
             self.explanation_table.add_row(*row)
 
     @staticmethod
-    def get_schema_verdict(answer_matcher, question_verdict, delta):
+    def get_schema_verdict(answer_type, question_verdict, delta=None):
         # Note: Negative custom weights should be considered as incorrect schema verdict(special case)
-        if (
-            delta < 0
-            and answer_matcher.answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED
-        ):
+        if delta < 0 and answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
             return SchemaVerdict.INCORRECT
         else:
             for verdict in VERDICTS_IN_ORDER:
@@ -907,6 +948,10 @@ class EvaluationConfigForSet:
 
     def reset_evaluation(self):
         self.explanation_table = None
+
+        for section_scheme in self.section_marking_schemes.values():
+            section_scheme.reset_streaks()
+
         self.schema_verdict_counts = {
             schema_verdict: 0 for schema_verdict in SCHEMA_VERDICTS_IN_ORDER
         }
@@ -1040,7 +1085,7 @@ def evaluate_concatenated_response(
             answer_matcher,
             question_schema_verdict,
         ) = evaluation_config_for_response.match_answer_for_question(
-            current_score, question, marked_answer
+            current_score, question, marked_answer, allow_streak=True
         )
         marking_scheme = evaluation_config_for_response.get_marking_scheme_for_question(
             question

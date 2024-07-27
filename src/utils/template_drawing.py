@@ -188,18 +188,20 @@ class TemplateDrawing:
                 "bubble_dimensions",
             ],
         )
-        block_position = field_block.get_shifted_origin() if shifted else origin
 
-        # Field block bounding rectangle
-        DrawingUtils.draw_box(
-            marked_image,
-            block_position,
-            dimensions,
-            color=CLR_BLACK,
-            style="BOX_HOLLOW",
-            thickness_factor=0,
-            border=border,
-        )
+        # TODO: get this field block using a bounding box of all bubbles instead. (remove shift at field block level)
+        block_position = field_block.get_shifted_origin() if shifted else origin
+        if not shifted:
+            # Field block bounding rectangle
+            DrawingUtils.draw_box(
+                marked_image,
+                block_position,
+                dimensions,
+                color=CLR_BLACK,
+                style="BOX_HOLLOW",
+                thickness_factor=0,
+                border=border,
+            )
 
         for field in field_block.fields:
             field_bubbles = field.field_bubbles

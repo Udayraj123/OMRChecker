@@ -18,16 +18,20 @@ class MathUtils:
     def shift_points_from_origin(new_origin, list_of_points):
         return list(
             map(
-                lambda point: [
-                    new_origin[0] + point[0],
-                    new_origin[1] + point[1],
-                ],
+                lambda point: MathUtils.add_points(new_origin, point),
                 list_of_points,
             )
         )
 
     @staticmethod
-    def get_relative_position(new_origin, point):
+    def add_points(point, new_origin):
+        return [
+            new_origin[0] + point[0],
+            new_origin[1] + point[1],
+        ]
+
+    @staticmethod
+    def subtract_points(point, new_origin):
         return [
             point[0] - new_origin[0],
             point[1] - new_origin[1],
@@ -37,7 +41,7 @@ class MathUtils:
     def shift_points_to_origin(new_origin, list_of_points):
         return list(
             map(
-                lambda point: MathUtils.get_relative_position(new_origin, point),
+                lambda point: MathUtils.subtract_points(point, new_origin),
                 list_of_points,
             )
         )

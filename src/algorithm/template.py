@@ -338,7 +338,8 @@ class FieldBlock:
 
     def reset_all_shifts(self):
         self.shifts = [0, 0]
-        # TODO: reset bubble shifts when supported
+        for field in self.fields:
+            field.reset_all_shifts()
 
     # Need this at runtime as we have allowed mutation of template via pre-processors
     def get_shifted_origin(self):
@@ -492,6 +493,11 @@ class Field:
         # TODO: move local_threshold into child detection class
         self.local_threshold = None
 
+    def reset_all_shifts(self):
+        # Note: no shifts needed at bubble level
+        for bubble in self.field_bubbles:
+            bubble.reset_shifts()
+
     def __str__(self):
         return self.field_label
 
@@ -523,6 +529,7 @@ class FieldBubble:
         self.plot_bin_name = field_label
         self.x = round(pt[0])
         self.y = round(pt[1])
+        self.shifts = [0, 0]
         self.field_label = field_label
         self.field_type = field_type
         self.field_value = field_value
@@ -531,9 +538,14 @@ class FieldBubble:
     def __str__(self):
         return self.name  # f"{self.field_label}: [{self.x}, {self.y}]"
 
-    # TODO: support for bubble level shifts?
+    def reset_shifts(self):
+        self.shifts = [0, 0]
+
     def get_shifted_position(self, shifts):
-        return [self.x + shifts[0], self.y + shifts[1]]
+        return [
+            self.x + self.shifts[0] + shifts[0],
+            self.y + self.shifts[1] + shifts[1],
+        ]
 
     # Make the class serializable
     def to_json(self):

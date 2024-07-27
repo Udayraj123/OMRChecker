@@ -3,7 +3,6 @@ import numpy as np
 from src.algorithm.alignment.sift_matcher import SiftMatcher
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
-from src.utils.logger import logger
 from src.utils.math import MathUtils
 from src.utils.template_drawing import TemplateDrawing
 
@@ -42,40 +41,39 @@ def apply_k_nearest_interpolation_inplace(
         config,
     )
     anchors_with_displacements = [
-        [anchor_point, MathUtils.get_relative_position(displaced_point, anchor_point)]
+        [anchor_point, MathUtils.subtract_points(anchor_point, displaced_point)]
         for anchor_point, displaced_point in displacement_pairs
     ]
-    # modify field block level shifts
-
-    nearest_anchors = find_k_nearest_anchors(
-        field_block.origin, anchors_with_displacements, k
+    block_image_shifts = MathUtils.subtract_points(
+        [margins["left"], margins["top"]], field_block.origin
     )
-    # Method 1: Get average displacement
-    average_shifts = np.average(
-        [displacement for _anchor_point, displacement in nearest_anchors], axis=0
-    ).astype(np.int32)
-    logger.info(field_block.name, average_shifts)
-
     if config.outputs.show_image_level >= 2:
-        block_image_origin = MathUtils.get_relative_position(
-            [margins["left"], margins["top"]], field_block.origin
-        )
         block_gray_image_before = block_gray_image.copy()
-        # Shift the coordinates to the field block's origin to draw on the cropped block
-        field_block.shifts = MathUtils.get_relative_position(block_image_origin, [0, 0])
 
+        # Shift the coordinates to the field block's origin to draw on the cropped block
+        old_shifts = field_block.shifts
+        field_block.shifts = block_image_shifts
         TemplateDrawing.draw_field_block(
             field_block, block_gray_image_before, shifted=True, thickness=2
         )
+        field_block.shifts = old_shifts
 
+    # modify bubble level shifts
+    average_shifts = shift_by_field_blocks(
+        field_block, block_image_shifts, anchors_with_displacements, k
+    )
+    # shift_by_fields(field_block, block_image_shifts, anchors_with_displacements, k)
+    # shift_by_field_bubbles(field_block, block_image_shifts, anchors_with_displacements, k)
+
+    if config.outputs.show_image_level >= 2:
         block_gray_image_after = block_gray_image.copy()
-        field_block.shifts = MathUtils.get_relative_position(
-            block_image_origin, average_shifts
-        )
-
+        old_shifts = field_block.shifts
+        field_block.shifts = block_image_shifts  # MathUtils.add_points(block_image_shifts, average_shifts)
         TemplateDrawing.draw_field_block(
             field_block, block_gray_image_after, shifted=True, thickness=2
         )
+        field_block.shifts = old_shifts
+
         InteractionUtils.show(
             f"Field Block shifts: {average_shifts}",
             ImageUtils.get_padded_hstack(
@@ -83,5 +81,94 @@ def apply_k_nearest_interpolation_inplace(
             ),
         )
 
-    field_block.shifts = average_shifts
-    # Method 2: Get affine transform
+    # Method 2: Get affine transform on the bubble coordinates
+    # field_block.shifts = average_shifts
+
+
+def shift_by_field_blocks(
+    field_block, block_image_shifts, anchors_with_displacements, k, centered=False
+):
+    # Take average position of all bubbles
+    field_block_position = (
+        np.average(
+            [
+                # field center
+                np.average(
+                    [
+                        field_bubble.get_shifted_position(block_image_shifts)
+                        for field_bubble in field.field_bubbles
+                    ],
+                    axis=0,
+                )
+                for field in field_block.fields
+            ],
+            axis=0,
+        ).astype(np.int32)
+        if centered
+        else MathUtils.add_points(block_image_shifts, field_block.origin)
+    )
+
+    nearest_anchors = find_k_nearest_anchors(
+        field_block_position, anchors_with_displacements, k
+    )
+
+    # Method 1: Get average displacement
+    average_shifts = np.average(
+        [displacement for _anchor_point, displacement in nearest_anchors],
+        axis=0,
+    ).astype(np.int32)
+
+    # Shift all bubbles
+    for field in field_block.fields:
+        for field_bubble in field.field_bubbles:
+            field_bubble.shifts = average_shifts
+
+    return average_shifts
+
+
+def shift_by_fields(field_block, block_image_shifts, anchors_with_displacements, k):
+    # modify bubble level shifts
+    for field in field_block.fields:
+        # Take average position of all bubbles
+        field_center_position = np.average(
+            [
+                field_bubble.get_shifted_position(block_image_shifts)
+                for field_bubble in field.field_bubbles
+            ],
+            axis=0,
+        ).astype(np.int32)
+
+        nearest_anchors = find_k_nearest_anchors(
+            field_center_position, anchors_with_displacements, k
+        )
+
+        # Method 1: Get average displacement
+        average_shifts = np.average(
+            [displacement for _anchor_point, displacement in nearest_anchors],
+            axis=0,
+        ).astype(np.int32)
+
+        # Shift all bubbles
+        for field_bubble in field.field_bubbles:
+            field_bubble.shifts = average_shifts
+
+
+def shift_by_field_bubbles(
+    field_block, block_image_shifts, anchors_with_displacements, k
+):
+    for field in field_block.fields:
+        for field_bubble in field.field_bubbles:
+            field_bubble.reset_shifts()
+            relative_bubble_positions = field_bubble.get_shifted_position(
+                block_image_shifts
+            )
+            nearest_anchors = find_k_nearest_anchors(
+                relative_bubble_positions, anchors_with_displacements, k
+            )
+            # Method 1: Get average displacement
+            average_shifts = np.average(
+                [displacement for _anchor_point, displacement in nearest_anchors],
+                axis=0,
+            ).astype(np.int32)
+
+            field_bubble.shifts = average_shifts

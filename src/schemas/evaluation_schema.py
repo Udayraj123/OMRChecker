@@ -17,6 +17,12 @@ marking_score = {
             "description": "The marking score as a number. It can be negative as well",
             "type": "number",
         },
+        {
+            # TODO: enable this only if scheme.type === "consecutive_marking"
+            "description": "type array will be used for streak based marking",
+            "type": "array",
+            "items": {"type": "number"},
+        },
     ]
 }
 
@@ -94,7 +100,9 @@ local_questions_and_answers_options = {
                                     "maxItems": 2,
                                     "prefixItems": [
                                         {"type": "string"},
-                                        marking_score,
+                                        {
+                                            "$ref": "#/$def/marking_score",
+                                        },
                                     ],
                                 },
                             },
