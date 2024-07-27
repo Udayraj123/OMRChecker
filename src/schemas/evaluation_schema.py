@@ -1,12 +1,14 @@
 from src.schemas.constants import (
     DEFAULT_SECTION_KEY,
+    MARKING_SCHEME_TYPES_IN_ORDER,
     SCHEMA_VERDICTS_IN_ORDER,
+    MarkingSchemeType,
     load_common_defs,
 )
 
 marking_score_regex = "-?(\\d+)(/(\\d+))?"
 
-marking_score = {
+marking_score_without_streak = {
     "oneOf": [
         {
             "description": "The marking score as a string. We can pass natural fractions as well",
@@ -17,24 +19,83 @@ marking_score = {
             "description": "The marking score as a number. It can be negative as well",
             "type": "number",
         },
-        {
-            # TODO: enable this only if scheme.type === "consecutive_marking"
-            "description": "type array will be used for streak based marking",
-            "type": "array",
-            "items": {"type": "number"},
-        },
     ]
 }
 
-marking_object_properties = {
+marking_score_with_streak = {
+    **marking_score_without_streak,
+    "oneOf": [
+        *marking_score_without_streak["oneOf"],
+        {
+            "description": "An array will be used for consecutive streak based marking. Note: original order from questions_in_order will be used.",
+            "type": "array",
+            "items": {"oneOf": [*marking_score_without_streak["oneOf"]]},
+        },
+    ],
+}
+
+section_marking_without_streak_object = {
     "description": "The marking object describes verdict-wise score deltas",
     "required": SCHEMA_VERDICTS_IN_ORDER,
     "type": "object",
     "additionalProperties": False,
     "properties": {
-        schema_verdict: marking_score for schema_verdict in SCHEMA_VERDICTS_IN_ORDER
+        schema_verdict: {
+            "$ref": "#/$def/marking_score_without_streak",
+        }
+        for schema_verdict in SCHEMA_VERDICTS_IN_ORDER
     },
 }
+
+section_marking_with_streak_object = {
+    **section_marking_without_streak_object,
+    "properties": {
+        schema_verdict: {"$ref": "#/$def/marking_score_with_streak"}
+        for schema_verdict in SCHEMA_VERDICTS_IN_ORDER
+    },
+}
+
+
+custom_section_marking_object_conditions = [
+    {
+        "if": {"properties": {"marking_type": {"const": MarkingSchemeType.DEFAULT}}},
+        "then": {
+            "properties": {
+                "marking": {"$ref": "#/$def/section_marking_without_streak_object"},
+            }
+        },
+    },
+    {
+        "if": {
+            "properties": {
+                "marking_type": {"const": MarkingSchemeType.SECTION_LEVEL_STREAK}
+            }
+        },
+        "then": {
+            "properties": {
+                "marking": {"$ref": "#/$def/section_marking_with_streak_object"},
+            }
+        },
+    },
+    {
+        "if": {
+            "properties": {
+                "marking_type": {"const": MarkingSchemeType.VERDICT_LEVEL_STREAK}
+            }
+        },
+        "then": {
+            "properties": {
+                "marking": {"$ref": "#/$def/section_marking_with_streak_object"},
+            }
+        },
+        "else": {
+            "properties": {
+                "marking": {"$ref": "#/$def/section_marking_without_streak_object"},
+            }
+        },
+    },
+]
+
 image_and_csv_options = {
     "description": "The options needed if source type is image and csv",
     "required": ["answer_key_csv_path"],
@@ -101,7 +162,7 @@ local_questions_and_answers_options = {
                                     "prefixItems": [
                                         {"type": "string"},
                                         {
-                                            "$ref": "#/$def/marking_score",
+                                            "$ref": "#/$def/marking_score_without_streak",
                                         },
                                     ],
                                 },
@@ -121,13 +182,19 @@ common_evaluation_schema_properties = {
         "type": "object",
         "required": [DEFAULT_SECTION_KEY],
         "patternProperties": {
-            f"^{DEFAULT_SECTION_KEY}$": {"$ref": "#/$def/marking_object_properties"},
+            f"^{DEFAULT_SECTION_KEY}$": {
+                "$ref": "#/$def/section_marking_without_streak_object"
+            },
             f"^(?!{DEFAULT_SECTION_KEY}$).*": {
                 "description": "A section that defines custom marking for a subset of the questions",
                 "additionalProperties": False,
                 "required": ["marking", "questions"],
                 "type": "object",
                 "properties": {
+                    "marking_type": {
+                        "type": "string",
+                        "enum": [*MARKING_SCHEME_TYPES_IN_ORDER],
+                    },
                     "questions": {
                         "oneOf": [
                             {"$ref": "#/$def/field_string_type"},
@@ -137,8 +204,9 @@ common_evaluation_schema_properties = {
                             },
                         ]
                     },
-                    "marking": {"$ref": "#/$def/marking_object_properties"},
+                    "marking": True,
                 },
+                "allOf": [*custom_section_marking_object_conditions],
             },
         },
     },
@@ -361,8 +429,10 @@ EVALUATION_SCHEMA = {
                 "matplotlib_color",
             ]
         ),
-        "marking_object_properties": marking_object_properties,
-        "marking_score": marking_score,
+        "marking_score_without_streak": marking_score_without_streak,
+        "marking_score_with_streak": marking_score_with_streak,
+        "section_marking_without_streak_object": section_marking_without_streak_object,
+        "section_marking_with_streak_object": section_marking_with_streak_object,
         "image_and_csv_options": image_and_csv_options,
         "local_questions_and_answers_options": local_questions_and_answers_options,
     },

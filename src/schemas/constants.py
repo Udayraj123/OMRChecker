@@ -25,12 +25,28 @@ VERDICTS_IN_ORDER = [
 
 SchemaVerdict = DotMap(
     {
+        # Note: bonus not allowed as schema verdict.
         "CORRECT": "correct",
         "INCORRECT": "incorrect",
         "UNMARKED": "unmarked",
     },
     _dynamic=False,
 )
+
+MarkingSchemeType = DotMap(
+    {
+        "DEFAULT": "default",
+        "VERDICT_LEVEL_STREAK": "verdict_level_streak",
+        "SECTION_LEVEL_STREAK": "section_level_streak",
+    },
+    _dynamic=False,
+)
+
+MARKING_SCHEME_TYPES_IN_ORDER = [
+    MarkingSchemeType.DEFAULT,
+    MarkingSchemeType.VERDICT_LEVEL_STREAK,
+    MarkingSchemeType.SECTION_LEVEL_STREAK,
+]
 
 SCHEMA_VERDICTS_IN_ORDER = [
     SchemaVerdict.CORRECT,
