@@ -144,7 +144,7 @@ class ImageUtils:
         return cv2.LUT(image, table)
 
     @staticmethod
-    def get_control_warped_points_from_contour(
+    def get_control_destination_points_from_contour(
         source_contour, warped_line, max_points=None
     ):
         total_points = len(source_contour)

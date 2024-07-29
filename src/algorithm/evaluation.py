@@ -153,7 +153,7 @@ class AnswerMatcher:
             current_streak,
             updated_streak,
         ) = self.section_marking_scheme.get_delta_and_update_streak(
-            answer_type, question_verdict, allow_streak
+            self.marking, answer_type, question_verdict, allow_streak
         )
 
         return question_verdict, delta, current_streak, updated_streak
@@ -222,17 +222,21 @@ class SectionMarkingScheme:
             self.section_level_streak = 0
             self.previous_streak_verdict = None
 
-    def get_delta_for_verdict(self, question_verdict, current_streak):
-        if type(self.marking[question_verdict]) == list:
-            return self.marking[question_verdict][current_streak]
+    def get_delta_for_verdict(
+        self, answer_matcher_marking, question_verdict, current_streak
+    ):
+        if type(answer_matcher_marking[question_verdict]) == list:
+            return answer_matcher_marking[question_verdict][current_streak]
         else:
             if current_streak > 0:
                 logger.warning(
                     f"Non zero streak({current_streak}) for verdict {question_verdict} in scheme {self}. Using non-streak score for this verdict."
                 )
-            return self.marking[question_verdict]
+            return answer_matcher_marking[question_verdict]
 
-    def get_delta_and_update_streak(self, answer_type, question_verdict, allow_streak):
+    def get_delta_and_update_streak(
+        self, answer_matcher_marking, answer_type, question_verdict, allow_streak
+    ):
         schema_verdict = EvaluationConfigForSet.get_schema_verdict(
             answer_type, question_verdict, 0
         )
@@ -249,7 +253,9 @@ class SectionMarkingScheme:
                 if schema_verdict != SchemaVerdict.UNMARKED:
                     self.streaks[schema_verdict] = current_streak + 1
 
-            delta = self.get_delta_for_verdict(question_verdict, current_streak)
+            delta = self.get_delta_for_verdict(
+                answer_matcher_marking, question_verdict, current_streak
+            )
             updated_streak = self.streaks[schema_verdict]
 
         elif self.marking_type == MarkingSchemeType.SECTION_LEVEL_STREAK:
@@ -266,11 +272,15 @@ class SectionMarkingScheme:
                 if previous_verdict is None or schema_verdict == previous_verdict:
                     self.section_level_streak = current_streak + 1
 
-            delta = self.get_delta_for_verdict(question_verdict, current_streak)
+            delta = self.get_delta_for_verdict(
+                answer_matcher_marking, question_verdict, current_streak
+            )
             updated_streak = self.section_level_streak
         else:
             current_streak, updated_streak = 0, 0
-            delta = self.marking[question_verdict]
+            delta = self.get_delta_for_verdict(
+                answer_matcher_marking, question_verdict, current_streak
+            )
 
         return delta, current_streak, updated_streak
 
