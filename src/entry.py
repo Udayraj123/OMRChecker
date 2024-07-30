@@ -97,6 +97,7 @@ def print_config_summary(
     table.add_row("Directory Path", f"{curr_dir}")
     table.add_row("Count of Images", f"{len(omr_files)}")
     table.add_row("Debug Mode ", "ON" if args["debug"] else "OFF")
+    table.add_row("Output Mode ", args["output_mode"])
     table.add_row("Set Layout Mode ", "ON" if args["setLayout"] else "OFF")
     table.add_row(
         "Markers Detection",
@@ -142,6 +143,7 @@ def process_dir(
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
 
     output_dir = Path(args["output_dir"], curr_dir.relative_to(root_dir))
+    output_mode = args["output_mode"]
     paths = Paths(output_dir)
 
     # look for images in current dir to process
@@ -190,7 +192,7 @@ def process_dir(
             )
 
         setup_dirs_for_paths(paths)
-        outputs_namespace = setup_outputs_for_template(paths, template)
+        outputs_namespace = setup_outputs_for_template(paths, template, output_mode)
 
         print_config_summary(
             curr_dir,
@@ -211,6 +213,7 @@ def process_dir(
                 tuning_config,
                 evaluation_config,
                 outputs_namespace,
+                output_mode,
             )
 
     elif not subdirs:
@@ -270,6 +273,7 @@ def process_files(
     tuning_config,
     evaluation_config,
     outputs_namespace,
+    output_mode,
 ):
     start_time = int(time())
     files_counter = 0
@@ -337,7 +341,7 @@ def process_files(
             continue
 
         (
-            response_dict,
+            raw_omr_response,
             multi_marked,
             _,
             field_number_to_field_bubble_means,
@@ -349,12 +353,12 @@ def process_files(
 
         # TODO: move inner try catch here
         # concatenate roll nos, set unmarked responses, etc
-        omr_response = get_concatenated_response(response_dict, template)
+        concatenated_response = get_concatenated_response(raw_omr_response, template)
         evaluation_config_for_response = (
             None
             if evaluation_config is None
             else evaluation_config.get_evaluation_config_for_response(
-                omr_response, file_path
+                concatenated_response, file_path
             )
         )
 
@@ -362,12 +366,12 @@ def process_files(
             evaluation_config_for_response is None
             or not evaluation_config_for_response.get_should_explain_scoring()
         ):
-            logger.info(f"Read Response: \n{omr_response}")
+            logger.info(f"Read Response: \n{concatenated_response}")
 
         score, evaluation_meta = 0, None
         if evaluation_config_for_response is not None:
             score, evaluation_meta = evaluate_concatenated_response(
-                omr_response, evaluation_config_for_response
+                concatenated_response, evaluation_config_for_response
             )
             (
                 default_answers_summary,
@@ -384,20 +388,24 @@ def process_files(
         save_marked_dir = outputs_namespace.paths.save_marked_dir
 
         # Save output image with bubble values and evaluation meta
-        (
-            final_marked,
-            colored_final_marked,
-        ) = TemplateDrawing.draw_template_layout(
-            gray_image,
-            colored_image,
-            template,
-            tuning_config,
-            file_id,
-            field_number_to_field_bubble_means,
-            save_marked_dir=save_marked_dir,
-            evaluation_meta=evaluation_meta,
-            evaluation_config_for_response=evaluation_config_for_response,
-        )
+        if output_mode != "moderation":
+            (
+                final_marked,
+                colored_final_marked,
+            ) = TemplateDrawing.draw_template_layout(
+                gray_image,
+                colored_image,
+                template,
+                tuning_config,
+                file_id,
+                field_number_to_field_bubble_means,
+                save_marked_dir=save_marked_dir,
+                evaluation_meta=evaluation_meta,
+                evaluation_config_for_response=evaluation_config_for_response,
+            )
+        else:
+            # No drawing in moderation output mode
+            final_marked, colored_final_marked = gray_image, colored_image
 
         # Save output stack images
         template.save_image_ops.save_image_stacks(
@@ -423,11 +431,14 @@ def process_files(
             )
 
         # Save output CSV results
-        resp_array = []
-        for k in template.output_columns:
-            resp_array.append(omr_response[k])
+        output_omr_response = (
+            raw_omr_response if output_mode == "moderation" else concatenated_response
+        )
+        omr_response_array = []
+        for field in outputs_namespace.omr_response_columns:
+            omr_response_array.append(output_omr_response[field])
 
-        outputs_namespace.OUTPUT_SET.append([file_name] + resp_array)
+        outputs_namespace.OUTPUT_SET.append([file_name] + omr_response_array)
         posix_file_path = Paths.to_posix_path(file_path)
 
         if multi_marked == 0 or not tuning_config.outputs.filter_out_multimarked_files:
@@ -441,7 +452,8 @@ def process_files(
                 posix_file_path,
                 output_file_path,
                 score,
-            ] + resp_array
+            ] + omr_response_array
+
             # Write/Append to results_line file(opened in append mode)
             pd.DataFrame(results_line, dtype=str).T.to_csv(
                 outputs_namespace.files_obj["Results"],
@@ -464,7 +476,7 @@ def process_files(
                     posix_file_path,
                     output_file_path,
                     "NA",
-                ] + resp_array
+                ] + omr_response_array
                 pd.DataFrame(mm_line, dtype=str).T.to_csv(
                     outputs_namespace.files_obj["MultiMarked"],
                     mode="a",

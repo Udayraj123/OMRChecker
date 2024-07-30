@@ -81,21 +81,23 @@ def setup_dirs_for_paths(paths):
             os.makedirs(save_output_dir)
 
 
-def setup_outputs_for_template(paths, template):
+def setup_outputs_for_template(paths, template, output_mode):
     # TODO: consider moving this into a class instance
     ns = argparse.Namespace()
     logger.info("Checking Files...")
-
+    ns.omr_response_columns = template.output_columns
+    if output_mode == "moderation":
+        ns.omr_response_columns = list(template.all_parsed_labels)
     # Include current output paths
     ns.paths = paths
 
-    ns.empty_resp = [""] * len(template.output_columns)
-    ns.sheetCols = [
+    ns.empty_resp = [""] * len(ns.omr_response_columns)
+    ns.sheet_columns = [
         "file_id",
         "input_path",
         "output_path",
         "score",
-    ] + template.output_columns
+    ] + ns.omr_response_columns
     ns.OUTPUT_SET = []
     ns.files_obj = {}
     TIME_NOW_HRS = strftime("%I%p", localtime())
@@ -111,7 +113,7 @@ def setup_outputs_for_template(paths, template):
             # moved handling of files to pandas csv writer
             ns.files_obj[file_key] = file_name
             # Create Header Columns
-            pd.DataFrame([ns.sheetCols], dtype=str).to_csv(
+            pd.DataFrame([ns.sheet_columns], dtype=str).to_csv(
                 ns.files_obj[file_key],
                 mode="a",
                 quoting=QUOTE_NONNUMERIC,
