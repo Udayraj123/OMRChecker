@@ -10,7 +10,7 @@
 import json
 import os
 from csv import QUOTE_NONNUMERIC
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from time import time
 
 import pandas as pd
@@ -151,7 +151,7 @@ def process_dir(
     omr_files = sorted([f for ext in exts for f in curr_dir.glob(ext)])
 
     # omr_files = Paths.filter_omr_files(omr_files)
-    omr_files = [Path(omr_file.as_posix()) for omr_file in omr_files]
+    omr_files = [Path(PurePosixPath(omr_file).as_posix()) for omr_file in omr_files]
 
     # Exclude images (take union over all pre_processors)
     excluded_files = []
@@ -284,7 +284,7 @@ def process_files(
     logger.set_log_levels(tuning_config.outputs.show_logs_by_type)
     for file_path in omr_files:
         files_counter += 1
-        file_name = file_path.name
+        file_name = Paths.remove_non_utf_characters(file_path.name)
         file_id = str(file_name)
 
         gray_image, colored_image = ImageUtils.read_image_util(

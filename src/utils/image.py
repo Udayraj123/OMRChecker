@@ -1,10 +1,7 @@
-import os
-
 import cv2
 import numpy as np
 from matplotlib import pyplot
 from shapely import LineString, Point
-
 from src.processors.constants import EDGE_TYPES_IN_ORDER, EdgeType
 from src.utils.constants import CLR_WHITE
 from src.utils.logger import logger
@@ -19,14 +16,24 @@ class ImageUtils:
 
     @staticmethod
     def read_image_util(file_path, tuning_config):
-        if not os.path.exists(file_path):
-            raise Exception(f"Image file path doesn't exist: {file_path}")
+        encoded_path = file_path
         if tuning_config.outputs.colored_outputs_enabled:
             colored_image = cv2.imread(file_path, cv2.IMREAD_COLOR)
+            colored_image = cv2.imdecode(
+                np.fromfile(encoded_path, dtype=np.uint8), cv2.IMREAD_COLOR
+            )
+            if colored_image is None:
+                raise IOError(f"Unable to read image: {file_path}")
             gray_image = cv2.cvtColor(colored_image, cv2.COLOR_BGR2GRAY)
         else:
             gray_image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+            gray_image = cv2.imdecode(
+                np.fromfile(encoded_path, dtype=np.uint8), cv2.IMREAD_GRAYSCALE
+            )
+            if gray_image is None:
+                raise IOError(f"Unable to read image: {file_path}")
             colored_image = None
+
         return gray_image, colored_image
 
     @staticmethod
