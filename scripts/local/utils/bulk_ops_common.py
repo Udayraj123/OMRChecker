@@ -1,9 +1,8 @@
 import argparse
-import glob
-import os
-
 import functools
+import glob
 import operator
+import os
 
 from src.utils.file import Paths
 
@@ -14,6 +13,9 @@ from src.utils.file import Paths
 # compress with file max size,
 
 # resizing with image max shape,
+
+# Sorting omr files
+# - Renaming files having non-utf characters (ascii paths - this is needed for loading urls in moderation portal````)
 
 # converting to another format:
 #   - PDF to Image(s) (png, jpg)
@@ -26,7 +28,6 @@ from src.utils.file import Paths
 # crop markers and save
 
 # Maybe have a common util file for bulk ops and then create one file for each of the above util.
-
 
 
 # Usual pre-processing commands for speedups (useful during re-runs)
@@ -43,8 +44,9 @@ def walk_and_extract_files(input_dir, file_extensions):
         ]
         matching_files = functools.reduce(operator.iconcat, matching_globs, [])
         for file_path in matching_files:
-            extracted_files.append(Paths.to_posix_path(file_path))
+            extracted_files.append(Paths.sep_based_posix_path(file_path))
     return extracted_files
+
 
 def get_local_argparser():
     local_argparser = argparse.ArgumentParser()
@@ -87,7 +89,7 @@ def get_local_argparser():
     return local_argparser
 
 
-def add_common_args(argparser, arguments): 
+def add_common_args(argparser, arguments):
     local_argparser = get_local_argparser()
     for argument in arguments:
         for action in local_argparser._actions:
@@ -99,13 +101,12 @@ def add_common_args(argparser, arguments):
                     type=action.type,
                     default=action.default,
                     required=action.required,
-                    help=action.help
+                    help=action.help,
                 )
                 break  # Move to the next argument
 
-    
-def run_argparser(argparser):
 
+def run_argparser(argparser):
     (
         args,
         unknown,
@@ -116,5 +117,5 @@ def run_argparser(argparser):
     if len(unknown) > 0:
         argparser.print_help()
         raise Exception(f"\nError: Unknown arguments: {unknown}")
-    
+
     return args

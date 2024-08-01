@@ -922,7 +922,7 @@ class EvaluationConfigForSet:
         )
         if len(missing_prefixed_questions) > 0:
             logger.warning(
-                f"No answer given for potential questions in OMR response: {missing_prefixed_questions}"
+                f"No answer given for potential questions in OMR response: {missing_prefixed_questions} ('q' prefix). You may rename the field in evaluation.json to avoid this warning."
             )
 
     # Public function

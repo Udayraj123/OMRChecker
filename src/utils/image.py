@@ -1,3 +1,5 @@
+import os
+
 import cv2
 import numpy as np
 from matplotlib import pyplot
@@ -17,6 +19,8 @@ class ImageUtils:
 
     @staticmethod
     def read_image_util(file_path, tuning_config):
+        if not os.path.exists(file_path):
+            raise Exception(f"Image file path doesn't exist: {file_path}")
         if tuning_config.outputs.colored_outputs_enabled:
             colored_image = cv2.imread(file_path, cv2.IMREAD_COLOR)
             gray_image = cv2.cvtColor(colored_image, cv2.COLOR_BGR2GRAY)

@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import string
 from collections import defaultdict
 from csv import QUOTE_NONNUMERIC
 from pathlib import PureWindowsPath
@@ -26,10 +27,33 @@ def load_json(path, **rest):
 
 class Paths:
     @staticmethod
-    def to_posix_path(path):
+    def remove_non_utf_characters(path_string):
+        return "".join(x for x in path_string if x in string.printable)
+
+    # @staticmethod
+    # def filter_omr_files(omr_files):
+    #     filtered_omr_files = []
+    #     omr_files_set = set()
+    #     for omr_file in omr_files:
+    #         omr_file_string = omr_file.as_posix()
+    #         filtered_omr_file = Paths.remove_non_utf_characters(omr_file_string)
+    #         if omr_file_string in omr_files_set:
+    #             logger.warning(
+    #                 f"Skipping duplicate file after utf-8 encoding: {omr_file_string}"
+    #             )
+    #         omr_files_set.add(omr_file_string)
+    #         filtered_omr_files.append(Path(filtered_omr_file))
+    #     return filtered_omr_files
+
+    @staticmethod
+    def sep_based_posix_path(path):
         path = os.path.normpath(path)
-        if os.path.sep == "\\":
+        # TODO: check for this second condition
+        if os.path.sep == "\\" or "\\" in path:
             path = PureWindowsPath(path).as_posix()
+
+        path = Paths.remove_non_utf_characters(path)
+
         return path
 
     def __init__(self, output_dir):

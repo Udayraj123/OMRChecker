@@ -150,11 +150,14 @@ def process_dir(
     exts = ("*.[pP][nN][gG]", "*.[jJ][pP][gG]", "*.[jJ][pP][eE][gG]")
     omr_files = sorted([f for ext in exts for f in curr_dir.glob(ext)])
 
+    # omr_files = Paths.filter_omr_files(omr_files)
+    omr_files = [Path(omr_file.as_posix()) for omr_file in omr_files]
+
     # Exclude images (take union over all pre_processors)
     excluded_files = []
     if template:
         if template.alignment["reference_image_path"] is not None:
-            excluded_files.extend(template.alignment["reference_image_path"])
+            excluded_files.extend(Path(template.alignment["reference_image_path"]))
 
         for pp in template.pre_processors:
             excluded_files.extend(Path(p) for p in pp.exclude_files())
@@ -458,13 +461,15 @@ def process_files(
             omr_response_array.append(output_omr_response[field])
 
         outputs_namespace.OUTPUT_SET.append([file_name] + omr_response_array)
-        posix_file_path = Paths.to_posix_path(file_path)
+        posix_file_path = Paths.sep_based_posix_path(file_path)
 
         if multi_marked == 0 or not tuning_config.outputs.filter_out_multimarked_files:
             STATS.files_not_moved += 1
 
             # Normalize path and convert to posix style
-            output_file_path = Paths.to_posix_path(save_marked_dir.joinpath(file_id))
+            output_file_path = Paths.sep_based_posix_path(
+                save_marked_dir.joinpath(file_id)
+            )
             # Enter into Results sheet-
             results_line = [
                 file_name,
@@ -484,7 +489,7 @@ def process_files(
         else:
             # multi_marked file
             logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
-            output_file_path = Paths.to_posix_path(
+            output_file_path = Paths.sep_based_posix_path(
                 outputs_namespace.paths.multi_marked_dir.joinpath(file_name)
             )
             if check_and_move(
