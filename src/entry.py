@@ -157,7 +157,8 @@ def process_dir(
     excluded_files = []
     if template:
         if template.alignment["reference_image_path"] is not None:
-            excluded_files.extend(Path(template.alignment["reference_image_path"]))
+            # Note: reference_image_path is already Path()
+            excluded_files.extend(template.alignment["reference_image_path"])
 
         for pp in template.pre_processors:
             excluded_files.extend(Path(p) for p in pp.exclude_files())

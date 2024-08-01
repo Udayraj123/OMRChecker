@@ -16,6 +16,7 @@ from src.utils.math import MathUtils
 
 def load_json(path, **rest):
     try:
+        # TODO: see if non-utf characters need to be handled
         with open(path, "r") as f:
             loaded = json.load(f, **rest)
     except json.decoder.JSONDecodeError as error:
