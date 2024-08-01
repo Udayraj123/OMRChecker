@@ -397,15 +397,34 @@ def process_files(
                 colored_image,
                 template,
                 tuning_config,
-                file_id,
                 field_number_to_field_bubble_means,
-                save_marked_dir=save_marked_dir,
                 evaluation_meta=evaluation_meta,
                 evaluation_config_for_response=evaluation_config_for_response,
             )
         else:
             # No drawing in moderation output mode
             final_marked, colored_final_marked = gray_image, colored_image
+
+        # TODO(refactor): move to small function
+        should_save_detections = (
+            tuning_config.outputs.save_detections and save_marked_dir is not None
+        )
+
+        if should_save_detections:
+            # TODO: migrate after support for multi_marked bucket based on identifier config
+            # if multi_roll:
+            #     save_marked_dir = save_marked_dir.joinpath("_MULTI_")
+            ImageUtils.save_marked_image(save_marked_dir, file_id, final_marked)
+
+            if (
+                tuning_config.outputs.colored_outputs_enabled
+                and save_marked_dir is not None
+            ):
+                # TODO: get dedicated path from top args
+                colored_save_marked_dir = save_marked_dir.joinpath("colored")
+                ImageUtils.save_marked_image(
+                    colored_save_marked_dir, file_id, colored_final_marked
+                )
 
         # Save output stack images
         template.save_image_ops.save_image_stacks(

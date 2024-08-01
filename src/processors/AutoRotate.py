@@ -54,7 +54,7 @@ class AutoRotate(ImageTemplatePreprocessor):
                     f"Template Matching Result for rotation: {rotation}", res
                 )
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-            logger.info(rotation, max_val)
+            # logger.info(rotation, max_val)
             if max_val > best_val:
                 best_val = max_val
                 best_rotation = rotation

@@ -156,9 +156,11 @@ class ImageInstanceOps:
             if show_preprocessors_diff[pre_processor_name]:
                 InteractionUtils.show(
                     f"Before {pre_processor_name}: {file_path}",
-                    colored_image
-                    if config.outputs.colored_outputs_enabled
-                    else gray_image,
+                    (
+                        colored_image
+                        if config.outputs.colored_outputs_enabled
+                        else gray_image
+                    ),
                 )
 
             # Apply filter
@@ -176,9 +178,11 @@ class ImageInstanceOps:
             if show_preprocessors_diff[pre_processor_name]:
                 InteractionUtils.show(
                     f"After {pre_processor_name}: {file_path}",
-                    colored_image
-                    if config.outputs.colored_outputs_enabled
-                    else gray_image,
+                    (
+                        colored_image
+                        if config.outputs.colored_outputs_enabled
+                        else gray_image
+                    ),
                 )
 
         if template.output_image_shape:
@@ -679,6 +683,43 @@ class ImageInstanceOps:
         local_max_jump,
         global_max_jump,
     ):
+        # TODO: see if deepclone is really needed given parent's instance
+        # field_bubble_means = [
+        #     deepcopy(bubble) for bubble in field_bubble_means
+        # ]
+
+        # Main detection logic:
+        for bubble in field_bubble_means:
+            local_bubble_is_marked = local_threshold_for_field > bubble.mean_value
+            # TODO: refactor this mutation to a more appropriate place
+            bubble.is_marked = local_bubble_is_marked
+
+        confidence_metrics = (
+            {}
+            if not config.outputs.show_confidence_metrics
+            else ImageInstanceOps.get_confidence_metrics(
+                field,
+                field_bubble_means,
+                config,
+                local_threshold_for_field,
+                global_threshold_for_template,
+                local_max_jump,
+                global_max_jump,
+            )
+        )
+
+        return field_bubble_means, confidence_metrics
+
+    @staticmethod
+    def get_confidence_metrics(
+        field,
+        field_bubble_means,
+        config,
+        local_threshold_for_field,
+        global_threshold_for_template,
+        local_max_jump,
+        global_max_jump,
+    ):
         (
             MIN_JUMP,
             GLOBAL_THRESHOLD_MARGIN,
@@ -693,11 +734,6 @@ class ImageInstanceOps:
                 "CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY",
             ],
         )
-        # TODO: see if deepclone is really needed given parent's instance
-        # field_bubble_means = [
-        #     deepcopy(bubble) for bubble in field_bubble_means
-        # ]
-
         bubbles_in_doubt = {
             "by_disparity": [],
             "by_jump": [],
@@ -709,12 +745,9 @@ class ImageInstanceOps:
         for bubble in field_bubble_means:
             global_bubble_is_marked = global_threshold_for_template > bubble.mean_value
             local_bubble_is_marked = local_threshold_for_field > bubble.mean_value
-            # TODO: refactor this mutation to a more appropriate place
-            bubble.is_marked = local_bubble_is_marked
             # 1. Disparity in global/local threshold output
             if global_bubble_is_marked != local_bubble_is_marked:
                 bubbles_in_doubt["by_disparity"].append(bubble)
-
         # 5. High confidence if the gap is very large compared to MIN_JUMP
         is_global_jump_confident = (
             global_max_jump > MIN_JUMP + CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY
@@ -847,4 +880,4 @@ class ImageInstanceOps:
             "local_max_jump": local_max_jump,
             "field_label": field.field_label,
         }
-        return field_bubble_means, confidence_metrics
+        return confidence_metrics

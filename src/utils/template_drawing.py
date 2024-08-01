@@ -12,7 +12,6 @@ from src.utils.constants import (
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
-from src.utils.logger import logger
 
 
 class TemplateDrawing:
@@ -26,14 +25,6 @@ class TemplateDrawing:
 
         colored_final_marked = colored_image
         if config.outputs.colored_outputs_enabled:
-            save_marked_dir = kwargs.get("save_marked_dir", None)
-            # TODO: get dedicated path from top args
-            kwargs["save_marked_dir"] = (
-                save_marked_dir.joinpath("colored")
-                if save_marked_dir is not None
-                else None
-            )
-
             colored_final_marked = TemplateDrawing.draw_template_layout_util(
                 colored_final_marked,
                 "COLORED",
@@ -78,9 +69,7 @@ class TemplateDrawing:
         image_type,
         template,
         config,
-        file_id=None,
         field_number_to_field_bubble_means=None,
-        save_marked_dir=None,
         evaluation_meta=None,
         evaluation_config_for_response=None,
         shifted=False,
@@ -95,10 +84,6 @@ class TemplateDrawing:
         should_draw_marked_bubbles = field_number_to_field_bubble_means is not None
         should_draw_question_verdicts = (
             should_draw_marked_bubbles and evaluation_meta is not None
-        )
-
-        should_save_detections = (
-            config.outputs.save_detections and save_marked_dir is not None
         )
 
         if should_draw_field_block_rectangles:
@@ -137,14 +122,6 @@ class TemplateDrawing:
                 evaluation_meta,
                 evaluation_config_for_response,
             )
-
-        if should_save_detections:
-            # TODO: migrate after support for multi_marked bucket based on identifier config
-            # if multi_roll:
-            #     save_marked_dir = save_marked_dir.joinpath("_MULTI_")
-            image_path = str(save_marked_dir.joinpath(file_id))
-            logger.info(f"Saving Image to '{image_path}'")
-            ImageUtils.save_img(image_path, marked_image)
 
         if should_draw_question_verdicts:
             marked_image = TemplateDrawing.draw_evaluation_summary(

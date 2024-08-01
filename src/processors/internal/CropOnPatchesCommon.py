@@ -245,10 +245,6 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             "selector",
             self.default_points_selector.get(zone_label, SelectorType.SELECT_CENTER),
         )
-        logger.warning(
-            zone_label, points_selector, zone_description, self.default_points_selector
-        )
-
         dot_rect = self.find_dot_corners_from_options(
             image, zone_description, file_path
         )

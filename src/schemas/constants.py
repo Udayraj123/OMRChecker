@@ -90,6 +90,7 @@ ALL_COMMON_DEFS = {
     },
     "field_string_type": {
         "type": "string",
+        # TODO: underscore support is not there "q_11..2"
         "pattern": "^([^\\.]+|[^\\.\\d]+\\d+\\.{2,3}\\d+)$",
     },
     "positive_number": {"type": "number", "minimum": 0},

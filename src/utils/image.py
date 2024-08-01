@@ -30,6 +30,12 @@ class ImageUtils:
         cv2.imwrite(path, final_marked)
 
     @staticmethod
+    def save_marked_image(save_marked_dir, file_id, final_marked):
+        image_path = str(save_marked_dir.joinpath(file_id))
+        logger.info(f"Saving Image to '{image_path}'")
+        ImageUtils.save_img(image_path, final_marked)
+
+    @staticmethod
     def resize_to_shape(img, image_shape):
         h, w = image_shape
         return ImageUtils.resize_util(img, w, h)
