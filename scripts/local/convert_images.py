@@ -1,16 +1,17 @@
-#!/usr/bin/env python3
-"""Convert png images within the repository."""
-
-
 import argparse
-import os
 
-# TODO: check pre-commit support for imports
-from scripts.utils.image_utils import convert_image, get_size_in_kb, get_size_reduction
+from scripts.local.utils.bulk_ops_common import add_common_args, run_argparser
+
+
+def convert_image_to():
+    # Wrapper to handle all available extensions
+    pass
 
 
 def convert_images_in_tree(args):
-    filenames = args.get("filenames", None)
+    input_directory = args.get("input", None)
+    recursive = args.get("recursive", None)
+    output_directory = args.get("output", None)
     trigger_size = args.get("trigger_size", None)
     converted_count = 0
     for image_path in filenames:
@@ -38,27 +39,8 @@ def convert_images_in_tree(args):
 def parse_args():
     # construct the argument parse and parse the arguments
     argparser = argparse.ArgumentParser()
-
-    argparser.add_argument(
-        "--trigger-size",
-        default=200,
-        required=True,
-        type=int,
-        dest="trigger_size",
-        help="Specify minimum file size to trigger the hook.",
-    )
-    argparser.add_argument("filenames", nargs="*", help="Files to optimize.")
-
-    (
-        args,
-        unknown,
-    ) = argparser.parse_known_args()
-
-    args = vars(args)
-
-    if len(unknown) > 0:
-        argparser.print_help()
-        raise Exception(f"\nError: Unknown arguments: {unknown}")
+    add_common_args(argparser, ["--input", "--output", "--trigger-size", "--recursive"])
+    args = run_argparser(argparser)
     return args
 
 

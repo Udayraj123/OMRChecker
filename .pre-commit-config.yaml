@@ -7,6 +7,9 @@ repos:
       - id: convert-images
         name: Convert png to jpg in samples
         entry: scripts/hooks/convert_images_hook.py
+        # TODO: support for imports inside pre-commit
+        # env:
+        #   PYTHONPATH: $PYTHONPATH:$PWD
         args: ["--trigger-size", "150"]
         files: ^samples.*\.(png|PNG)$
         pass_filenames: true
@@ -23,6 +26,8 @@ repos:
       - id: resize-images
         name: Resize images
         entry: scripts/hooks/resize_images_hook.py
+        env:
+          PYTHONPATH: $PYTHONPATH:./scripts
         args: ["--max-width", "1500", "--max-height", "1500", "--trigger-size", "150"]
         files: \.(png|jpg|jpeg|PNG|JPG|JPEG)$
         pass_filenames: true
