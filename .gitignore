@@ -14,3 +14,4 @@ outputs/*
 venv/
 OMRChecker.wiki/
 pytestdebug.log
+.coverage

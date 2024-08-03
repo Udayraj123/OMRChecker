@@ -4,5 +4,6 @@ freezegun==1.4.0
 pre-commit==3.7.0
 pytest-mock==3.14.0
 pytest==8.1.1
+coverage==7.6.0
 syrupy==4.6.1
 Pillow==10.3.0
