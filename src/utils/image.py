@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from matplotlib import pyplot
 from shapely import LineString, Point
+
 from src.processors.constants import EDGE_TYPES_IN_ORDER, EdgeType
 from src.utils.constants import CLR_WHITE
 from src.utils.logger import logger
