@@ -14,6 +14,8 @@ from src.utils.file import Paths
 
 # resizing with image max shape,
 
+# Create a gif from multiple outputs
+
 # Sorting omr files
 # - Renaming files having non-utf characters (ascii paths - this is needed for loading urls in moderation portal````)
 
@@ -22,7 +24,7 @@ from src.utils.file import Paths
 #   - Image to Image (png, tiff, jpg)
 
 # blurring a section,
-# adding a watermark,
+# adding a watermark, "Scanned via OMRChecker"
 
 # crop documents pages and save
 # crop markers and save
