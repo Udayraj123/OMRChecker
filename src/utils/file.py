@@ -27,9 +27,11 @@ def load_json(path, **rest):
 
 
 class Paths:
+    printable_chars = set(string.printable)
+
     @staticmethod
     def remove_non_utf_characters(path_string):
-        return "".join(x for x in path_string if x in string.printable)
+        return "".join(x for x in path_string if x in Paths.printable_chars)
 
     # @staticmethod
     # def filter_omr_files(omr_files):
