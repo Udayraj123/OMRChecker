@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: "**"
 
+env:
+  OMR_CHECKER_CONTAINER: true
+
 jobs:
   pre-commit:
     runs-on: ubuntu-latest

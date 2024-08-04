@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 import cv2
 from matplotlib import pyplot
-from screeninfo import get_monitors
-
+from screeninfo import Monitor, get_monitors
+import os
 from src.utils.constants import WAIT_KEYS
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
@@ -13,7 +13,10 @@ from src.utils.logger import logger
 @dataclass
 class ImageMetrics:
     # TODO: fix window metrics doesn't account for the doc/taskbar on macos
-    monitor_window = get_monitors()[0]
+    if os.environ.get("OMR_CHECKER_CONTAINER"):
+        monitor_window = Monitor(0, 0, 1000, 1000, 100, 100, "FakeMonitor", False)
+    else:
+        monitor_window = get_monitors()[0]
     window_width, window_height = monitor_window.width, monitor_window.height
     # for positioning image windows
     window_x, window_y = 0, 0
@@ -112,6 +115,8 @@ class InteractionUtils:
         config=None,
     ):
         image_metrics = InteractionUtils.image_metrics
+        if os.environ.get("OMR_CHECKER_CONTAINER"):
+            return
         if image is None:
             logger.warning(f"'{name}' - NoneType image to show!")
             if pause:
