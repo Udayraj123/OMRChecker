@@ -24,6 +24,7 @@
       "options": {
         "reference": "reference.png",
         "maxFeatures": 1000,
+        "goodMatchPercent": 0.08,
         "2d": true
       }
     },

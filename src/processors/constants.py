@@ -13,7 +13,7 @@ EdgeType = DotMap(
 EDGE_TYPES_IN_ORDER = [EdgeType.TOP, EdgeType.RIGHT, EdgeType.BOTTOM, EdgeType.LEFT]
 
 
-AreaTemplate = DotMap(
+ZonePreset = DotMap(
     {
         "topLeftDot": "topLeftDot",
         "topRightDot": "topRightDot",
@@ -31,71 +31,71 @@ AreaTemplate = DotMap(
     _dynamic=False,
 )
 
-DOT_AREA_TYPES_IN_ORDER = [
-    AreaTemplate.topLeftDot,
-    AreaTemplate.topRightDot,
-    AreaTemplate.bottomRightDot,
-    AreaTemplate.bottomLeftDot,
+DOT_ZONE_TYPES_IN_ORDER = [
+    ZonePreset.topLeftDot,
+    ZonePreset.topRightDot,
+    ZonePreset.bottomRightDot,
+    ZonePreset.bottomLeftDot,
 ]
 
-MARKER_AREA_TYPES_IN_ORDER = [
-    AreaTemplate.topLeftMarker,
-    AreaTemplate.topRightMarker,
-    AreaTemplate.bottomRightMarker,
-    AreaTemplate.bottomLeftMarker,
+MARKER_ZONE_TYPES_IN_ORDER = [
+    ZonePreset.topLeftMarker,
+    ZonePreset.topRightMarker,
+    ZonePreset.bottomRightMarker,
+    ZonePreset.bottomLeftMarker,
 ]
 
-LINE_AREA_TYPES_IN_ORDER = [
-    AreaTemplate.topLine,
-    AreaTemplate.rightLine,
-    AreaTemplate.bottomLine,
-    AreaTemplate.leftLine,
+LINE_ZONE_TYPES_IN_ORDER = [
+    ZonePreset.topLine,
+    ZonePreset.rightLine,
+    ZonePreset.bottomLine,
+    ZonePreset.leftLine,
 ]
 
 TARGET_EDGE_FOR_LINE = {
-    AreaTemplate.topLine: EdgeType.TOP,
-    AreaTemplate.rightLine: EdgeType.RIGHT,
-    AreaTemplate.bottomLine: EdgeType.BOTTOM,
-    AreaTemplate.leftLine: EdgeType.LEFT,
+    ZonePreset.topLine: EdgeType.TOP,
+    ZonePreset.rightLine: EdgeType.RIGHT,
+    ZonePreset.bottomLine: EdgeType.BOTTOM,
+    ZonePreset.leftLine: EdgeType.LEFT,
 }
 
 # This defines the precedence for composing ordered points in the edge_contours_map
 TARGET_ENDPOINTS_FOR_EDGES = {
     EdgeType.TOP: [
-        [AreaTemplate.topLeftDot, 0],
-        [AreaTemplate.topLeftMarker, 0],
-        [AreaTemplate.leftLine, -1],
-        [AreaTemplate.topLine, "ALL"],
-        [AreaTemplate.rightLine, 0],
-        [AreaTemplate.topRightDot, 0],
-        [AreaTemplate.topRightMarker, 0],
+        [ZonePreset.topLeftDot, 0],
+        [ZonePreset.topLeftMarker, 0],
+        [ZonePreset.leftLine, -1],
+        [ZonePreset.topLine, "ALL"],
+        [ZonePreset.rightLine, 0],
+        [ZonePreset.topRightDot, 0],
+        [ZonePreset.topRightMarker, 0],
     ],
     EdgeType.RIGHT: [
-        [AreaTemplate.topRightDot, 0],
-        [AreaTemplate.topRightMarker, 0],
-        [AreaTemplate.topLine, -1],
-        [AreaTemplate.rightLine, "ALL"],
-        [AreaTemplate.bottomLine, 0],
-        [AreaTemplate.bottomRightDot, 0],
-        [AreaTemplate.bottomRightMarker, 0],
+        [ZonePreset.topRightDot, 0],
+        [ZonePreset.topRightMarker, 0],
+        [ZonePreset.topLine, -1],
+        [ZonePreset.rightLine, "ALL"],
+        [ZonePreset.bottomLine, 0],
+        [ZonePreset.bottomRightDot, 0],
+        [ZonePreset.bottomRightMarker, 0],
     ],
     EdgeType.LEFT: [
-        [AreaTemplate.bottomLeftDot, 0],
-        [AreaTemplate.bottomLeftMarker, 0],
-        [AreaTemplate.bottomLine, -1],
-        [AreaTemplate.leftLine, "ALL"],
-        [AreaTemplate.topLine, 0],
-        [AreaTemplate.topLeftDot, 0],
-        [AreaTemplate.topLeftMarker, 0],
+        [ZonePreset.bottomLeftDot, 0],
+        [ZonePreset.bottomLeftMarker, 0],
+        [ZonePreset.bottomLine, -1],
+        [ZonePreset.leftLine, "ALL"],
+        [ZonePreset.topLine, 0],
+        [ZonePreset.topLeftDot, 0],
+        [ZonePreset.topLeftMarker, 0],
     ],
     EdgeType.BOTTOM: [
-        [AreaTemplate.bottomRightDot, 0],
-        [AreaTemplate.bottomRightMarker, 0],
-        [AreaTemplate.rightLine, -1],
-        [AreaTemplate.bottomLine, "ALL"],
-        [AreaTemplate.leftLine, 0],
-        [AreaTemplate.bottomLeftDot, 0],
-        [AreaTemplate.bottomLeftMarker, 0],
+        [ZonePreset.bottomRightDot, 0],
+        [ZonePreset.bottomRightMarker, 0],
+        [ZonePreset.rightLine, -1],
+        [ZonePreset.bottomLine, "ALL"],
+        [ZonePreset.leftLine, 0],
+        [ZonePreset.bottomLeftDot, 0],
+        [ZonePreset.bottomLeftMarker, 0],
     ],
 }
 

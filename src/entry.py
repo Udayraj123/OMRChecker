@@ -10,12 +10,13 @@
 import json
 import os
 from csv import QUOTE_NONNUMERIC
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from time import time
 
 import pandas as pd
 from rich.table import Table
 
+from src.algorithm.alignment.template_alignment import apply_template_alignment
 from src.algorithm.evaluation import EvaluationConfig, evaluate_concatenated_response
 from src.algorithm.template import Template
 from src.schemas.constants import DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING
@@ -96,6 +97,7 @@ def print_config_summary(
     table.add_row("Directory Path", f"{curr_dir}")
     table.add_row("Count of Images", f"{len(omr_files)}")
     table.add_row("Debug Mode ", "ON" if args["debug"] else "OFF")
+    table.add_row("Output Mode ", args["output_mode"])
     table.add_row("Set Layout Mode ", "ON" if args["setLayout"] else "OFF")
     table.add_row(
         "Markers Detection",
@@ -141,15 +143,23 @@ def process_dir(
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
 
     output_dir = Path(args["output_dir"], curr_dir.relative_to(root_dir))
+    output_mode = args["output_mode"]
     paths = Paths(output_dir)
 
     # look for images in current dir to process
     exts = ("*.[pP][nN][gG]", "*.[jJ][pP][gG]", "*.[jJ][pP][eE][gG]")
     omr_files = sorted([f for ext in exts for f in curr_dir.glob(ext)])
 
+    # omr_files = Paths.filter_omr_files(omr_files)
+    omr_files = [Path(PurePosixPath(omr_file).as_posix()) for omr_file in omr_files]
+
     # Exclude images (take union over all pre_processors)
     excluded_files = []
     if template:
+        if template.alignment["reference_image_path"] is not None:
+            # Note: reference_image_path is already Path()
+            excluded_files.extend(template.alignment["reference_image_path"])
+
         for pp in template.pre_processors:
             excluded_files.extend(Path(p) for p in pp.exclude_files())
 
@@ -186,7 +196,7 @@ def process_dir(
             )
 
         setup_dirs_for_paths(paths)
-        outputs_namespace = setup_outputs_for_template(paths, template)
+        outputs_namespace = setup_outputs_for_template(paths, template, output_mode)
 
         print_config_summary(
             curr_dir,
@@ -207,6 +217,7 @@ def process_dir(
                 tuning_config,
                 evaluation_config,
                 outputs_namespace,
+                output_mode,
             )
 
     elif not subdirs:
@@ -266,6 +277,7 @@ def process_files(
     tuning_config,
     evaluation_config,
     outputs_namespace,
+    output_mode,
 ):
     start_time = int(time())
     files_counter = 0
@@ -273,7 +285,7 @@ def process_files(
     logger.set_log_levels(tuning_config.outputs.show_logs_by_type)
     for file_path in omr_files:
         files_counter += 1
-        file_name = file_path.name
+        file_name = Paths.remove_non_utf_characters(file_path.name)
         file_id = str(file_name)
 
         gray_image, colored_image = ImageUtils.read_image_util(
@@ -302,6 +314,12 @@ def process_files(
             file_path, gray_image, colored_image, template
         )
 
+        # TODO[later]: template as a "Processor"
+        # TODO: apply template alignment
+        gray_image, colored_image, template = apply_template_alignment(
+            gray_image, colored_image, template, tuning_config
+        )
+
         if gray_image is None:
             # Error OMR case
             output_file_path = outputs_namespace.paths.errors_dir.joinpath(file_name)
@@ -327,7 +345,7 @@ def process_files(
             continue
 
         (
-            response_dict,
+            raw_omr_response,
             multi_marked,
             _,
             field_number_to_field_bubble_means,
@@ -339,12 +357,12 @@ def process_files(
 
         # TODO: move inner try catch here
         # concatenate roll nos, set unmarked responses, etc
-        omr_response = get_concatenated_response(response_dict, template)
+        concatenated_response = get_concatenated_response(raw_omr_response, template)
         evaluation_config_for_response = (
             None
             if evaluation_config is None
             else evaluation_config.get_evaluation_config_for_response(
-                omr_response, file_path
+                concatenated_response, file_path
             )
         )
 
@@ -352,12 +370,12 @@ def process_files(
             evaluation_config_for_response is None
             or not evaluation_config_for_response.get_should_explain_scoring()
         ):
-            logger.info(f"Read Response: \n{omr_response}")
+            logger.info(f"Read Response: \n{concatenated_response}")
 
         score, evaluation_meta = 0, None
         if evaluation_config_for_response is not None:
             score, evaluation_meta = evaluate_concatenated_response(
-                omr_response, evaluation_config_for_response
+                concatenated_response, evaluation_config_for_response
             )
             (
                 default_answers_summary,
@@ -374,20 +392,43 @@ def process_files(
         save_marked_dir = outputs_namespace.paths.save_marked_dir
 
         # Save output image with bubble values and evaluation meta
-        (
-            final_marked,
-            colored_final_marked,
-        ) = TemplateDrawing.draw_template_layout(
-            gray_image,
-            colored_image,
-            template,
-            tuning_config,
-            file_id,
-            field_number_to_field_bubble_means,
-            save_marked_dir=save_marked_dir,
-            evaluation_meta=evaluation_meta,
-            evaluation_config_for_response=evaluation_config_for_response,
+        if output_mode != "moderation":
+            (
+                final_marked,
+                colored_final_marked,
+            ) = TemplateDrawing.draw_template_layout(
+                gray_image,
+                colored_image,
+                template,
+                tuning_config,
+                field_number_to_field_bubble_means,
+                evaluation_meta=evaluation_meta,
+                evaluation_config_for_response=evaluation_config_for_response,
+            )
+        else:
+            # No drawing in moderation output mode
+            final_marked, colored_final_marked = gray_image, colored_image
+
+        # TODO(refactor): move to small function
+        should_save_detections = (
+            tuning_config.outputs.save_detections and save_marked_dir is not None
         )
+
+        if should_save_detections:
+            # TODO: migrate after support for multi_marked bucket based on identifier config
+            # if multi_roll:
+            #     save_marked_dir = save_marked_dir.joinpath("_MULTI_")
+            ImageUtils.save_marked_image(save_marked_dir, file_id, final_marked)
+
+            if (
+                tuning_config.outputs.colored_outputs_enabled
+                and save_marked_dir is not None
+            ):
+                # TODO: get dedicated path from top args
+                colored_save_marked_dir = save_marked_dir.joinpath("colored")
+                ImageUtils.save_marked_image(
+                    colored_save_marked_dir, file_id, colored_final_marked
+                )
 
         # Save output stack images
         template.save_image_ops.save_image_stacks(
@@ -413,25 +454,31 @@ def process_files(
             )
 
         # Save output CSV results
-        resp_array = []
-        for k in template.output_columns:
-            resp_array.append(omr_response[k])
+        output_omr_response = (
+            raw_omr_response if output_mode == "moderation" else concatenated_response
+        )
+        omr_response_array = []
+        for field in outputs_namespace.omr_response_columns:
+            omr_response_array.append(output_omr_response[field])
 
-        outputs_namespace.OUTPUT_SET.append([file_name] + resp_array)
-        posix_file_path = Paths.to_posix_path(file_path)
+        outputs_namespace.OUTPUT_SET.append([file_name] + omr_response_array)
+        posix_file_path = Paths.sep_based_posix_path(file_path)
 
         if multi_marked == 0 or not tuning_config.outputs.filter_out_multimarked_files:
             STATS.files_not_moved += 1
 
             # Normalize path and convert to posix style
-            output_file_path = Paths.to_posix_path(save_marked_dir.joinpath(file_id))
+            output_file_path = Paths.sep_based_posix_path(
+                save_marked_dir.joinpath(file_id)
+            )
             # Enter into Results sheet-
             results_line = [
                 file_name,
                 posix_file_path,
                 output_file_path,
                 score,
-            ] + resp_array
+            ] + omr_response_array
+
             # Write/Append to results_line file(opened in append mode)
             pd.DataFrame(results_line, dtype=str).T.to_csv(
                 outputs_namespace.files_obj["Results"],
@@ -443,7 +490,7 @@ def process_files(
         else:
             # multi_marked file
             logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
-            output_file_path = Paths.to_posix_path(
+            output_file_path = Paths.sep_based_posix_path(
                 outputs_namespace.paths.multi_marked_dir.joinpath(file_name)
             )
             if check_and_move(
@@ -454,7 +501,7 @@ def process_files(
                     posix_file_path,
                     output_file_path,
                     "NA",
-                ] + resp_array
+                ] + omr_response_array
                 pd.DataFrame(mm_line, dtype=str).T.to_csv(
                     outputs_namespace.files_obj["MultiMarked"],
                     mode="a",

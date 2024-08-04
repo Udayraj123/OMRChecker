@@ -38,6 +38,7 @@ CONFIG_DEFAULTS = DotMap(
             "save_detections": True,
             "colored_outputs_enabled": False,
             "save_image_metrics": False,
+            "show_confidence_metrics": False,
             "filter_out_multimarked_files": False,
         },
     },

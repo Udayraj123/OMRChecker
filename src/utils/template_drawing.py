@@ -12,7 +12,6 @@ from src.utils.constants import (
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
-from src.utils.logger import logger
 
 
 class TemplateDrawing:
@@ -26,14 +25,6 @@ class TemplateDrawing:
 
         colored_final_marked = colored_image
         if config.outputs.colored_outputs_enabled:
-            save_marked_dir = kwargs.get("save_marked_dir", None)
-            # TODO: get dedicated path from top args
-            kwargs["save_marked_dir"] = (
-                save_marked_dir.joinpath("colored")
-                if save_marked_dir is not None
-                else None
-            )
-
             colored_final_marked = TemplateDrawing.draw_template_layout_util(
                 colored_final_marked,
                 "COLORED",
@@ -78,9 +69,7 @@ class TemplateDrawing:
         image_type,
         template,
         config,
-        file_id=None,
         field_number_to_field_bubble_means=None,
-        save_marked_dir=None,
         evaluation_meta=None,
         evaluation_config_for_response=None,
         shifted=False,
@@ -95,10 +84,6 @@ class TemplateDrawing:
         should_draw_marked_bubbles = field_number_to_field_bubble_means is not None
         should_draw_question_verdicts = (
             should_draw_marked_bubbles and evaluation_meta is not None
-        )
-
-        should_save_detections = (
-            config.outputs.save_detections and save_marked_dir is not None
         )
 
         if should_draw_field_block_rectangles:
@@ -138,14 +123,6 @@ class TemplateDrawing:
                 evaluation_config_for_response,
             )
 
-        if should_save_detections:
-            # TODO: migrate after support for multi_marked bucket based on identifier config
-            # if multi_roll:
-            #     save_marked_dir = save_marked_dir.joinpath("_MULTI_")
-            image_path = str(save_marked_dir.joinpath(file_id))
-            logger.info(f"Saving Image to '{image_path}'")
-            ImageUtils.save_img(image_path, marked_image)
-
         if should_draw_question_verdicts:
             marked_image = TemplateDrawing.draw_evaluation_summary(
                 marked_image, evaluation_meta, evaluation_config_for_response
@@ -169,17 +146,29 @@ class TemplateDrawing:
     ):
         marked_image = image.copy() if shouldCopy else image
         for field_block in template.field_blocks:
-            field_block_name, origin, dimensions, bubble_dimensions = map(
-                lambda attr: getattr(field_block, attr),
-                [
-                    "name",
-                    "origin",
-                    "dimensions",
-                    "bubble_dimensions",
-                ],
+            TemplateDrawing.draw_field_block(
+                field_block, marked_image, shifted, thickness, border
             )
-            block_position = field_block.get_shifted_origin() if shifted else origin
 
+        return marked_image
+
+    @staticmethod
+    def draw_field_block(
+        field_block, marked_image, shifted=True, thickness=3, border=3
+    ):
+        field_block_name, origin, dimensions, bubble_dimensions = map(
+            lambda attr: getattr(field_block, attr),
+            [
+                "name",
+                "origin",
+                "dimensions",
+                "bubble_dimensions",
+            ],
+        )
+
+        # TODO: get this field block using a bounding box of all bubbles instead. (remove shift at field block level)
+        block_position = field_block.get_shifted_origin() if shifted else origin
+        if not shifted:
             # Field block bounding rectangle
             DrawingUtils.draw_box(
                 marked_image,
@@ -191,29 +180,29 @@ class TemplateDrawing:
                 border=border,
             )
 
-            for field in field_block.fields:
-                field_bubbles = field.field_bubbles
-                for unit_bubble in field_bubbles:
-                    shifted_position = unit_bubble.get_shifted_position(
-                        field_block.shifts
-                    )
-                    DrawingUtils.draw_box(
-                        marked_image,
-                        shifted_position,
-                        bubble_dimensions,
-                        thickness_factor=1 / 10,
-                        border=border,
-                    )
-
-            if shifted:
-                text_position = lambda size_x, size_y: (
-                    int(block_position[0] + dimensions[0] - size_x),
-                    int(block_position[1] - size_y),
+        for field in field_block.fields:
+            field_bubbles = field.field_bubbles
+            for unit_bubble in field_bubbles:
+                shifted_position = unit_bubble.get_shifted_position(field_block.shifts)
+                DrawingUtils.draw_box(
+                    marked_image,
+                    shifted_position,
+                    bubble_dimensions,
+                    thickness_factor=1 / 10,
+                    border=border,
                 )
-                text = f"({field_block.shifts}){field_block_name}"
-                DrawingUtils.draw_text(marked_image, text, text_position, thickness)
 
-        return marked_image
+        if shifted:
+            text_position = lambda size_x, size_y: (
+                int(block_position[0] + dimensions[0] - size_x),
+                int(block_position[1] - size_y),
+            )
+            text = f"({field_block.shifts}){field_block_name}"
+            DrawingUtils.draw_text(
+                marked_image, text, text_position, thickness=thickness
+            )
+
+        return
 
     @staticmethod
     def draw_marked_bubbles_with_evaluation_meta(

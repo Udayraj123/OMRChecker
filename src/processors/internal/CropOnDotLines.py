@@ -2,15 +2,15 @@ import cv2
 import numpy as np
 
 from src.processors.constants import (
-    DOT_AREA_TYPES_IN_ORDER,
+    DOT_ZONE_TYPES_IN_ORDER,
     EDGE_TYPES_IN_ORDER,
-    LINE_AREA_TYPES_IN_ORDER,
+    LINE_ZONE_TYPES_IN_ORDER,
     TARGET_EDGE_FOR_LINE,
-    AreaTemplate,
     EdgeType,
     ScannerType,
     SelectorType,
     WarpMethod,
+    ZonePreset,
 )
 from src.processors.internal.CropOnPatchesCommon import CropOnPatchesCommon
 from src.utils.drawing import DrawingUtils
@@ -25,87 +25,87 @@ from src.utils.math import MathUtils
 class CropOnDotLines(CropOnPatchesCommon):
     __is_internal_preprocessor__ = True
 
-    scan_area_templates_for_layout = {
+    scan_zone_presets_for_layout = {
         "ONE_LINE_TWO_DOTS": [
-            AreaTemplate.topRightDot,
-            AreaTemplate.bottomRightDot,
-            AreaTemplate.leftLine,
+            ZonePreset.topRightDot,
+            ZonePreset.bottomRightDot,
+            ZonePreset.leftLine,
         ],
         "TWO_DOTS_ONE_LINE": [
-            AreaTemplate.rightLine,
-            AreaTemplate.topLeftDot,
-            AreaTemplate.bottomLeftDot,
+            ZonePreset.rightLine,
+            ZonePreset.topLeftDot,
+            ZonePreset.bottomLeftDot,
         ],
         "TWO_LINES": [
-            AreaTemplate.leftLine,
-            AreaTemplate.rightLine,
+            ZonePreset.leftLine,
+            ZonePreset.rightLine,
         ],
         "TWO_LINES_HORIZONTAL": [
-            AreaTemplate.topLine,
-            AreaTemplate.bottomLine,
+            ZonePreset.topLine,
+            ZonePreset.bottomLine,
         ],
-        "FOUR_DOTS": DOT_AREA_TYPES_IN_ORDER,
+        "FOUR_DOTS": DOT_ZONE_TYPES_IN_ORDER,
     }
 
-    default_scan_area_descriptions = {
+    default_scan_zone_descriptions = {
         **{
-            area_template: {
+            zone_preset: {
                 "scannerType": ScannerType.PATCH_DOT,
                 "selector": "SELECT_CENTER",
                 "maxPoints": 2,  # for cropping
             }
-            for area_template in DOT_AREA_TYPES_IN_ORDER
+            for zone_preset in DOT_ZONE_TYPES_IN_ORDER
         },
         **{
-            area_template: {
+            zone_preset: {
                 "scannerType": ScannerType.PATCH_LINE,
                 "selector": "LINE_OUTER_EDGE",
             }
-            for area_template in LINE_AREA_TYPES_IN_ORDER
+            for zone_preset in LINE_ZONE_TYPES_IN_ORDER
         },
         "CUSTOM": {},
     }
 
     default_points_selector_map = {
         "CENTERS": {
-            AreaTemplate.topLeftDot: "SELECT_CENTER",
-            AreaTemplate.topRightDot: "SELECT_CENTER",
-            AreaTemplate.bottomRightDot: "SELECT_CENTER",
-            AreaTemplate.bottomLeftDot: "SELECT_CENTER",
-            AreaTemplate.leftLine: "LINE_OUTER_EDGE",
-            AreaTemplate.rightLine: "LINE_OUTER_EDGE",
+            ZonePreset.topLeftDot: "SELECT_CENTER",
+            ZonePreset.topRightDot: "SELECT_CENTER",
+            ZonePreset.bottomRightDot: "SELECT_CENTER",
+            ZonePreset.bottomLeftDot: "SELECT_CENTER",
+            ZonePreset.leftLine: "LINE_OUTER_EDGE",
+            ZonePreset.rightLine: "LINE_OUTER_EDGE",
         },
         "INNER_WIDTHS": {
-            AreaTemplate.topLeftDot: "SELECT_TOP_RIGHT",
-            AreaTemplate.topRightDot: "SELECT_TOP_LEFT",
-            AreaTemplate.bottomRightDot: "SELECT_BOTTOM_LEFT",
-            AreaTemplate.bottomLeftDot: "SELECT_BOTTOM_RIGHT",
-            AreaTemplate.leftLine: "LINE_INNER_EDGE",
-            AreaTemplate.rightLine: "LINE_INNER_EDGE",
+            ZonePreset.topLeftDot: "SELECT_TOP_RIGHT",
+            ZonePreset.topRightDot: "SELECT_TOP_LEFT",
+            ZonePreset.bottomRightDot: "SELECT_BOTTOM_LEFT",
+            ZonePreset.bottomLeftDot: "SELECT_BOTTOM_RIGHT",
+            ZonePreset.leftLine: "LINE_INNER_EDGE",
+            ZonePreset.rightLine: "LINE_INNER_EDGE",
         },
         "INNER_HEIGHTS": {
-            AreaTemplate.topLeftDot: "SELECT_BOTTOM_LEFT",
-            AreaTemplate.topRightDot: "SELECT_BOTTOM_RIGHT",
-            AreaTemplate.bottomRightDot: "SELECT_TOP_RIGHT",
-            AreaTemplate.bottomLeftDot: "SELECT_TOP_LEFT",
-            AreaTemplate.leftLine: "LINE_OUTER_EDGE",
-            AreaTemplate.rightLine: "LINE_OUTER_EDGE",
+            ZonePreset.topLeftDot: "SELECT_BOTTOM_LEFT",
+            ZonePreset.topRightDot: "SELECT_BOTTOM_RIGHT",
+            ZonePreset.bottomRightDot: "SELECT_TOP_RIGHT",
+            ZonePreset.bottomLeftDot: "SELECT_TOP_LEFT",
+            ZonePreset.leftLine: "LINE_OUTER_EDGE",
+            ZonePreset.rightLine: "LINE_OUTER_EDGE",
         },
         "INNER_CORNERS": {
-            AreaTemplate.topLeftDot: "SELECT_BOTTOM_RIGHT",
-            AreaTemplate.topRightDot: "SELECT_BOTTOM_LEFT",
-            AreaTemplate.bottomRightDot: "SELECT_TOP_LEFT",
-            AreaTemplate.bottomLeftDot: "SELECT_TOP_RIGHT",
-            AreaTemplate.leftLine: "LINE_INNER_EDGE",
-            AreaTemplate.rightLine: "LINE_INNER_EDGE",
+            ZonePreset.topLeftDot: "SELECT_BOTTOM_RIGHT",
+            ZonePreset.topRightDot: "SELECT_BOTTOM_LEFT",
+            ZonePreset.bottomRightDot: "SELECT_TOP_LEFT",
+            ZonePreset.bottomLeftDot: "SELECT_TOP_RIGHT",
+            ZonePreset.leftLine: "LINE_INNER_EDGE",
+            ZonePreset.rightLine: "LINE_INNER_EDGE",
         },
         "OUTER_CORNERS": {
-            AreaTemplate.topLeftDot: "SELECT_TOP_LEFT",
-            AreaTemplate.topRightDot: "SELECT_TOP_RIGHT",
-            AreaTemplate.bottomRightDot: "SELECT_BOTTOM_RIGHT",
-            AreaTemplate.bottomLeftDot: "SELECT_BOTTOM_LEFT",
-            AreaTemplate.leftLine: "LINE_OUTER_EDGE",
-            AreaTemplate.rightLine: "LINE_OUTER_EDGE",
+            ZonePreset.topLeftDot: "SELECT_TOP_LEFT",
+            ZonePreset.topRightDot: "SELECT_TOP_RIGHT",
+            ZonePreset.bottomRightDot: "SELECT_BOTTOM_RIGHT",
+            ZonePreset.bottomLeftDot: "SELECT_BOTTOM_LEFT",
+            ZonePreset.leftLine: "LINE_OUTER_EDGE",
+            ZonePreset.rightLine: "LINE_OUTER_EDGE",
         },
     }
 
@@ -119,9 +119,9 @@ class CropOnDotLines(CropOnPatchesCommon):
             cv2.MORPH_RECT, tuple(tuning_options.get("dotKernel", [5, 5]))
         )
 
-    def validate_scan_areas(self):
+    def validate_scan_zones(self):
         # TODO: more validations here at child class level (customOptions etc)
-        return super().validate_scan_areas()
+        return super().validate_scan_zones()
 
     def validate_and_remap_options_schema(self, options):
         layout_type = options["type"]
@@ -137,47 +137,47 @@ class CropOnDotLines(CropOnPatchesCommon):
             },
         }
 
-        # TODO: add default values for provided options["scanAreas"]? like get "maxPoints" from options["lineMaxPoints"]
-        # inject scanAreas
-        parsed_options["scanAreas"] = [
-            # Note: currently at CropOnMarkers/CropOnDotLines level, 'scanAreas' is extended provided areas
-            *options.get("scanAreas", []),
+        # TODO: add default values for provided options["scanZones"]? like get "maxPoints" from options["lineMaxPoints"]
+        # inject scanZones
+        parsed_options["scanZones"] = [
+            # Note: currently at CropOnMarkers/CropOnDotLines level, 'scanZones' is extended provided zones
+            *options.get("scanZones", []),
             *[
                 {
-                    "areaTemplate": area_template,
-                    "areaDescription": options.get(area_template, {}),
+                    "zonePreset": zone_preset,
+                    "zoneDescription": options.get(zone_preset, {}),
                     "customOptions": {
                         # TODO: get customOptions here
                     },
                 }
-                for area_template in self.scan_area_templates_for_layout[layout_type]
+                for zone_preset in self.scan_zone_presets_for_layout[layout_type]
             ],
         ]
         return parsed_options
 
     edge_selector_map = {
-        AreaTemplate.topLine: {
+        ZonePreset.topLine: {
             "LINE_INNER_EDGE": EdgeType.BOTTOM,
             "LINE_OUTER_EDGE": EdgeType.TOP,
         },
-        AreaTemplate.leftLine: {
+        ZonePreset.leftLine: {
             "LINE_INNER_EDGE": EdgeType.RIGHT,
             "LINE_OUTER_EDGE": EdgeType.LEFT,
         },
-        AreaTemplate.bottomLine: {
+        ZonePreset.bottomLine: {
             "LINE_INNER_EDGE": EdgeType.TOP,
             "LINE_OUTER_EDGE": EdgeType.BOTTOM,
         },
-        AreaTemplate.rightLine: {
+        ZonePreset.rightLine: {
             "LINE_INNER_EDGE": EdgeType.LEFT,
             "LINE_OUTER_EDGE": EdgeType.RIGHT,
         },
     }
 
     @staticmethod
-    def select_edge_from_scan_area(area_description, edge_type):
+    def select_edge_from_scan_zone(zone_description, edge_type):
         destination_rectangle = MathUtils.get_rectangle_points_from_box(
-            area_description["origin"], area_description["dimensions"]
+            zone_description["origin"], zone_description["dimensions"]
         )
 
         destination_line = MathUtils.select_edge_from_rectangle(
@@ -186,30 +186,30 @@ class CropOnDotLines(CropOnPatchesCommon):
         return destination_line
 
     def find_and_select_points_from_line(
-        self, image, area_template, area_description, _file_path
+        self, image, zone_preset, zone_description, _file_path
     ):
-        area_label = area_description["label"]
-        points_selector = area_description.get(
+        zone_label = zone_description["label"]
+        points_selector = zone_description.get(
             "selector",
-            self.default_points_selector.get(area_label, SelectorType.LINE_OUTER_EDGE),
+            self.default_points_selector.get(zone_label, SelectorType.LINE_OUTER_EDGE),
         )
 
         line_edge_contours_map = self.find_line_corners_and_contours(
-            image, area_description
+            image, zone_description
         )
 
-        selected_edge_type = self.edge_selector_map[area_label][points_selector]
-        target_edge_type = TARGET_EDGE_FOR_LINE[area_template]
+        selected_edge_type = self.edge_selector_map[zone_label][points_selector]
+        target_edge_type = TARGET_EDGE_FOR_LINE[zone_preset]
         selected_contour = line_edge_contours_map[selected_edge_type]
-        destination_line = self.select_edge_from_scan_area(
-            area_description, selected_edge_type
+        destination_line = self.select_edge_from_scan_zone(
+            zone_description, selected_edge_type
         )
         # Ensure clockwise order after extraction
         if selected_edge_type != target_edge_type:
             selected_contour.reverse()
             destination_line.reverse()
 
-        max_points = area_description.get("maxPoints", None)
+        max_points = zone_description.get("maxPoints", None)
 
         # Extrapolates the destination_line to get approximate destination points
         (
@@ -220,7 +220,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         )
         # Temp
         # table = Table(
-        #     title=f"{area_label}: {destination_line}",
+        #     title=f"{zone_label}: {destination_line}",
         #     show_header=True,
         #     show_lines=False,
         # )
@@ -232,14 +232,14 @@ class CropOnDotLines(CropOnPatchesCommon):
 
         return control_points, destination_points, selected_contour
 
-    def find_line_corners_and_contours(self, image, area_description):
-        area_label = area_description["label"]
+    def find_line_corners_and_contours(self, image, zone_description):
+        zone_label = zone_description["label"]
         config = self.tuning_config
         tuning_options = self.tuning_options
-        area, area_start = self.compute_scan_area_util(image, area_description)
+        zone, zone_start = self.compute_scan_zone_util(image, zone_description)
 
         # Make boxes darker (less gamma)
-        darker_image = ImageUtils.adjust_gamma(area, config.thresholding.GAMMA_LOW)
+        darker_image = ImageUtils.adjust_gamma(zone, config.thresholding.GAMMA_LOW)
 
         # Lines are expected to be fairly dark
         line_threshold = tuning_options.get("lineThreshold", 180)
@@ -280,38 +280,38 @@ class CropOnDotLines(CropOnPatchesCommon):
             ]
         elif config.outputs.show_image_level == 4:
             InteractionUtils.show(
-                f"morph_opened_{area_label}", line_morphed, pause=False
+                f"morph_opened_{zone_label}", line_morphed, pause=False
             )
 
         (
             _,
             edge_contours_map,
         ) = self.find_morph_corners_and_contours_map(
-            area_start, line_morphed, area_description
+            zone_start, line_morphed, zone_description
         )
 
         if edge_contours_map is None:
             raise Exception(
-                f"No line match found at origin: {area_description['origin']} with dimensions: {area_description['dimensions']}"
+                f"No line match found at origin: {zone_description['origin']} with dimensions: {zone_description['dimensions']}"
             )
         return edge_contours_map
 
-    def find_dot_corners_from_options(self, image, area_description, _file_path):
+    def find_dot_corners_from_options(self, image, zone_description, _file_path):
         config = self.tuning_config
         tuning_options = self.tuning_options
-        area_label = area_description["label"]
+        zone_label = zone_description["label"]
 
-        area, area_start = self.compute_scan_area_util(image, area_description)
+        zone, zone_start = self.compute_scan_zone_util(image, zone_description)
 
         # TODO: simple colored thresholding to clear out noise?
 
         dot_blur_kernel = tuning_options.get("dotBlurKernel", None)
         if dot_blur_kernel:
-            area = cv2.GaussianBlur(area, dot_blur_kernel, 0)
+            zone = cv2.GaussianBlur(zone, dot_blur_kernel, 0)
 
         # Open : erode then dilate
         morph_c = cv2.morphologyEx(
-            area, cv2.MORPH_OPEN, self.dot_kernel_morph, iterations=3
+            zone, cv2.MORPH_OPEN, self.dot_kernel_morph, iterations=3
         )
 
         # TODO: try pyrDown to 64 values and find the outlier for black threshold?
@@ -321,19 +321,19 @@ class CropOnDotLines(CropOnPatchesCommon):
         normalised = ImageUtils.normalize(thresholded)
 
         if config.outputs.show_image_level >= 5:
-            self.debug_hstack += [area, morph_c, thresholded, normalised]
+            self.debug_hstack += [zone, morph_c, thresholded, normalised]
         elif config.outputs.show_image_level == 4:
             InteractionUtils.show(
-                f"threshold_normalised: {area_label}", normalised, pause=False
+                f"threshold_normalised: {zone_label}", normalised, pause=False
             )
 
         corners, _ = self.find_morph_corners_and_contours_map(
-            area_start, normalised, area_description
+            zone_start, normalised, zone_description
         )
         if corners is None:
             if config.outputs.show_image_level >= 1:
                 hstack = ImageUtils.get_padded_hstack(
-                    [self.debug_image, area, thresholded]
+                    [self.debug_image, zone, thresholded]
                 )
                 InteractionUtils.show(
                     f"No patch/dot debug hstack",
@@ -343,24 +343,24 @@ class CropOnDotLines(CropOnPatchesCommon):
                 InteractionUtils.show(f"No patch/dot found:", hstack, pause=1)
 
             raise Exception(
-                f"No patch/dot found at origin: {area_description['origin']} with dimensions: {area_description['dimensions']}"
+                f"No patch/dot found at origin: {zone_description['origin']} with dimensions: {zone_description['dimensions']}"
             )
 
         return corners
 
-    # TODO: >> create a ScanArea class and move some methods there
-    def find_morph_corners_and_contours_map(self, area_start, area, area_description):
-        scanner_type, area_label = (
-            area_description["scannerType"],
-            area_description["label"],
+    # TODO: >> create a Scanzone class and move some methods there
+    def find_morph_corners_and_contours_map(self, zone_start, zone, zone_description):
+        scanner_type, zone_label = (
+            zone_description["scannerType"],
+            zone_description["label"],
         )
         config = self.tuning_config
-        canny_edges = cv2.Canny(area, 185, 55)
+        canny_edges = cv2.Canny(zone, 185, 55)
 
         if config.outputs.show_image_level >= 5:
             self.debug_hstack.append(canny_edges)
 
-        # Should mostly return a single contour in the area
+        # Should mostly return a single contour in the zone
         all_contours = ImageUtils.grab_contours(
             cv2.findContours(
                 canny_edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
@@ -420,7 +420,7 @@ class CropOnDotLines(CropOnPatchesCommon):
                 self.debug_hstack.append(corners_contour_overlay)
 
             InteractionUtils.show(
-                f"Debug Largest Patch: {area_label}",
+                f"Debug Largest Patch: {zone_label}",
                 ImageUtils.get_padded_hstack(self.debug_hstack),
                 0,
                 resize_to_height=True,
@@ -430,12 +430,12 @@ class CropOnDotLines(CropOnPatchesCommon):
             self.debug_hstack = []
 
         absolute_corners = MathUtils.shift_points_from_origin(
-            area_start, ordered_patch_corners
+            zone_start, ordered_patch_corners
         )
 
         shifted_edge_contours_map = {
             edge_type: MathUtils.shift_points_from_origin(
-                area_start, edge_contours_map[edge_type]
+                zone_start, edge_contours_map[edge_type]
             )
             for edge_type in EDGE_TYPES_IN_ORDER
         }

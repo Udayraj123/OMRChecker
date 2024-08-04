@@ -127,8 +127,13 @@ CONFIG_SCHEMA = {
                     "description": "This option saves the detection outputs while taking a small toll on the processing speeds",
                     "type": "boolean",
                 },
+                # TODO: merge into one object
                 "save_image_metrics": {
                     "description": "This option exports the confidence metrics etc related to the images. These can be later used for deeper analysis/visualizations",
+                    "type": "boolean",
+                },
+                "show_confidence_metrics": {
+                    "description": "The toggle for enabling confidence metrics calculation",
                     "type": "boolean",
                 },
                 "filter_out_multimarked_files": {

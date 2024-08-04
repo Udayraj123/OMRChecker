@@ -61,7 +61,7 @@ class SelectROI:
                 # TODO: debug the GUI lag here -
                 # tl, br = self.rectangle_tl, self.rectangle_br
                 # if tl != br:
-                #     tl, br = ImageUtils.clip_area_to_image_bounds([tl, br], image_copy)
+                #     tl, br = ImageUtils.clip_zone_to_image_bounds([tl, br], image_copy)
                 #     # Re-draw the rectangle
                 #     cv2.rectangle(image_copy, tl, br, SelectROI.draw_color, 2)
 

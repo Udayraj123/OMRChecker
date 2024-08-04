@@ -29,14 +29,12 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
         self.ref_img = ImageUtils.resize_to_shape(ref_img, self.processing_image_shape)
         # get options with defaults
         self.max_features = int(options.get("maxFeatures", 500))
-        self.good_match_percent = options.get("goodMatchPercent", 0.15)
+        self.good_match_percent = options.get("goodMatchPercent", 0.10)
 
-        matcher_type = options.get(
-            "matcherType", "DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING"
-        )
+        matcher_type = options.get("matcherType", "BRUTEFORCE_HAMMING")
         if matcher_type == "NORM_HAMMING":
             self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-        elif matcher_type == "DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING":
+        elif matcher_type == "BRUTEFORCE_HAMMING":
             self.matcher = cv2.DescriptorMatcher_create(
                 cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING
             )
@@ -73,6 +71,9 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
         # Sort matches by score
         matches = sorted(matches, key=lambda x: x.distance, reverse=False)
 
+        # Note: we can also enhance the algorithm to discard matches after the first "large jump" if present
+        # print(list(map(lambda x: x.distance, matches)))
+
         # Remove not so good matches
         num_good_matches = int(len(matches) * self.good_match_percent)
         matches = matches[:num_good_matches]
@@ -86,7 +87,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
                 im_matches, u_height=config.outputs.display_image_dimensions[1]
             )
             InteractionUtils.show(
-                "Aligning", im_matches, resize_to_height=True, config=config
+                "Alignment Matches", im_matches, resize_to_height=True, config=config
             )
 
         # Extract location of good matches

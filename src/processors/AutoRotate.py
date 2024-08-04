@@ -4,6 +4,7 @@ from src.processors.interfaces.ImageTemplatePreprocessor import (
     ImageTemplatePreprocessor,
 )
 from src.utils.image import ImageUtils
+from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 
 
@@ -26,6 +27,7 @@ class AutoRotate(ImageTemplatePreprocessor):
             )
 
     def apply_filter(self, image, colored_image, _template, file_path):
+        config = self.tuning_config
         best_val, best_rotation = -1, None
         rotations = [
             None,
@@ -39,12 +41,24 @@ class AutoRotate(ImageTemplatePreprocessor):
                 rotated_img = ImageUtils.rotate(
                     image, rotation, keep_original_shape=True
                 )
-            res = cv2.matchTemplate(rotated_img, self.resized_reference, cv2.TM_CCOEFF)
+            # TODO: find a better suited template matching for white images.
+            res = cv2.matchTemplate(
+                rotated_img, self.resized_reference, cv2.TM_CCOEFF_NORMED
+            )
+            if config.outputs.show_image_level >= 4:
+                InteractionUtils.show(f"Image for rotation: {rotation}", rotated_img, 0)
+                InteractionUtils.show(
+                    f"Reference for rotation: {rotation}", self.resized_reference, 0
+                )
+                InteractionUtils.show(
+                    f"Template Matching Result for rotation: {rotation}", res
+                )
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-            logger.debug(rotation, max_val)
+            # logger.info(rotation, max_val)
             if max_val > best_val:
                 best_val = max_val
                 best_rotation = rotation
+
         if self.threshold is not None:
             if self.threshold["value"] > best_val:
                 if self.threshold["passthrough"]:
@@ -61,6 +75,7 @@ class AutoRotate(ImageTemplatePreprocessor):
         )
         if best_rotation is None:
             return image, colored_image, _template
+
         image = ImageUtils.rotate(image, best_rotation, keep_original_shape=True)
         if self.tuning_config.outputs.colored_outputs_enabled:
             colored_image = ImageUtils.rotate(
