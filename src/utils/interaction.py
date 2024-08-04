@@ -9,12 +9,11 @@ from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.logger import logger
 
-monitor_window = get_monitors()[0]
-
 
 @dataclass
 class ImageMetrics:
     # TODO: fix window metrics doesn't account for the doc/taskbar on macos
+    monitor_window = get_monitors()[0]
     window_width, window_height = monitor_window.width, monitor_window.height
     # for positioning image windows
     window_x, window_y = 0, 0
