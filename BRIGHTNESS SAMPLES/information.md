@@ -1,0 +1,1 @@
+This situation could have also been addressed by adjusting the global white threshold. However, if the images in the input folder vary in brightness—some being bright (high brightness) and others dark (low brightness)—changing the white threshold globally would affect all images in the input folder, not just the dark ones.
