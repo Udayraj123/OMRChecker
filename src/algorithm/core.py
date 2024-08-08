@@ -17,7 +17,7 @@ import cv2
 import numpy as np
 from matplotlib import colormaps, pyplot
 
-from src.algorithm.detection import BubbleMeanValue, FieldStdMeanValue
+from src.algorithm.detection.thresholding import BubbleMeanValue, FieldStdMeanValue
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
