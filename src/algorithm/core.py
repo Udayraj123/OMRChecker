@@ -226,7 +226,7 @@ class ImageInstanceOps:
         # Get mean bubbleValues n other stats
         (
             global_bubble_means_and_refs,
-            field_number_to_field_bubble_means,
+            field_number_to_field_detection,
             global_field_bubble_means_stds,
         ) = (
             [],
@@ -234,36 +234,22 @@ class ImageInstanceOps:
             [],
         )
         for field_block in template.field_blocks:
-            #  TODO: support for if field_block.field_type == "BARCODE":
             field_bubble_means_stds = []
-            box_w, box_h = field_block.bubble_dimensions
 
-            for field in field_block.fields:
-                field_bubbles = field.field_bubbles
-                field_bubble_means = []
-                for unit_bubble in field_bubbles:
-                    x, y = unit_bubble.get_shifted_position(field_block.shifts)
-                    rect = [y, y + box_h, x, x + box_w]
-                    # TODO: get this from within the BubbleDetection class
-                    mean_value = cv2.mean(
-                        gray_image[rect[0] : rect[1], rect[2] : rect[3]]
-                    )[0]
-                    field_bubble_means.append(
-                        BubbleMeanValue(mean_value, unit_bubble)
-                        # TODO: cross/check mark detection support (#167)
-                        # detectCross(gray_image, rect) ? 0 : 255
-                    )
+            for field_detector in field_block.field_detectors:
+                #  TODO: support for if field_block.field_type == "BARCODE":
+                field_detection = field_detector.evaluate_detection_params(gray_image)
+                # This happens in second pass!
+                # field_detection = field_detector.get_detection(gray_image)
 
-                # TODO: move std calculation inside the class
-                field_std = round(
-                    np.std([item.mean_value for item in field_bubble_means]), 2
-                )
-                field_bubble_means_stds.append(
-                    FieldStdMeanValue(field_std, field_block)
-                )
+                # abstract the bubble detection logic in a separate loop
+                if field_detector.type == "BUBBLES_THRESHOLD":
+                    field_bubble_means = field_detection.get_field_bubble_means()
+                    field_bubble_means_stds.append(field_detection.get_field_bubble_means_std())
+                    # todo: replace these with generic items
+                    global_bubble_means_and_refs.extend(field_bubble_means)
+                field_number_to_field_detection.append(field_detection)
 
-                field_number_to_field_bubble_means.append(field_bubble_means)
-                global_bubble_means_and_refs.extend(field_bubble_means)
             global_field_bubble_means_stds.extend(field_bubble_means_stds)
 
         (
@@ -344,9 +330,9 @@ class ImageInstanceOps:
                     < global_std_thresh
                 )
 
-                field_bubble_means = field_number_to_field_bubble_means[
+                field_bubble_means = field_number_to_field_detection[
                     absolute_field_number
-                ]
+                ].get_field_bubble_means()
 
                 (
                     local_threshold_for_field,
@@ -428,7 +414,7 @@ class ImageInstanceOps:
             omr_response,
             multi_marked,
             multi_roll,
-            field_number_to_field_bubble_means,
+            field_number_to_field_detection,
             global_threshold_for_template,
             global_field_confidence_metrics,
         )

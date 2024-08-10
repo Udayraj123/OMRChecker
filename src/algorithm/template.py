@@ -476,6 +476,11 @@ class FieldBlock:
                 )
                 bubble_point[_h] += bubbles_gap
             self.fields.append(Field(field_label, field_type, field_bubbles, direction))
+            
+            # TODO: fill this -
+            # self.field_detections.append(FieldDetection(field_label, field_type, field_bubbles, direction))
+            # self.field_detector.append(FieldDetector(field_label, field_type, field_bubbles, direction))
+
             lead_point[_v] += labels_gap
 
 

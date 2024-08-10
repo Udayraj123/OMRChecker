@@ -73,14 +73,3 @@ class FieldStdMeanValue(MeanValueItem):
             ]
         }
 
-
-# TODO: use this or merge it
-class FieldDetection:
-    def __init__(self, field, confidence):
-        self.field = field
-        self.confidence = confidence
-        # TODO: use local_threshold from here
-        # self.local_threshold = None
-
-
-# TODO: move the detection utils in this file.
