@@ -1,7 +1,8 @@
-from src.algorithm.detection.field import FieldTypeDetector
+
+from src.algorithm.detection.base.field_type_detector import FieldTypeDetector
 
 
-class BarcodeFieldDetector(FieldTypeDetector):
+class BarcodeQRDetector(FieldTypeDetector):
     def __init__(self):
         super().__init__()
 

@@ -20,8 +20,14 @@ class Template:
         self.template_detector = TemplateDetector(self, tuning_config)
         self.directory_handler = DirectoryHandler(self)
         self.template_preprocessing = TemplatePreprocessing(self, tuning_config)
-
-        # TODO: move other functions here
+        
+        # re-export references for external use
+        self.all_field_types = self.template_layout.all_field_types
+        self.all_fields = self.template_layout.all_fields
+        self.path = self.template_layout.path
+        self.apply_preprocessors = self.template_layout.apply_preprocessors
+        self.export_omr_metrics_for_file = self.template_layout.export_omr_metrics_for_file
+        # TODO: move some other functions here
 
     def get_exclude_files(self):
         excluded_files = []
@@ -78,15 +84,7 @@ class Template:
     def get_errors_dir(self):
         return self.directory_handler.path_utils.errors_dir
 
-    def export_omr_metrics_for_file(self, *args, **kwargs):
-        return self.directory_handler.export_omr_metrics_for_file(*args, **kwargs)
-
-    def apply_preprocessors(self, *args, **kwargs):
-        return self.template_preprocessing.apply_preprocessors(*args, **kwargs)
-
     def read_omr_response(self, input_gray_image, colored_image, file_path):
-        config = self.tuning_config
-
         # Note: resize also creates a copy
         gray_image, colored_image = ImageUtils.resize_to_dimensions(
             self.template_dimensions, input_gray_image, colored_image

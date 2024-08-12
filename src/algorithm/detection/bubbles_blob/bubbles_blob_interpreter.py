@@ -12,3 +12,4 @@ class BarcodeInterpreter(FieldInterpreter):
 
     def get_field_level_confidence_metrics(self):
         return {"Barcode": "TODO"}
+

@@ -82,10 +82,11 @@ class DirectoryHandler:
         confidence_metrics_for_file,
         evaluation_meta,
     ):
-        global_bubble_means_and_refs = []
+        field_wise_means_and_refs = []
+        # TODO: loop over using a list of field_labels now
         for field_bubble_means in field_number_to_field_bubble_means:
-            global_bubble_means_and_refs.extend(field_bubble_means)
-        # sorted_global_bubble_means_and_refs = sorted(global_bubble_means_and_refs)
+            field_wise_means_and_refs.extend(field_bubble_means)
+        # sorted_global_bubble_means_and_refs = sorted(field_wise_means_and_refs)
 
         image_metrics_path = self.path_utils.image_metrics_dir.joinpath(
             f"{os.path.splitext(file_name)[0]}.js"

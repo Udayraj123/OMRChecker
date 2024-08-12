@@ -225,6 +225,7 @@ def process_directory_files(
 ):
     start_time = int(time())
     files_counter = 0
+    # TODO: move STATS inside template.directory_handler
     STATS.files_not_moved = 0
     logger.set_log_levels(tuning_config.outputs.show_logs_by_type)
     for file_path in omr_files:
@@ -335,7 +336,7 @@ def process_directory_files(
             field_number_to_field_bubble_means,
             all_fields_threshold_for_file,
             confidence_metrics_for_file,
-        ) = template.get_metrics_for_file(file_path)
+        ) = template.get_omr_metrics_for_file(file_path)
         # Save output image with bubble values and evaluation meta
         if output_mode != "moderation":
             (

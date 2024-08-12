@@ -81,12 +81,6 @@ class BubblesThresholdDetector(FieldTypeDetector):
         # TODO: use local_threshold from here
         # self.local_threshold = None
 
-    def setup_directory_metrics(self, directory_aggregates):
-        directory_aggregates[self.type] = {
-            "per_omr_thresholds": [],
-            "omr_thresholds_sum": 0,
-            "running_omr_threshold": 0,
-        }
 
     def get_field_bubble_means(self):
         return self.field_bubble_means
@@ -96,10 +90,17 @@ class BubblesThresholdDetector(FieldTypeDetector):
 
     def update_field_type_aggregates(self, field_label):
         self.all_outlier_deviations[field_label] = self.field_bubble_means_std
-        self.global_bubble_means_and_refs[field_label] = self.field_bubble_means
+        self.field_wise_means_and_refs[field_label] = self.field_bubble_means
 
-    def reset_field_type_aggregates(self):
-        self.global_bubble_means_and_refs, self.all_outlier_deviations = {}, {}
+    def reset_directory_level_aggregates(self):
+        self.directory_level_aggregates = {
+            "per_omr_thresholds": [],
+            "omr_thresholds_sum": 0,
+            "running_omr_threshold": 0,
+        }
+
+    def reset_file_level_aggregates(self):
+        self.field_wise_means_and_refs, self.all_outlier_deviations = {}, {}
 
     def read_field(self, field, gray_image, colored_image, file_aggregate_params=None):
         # Make use of file_aggregate_params if available (in second+ passes)
@@ -194,7 +195,7 @@ class BubblesThresholdDetector(FieldTypeDetector):
 
         return field_bubble_means, confidence_metrics
 
-    def populate_field_type_aggregates():
+    def reset_field_type_level_aggregates():
         (
             GLOBAL_PAGE_THRESHOLD,
             MIN_JUMP,
@@ -230,7 +231,7 @@ class BubblesThresholdDetector(FieldTypeDetector):
         # Note: Plotting takes Significant times here --> Change Plotting args
         # to support show_image_level
         all_fields_threshold_for_file, j_low, j_high = self.get_global_threshold(
-            global_bubble_means_and_refs,  # , looseness=4
+            field_wise_means_and_refs,  # , looseness=4
             GLOBAL_PAGE_THRESHOLD,
             plot_title=f"Mean Intensity Barplot: {file_path}",
             MIN_JUMP=MIN_JUMP,

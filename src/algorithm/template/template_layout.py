@@ -16,7 +16,10 @@ from src.utils.parsing import (
 class TemplateLayout:
     def __init__(self, template_path, tuning_config):
         self.path = template_path
-
+        # TODO: fill these for external use
+        # self.fields = []
+        # self.all_field_types = []
+        
         json_object = open_template_with_defaults(template_path)
         (
             custom_labels_object,
