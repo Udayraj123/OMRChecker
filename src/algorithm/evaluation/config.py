@@ -1,12 +1,3 @@
-"""
-
- OMRChecker
-
- Author: Udayraj Deshmukh
- Github: https://github.com/Udayraj123
-
-"""
-
 import ast
 import os
 import re
@@ -106,7 +97,7 @@ class AnswerMatcher:
 
     def set_local_marking_defaults(self, section_marking_scheme):
         answer_type = self.answer_type
-        self.empty_val = section_marking_scheme.empty_val
+        self.empty_value = section_marking_scheme.empty_value
         # Make a copy of section marking locally
         self.marking = deepcopy(section_marking_scheme.marking)
         if answer_type == AnswerType.STANDARD:
@@ -160,7 +151,7 @@ class AnswerMatcher:
 
     def get_standard_verdict(self, marked_answer):
         allowed_answer = self.answer_item
-        if marked_answer == self.empty_val:
+        if marked_answer == self.empty_value:
             return Verdict.UNMARKED
         elif marked_answer == allowed_answer:
             return Verdict.ANSWER_MATCH
@@ -169,7 +160,7 @@ class AnswerMatcher:
 
     def get_multiple_correct_verdict(self, marked_answer):
         allowed_answers = self.answer_item
-        if marked_answer == self.empty_val:
+        if marked_answer == self.empty_value:
             return Verdict.UNMARKED
         elif marked_answer in allowed_answers:
             # e.g. ANSWER-MATCH-BC
@@ -181,7 +172,7 @@ class AnswerMatcher:
         allowed_answers = [
             allowed_answer for allowed_answer, _answer_score in self.answer_item
         ]
-        if marked_answer == self.empty_val:
+        if marked_answer == self.empty_value:
             return Verdict.UNMARKED
         elif marked_answer in allowed_answers:
             return f"{Verdict.ANSWER_MATCH}-{marked_answer}"
@@ -193,9 +184,9 @@ class AnswerMatcher:
 
 
 class SectionMarkingScheme:
-    def __init__(self, section_key, section_scheme, set_name, empty_val):
-        # TODO: get local empty_val from qblock
-        self.empty_val = empty_val
+    def __init__(self, section_key, section_scheme, set_name, empty_value):
+        # TODO: get local empty_value from qblock
+        self.empty_value = empty_value
         self.section_key = section_key
         self.set_name = set_name
         self.marking_type = section_scheme.get("marking_type", "default")
@@ -573,20 +564,20 @@ class EvaluationConfigForSet:
                 gray_image,
                 colored_image,
                 template,
-            ) = template.image_instance_ops.apply_preprocessors(
+            ) = template.apply_preprocessors(
                 image_path, gray_image, colored_image, template
             )
             if gray_image is None:
                 raise Exception(f"Could not read answer key from image {image_path}")
 
-            (response_dict, *_) = template.image_instance_ops.read_omr_response(
+            raw_omr_response = template.read_omr_response(
                 gray_image, colored_image, template, image_path
             )
-            omr_response = get_concatenated_response(response_dict, template)
+            omr_response = get_concatenated_response(raw_omr_response, template)
 
-            empty_val = template.global_empty_val
+            empty_value = template.global_empty_val
             empty_answer_regex = (
-                rf"{re.escape(empty_val)}+" if empty_val != "" else r"^$"
+                rf"{re.escape(empty_value)}+" if empty_value != "" else r"^$"
             )
 
             if "questions_in_order" in options:
@@ -600,7 +591,7 @@ class EvaluationConfigForSet:
                 ]
                 if len(empty_answered_questions) > 0:
                     logger.error(
-                        f"Found empty answers for the questions: {empty_answered_questions}, empty value used: '{empty_val}'"
+                        f"Found empty answers for the questions: {empty_answered_questions}, empty value used: '{empty_value}'"
                     )
                     raise Exception(
                         f"Found empty answers in file '{image_path}'. Please check your template again in the --setLayout mode."
@@ -1164,52 +1155,3 @@ class EvaluationConfigForSet:
                 )
 
         return symbol, color, symbol_color, thickness_factor
-
-
-# A utility to calculate score and metadata
-def evaluate_concatenated_response(
-    concatenated_response, evaluation_config_for_response
-):
-    evaluation_config_for_response.prepare_and_validate_omr_response(
-        concatenated_response, allow_streak=True
-    )
-    current_score = 0.0
-    questions_meta = {}
-    for question in evaluation_config_for_response.questions_in_order:
-        marked_answer = concatenated_response[question]
-        (
-            delta,
-            question_verdict,
-            answer_matcher,
-            question_schema_verdict,
-        ) = evaluation_config_for_response.match_answer_for_question(
-            current_score, question, marked_answer
-        )
-        marking_scheme = evaluation_config_for_response.get_marking_scheme_for_question(
-            question
-        )
-        bonus_type = marking_scheme.get_bonus_type()
-        current_score += delta
-        questions_meta[question] = {
-            "question_verdict": question_verdict,
-            "marked_answer": marked_answer,
-            "delta": delta,
-            "current_score": current_score,
-            "answer_item": answer_matcher.answer_item,
-            "answer_type": answer_matcher.answer_type,
-            "bonus_type": bonus_type,
-            "question_schema_verdict": question_schema_verdict,
-        }
-
-    evaluation_config_for_response.conditionally_print_explanation()
-    (
-        formatted_answers_summary,
-        *_,
-    ) = evaluation_config_for_response.get_formatted_answers_summary()
-    evaluation_meta = {
-        "score": current_score,
-        "questions_meta": questions_meta,
-        # "schema_verdict_counts": evaluation_config_for_response.schema_verdict_counts,
-        "formatted_answers_summary": formatted_answers_summary,
-    }
-    return current_score, evaluation_meta

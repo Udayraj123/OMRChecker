@@ -4,7 +4,7 @@ import glob
 import operator
 import os
 
-from src.utils.file import Paths
+from src.utils.file import PathUtils
 
 # TODO: add shell utilities for simple local images processing such as:
 
@@ -46,7 +46,7 @@ def walk_and_extract_files(input_dir, file_extensions):
         ]
         matching_files = functools.reduce(operator.iconcat, matching_globs, [])
         for file_path in matching_files:
-            extracted_files.append(Paths.sep_based_posix_path(file_path))
+            extracted_files.append(PathUtils.sep_based_posix_path(file_path))
     return extracted_files
 
 

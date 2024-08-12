@@ -8,7 +8,7 @@ from freezegun import freeze_time
 
 from main import entry_point_for_args
 from src.tests.constants import FROZEN_TIMESTAMP, IMAGE_SNAPSHOTS_PATH
-from src.utils.file import Paths
+from src.utils.file import PathUtils
 
 
 def setup_mocker_patches(mocker):
@@ -103,7 +103,7 @@ def extract_all_csv_outputs(output_dir):
     for _dir, _subdir, _files in os.walk(output_dir):
         for file in glob(os.path.join(_dir, "*.csv")):
             output_df = extract_output_data(file)
-            relative_path = Paths.sep_based_posix_path(
+            relative_path = PathUtils.sep_based_posix_path(
                 os.path.relpath(file, output_dir)
             )
             # pandas pretty print complete df

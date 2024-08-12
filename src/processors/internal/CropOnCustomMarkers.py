@@ -198,7 +198,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             "markerDimensions", options.get("markerDimensions", None)
         )
         if marker_dimensions is not None:
-            marker = ImageUtils.resize_to_dimensions(marker, marker_dimensions)
+            marker = ImageUtils.resize_to_dimensions(marker_dimensions, marker)
 
         blur_kernel = custom_options.get("markerBlurKernel", (5, 5))
         marker = cv2.GaussianBlur(marker, blur_kernel, 0)

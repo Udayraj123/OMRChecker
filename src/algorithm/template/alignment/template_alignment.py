@@ -21,14 +21,19 @@ def apply_template_alignment(gray_image, colored_image, template, config):
         template.alignment["gray_alignment_image"],
         template.alignment["colored_alignment_image"],
     )
+
     # Note: resize also creates a copy
-    gray_image, colored_image, gray_alignment_image, colored_alignment_image = map(
-        lambda image: (
-            None
-            if image is None
-            else ImageUtils.resize_to_dimensions(image, template.template_dimensions)
-        ),
-        [gray_image, colored_image, gray_alignment_image, colored_alignment_image],
+    (
+        gray_image,
+        colored_image,
+        gray_alignment_image,
+        colored_alignment_image,
+    ) = ImageUtils.resize_to_dimensions(
+        template.template_dimensions,
+        gray_image,
+        colored_image,
+        gray_alignment_image,
+        colored_alignment_image,
     )
 
     for field_block in template.field_blocks:

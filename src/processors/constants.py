@@ -100,11 +100,22 @@ TARGET_ENDPOINTS_FOR_EDGES = {
 }
 
 
+FieldDetectionType = DotMap(
+    {
+        "BUBBLES_THRESHOLD": "BUBBLES_THRESHOLD",
+        "BUBBLES_BLOB": "BUBBLES_BLOB",
+        "OCR": "OCR",
+        "BARCODE_QR": "BARCODE_QR",
+    },
+    _dynamic=False,
+)
+
 ScannerType = DotMap(
     {
         "PATCH_DOT": "PATCH_DOT",
         "PATCH_LINE": "PATCH_LINE",
         "TEMPLATE_MATCH": "TEMPLATE_MATCH",
+        # TODO: OCR, QR
     },
     _dynamic=False,
 )

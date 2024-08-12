@@ -76,7 +76,7 @@ class TemplateDrawing:
         border=-1,
     ):
         marked_image = ImageUtils.resize_to_dimensions(
-            image, template.template_dimensions
+            template.template_dimensions, image
         )
 
         transparent_layer = marked_image.copy()

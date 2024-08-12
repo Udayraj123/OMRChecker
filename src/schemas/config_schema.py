@@ -38,7 +38,7 @@ CONFIG_SCHEMA = {
                     "maximum": 50,
                 },
                 "MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK": {
-                    "description": "This value is added to jump value, underconfident bubbles fallback to global_threshold_for_template",
+                    "description": "This value is added to jump value, only under-confident bubbles will use a fallback threshold",
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 20,

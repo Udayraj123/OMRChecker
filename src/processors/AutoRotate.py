@@ -23,7 +23,7 @@ class AutoRotate(ImageTemplatePreprocessor):
         self.threshold = self.options.get("threshold", None)
         if self.marker_dimensions:
             self.resized_reference = ImageUtils.resize_to_dimensions(
-                self.reference_image, self.marker_dimensions
+                self.marker_dimensions, self.reference_image
             )
 
     def apply_filter(self, image, colored_image, _template, file_path):

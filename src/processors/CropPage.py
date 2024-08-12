@@ -1,7 +1,3 @@
-"""
-https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/
-"""
-
 import cv2
 import numpy as np
 
@@ -15,6 +11,10 @@ from src.utils.logger import logger
 from src.utils.math import MathUtils
 
 MIN_PAGE_AREA = 80000
+
+"""
+ref: https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/
+"""
 
 
 class CropPage(WarpOnPointsCommon):

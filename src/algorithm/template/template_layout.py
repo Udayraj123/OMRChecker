@@ -1,18 +1,7 @@
-"""
-
- OMRChecker
-
- Author: Udayraj Deshmukh
- Github: https://github.com/Udayraj123
-
-"""
-
 import os
 
-from src.algorithm.core import ImageInstanceOps
 from src.processors.manager import PROCESSOR_MANAGER
 from src.utils.constants import BUILTIN_FIELD_TYPES, CUSTOM_FIELD_TYPE
-from src.utils.file import SaveImageOps
 from src.utils.image import ImageUtils
 from src.utils.logger import logger
 from src.utils.parsing import (
@@ -24,11 +13,9 @@ from src.utils.parsing import (
 
 
 # TODO: make a child class TemplateLayout to keep template only about the layouts & json data?
-class Template:
+class TemplateLayout:
     def __init__(self, template_path, tuning_config):
         self.path = template_path
-        self.image_instance_ops = ImageInstanceOps(tuning_config)
-        self.save_image_ops = SaveImageOps(tuning_config)
 
         json_object = open_template_with_defaults(template_path)
         (
@@ -70,6 +57,8 @@ class Template:
         )
 
         self.parse_output_columns(output_columns_array)
+
+        # TODO: move outside
         self.setup_pre_processors(pre_processors_object, template_path.parent)
 
         self.parse_custom_field_types(custom_field_types)
@@ -104,7 +93,7 @@ class Template:
             pre_processor_instance = ImageTemplateProcessorClass(
                 options=pre_processor["options"],
                 relative_dir=relative_dir,
-                save_image_ops=self.save_image_ops,
+                save_image_ops=self.template.save_image_ops,
                 default_processing_image_shape=self.processing_image_shape,
             )
             self.pre_processors.append(pre_processor_instance)
@@ -156,7 +145,7 @@ class Template:
                 processed_gray_alignment_image,
                 processed_colored_alignment_image,
                 _,
-            ) = self.image_instance_ops.apply_preprocessors(
+            ) = self.template.apply_preprocessors(
                 self.alignment["reference_image_path"],
                 gray_alignment_image,
                 colored_alignment_image,
@@ -305,10 +294,18 @@ class Template:
                 f"Overflowing field block '{block_name}' with origin {block_instance.origin} and dimensions {block_instance.dimensions} in template with dimensions {self.template_dimensions}"
             )
 
+    def reset_and_setup_for_directory(self, output_dir, output_mode):
+        """Reset all mutations to the template, and setup output directories"""
+        self.reset_all_shifts()
+        self.reset_and_setup_outputs(output_dir, output_mode)
+
     def reset_all_shifts(self):
         # Note: field blocks offset is static and independent of "shifts"
         for field_block in self.field_blocks:
             field_block.reset_all_shifts()
+
+    def reset_and_setup_outputs(self, output_dir, output_mode):
+        self.directory_handler.reset_path_utils(output_dir, output_mode)
 
     def __str__(self):
         return str(self.path)
@@ -353,7 +350,7 @@ class FieldBlock:
             for key in [
                 "bubble_dimensions",
                 "dimensions",
-                "empty_val",
+                "empty_value",
                 "fields",
                 "name",
                 "origin",
@@ -374,7 +371,7 @@ class FieldBlock:
             field_type,
             labels_gap,
             origin,
-            self.empty_val,
+            self.empty_value,
         ) = map(
             field_block_object.get,
             [
@@ -476,10 +473,10 @@ class FieldBlock:
                 )
                 bubble_point[_h] += bubbles_gap
             self.fields.append(Field(field_label, field_type, field_bubbles, direction))
-            
+
             # TODO: fill this -
-            # self.field_detections.append(FieldDetection(field_label, field_type, field_bubbles, direction))
-            # self.field_detector.append(FieldDetector(field_label, field_type, field_bubbles, direction))
+            # self.field_detectioself.append(FieldInterpreter(field_label, field_type, field_bubbles, direction))
+            # self.field_detector.append(FieldTypeDetector(field_label, field_type, field_bubbles, direction))
 
             lead_point[_v] += labels_gap
 
