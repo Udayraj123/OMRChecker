@@ -5,18 +5,38 @@ from src.algorithm.detection.bubbles_blob.bubbles_blob_detector import BubblesBl
 from src.algorithm.detection.bubbles_threshold.bubbles_threshold_detector import BubblesThresholdDetector
 from src.algorithm.detection.ocr.ocr_detector import OCRDetector
 from src.processors.constants import FieldDetectionType
+from src.utils.parsing import default_dump
 
 
+
+class StatsByLabel:
+    def __init__(self, *labels):
+        self.label_counts = {
+            label: 0 for label in labels
+        }
+    
+    def push(self, label, number = 1):
+        if label not in self.label_counts:
+            raise Exception(f"Unknown label passed to stats by label: {label}, allowed labels: {self.label_counts.keys()}")
+            # self.label_counts[label] = []
+
+        self.label_counts[label].push(number)
+    
+    def to_json(self):
+        return {
+            key: default_dump(getattr(self, key))
+            for key in [
+                "label_counts",
+            ]
+        }
 """
 Template Detector takes care of detections of an image file using a single template
 We create one instance of TemplateDetector per Template. 
 Note: a Template may get reused for multiple directories(in nested case)
 """
 class TemplateDetector:
-    # Currently two passes are enough for all detectors to work
-    NUM_PASSES = 2
 
-    detectors_map = {
+    field_type_to_detector = {
         FieldDetectionType.BUBBLES_THRESHOLD: BubblesThresholdDetector,
         FieldDetectionType.BUBBLES_BLOB: BubblesBlobDetector,
         FieldDetectionType.OCR: OCRDetector,
@@ -29,122 +49,105 @@ class TemplateDetector:
         self.prepare_field_type_detectors()
         initial_directory_path = os.path.dirname(template.path)
         self.reset_directory_level_aggregates(initial_directory_path)
-    
-    def get_detector_instance(self, field_type):
-        return TemplateDetector.detectors_map[field_type]()
-
+  
     def prepare_field_type_detectors(self):
         template = self.template
         # TODO: create instances of all required field type detectors
         self.field_type_detectors = {
-            field_type: self.get_detector_instance(field_type) for field_type in template.all_field_types
+            field_type: self.get_field_detector_instance(field_type) for field_type in template.all_field_detection_types
         }
         self.all_field_detectors = [(field, self.field_type_detectors[field.field_type]) for field in template.all_fields]
-
+  
+    def get_field_detector_instance(self, field_type):
+        config = self.template.tuning_config
+        # Note: detector level config would be passed at runtime! Because aggregates need to happen per field type
+        # Instances per different config may need to be created.
+        # That's why "reader" may be multiple, but "detector" will be single per directory
+            # Note: field object can have the corresponding runtime config for the detection
+        FieldDetectorClass = TemplateDetector.field_type_to_detector[field_type]
+        return FieldDetectorClass(config)
 
     def reset_directory_level_aggregates(self, initial_directory_path):
         self.directory_level_aggregates = {
             "directory_level": {
                 "initial_directory_path": initial_directory_path,
-                "processed_files_count": 0,
-                "multi_marked_count": 0,
+                "files_count": StatsByLabel("processed", "multi_marked")
             },
-            "field_type_level": {
-                # [BUBBLES_THRESHOLD] : {}
-                # [BARCODE_QR]: {}
+            "field_detection_type_wise": {
+                # This count would get different in conditional sets
+                field_type: {
+                    "files_count": StatsByLabel("processed"),
+                    # More get added from the field type
+                } for field_type in self.template.all_field_detection_types
             },
             "file_level": {
                 # filepath: {
-                # "all_fields_threshold_for_file"
+                # "field_detection_type_wise"
                 # "read_response_flags": []
                 # }
             },
         }
         for field_type_detector in self.field_type_detectors.values():
-            field_type_detector.setup_directory_metrics()
+            field_type_detector.reset_directory_level_aggregates()
 
     def read_omr_and_update_metrics(self, file_path, gray_image, colored_image):
         # First pass to compute aggregates like global threshold
         # TODO: populate local thresholds even in first pass? (to enable multiple passes)
         
-        self.reset_file_level_aggregates(file_path)
         
-        for pass_index in range(TemplateDetector.NUM_PASSES):
-            omr_response = self.run_detection_pass(
-                pass_index, gray_image, colored_image
-            )
+        # populate detections
+        self.run_file_level_detection(
+            file_path, gray_image, colored_image
+        )
+
+        # populate interpretations
+        omr_response = self.run_file_level_interpretation(
+            file_path, gray_image, colored_image
+        )
 
         # self.update_file_level_validation(omr_response)
         
         # TODO: call from parents?
-        self.update_directory_level_metrics(file_path, omr_response)
+        self.update_directory_aggregates_for_file(file_path, omr_response)
         
-        file_level_aggregates = self.file_level_aggregates
+        file_level_aggregates = self.file_level_interpretation_aggregates
 
         return omr_response, file_level_aggregates
     
-    def reset_file_level_aggregates(self):
-        self.file_level_aggregates = {}
 
+    # def reset_field_detection_type_wise_aggregates(self):
+    #     for field_type_detector in self.field_type_detectors.values():
+    #         field_type_detector.reset_field_detection_type_wise_aggregates()
+    
+    def run_file_level_detection(self, file_path, gray_image, colored_image):
+        self.reinitialize_file_level_detection_aggregates(file_path)
+        
         # Setup field type wise metrics
         for field_type_detector in self.field_type_detectors.values():
-            field_type_detector.reset_file_level_aggregates()
+            field_type_detector.reinitialize_file_level_detection_aggregates(file_path)
 
-
-    def reset_field_type_level_aggregates(self):
-        for field_type_detector in self.field_type_detectors.values():
-            field_type_detector.reset_field_type_level_aggregates()
-    
-    def get_file_level_aggregates_for_pass(self, pass_index):
-        if(pass_index == -1):
-            return {}
-        return self.file_level_aggregates[pass_index]
-    
-    def set_file_level_aggregates(self, pass_index, current_file_level_aggregates):
-        self.file_level_aggregates[pass_index] = current_file_level_aggregates
-
-    def run_detection_pass(self, pass_index, gray_image, colored_image):
-        self.reset_field_type_level_aggregates()
-        # For fallbacks
-        previous_file_level_aggregates = self.get_file_level_aggregates_for_pass(pass_index - 1)
-
-        read_response_flags = {
-            "multi_marked": False,
-            "multi_marked_fields": {},
-            "multi_id": False,
-        }
-
-        current_omr_response = {}
-        for field, field_detector in self.all_field_detectors:
-            # reading + detection + metrics calculation
-            detected_string = field_detector.detect_and_update_field_level_aggregates(previous_file_level_aggregates, gray_image, colored_image)
-            
-            field_label = field.field_label
-
-            # Run validation before updating omr response
-            self.update_validation_for_field(pass_index, current_omr_response, field_label, detected_string)
-
-            current_omr_response[field_label] = detected_string
-            
+        for field, field_type_detector in self.all_field_detectors:
+            # Note: field object can have the corresponding runtime config for the detection
+            # reading + detection
+            field_type_detector.run_field_level_detection(field, gray_image, colored_image)
+        
         # Updating aggregates 
-        field_level_aggregates = {}
-        for field, field_detector in self.all_field_detectors:
-            field_level_aggregates[field.field_label] = field_detector.get_field_type_level_aggregates()
-        
-        field_type_level_aggregates = {}
+        field_detection_type_wise_aggregates = {}
         for field_type_detector in self.field_type_detectors.values():
-            field_type_level_aggregates[field_type_detector.type] = field_type_detector.get_field_type_level_aggregates()
+            field_detection_type_wise_aggregates[field_type_detector.detection_type] = field_type_detector.generate_file_level_detection_aggregates(file_path)
+            
+        # field_level_aggregates = {}
+        # for field, field_detector in self.all_field_detectors:
+        #     field_level_aggregates[field.field_label] = field_detector.get_field_level_aggregates()
         
-        current_file_level_aggregates = {
-            "read_response_flags": read_response_flags,
-            "field_level_aggregates": field_level_aggregates,
-            "field_type_level_aggregates": field_type_level_aggregates,
+        self.file_level_detection_aggregates = {
+            # "field_level_aggregates": field_level_aggregates,
+            "field_detection_type_wise_aggregates": field_detection_type_wise_aggregates,
         }
 
-        self.set_file_level_aggregates(pass_index, current_file_level_aggregates)
+    def reinitialize_file_level_detection_aggregates(self,file_path):
+        self.file_level_detection_aggregates = {"file_path": file_path}
 
-        return current_omr_response
-    
     def update_validation_for_field(
         self, read_response_flags, current_omr_response, field_label
     ):
@@ -155,13 +158,67 @@ class TemplateDetector:
 
         # TODO: evaluate more validations here
 
+    def run_file_level_interpretation(self, file_path, gray_image, colored_image):
+        self.reinitialize_file_level_interpretation_aggregates(file_path)
 
-    def update_directory_level_metrics(
+        # For fallbacks
+        all_file_level_detection_aggregates = self.file_level_detection_aggregates
+
+        # Setup field type wise metrics
+        for field_type_detector in self.field_type_detectors.values():
+            field_type_detector.reinitialize_file_level_interpretation_aggregates(file_path, all_file_level_detection_aggregates)
+
+        file_level_interpretation_aggregates = {
+            "read_response_flags": {
+            "multi_marked": False,
+            "multi_marked_fields": {},
+            "multi_id": False,
+        },
+            "field_level_aggregates": None,
+            "field_detection_type_wise_aggregates": None,
+        }
+
+        current_omr_response = {}
+        for field, field_detector in self.all_field_detectors:
+            # reading + detection + metrics calculation
+            detected_string = field_detector.run_field_level_interpretation(field, gray_image, colored_image)
+            
+            field_label = field.field_label
+
+            # Run validation before updating omr response
+            self.update_validation_for_field(field_label, file_level_interpretation_aggregates, current_omr_response, detected_string)
+
+            current_omr_response[field_label] = detected_string
+
+        # Updating aggregates 
+        field_detection_type_wise_aggregates = {}
+        for field_type_detector in self.field_type_detectors.values():
+            interpretation_aggregates = field_type_detector.generate_file_level_interpretation_aggregates(file_path)
+            field_detection_type_wise_aggregates[field_type_detector.detection_type] = interpretation_aggregates
+            
+        # field_level_aggregates = {}
+        # for field, field_detector in self.all_field_detectors:
+        #     field_level_aggregates[field.field_label] 
+        file_level_interpretation_aggregates = {
+            "file_path": file_path,
+            "read_response_flags": read_response_flags,
+        }
+
+        self.file_level_interpretation_aggregates = file_level_interpretation_aggregates
+
+        return current_omr_response
+
+    def reinitialize_file_level_interpretation_aggregates(self, file_path):
+        self.file_level_interpretation_aggregates = {"file_path": file_path}
+
+    def update_directory_aggregates_for_file(
         self,
         file_path,
         file_aggregate_params,
         omr_response,
     ):
+        self.file_level_detection_aggregates
+        self.file_level_interpretation_aggregates
         # TODO: get_file_level_confidence_metrics()
         # TODO: for plotting underconfident_fields = filter(lambda x: x.confidence < 0.8, fields_confidence)
 
@@ -175,23 +232,9 @@ class TemplateDetector:
         )
         file_wise_aggregates[file_path] = file_aggregate_params
 
-        all_fields_threshold_for_file, read_response_flags = map(
-            file_aggregate_params.get,
-            ["all_fields_threshold_for_file", "read_response_flags"],
-        )
-
-        if read_response_flags["multi_marked"]:
+        if file_aggregate_params["read_response_flags"]["multi_marked"]:
+            # TODO: directory_aggregates["files_count"].push("multi_marked")
             directory_aggregates["multi_marked_count"] += 1
-
-        directory_aggregates["omr_thresholds_sum"] += all_fields_threshold_for_file
-
-        # To be used as a better fallback!
-        directory_aggregates["running_omr_threshold"] = (
-            directory_aggregates["omr_thresholds_sum"]
-            / directory_aggregates["processed_files_count"]
-        )
-
-        directory_aggregates["per_omr_thresholds"].append(all_fields_threshold_for_file)
 
     def get_omr_metrics_for_file(self, file_path):
         (

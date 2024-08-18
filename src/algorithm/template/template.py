@@ -19,10 +19,9 @@ class Template:
         self.template_layout = TemplateLayout(template_path, tuning_config)
         self.template_detector = TemplateDetector(self, tuning_config)
         self.directory_handler = DirectoryHandler(self)
-        self.template_preprocessing = TemplatePreprocessing(self, tuning_config)
         
         # re-export references for external use
-        self.all_field_types = self.template_layout.all_field_types
+        self.all_field_detection_types = self.template_layout.all_field_detection_types
         self.all_fields = self.template_layout.all_fields
         self.path = self.template_layout.path
         self.apply_preprocessors = self.template_layout.apply_preprocessors

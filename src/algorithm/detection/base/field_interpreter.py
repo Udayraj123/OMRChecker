@@ -1,14 +1,13 @@
 
 """
-The field detection base class stores all metrics on for the scan zone of the field
-Instantiated for every field for each image at runtime.
+
 """
 
 
-class FieldInterpreter:
-    def __init__(self, field, field_block):
+class FieldInterpretation:
+    def __init__(self, field):
         self.field = field
-        self.field_block = field_block
+        # self.field_block = field_block
         self.confidence_metrics = {}
 
     def get_detected_string():

@@ -273,10 +273,10 @@ class TemplateDrawing:
         for bubble_detection in field_bubble_means:
             bubble = bubble_detection.item_reference
             shifted_position = tuple(bubble.get_shifted_position(field_block.shifts))
-            field_value = str(bubble.field_value)
+            bubble_value = str(bubble.bubble_value)
 
             # Enhanced bounding box for expected answer:
-            if TemplateDrawing.is_part_of_some_answer(question_meta, field_value):
+            if TemplateDrawing.is_part_of_some_answer(question_meta, bubble_value):
                 DrawingUtils.draw_box(
                     marked_image,
                     shifted_position,
@@ -327,7 +327,7 @@ class TemplateDrawing:
                 ):
                     DrawingUtils.draw_text(
                         marked_image,
-                        field_value,
+                        bubble_value,
                         shifted_position,
                         text_size=TEXT_SIZE,
                         color=CLR_NEAR_BLACK,
@@ -357,10 +357,12 @@ class TemplateDrawing:
         marked_image, field_bubble_means, field_block, evaluation_config_for_response
     ):
         bubble_dimensions = tuple(field_block.bubble_dimensions)
+        
+        # TODO: make this generic, consume FieldInterpretation
         for bubble_detection in field_bubble_means:
             bubble = bubble_detection.item_reference
             shifted_position = tuple(bubble.get_shifted_position(field_block.shifts))
-            field_value = str(bubble.field_value)
+            bubble_value = str(bubble.bubble_value)
 
             if bubble_detection.is_marked:
                 DrawingUtils.draw_box(
@@ -380,7 +382,7 @@ class TemplateDrawing:
                 ):
                     DrawingUtils.draw_text(
                         marked_image,
-                        field_value,
+                        bubble_value,
                         shifted_position,
                         text_size=TEXT_SIZE,
                         color=CLR_NEAR_BLACK,
@@ -434,16 +436,16 @@ class TemplateDrawing:
         return marked_image
 
     @staticmethod
-    def is_part_of_some_answer(question_meta, field_value):
+    def is_part_of_some_answer(question_meta, bubble_value):
         if question_meta["bonus_type"] is not None:
             return True
         matched_groups = TemplateDrawing.get_matched_answer_groups(
-            question_meta, field_value
+            question_meta, bubble_value
         )
         return len(matched_groups) > 0
 
     @staticmethod
-    def get_matched_answer_groups(question_meta, field_value):
+    def get_matched_answer_groups(question_meta, bubble_value):
         matched_groups = []
         answer_type, answer_item = map(
             question_meta.get, ["answer_type", "answer_item"]
@@ -451,15 +453,15 @@ class TemplateDrawing:
 
         if answer_type == AnswerType.STANDARD:
             # Note: implicit check on concatenated answer
-            if field_value in str(answer_item):
+            if bubble_value in str(answer_item):
                 matched_groups.append(0)
         if answer_type == AnswerType.MULTIPLE_CORRECT:
             for answer_index, allowed_answer in enumerate(answer_item):
-                if field_value in allowed_answer:
+                if bubble_value in allowed_answer:
                     matched_groups.append(answer_index)
         elif answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
             for answer_index, (allowed_answer, score) in enumerate(answer_item):
-                if field_value in allowed_answer and score > 0:
+                if bubble_value in allowed_answer and score > 0:
                     matched_groups.append(answer_index)
         return matched_groups
 
@@ -486,9 +488,9 @@ class TemplateDrawing:
         for bubble_detection in field_bubble_means:
             bubble = bubble_detection.item_reference
             shifted_position = tuple(bubble.get_shifted_position(field_block.shifts))
-            field_value = str(bubble.field_value)
+            bubble_value = str(bubble.bubble_value)
             matched_groups = TemplateDrawing.get_matched_answer_groups(
-                question_meta, field_value
+                question_meta, bubble_value
             )
             for answer_index in matched_groups:
                 box_edge = box_edges[answer_index % 4]

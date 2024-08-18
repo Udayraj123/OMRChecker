@@ -7,9 +7,12 @@ import cv2
 import numpy as np
 from matplotlib import colormaps, pyplot
 
-from src.algorithm.detection.field import FieldTypeDetector
-from src.processors.constants import FieldDetectionType
+from src.algorithm.detection.base.field_interpreter import FieldInterpretation
+from src.utils.logger import logger
 from src.utils.parsing import default_dump
+from src.processors.constants import FieldDetectionType
+from src.algorithm.template.template_detector import StatsByLabel
+from src.algorithm.detection.base.field_type_detector import FieldTypeDetector
 
 
 @functools.total_ordering
@@ -36,19 +39,17 @@ class MeanValueItem:
         return self.mean_value < other.mean_value
 
 
-# TODO: merge with FieldInterpreter
+# TODO: merge with FieldInterpreter?
 class BubbleMeanValue(MeanValueItem):
     def __init__(self, mean_value, unit_bubble):
         super().__init__(mean_value, unit_bubble)
-        # TODO: move this into FieldInterpreter/give reference to it
-        self.is_marked = None
 
     def to_json(self):
         # TODO: mini util for this loop
         return {
             key: default_dump(getattr(self, key))
             for key in [
-                "is_marked",
+                # "is_marked",
                 # "shifted_position": unit_bubble.item_reference.get_shifted_position(field_block.shifts),
                 "item_reference_name",
                 "mean_value",
@@ -74,128 +75,65 @@ class FieldStdMeanValue(MeanValueItem):
         }
 
 
+class NumberAggregate:
+    def __init__(self):
+        self.collection = []
+        self.running_sum = 0
+        self.running_average = 0
+    
+    def push(self, number, label):
+        self.collection.push([number, label])
+        self.running_sum += number
+        self.running_average = self.running_sum / len(self.collection)
+    
+    def merge(self, other_aggregate):
+        self.collection += other_aggregate.collection
+        self.running_sum += other_aggregate.running_sum
+        self.running_average = self.running_sum / len(self.collection)
+    
+    def to_json(self):
+        return {
+            key: default_dump(getattr(self, key))
+            for key in [
+                "collection",
+                "running_sum",
+                "running_average",
+            ]
+        }
+
 class BubblesThresholdDetector(FieldTypeDetector):
     def __init__(self):
-        self.type = FieldDetectionType.BUBBLES_THRESHOLD
+        self.detection_type = FieldDetectionType.BUBBLES_THRESHOLD
         super().__init__()
         # TODO: use local_threshold from here
         # self.local_threshold = None
 
-
-    def get_field_bubble_means(self):
-        return self.field_bubble_means
-
-    def get_field_bubble_means_std(self):
-        return self.field_bubble_means_std
-
-    def update_field_type_aggregates(self, field_label):
-        self.all_outlier_deviations[field_label] = self.field_bubble_means_std
-        self.field_wise_means_and_refs[field_label] = self.field_bubble_means
-
     def reset_directory_level_aggregates(self):
         self.directory_level_aggregates = {
-            "per_omr_thresholds": [],
-            "omr_thresholds_sum": 0,
-            "running_omr_threshold": 0,
+            "files_count": StatsByLabel("processed"),
+            "file_wise_thresholds": NumberAggregate(),
         }
 
-    def reset_file_level_aggregates(self):
+    def reinitialize_file_level_detection_aggregates(self):
         self.field_wise_means_and_refs, self.all_outlier_deviations = {}, {}
 
-    def read_field(self, field, gray_image, colored_image, file_aggregate_params=None):
-        # Make use of file_aggregate_params if available (in second+ passes)
-        if file_aggregate_params is not None:
-            # override fallback threshold as per current running one(based on some config: NONE, FILE_LEVEL, FIELD_BLOCK_LEVEL, FIELD_LEVEL)
-            pass
+    def generate_file_level_detection_aggregates(self, file_path):
 
-        # TODO: get bubble dimensions at field level during parsing-
-        # box_w, box_h = self.field.bubble_dimensions
-        box_w, box_h = self.field_block.bubble_dimensions
-
-        field_bubbles = self.field.field_bubbles
-
-        field_bubble_means = []
-        for unit_bubble in field_bubbles:
-            x, y = unit_bubble.get_shifted_position(self.shifts)
-            rect = [y, y + box_h, x, x + box_w]
-            # TODO: get this from within the BubbleDetection class
-            mean_value = cv2.mean(gray_image[rect[0] : rect[1], rect[2] : rect[3]])[0]
-            field_bubble_means.append(
-                BubbleMeanValue(mean_value, unit_bubble)
-                # TODO: cross/check mark detection support (#167)
-                # detectCross(gray_image, rect) ? 0 : 255
-            )
-        self.field_bubble_means = field_bubble_means
-
-        # TODO: move std calculation inside the class
-        field_bubble_means_std = round(
-            np.std([item.mean_value for item in field_bubble_means]), 2
-        )
-        self.field_bubble_means_std = FieldStdMeanValue(
-            field_bubble_means_std, field_block
-        )
-
-        # TODO return interpretation?
-        return self.field_bubble_means
-
-    def get_field_interpretation(
-        self,
-        field,
-        # TODO: self + aggregate params
-        field_bubble_means,
-        config,
-        all_fields_threshold_for_file,
-        global_max_jump,
-        all_fields_outlier_deviation_threshold_for_file,
-    ):
-        # self_deviation = all_outlier_deviations[absolute_field_number].mean_value
-        self_deviation = self.field_bubble_means_deviation
-        # All Black or All White case
-        no_outliers = (
-            # TODO: rename mean_value in parent class to suit better
-            self_deviation
-            < all_fields_outlier_deviation_threshold_for_file
-        )
-        (
-            local_threshold_for_field,
-            local_max_jump,
-        ) = self.get_local_threshold(
-            field_bubble_means,
-            all_fields_threshold_for_file,
-            no_outliers,
-            plot_title=f"Mean Intensity Barplot for {key}.{field.field_label}.block{block_field_number}",
-            plot_show=config.outputs.show_image_level >= 7,
-            config=config,
-        )
-        # TODO: move get_local_threshold into FieldInterpreter
-        field.local_threshold = local_threshold_for_field
-        per_omr_threshold_avg += local_threshold_for_field
-
-        # TODO: see if deepclone is really needed given parent's instance
-        # field_bubble_means = [
-        #     deepcopy(bubble) for bubble in field_bubble_means
-        # ]
-
-        # Main detection logic:
-        for bubble in field_bubble_means:
-            local_bubble_is_marked = local_threshold_for_field > bubble.mean_value
-            # TODO: refactor this mutation to a more appropriate place
-            bubble.is_marked = local_bubble_is_marked
-
-        # TODO: call from FieldInterpreter
-        confidence_metrics = self.interpreter.get_field_level_confidence_metrics(
-            field,
-            field_bubble_means,
-            config,
-            local_threshold_for_field,
-            all_fields_threshold_for_file,
-            local_max_jump,
-            global_max_jump,
-        )
-
-        return field_bubble_means, confidence_metrics
-
-    def reset_field_type_level_aggregates():
+    # def get_file_level_detection_aggregates(self):
+        return {
+            "file_path": file_path,
+            "field_wise_means_and_refs": self.field_wise_means_and_refs, 
+            "all_outlier_deviations": self.all_outlier_deviations,
+        }
+    
+    # TODO: move into FieldInterpretation?
+    def reinitialize_file_level_interpretation_aggregates(self, file_path, all_file_level_detection_aggregates):
+        config = self.config
+        # Note: we also have access to other detectors aggregates if for any conditionally interpretation in future.
+        own_detection_aggregates = all_file_level_detection_aggregates["field_detection_type_wise_aggregates"][self.detection_type]
+        field_wise_means_and_refs, all_outlier_deviations = own_detection_aggregates["field_wise_means_and_refs"].values(), own_detection_aggregates["all_outlier_deviations"].values()
+        
+        # Calculate thresholds here
         (
             GLOBAL_PAGE_THRESHOLD,
             MIN_JUMP,
@@ -245,276 +183,107 @@ class BubblesThresholdDetector(FieldTypeDetector):
         logger.debug(
             f"Thresholding: \t all_fields_threshold_for_file: {round(all_fields_threshold_for_file, 2)} \tglobal_std_THR: {round(all_fields_outlier_deviation_threshold_for_file, 2)}\t{'(Looks like a Xeroxed OMR)' if (all_fields_threshold_for_file == 255) else ''}"
         )
-        field_type_aggregates = {
-            **field_type_aggregates,
-            #
-            "local_thresholds": {
-                # TODO: make stats util to "push" a value
-                "running_total": 0,
-                "running_average": 0,
-                "processed_fields_count": 0,
-                # TODO: both directory and file level
-                "field_wise": {},
-                # TODO: both directory and file level
-                "field_type_wise": {},
-                # FieldType -> { "running_average", "processed_fields_count"}
-            },
-            "confidence_metrics_for_file": {},
+    
+        # TODO: return field_type(MCQ/INT/CUSTOM_1/CUSTOM_2) wise thresholds too - for interpretation?
+
+        self.file_level_interpretation_aggregates = {
+            # 
             "all_fields_threshold_for_file": all_fields_threshold_for_file,
             "all_fields_outlier_deviation_threshold_for_file": all_fields_outlier_deviation_threshold_for_file,
+            "global_max_jump": global_max_jump,
+
+            "field_wise_local_thresholds": NumberAggregate(),
+            "field_wise_confidence_metrics": None,
+            "fields_count": StatsByLabel("processed"),
+            "field_type_wise_thresholds": NumberAggregate(),
+            "file_level_threshold": own_detection_aggregates["all_fields_threshold_for_file"],
+        }
+        # This is the metric we use as the fallback in old code
+        # self.file_level_interpretation_aggregates["field_wise_local_thresholds"].running_average
+
+    def generate_file_level_interpretation_aggregates(self):
+        
+        # TODO: produce metrics here.
+
+        return {
+            # "field_wise_local_thresholds"
+            # "field_wise_confidence_metrics"
+            # "file_level_threshold"
+            # "field_type_wise_aggregates"
         }
 
-    @staticmethod
-    def get_global_threshold(
-        bubble_means_and_refs,
-        global_default_threshold,
-        MIN_JUMP,
-        JUMP_DELTA,
-        plot_title,
-        plot_show,
-        sort_in_plot=True,
-        looseness=1,
-    ):
-        """
-        Note: Cannot assume qStrip has only-gray or only-white bg (no jump).
-            So it's assumed that there will be either 1 or 2 jumps.
-        1 Jump :
-                ......
-                ||||||
-                ||||||  <-- risky THR
-                ||||||  <-- safe THR
-            ....||||||
-            ||||||||||
+    def run_field_level_detection(self, field, gray_image, _colored_image):
+        field_bubbles = field.field_bubbles
 
-        2 Jumps :
-                ......
-                |||||| <-- wrong THR
-            ....||||||
-            |||||||||| <-- safe THR
-          ..||||||||||
-          ||||||||||||
-        """
-        # Sort the Q bubbleValues
-        sorted_bubble_means_and_refs = sorted(
-            bubble_means_and_refs,
-        )
-        sorted_bubble_means = [item.mean_value for item in sorted_bubble_means_and_refs]
-
-        # Find the FIRST LARGE GAP and set it as threshold:
-        ls = (looseness + 1) // 2
-        l = len(sorted_bubble_means) - ls
-        max1, thr1 = MIN_JUMP, global_default_threshold
-        for i in range(ls, l):
-            jump = sorted_bubble_means[i + ls] - sorted_bubble_means[i - ls]
-            if jump > max1:
-                max1 = jump
-                thr1 = sorted_bubble_means[i - ls] + jump / 2
-
-        all_fields_threshold_for_file, j_low, j_high = (
-            thr1,
-            thr1 - max1 // 2,
-            thr1 + max1 // 2,
-        )
-
-        # TODO: make use of outliers using percentile logic and report the benchmarks
-        # Make use of the fact that the JUMP_DELTA(Vertical gap ofc) between
-        # values at detected jumps would be atleast 20
-        max2, thr2 = MIN_JUMP, global_default_threshold
-        # Requires atleast 1 gray box to be present (Roll field will ensure this)
-        for i in range(ls, l):
-            jump = sorted_bubble_means[i + ls] - sorted_bubble_means[i - ls]
-            new_thr = sorted_bubble_means[i - ls] + jump / 2
-            if jump > max2 and abs(thr1 - new_thr) > JUMP_DELTA:
-                max2 = jump
-                thr2 = new_thr
-        # TODO: deprecate thr2 and thus JUMP_DELTA (used only in the plotting)
-        # all_fields_threshold_for_file = min(thr1,thr2)
-
-        # TODO: maybe use plot_create flag to add plots in append_save_image
-        if plot_show:
-            plot_means_and_refs = (
-                sorted_bubble_means_and_refs if sort_in_plot else bubble_means_and_refs
-            )
-            BubblesThresholdDetector.plot_for_global_threshold(
-                plot_means_and_refs, plot_title, all_fields_threshold_for_file, thr2
+        field_bubble_means = []
+        for unit_bubble in field_bubbles:
+            # TODO: cross/check mark detection support (#167)
+            # detectCross(gray_image, rect) ? 0 : 255
+            bubble_mean_value = self.read_bubble_mean_value(unit_bubble, gray_image)
+            
+            field_bubble_means.append(
+                bubble_mean_value
             )
 
-        return all_fields_threshold_for_file, j_low, j_high
+        self.update_all_detection_aggregates(field, field_bubble_means)
+    
+    def read_bubble_mean_value(self, unit_bubble, gray_image):
+        box_w, box_h = unit_bubble.bubble_dimensions 
+        x, y = unit_bubble.get_shifted_position()
+        rect = [y, y + box_h, x, x + box_w]
+        mean_value = cv2.mean(gray_image[rect[0] : rect[1], rect[2] : rect[3]])[0]
+        bubble_mean_value = BubbleMeanValue(mean_value, unit_bubble)
+        return bubble_mean_value
 
-    @staticmethod
-    def plot_for_global_threshold(
-        plot_means_and_refs, plot_title, all_fields_threshold_for_file, thr2
-    ):
-        _, ax = pyplot.subplots()
-        # TODO: move into individual utils
+    def update_all_detection_aggregates(self, field, field_bubble_means):
+        field_label = field.field_label
+        
+        # update_field_level_detection_aggregates
 
-        plot_values = [x.mean_value for x in plot_means_and_refs]
-        original_bin_names = [
-            x.item_reference.plot_bin_name for x in plot_means_and_refs
-        ]
-        plot_labels = [x.item_reference_name for x in plot_means_and_refs]
-
-        # TODO: move into individual utils
-        sorted_unique_bin_names, unique_label_indices = np.unique(
-            original_bin_names, return_inverse=True
+        field_bubble_means_std = round(
+            np.std([item.mean_value for item in field_bubble_means]), 2
         )
 
-        plot_color_sampler = colormaps["Spectral"].resampled(
-            len(sorted_unique_bin_names)
+        field_bubble_means_std = FieldStdMeanValue(
+            field_bubble_means_std, field
         )
 
-        shuffled_color_indices = random.sample(
-            list(unique_label_indices), len(unique_label_indices)
-        )
-        plot_colors = plot_color_sampler(
-            [shuffled_color_indices[i] for i in unique_label_indices]
-        )
-        bar_container = ax.bar(
-            range(len(plot_means_and_refs)),
-            plot_values,
-            color=plot_colors,
-            label=plot_labels,
-        )
+        self.all_outlier_deviations[field_label] = field_bubble_means_std
+        self.field_wise_means_and_refs[field_label] = field_bubble_means
 
-        # TODO: move into individual utils
-        low = min(plot_values)
-        high = max(plot_values)
-        margin_factor = 0.1
-        pyplot.ylim(
-            [
-                math.ceil(low - margin_factor * (high - low)),
-                math.ceil(high + margin_factor * (high - low)),
-            ]
-        )
+    def run_field_level_interpretation(self, field, gray_image, _colored_image):
+        field_bubbles = field.field_bubbles
 
-        # Show field labels
-        ax.bar_label(bar_container, labels=plot_labels)
-        handles, labels = ax.get_legend_handles_labels()
-        # Naturally sorted unique legend labels https://stackoverflow.com/a/27512450/6242649
-        ax.legend(
-            *zip(
-                *sorted(
-                    [
-                        (h, l)
-                        for i, (h, l) in enumerate(zip(handles, labels))
-                        if l not in labels[:i]
-                    ],
-                    key=lambda s: [
-                        int(t) if t.isdigit() else t.lower()
-                        for t in re.split("(\\d+)", s[1])
-                    ],
-                )
-            )
-        )
-        ax.set_title(plot_title)
-        ax.axhline(
-            all_fields_threshold_for_file, color="green", ls="--", linewidth=5
-        ).set_label("Global Threshold")
-        ax.axhline(thr2, color="red", ls=":", linewidth=3).set_label("THR2 Line")
-        # ax.axhline(j_low,color='red',ls='-.', linewidth=3)
-        # ax.axhline(j_high,color='red',ls='-.', linewidth=3).set_label("Boundary Line")
-        # ax.set_ylabel("Mean Intensity")
-        ax.set_ylabel("Values")
-        ax.set_xlabel("Position")
+        field_bubble_means = []
+        # Use aggregates-
+        # for unit_bubble in field_bubbles:
+            
 
-        pyplot.title(plot_title)
-        pyplot.show()
+        self.update_all_interpretation_aggregates(field, field_bubble_means)
+    
+    def update_all_interpretation_aggregates(self, field, field_bubble_means):
+        # fields count++
+        pass
+    
+    def reset_field_type_level_aggregates(self):
+        # The field_type is about MCQ vs INT etc including user defined types
+        # The field_detection_type is about BUBBLES vs OCR etc
+        
+        field_type_aggregates = {
+            "field_type_wise_thresholds": NumberAggregate(),
+        }
+        file_level_interpretation_aggregates["files_count"] = StatsByLabel("processed")
 
-    @staticmethod
-    def get_local_threshold(
-        bubble_means_and_refs,
-        all_fields_threshold_for_file,
-        no_outliers,
-        plot_title,
-        plot_show,
-        config,
-    ):
-        """
-        TODO: Update this documentation too-
+        # "local_thresholds": {
+        #     "processed_fields_count": 0,
+        #     # TODO: both directory and file level
+        #     "field_wise": {},
+        #     # TODO: both directory and file level
+        #     "field_type_wise": {},
+        #     # FieldType -> { "running_average", "processed_fields_count"}
+        # },
+        "confidence_metrics_for_file": {},
+        "all_fields_threshold_for_file": all_fields_threshold_for_file,
+        "all_fields_outlier_deviation_threshold_for_file": all_fields_outlier_deviation_threshold_for_file,
+    # }
 
-        0 Jump :
-                        <-- safe THR?
-               .......
-            ...|||||||
-            ||||||||||  <-- safe THR?
-
-        => Will fallback to all_fields_threshold_for_file
-
-        How to decide it is this case of 0 jumps
-
-        1 Jump :
-                ......
-                ||||||
-                ||||||  <-- risky THR
-                ||||||  <-- safe THR
-            ....||||||
-            ||||||||||
-
-        => Will use safe local threshold
-
-        """
-        # Sort the Q bubbleValues
-        sorted_bubble_means_and_refs = sorted(
-            bubble_means_and_refs,
-        )
-        sorted_bubble_means = [item.mean_value for item in sorted_bubble_means_and_refs]
-        # Small no of pts cases:
-        # base case: 1 or 2 pts
-        if len(sorted_bubble_means) < 3:
-            max1, thr1 = config.thresholding.MIN_JUMP, (
-                all_fields_threshold_for_file
-                if np.max(sorted_bubble_means) - np.min(sorted_bubble_means)
-                < config.thresholding.MIN_GAP_TWO_BUBBLES
-                else np.mean(sorted_bubble_means)
-            )
-        else:
-            l = len(sorted_bubble_means) - 1
-            max1, thr1 = config.thresholding.MIN_JUMP, 255
-            for i in range(1, l):
-                jump = sorted_bubble_means[i + 1] - sorted_bubble_means[i - 1]
-                if jump > max1:
-                    max1 = jump
-                    thr1 = sorted_bubble_means[i - 1] + jump / 2
-
-            confident_jump = (
-                config.thresholding.MIN_JUMP
-                + config.thresholding.MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK
-            )
-
-            # TODO: seek improvement here because of the empty cases failing here(boundary walls)
-            # Can see erosion make a lot of sense here?
-            # If not confident, then only take help of all_fields_threshold_for_file
-            if max1 < confident_jump:
-                # Threshold hack: local can never be 255
-                if no_outliers or thr1 == 255:
-                    # All Black or All White case
-                    thr1 = all_fields_threshold_for_file
-                else:
-                    # TODO: Low confidence parameters here
-                    pass
-
-        # TODO: Make a common plot util to show local and global thresholds
-        if plot_show:
-            BubblesThresholdDetector.plot_for_local_threshold(
-                sorted_bubble_means, thr1, all_fields_threshold_for_file, plot_title
-            )
-        return thr1, max1
-
-    @staticmethod
-    def plot_for_local_threshold(
-        sorted_bubble_means, thr1, all_fields_threshold_for_file, plot_title
-    ):
-        # TODO: add plot labels via the util
-        _, ax = pyplot.subplots()
-        ax.bar(range(len(sorted_bubble_means)), sorted_bubble_means)
-        thrline = ax.axhline(thr1, color="green", ls=("-."), linewidth=3)
-        thrline.set_label("Local Threshold")
-        thrline = ax.axhline(
-            all_fields_threshold_for_file, color="red", ls=":", linewidth=5
-        )
-        thrline.set_label("Global Threshold")
-        ax.set_title(plot_title)
-        ax.set_ylabel("Bubble Mean Intensity")
-        ax.set_xlabel("Bubble Number(sorted)")
-        ax.legend()
-        pyplot.show()

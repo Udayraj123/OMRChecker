@@ -3,6 +3,7 @@ import os
 from src.processors.manager import PROCESSOR_MANAGER
 from src.utils.constants import BUILTIN_FIELD_TYPES, CUSTOM_FIELD_TYPE
 from src.utils.image import ImageUtils
+from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 from src.utils.parsing import (
     custom_sort_output_columns,
@@ -18,8 +19,8 @@ class TemplateLayout:
         self.path = template_path
         # TODO: fill these for external use
         # self.fields = []
-        # self.all_field_types = []
-        
+        # self.all_field_detection_types = []
+
         json_object = open_template_with_defaults(template_path)
         (
             custom_labels_object,
@@ -82,6 +83,84 @@ class TemplateLayout:
 
         # TODO: this is dependent on other calls to finish
         self.setup_alignment(alignment_object, template_path.parent, tuning_config)
+
+    def get_copy_for_shifting(self):
+        # Copy template for this instance op
+        template_layout = shallowcopy(self)
+        # Make deepcopy for only parts that are mutated by Processor
+        template_layout.field_blocks = [field_block.get_copy_for_shifting() for field_block in self.field_blocks]
+        
+        return template_layout
+
+    # TODO: separate out preprocessing?
+    def apply_preprocessors(
+        self, file_path, gray_image, colored_image, original_template_layout
+    ):
+        config = self.tuning_config
+
+        template_layout = original_template_layout.get_copy_for_shifting()
+
+        # Reset the shifts in the copied template_layout
+        template_layout.reset_all_shifts()
+
+        # resize to conform to common preprocessor input requirements
+        gray_image = ImageUtils.resize_to_shape(
+            gray_image, template_layout.processing_image_shape
+        )
+        if config.outputs.colored_outputs_enabled:
+            colored_image = ImageUtils.resize_to_shape(
+                colored_image, template_layout.processing_image_shape
+            )
+
+        show_preprocessors_diff = config.outputs.show_preprocessors_diff
+        # run pre_processors in sequence
+        for pre_processor in template_layout.pre_processors:
+            pre_processor_name = pre_processor.get_class_name()
+
+            # Show Before Preview
+            if show_preprocessors_diff[pre_processor_name]:
+                InteractionUtils.show(
+                    f"Before {pre_processor_name}: {file_path}",
+                    (
+                        colored_image
+                        if config.outputs.colored_outputs_enabled
+                        else gray_image
+                    ),
+                )
+
+            # Apply filter
+            (
+                out_omr,
+                colored_image,
+                next_template_layout,
+            ) = pre_processor.resize_and_apply_filter(
+                gray_image, colored_image, template_layout, file_path
+            )
+            gray_image = out_omr
+            template_layout = next_template_layout
+
+            # Show After Preview
+            if show_preprocessors_diff[pre_processor_name]:
+                InteractionUtils.show(
+                    f"After {pre_processor_name}: {file_path}",
+                    (
+                        colored_image
+                        if config.outputs.colored_outputs_enabled
+                        else gray_image
+                    ),
+                )
+
+        if template_layout.output_image_shape:
+            # resize to output requirements
+            gray_image = ImageUtils.resize_to_shape(
+                gray_image, template_layout.output_image_shape
+            )
+            if config.outputs.colored_outputs_enabled:
+                colored_image = ImageUtils.resize_to_shape(
+                    colored_image, template_layout.output_image_shape
+                )
+
+        return gray_image, colored_image, template_layout
 
     def parse_output_columns(self, output_columns_array):
         self.output_columns = parse_fields(f"Output Columns", output_columns_array)
@@ -156,9 +235,9 @@ class TemplateLayout:
             )
             # Pre-processed alignment image
             self.alignment["gray_alignment_image"] = processed_gray_alignment_image
-            self.alignment[
-                "colored_alignment_image"
-            ] = processed_colored_alignment_image
+            self.alignment["colored_alignment_image"] = (
+                processed_colored_alignment_image
+            )
 
     def setup_field_blocks(self, field_blocks_object):
         # Add field_blocks
@@ -333,8 +412,14 @@ class FieldBlock:
         self.name = block_name
         # TODO: Move plot_bin_name into child class
         self.plot_bin_name = block_name
-        self.setup_field_block(field_block_object, field_blocks_offset)
         self.shifts = [0, 0]
+        self.setup_field_block(field_block_object, field_blocks_offset)
+    
+    def get_copy_for_shifting(self):
+        copied_field_block = shallowcopy(self)
+        # No need to deepcopy self.fields since they are not using shifts yet,
+        # also we are resetting them anyway before runs.
+        return copied_field_block
 
     def reset_all_shifts(self):
         self.shifts = [0, 0]
@@ -374,7 +459,7 @@ class FieldBlock:
             field_type,
             labels_gap,
             origin,
-            self.empty_value,
+            empty_value,
         ) = map(
             field_block_object.get,
             [
@@ -396,6 +481,8 @@ class FieldBlock:
         offset_x, offset_y = field_blocks_offset
         self.origin = [origin[0] + offset_x, origin[1] + offset_y]
         self.bubble_dimensions = bubble_dimensions
+        self.empty_value = empty_value
+        self.direction = direction
         self.bubbles_gap = bubbles_gap
         self.labels_gap = labels_gap
         # TODO: support barcode, ocr, etc custom field types
@@ -409,10 +496,14 @@ class FieldBlock:
             direction,
             labels_gap,
         )
+        field_block = self
         self.generate_bubble_grid(
+            bubble_dimensions,
             bubble_values,
             bubbles_gap,
             direction,
+            empty_value,
+            field_block,
             field_type,
             labels_gap,
         )
@@ -450,37 +541,38 @@ class FieldBlock:
 
     def generate_bubble_grid(
         self,
+        bubble_dimensions,
         bubble_values,
         bubbles_gap,
         direction,
+        empty_value,
+        field_block,
         field_type,
         labels_gap,
     ):
-        _h, _v = (1, 0) if (direction == "vertical") else (0, 1)
+        field_block = self
+        _v = 0 if (direction == "vertical") else 1
         self.fields = []
         # Generate the bubble grid
         lead_point = [float(self.origin[0]), float(self.origin[1])]
         for field_label in self.parsed_field_labels:
-            bubble_point = lead_point.copy()
-            field_bubbles = []
-            for bubble_index, bubble_value in enumerate(bubble_values):
-                field_bubbles.append(
-                    FieldBubble(
-                        bubble_point.copy(),
-                        # TODO: move field_label into field_label_ref
-                        field_label,
-                        field_type,
-                        bubble_value,
-                        bubble_index,
-                    )
+            origin = lead_point.copy()
+            self.fields.append(
+                Field(
+                    bubble_dimensions,
+                    bubble_values,
+                    bubbles_gap,
+                    direction,
+                    empty_value,
+                    field_block,
+                    field_label,
+                    field_type,
+                    origin,
                 )
-                bubble_point[_h] += bubbles_gap
-            self.fields.append(Field(field_label, field_type, field_bubbles, direction))
-
-            # TODO: fill this -
+            )
+            # TODO: fill this? -
             # self.field_detectioself.append(FieldInterpreter(field_label, field_type, field_bubbles, direction))
             # self.field_detector.append(FieldTypeDetector(field_label, field_type, field_bubbles, direction))
-
             lead_point[_v] += labels_gap
 
 
@@ -490,13 +582,42 @@ class Field:
 
     """
 
-    def __init__(self, field_label, field_type, field_bubbles, direction):
+    def __init__(
+        self,
+        bubble_dimensions,
+        bubble_values,
+        bubbles_gap,
+        direction,
+        empty_value,
+        field_block,
+        field_label,
+        field_type,
+        origin,
+    ):
+        self.bubble_dimensions = bubble_dimensions
+        self.bubble_values = bubble_values
+        self.bubbles_gap = bubbles_gap
+        self.direction = direction
+        self.empty_value = empty_value
+        self.origin = origin
+        # reference to get shifts at runtime
+        self.field_block = field_block
         self.field_label = field_label
         self.field_type = field_type
+        self.populate_bubbles()
+
+    def populate_bubbles(self):
+        _h = 1 if (self.direction == "vertical") else 0
+        field = self
+        bubble_point = self.origin.copy()
+        field_bubbles = []
+        for bubble_index, bubble_value in enumerate(self.bubble_values):
+            bubble_origin = bubble_point.copy()
+            field_bubbles.append(
+                FieldBubble(bubble_index, bubble_origin, bubble_value, field)
+            )
+            bubble_point[_h] += self.bubbles_gap
         self.field_bubbles = field_bubbles
-        self.direction = direction
-        # TODO: move local_threshold into child detection class
-        self.local_threshold = None
 
     def reset_all_shifts(self):
         # Note: no shifts needed at bubble level
@@ -515,7 +636,6 @@ class Field:
                 "field_type",
                 "direction",
                 "field_bubbles",
-                "local_threshold",
             ]
         }
 
@@ -529,15 +649,19 @@ class FieldBubble:
     It can also correspond to a single digit of integer type Q (eg q5d1)
     """
 
-    def __init__(self, pt, field_label, field_type, field_value, bubble_index):
-        self.name = f"{field_label}_{field_value}"
-        self.plot_bin_name = field_label
-        self.x = round(pt[0])
-        self.y = round(pt[1])
+    def __init__(self, bubble_origin, bubble_index, bubble_value, field):
+
+        self.field = field
+        self.field_label = field.field_label
+        self.field_type = field.field_type
+        self.bubble_dimensions = field.bubble_dimensions
+
+        self.name = f"{self.field_label}_{bubble_value}"
+        self.plot_bin_name = self.field_label
+        self.x = round(bubble_origin[0])
+        self.y = round(bubble_origin[1])
         self.shifts = [0, 0]
-        self.field_label = field_label
-        self.field_type = field_type
-        self.field_value = field_value
+        self.bubble_value = bubble_value
         self.bubble_index = bubble_index
 
     def __str__(self):
@@ -546,7 +670,10 @@ class FieldBubble:
     def reset_shifts(self):
         self.shifts = [0, 0]
 
-    def get_shifted_position(self, shifts):
+    def get_shifted_position(self, shifts = None):
+        # field_shifts = self.field.shifts
+        if shifts is None:
+            shifts = self.field.field_block.shifts
         return [
             self.x + self.shifts[0] + shifts[0],
             self.y + self.shifts[1] + shifts[1],
@@ -558,7 +685,7 @@ class FieldBubble:
             key: default_dump(getattr(self, key))
             for key in [
                 "field_label",
-                "field_value",
+                "bubble_value",
                 # for item_reference_name
                 "name",
                 "x",
@@ -566,5 +693,6 @@ class FieldBubble:
                 # "plot_bin_name",
                 # "field_type",
                 # "bubble_index",
+                # "bubble_dimensions",
             ]
         }

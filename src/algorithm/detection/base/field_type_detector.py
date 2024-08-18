@@ -5,10 +5,10 @@ It is static per template instance. Instantiated once per field type in the temp
 
 
 class FieldTypeDetector:
-    def __init__(self):
+    def __init__(self, config):
         # TODO: use local_threshold from here
         # self.local_threshold = None
-        pass
+        self.config = config
 
     def setup_directory_metrics():
         raise Exception(f"Not implemented")
