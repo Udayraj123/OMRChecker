@@ -7,7 +7,7 @@ from src.processors.constants import (
     ZonePreset,
 )
 from src.schemas.constants import load_common_defs
-from src.utils.constants import BUILTIN_FIELD_TYPES, CUSTOM_FIELD_TYPE
+from src.utils.constants import BUILTIN_BUBBLE_FIELD_TYPES, CUSTOM_FIELD_TYPE
 
 margins_schema_def = {
     "description": "The margins to use around a box",
@@ -363,7 +363,7 @@ many_field_blocks_description_def = {
                         "properties": {
                             "fieldType": {
                                 "enum": [
-                                    *list(BUILTIN_FIELD_TYPES.keys()),
+                                    *list(BUILTIN_BUBBLE_FIELD_TYPES.keys()),
                                 ]
                             }
                         },
@@ -1005,7 +1005,7 @@ TEMPLATE_SCHEMA = {
                 ],
             },
         },
-        "customFieldTypes": {
+        "customBubbleFieldTypes": {
             "type": "object",
             "patternProperties": {
                 "^CUSTOM_.*$": {

@@ -8,11 +8,15 @@ import numpy as np
 from matplotlib import colormaps, pyplot
 
 from src.algorithm.detection.base.field_interpreter import FieldInterpretation
+from src.algorithm.detection.base.field_type_detector import FieldTypeDetector
+from src.algorithm.detection.bubbles_threshold.bubbles_threshold_interpreter import (
+    BubbleInterpretation,
+    BubblesFieldInterpretation,
+)
+from src.algorithm.template.template_detector import StatsByLabel
+from src.processors.constants import FieldDetectionType
 from src.utils.logger import logger
 from src.utils.parsing import default_dump
-from src.processors.constants import FieldDetectionType
-from src.algorithm.template.template_detector import StatsByLabel
-from src.algorithm.detection.base.field_type_detector import FieldTypeDetector
 
 
 @functools.total_ordering
@@ -80,17 +84,17 @@ class NumberAggregate:
         self.collection = []
         self.running_sum = 0
         self.running_average = 0
-    
+
     def push(self, number, label):
         self.collection.push([number, label])
         self.running_sum += number
         self.running_average = self.running_sum / len(self.collection)
-    
+
     def merge(self, other_aggregate):
         self.collection += other_aggregate.collection
         self.running_sum += other_aggregate.running_sum
         self.running_average = self.running_sum / len(self.collection)
-    
+
     def to_json(self):
         return {
             key: default_dump(getattr(self, key))
@@ -101,10 +105,11 @@ class NumberAggregate:
             ]
         }
 
+
 class BubblesThresholdDetector(FieldTypeDetector):
-    def __init__(self):
-        self.detection_type = FieldDetectionType.BUBBLES_THRESHOLD
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.field_detection_type = FieldDetectionType.BUBBLES_THRESHOLD
         # TODO: use local_threshold from here
         # self.local_threshold = None
 
@@ -114,46 +119,91 @@ class BubblesThresholdDetector(FieldTypeDetector):
             "file_wise_thresholds": NumberAggregate(),
         }
 
-    def reinitialize_file_level_detection_aggregates(self):
-        self.field_wise_means_and_refs, self.all_outlier_deviations = {}, {}
-
-    def generate_file_level_detection_aggregates(self, file_path):
-
-    # def get_file_level_detection_aggregates(self):
-        return {
+    def reset_file_level_detection_aggregates(self, file_path):
+        self.file_level_detection_aggregates = {
+            # "files_count": StatsByLabel("processed"),
             "file_path": file_path,
-            "field_wise_means_and_refs": self.field_wise_means_and_refs, 
-            "all_outlier_deviations": self.all_outlier_deviations,
+            "global_max_jump": None,
+            "field_level_detection_aggregates": {},
         }
-    
+
+    def get_file_level_detection_aggregates(self):
+        return self.file_level_detection_aggregates
+
+    def get_file_level_interpretation_aggregates(self):
+        return self.file_level_interpretation_aggregates
+
     # TODO: move into FieldInterpretation?
-    def reinitialize_file_level_interpretation_aggregates(self, file_path, all_file_level_detection_aggregates):
-        config = self.config
+    def reinitialize_file_level_interpretation_aggregates(
+        self,
+        file_path,
+        field_detection_type_wise_detection_aggregates,
+        field_label_wise_detection_aggregates,
+    ):
         # Note: we also have access to other detectors aggregates if for any conditionally interpretation in future.
-        own_detection_aggregates = all_file_level_detection_aggregates["field_detection_type_wise_aggregates"][self.detection_type]
-        field_wise_means_and_refs, all_outlier_deviations = own_detection_aggregates["field_wise_means_and_refs"].values(), own_detection_aggregates["all_outlier_deviations"].values()
-        
-        # Calculate thresholds here
+        own_detection_aggregates = field_detection_type_wise_detection_aggregates[
+            self.field_detection_type
+        ]
+        all_outlier_deviations = own_detection_aggregates[
+            "field_level_detection_aggregates"
+        ]["field_bubble_means_std"].values()
+        outlier_deviation_threshold_for_file = self.get_outlier_deviation_threshold(
+            file_path, all_outlier_deviations
+        )
+
+        field_wise_means_and_refs = own_detection_aggregates[
+            "field_level_detection_aggregates"
+        ]["field_bubble_means"].values()
+        file_level_fallback_threshold, global_max_jump = self.get_fallback_threshold(
+            file_path, field_wise_means_and_refs
+        )
+
+        logger.debug(
+            f"Thresholding: \t file_level_fallback_threshold: {round(file_level_fallback_threshold, 2)} \tglobal_std_THR: {round(outlier_deviation_threshold_for_file, 2)}\t{'(Looks like a Xeroxed OMR)' if (file_level_fallback_threshold == 255) else ''}"
+        )
+        # TODO: uncomment for more granular threshold detection insights (per bubbleFieldType)
+        # bubble_field_type_wise_thresholds = {}
+        # for field_detection_aggregates in field_label_wise_detection_aggregates.values():
+        #     field = field_detection_aggregates["field"]
+        #     bubble_field_type = field.bubble_field_type
+        #     field_wise_means_and_refs = field_detection_aggregates["field_bubble_means"].values()
+        #
+        #     # TODO: handle CUSTOM_FIELD_TYPE separately
+        #     if bubble_field_type not in bubble_field_type_wise_thresholds:
+        #         bubble_field_type_wise_thresholds[bubble_field_type] = NumberAggregate()
+
+        #     bubble_field_type_level_fallback_threshold, _ = self.get_fallback_threshold(file_path, field_wise_means_and_refs)
+        #     bubble_field_type_wise_thresholds[bubble_field_type].push(bubble_field_type_level_fallback_threshold)
+
+        # TODO: return bubble_field_type_wise(MCQ/INT/CUSTOM_1/CUSTOM_2) thresholds too - for interpretation?
+        self.file_level_interpretation_aggregates = {
+            "file_level_fallback_threshold": file_level_fallback_threshold,
+            "global_max_jump": global_max_jump,
+            "outlier_deviation_threshold_for_file": outlier_deviation_threshold_for_file,
+            "field_label_wise_local_thresholds": {},
+            "bubble_field_type_wise_thresholds": {},
+            "field_wise_confidence_metrics": None,
+            "confidence_metrics_for_file": None,
+            "fields_count": StatsByLabel("processed"),
+            "field_level_interpretation_aggregates": {},
+        }
+
+    def get_outlier_deviation_threshold(self, file_path, all_outlier_deviations):
+        config = self.config
         (
-            GLOBAL_PAGE_THRESHOLD,
-            MIN_JUMP,
-            JUMP_DELTA,
             MIN_JUMP_STD,
             JUMP_DELTA_STD,
             GLOBAL_PAGE_THRESHOLD_STD,
         ) = map(
             config.thresholding.get,
             [
-                "GLOBAL_PAGE_THRESHOLD",
-                "MIN_JUMP",
-                "JUMP_DELTA",
                 "MIN_JUMP_STD",
                 "JUMP_DELTA_STD",
                 "GLOBAL_PAGE_THRESHOLD_STD",
             ],
         )
         (
-            all_fields_outlier_deviation_threshold_for_file,
+            outlier_deviation_threshold_for_file,
             _,
             _,
         ) = self.get_global_threshold(
@@ -161,14 +211,30 @@ class BubblesThresholdDetector(FieldTypeDetector):
             GLOBAL_PAGE_THRESHOLD_STD,
             MIN_JUMP=MIN_JUMP_STD,
             JUMP_DELTA=JUMP_DELTA_STD,
-            plot_title="Q-wise Std-dev Plot",
+            plot_title=f"Field-wise Std-dev Plot for {file_path}",
             plot_show=config.outputs.show_image_level >= 6,
             sort_in_plot=True,
+        )
+        return outlier_deviation_threshold_for_file
+
+    def get_fallback_threshold(self, file_path, field_wise_means_and_refs):
+        config = self.config
+        (
+            GLOBAL_PAGE_THRESHOLD,
+            MIN_JUMP,
+            JUMP_DELTA,
+        ) = map(
+            config.thresholding.get,
+            [
+                "GLOBAL_PAGE_THRESHOLD",
+                "MIN_JUMP",
+                "JUMP_DELTA",
+            ],
         )
 
         # Note: Plotting takes Significant times here --> Change Plotting args
         # to support show_image_level
-        all_fields_threshold_for_file, j_low, j_high = self.get_global_threshold(
+        file_level_fallback_threshold, j_low, j_high = self.get_global_threshold(
             field_wise_means_and_refs,  # , looseness=4
             GLOBAL_PAGE_THRESHOLD,
             plot_title=f"Mean Intensity Barplot: {file_path}",
@@ -180,39 +246,10 @@ class BubblesThresholdDetector(FieldTypeDetector):
         )
         global_max_jump = j_high - j_low
 
-        logger.debug(
-            f"Thresholding: \t all_fields_threshold_for_file: {round(all_fields_threshold_for_file, 2)} \tglobal_std_THR: {round(all_fields_outlier_deviation_threshold_for_file, 2)}\t{'(Looks like a Xeroxed OMR)' if (all_fields_threshold_for_file == 255) else ''}"
-        )
-    
-        # TODO: return field_type(MCQ/INT/CUSTOM_1/CUSTOM_2) wise thresholds too - for interpretation?
-
-        self.file_level_interpretation_aggregates = {
-            # 
-            "all_fields_threshold_for_file": all_fields_threshold_for_file,
-            "all_fields_outlier_deviation_threshold_for_file": all_fields_outlier_deviation_threshold_for_file,
-            "global_max_jump": global_max_jump,
-
-            "field_wise_local_thresholds": NumberAggregate(),
-            "field_wise_confidence_metrics": None,
-            "fields_count": StatsByLabel("processed"),
-            "field_type_wise_thresholds": NumberAggregate(),
-            "file_level_threshold": own_detection_aggregates["all_fields_threshold_for_file"],
-        }
-        # This is the metric we use as the fallback in old code
-        # self.file_level_interpretation_aggregates["field_wise_local_thresholds"].running_average
-
-    def generate_file_level_interpretation_aggregates(self):
-        
-        # TODO: produce metrics here.
-
-        return {
-            # "field_wise_local_thresholds"
-            # "field_wise_confidence_metrics"
-            # "file_level_threshold"
-            # "field_type_wise_aggregates"
-        }
+        return file_level_fallback_threshold, global_max_jump
 
     def run_field_level_detection(self, field, gray_image, _colored_image):
+        self.reset_field_level_detection_aggregates()
         field_bubbles = field.field_bubbles
 
         field_bubble_means = []
@@ -220,70 +257,90 @@ class BubblesThresholdDetector(FieldTypeDetector):
             # TODO: cross/check mark detection support (#167)
             # detectCross(gray_image, rect) ? 0 : 255
             bubble_mean_value = self.read_bubble_mean_value(unit_bubble, gray_image)
-            
-            field_bubble_means.append(
-                bubble_mean_value
-            )
 
-        self.update_all_detection_aggregates(field, field_bubble_means)
-    
+            field_bubble_means.append(bubble_mean_value)
+
+        self.update_detection_aggregates_on_processed_field(field, field_bubble_means)
+
     def read_bubble_mean_value(self, unit_bubble, gray_image):
-        box_w, box_h = unit_bubble.bubble_dimensions 
+        box_w, box_h = unit_bubble.bubble_dimensions
         x, y = unit_bubble.get_shifted_position()
         rect = [y, y + box_h, x, x + box_w]
         mean_value = cv2.mean(gray_image[rect[0] : rect[1], rect[2] : rect[3]])[0]
         bubble_mean_value = BubbleMeanValue(mean_value, unit_bubble)
         return bubble_mean_value
 
-    def update_all_detection_aggregates(self, field, field_bubble_means):
-        field_label = field.field_label
-        
-        # update_field_level_detection_aggregates
+    def reset_field_level_detection_aggregates(self):
+        self.field_level_detection_aggregates = {}
+
+    def get_field_level_detection_aggregates(self):
+        return self.field_level_detection_aggregates
+
+    def update_detection_aggregates_on_processed_field(self, field, field_bubble_means):
+        field_label, bubble_field_type = field.field_label, field.bubble_field_type
+        # self.file_level_detection_aggregates["fields_count"].push("processed")
 
         field_bubble_means_std = round(
             np.std([item.mean_value for item in field_bubble_means]), 2
         )
 
-        field_bubble_means_std = FieldStdMeanValue(
-            field_bubble_means_std, field
+        field_bubble_means_std = FieldStdMeanValue(field_bubble_means_std, field)
+
+        # update_field_level_detection_aggregates
+        self.field_level_detection_aggregates = {
+            "field": field,
+            "field_bubble_means": field_bubble_means,
+            "field_bubble_means_std": field_bubble_means_std,
+        }
+        self.file_level_detection_aggregates["field_level_detection_aggregates"][
+            field_label
+        ] = self.field_level_detection_aggregates
+
+    def run_field_level_interpretation(self, field, _gray_image, _colored_image):
+        tuning_config = self.tuning_config
+        self.reset_field_level_interpretation_aggregates()
+
+        # TODO: instantiate this class somewhere more appropriate?
+        field_interpretation = BubblesFieldInterpretation(
+            tuning_config, field, self.file_level_interpretation_aggregates
         )
 
-        self.all_outlier_deviations[field_label] = field_bubble_means_std
-        self.field_wise_means_and_refs[field_label] = field_bubble_means
+        self.update_field_level_interpretation_aggregates(field, field_interpretation)
 
-    def run_field_level_interpretation(self, field, gray_image, _colored_image):
-        field_bubbles = field.field_bubbles
+        detected_string = field_interpretation.get_detected_string()
 
-        field_bubble_means = []
-        # Use aggregates-
-        # for unit_bubble in field_bubbles:
-            
+        return detected_string
 
-        self.update_all_interpretation_aggregates(field, field_bubble_means)
-    
-    def update_all_interpretation_aggregates(self, field, field_bubble_means):
-        # fields count++
-        pass
-    
-    def reset_field_type_level_aggregates(self):
-        # The field_type is about MCQ vs INT etc including user defined types
-        # The field_detection_type is about BUBBLES vs OCR etc
-        
-        field_type_aggregates = {
-            "field_type_wise_thresholds": NumberAggregate(),
+    def reset_field_level_interpretation_aggregates(self):
+        self.field_level_interpretation_aggregates = {}
+
+    def get_field_level_interpretation_aggregates(self):
+        return self.field_level_interpretation_aggregates
+
+    def update_file_level_interpretation_aggregates(self, file_path):
+        confidence_metrics_for_file = {}
+        # TODO: confidence_metrics_for_file
+        self.file_level_interpretation_aggregates[
+            "confidence_metrics_for_file"
+        ] = confidence_metrics_for_file
+
+        # self.directory_level_aggregates["file_level_interpretation_aggregates"][file_path] = self.file_level_interpretation_aggregates
+
+    def update_field_level_interpretation_aggregates(self, field, field_interpretation):
+        self.field_level_interpretation_aggregates = {
+            "field": field,
+            # TODO: move this into the same class? or call this function from inside?
+            "is_multi_marked": field_interpretation.is_multi_marked,
+            "confidence_metrics_for_field": field_interpretation.confidence_metrics_for_field,
+            "local_threshold_for_field": field_interpretation.local_threshold_for_field,
+            "field_bubble_interpretations": field_interpretation.field_bubble_interpretations,
         }
-        file_level_interpretation_aggregates["files_count"] = StatsByLabel("processed")
 
-        # "local_thresholds": {
-        #     "processed_fields_count": 0,
-        #     # TODO: both directory and file level
-        #     "field_wise": {},
-        #     # TODO: both directory and file level
-        #     "field_type_wise": {},
-        #     # FieldType -> { "running_average", "processed_fields_count"}
-        # },
-        "confidence_metrics_for_file": {},
-        "all_fields_threshold_for_file": all_fields_threshold_for_file,
-        "all_fields_outlier_deviation_threshold_for_file": all_fields_outlier_deviation_threshold_for_file,
-    # }
+        # TODO: update field_label_wise_local_thresholds
+        # TODO: update bubble_field_type_wise_thresholds
 
+        # self.file_level_interpretation_aggregates[][field_label] = self.field_level_interpretation_aggregates
+
+        # fields count++
+        self.file_level_interpretation_aggregates["fields_count"].push("processed")
+        # self.file_level_interpretation_aggregates["fields_count"].push(field.bubble_field_type)

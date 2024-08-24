@@ -54,7 +54,7 @@ class EasyOCR(TextOCR):
         found_box = None
         # Firstly postprocess all texts before searching.
 
-        # TODO: add search logic
+        # TODO: add (fuzzy?) search logic
 
         # Note: the caller should take care of extracting center vs corners of the box
         return found_box

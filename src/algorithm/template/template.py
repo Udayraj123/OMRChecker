@@ -1,11 +1,13 @@
+import json
 from pathlib import Path
 
 from src.algorithm.template.directory_handler import DirectoryHandler
 from src.algorithm.template.template_detector import TemplateDetector
 from src.algorithm.template.template_layout import TemplateLayout
-from src.algorithm.template.template_preprocessing import TemplatePreprocessing
-from src.utils.file import SaveImageOps
+from src.processors.constants import FieldDetectionType
+from src.utils.file import PathUtils, SaveImageOps
 from src.utils.image import ImageUtils
+from src.utils.logger import logger
 
 """
 The main interface for interacting with all template json related operations
@@ -25,9 +27,7 @@ class Template:
         self.all_fields = self.template_layout.all_fields
         self.path = self.template_layout.path
         self.apply_preprocessors = self.template_layout.apply_preprocessors
-        self.export_omr_metrics_for_file = (
-            self.template_layout.export_omr_metrics_for_file
-        )
+
         # TODO: move some other functions here
 
     def get_exclude_files(self):
@@ -100,12 +100,103 @@ class Template:
 
         gray_image, colored_image = ImageUtils.normalize(gray_image, colored_image)
 
-        (
-            omr_response,
-            file_aggregate_params,
-        ) = self.template_detector.read_omr_and_update_metrics(
+        omr_response = self.template_detector.read_omr_and_update_metrics(
             file_path, gray_image, colored_image
         )
 
-        # file_aggregate_params would be used for drawing the debug layout
-        return omr_response, file_aggregate_params
+        return omr_response
+
+    def get_omr_metrics_for_file(self, file_path):
+        # This can be used for drawing the bubbles etc
+        file_level_interpretation_aggregates = (
+            self.template_detector.get_file_level_interpretation_aggregates()
+        )
+        is_multi_marked = file_level_interpretation_aggregates[
+            "read_response_flags"["is_multi_marked"]
+        ]
+        field_label_wise_interpretation_aggregates = (
+            file_level_interpretation_aggregates[
+                "field_label_wise_interpretation_aggregates"
+            ]
+        )
+
+        # TODO: temp logic until template drawing is not migrated -
+        field_number_to_field_bubble_means = []
+        for field in self.all_fields:
+            field_detection_type, field_label = (
+                field.field_detection_type,
+                field.field_label,
+            )
+            if field_detection_type == FieldDetectionType.BUBBLES_THRESHOLD:
+                field_bubble_means = field_label_wise_interpretation_aggregates[
+                    field_label
+                ]["field_bubble_means"]
+                field_number_to_field_bubble_means.append(field_bubble_means)
+
+        return is_multi_marked, field_number_to_field_bubble_means
+
+    # TODO: figure out a structure to output directory metrics apart from from this file one.
+    # directory_metrics_path = self.path_utils.image_metrics_dir.joinpath()
+    # def export_omr_metrics_for_directory()
+    def export_omr_metrics_for_file(
+        self, file_path, evaluation_meta, field_number_to_field_bubble_means
+    ):
+        file_level_interpretation_aggregates = (
+            self.template_detector.get_file_level_interpretation_aggregates()
+        )
+
+        file_name = PathUtils.remove_non_utf_characters(file_path.name)
+
+        is_multi_marked = file_level_interpretation_aggregates[
+            "read_response_flags"["is_multi_marked"]
+        ]
+        file_level_interpretation_aggregates = (
+            self.template_detector.get_file_level_interpretation_aggregates()
+        )
+        bubbles_threshold_interpretation_aggregates = (
+            file_level_interpretation_aggregates[
+                "field_detection_type_wise_interpretation_aggregates"
+            ][FieldDetectionType.BUBBLES_THRESHOLD]
+        )
+        confidence_metrics_for_file = bubbles_threshold_interpretation_aggregates[
+            "confidence_metrics_for_file"
+        ]
+        file_level_fallback_threshold = bubbles_threshold_interpretation_aggregates[
+            "file_level_fallback_threshold"
+        ]
+
+        field_wise_means_and_refs = []
+
+        # TODO: loop over using a list of field_labels now
+        for field_bubble_means in field_number_to_field_bubble_means:
+            field_wise_means_and_refs.extend(field_bubble_means)
+        # sorted_global_bubble_means_and_refs = sorted(field_wise_means_and_refs)
+
+        image_metrics_path = self.path_utils.image_metrics_dir.joinpath(
+            f"metrics-{file_name}.js"
+        )
+
+        template_meta = {
+            # "template": template,
+            "is_multi_marked": is_multi_marked,
+            "field_number_to_field_bubble_means": field_number_to_field_bubble_means,
+            "file_level_fallback_threshold": file_level_fallback_threshold,
+            "confidence_metrics_for_file": confidence_metrics_for_file,
+        }
+        # evaluation_meta = evaluation.get_omr_metrics_for_file()
+
+        image_metrics = {
+            "template_meta": template_meta,
+            "evaluation_meta": (evaluation_meta if evaluation_meta is not None else {}),
+        }
+        with open(
+            image_metrics_path,
+            "w",
+        ) as f:
+            json_string = json.dumps(
+                image_metrics,
+                default=lambda x: x.to_json(),
+                indent=4,
+            )
+            f.write(f"export default {json_string}")
+            logger.info(f"Exported image metrics to: {image_metrics_path}")

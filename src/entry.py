@@ -7,16 +7,16 @@ from time import time
 import pandas as pd
 from rich.table import Table
 
-from src.algorithm.alignment.template_alignment import apply_template_alignment
 from src.algorithm.evaluation.config import (
     EvaluationConfig,
     evaluate_concatenated_response,
 )
+from src.algorithm.template.alignment.template_alignment import apply_template_alignment
 from src.algorithm.template.template_layout import Template
 from src.schemas.constants import DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING
 from src.schemas.defaults import CONFIG_DEFAULTS
 from src.utils import constants
-from src.utils.file import PathUtils, setup_dirs_for_paths, setup_outputs_for_template
+from src.utils.file import PathUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils, Stats
 from src.utils.logger import console, logger
@@ -330,15 +330,17 @@ def process_directory_files(
         # TODO: move this logic inside the class
         save_marked_dir = template.get_save_marked_dir()
 
+        # ----------
+
         # TODO: refactor this logic
         (
-            multi_marked,
+            is_multi_marked,
             field_number_to_field_bubble_means,
-            all_fields_threshold_for_file,
-            confidence_metrics_for_file,
         ) = template.get_omr_metrics_for_file(file_path)
+
         # Save output image with bubble values and evaluation meta
         if output_mode != "moderation":
+            # TODO: move TemplateDrawing functions inside the template class
             (
                 final_marked,
                 colored_final_marked,
@@ -361,7 +363,7 @@ def process_directory_files(
         )
 
         if should_save_detections:
-            # TODO: migrate after support for multi_marked bucket based on identifier config
+            # TODO: migrate after support for is_multi_marked bucket based on identifier config
             # if multi_roll:
             #     save_marked_dir = save_marked_dir.joinpath("_MULTI_")
             ImageUtils.save_marked_image(save_marked_dir, file_id, final_marked)
@@ -384,20 +386,11 @@ def process_directory_files(
             images_per_row=5 if tuning_config.outputs.show_image_level >= 5 else 4,
         )
 
-        # TODO: move it inside template finalize()
+        # TODO: move it inside template finalize_file_level_metrics()?
         # Save output metrics
         if tuning_config.outputs.save_image_metrics:
             template.export_omr_metrics_for_file(
-                file_name,
-                gray_image,
-                final_marked,
-                colored_final_marked,
-                template,
-                # TODO: no need to pass these metrics from outside
-                field_number_to_field_bubble_means,
-                all_fields_threshold_for_file,
-                confidence_metrics_for_file,
-                evaluation_meta,
+                file_path, evaluation_meta, field_number_to_field_bubble_means
             )
 
         # Save output CSV results
@@ -410,7 +403,10 @@ def process_directory_files(
 
         posix_file_path = PathUtils.sep_based_posix_path(file_path)
 
-        if multi_marked == 0 or not tuning_config.outputs.filter_out_multimarked_files:
+        if (
+            not is_multi_marked
+            or not tuning_config.outputs.filter_out_multimarked_files
+        ):
             STATS.files_not_moved += 1
 
             # Normalize path and convert to posix style
@@ -434,7 +430,7 @@ def process_directory_files(
                 index=False,
             )
         else:
-            # multi_marked file
+            # is_multi_marked file
             logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
             output_file_path = PathUtils.sep_based_posix_path(
                 template.get_multi_marked_dir().joinpath(file_name)
@@ -469,6 +465,7 @@ def process_directory_files(
 
 
 def check_and_move(error_code, file_path, filepath2):
+    # TODO: use StatsByLabel class here
     # TODO: fix file movement into error/multimarked/invalid etc again
     STATS.files_not_moved += 1
     return True

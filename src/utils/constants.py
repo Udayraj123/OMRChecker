@@ -27,7 +27,7 @@ ERROR_CODES = DotMap(
     _dynamic=False,
 )
 
-BUILTIN_FIELD_TYPES = {
+BUILTIN_BUBBLE_FIELD_TYPES = {
     "QTYPE_INT": {
         "bubbleValues": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
         "direction": "vertical",
@@ -41,7 +41,7 @@ BUILTIN_FIELD_TYPES = {
         "bubbleValues": ["A", "B", "C", "D", "E"],
         "direction": "horizontal",
     },
-    # Note: you can put custom field types in template.json in the "customFieldTypes" key.
+    # Note: you can put custom field types in template.json in the "customBubbleFieldTypes" key.
 }
 
 CUSTOM_FIELD_TYPE = "CUSTOM_BUBBLES"

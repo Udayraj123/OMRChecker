@@ -1,7 +1,7 @@
 import os
 
 from src.processors.manager import PROCESSOR_MANAGER
-from src.utils.constants import BUILTIN_FIELD_TYPES, CUSTOM_FIELD_TYPE
+from src.utils.constants import BUILTIN_BUBBLE_FIELD_TYPES, CUSTOM_FIELD_TYPE
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -13,7 +13,6 @@ from src.utils.parsing import (
 )
 
 
-# TODO: make a child class TemplateLayout to keep template only about the layouts & json data?
 class TemplateLayout:
     def __init__(self, template_path, tuning_config):
         self.path = template_path
@@ -49,7 +48,7 @@ class TemplateLayout:
                 "options",
                 "outputImageShape",
                 "fieldBlocksOffset",
-                "customFieldTypes",
+                "customBubbleFieldTypes",
                 # TODO: support for "sortFiles" key
             ],
         )
@@ -88,8 +87,10 @@ class TemplateLayout:
         # Copy template for this instance op
         template_layout = shallowcopy(self)
         # Make deepcopy for only parts that are mutated by Processor
-        template_layout.field_blocks = [field_block.get_copy_for_shifting() for field_block in self.field_blocks]
-        
+        template_layout.field_blocks = [
+            field_block.get_copy_for_shifting() for field_block in self.field_blocks
+        ]
+
         return template_layout
 
     # TODO: separate out preprocessing?
@@ -182,25 +183,25 @@ class TemplateLayout:
 
     def parse_custom_field_types(self, custom_field_types):
         if custom_field_types is None:
-            self.field_types_data = BUILTIN_FIELD_TYPES
+            self.bubble_field_types_data = BUILTIN_BUBBLE_FIELD_TYPES
         else:
-            self.field_types_data = {
-                **BUILTIN_FIELD_TYPES,
+            self.bubble_field_types_data = {
+                **BUILTIN_BUBBLE_FIELD_TYPES,
                 **custom_field_types,
             }
 
     def validate_field_blocks(self, field_blocks_object):
         for block_name, field_block_object in field_blocks_object.items():
-            field_type = field_block_object["fieldType"]
+            bubble_field_type = field_block_object["bubbleFieldType"]
             if (
-                field_type not in self.field_types_data
-                and field_type != CUSTOM_FIELD_TYPE
+                bubble_field_type not in self.bubble_field_types_data
+                and bubble_field_type != CUSTOM_FIELD_TYPE
             ):
                 logger.critical(
-                    f"Cannot find definition for {field_type} in customFieldTypes"
+                    f"Cannot find definition for {bubble_field_type} in customBubbleFieldTypes"
                 )
                 raise Exception(
-                    f"Invalid field type: {field_type} in block {block_name}"
+                    f"Invalid bubble field type: {bubble_field_type} in block {block_name}"
                 )
 
     # TODO: move out to template_alignment.py
@@ -235,9 +236,9 @@ class TemplateLayout:
             )
             # Pre-processed alignment image
             self.alignment["gray_alignment_image"] = processed_gray_alignment_image
-            self.alignment["colored_alignment_image"] = (
-                processed_colored_alignment_image
-            )
+            self.alignment[
+                "colored_alignment_image"
+            ] = processed_colored_alignment_image
 
     def setup_field_blocks(self, field_blocks_object):
         # Add field_blocks
@@ -322,18 +323,18 @@ class TemplateLayout:
         self.validate_parsed_labels(field_block_object["fieldLabels"], block_instance)
 
     def pre_fill_field_block(self, field_block_object):
-        field_type = field_block_object.get("fieldType", CUSTOM_FIELD_TYPE)
-        #  TODO: support for if field_type == "BARCODE":
+        bubble_field_type = field_block_object.get("bubbleFieldType", CUSTOM_FIELD_TYPE)
+        #  TODO: support for if bubble_field_type == "BARCODE":
 
-        if field_type in self.field_types_data:
-            field_type_data = self.field_types_data[field_type]
+        if bubble_field_type in self.bubble_field_types_data:
+            field_type_data = self.bubble_field_types_data[bubble_field_type]
             field_block_object = {
                 **field_block_object,
                 **field_type_data,
             }
 
         return {
-            "fieldType": field_type,
+            "bubbleFieldType": bubble_field_type,
             # "direction": "vertical",
             "emptyValue": self.global_empty_val,
             "bubbleDimensions": self.bubble_dimensions,
@@ -414,7 +415,7 @@ class FieldBlock:
         self.plot_bin_name = block_name
         self.shifts = [0, 0]
         self.setup_field_block(field_block_object, field_blocks_offset)
-    
+
     def get_copy_for_shifting(self):
         copied_field_block = shallowcopy(self)
         # No need to deepcopy self.fields since they are not using shifts yet,
@@ -456,7 +457,7 @@ class FieldBlock:
             bubbles_gap,
             direction,
             field_labels,
-            field_type,
+            bubble_field_type,
             labels_gap,
             origin,
             empty_value,
@@ -486,7 +487,8 @@ class FieldBlock:
         self.bubbles_gap = bubbles_gap
         self.labels_gap = labels_gap
         # TODO: support barcode, ocr, etc custom field types
-        self.field_type = field_type
+        # TODO: add a way to distinguish two CUSTOM_FIELD_TYPE (using an index prefix?)
+        self.bubble_field_type = bubble_field_type
         self.setup_alignment(alignment_object)
 
         self.calculate_block_dimensions(
@@ -504,7 +506,7 @@ class FieldBlock:
             direction,
             empty_value,
             field_block,
-            field_type,
+            bubble_field_type,
             labels_gap,
         )
 
@@ -547,7 +549,7 @@ class FieldBlock:
         direction,
         empty_value,
         field_block,
-        field_type,
+        bubble_field_type,
         labels_gap,
     ):
         field_block = self
@@ -566,13 +568,10 @@ class FieldBlock:
                     empty_value,
                     field_block,
                     field_label,
-                    field_type,
+                    bubble_field_type,
                     origin,
                 )
             )
-            # TODO: fill this? -
-            # self.field_detectioself.append(FieldInterpreter(field_label, field_type, field_bubbles, direction))
-            # self.field_detector.append(FieldTypeDetector(field_label, field_type, field_bubbles, direction))
             lead_point[_v] += labels_gap
 
 
@@ -591,7 +590,7 @@ class Field:
         empty_value,
         field_block,
         field_label,
-        field_type,
+        bubble_field_type,
         origin,
     ):
         self.bubble_dimensions = bubble_dimensions
@@ -603,7 +602,7 @@ class Field:
         # reference to get shifts at runtime
         self.field_block = field_block
         self.field_label = field_label
-        self.field_type = field_type
+        self.bubble_field_type = bubble_field_type
         self.populate_bubbles()
 
     def populate_bubbles(self):
@@ -633,7 +632,7 @@ class Field:
             key: default_dump(getattr(self, key))
             for key in [
                 "field_label",
-                "field_type",
+                "bubble_field_type",
                 "direction",
                 "field_bubbles",
             ]
@@ -650,10 +649,9 @@ class FieldBubble:
     """
 
     def __init__(self, bubble_origin, bubble_index, bubble_value, field):
-
         self.field = field
         self.field_label = field.field_label
-        self.field_type = field.field_type
+        self.bubble_field_type = field.bubble_field_type
         self.bubble_dimensions = field.bubble_dimensions
 
         self.name = f"{self.field_label}_{bubble_value}"
@@ -670,7 +668,7 @@ class FieldBubble:
     def reset_shifts(self):
         self.shifts = [0, 0]
 
-    def get_shifted_position(self, shifts = None):
+    def get_shifted_position(self, shifts=None):
         # field_shifts = self.field.shifts
         if shifts is None:
             shifts = self.field.field_block.shifts
@@ -691,7 +689,7 @@ class FieldBubble:
                 "x",
                 "y",
                 # "plot_bin_name",
-                # "field_type",
+                # "bubble_field_type",
                 # "bubble_index",
                 # "bubble_dimensions",
             ]
