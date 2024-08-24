@@ -19,13 +19,15 @@ class Template:
         self.template_layout = TemplateLayout(template_path, tuning_config)
         self.template_detector = TemplateDetector(self, tuning_config)
         self.directory_handler = DirectoryHandler(self)
-        
+
         # re-export references for external use
         self.all_field_detection_types = self.template_layout.all_field_detection_types
         self.all_fields = self.template_layout.all_fields
         self.path = self.template_layout.path
         self.apply_preprocessors = self.template_layout.apply_preprocessors
-        self.export_omr_metrics_for_file = self.template_layout.export_omr_metrics_for_file
+        self.export_omr_metrics_for_file = (
+            self.template_layout.export_omr_metrics_for_file
+        )
         # TODO: move some other functions here
 
     def get_exclude_files(self):
@@ -45,6 +47,9 @@ class Template:
     def get_pre_processors(self):
         # return self.template_preprocessing.pre_processors
         return self.template_layout.pre_processors
+
+    def get_pre_processor_names(self):
+        return [pp.__class__.__name__ for pp in self.get_pre_processors()]
 
     # TODO: reduce the number of these getter
     def get_processing_image_shape(self):

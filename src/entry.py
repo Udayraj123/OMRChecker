@@ -54,7 +54,7 @@ def print_config_summary(
     table.add_row("Set Layout Mode ", "ON" if args["setLayout"] else "OFF")
     table.add_row(
         "Markers Detection",
-        "ON" if "CropOnMarkers" in template.get_pre_processors() else "OFF",
+        "ON" if "CropOnMarkers" in template.get_pre_processor_names() else "OFF",
     )
     table.add_row("Detected Template Path", f"{template}")
     if local_config_path:
@@ -64,7 +64,7 @@ def print_config_summary(
 
     table.add_row(
         "Detected pre-processors",
-        f"{[pp.__class__.__name__ for pp in template.get_pre_processors()]}",
+        f"{template.get_pre_processor_names()}",
     )
     table.add_row("Processing Image Shape", f"{template.get_processing_image_shape()}")
 
