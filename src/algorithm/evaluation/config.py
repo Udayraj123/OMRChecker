@@ -24,7 +24,6 @@ from src.utils.logger import console, logger
 from src.utils.math import MathUtils
 from src.utils.parsing import (
     OVERRIDE_MERGER,
-    get_concatenated_response,
     open_evaluation_with_defaults,
     parse_fields,
     parse_float_or_fraction,
@@ -564,16 +563,13 @@ class EvaluationConfigForSet:
                 gray_image,
                 colored_image,
                 template,
-            ) = template.apply_preprocessors(
-                image_path, gray_image, colored_image, template
-            )
+            ) = template.apply_preprocessors(image_path, gray_image, colored_image)
             if gray_image is None:
                 raise Exception(f"Could not read answer key from image {image_path}")
 
-            raw_omr_response = template.read_omr_response(
+            _, concatenated_omr_response = template.read_omr_response(
                 gray_image, colored_image, template, image_path
             )
-            omr_response = get_concatenated_response(raw_omr_response, template)
 
             empty_value = template.global_empty_val
             empty_answer_regex = (
@@ -587,7 +583,9 @@ class EvaluationConfigForSet:
                 empty_answered_questions = [
                     question
                     for question in questions_in_order
-                    if re.search(empty_answer_regex, omr_response[question])
+                    if re.search(
+                        empty_answer_regex, concatenated_omr_response[question]
+                    )
                 ]
                 if len(empty_answered_questions) > 0:
                     logger.error(
@@ -602,11 +600,11 @@ class EvaluationConfigForSet:
                 )
                 questions_in_order = sorted(
                     question
-                    for (question, answer) in omr_response.items()
+                    for (question, answer) in concatenated_omr_response.items()
                     if not re.search(empty_answer_regex, answer)
                 )
             answers_in_order = [
-                omr_response[question] for question in questions_in_order
+                concatenated_omr_response[question] for question in questions_in_order
             ]
             # TODO: save the CSV
         return questions_in_order, answers_in_order
@@ -890,11 +888,13 @@ class EvaluationConfigForSet:
             )
 
     # Public function: Externally called methods with higher abstraction level.
-    def prepare_and_validate_omr_response(self, omr_response, allow_streak=False):
+    def prepare_and_validate_omr_response(
+        self, concatenated_omr_response, allow_streak=False
+    ):
         self.allow_streak = allow_streak
         self.reset_evaluation()
 
-        omr_response_keys = set(omr_response.keys())
+        omr_response_keys = set(concatenated_omr_response.keys())
         all_questions = set(self.questions_in_order)
         missing_questions = sorted(all_questions.difference(omr_response_keys))
         if len(missing_questions) > 0:
@@ -906,7 +906,7 @@ class EvaluationConfigForSet:
             )
 
         prefixed_omr_response_questions = set(
-            [k for k in omr_response.keys() if k.startswith("q")]
+            [k for k in concatenated_omr_response.keys() if k.startswith("q")]
         )
         missing_prefixed_questions = sorted(
             prefixed_omr_response_questions.difference(all_questions)

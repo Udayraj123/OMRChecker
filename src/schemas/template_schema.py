@@ -1,13 +1,18 @@
 from src.processors.constants import (
+    FIELD_DETECTION_TYPES_IN_ORDER,
     MARKER_ZONE_TYPES_IN_ORDER,
     SCANNER_TYPES_IN_ORDER,
     SELECTOR_TYPES_IN_ORDER,
+    FieldDetectionType,
     WarpMethod,
     WarpMethodFlags,
     ZonePreset,
 )
 from src.schemas.constants import load_common_defs
-from src.utils.constants import BUILTIN_BUBBLE_FIELD_TYPES, CUSTOM_FIELD_TYPE
+from src.utils.constants import (
+    BUILTIN_BUBBLE_FIELD_TYPES,
+    CUSTOM_BUBBLE_FIELD_TYPE_PATTERN,
+)
 
 margins_schema_def = {
     "description": "The margins to use around a box",
@@ -285,10 +290,15 @@ _common_field_block_properties = {
         "description": "The custom empty bubble value to use in this field block",
         "type": "string",
     },
-    "fieldType": {
-        "description": "The field type to use from a list of ready-made types as well as the custom type",
+    # TODO: move this as required field down to BUBBLES_THRESHOLD level
+    "bubbleFieldType": {
+        "description": "The bubble field type to use from a list of ready-made types as well as the custom type",
         "type": "string",
         # Note: moved enum validation into setup code
+    },
+    "fieldDetectionType": {
+        "description": "The detection type to use for reading the fields in the block",
+        "enum": FIELD_DETECTION_TYPES_IN_ORDER,
     },
     "alignment": {
         "type": "object",
@@ -314,6 +324,7 @@ _field_type_properties = {
     },
 }
 
+# TODO: separate out the schema for other field types
 _traditional_field_block_properties = {
     **_common_field_block_properties,
     **_field_type_properties,
@@ -351,36 +362,35 @@ many_field_blocks_description_def = {
             "type": "object",
             "required": [
                 "origin",
-                "bubblesGap",
-                "labelsGap",
-                "fieldLabels",
-                "fieldType",
+                "fieldDetectionType",
             ],
             "properties": _common_field_block_properties,
             "allOf": [
                 {
                     "if": {
                         "properties": {
-                            "fieldType": {
-                                "enum": [
-                                    *list(BUILTIN_BUBBLE_FIELD_TYPES.keys()),
+                            "fieldDetectionType": {
+                                "const": FieldDetectionType.BUBBLES_THRESHOLD
+                            },
+                            "bubbleFieldType": {
+                                "oneOf": [
+                                    {
+                                        "enum": [
+                                            *list(BUILTIN_BUBBLE_FIELD_TYPES.keys()),
+                                        ]
+                                    },
+                                    {
+                                        "type": "string",
+                                        "pattern": CUSTOM_BUBBLE_FIELD_TYPE_PATTERN,
+                                    },
                                 ]
-                            }
+                            },
                         },
-                        "required": ["fieldType"],
-                    },
-                    "then": {
-                        "additionalProperties": False,
-                        "properties": _traditional_field_block_properties,
-                    },
-                },
-                {
-                    "if": {
-                        "properties": {"fieldType": {"const": CUSTOM_FIELD_TYPE}},
                         "required": [
-                            "bubbleValues",
-                            "direction",
-                            "fieldType",
+                            "bubbleFieldType",
+                            "bubblesGap",
+                            "labelsGap",
+                            "fieldLabels",
                         ],
                     },
                     "then": {
@@ -390,11 +400,15 @@ many_field_blocks_description_def = {
                 },
                 {
                     "if": {
-                        "properties": {"fieldType": {"const": "BARCODE"}},
+                        "properties": {
+                            "fieldDetectionType": {
+                                "const": FieldDetectionType.BARCODE_QR
+                            }
+                        },
                         # TODO: move barcode specific properties into this if-else
                         "required": [
                             "scanZone",
-                            "fieldType",
+                            "bubbleFieldType",
                             "fieldLabel",
                             # TODO: "failIfNotFound"
                             # "emptyValue",
@@ -409,7 +423,7 @@ many_field_blocks_description_def = {
                         },
                     },
                 },
-                # TODO: support for PHOTO_BLOB, OCR custom fields here
+                # TODO: support for PHOTO_BLOB, OCR custom fields at top level fieldDetectionType
             ],
         }
     },
@@ -1008,8 +1022,8 @@ TEMPLATE_SCHEMA = {
         "customBubbleFieldTypes": {
             "type": "object",
             "patternProperties": {
-                "^CUSTOM_.*$": {
-                    "description": "The key is a unique name for the custom field type. It can override built-in field types as well.",
+                CUSTOM_BUBBLE_FIELD_TYPE_PATTERN: {
+                    "description": "The key is a unique name for the custom bubble field type. It can override built-in field types as well.",
                     "type": "object",
                     "required": [
                         "bubbleValues",

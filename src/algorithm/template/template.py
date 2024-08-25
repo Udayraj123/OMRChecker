@@ -16,19 +16,38 @@ The main interface for interacting with all template json related operations
 
 class Template:
     def __init__(self, template_path, tuning_config):
+        # TODO: load template json file at this level?
+        self.tuning_config = tuning_config
         # template_json =
         self.save_image_ops = SaveImageOps(tuning_config)
-        self.template_layout = TemplateLayout(template_path, tuning_config)
-        self.template_detector = TemplateDetector(self, tuning_config)
+        self.template_layout = TemplateLayout(self, template_path, tuning_config)
+        # TODO: find a better way to couple these
+        self.path = self.template_layout.path
+        self.all_fields = self.template_layout.all_fields
+        self.output_columns = self.template_layout.output_columns
+        self.all_field_detection_types = self.template_layout.all_field_detection_types
+        self.template_detector = TemplateDetector(self)
         self.directory_handler = DirectoryHandler(self)
 
         # re-export references for external use
-        self.all_field_detection_types = self.template_layout.all_field_detection_types
-        self.all_fields = self.template_layout.all_fields
-        self.path = self.template_layout.path
         self.apply_preprocessors = self.template_layout.apply_preprocessors
+        self.field_blocks = self.template_layout.field_blocks
+        # TODO: see if get_concatenated_omr_response should move to template_detector instead
+        self.get_concatenated_omr_response = (
+            self.template_layout.get_concatenated_omr_response
+        )
+        self.path = self.template_layout.path
+        self.template_dimensions = self.template_layout.template_dimensions
 
         # TODO: move some other functions here
+
+    def reset_and_setup_for_directory(self, output_dir, output_mode):
+        """Reset all mutations to the template and setup output directories"""
+        self.template_layout.reset_all_shifts()
+        self.reset_and_setup_outputs(output_dir, output_mode)
+
+    def reset_and_setup_outputs(self, output_dir, output_mode):
+        self.directory_handler.reset_path_utils(output_dir, output_mode)
 
     def get_exclude_files(self):
         excluded_files = []
@@ -53,7 +72,7 @@ class Template:
 
     # TODO: reduce the number of these getter
     def get_processing_image_shape(self):
-        return self.template_preprocessing.processing_image_shape
+        return self.template_layout.processing_image_shape
 
     def get_empty_response_array(self):
         return self.directory_handler.empty_response_array
@@ -69,7 +88,7 @@ class Template:
     def get_results_file(self):
         return self.directory_handler.output_files["Results"]
 
-    # TODO: replace these utils with more dynamic flagged files
+    # TODO: replace these utils with more dynamic flagged files (FileStatsByLabel?)
     def get_multimarked_file(self):
         return self.directory_handler.output_files["MultiMarked"]
 
@@ -100,19 +119,21 @@ class Template:
 
         gray_image, colored_image = ImageUtils.normalize(gray_image, colored_image)
 
-        omr_response = self.template_detector.read_omr_and_update_metrics(
+        raw_omr_response = self.template_detector.read_omr_and_update_metrics(
             file_path, gray_image, colored_image
         )
 
-        return omr_response
+        concatenated_omr_response = self.get_concatenated_omr_response(raw_omr_response)
+
+        return concatenated_omr_response, raw_omr_response
 
     def get_omr_metrics_for_file(self, file_path):
         # This can be used for drawing the bubbles etc
         file_level_interpretation_aggregates = (
             self.template_detector.get_file_level_interpretation_aggregates()
         )
-        is_multi_marked = file_level_interpretation_aggregates[
-            "read_response_flags"["is_multi_marked"]
+        is_multi_marked = file_level_interpretation_aggregates["read_response_flags"][
+            "is_multi_marked"
         ]
         field_label_wise_interpretation_aggregates = (
             file_level_interpretation_aggregates[

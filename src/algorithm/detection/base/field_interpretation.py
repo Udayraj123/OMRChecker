@@ -1,8 +1,3 @@
-"""
-
-"""
-
-
 class FieldInterpretation:
     def __init__(self, tuning_config, field):
         self.tuning_config = tuning_config
@@ -17,3 +12,7 @@ class FieldInterpretation:
 
     def get_field_level_confidence_metrics():
         raise Exception(f"Not implemented")
+
+
+# class FieldInterpretor:
+#     pass

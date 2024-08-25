@@ -1,7 +1,5 @@
 import os
 
-import numpy as np
-
 from src.algorithm.detection.barcode_qr.barcode_qr_detector import BarcodeQRDetector
 from src.algorithm.detection.bubbles_blob.bubbles_blob_detector import (
     BubblesBlobDetector,
@@ -11,30 +9,7 @@ from src.algorithm.detection.bubbles_threshold.bubbles_threshold_detector import
 )
 from src.algorithm.detection.ocr.ocr_detector import OCRDetector
 from src.processors.constants import FieldDetectionType
-from src.utils.parsing import default_dump
-
-
-class StatsByLabel:
-    def __init__(self, *labels):
-        self.label_counts = {label: 0 for label in labels}
-
-    def push(self, label, number=1):
-        if label not in self.label_counts:
-            raise Exception(
-                f"Unknown label passed to stats by label: {label}, allowed labels: {self.label_counts.keys()}"
-            )
-            # self.label_counts[label] = []
-
-        self.label_counts[label] += number
-
-    def to_json(self):
-        return {
-            key: default_dump(getattr(self, key))
-            for key in [
-                "label_counts",
-            ]
-        }
-
+from src.utils.stats import StatsByLabel
 
 """
 Template Detector takes care of detections of an image file using a single template
@@ -60,11 +35,12 @@ class TemplateDetector:
 
     def prepare_field_type_detectors(self):
         template = self.template
-        # TODO: create instances of all required field type detectors
+        # Create instances of all required field type detectors
         self.field_type_detectors = {
             field_detection_type: self.get_field_detector_instance(field_detection_type)
             for field_detection_type in template.all_field_detection_types
         }
+        # List of fields and their mapped detectors
         self.all_field_detectors = [
             (field, self.field_type_detectors[field.field_detection_type])
             for field in template.all_fields
@@ -225,6 +201,7 @@ class TemplateDetector:
 
     def reset_file_level_interpretation_aggregates(self, file_path):
         self.file_level_interpretation_aggregates = {
+            "file_path": file_path,
             "read_response_flags": {
                 "is_multi_marked": False,
                 "multi_marked_fields": [],
@@ -309,7 +286,7 @@ class TemplateDetector:
         field_detection_type_wise_interpretation_aggregates = {}
         for field_type_detector in self.field_type_detectors.values():
             # Note: This would contain confidence_metrics_for_file
-            field_type_detector.update_file_level_interpretation_aggregates()
+            field_type_detector.finalize_file_level_interpretation_aggregates()
             field_detection_type_wise_interpretation_aggregates[
                 field_type_detector.field_detection_type
             ] = field_type_detector.get_file_level_interpretation_aggregates()
@@ -337,15 +314,9 @@ class TemplateDetector:
 
         # confidence_metrics_for_file = self.file_level_interpretation_aggregates["field_detection_type_wise_interpretation_aggregates"]["confidence_metrics_for_file"]
 
-    def reset_file_level_interpretation_aggregates(self, file_path):
-        self.file_level_interpretation_aggregates = {
-            "file_path": file_path,
-            "read_response_flags": None,
-        }
-
     def finalize_directory_metrics(self):
         # TODO: get_directory_level_confidence_metrics()
 
-        output_metrics = self.directory_level_aggregates
+        # output_metrics = self.directory_level_aggregates
         # TODO: export directory level stats here
         pass

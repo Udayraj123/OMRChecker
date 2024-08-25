@@ -1,7 +1,9 @@
 import os
+from copy import copy as shallowcopy
 
+from src.processors.constants import FieldDetectionType
 from src.processors.manager import PROCESSOR_MANAGER
-from src.utils.constants import BUILTIN_BUBBLE_FIELD_TYPES, CUSTOM_FIELD_TYPE
+from src.utils.constants import BUILTIN_BUBBLE_FIELD_TYPES
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -14,11 +16,10 @@ from src.utils.parsing import (
 
 
 class TemplateLayout:
-    def __init__(self, template_path, tuning_config):
+    def __init__(self, template, template_path, tuning_config):
         self.path = template_path
-        # TODO: fill these for external use
-        # self.fields = []
-        # self.all_field_detection_types = []
+        self.template = template
+        self.tuning_config = tuning_config
 
         json_object = open_template_with_defaults(template_path)
         (
@@ -66,7 +67,7 @@ class TemplateLayout:
 
         self.parse_custom_field_types(custom_field_types)
         self.validate_field_blocks(field_blocks_object)
-        self.setup_field_blocks(field_blocks_object)
+        self.setup_layout(field_blocks_object)
 
         self.parse_custom_labels(custom_labels_object)
 
@@ -81,7 +82,7 @@ class TemplateLayout:
         self.validate_template_columns(non_custom_columns, all_custom_columns)
 
         # TODO: this is dependent on other calls to finish
-        self.setup_alignment(alignment_object, template_path.parent, tuning_config)
+        self.setup_alignment(alignment_object, template_path.parent)
 
     def get_copy_for_shifting(self):
         # Copy template for this instance op
@@ -94,28 +95,26 @@ class TemplateLayout:
         return template_layout
 
     # TODO: separate out preprocessing?
-    def apply_preprocessors(
-        self, file_path, gray_image, colored_image, original_template_layout
-    ):
+    def apply_preprocessors(self, file_path, gray_image, colored_image):
         config = self.tuning_config
 
-        template_layout = original_template_layout.get_copy_for_shifting()
+        next_template_layout = self.get_copy_for_shifting()
 
-        # Reset the shifts in the copied template_layout
-        template_layout.reset_all_shifts()
+        # Reset the shifts in the copied next_template_layout
+        next_template_layout.reset_all_shifts()
 
         # resize to conform to common preprocessor input requirements
         gray_image = ImageUtils.resize_to_shape(
-            gray_image, template_layout.processing_image_shape
+            gray_image, next_template_layout.processing_image_shape
         )
         if config.outputs.colored_outputs_enabled:
             colored_image = ImageUtils.resize_to_shape(
-                colored_image, template_layout.processing_image_shape
+                colored_image, next_template_layout.processing_image_shape
             )
 
         show_preprocessors_diff = config.outputs.show_preprocessors_diff
         # run pre_processors in sequence
-        for pre_processor in template_layout.pre_processors:
+        for pre_processor in next_template_layout.pre_processors:
             pre_processor_name = pre_processor.get_class_name()
 
             # Show Before Preview
@@ -135,7 +134,7 @@ class TemplateLayout:
                 colored_image,
                 next_template_layout,
             ) = pre_processor.resize_and_apply_filter(
-                gray_image, colored_image, template_layout, file_path
+                gray_image, colored_image, next_template_layout, file_path
             )
             gray_image = out_omr
             template_layout = next_template_layout
@@ -193,10 +192,7 @@ class TemplateLayout:
     def validate_field_blocks(self, field_blocks_object):
         for block_name, field_block_object in field_blocks_object.items():
             bubble_field_type = field_block_object["bubbleFieldType"]
-            if (
-                bubble_field_type not in self.bubble_field_types_data
-                and bubble_field_type != CUSTOM_FIELD_TYPE
-            ):
+            if bubble_field_type not in self.bubble_field_types_data:
                 logger.critical(
                     f"Cannot find definition for {bubble_field_type} in customBubbleFieldTypes"
                 )
@@ -205,7 +201,8 @@ class TemplateLayout:
                 )
 
     # TODO: move out to template_alignment.py
-    def setup_alignment(self, alignment_object, relative_dir, tuning_config):
+    def setup_alignment(self, alignment_object, relative_dir):
+        tuning_config = self.tuning_config
         self.alignment = alignment_object
         self.alignment["margins"] = alignment_object["margins"]
         self.alignment["reference_image_path"] = None
@@ -232,7 +229,7 @@ class TemplateLayout:
                 self.alignment["reference_image_path"],
                 gray_alignment_image,
                 colored_alignment_image,
-                self,
+                self.template,
             )
             # Pre-processed alignment image
             self.alignment["gray_alignment_image"] = processed_gray_alignment_image
@@ -240,14 +237,25 @@ class TemplateLayout:
                 "colored_alignment_image"
             ] = processed_colored_alignment_image
 
-    def setup_field_blocks(self, field_blocks_object):
+    def setup_layout(self, field_blocks_object):
+        # TODO: try for better readability here
+        self.all_fields = []
+        all_field_detection_types = set()
+        # TODO: see if labels part can be moved out of template layout?
+        self.all_parsed_labels = set()
         # Add field_blocks
         self.field_blocks = []
-        self.all_parsed_labels = set()
         # TODO: add support for parsing "conditionalSets" with their matcher
         for block_name, field_block_object in field_blocks_object.items():
-            self.parse_and_add_field_block(block_name, field_block_object)
+            block_instance = self.parse_and_add_field_block(
+                block_name, field_block_object
+            )
+            self.all_fields.extend(block_instance.fields)
+            all_field_detection_types.add(block_instance.field_detection_type)
 
+        self.all_field_detection_types = list(all_field_detection_types)
+
+    # TODO: see if labels part can be moved out of template layout?
     def parse_custom_labels(self, custom_labels_object):
         all_parsed_custom_labels = set()
         self.custom_labels = {}
@@ -281,6 +289,18 @@ class TemplateLayout:
         self.non_custom_labels = self.all_parsed_labels.difference(
             all_parsed_custom_labels
         )
+
+    def get_concatenated_omr_response(self, raw_omr_response):
+        # Multi-column/multi-row questions which need to be concatenated
+        concatenated_omr_response = {}
+        for field_label, concatenate_keys in self.custom_labels.items():
+            custom_label = "".join([raw_omr_response[k] for k in concatenate_keys])
+            concatenated_omr_response[field_label] = custom_label
+
+        for field_label in self.non_custom_labels:
+            concatenated_omr_response[field_label] = raw_omr_response[field_label]
+
+        return concatenated_omr_response
 
     def fill_output_columns(self, non_custom_columns, all_custom_columns):
         all_template_columns = non_custom_columns + all_custom_columns
@@ -321,17 +341,15 @@ class TemplateLayout:
         # TODO: support custom field types like Barcode and OCR
         self.field_blocks.append(block_instance)
         self.validate_parsed_labels(field_block_object["fieldLabels"], block_instance)
+        return block_instance
 
     def pre_fill_field_block(self, field_block_object):
-        bubble_field_type = field_block_object.get("bubbleFieldType", CUSTOM_FIELD_TYPE)
-        #  TODO: support for if bubble_field_type == "BARCODE":
-
-        if bubble_field_type in self.bubble_field_types_data:
-            field_type_data = self.bubble_field_types_data[bubble_field_type]
-            field_block_object = {
-                **field_block_object,
-                **field_type_data,
-            }
+        bubble_field_type = field_block_object["bubbleFieldType"]
+        field_type_data = self.bubble_field_types_data[bubble_field_type]
+        field_block_object = {
+            **field_block_object,
+            **field_type_data,
+        }
 
         return {
             "bubbleFieldType": bubble_field_type,
@@ -377,18 +395,10 @@ class TemplateLayout:
                 f"Overflowing field block '{block_name}' with origin {block_instance.origin} and dimensions {block_instance.dimensions} in template with dimensions {self.template_dimensions}"
             )
 
-    def reset_and_setup_for_directory(self, output_dir, output_mode):
-        """Reset all mutations to the template, and setup output directories"""
-        self.reset_all_shifts()
-        self.reset_and_setup_outputs(output_dir, output_mode)
-
     def reset_all_shifts(self):
         # Note: field blocks offset is static and independent of "shifts"
         for field_block in self.field_blocks:
             field_block.reset_all_shifts()
-
-    def reset_and_setup_outputs(self, output_dir, output_mode):
-        self.directory_handler.reset_path_utils(output_dir, output_mode)
 
     def __str__(self):
         return str(self.path)
@@ -458,6 +468,7 @@ class FieldBlock:
             direction,
             field_labels,
             bubble_field_type,
+            field_detection_type,
             labels_gap,
             origin,
             empty_value,
@@ -470,45 +481,55 @@ class FieldBlock:
                 "bubblesGap",
                 "direction",
                 "fieldLabels",
-                "fieldType",
+                "bubbleFieldType",
+                "fieldDetectionType",
                 "labelsGap",
                 "origin",
                 "emptyValue",
             ],
         )
+        self.field_detection_type = field_detection_type
         self.parsed_field_labels = parse_fields(
             f"Field Block Labels: {self.name}", field_labels
         )
         offset_x, offset_y = field_blocks_offset
         self.origin = [origin[0] + offset_x, origin[1] + offset_y]
-        self.bubble_dimensions = bubble_dimensions
-        self.empty_value = empty_value
-        self.direction = direction
-        self.bubbles_gap = bubbles_gap
-        self.labels_gap = labels_gap
-        # TODO: support barcode, ocr, etc custom field types
-        # TODO: add a way to distinguish two CUSTOM_FIELD_TYPE (using an index prefix?)
-        self.bubble_field_type = bubble_field_type
-        self.setup_alignment(alignment_object)
 
-        self.calculate_block_dimensions(
-            bubble_dimensions,
-            bubble_values,
-            bubbles_gap,
-            direction,
-            labels_gap,
-        )
-        field_block = self
-        self.generate_bubble_grid(
-            bubble_dimensions,
-            bubble_values,
-            bubbles_gap,
-            direction,
-            empty_value,
-            field_block,
-            bubble_field_type,
-            labels_gap,
-        )
+        # TODO: conditionally set below items based on field
+        if field_detection_type == FieldDetectionType.BUBBLES_THRESHOLD:
+            self.bubble_dimensions = bubble_dimensions
+            self.empty_value = empty_value
+            self.direction = direction
+            self.bubbles_gap = bubbles_gap
+            self.labels_gap = labels_gap
+            self.bubble_field_type = bubble_field_type
+            self.setup_alignment(alignment_object)
+
+            self.calculate_block_dimensions(
+                bubble_dimensions,
+                bubble_values,
+                bubbles_gap,
+                direction,
+                labels_gap,
+            )
+
+            # TODO: refactor this dependency
+            field_block = self
+            self.generate_bubble_grid(
+                bubble_dimensions,
+                bubble_values,
+                bubbles_gap,
+                direction,
+                empty_value,
+                field_block,
+                bubble_field_type,
+                field_detection_type,
+                labels_gap,
+            )
+        # elif field_detection_type == FieldDetectionType.OCR:
+        #     pass
+        # TODO: support barcode, ocr, etc custom field types
+        return
 
     def setup_alignment(self, alignment_object):
         DEFAULT_ALIGNMENT = {
@@ -550,6 +571,7 @@ class FieldBlock:
         empty_value,
         field_block,
         bubble_field_type,
+        field_detection_type,
         labels_gap,
     ):
         field_block = self
@@ -562,13 +584,14 @@ class FieldBlock:
             self.fields.append(
                 Field(
                     bubble_dimensions,
+                    bubble_field_type,
                     bubble_values,
                     bubbles_gap,
                     direction,
                     empty_value,
                     field_block,
+                    field_detection_type,
                     field_label,
-                    bubble_field_type,
                     origin,
                 )
             )
@@ -584,15 +607,17 @@ class Field:
     def __init__(
         self,
         bubble_dimensions,
+        bubble_field_type,
         bubble_values,
         bubbles_gap,
         direction,
         empty_value,
         field_block,
+        field_detection_type,
         field_label,
-        bubble_field_type,
         origin,
     ):
+        self.field_detection_type = field_detection_type
         self.bubble_dimensions = bubble_dimensions
         self.bubble_values = bubble_values
         self.bubbles_gap = bubbles_gap
@@ -648,7 +673,7 @@ class FieldBubble:
     It can also correspond to a single digit of integer type Q (eg q5d1)
     """
 
-    def __init__(self, bubble_origin, bubble_index, bubble_value, field):
+    def __init__(self, bubble_index, bubble_origin, bubble_value, field):
         self.field = field
         self.field_label = field.field_label
         self.bubble_field_type = field.bubble_field_type

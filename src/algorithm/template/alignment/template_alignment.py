@@ -1,10 +1,11 @@
-from src.algorithm.alignment.k_nearest_interpolation import (
+from src.algorithm.template.alignment.k_nearest_interpolation import (
     apply_k_nearest_interpolation_inplace,
 )
 from src.utils.image import ImageUtils
 from src.utils.logger import logger
 
 
+# TODO: move into template class
 def apply_template_alignment(gray_image, colored_image, template, config):
     if "gray_alignment_image" not in template.alignment:
         logger.info(f"Note: Alignment not enabled for template {template}")

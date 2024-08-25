@@ -1,8 +1,10 @@
 import cv2
 import numpy as np
 
-from src.algorithm.alignment.piecewise_affine_delaunay import apply_piecewise_affine
-from src.algorithm.alignment.utils import show_displacement_overlay
+from src.algorithm.template.alignment.piecewise_affine_delaunay import (
+    apply_piecewise_affine,
+)
+from src.algorithm.template.alignment.utils import show_displacement_overlay
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 from src.utils.math import MathUtils

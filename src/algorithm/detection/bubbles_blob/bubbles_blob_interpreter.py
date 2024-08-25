@@ -1,7 +1,7 @@
-from src.algorithm.detection.field import FieldInterpreter
+from src.algorithm.detection.base.field_interpretation import FieldInterpretation
 
 
-class BarcodeInterpreter(FieldInterpreter):
+class BarcodeInterpretation(FieldInterpretation):
     def __init__(self, field, field_block):
         super().__init__(field, field_block)
 
@@ -12,4 +12,3 @@ class BarcodeInterpreter(FieldInterpreter):
 
     def get_field_level_confidence_metrics(self):
         return {"Barcode": "TODO"}
-

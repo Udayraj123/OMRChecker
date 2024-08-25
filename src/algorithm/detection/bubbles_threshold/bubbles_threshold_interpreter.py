@@ -1,19 +1,13 @@
-import functools
 import math
 import random
 import re
 
-import cv2
 import numpy as np
 from matplotlib import colormaps, pyplot
 
-from src.algorithm.detection.base import FieldInterpretation
-from src.algorithm.detection.base.field_interpreter import FieldInterpretation
-from src.algorithm.detection.base.field_type_detector import FieldTypeDetector
-from src.algorithm.template.template_detector import StatsByLabel
+from src.algorithm.detection.base.field_interpretation import FieldInterpretation
 from src.processors.constants import FieldDetectionType
 from src.utils.logger import logger
-from src.utils.parsing import default_dump
 
 
 class BubbleInterpretation:
@@ -32,13 +26,9 @@ class BubbleInterpretation:
         return is_marked
 
 
-class FieldInterpretor:
-    pass
-
-
-class BubblesFieldInterpretor(FieldInterpretor):
-    # TODO: need one class that keeps directory level aggregates
-    pass
+# class BubblesFieldInterpretor(FieldInterpretor):
+#     # TODO: need one class that keeps directory level aggregates
+#     pass
 
 
 class BubblesFieldInterpretation(FieldInterpretation):
@@ -56,8 +46,10 @@ class BubblesFieldInterpretation(FieldInterpretation):
         ]
 
         # TODO: try out using additional fallbacks available
-        # file_level_interpretation_aggregates["field_label_wise_local_thresholds"][field_label].running_average
-        # file_level_interpretation_aggregates["bubble_field_type_wise_thresholds"][field.bubble_field_type].running_average
+        # file_level_average_threshold = file_level_interpretation_aggregates["all_fields_local_thresholds"].running_average
+        # bubble_field_type_average_threshold =file_level_interpretation_aggregates["bubble_field_type_wise_thresholds"][field.bubble_field_type].running_average
+        # directory_level_bubble_field_type_average_threshold = directory_level_interpretation_aggregates["bubble_field_type_wise_thresholds"][field.bubble_field_type].running_average
+        # directory_level_field_label_average_threshold = directory_level_interpretation_aggregates["field_label_wise_local_thresholds"][field_label].running_average
 
         self.outlier_deviation_threshold_for_file = file_level_detection_aggregates[
             "outlier_deviation_threshold_for_file"
@@ -101,10 +93,10 @@ class BubblesFieldInterpretation(FieldInterpretation):
         )
 
         (
-            local_threshold_for_field,
-            local_max_jump,
+            self.local_threshold_for_field,
+            self.local_max_jump,
         ) = self.get_local_threshold(
-            # TODO: self args
+            # TODO: self args?
             self.field_bubble_means,
             self.file_level_fallback_threshold,
             no_outliers,
@@ -112,23 +104,23 @@ class BubblesFieldInterpretation(FieldInterpretation):
             plot_title=f"Mean Intensity Barplot for {field.field_label}.block",
             plot_show=config.outputs.show_image_level >= 7,
         )
-        self.local_threshold_for_field = local_threshold_for_field
 
         self.field_bubble_interpretations = []
-        # Main detection logic:
+
+        # Main detection/thresholding logic here:
         for field_bubble_mean in self.field_bubble_means:
             self.field_bubble_interpretations.append(
-                BubbleInterpretation(field_bubble_mean, local_threshold_for_field)
+                BubbleInterpretation(field_bubble_mean, self.local_threshold_for_field)
             )
 
-        # TODO: call from FieldInterpreter?
+        # TODO: call from FieldInterpretation (directory level)?
         self.confidence_metrics_for_field = self.get_field_level_confidence_metrics(
             field,
             self.field_bubble_means,
             config,
-            local_threshold_for_field,
+            self.local_threshold_for_field,
             self.file_level_fallback_threshold,
-            local_max_jump,
+            self.local_max_jump,
             self.global_max_jump,
         )
 
@@ -572,27 +564,3 @@ class BubblesFieldInterpretation(FieldInterpretation):
             "field_label": field.field_label,
         }
         return confidence_metrics
-
-    # deprecate
-    def update_field_level_aggregates(self, file_aggregate_params, omr_response):
-        field_label, local_threshold_for_field = (
-            self.field_label,
-            self.local_threshold_for_field,
-        )
-        local_thresholds = file_aggregate_params["local_thresholds"]
-        local_thresholds["running_total"] += local_threshold_for_field
-        local_thresholds["processed_fields_count"] += 1
-        local_thresholds["running_average"] = (
-            local_thresholds["running_total"]
-            / local_thresholds["processed_fields_count"]
-        )
-
-        read_response_flags = file_aggregate_params["read_response_flags"]
-
-        # Check for multi_marked for the before-concatenations case
-        if len(self.marked_bubbles) > 1:
-            read_response_flags["multi_marked"] = True
-            read_response_flags["multi_marked_fields"][
-                field_label
-            ] = self.marked_bubbles
-        # TODO: more field level validations here

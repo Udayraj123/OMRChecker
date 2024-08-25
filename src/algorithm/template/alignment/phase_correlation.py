@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from src.algorithm.alignment.utils import show_displacement_overlay
+from src.algorithm.template.alignment.utils import show_displacement_overlay
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 

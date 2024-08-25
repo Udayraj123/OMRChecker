@@ -1,4 +1,3 @@
-import json
 import os
 from csv import QUOTE_NONNUMERIC
 from time import localtime, strftime
@@ -10,21 +9,22 @@ from src.utils.logger import logger
 
 
 class DirectoryHandler:
-    def __init__(self):
+    def __init__(self, template):
+        self.template = template
         self.path_utils = None
 
     def reset_path_utils(self, output_dir, output_mode):
         # Override the paths utils
         self.path_utils = PathUtils(output_dir)
         self.path_utils.create_output_directories()
-        self.setup_outputs_namespace(self, output_mode)
+        self.setup_outputs_namespace(output_mode)
 
     def setup_outputs_namespace(self, output_mode):
         logger.info("Checking Files...")
         self.omr_response_columns = (
-            list(self.all_parsed_labels)
+            list(self.template.all_parsed_labels)
             if output_mode == "moderation"
-            else self.output_columns
+            else self.template.output_columns
         )
 
         # Include current output paths

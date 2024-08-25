@@ -82,14 +82,40 @@
       "q20_2"
     ]
   },
-  "fieldBlocks": {
-    "Squad": {
-      "fieldType": "CUSTOM_BUBBLES",
+  "customBubbleFieldTypes": {
+    "CUSTOM_SQUAD": {
       "bubbleValues": [
         "J",
         "H"
       ],
-      "direction": "vertical",
+      "direction": "vertical"
+    },
+    "CUSTOM_MEDIUM_1": {
+      "bubbleValues": [
+        "E",
+        "H"
+      ],
+      "direction": "vertical"
+    },
+    "CUSTOM_MEDIUM_2": {
+      "bubbleValues": [
+        "R",
+        "E"
+      ],
+      "direction": "vertical"
+    },
+    "CUSTOM_SET_CODE": {
+      "bubbleValues": [
+        "A",
+        "B"
+      ],
+      "direction": "horizontal"
+    }
+  },
+  "fieldBlocks": {
+    "Squad": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_SQUAD",
       "origin": [
         204,
         274
@@ -101,12 +127,8 @@
       ]
     },
     "Medium_1": {
-      "fieldType": "CUSTOM_BUBBLES",
-      "bubbleValues": [
-        "E",
-        "H"
-      ],
-      "direction": "vertical",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_MEDIUM_1",
       "origin": [
         204,
         274
@@ -118,12 +140,8 @@
       ]
     },
     "Medium_2": {
-      "fieldType": "CUSTOM_BUBBLES",
-      "bubbleValues": [
-        "R",
-        "E"
-      ],
-      "direction": "vertical",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_MEDIUM_2",
       "origin": [
         258,
         274
@@ -135,7 +153,8 @@
       ]
     },
     "Roll": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         308,
         274
@@ -147,7 +166,8 @@
       ]
     },
     "Int1": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         938,
         274
@@ -160,7 +180,8 @@
       ]
     },
     "Int2": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         1104,
         274
@@ -173,7 +194,8 @@
       ]
     },
     "Int3": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         1270,
         274
@@ -186,7 +208,8 @@
       ]
     },
     "Int4": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         1437,
         271
@@ -199,7 +222,8 @@
       ]
     },
     "Int5": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         1602,
         271
@@ -212,7 +236,8 @@
       ]
     },
     "Mcq1": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         198,
         840
@@ -224,7 +249,8 @@
       ]
     },
     "Mcq2": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         198,
         1114
@@ -236,7 +262,8 @@
       ]
     },
     "Mcq3": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         570,
         840
@@ -248,12 +275,8 @@
       ]
     },
     "Mcq4": {
-      "fieldType": "CUSTOM_BUBBLES",
-      "bubbleValues": [
-        "A",
-        "B"
-      ],
-      "direction": "horizontal",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_SET_CODE",
       "origin": [
         638,
         1175
@@ -265,7 +288,8 @@
       ]
     },
     "Int6": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         930,
         929
@@ -278,7 +302,8 @@
       ]
     },
     "Int7": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         1099,
         929
@@ -291,7 +316,8 @@
       ]
     },
     "Int8": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         1265,
         929
@@ -304,7 +330,8 @@
       ]
     },
     "Int9": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         1430,
         927
@@ -317,7 +344,8 @@
       ]
     },
     "Int10": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         1602,
         927

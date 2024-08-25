@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.algorithm.alignment.sift_matcher import SiftMatcher
+from src.algorithm.template.alignment.sift_matcher import SiftMatcher
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.math import MathUtils

@@ -20,7 +20,8 @@
   ],
   "fieldBlocks": {
     "MCQBlock1": {
-      "fieldType": "QTYPE_MCQ5",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ5",
       "origin": [
         65,
         79

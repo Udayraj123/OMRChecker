@@ -10,7 +10,8 @@
   "preProcessors": [],
   "fieldBlocks": {
     "MCQBlock1": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         78,
         41

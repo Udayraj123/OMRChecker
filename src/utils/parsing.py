@@ -34,19 +34,6 @@ OVERRIDE_MERGER = Merger(
 )
 
 
-def get_concatenated_response(raw_omr_response, template):
-    # Multi-column/multi-row questions which need to be concatenated
-    concatenated_response = {}
-    for field_label, concatenate_keys in template.custom_labels.items():
-        custom_label = "".join([raw_omr_response[k] for k in concatenate_keys])
-        concatenated_response[field_label] = custom_label
-
-    for field_label in template.non_custom_labels:
-        concatenated_response[field_label] = raw_omr_response[field_label]
-
-    return concatenated_response
-
-
 def open_config_with_defaults(config_path):
     user_tuning_config = load_json(config_path)
     user_tuning_config = OVERRIDE_MERGER.merge(

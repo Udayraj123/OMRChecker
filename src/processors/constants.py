@@ -109,7 +109,12 @@ FieldDetectionType = DotMap(
     },
     _dynamic=False,
 )
-
+FIELD_DETECTION_TYPES_IN_ORDER = [
+    FieldDetectionType.BUBBLES_THRESHOLD,
+    FieldDetectionType.BUBBLES_BLOB,
+    FieldDetectionType.OCR,
+    FieldDetectionType.BARCODE_QR,
+]
 ScannerType = DotMap(
     {
         "PATCH_DOT": "PATCH_DOT",

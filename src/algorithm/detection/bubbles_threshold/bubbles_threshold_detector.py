@@ -1,22 +1,16 @@
 import functools
-import math
-import random
-import re
 
 import cv2
 import numpy as np
-from matplotlib import colormaps, pyplot
 
-from src.algorithm.detection.base.field_interpreter import FieldInterpretation
 from src.algorithm.detection.base.field_type_detector import FieldTypeDetector
 from src.algorithm.detection.bubbles_threshold.bubbles_threshold_interpreter import (
-    BubbleInterpretation,
     BubblesFieldInterpretation,
 )
-from src.algorithm.template.template_detector import StatsByLabel
 from src.processors.constants import FieldDetectionType
 from src.utils.logger import logger
 from src.utils.parsing import default_dump
+from src.utils.stats import StatsByLabel
 
 
 @functools.total_ordering
@@ -43,7 +37,7 @@ class MeanValueItem:
         return self.mean_value < other.mean_value
 
 
-# TODO: merge with FieldInterpreter?
+# TODO: merge with FieldInterpretation/BubbleInterpretation?
 class BubbleMeanValue(MeanValueItem):
     def __init__(self, mean_value, unit_bubble):
         super().__init__(mean_value, unit_bubble)
@@ -64,9 +58,10 @@ class BubbleMeanValue(MeanValueItem):
         return f"{self.item_reference} : {round(self.mean_value, 2)} {'*' if self.is_marked else ''}"
 
 
-# TODO: see if this one can be merged in above
 class FieldStdMeanValue(MeanValueItem):
-    def __init__(self, mean_value, item_reference):
+    def __init__(self, field_bubble_means, item_reference):
+        mean_value = round(np.std([item.mean_value for item in field_bubble_means]), 2)
+
         super().__init__(mean_value, item_reference)
 
     def to_json(self):
@@ -106,12 +101,11 @@ class NumberAggregate:
         }
 
 
+# TODO: "lift up" some skeleton of this detector to be used by other detectors
 class BubblesThresholdDetector(FieldTypeDetector):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.field_detection_type = FieldDetectionType.BUBBLES_THRESHOLD
-        # TODO: use local_threshold from here
-        # self.local_threshold = None
 
     def reset_directory_level_aggregates(self):
         self.directory_level_aggregates = {
@@ -168,7 +162,6 @@ class BubblesThresholdDetector(FieldTypeDetector):
         #     bubble_field_type = field.bubble_field_type
         #     field_wise_means_and_refs = field_detection_aggregates["field_bubble_means"].values()
         #
-        #     # TODO: handle CUSTOM_FIELD_TYPE separately
         #     if bubble_field_type not in bubble_field_type_wise_thresholds:
         #         bubble_field_type_wise_thresholds[bubble_field_type] = NumberAggregate()
 
@@ -182,6 +175,7 @@ class BubblesThresholdDetector(FieldTypeDetector):
             "outlier_deviation_threshold_for_file": outlier_deviation_threshold_for_file,
             "field_label_wise_local_thresholds": {},
             "bubble_field_type_wise_thresholds": {},
+            "all_fields_local_thresholds": NumberAggregate(),
             "field_wise_confidence_metrics": None,
             "confidence_metrics_for_file": None,
             "fields_count": StatsByLabel("processed"),
@@ -277,14 +271,10 @@ class BubblesThresholdDetector(FieldTypeDetector):
         return self.field_level_detection_aggregates
 
     def update_detection_aggregates_on_processed_field(self, field, field_bubble_means):
-        field_label, bubble_field_type = field.field_label, field.bubble_field_type
+        field_label = field.field_label
         # self.file_level_detection_aggregates["fields_count"].push("processed")
 
-        field_bubble_means_std = round(
-            np.std([item.mean_value for item in field_bubble_means]), 2
-        )
-
-        field_bubble_means_std = FieldStdMeanValue(field_bubble_means_std, field)
+        field_bubble_means_std = FieldStdMeanValue(field_bubble_means, field)
 
         # update_field_level_detection_aggregates
         self.field_level_detection_aggregates = {
@@ -317,7 +307,7 @@ class BubblesThresholdDetector(FieldTypeDetector):
     def get_field_level_interpretation_aggregates(self):
         return self.field_level_interpretation_aggregates
 
-    def update_file_level_interpretation_aggregates(self, file_path):
+    def finalize_file_level_interpretation_aggregates(self, file_path):
         confidence_metrics_for_file = {}
         # TODO: confidence_metrics_for_file
         self.file_level_interpretation_aggregates[
@@ -327,20 +317,24 @@ class BubblesThresholdDetector(FieldTypeDetector):
         # self.directory_level_aggregates["file_level_interpretation_aggregates"][file_path] = self.file_level_interpretation_aggregates
 
     def update_field_level_interpretation_aggregates(self, field, field_interpretation):
+        # TODO: move this into the same class? or call this function from inside field_interpretation?
         self.field_level_interpretation_aggregates = {
             "field": field,
-            # TODO: move this into the same class? or call this function from inside?
             "is_multi_marked": field_interpretation.is_multi_marked,
             "confidence_metrics_for_field": field_interpretation.confidence_metrics_for_field,
             "local_threshold_for_field": field_interpretation.local_threshold_for_field,
             "field_bubble_interpretations": field_interpretation.field_bubble_interpretations,
         }
 
+        self.file_level_interpretation_aggregates["all_fields_local_thresholds"].push(
+            field_interpretation.local_threshold_for_field
+        )
+
         # TODO: update field_label_wise_local_thresholds
         # TODO: update bubble_field_type_wise_thresholds
 
         # self.file_level_interpretation_aggregates[][field_label] = self.field_level_interpretation_aggregates
 
-        # fields count++
+        # fields count++ for field_detection_type(self) and bubble_field_type
         self.file_level_interpretation_aggregates["fields_count"].push("processed")
         # self.file_level_interpretation_aggregates["fields_count"].push(field.bubble_field_type)

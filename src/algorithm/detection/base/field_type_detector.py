@@ -12,6 +12,7 @@ class FieldTypeDetector:
         # Expected to be set by the child class
         self.field_detection_type = None
 
+    # TODO: update the skeleton as per latest info
     def setup_directory_metrics():
         raise Exception(f"Not implemented")
 
@@ -28,5 +29,5 @@ class FieldTypeDetector:
         raise Exception(f"Not implemented")
 
     def get_field_interpretation():
-        # Returns an instance of FieldInterpreter
+        # Returns an instance of FieldInterpretation
         raise Exception(f"Not implemented")

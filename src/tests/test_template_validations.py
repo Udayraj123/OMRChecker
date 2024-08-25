@@ -61,7 +61,7 @@ def test_empty_template(mocker):
 
 def test_invalid_field_type(mocker):
     def modify_template(template):
-        template["fieldBlocks"]["MCQ_Block_1"]["fieldType"] = "X"
+        template["fieldBlocks"]["MCQ_Block_1"]["bubbleFieldType"] = "X"
 
     print("\nExpecting invalid template json error logs:")
     _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
