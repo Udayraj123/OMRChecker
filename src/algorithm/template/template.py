@@ -23,23 +23,38 @@ class Template:
         self.template_layout = TemplateLayout(self, template_path, tuning_config)
         # TODO: find a better way to couple these
         self.path = self.template_layout.path
+        self.alignment = self.template_layout.alignment
         self.all_fields = self.template_layout.all_fields
         self.output_columns = self.template_layout.output_columns
         self.all_field_detection_types = self.template_layout.all_field_detection_types
-        self.template_detector = TemplateDetector(self)
-        self.directory_handler = DirectoryHandler(self)
 
         # re-export references for external use
-        self.apply_preprocessors = self.template_layout.apply_preprocessors
         self.field_blocks = self.template_layout.field_blocks
         # TODO: see if get_concatenated_omr_response should move to template_detector instead
         self.get_concatenated_omr_response = (
             self.template_layout.get_concatenated_omr_response
         )
-        self.path = self.template_layout.path
         self.template_dimensions = self.template_layout.template_dimensions
 
-        # TODO: move some other functions here
+        self.template_detector = TemplateDetector(self)
+        self.directory_handler = DirectoryHandler(self)
+
+    # TODO: move some other functions here
+    def apply_preprocessors(self, file_path, gray_image, colored_image):
+        (
+            gray_image,
+            colored_image,
+            next_template_layout,
+        ) = self.template_layout.apply_preprocessors(
+            file_path, gray_image, colored_image
+        )
+        self.template_layout = next_template_layout
+        # TODO: decide how shallow copy is handled now.
+        next_template = self
+        return gray_image, colored_image, next_template
+
+    def __str__(self):
+        return str(self.path)
 
     def reset_and_setup_for_directory(self, output_dir, output_mode):
         """Reset all mutations to the template and setup output directories"""
@@ -82,7 +97,6 @@ class Template:
         for field in self.directory_handler.omr_response_columns:
             omr_response_array.append(output_omr_response[field])
 
-        self.directory_handler.OUTPUT_SET.append([file_name] + omr_response_array)
         return omr_response_array
 
     def get_results_file(self):
@@ -108,6 +122,9 @@ class Template:
         return self.directory_handler.path_utils.errors_dir
 
     def read_omr_response(self, input_gray_image, colored_image, file_path):
+        # Convert posix path to string
+        file_path = str(file_path)
+
         # Note: resize also creates a copy
         gray_image, colored_image = ImageUtils.resize_to_dimensions(
             self.template_dimensions, input_gray_image, colored_image
@@ -142,25 +159,29 @@ class Template:
         )
 
         # TODO: temp logic until template drawing is not migrated -
-        field_number_to_field_bubble_means = []
+        field_number_to_field_bubble_interpretation = []
         for field in self.all_fields:
             field_detection_type, field_label = (
                 field.field_detection_type,
                 field.field_label,
             )
             if field_detection_type == FieldDetectionType.BUBBLES_THRESHOLD:
-                field_bubble_means = field_label_wise_interpretation_aggregates[
-                    field_label
-                ]["field_bubble_means"]
-                field_number_to_field_bubble_means.append(field_bubble_means)
+                field_bubble_interpretations = (
+                    field_label_wise_interpretation_aggregates[field_label][
+                        "field_bubble_interpretations"
+                    ]
+                )
+                field_number_to_field_bubble_interpretation.append(
+                    field_bubble_interpretations
+                )
 
-        return is_multi_marked, field_number_to_field_bubble_means
+        return is_multi_marked, field_number_to_field_bubble_interpretation
 
     # TODO: figure out a structure to output directory metrics apart from from this file one.
     # directory_metrics_path = self.path_utils.image_metrics_dir.joinpath()
     # def export_omr_metrics_for_directory()
     def export_omr_metrics_for_file(
-        self, file_path, evaluation_meta, field_number_to_field_bubble_means
+        self, file_path, evaluation_meta, field_number_to_field_bubble_interpretation
     ):
         file_level_interpretation_aggregates = (
             self.template_detector.get_file_level_interpretation_aggregates()
@@ -189,8 +210,8 @@ class Template:
         field_wise_means_and_refs = []
 
         # TODO: loop over using a list of field_labels now
-        for field_bubble_means in field_number_to_field_bubble_means:
-            field_wise_means_and_refs.extend(field_bubble_means)
+        for field_bubble_interpretations in field_number_to_field_bubble_interpretation:
+            field_wise_means_and_refs.extend(field_bubble_interpretations)
         # sorted_global_bubble_means_and_refs = sorted(field_wise_means_and_refs)
 
         image_metrics_path = self.path_utils.image_metrics_dir.joinpath(
@@ -200,7 +221,7 @@ class Template:
         template_meta = {
             # "template": template,
             "is_multi_marked": is_multi_marked,
-            "field_number_to_field_bubble_means": field_number_to_field_bubble_means,
+            "field_number_to_field_bubble_interpretation": field_number_to_field_bubble_interpretation,
             "file_level_fallback_threshold": file_level_fallback_threshold,
             "confidence_metrics_for_file": confidence_metrics_for_file,
         }

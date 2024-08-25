@@ -69,7 +69,7 @@ class TemplateDrawing:
         image_type,
         template,
         config,
-        field_number_to_field_bubble_means=None,
+        field_number_to_field_bubble_interpretation=None,
         evaluation_meta=None,
         evaluation_config_for_response=None,
         shifted=False,
@@ -80,8 +80,12 @@ class TemplateDrawing:
         )
 
         transparent_layer = marked_image.copy()
-        should_draw_field_block_rectangles = field_number_to_field_bubble_means is None
-        should_draw_marked_bubbles = field_number_to_field_bubble_means is not None
+        should_draw_field_block_rectangles = (
+            field_number_to_field_bubble_interpretation is None
+        )
+        should_draw_marked_bubbles = (
+            field_number_to_field_bubble_interpretation is not None
+        )
         should_draw_question_verdicts = (
             should_draw_marked_bubbles and evaluation_meta is not None
         )
@@ -100,7 +104,7 @@ class TemplateDrawing:
                         marked_image_copy,
                         image_type,
                         template,
-                        field_number_to_field_bubble_means,
+                        field_number_to_field_bubble_interpretation,
                         evaluation_meta=None,
                         evaluation_config_for_response=None,
                     )
@@ -118,7 +122,7 @@ class TemplateDrawing:
                 marked_image,
                 image_type,
                 template,
-                field_number_to_field_bubble_means,
+                field_number_to_field_bubble_interpretation,
                 evaluation_meta,
                 evaluation_config_for_response,
             )
@@ -209,7 +213,7 @@ class TemplateDrawing:
         marked_image,
         image_type,
         template,
-        field_number_to_field_bubble_means,
+        field_number_to_field_bubble_interpretation,
         evaluation_meta,
         evaluation_config_for_response,
     ):
@@ -220,9 +224,9 @@ class TemplateDrawing:
         for field_block in template.field_blocks:
             for field in field_block.fields:
                 field_label = field.field_label
-                field_bubble_means = field_number_to_field_bubble_means[
-                    absolute_field_number
-                ]
+                field_bubble_interpretations = (
+                    field_number_to_field_bubble_interpretation[absolute_field_number]
+                )
                 absolute_field_number += 1
 
                 question_has_verdict = (
@@ -244,7 +248,7 @@ class TemplateDrawing:
                     TemplateDrawing.draw_field_with_question_meta(
                         marked_image,
                         image_type,
-                        field_bubble_means,
+                        field_bubble_interpretations,
                         field_block,
                         question_meta,
                         evaluation_config_for_response,
@@ -252,7 +256,7 @@ class TemplateDrawing:
                 else:
                     TemplateDrawing.draw_field_bubbles_and_detections(
                         marked_image,
-                        field_bubble_means,
+                        field_bubble_interpretations,
                         field_block,
                         evaluation_config_for_response,
                     )
@@ -263,15 +267,15 @@ class TemplateDrawing:
     def draw_field_with_question_meta(
         marked_image,
         image_type,
-        field_bubble_means,
+        field_bubble_interpretations,
         field_block,
         question_meta,
         evaluation_config_for_response,
     ):
         bubble_dimensions = tuple(field_block.bubble_dimensions)
         bonus_type = question_meta["bonus_type"]
-        for bubble_detection in field_bubble_means:
-            bubble = bubble_detection.item_reference
+        for field_bubble_interpretation in field_bubble_interpretations:
+            bubble = field_bubble_interpretation.item_reference
             shifted_position = tuple(bubble.get_shifted_position(field_block.shifts))
             bubble_value = str(bubble.bubble_value)
 
@@ -287,14 +291,14 @@ class TemplateDrawing:
                 )
 
             # Filled box in case of marked bubble or bonus case
-            if bubble_detection.is_marked or bonus_type is not None:
+            if field_bubble_interpretation.is_marked or bonus_type is not None:
                 (
                     verdict_symbol,
                     verdict_color,
                     verdict_symbol_color,
                     thickness_factor,
                 ) = evaluation_config_for_response.get_evaluation_meta_for_question(
-                    question_meta, bubble_detection, image_type
+                    question_meta, field_bubble_interpretation, image_type
                 )
 
                 # Bounding box for marked bubble or bonus bubble
@@ -320,7 +324,7 @@ class TemplateDrawing:
 
                 # Symbol of the field value for marked bubble
                 if (
-                    bubble_detection.is_marked
+                    field_bubble_interpretation.is_marked
                     and evaluation_config_for_response.draw_detected_bubble_texts[
                         "enabled"
                     ]
@@ -347,24 +351,27 @@ class TemplateDrawing:
                 marked_image,
                 image_type,
                 question_meta,
-                field_bubble_means,
+                field_bubble_interpretations,
                 field_block,
                 evaluation_config_for_response,
             )
 
     @staticmethod
     def draw_field_bubbles_and_detections(
-        marked_image, field_bubble_means, field_block, evaluation_config_for_response
+        marked_image,
+        field_bubble_interpretations,
+        field_block,
+        evaluation_config_for_response,
     ):
         bubble_dimensions = tuple(field_block.bubble_dimensions)
-        
+
         # TODO: make this generic, consume FieldInterpretation
-        for bubble_detection in field_bubble_means:
-            bubble = bubble_detection.item_reference
+        for field_bubble_interpretation in field_bubble_interpretations:
+            bubble = field_bubble_interpretation.item_reference
             shifted_position = tuple(bubble.get_shifted_position(field_block.shifts))
             bubble_value = str(bubble.bubble_value)
 
-            if bubble_detection.is_marked:
+            if field_bubble_interpretation.is_marked:
                 DrawingUtils.draw_box(
                     marked_image,
                     shifted_position,
@@ -470,7 +477,7 @@ class TemplateDrawing:
         marked_image,
         image_type,
         question_meta,
-        field_bubble_means,
+        field_bubble_interpretations,
         field_block,
         evaluation_config_for_response,
     ):
@@ -485,8 +492,8 @@ class TemplateDrawing:
         bubble_dimensions = field_block.bubble_dimensions
         if image_type == "GRAYSCALE":
             color_sequence = [CLR_WHITE] * len(color_sequence)
-        for bubble_detection in field_bubble_means:
-            bubble = bubble_detection.item_reference
+        for field_bubble_interpretation in field_bubble_interpretations:
+            bubble = field_bubble_interpretation.item_reference
             shifted_position = tuple(bubble.get_shifted_position(field_block.shifts))
             bubble_value = str(bubble.bubble_value)
             matched_groups = TemplateDrawing.get_matched_answer_groups(

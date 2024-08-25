@@ -346,7 +346,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             if scale <= 0.0:
                 continue
 
-            rescaled_marker = ImageUtils.resize_util(
+            rescaled_marker = ImageUtils.resize_single(
                 marker,
                 u_width=int(marker_width * scale),
                 u_height=int(marker_height * scale),

@@ -17,7 +17,10 @@ class BubbleInterpretation:
         self.bubble_value = field_bubble_mean.item_reference.bubble_value
         self.local_threshold = local_threshold
         self.is_marked = None
+        # TODO: decouple this -  needed for drawing
+        self.item_reference = field_bubble_mean.item_reference
         # self.unit_bubble = field_bubble_mean.item_reference
+
         self.update_interpretation(local_threshold)
 
     def update_interpretation(self, local_threshold):
@@ -34,14 +37,20 @@ class BubbleInterpretation:
 class BubblesFieldInterpretation(FieldInterpretation):
     # Note: this class should not contain any aggregates?
     # More of a utils class then?
-    def __init__(self, tuning_config, field, file_level_detection_aggregates):
+    def __init__(
+        self,
+        tuning_config,
+        field,
+        file_level_detection_aggregates,
+        file_level_interpretation_aggregates,
+    ):
         self.field_detection_type = FieldDetectionType.BUBBLES_THRESHOLD
         super().__init__(tuning_config, field)
 
         self.empty_value = field.empty_value
         field_label = field.field_label
 
-        self.file_level_fallback_threshold = file_level_detection_aggregates[
+        self.file_level_fallback_threshold = file_level_interpretation_aggregates[
             "file_level_fallback_threshold"
         ]
 
@@ -51,10 +60,10 @@ class BubblesFieldInterpretation(FieldInterpretation):
         # directory_level_bubble_field_type_average_threshold = directory_level_interpretation_aggregates["bubble_field_type_wise_thresholds"][field.bubble_field_type].running_average
         # directory_level_field_label_average_threshold = directory_level_interpretation_aggregates["field_label_wise_local_thresholds"][field_label].running_average
 
-        self.outlier_deviation_threshold_for_file = file_level_detection_aggregates[
-            "outlier_deviation_threshold_for_file"
-        ]
-        self.global_max_jump = file_level_detection_aggregates["global_max_jump"]
+        self.outlier_deviation_threshold_for_file = (
+            file_level_interpretation_aggregates["outlier_deviation_threshold_for_file"]
+        )
+        self.global_max_jump = file_level_interpretation_aggregates["global_max_jump"]
 
         field_level_detection_aggregates = file_level_detection_aggregates[
             "field_level_detection_aggregates"
@@ -135,6 +144,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
         ]
         self.is_multi_marked = len(marked_bubbles) > 1
 
+    # TODO: see if this one should move to detector
     @staticmethod
     def get_global_threshold(
         bubble_means_and_refs,

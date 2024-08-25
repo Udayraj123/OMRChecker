@@ -55,6 +55,7 @@ class CropPage(WarpOnPointsCommon):
 
     def extract_control_destination_points(self, image, colored_image, file_path):
         options = self.options
+
         sheet, page_contour = self.find_page_contour_and_corners(
             image, colored_image, file_path
         )

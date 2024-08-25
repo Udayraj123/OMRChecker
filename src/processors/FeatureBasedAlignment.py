@@ -57,7 +57,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
         # Convert images to grayscale
         # im1Gray = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
         # im2Gray = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
-        image = cv2.normalize(image, 0, 255, norm_type=cv2.NORM_MINMAX)
+        image = cv2.normalize(image, None, 0, 255, norm_type=cv2.NORM_MINMAX)
 
         # Detect Oriented Fast and Rotated Brief (ORB) features and compute descriptors.
         from_keypoints, from_descriptors = self.orb.detectAndCompute(image, None)

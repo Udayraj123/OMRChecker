@@ -24,7 +24,7 @@ def get_phase_correlation_shifts(alignment_image, gray_image):
     shifts[shifts > midpoints] -= np.array(shape)[shifts > midpoints]
     x, y = shifts[:2]
 
-    corr_image = cv2.normalize(corr, 0, 255, norm_type=cv2.NORM_MINMAX)
+    corr_image = cv2.normalize(corr, None, 0, 255, norm_type=cv2.NORM_MINMAX)
 
     return [int(x), int(y)], corr_image
 

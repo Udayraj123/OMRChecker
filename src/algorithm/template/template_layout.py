@@ -130,14 +130,12 @@ class TemplateLayout:
 
             # Apply filter
             (
-                out_omr,
+                gray_image,
                 colored_image,
                 next_template_layout,
             ) = pre_processor.resize_and_apply_filter(
                 gray_image, colored_image, next_template_layout, file_path
             )
-            gray_image = out_omr
-            template_layout = next_template_layout
 
             # Show After Preview
             if show_preprocessors_diff[pre_processor_name]:
@@ -149,6 +147,8 @@ class TemplateLayout:
                         else gray_image
                     ),
                 )
+
+        template_layout = next_template_layout
 
         if template_layout.output_image_shape:
             # resize to output requirements
@@ -225,11 +225,10 @@ class TemplateLayout:
                 processed_gray_alignment_image,
                 processed_colored_alignment_image,
                 _,
-            ) = self.template.apply_preprocessors(
+            ) = self.apply_preprocessors(
                 self.alignment["reference_image_path"],
                 gray_alignment_image,
                 colored_alignment_image,
-                self.template,
             )
             # Pre-processed alignment image
             self.alignment["gray_alignment_image"] = processed_gray_alignment_image

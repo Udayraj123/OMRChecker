@@ -54,7 +54,7 @@ def print_config_summary(
         "Markers Detection",
         "ON" if "CropOnMarkers" in template.get_pre_processor_names() else "OFF",
     )
-    table.add_row("Detected Template Path", f"{template}")
+    table.add_row("Detected Template Path", f"{template.path}")
     if local_config_path:
         table.add_row("Detected Local Config", f"{local_config_path}")
     if evaluation_config:
@@ -191,6 +191,7 @@ def show_template_layouts(omr_files, template, tuning_config):
         file_name = file_path.name
         file_path = str(file_path)
         gray_image, colored_image = ImageUtils.read_image_util(file_path, tuning_config)
+
         (
             gray_image,
             colored_image,
@@ -251,6 +252,7 @@ def process_directory_files(
         )
 
         # TODO: use try catch here and store paths to error files
+
         # Note: the returned template is a copy
         (
             gray_image,
@@ -291,7 +293,7 @@ def process_directory_files(
             continue
 
         concatenated_omr_response, raw_omr_response = template.read_omr_response(
-            gray_image, colored_image, template, file_path
+            gray_image, colored_image, file_path
         )
 
         # TODO: move add a try catch here?
@@ -335,7 +337,7 @@ def process_directory_files(
         # TODO: refactor this logic
         (
             is_multi_marked,
-            field_number_to_field_bubble_means,
+            field_number_to_field_bubble_interpretation,
         ) = template.get_omr_metrics_for_file(file_path)
 
         # Save output image with bubble values and evaluation meta
@@ -349,7 +351,7 @@ def process_directory_files(
                 colored_image,
                 template,
                 tuning_config,
-                field_number_to_field_bubble_means,
+                field_number_to_field_bubble_interpretation,
                 evaluation_meta=evaluation_meta,
                 evaluation_config_for_response=evaluation_config_for_response,
             )
@@ -390,7 +392,7 @@ def process_directory_files(
         # Save output metrics
         if tuning_config.outputs.save_image_metrics:
             template.export_omr_metrics_for_file(
-                file_path, evaluation_meta, field_number_to_field_bubble_means
+                file_path, evaluation_meta, field_number_to_field_bubble_interpretation
             )
 
         # Save output CSV results

@@ -83,10 +83,7 @@ class TemplateDetector:
                 "field_label_wise_detection_aggregates": None,
                 "field_detection_type_wise_detection_aggregates": None,
             },
-            "file_level_interpretation_aggregates": {
-                "field_label_wise_interpretation_aggregates": None,
-                "field_detection_type_wise_interpretation_aggregates": None,
-            },
+            "file_level_interpretation_aggregates": {},
         }
         for field_type_detector in self.field_type_detectors.values():
             field_type_detector.reset_directory_level_aggregates()
@@ -147,7 +144,7 @@ class TemplateDetector:
         # Updating field detection type level aggregates
         field_detection_type_wise_detection_aggregates = {}
         for field_type_detector in self.field_type_detectors.values():
-            field_type_detector.update_file_level_detection_aggregates()
+            field_type_detector.finalize_file_level_detection_aggregates()
             field_detection_type_wise_detection_aggregates[
                 field_type_detector.field_detection_type
             ] = field_type_detector.get_file_level_detection_aggregates()
@@ -166,8 +163,8 @@ class TemplateDetector:
     def reset_file_level_detection_aggregates(self, file_path):
         self.file_level_detection_aggregates = {
             "file_path": file_path,
-            "field_label_wise_detection_aggregates": None,
-            "field_detection_type_wise_detection_aggregates": None,
+            "field_label_wise_detection_aggregates": {},
+            "field_detection_type_wise_detection_aggregates": {},
         }
 
         # Setup field type wise metrics
@@ -187,7 +184,7 @@ class TemplateDetector:
             )
 
             self.update_field_level_interpretation_aggregates(
-                file_path, current_omr_response, field, field_type_detector
+                current_omr_response, field, field_type_detector
             )
 
             field_label = field.field_label
@@ -212,26 +209,24 @@ class TemplateDetector:
         }
 
         # Interpretation loop needs access to the file level detection aggregates
-        all_file_level_interpretation_aggregates = self.directory_level_aggregates[
-            "file_level_interpretation_aggregates"
+        all_file_level_detection_aggregates = self.directory_level_aggregates[
+            "file_level_detection_aggregates"
         ][file_path]
-        field_detection_type_wise_interpretation_aggregates = (
-            all_file_level_interpretation_aggregates[
-                "field_detection_type_wise_interpretation_aggregates"
+        field_detection_type_wise_detection_aggregates = (
+            all_file_level_detection_aggregates[
+                "field_detection_type_wise_detection_aggregates"
             ]
         )
-        field_label_wise_interpretation_aggregates = (
-            all_file_level_interpretation_aggregates[
-                "field_label_wise_interpretation_aggregates"
-            ]
-        )
+        field_label_wise_detection_aggregates = all_file_level_detection_aggregates[
+            "field_label_wise_detection_aggregates"
+        ]
 
         # Setup field type wise metrics
         for field_type_detector in self.field_type_detectors.values():
             field_type_detector.reinitialize_file_level_interpretation_aggregates(
                 file_path,
-                field_detection_type_wise_interpretation_aggregates,
-                field_label_wise_interpretation_aggregates,
+                field_detection_type_wise_detection_aggregates,
+                field_label_wise_detection_aggregates,
             )
 
     def update_field_level_interpretation_aggregates(
@@ -286,7 +281,7 @@ class TemplateDetector:
         field_detection_type_wise_interpretation_aggregates = {}
         for field_type_detector in self.field_type_detectors.values():
             # Note: This would contain confidence_metrics_for_file
-            field_type_detector.finalize_file_level_interpretation_aggregates()
+            field_type_detector.finalize_file_level_interpretation_aggregates(file_path)
             field_detection_type_wise_interpretation_aggregates[
                 field_type_detector.field_detection_type
             ] = field_type_detector.get_file_level_interpretation_aggregates()

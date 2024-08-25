@@ -568,7 +568,7 @@ class EvaluationConfigForSet:
                 raise Exception(f"Could not read answer key from image {image_path}")
 
             _, concatenated_omr_response = template.read_omr_response(
-                gray_image, colored_image, template, image_path
+                gray_image, colored_image, image_path
             )
 
             empty_value = template.global_empty_val

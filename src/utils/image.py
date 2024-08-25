@@ -141,15 +141,16 @@ class ImageUtils:
     def normalize_single(image, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX):
         if image is None or image.max() == image.min():
             return image
-        return cv2.normalize(image, alpha, beta, norm_type)
+
+        return cv2.normalize(image, None, alpha, beta, norm_type)
 
     @staticmethod
     def normalize(*images, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX):
         if len(images) == 1:
             return ImageUtils.normalize_single(images[0], alpha, beta, norm_type)
         return map(
-            images,
             lambda image: ImageUtils.normalize_single(image, alpha, beta, norm_type),
+            images,
         )
 
     @staticmethod
