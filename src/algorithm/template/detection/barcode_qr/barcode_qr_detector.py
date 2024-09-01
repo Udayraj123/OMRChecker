@@ -1,5 +1,4 @@
-
-from src.algorithm.detection.base.field_type_detector import FieldTypeDetector
+from src.algorithm.template.detection.base.field_type_detector import FieldTypeDetector
 
 
 class BarcodeQRDetector(FieldTypeDetector):

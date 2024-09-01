@@ -1,13 +1,15 @@
 import os
 
-from src.algorithm.detection.barcode_qr.barcode_qr_detector import BarcodeQRDetector
-from src.algorithm.detection.bubbles_blob.bubbles_blob_detector import (
+from src.algorithm.template.detection.barcode_qr.barcode_qr_detector import (
+    BarcodeQRDetector,
+)
+from src.algorithm.template.detection.bubbles_blob.bubbles_blob_detector import (
     BubblesBlobDetector,
 )
-from src.algorithm.detection.bubbles_threshold.bubbles_threshold_detector import (
+from src.algorithm.template.detection.bubbles_threshold.bubbles_threshold_detector import (
     BubblesThresholdDetector,
 )
-from src.algorithm.detection.ocr.ocr_detector import OCRDetector
+from src.algorithm.template.detection.ocr.ocr_detector import OCRDetector
 from src.processors.constants import FieldDetectionType
 from src.utils.stats import StatsByLabel
 
@@ -31,7 +33,7 @@ class TemplateDetector:
         self.all_fields = template.all_fields
         self.prepare_field_type_detectors()
         initial_directory_path = os.path.dirname(template.path)
-        self.reset_directory_level_aggregates(initial_directory_path)
+        self.initialize_directory_level_aggregates(initial_directory_path)
 
     def prepare_field_type_detectors(self):
         template = self.template
@@ -57,7 +59,7 @@ class TemplateDetector:
         ]
         return FieldDetectorClass(tuning_config)
 
-    def reset_directory_level_aggregates(self, initial_directory_path):
+    def initialize_directory_level_aggregates(self, initial_directory_path):
         self.directory_level_aggregates = {
             "directory_level": {
                 "initial_directory_path": initial_directory_path,
@@ -86,7 +88,7 @@ class TemplateDetector:
             "file_level_interpretation_aggregates": {},
         }
         for field_type_detector in self.field_type_detectors.values():
-            field_type_detector.reset_directory_level_aggregates()
+            field_type_detector.initialize_directory_level_aggregates()
 
     def read_omr_and_update_metrics(self, file_path, gray_image, colored_image):
         # First pass to compute aggregates like global threshold
@@ -103,7 +105,7 @@ class TemplateDetector:
         return omr_response
 
     def run_file_level_detection(self, file_path, gray_image, colored_image):
-        self.reset_file_level_detection_aggregates(file_path)
+        self.initialize_file_level_detection_aggregates(file_path)
 
         # TODO: see where the conditional sets logic can fit in this loop (or at a wrapper level?)
         # Perform detection step for each field
@@ -144,7 +146,7 @@ class TemplateDetector:
         # Updating field detection type level aggregates
         field_detection_type_wise_detection_aggregates = {}
         for field_type_detector in self.field_type_detectors.values():
-            field_type_detector.finalize_file_level_detection_aggregates()
+            field_type_detector.finalize_file_level_detection_aggregates(file_path)
             field_detection_type_wise_detection_aggregates[
                 field_type_detector.field_detection_type
             ] = field_type_detector.get_file_level_detection_aggregates()
@@ -160,7 +162,7 @@ class TemplateDetector:
         # TODO: uncomment if needed for directory level graphs
         # self.directory_level_aggregates["field_label_wise_detection_aggregates"][file_path] = self.field_label_wise_detection_aggregates
 
-    def reset_file_level_detection_aggregates(self, file_path):
+    def initialize_file_level_detection_aggregates(self, file_path):
         self.file_level_detection_aggregates = {
             "file_path": file_path,
             "field_label_wise_detection_aggregates": {},
@@ -169,16 +171,17 @@ class TemplateDetector:
 
         # Setup field type wise metrics
         for field_type_detector in self.field_type_detectors.values():
-            field_type_detector.reset_file_level_detection_aggregates(file_path)
+            field_type_detector.initialize_file_level_detection_aggregates(file_path)
 
+    # TODO: move into template_interpreter
     def run_file_level_interpretation(self, file_path, gray_image, colored_image):
-        self.reset_file_level_interpretation_aggregates(file_path)
+        self.initialize_file_level_interpretation_aggregates(file_path)
 
         current_omr_response = {}
         # Perform interpretation step for each field
         for field, field_type_detector in self.all_field_detectors:
             # TODO: field object should contain the corresponding runtime config for the detection
-            field_type_detector.reset_field_level_interpretation_aggregates()
+            field_type_detector.initialize_field_level_interpretation_aggregates()
             detected_string = field_type_detector.run_field_level_interpretation(
                 field, gray_image, colored_image
             )
@@ -196,7 +199,7 @@ class TemplateDetector:
 
         return current_omr_response
 
-    def reset_file_level_interpretation_aggregates(self, file_path):
+    def initialize_file_level_interpretation_aggregates(self, file_path):
         self.file_level_interpretation_aggregates = {
             "file_path": file_path,
             "read_response_flags": {
@@ -209,6 +212,7 @@ class TemplateDetector:
         }
 
         # Interpretation loop needs access to the file level detection aggregates
+        # TODO: get this as a getter inside template_interpreter(self.detector_ref)
         all_file_level_detection_aggregates = self.directory_level_aggregates[
             "file_level_detection_aggregates"
         ][file_path]

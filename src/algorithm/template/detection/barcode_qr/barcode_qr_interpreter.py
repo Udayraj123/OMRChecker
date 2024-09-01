@@ -1,4 +1,6 @@
-from src.algorithm.detection.base.field_interpretation import FieldInterpretation
+from src.algorithm.template.detection.base.field_interpretation import (
+    FieldInterpretation,
+)
 
 
 class BarcodeInterpretation(FieldInterpretation):

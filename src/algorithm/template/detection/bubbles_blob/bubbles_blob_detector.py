@@ -3,7 +3,7 @@ import math
 import cv2
 import numpy as np
 
-from src.algorithm.detection.base.field_type_detector import FieldTypeDetector
+from src.algorithm.template.detection.base.field_type_detector import FieldTypeDetector
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 

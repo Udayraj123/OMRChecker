@@ -1,6 +1,6 @@
 import easyocr
 
-from src.algorithm.detection.ocr.textocr import TextOCR
+from src.algorithm.template.detection.ocr.textocr import TextOCR
 
 
 class EasyOCR(TextOCR):

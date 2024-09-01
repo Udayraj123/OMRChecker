@@ -26,7 +26,7 @@ class TextOCR:
         printable_text = TextOCR.cleanup_text(stripped_text)
 
         if clear_whitespace:
-            cleaned_text = re.sub("\s{2,}", " ", printable_text)
+            cleaned_text = re.sub("\\s{2,}", " ", printable_text)
 
         if charset is not None:
             cleaned_text = TextOCR.filter_text(cleaned_text, charset)

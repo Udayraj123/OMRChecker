@@ -5,7 +5,9 @@ import re
 import numpy as np
 from matplotlib import colormaps, pyplot
 
-from src.algorithm.detection.base.field_interpretation import FieldInterpretation
+from src.algorithm.template.detection.base.field_interpretation import (
+    FieldInterpretation,
+)
 from src.processors.constants import FieldDetectionType
 from src.utils.logger import logger
 
@@ -48,15 +50,37 @@ class BubblesFieldInterpretation(FieldInterpretation):
         super().__init__(tuning_config, field)
 
         self.empty_value = field.empty_value
-        field_label = field.field_label
+        self.interpret_detection(
+            field, file_level_detection_aggregates, file_level_interpretation_aggregates
+        )
 
+    def get_detected_string(self):
+        marked_bubbles = [
+            bubble_interpretation.bubble_value
+            for bubble_interpretation in self.field_bubble_interpretations
+            if bubble_interpretation.is_marked
+        ]
+        # Empty value logic
+        if len(marked_bubbles) == 0:
+            return self.empty_value
+
+        # Concatenation logic
+        return "".join(marked_bubbles)
+
+    def interpret_detection(
+        self,
+        field,
+        file_level_detection_aggregates,
+        file_level_interpretation_aggregates,
+    ):
+        field_label = field.field_label
         self.file_level_fallback_threshold = file_level_interpretation_aggregates[
             "file_level_fallback_threshold"
         ]
 
         # TODO: try out using additional fallbacks available
         # file_level_average_threshold = file_level_interpretation_aggregates["all_fields_local_thresholds"].running_average
-        # bubble_field_type_average_threshold =file_level_interpretation_aggregates["bubble_field_type_wise_thresholds"][field.bubble_field_type].running_average
+        # bubble_field_type_average_threshold = file_level_interpretation_aggregates["bubble_field_type_wise_thresholds"][field.bubble_field_type].running_average
         # directory_level_bubble_field_type_average_threshold = directory_level_interpretation_aggregates["bubble_field_type_wise_thresholds"][field.bubble_field_type].running_average
         # directory_level_field_label_average_threshold = directory_level_interpretation_aggregates["field_label_wise_local_thresholds"][field_label].running_average
 
@@ -74,19 +98,6 @@ class BubblesFieldInterpretation(FieldInterpretation):
         ]
 
         self.process_field_bubble_means()
-
-    def get_detected_string(self):
-        marked_bubbles = [
-            bubble_interpretation.bubble_value
-            for bubble_interpretation in self.field_bubble_interpretations
-            if bubble_interpretation.is_marked
-        ]
-        # Empty value logic
-        if len(marked_bubbles) == 0:
-            return self.empty_value
-
-        # Concatenation logic
-        return "".join(marked_bubbles)
 
     def process_field_bubble_means(
         self,
@@ -566,11 +577,11 @@ class BubblesFieldInterpretation(FieldInterpretation):
 
                 # TODO: aggregate the bubble metrics into the Field objects
                 # collect_bubbles_in_doubt(bubbles_in_doubt["by_disparity"], bubbles_in_doubt["global_higher"], bubbles_in_doubt["global_lower"], bubbles_in_doubt["by_jump"])
-        confidence_metrics = {
+        field_level_confidence_metrics = {
             "bubbles_in_doubt": bubbles_in_doubt,
             "is_global_jump_confident": is_global_jump_confident,
             "is_local_jump_confident": is_local_jump_confident,
             "local_max_jump": local_max_jump,
             "field_label": field.field_label,
         }
-        return confidence_metrics
+        return field_level_confidence_metrics

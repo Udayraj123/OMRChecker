@@ -1,4 +1,7 @@
 # TODO support pytesseract methods as well.
+from src.algorithm.template.detection.ocr.textocr import TextOCR
+
+
 class TesseractOCR(TextOCR):
     @staticmethod
     def read_texts(image, confidence_threshold=0.8):

@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
+from src.algorithm.template.detection.template_detector import TemplateDetector
 from src.algorithm.template.directory_handler import DirectoryHandler
-from src.algorithm.template.template_detector import TemplateDetector
 from src.algorithm.template.template_layout import TemplateLayout
 from src.processors.constants import FieldDetectionType
 from src.utils.file import PathUtils, SaveImageOps
