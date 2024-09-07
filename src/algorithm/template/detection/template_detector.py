@@ -18,7 +18,7 @@ Note: a Template may get reused for multiple directories(in nested case)
 
 
 class TemplateDetector:
-    field_type_to_processor = {
+    field_detection_type_to_processor = {
         FieldDetectionType.BUBBLES_THRESHOLD: BubblesThresholdFileProcessor,
         FieldDetectionType.OCR: OCRFileProcessor,
         # FieldDetectionType.BARCODE_QR: BarcodeQRProcessor,
@@ -28,14 +28,14 @@ class TemplateDetector:
     def __init__(self, template):
         self.template = template
         self.all_fields = template.all_fields
-        self.prepare_field_type_processors()
+        self.prepare_field_detection_type_processors()
         initial_directory_path = os.path.dirname(template.path)
         self.initialize_directory_level_aggregates(initial_directory_path)
 
-    def prepare_field_type_processors(self):
+    def prepare_field_detection_type_processors(self):
         template = self.template
         # Create instances of all required field type processors
-        self.field_type_processors = {
+        self.field_detection_type_processors = {
             field_detection_type: self.get_field_detection_type_processor(
                 field_detection_type
             )
@@ -43,8 +43,8 @@ class TemplateDetector:
         }
         # List of fields and their mapped processors
         all_fields: List[Field] = template.all_fields
-        self.all_field_type_processors = [
-            (field, self.field_type_processors[field.field_detection_type])
+        self.all_field_detection_type_processors = [
+            (field, self.field_detection_type_processors[field.field_detection_type])
             for field in all_fields
         ]
 
@@ -52,7 +52,7 @@ class TemplateDetector:
         self, field_detection_type
     ) -> FieldTypeFileProcessor:
         tuning_config = self.template.tuning_config
-        FieldTypeProcessorClass = TemplateDetector.field_type_to_processor[
+        FieldTypeProcessorClass = TemplateDetector.field_detection_type_to_processor[
             field_detection_type
         ]
         return FieldTypeProcessorClass(tuning_config)
@@ -85,8 +85,10 @@ class TemplateDetector:
             },
             "file_level_interpretation_aggregates": {},
         }
-        for field_type_processor in self.field_type_processors.values():
-            field_type_processor.initialize_directory_level_aggregates()
+        for (
+            field_detection_type_processor
+        ) in self.field_detection_type_processors.values():
+            field_detection_type_processor.initialize_directory_level_aggregates()
 
     def read_omr_and_update_metrics(self, file_path, gray_image, colored_image):
         # First pass to compute aggregates like global threshold
@@ -106,29 +108,35 @@ class TemplateDetector:
         self.initialize_file_level_detection_aggregates(file_path)
 
         # Perform detection step for each field
-        for field, field_type_processor in self.all_field_type_processors:
+        for (
+            field,
+            field_detection_type_processor,
+        ) in self.all_field_detection_type_processors:
             # TODO: see where the conditional sets logic can fit in this loop (or at a wrapper level?)
             # TODO: field object should contain the corresponding runtime config for the detection
-            field_type_processor.run_field_level_detection(
+            field_detection_type_processor.run_field_level_detection(
                 field, gray_image, colored_image
             )
             self.update_field_level_detection_aggregates(
-                file_path, field, field_type_processor
+                file_path, field, field_detection_type_processor
             )
 
         self.update_detection_aggregates_on_processed_file(file_path)
 
     def update_field_level_detection_aggregates(
-        self, file_path, field: Field, field_type_processor: FieldTypeFileProcessor
+        self,
+        file_path,
+        field: Field,
+        field_detection_type_processor: FieldTypeFileProcessor,
     ):
-        field_detection_type = field_type_processor.field_detection_type
+        field_detection_type = field_detection_type_processor.field_detection_type
 
         field_label_wise_detection_aggregates = self.file_level_detection_aggregates[
             "field_label_wise_detection_aggregates"
         ]
         field_label_wise_detection_aggregates[
             field.field_label
-        ] = field_type_processor.get_field_level_detection_aggregates()
+        ] = field_detection_type_processor.get_field_level_detection_aggregates()
 
         field_detection_type_level_detection_aggregates = (
             self.directory_level_aggregates[
@@ -143,13 +151,15 @@ class TemplateDetector:
     def update_detection_aggregates_on_processed_file(self, file_path):
         # Updating field detection type level aggregates
         field_detection_type_wise_detection_aggregates = {}
-        for field_type_processor in self.field_type_processors.values():
-            field_type_processor.update_detection_aggregates_on_processed_file(
+        for (
+            field_detection_type_processor
+        ) in self.field_detection_type_processors.values():
+            field_detection_type_processor.update_detection_aggregates_on_processed_file(
                 file_path
             )
             field_detection_type_wise_detection_aggregates[
-                field_type_processor.field_detection_type
-            ] = field_type_processor.get_file_level_detection_aggregates()
+                field_detection_type_processor.field_detection_type
+            ] = field_detection_type_processor.get_file_level_detection_aggregates()
 
         # Update aggregates in state
         self.file_level_detection_aggregates[
@@ -170,8 +180,12 @@ class TemplateDetector:
         }
 
         # Setup field type wise metrics
-        for field_type_processor in self.field_type_processors.values():
-            field_type_processor.initialize_file_level_detection_aggregates(file_path)
+        for (
+            field_detection_type_processor
+        ) in self.field_detection_type_processors.values():
+            field_detection_type_processor.initialize_file_level_detection_aggregates(
+                file_path
+            )
 
     # TODO: move into template_interpreter as a subclass of TemplatePass?
     def run_file_level_interpretation(self, file_path, gray_image, colored_image):
@@ -179,13 +193,18 @@ class TemplateDetector:
 
         current_omr_response = {}
         # Perform interpretation step for each field
-        for field, field_type_processor in self.all_field_type_processors:
-            detected_string = field_type_processor.run_field_level_interpretation(
-                field, gray_image, colored_image
+        for (
+            field,
+            field_detection_type_processor,
+        ) in self.all_field_detection_type_processors:
+            detected_string = (
+                field_detection_type_processor.run_field_level_interpretation(
+                    field, gray_image, colored_image
+                )
             )
 
             self.update_field_level_interpretation_aggregates(
-                current_omr_response, field, field_type_processor
+                current_omr_response, field, field_detection_type_processor
             )
 
             field_label = field.field_label
@@ -224,8 +243,10 @@ class TemplateDetector:
         ]
 
         # Setup field type wise metrics
-        for field_type_processor in self.field_type_processors.values():
-            field_type_processor.initialize_file_level_interpretation_aggregates(
+        for (
+            field_detection_type_processor
+        ) in self.field_detection_type_processors.values():
+            field_detection_type_processor.initialize_file_level_interpretation_aggregates(
                 file_path,
                 field_detection_type_wise_detection_aggregates,
                 field_label_wise_detection_aggregates,
@@ -235,7 +256,7 @@ class TemplateDetector:
         self,
         current_omr_response,
         field: Field,
-        field_type_processor: FieldTypeFileProcessor,
+        field_detection_type_processor: FieldTypeFileProcessor,
     ):
         field_label = field.field_label
         field_label_wise_interpretation_aggregates = (
@@ -245,7 +266,7 @@ class TemplateDetector:
         )
 
         field_level_interpretation_aggregates = (
-            field_type_processor.get_field_level_interpretation_aggregates()
+            field_detection_type_processor.get_field_level_interpretation_aggregates()
         )
         field_label_wise_interpretation_aggregates[
             field_label
@@ -265,7 +286,7 @@ class TemplateDetector:
 
         # TODO: support for more validations here?
 
-        field_detection_type = field_type_processor.field_detection_type
+        field_detection_type = field_detection_type_processor.field_detection_type
 
         field_detection_type_level_interpretation_aggregates = (
             self.directory_level_aggregates[
@@ -285,14 +306,18 @@ class TemplateDetector:
     ):
         # Updating field interpretation type level aggregates
         field_detection_type_wise_interpretation_aggregates = {}
-        for field_type_processor in self.field_type_processors.values():
+        for (
+            field_detection_type_processor
+        ) in self.field_detection_type_processors.values():
             # Note: This would contain confidence_metrics_for_file
-            field_type_processor.update_interpretation_aggregates_on_processed_file(
+            field_detection_type_processor.update_interpretation_aggregates_on_processed_file(
                 file_path
             )
             field_detection_type_wise_interpretation_aggregates[
-                field_type_processor.field_detection_type
-            ] = field_type_processor.get_file_level_interpretation_aggregates()
+                field_detection_type_processor.field_detection_type
+            ] = (
+                field_detection_type_processor.get_file_level_interpretation_aggregates()
+            )
 
         # Update aggregates in state
         self.file_level_interpretation_aggregates[

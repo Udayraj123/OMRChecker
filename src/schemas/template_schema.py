@@ -312,7 +312,7 @@ _common_field_block_properties = {
     },
 }
 
-_field_type_properties = {
+_bubble_field_type_properties = {
     "bubbleValues": {
         "$ref": "#/$def/array_of_strings",
         "description": "The ordered array of values to use for given bubbles per field in this field block",
@@ -327,7 +327,7 @@ _field_type_properties = {
 # TODO: separate out the schema for other field types
 _traditional_field_block_properties = {
     **_common_field_block_properties,
-    **_field_type_properties,
+    **_bubble_field_type_properties,
     "bubbleDimensions": {
         "$ref": "#/$def/two_positive_numbers",
         "description": "The custom dimensions for the bubbles in the current field block: [width, height]",
@@ -1052,7 +1052,7 @@ TEMPLATE_SCHEMA = {
                         "direction",
                     ],
                     "additionalProperties": False,
-                    "properties": _field_type_properties,
+                    "properties": _bubble_field_type_properties,
                 },
             },
         },

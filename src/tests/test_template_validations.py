@@ -59,7 +59,7 @@ def test_empty_template(mocker):
     )
 
 
-def test_invalid_field_type(mocker):
+def test_invalid_bubble_field_type(mocker):
     def modify_template(template):
         template["fieldBlocks"]["MCQ_Block_1"]["bubbleFieldType"] = "X"
 

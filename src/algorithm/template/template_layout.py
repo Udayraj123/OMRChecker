@@ -35,7 +35,7 @@ class TemplateLayout:
             self.options,
             self.output_image_shape,
             self.field_blocks_offset,
-            custom_field_types,
+            custom_bubble_field_types,
         ) = map(
             json_object.get,
             [
@@ -66,7 +66,7 @@ class TemplateLayout:
         # TODO: move outside
         self.setup_pre_processors(pre_processors_object, template_path.parent)
 
-        self.parse_custom_field_types(custom_field_types)
+        self.parse_custom_bubble_field_types(custom_bubble_field_types)
         self.validate_field_blocks(field_blocks_object)
         self.setup_layout(field_blocks_object)
 
@@ -181,13 +181,13 @@ class TemplateLayout:
             )
             self.pre_processors.append(pre_processor_instance)
 
-    def parse_custom_field_types(self, custom_field_types):
-        if custom_field_types is None:
+    def parse_custom_bubble_field_types(self, custom_bubble_field_types):
+        if custom_bubble_field_types is None:
             self.bubble_field_types_data = BUILTIN_BUBBLE_FIELD_TYPES
         else:
             self.bubble_field_types_data = {
                 **BUILTIN_BUBBLE_FIELD_TYPES,
-                **custom_field_types,
+                **custom_bubble_field_types,
             }
 
     def validate_field_blocks(self, field_blocks_object):
