@@ -37,6 +37,7 @@ class OCRFieldInterpretation(FieldInterpretation):
         file_level_detection_aggregates,
         file_level_interpretation_aggregates,
     ):
+        # TODO: scan_zone_rect = CropOnPatchesCommon.compute_scan_zone_destination_rect(field.scan_zone_description)
         # field_label = field.field_label
         self.interpretations: List[OCRInterpretation] = []
         # self.process_field_bubble_means()

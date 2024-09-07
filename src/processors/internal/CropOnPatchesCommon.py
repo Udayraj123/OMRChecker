@@ -21,6 +21,7 @@ from src.utils.parsing import OVERRIDE_MERGER
 
 class CropOnPatchesCommon(WarpOnPointsCommon):
     __is_internal_preprocessor__ = True
+    default_scan_zone_descriptions = {}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
