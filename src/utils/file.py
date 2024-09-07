@@ -1,13 +1,8 @@
-import argparse
 import json
 import os
 import string
 from collections import defaultdict
-from csv import QUOTE_NONNUMERIC
 from pathlib import PureWindowsPath
-from time import localtime, strftime
-
-import pandas as pd
 
 from src.utils.image import ImageUtils
 from src.utils.logger import logger
@@ -172,13 +167,12 @@ class SaveImageOps:
         _display_height, display_width = config.outputs.display_image_dimensions
 
         # TODO: attach title text as header to each stack image!
-        images = [
-            ImageUtils.resize_util(image, display_width)
-            for _title, image in titles_and_images
-        ]
+        images = ImageUtils.resize_multiple(
+            [image for _title, image in titles_and_images], display_width
+        )
         grid_images = MathUtils.chunks(images, images_per_row)
         result = ImageUtils.get_vstack_image_grid(grid_images)
-        result = ImageUtils.resize_util(
+        result = ImageUtils.resize_single(
             result,
             min(
                 len(titles_and_images) * display_width // 3,

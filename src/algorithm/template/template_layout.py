@@ -106,11 +106,11 @@ class TemplateLayout:
 
         # resize to conform to common preprocessor input requirements
         gray_image = ImageUtils.resize_to_shape(
-            gray_image, next_template_layout.processing_image_shape
+            next_template_layout.processing_image_shape, gray_image
         )
         if config.outputs.colored_outputs_enabled:
             colored_image = ImageUtils.resize_to_shape(
-                colored_image, next_template_layout.processing_image_shape
+                next_template_layout.processing_image_shape, colored_image
             )
 
         show_preprocessors_diff = config.outputs.show_preprocessors_diff
@@ -154,11 +154,11 @@ class TemplateLayout:
         if template_layout.output_image_shape:
             # resize to output requirements
             gray_image = ImageUtils.resize_to_shape(
-                gray_image, template_layout.output_image_shape
+                template_layout.output_image_shape, gray_image
             )
             if config.outputs.colored_outputs_enabled:
                 colored_image = ImageUtils.resize_to_shape(
-                    colored_image, template_layout.output_image_shape
+                    template_layout.output_image_shape, colored_image
                 )
 
         return gray_image, colored_image, template_layout

@@ -35,12 +35,12 @@ class ImageTemplatePreprocessor(Processor):
     def resize_and_apply_filter(self, in_image, colored_image, _template, _file_path):
         config = self.tuning_config
 
-        in_image = ImageUtils.resize_to_shape(in_image, self.processing_image_shape)
+        in_image = ImageUtils.resize_to_shape(self.processing_image_shape, in_image)
 
         if config.outputs.colored_outputs_enabled:
             colored_image = ImageUtils.resize_to_shape(
-                colored_image,
                 self.processing_image_shape,
+                colored_image,
             )
 
         out_image, colored_image, _template = self.apply_filter(

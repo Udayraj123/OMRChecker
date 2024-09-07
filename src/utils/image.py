@@ -48,16 +48,22 @@ class ImageUtils:
         ImageUtils.save_img(image_path, final_marked)
 
     @staticmethod
-    def resize_to_shape(img, image_shape):
+    def resize_to_shape(image_shape, *images):
         h, w = image_shape
-        return ImageUtils.resize_single(img, w, h)
+        return ImageUtils.resize_multiple(images, w, h)
 
     @staticmethod
     def resize_to_dimensions(image_dimensions, *images):
         w, h = image_dimensions
+        return ImageUtils.resize_multiple(images, w, h)
+
+    @staticmethod
+    def resize_multiple(images, u_width=None, u_height=None):
         if len(images) == 1:
-            return ImageUtils.resize_single(images[0], w, h)
-        return map(lambda image: ImageUtils.resize_single(image, w, h), images)
+            return ImageUtils.resize_single(images[0], u_width, u_height)
+        return map(
+            lambda image: ImageUtils.resize_single(image, u_width, u_height), images
+        )
 
     @staticmethod
     def resize_single(image, u_width=None, u_height=None):
@@ -389,7 +395,7 @@ class ImageUtils:
         if keep_original_shape:
             image_shape = image.shape[0:2]
             image = cv2.rotate(image, rotation)
-            return ImageUtils.resize_to_shape(image, image_shape)
+            return ImageUtils.resize_to_shape(image_shape, image)
         else:
             return cv2.rotate(image, rotation)
 

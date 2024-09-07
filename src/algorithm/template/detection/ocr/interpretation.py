@@ -1,5 +1,15 @@
+from typing import List
+
 from src.algorithm.template.detection.base.interpretation import FieldInterpretation
 from src.algorithm.template.template_layout import Field
+
+
+class OCRInterpretation:
+    def __init__(self):
+        self.is_marked = None
+
+    def get_value():
+        return "todo"
 
 
 class OCRFieldInterpretation(FieldInterpretation):
@@ -7,17 +17,19 @@ class OCRFieldInterpretation(FieldInterpretation):
         super().__init__(*args, **kwargs)
 
     def get_detected_string(self):
-        marked_bubbles = [
-            bubble_interpretation.bubble_value
-            for bubble_interpretation in self.field_bubble_interpretations
-            if bubble_interpretation.is_marked
+        marked_interpretations = [
+            interpretation.get_value()
+            for interpretation in self.interpretations
+            if interpretation.is_marked
         ]
         # Empty value logic
-        if len(marked_bubbles) == 0:
+        if len(marked_interpretations) == 0:
             return self.empty_value
 
-        # Concatenation logic
-        return "".join(marked_bubbles)
+        # TODO: if self.interpretation_config.concatenatation.enabled:
+        # return "".join(marked_interpretations)
+
+        return marked_interpretations[0]
 
     def run_interpretation(
         self,
@@ -26,14 +38,15 @@ class OCRFieldInterpretation(FieldInterpretation):
         file_level_interpretation_aggregates,
     ):
         # field_label = field.field_label
+        self.interpretations: List[OCRInterpretation] = []
         # self.process_field_bubble_means()
         self.update_common_interpretations()
 
     def update_common_interpretations(self):
         # TODO: can we move it to a common wrapper since is_multi_marked is independent of field detection type?
-        marked_bubbles = [
-            bubble_interpretation.bubble_value
-            for bubble_interpretation in self.field_bubble_interpretations
-            if bubble_interpretation.is_marked
+        marked_interpretations = [
+            interpretation.get_value()
+            for interpretation in self.interpretations
+            if interpretation.is_marked
         ]
-        self.is_multi_marked = len(marked_bubbles) > 1
+        self.is_multi_marked = len(marked_interpretations) > 1

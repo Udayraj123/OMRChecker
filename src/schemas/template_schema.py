@@ -398,14 +398,36 @@ many_field_blocks_description_def = {
                         "properties": _traditional_field_block_properties,
                     },
                 },
+                # {
+                #     "if": {
+                #         "properties": {
+                #             "fieldDetectionType": {
+                #                 "const": FieldDetectionType.BARCODE_QR
+                #             }
+                #         },
+                #         # TODO: move barcode specific properties into this if-else
+                #         "required": [
+                #             "scanZone",
+                #             "bubbleFieldType",
+                #             "fieldLabel",
+                #             # TODO: "failIfNotFound"
+                #             # "emptyValue",
+                #         ],
+                #     },
+                #     "then": {
+                #         "additionalProperties": False,
+                #         "properties": {
+                #             **_common_field_block_properties,
+                #             "scanZone": _box_zone_description,
+                #             "fieldLabel": {"type": "string"},
+                #         },
+                #     },
+                # },
                 {
                     "if": {
                         "properties": {
-                            "fieldDetectionType": {
-                                "const": FieldDetectionType.BARCODE_QR
-                            }
+                            "fieldDetectionType": {"const": FieldDetectionType.OCR}
                         },
-                        # TODO: move barcode specific properties into this if-else
                         "required": [
                             "scanZone",
                             "bubbleFieldType",
@@ -423,7 +445,7 @@ many_field_blocks_description_def = {
                         },
                     },
                 },
-                # TODO: support for PHOTO_BLOB, OCR custom fields at top level fieldDetectionType
+                # TODO: support for more custom fields at top level fieldDetectionType
             ],
         }
     },

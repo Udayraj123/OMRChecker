@@ -14,11 +14,11 @@ from src.utils.logger import logger
 
 class BubbleInterpretation:
     def __init__(self, field_bubble_mean: BubbleMeanValue, local_threshold):
+        self.is_marked = None
         # self.field_bubble_mean = field_bubble_mean
         self.mean_value = field_bubble_mean.mean_value
         self.bubble_value = field_bubble_mean.item_reference.bubble_value
         self.local_threshold = local_threshold
-        self.is_marked = None
         # TODO: decouple this -  needed for drawing
         self.item_reference = field_bubble_mean.item_reference
         # self.unit_bubble = field_bubble_mean.item_reference
