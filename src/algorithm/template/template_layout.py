@@ -1,5 +1,6 @@
 import os
 from copy import copy as shallowcopy
+from typing import List
 
 from src.processors.constants import FieldDetectionType
 from src.processors.manager import PROCESSOR_MANAGER
@@ -238,12 +239,12 @@ class TemplateLayout:
 
     def setup_layout(self, field_blocks_object):
         # TODO: try for better readability here
-        self.all_fields = []
+        self.all_fields: List[Field] = []
         all_field_detection_types = set()
         # TODO: see if labels part can be moved out of template layout?
         self.all_parsed_labels = set()
         # Add field_blocks
-        self.field_blocks = []
+        self.field_blocks: List[FieldBlock] = []
         # TODO: add support for parsing "conditionalSets" with their matcher
         for block_name, field_block_object in field_blocks_object.items():
             block_instance = self.parse_and_add_field_block(
@@ -611,7 +612,7 @@ class Field:
         bubbles_gap,
         direction,
         empty_value,
-        field_block,
+        field_block: FieldBlock,
         field_detection_type,
         field_label,
         origin,
@@ -672,7 +673,7 @@ class FieldBubble:
     It can also correspond to a single digit of integer type Q (eg q5d1)
     """
 
-    def __init__(self, bubble_index, bubble_origin, bubble_value, field):
+    def __init__(self, bubble_index, bubble_origin, bubble_value, field: Field):
         self.field = field
         self.field_label = field.field_label
         self.bubble_field_type = field.bubble_field_type

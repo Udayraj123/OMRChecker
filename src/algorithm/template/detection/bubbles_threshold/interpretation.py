@@ -1,19 +1,19 @@
 import math
 import random
 import re
+from typing import List
 
 import numpy as np
 from matplotlib import colormaps, pyplot
 
-from src.algorithm.template.detection.base.field_interpretation import (
-    FieldInterpretation,
-)
-from src.processors.constants import FieldDetectionType
+from src.algorithm.template.detection.base.interpretation import FieldInterpretation
+from src.algorithm.template.detection.bubbles_threshold.detection import BubbleMeanValue
+from src.algorithm.template.template_layout import Field
 from src.utils.logger import logger
 
 
 class BubbleInterpretation:
-    def __init__(self, field_bubble_mean, local_threshold):
+    def __init__(self, field_bubble_mean: BubbleMeanValue, local_threshold):
         # self.field_bubble_mean = field_bubble_mean
         self.mean_value = field_bubble_mean.mean_value
         self.bubble_value = field_bubble_mean.item_reference.bubble_value
@@ -31,28 +31,9 @@ class BubbleInterpretation:
         return is_marked
 
 
-# class BubblesFieldInterpretor(FieldInterpretor):
-#     # TODO: need one class that keeps directory level aggregates
-#     pass
-
-
 class BubblesFieldInterpretation(FieldInterpretation):
-    # Note: this class should not contain any aggregates?
-    # More of a utils class then?
-    def __init__(
-        self,
-        tuning_config,
-        field,
-        file_level_detection_aggregates,
-        file_level_interpretation_aggregates,
-    ):
-        self.field_detection_type = FieldDetectionType.BUBBLES_THRESHOLD
-        super().__init__(tuning_config, field)
-
-        self.empty_value = field.empty_value
-        self.interpret_detection(
-            field, file_level_detection_aggregates, file_level_interpretation_aggregates
-        )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def get_detected_string(self):
         marked_bubbles = [
@@ -67,9 +48,9 @@ class BubblesFieldInterpretation(FieldInterpretation):
         # Concatenation logic
         return "".join(marked_bubbles)
 
-    def interpret_detection(
+    def run_interpretation(
         self,
-        field,
+        field: Field,
         file_level_detection_aggregates,
         file_level_interpretation_aggregates,
     ):
@@ -90,7 +71,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
         self.global_max_jump = file_level_interpretation_aggregates["global_max_jump"]
 
         field_level_detection_aggregates = file_level_detection_aggregates[
-            "field_level_detection_aggregates"
+            "field_level_aggregates"
         ][field_label]
         self.field_bubble_means = field_level_detection_aggregates["field_bubble_means"]
         self.field_bubble_means_std = field_level_detection_aggregates[
@@ -125,7 +106,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
             plot_show=config.outputs.show_image_level >= 7,
         )
 
-        self.field_bubble_interpretations = []
+        self.field_bubble_interpretations: List[BubbleInterpretation] = []
 
         # Main detection/thresholding logic here:
         for field_bubble_mean in self.field_bubble_means:
@@ -413,8 +394,8 @@ class BubblesFieldInterpretation(FieldInterpretation):
 
     @staticmethod
     def get_field_level_confidence_metrics(
-        field,
-        field_bubble_means,
+        field: Field,
+        field_bubble_means: List[BubbleMeanValue],
         config,
         local_threshold_for_field,
         file_level_fallback_threshold,

@@ -1,3 +1,5 @@
+import json
+
 from src.utils.parsing import default_dump
 
 
@@ -19,5 +21,38 @@ class StatsByLabel:
             key: default_dump(getattr(self, key))
             for key in [
                 "label_counts",
+            ]
+        }
+
+    def __str__(self):
+        return json.dumps(self.to_json())
+
+
+class NumberAggregate:
+    def __init__(self):
+        self.collection = []
+        self.running_sum = 0
+        self.running_average = 0
+
+    def push(self, number_like, label):
+        self.collection.append([number_like, label])
+        # if isinstance(number_like, MeanValueItem):
+        #     self.running_sum += number_like.mean_value
+        # else:
+        self.running_sum += number_like
+        self.running_average = self.running_sum / len(self.collection)
+
+    def merge(self, other_aggregate):
+        self.collection += other_aggregate.collection
+        self.running_sum += other_aggregate.running_sum
+        self.running_average = self.running_sum / len(self.collection)
+
+    def to_json(self):
+        return {
+            key: default_dump(getattr(self, key))
+            for key in [
+                "collection",
+                "running_sum",
+                "running_average",
             ]
         }

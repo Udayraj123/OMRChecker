@@ -200,6 +200,7 @@ class Template:
                 "field_detection_type_wise_interpretation_aggregates"
             ][FieldDetectionType.BUBBLES_THRESHOLD]
         )
+
         confidence_metrics_for_file = bubbles_threshold_interpretation_aggregates[
             "confidence_metrics_for_file"
         ]
