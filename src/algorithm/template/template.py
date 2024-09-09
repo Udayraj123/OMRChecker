@@ -146,18 +146,22 @@ class Template:
 
         return concatenated_omr_response, raw_omr_response
 
+    # TODO: move inside template runner
     def get_omr_metrics_for_file(self, file_path):
         # This can be used for drawing the bubbles etc
-        file_level_interpretation_aggregates = (
-            self.template_file_runner.get_file_level_interpretation_aggregates()
+        directory_level_interpretation_aggregates = (
+            self.template_file_runner.get_directory_level_interpretation_aggregates()
         )
-        is_multi_marked = file_level_interpretation_aggregates[
-            "file_read_response_flags"
+
+        template_file_level_interpretation_aggregates = (
+            directory_level_interpretation_aggregates["file_wise_aggregates"][file_path]
+        )
+
+        is_multi_marked = template_file_level_interpretation_aggregates[
+            "read_response_flags"
         ]["is_multi_marked"]
         field_label_wise_interpretation_aggregates = (
-            file_level_interpretation_aggregates[
-                "field_label_wise_interpretation_aggregates"
-            ]
+            template_file_level_interpretation_aggregates["field_label_wise_aggregates"]
         )
 
         # TODO: temp logic until template drawing is not migrated -
@@ -170,8 +174,8 @@ class Template:
             if field_detection_type == FieldDetectionType.BUBBLES_THRESHOLD:
                 field_bubble_interpretations = (
                     field_label_wise_interpretation_aggregates[field_label][
-                        "field_bubble_interpretations"
-                    ]
+                        "from_field_type_runner"
+                    ]["field_bubble_interpretations"]
                 )
                 field_number_to_field_bubble_interpretation.append(
                     field_bubble_interpretations
@@ -185,19 +189,25 @@ class Template:
     def export_omr_metrics_for_file(
         self, file_path, evaluation_meta, field_number_to_field_bubble_interpretation
     ):
-        file_level_interpretation_aggregates = (
-            self.template_file_runner.get_file_level_interpretation_aggregates()
+        # This can be used for drawing the bubbles etc
+        directory_level_interpretation_aggregates = (
+            # TODO: get from file_level_interpretation_aggregates.field_detection_runner?
+            self.template_file_runner.get_directory_level_interpretation_aggregates()
+        )
+
+        template_file_level_interpretation_aggregates = (
+            directory_level_interpretation_aggregates["file_wise_aggregates"][file_path]
         )
 
         file_name = PathUtils.remove_non_utf_characters(file_path.name)
 
-        is_multi_marked = file_level_interpretation_aggregates[
-            "file_read_response_flags"
+        is_multi_marked = template_file_level_interpretation_aggregates[
+            "read_response_flags"
         ]["is_multi_marked"]
 
         bubbles_threshold_interpretation_aggregates = (
-            file_level_interpretation_aggregates[
-                "field_detection_type_wise_interpretation_aggregates"
+            template_file_level_interpretation_aggregates[
+                "field_detection_type_wise_aggregates"
             ][FieldDetectionType.BUBBLES_THRESHOLD]
         )
 

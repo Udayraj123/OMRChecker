@@ -5,12 +5,6 @@ from src.algorithm.template.detection.base.interpretation_pass import (
 )
 from src.algorithm.template.template_layout import Field
 
-"""
-FieldTypeFileLevelRunner contains the external contract to be used by TemplateFileLevelRunner for each of the field_detection_types
-It is static per template instance. Instantiated once per field type from the template.json
-
-"""
-
 
 class FileLevelRunner:
     def __init__(
@@ -60,6 +54,10 @@ class FileLevelRunner:
     def update_detection_aggregates_on_processed_file(self, file_path):
         return self.detection_pass.update_aggregates_on_processed_file(file_path)
 
+    # Detection: Directory Level
+    def get_directory_level_detection_aggregates(self):
+        return self.detection_pass.get_directory_level_aggregates()
+
     # Interpretation: Field Level
     def get_field_level_interpretation_aggregates(self):
         return self.interpretation_pass.get_field_level_aggregates()
@@ -83,8 +81,18 @@ class FileLevelRunner:
     def update_interpretation_aggregates_on_processed_file(self, file_path):
         return self.interpretation_pass.update_aggregates_on_processed_file(file_path)
 
+    # Interpretation: Directory Level
+    def get_directory_level_interpretation_aggregates(self):
+        return self.interpretation_pass.get_directory_level_aggregates()
+
 
 class FieldTypeFileLevelRunner(FileLevelRunner):
+    """
+    FieldTypeFileLevelRunner contains the external contract to be used by TemplateFileLevelRunner for each of the field_detection_types
+    It is static per template instance. Instantiated once per field type from the template.json
+
+    """
+
     def __init__(
         self,
         tuning_config,

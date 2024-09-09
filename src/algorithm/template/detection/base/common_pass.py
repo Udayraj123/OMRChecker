@@ -70,6 +70,7 @@ class FilePassAggregates:
         self.file_level_aggregates["field_label_wise_aggregates"][
             field_label
         ] = field_level_aggregates
+
         self.file_level_aggregates["fields_count"].push("processed")
 
     def update_directory_level_aggregates_on_processed_field(

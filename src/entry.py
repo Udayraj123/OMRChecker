@@ -220,7 +220,7 @@ def show_template_layouts(omr_files, template, tuning_config):
 # TODO: move into template.directory_handler
 def process_directory_files(
     omr_files,
-    template,
+    template: Template,
     tuning_config,
     evaluation_config,
     output_mode,
@@ -338,7 +338,7 @@ def process_directory_files(
         (
             is_multi_marked,
             field_number_to_field_bubble_interpretation,
-        ) = template.get_omr_metrics_for_file(file_path)
+        ) = template.get_omr_metrics_for_file(str(file_path))
 
         # Save output image with bubble values and evaluation meta
         if output_mode != "moderation":
@@ -392,7 +392,9 @@ def process_directory_files(
         # Save output metrics
         if tuning_config.outputs.save_image_metrics:
             template.export_omr_metrics_for_file(
-                file_path, evaluation_meta, field_number_to_field_bubble_interpretation
+                str(file_path),
+                evaluation_meta,
+                field_number_to_field_bubble_interpretation,
             )
 
         # Save output CSV results

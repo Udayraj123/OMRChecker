@@ -16,19 +16,16 @@ from src.algorithm.template.detection.ocr.file_runner import OCRFileRunner
 from src.algorithm.template.template_layout import Field
 from src.processors.constants import FieldDetectionType
 
-"""
-Template Detector takes care of detections of an image file using a single template
-We create one instance of TemplateFileLevelRunner per Template.
-Note: a Template may get reused for multiple directories(in nested case)
-"""
-
-
-"""
-TemplateFileLevelRunner maintains own template level runners as well as all the field detection type level runners.
-"""
-
 
 class TemplateFileLevelRunner(FileLevelRunner):
+    """
+    TemplateFileLevelRunner maintains own template level runners as well as all the field detection type level runners.
+    It takes care of detections of an image file using a single template
+
+    We create one instance of TemplateFileLevelRunner per Template.
+    Note: a Template may get reused for multiple directories(in nested case)
+    """
+
     field_detection_type_to_runner = {
         FieldDetectionType.BUBBLES_THRESHOLD: BubblesThresholdFileRunner,
         FieldDetectionType.OCR: OCRFileRunner,
@@ -166,6 +163,8 @@ class TemplateFileLevelRunner(FileLevelRunner):
         return current_omr_response
 
     def run_field_level_interpretation(self, current_omr_response, field):
+        self.interpretation_pass.initialize_field_level_aggregates(field)
+
         field_label = field.field_label
 
         field_detection_type_runner = self.field_detection_type_runners[
@@ -175,7 +174,7 @@ class TemplateFileLevelRunner(FileLevelRunner):
             field_detection_type_runner.run_field_level_interpretation(field)
         )
 
-        field_level_interpretation_aggregates = (
+        field_type_runner_field_level_aggregates = (
             field_detection_type_runner.get_field_level_interpretation_aggregates()
         )
 
@@ -183,31 +182,33 @@ class TemplateFileLevelRunner(FileLevelRunner):
             current_omr_response,
             field,
             field_interpretation,
-            field_level_interpretation_aggregates,
+            field_type_runner_field_level_aggregates,
         )
 
         detected_string = field_interpretation.get_detected_string()
         current_omr_response[field_label] = detected_string
 
+    # This overrides parent definition -
     def initialize_file_level_interpretation_aggregates(self, file_path):
         # Note: Interpretation loop needs access to the file level detection aggregates
         all_file_level_detection_aggregates = (
-            self.detection_pass.directory_level_aggregates["file_level_aggregates"][
+            self.detection_pass.directory_level_aggregates["file_wise_aggregates"][
                 file_path
             ]
         )
+
         field_detection_type_wise_detection_aggregates = (
             all_file_level_detection_aggregates["field_detection_type_wise_aggregates"]
         )
-        field_label_wise_aggregates = all_file_level_detection_aggregates[
+        field_label_wise_detection_aggregates = all_file_level_detection_aggregates[
             "field_label_wise_aggregates"
         ]
 
-        self.interpretation_pass.initialize_file_level_interpretation_aggregates(
+        self.interpretation_pass.initialize_file_level_aggregates(
             file_path,
             self.all_field_detection_types,
             field_detection_type_wise_detection_aggregates,
-            field_label_wise_aggregates,
+            field_label_wise_detection_aggregates,
         )
 
         # Setup field type wise metrics
@@ -215,11 +216,8 @@ class TemplateFileLevelRunner(FileLevelRunner):
             field_detection_type_runner.initialize_file_level_interpretation_aggregates(
                 file_path,
                 field_detection_type_wise_detection_aggregates,
-                field_label_wise_aggregates,
+                field_label_wise_detection_aggregates,
             )
-
-    def get_file_level_interpretation_aggregates(self):
-        return self.interpretation_pass.file_level_aggregates
 
     def update_interpretation_aggregates_on_processed_file(
         self, file_path, current_omr_response
