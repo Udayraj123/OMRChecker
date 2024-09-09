@@ -1,4 +1,4 @@
-from src.algorithm.template.detection.base.file_processor import FieldTypeFileProcessor
+from src.algorithm.template.detection.base.file_runner import FieldTypeFileLevelRunner
 from src.algorithm.template.detection.ocr.detection_pass import OCRDetectionPass
 from src.algorithm.template.detection.ocr.interpretation_pass import (
     OCRInterpretationPass,
@@ -6,7 +6,7 @@ from src.algorithm.template.detection.ocr.interpretation_pass import (
 from src.processors.constants import FieldDetectionType
 
 
-class OCRFileProcessor(FieldTypeFileProcessor):
+class OCRFileRunner(FieldTypeFileLevelRunner):
     def __init__(self, tuning_config):
         field_detection_type = FieldDetectionType.OCR
         detection_pass = OCRDetectionPass(tuning_config, field_detection_type)

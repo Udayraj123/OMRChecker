@@ -71,7 +71,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
         self.global_max_jump = file_level_interpretation_aggregates["global_max_jump"]
 
         field_level_detection_aggregates = file_level_detection_aggregates[
-            "field_level_aggregates"
+            "field_label_wise_aggregates"
         ][field_label]
         self.field_bubble_means = field_level_detection_aggregates["field_bubble_means"]
         self.field_bubble_means_std = field_level_detection_aggregates[

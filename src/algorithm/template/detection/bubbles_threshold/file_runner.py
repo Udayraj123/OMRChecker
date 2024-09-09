@@ -1,4 +1,4 @@
-from src.algorithm.template.detection.base.file_processor import FieldTypeFileProcessor
+from src.algorithm.template.detection.base.file_runner import FieldTypeFileLevelRunner
 from src.algorithm.template.detection.bubbles_threshold.detection_pass import (
     BubblesThresholdDetectionPass,
 )
@@ -8,7 +8,7 @@ from src.algorithm.template.detection.bubbles_threshold.interpretation_pass impo
 from src.processors.constants import FieldDetectionType
 
 
-class BubblesThresholdFileProcessor(FieldTypeFileProcessor):
+class BubblesThresholdFileRunner(FieldTypeFileLevelRunner):
     def __init__(self, tuning_config):
         field_detection_type = FieldDetectionType.BUBBLES_THRESHOLD
         detection_pass = BubblesThresholdDetectionPass(

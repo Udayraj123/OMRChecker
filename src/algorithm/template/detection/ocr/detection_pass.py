@@ -13,8 +13,8 @@ class OCRDetectionPass(FieldTypeDetectionPass):
     ) -> OCRFieldDetection:
         return OCRFieldDetection(field, gray_image, colored_image)
 
-    def initialize_directory_level_aggregates(self):
-        super().initialize_directory_level_aggregates()
+    def initialize_directory_level_aggregates(self, initial_directory_path):
+        super().initialize_directory_level_aggregates(initial_directory_path)
         self.insert_directory_level_aggregates(
             {
                 # TODO: check if any insert needed

@@ -17,8 +17,8 @@ class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
     ) -> BubblesFieldDetection:
         return BubblesFieldDetection(field, gray_image, colored_image)
 
-    def initialize_directory_level_aggregates(self):
-        super().initialize_directory_level_aggregates()
+    def initialize_directory_level_aggregates(self, initial_directory_path):
+        super().initialize_directory_level_aggregates(initial_directory_path)
         self.insert_directory_level_aggregates(
             {
                 "file_wise_thresholds": NumberAggregate(),

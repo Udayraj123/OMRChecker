@@ -48,6 +48,7 @@ class OCRInterpretationPass(FieldTypeInterpretationPass):
             field, field_interpretation
         )
         # TODO: get this object from field_interpretation through a function?
+        # TODO: move is_multi_marked logic to a parent class
         self.insert_field_level_aggregates(
             {
                 "is_multi_marked": field_interpretation.is_multi_marked,

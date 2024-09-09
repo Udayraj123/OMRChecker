@@ -1,7 +1,9 @@
 import json
 from pathlib import Path
 
-from src.algorithm.template.detection.template_detector import TemplateDetector
+from src.algorithm.template.detection.template_file_runner import (
+    TemplateFileLevelRunner,
+)
 from src.algorithm.template.directory_handler import DirectoryHandler
 from src.algorithm.template.template_layout import TemplateLayout
 from src.processors.constants import FieldDetectionType
@@ -30,13 +32,13 @@ class Template:
 
         # re-export references for external use
         self.field_blocks = self.template_layout.field_blocks
-        # TODO: see if get_concatenated_omr_response should move to template_detector instead
+        # TODO: see if get_concatenated_omr_response should move to template_file_runner instead
         self.get_concatenated_omr_response = (
             self.template_layout.get_concatenated_omr_response
         )
         self.template_dimensions = self.template_layout.template_dimensions
 
-        self.template_detector = TemplateDetector(self)
+        self.template_file_runner = TemplateFileLevelRunner(self)
         self.directory_handler = DirectoryHandler(self)
 
     # TODO: move some other functions here
@@ -110,7 +112,7 @@ class Template:
         return self.directory_handler.output_files["Errors"]
 
     def finalize_directory_metrics(self):
-        return self.template_detector.finalize_directory_metrics()
+        return self.template_file_runner.finalize_directory_metrics()
 
     def get_save_marked_dir(self):
         return self.directory_handler.path_utils.save_marked_dir
@@ -136,7 +138,7 @@ class Template:
 
         gray_image, colored_image = ImageUtils.normalize(gray_image, colored_image)
 
-        raw_omr_response = self.template_detector.read_omr_and_update_metrics(
+        raw_omr_response = self.template_file_runner.read_omr_and_update_metrics(
             file_path, gray_image, colored_image
         )
 
@@ -147,11 +149,11 @@ class Template:
     def get_omr_metrics_for_file(self, file_path):
         # This can be used for drawing the bubbles etc
         file_level_interpretation_aggregates = (
-            self.template_detector.get_file_level_interpretation_aggregates()
+            self.template_file_runner.get_file_level_interpretation_aggregates()
         )
-        is_multi_marked = file_level_interpretation_aggregates["read_response_flags"][
-            "is_multi_marked"
-        ]
+        is_multi_marked = file_level_interpretation_aggregates[
+            "file_read_response_flags"
+        ]["is_multi_marked"]
         field_label_wise_interpretation_aggregates = (
             file_level_interpretation_aggregates[
                 "field_label_wise_interpretation_aggregates"
@@ -184,17 +186,15 @@ class Template:
         self, file_path, evaluation_meta, field_number_to_field_bubble_interpretation
     ):
         file_level_interpretation_aggregates = (
-            self.template_detector.get_file_level_interpretation_aggregates()
+            self.template_file_runner.get_file_level_interpretation_aggregates()
         )
 
         file_name = PathUtils.remove_non_utf_characters(file_path.name)
 
         is_multi_marked = file_level_interpretation_aggregates[
-            "read_response_flags"["is_multi_marked"]
-        ]
-        file_level_interpretation_aggregates = (
-            self.template_detector.get_file_level_interpretation_aggregates()
-        )
+            "file_read_response_flags"
+        ]["is_multi_marked"]
+
         bubbles_threshold_interpretation_aggregates = (
             file_level_interpretation_aggregates[
                 "field_detection_type_wise_interpretation_aggregates"

@@ -23,7 +23,7 @@ class BubblesThresholdInterpretationPass(FieldTypeInterpretationPass):
         tuning_config = self.tuning_config
         return BubblesFieldInterpretation(
             # TODO: [think] on what should be the place for file level thresholds - interpretation vs detection (or middle)
-            # ... As file_level_aggregates["field_level_aggregates"] is not filled yet!
+            # ... As file_level_aggregates["field_label_wise_aggregates"] is not filled yet!
             tuning_config,
             field,
             file_level_detection_aggregates,
@@ -161,6 +161,7 @@ class BubblesThresholdInterpretationPass(FieldTypeInterpretationPass):
         # TODO: get this object from field_interpretation through a function?
         self.insert_field_level_aggregates(
             {
+                # TODO: move is_multi_marked logic to a parent class
                 "is_multi_marked": field_interpretation.is_multi_marked,
                 "local_threshold_for_field": field_interpretation.local_threshold_for_field,
                 "field_bubble_interpretations": field_interpretation.field_bubble_interpretations,
