@@ -430,7 +430,6 @@ many_field_blocks_description_def = {
                         },
                         "required": [
                             "scanZone",
-                            "bubbleFieldType",
                             "fieldLabel",
                             # TODO: "failIfNotFound"
                             # "emptyValue",

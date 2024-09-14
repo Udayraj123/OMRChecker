@@ -19,7 +19,7 @@ class BubbleInterpretation:
         self.mean_value = field_bubble_mean.mean_value
         self.bubble_value = field_bubble_mean.item_reference.bubble_value
         self.local_threshold = local_threshold
-        # TODO: decouple this -  needed for drawing
+        # TODO: decouple this -  needed for drawing (else not needed here?)
         self.item_reference = field_bubble_mean.item_reference
         # self.unit_bubble = field_bubble_mean.item_reference
 
@@ -29,6 +29,9 @@ class BubbleInterpretation:
         is_marked = local_threshold > self.mean_value
         self.is_marked = is_marked
         return is_marked
+
+    def __str__(self):
+        return f"{self.item_reference} : {round(self.mean_value, 2)} {'*' if self.is_marked else ''}"
 
 
 class BubblesFieldInterpretation(FieldInterpretation):
@@ -54,10 +57,30 @@ class BubblesFieldInterpretation(FieldInterpretation):
         file_level_detection_aggregates,
         file_level_interpretation_aggregates,
     ):
+        self.initialize_from_file_level_aggregates(
+            field, file_level_detection_aggregates, file_level_interpretation_aggregates
+        )
+        self.process_field_bubble_means()
+
+    def initialize_from_file_level_aggregates(
+        self,
+        field,
+        file_level_detection_aggregates,
+        file_level_interpretation_aggregates,
+    ):
         field_label = field.field_label
+
+        field_level_detection_aggregates = file_level_detection_aggregates[
+            "field_label_wise_aggregates"
+        ][field_label]
         self.file_level_fallback_threshold = file_level_interpretation_aggregates[
             "file_level_fallback_threshold"
         ]
+
+        self.outlier_deviation_threshold_for_file = (
+            file_level_interpretation_aggregates["outlier_deviation_threshold_for_file"]
+        )
+        self.global_max_jump = file_level_interpretation_aggregates["global_max_jump"]
 
         # TODO: try out using additional fallbacks available
         # file_level_average_threshold = file_level_interpretation_aggregates["all_fields_local_thresholds"].running_average
@@ -65,39 +88,34 @@ class BubblesFieldInterpretation(FieldInterpretation):
         # directory_level_bubble_field_type_average_threshold = directory_level_interpretation_aggregates["bubble_field_type_wise_thresholds"][field.bubble_field_type].running_average
         # directory_level_field_label_average_threshold = directory_level_interpretation_aggregates["field_label_wise_local_thresholds"][field_label].running_average
 
-        self.outlier_deviation_threshold_for_file = (
-            file_level_interpretation_aggregates["outlier_deviation_threshold_for_file"]
-        )
-        self.global_max_jump = file_level_interpretation_aggregates["global_max_jump"]
-
-        field_level_detection_aggregates = file_level_detection_aggregates[
-            "field_label_wise_aggregates"
-        ][field_label]
         self.field_bubble_means = field_level_detection_aggregates["field_bubble_means"]
         self.field_bubble_means_std = field_level_detection_aggregates[
             "field_bubble_means_std"
         ]
 
-        self.process_field_bubble_means()
-
     def process_field_bubble_means(
         self,
     ):
+        self.update_local_threshold_for_field()
+        self.update_interpretations_for_field()
+
+        # TODO: see if parent can call this function -
+        self.update_common_interpretations()
+        self.update_field_level_confidence_metrics()
+
+    def update_local_threshold_for_field(self):
         field = self.field
         config = self.tuning_config
 
         # All Black or All White case
         no_outliers = (
-            # TODO: rename mean_value in parent class to suit better
-            self.field_bubble_means_std
-            < self.outlier_deviation_threshold_for_file
+            self.field_bubble_means_std < self.outlier_deviation_threshold_for_file
         )
 
         (
             self.local_threshold_for_field,
             self.local_max_jump,
         ) = self.get_local_threshold(
-            # TODO: self args?
             self.field_bubble_means,
             self.file_level_fallback_threshold,
             no_outliers,
@@ -106,6 +124,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
             plot_show=config.outputs.show_image_level >= 7,
         )
 
+    def update_interpretations_for_field(self):
         self.field_bubble_interpretations: List[BubbleInterpretation] = []
 
         # Main detection/thresholding logic here:
@@ -113,19 +132,6 @@ class BubblesFieldInterpretation(FieldInterpretation):
             self.field_bubble_interpretations.append(
                 BubbleInterpretation(field_bubble_mean, self.local_threshold_for_field)
             )
-
-        # TODO: call from FieldInterpretation (directory level)?
-        self.confidence_metrics_for_field = self.get_field_level_confidence_metrics(
-            field,
-            self.field_bubble_means,
-            config,
-            self.local_threshold_for_field,
-            self.file_level_fallback_threshold,
-            self.local_max_jump,
-            self.global_max_jump,
-        )
-
-        self.update_common_interpretations()
 
     def update_common_interpretations(self):
         # TODO: can we move it to a common wrapper since is_multi_marked is independent of field detection type?
@@ -135,6 +141,21 @@ class BubblesFieldInterpretation(FieldInterpretation):
             if bubble_interpretation.is_marked
         ]
         self.is_multi_marked = len(marked_bubbles) > 1
+
+    def update_field_level_confidence_metrics(self):
+        field = self.field
+        config = self.tuning_config
+
+        field_level_confidence_metrics = self.calculate_field_level_confidence_metrics(
+            field,
+            self.field_bubble_means,
+            config,
+            self.local_threshold_for_field,
+            self.file_level_fallback_threshold,
+            self.local_max_jump,
+            self.global_max_jump,
+        )
+        self.insert_field_level_confidence_metrics(field_level_confidence_metrics)
 
     # TODO: see if this one should move to detector
     @staticmethod
@@ -377,15 +398,15 @@ class BubblesFieldInterpretation(FieldInterpretation):
     def plot_for_local_threshold(
         sorted_bubble_means, thr1, file_level_fallback_threshold, plot_title
     ):
-        # TODO: add plot labels via the util
+        # TODO: add plot labels via the util?
         _, ax = pyplot.subplots()
         ax.bar(range(len(sorted_bubble_means)), sorted_bubble_means)
-        thrline = ax.axhline(thr1, color="green", ls=("-."), linewidth=3)
-        thrline.set_label("Local Threshold")
-        thrline = ax.axhline(
+        thr_line = ax.axhline(thr1, color="green", ls=("-."), linewidth=3)
+        thr_line.set_label("Local Threshold")
+        thr_line = ax.axhline(
             file_level_fallback_threshold, color="red", ls=":", linewidth=5
         )
-        thrline.set_label("Global Threshold")
+        thr_line.set_label("Global Threshold")
         ax.set_title(plot_title)
         ax.set_ylabel("Bubble Mean Intensity")
         ax.set_xlabel("Bubble Number(sorted)")
@@ -393,8 +414,9 @@ class BubblesFieldInterpretation(FieldInterpretation):
         pyplot.show()
 
     @staticmethod
-    def get_field_level_confidence_metrics(
+    def calculate_field_level_confidence_metrics(
         field: Field,
+        # TODO: call from FieldInterpretation? using field_bubble_interpretations?
         field_bubble_means: List[BubbleMeanValue],
         config,
         local_threshold_for_field,
@@ -441,7 +463,6 @@ class BubblesFieldInterpretation(FieldInterpretation):
             local_max_jump > MIN_JUMP + CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY
         )
 
-        # TODO: FieldInterpretation.bubbles = field_bubble_means
         thresholds_string = f"global={round(file_level_fallback_threshold, 2)} local={round(local_threshold_for_field, 2)} global_margin={GLOBAL_THRESHOLD_MARGIN}"
         jumps_string = f"global_max_jump={round(global_max_jump, 2)} local_max_jump={round(local_max_jump, 2)} MIN_JUMP={MIN_JUMP} SURPLUS={CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY}"
         if len(bubbles_in_doubt["by_disparity"]) > 0:
@@ -513,30 +534,11 @@ class BubblesFieldInterpretation(FieldInterpretation):
             # Note: This factor indicates presence of cases like partially filled bubbles,
             # mis-aligned box boundaries or some form of unintentional marking over the bubble
             if len(field_bubble_means) > 1:
-                # TODO: move util
-                def get_jumps_in_bubble_means(field_bubble_means):
-                    # get sorted array
-                    sorted_field_bubble_means = sorted(
-                        field_bubble_means,
+                jumps_in_bubble_means = (
+                    BubblesFieldInterpretation.get_jumps_in_bubble_means(
+                        field_bubble_means
                     )
-                    # get jumps
-                    jumps_in_bubble_means = []
-                    previous_bubble = sorted_field_bubble_means[0]
-                    previous_mean = previous_bubble.mean_value
-                    for i in range(1, len(sorted_field_bubble_means)):
-                        bubble = sorted_field_bubble_means[i]
-                        current_mean = bubble.mean_value
-                        jumps_in_bubble_means.append(
-                            [
-                                round(current_mean - previous_mean, 2),
-                                previous_bubble,
-                            ]
-                        )
-                        previous_bubble = bubble
-                        previous_mean = current_mean
-                    return jumps_in_bubble_means
-
-                jumps_in_bubble_means = get_jumps_in_bubble_means(field_bubble_means)
+                )
                 bubbles_in_doubt["by_jump"] = [
                     bubble
                     for jump, bubble in jumps_in_bubble_means
@@ -566,3 +568,26 @@ class BubblesFieldInterpretation(FieldInterpretation):
             "field_label": field.field_label,
         }
         return field_level_confidence_metrics
+
+    @staticmethod
+    def get_jumps_in_bubble_means(field_bubble_means: List[BubbleMeanValue]):
+        # get sorted array
+        sorted_field_bubble_means = sorted(
+            field_bubble_means,
+        )
+        # get jumps
+        jumps_in_bubble_means = []
+        previous_bubble = sorted_field_bubble_means[0]
+        previous_mean = previous_bubble.mean_value
+        for i in range(1, len(sorted_field_bubble_means)):
+            bubble = sorted_field_bubble_means[i]
+            current_mean = bubble.mean_value
+            jumps_in_bubble_means.append(
+                [
+                    round(current_mean - previous_mean, 2),
+                    previous_bubble,
+                ]
+            )
+            previous_bubble = bubble
+            previous_mean = current_mean
+        return jumps_in_bubble_means

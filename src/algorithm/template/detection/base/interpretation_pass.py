@@ -24,7 +24,7 @@ class FieldTypeInterpretationPass(FilePassAggregates):
         super().initialize_field_level_aggregates(field)
         self.insert_field_level_aggregates(
             {
-                "confidence_metrics_for_field": {},
+                "field_level_confidence_metrics": {},
             }
         )
 
@@ -60,7 +60,7 @@ class FieldTypeInterpretationPass(FilePassAggregates):
     ):
         self.insert_field_level_aggregates(
             {
-                "confidence_metrics_for_field": field_interpretation.confidence_metrics_for_field,
+                "field_level_confidence_metrics": field_interpretation.get_field_level_confidence_metrics(),
             }
         )
         super().update_field_level_aggregates_on_processed_field(field)
@@ -73,7 +73,7 @@ class FieldTypeInterpretationPass(FilePassAggregates):
     ):
         self.file_level_aggregates["confidence_metrics_for_file"][
             field.field_label
-        ] = field_interpretation.confidence_metrics_for_field
+        ] = field_interpretation.get_field_level_confidence_metrics()
 
         super().update_file_level_aggregates_on_processed_field(
             field, field_level_aggregates
@@ -121,6 +121,7 @@ class TemplateInterpretationPass(FilePassAggregates):
         super().initialize_directory_level_aggregates(initial_directory_path)
         self.insert_directory_level_aggregates(
             {
+                "files_by_label_count": StatsByLabel("processed", "multi_marked"),
                 "field_detection_type_wise_aggregates": {
                     key: {"fields_count": StatsByLabel("processed")}
                     for key in all_field_detection_types
@@ -130,11 +131,11 @@ class TemplateInterpretationPass(FilePassAggregates):
 
     # This overrides parent definition -
     def update_aggregates_on_processed_field_interpretation(
-        # TODO: see if detection also needs this arg (field_type_runner_field_level_aggregates)
         self,
         current_omr_response,
         field: Field,
         field_interpretation: FieldInterpretation,
+        # TODO: see if detection also needs this arg (field_type_runner_field_level_aggregates)
         field_type_runner_field_level_aggregates,
     ):
         self.update_field_level_aggregates_on_processed_field_interpretation(
@@ -163,7 +164,7 @@ class TemplateInterpretationPass(FilePassAggregates):
 
         if field_type_runner_field_level_aggregates["is_multi_marked"]:
             read_response_flags["is_multi_marked"] = True
-            read_response_flags["multi_marked_fields"].push(field)
+            read_response_flags["multi_marked_fields"].append(field)
             # TODO: define identifier_labels
             # if field.is_part_of_identifier():
             # if field_label in self.template.identifier_labels:
@@ -188,7 +189,7 @@ class TemplateInterpretationPass(FilePassAggregates):
 
         self.file_level_aggregates["confidence_metrics_for_file"][
             field.field_label
-        ] = field_interpretation.confidence_metrics_for_field
+        ] = field_interpretation.get_field_level_confidence_metrics()
 
     def update_directory_level_aggregates_on_processed_field_interpretation(
         self, field: Field, field_interpretation, template_field_level_aggregates
@@ -222,4 +223,5 @@ class TemplateInterpretationPass(FilePassAggregates):
         read_response_flags = self.file_level_aggregates["read_response_flags"]
 
         if read_response_flags["is_multi_marked"]:
+            print("self.directory_level_aggregates", self.directory_level_aggregates)
             self.directory_level_aggregates["files_by_label_count"].push("multi_marked")

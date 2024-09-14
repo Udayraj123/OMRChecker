@@ -8,6 +8,7 @@ from src.utils.file import PathUtils
 from src.utils.logger import logger
 
 
+# Process files + directory
 class DirectoryHandler:
     def __init__(self, template):
         self.template = template

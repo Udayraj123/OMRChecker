@@ -15,7 +15,7 @@ class FieldInterpretation:
         self.field = field
         # self.field_block = field.field_block
         self.empty_value = field.empty_value
-        self.confidence_metrics_for_field = {}
+        self.field_level_confidence_metrics = {}
 
         self.run_interpretation(
             field, file_level_detection_aggregates, file_level_interpretation_aggregates
@@ -34,6 +34,13 @@ class FieldInterpretation:
     def get_detected_string():
         raise Exception(f"Not implemented")
 
-    @abstractmethod
-    def get_field_level_confidence_metrics():
-        raise Exception(f"Not implemented")
+    def get_field_level_confidence_metrics(self):
+        return self.field_level_confidence_metrics
+
+    def insert_field_level_confidence_metrics(
+        self, next_field_level_confidence_metrics
+    ):
+        self.field_level_confidence_metrics = {
+            **self.field_level_confidence_metrics,
+            **next_field_level_confidence_metrics,
+        }

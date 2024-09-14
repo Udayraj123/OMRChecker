@@ -88,7 +88,7 @@ class FileLevelRunner:
 
 class FieldTypeFileLevelRunner(FileLevelRunner):
     """
-    FieldTypeFileLevelRunner contains the external contract to be used by TemplateFileLevelRunner for each of the field_detection_types
+    FieldTypeFileLevelRunner contains the external contract to be used by TemplateFileRunner for each of the field_detection_types
     It is static per template instance. Instantiated once per field type from the template.json
 
     """

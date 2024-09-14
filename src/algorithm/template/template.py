@@ -1,9 +1,7 @@
 import json
 from pathlib import Path
 
-from src.algorithm.template.detection.template_file_runner import (
-    TemplateFileLevelRunner,
-)
+from src.algorithm.template.detection.template_file_runner import TemplateFileRunner
 from src.algorithm.template.directory_handler import DirectoryHandler
 from src.algorithm.template.template_layout import TemplateLayout
 from src.processors.constants import FieldDetectionType
@@ -27,6 +25,7 @@ class Template:
         self.path = self.template_layout.path
         self.alignment = self.template_layout.alignment
         self.all_fields = self.template_layout.all_fields
+        self.global_empty_val = self.template_layout.global_empty_val
         self.output_columns = self.template_layout.output_columns
         self.all_field_detection_types = self.template_layout.all_field_detection_types
 
@@ -38,7 +37,7 @@ class Template:
         )
         self.template_dimensions = self.template_layout.template_dimensions
 
-        self.template_file_runner = TemplateFileLevelRunner(self)
+        self.template_file_runner = TemplateFileRunner(self)
         self.directory_handler = DirectoryHandler(self)
 
     # TODO: move some other functions here
@@ -189,6 +188,7 @@ class Template:
     def export_omr_metrics_for_file(
         self, file_path, evaluation_meta, field_number_to_field_bubble_interpretation
     ):
+        # TODO: move these inside self.template_file_runner.get_export_omr_metrics_for_file
         # This can be used for drawing the bubbles etc
         directory_level_interpretation_aggregates = (
             # TODO: get from file_level_interpretation_aggregates.field_detection_runner?

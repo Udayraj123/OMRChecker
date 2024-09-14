@@ -296,7 +296,7 @@ def process_directory_files(
             gray_image, colored_image, file_path
         )
 
-        # TODO: move add a try catch here?
+        # TODO: add a try catch here?
 
         evaluation_config_for_response = (
             None

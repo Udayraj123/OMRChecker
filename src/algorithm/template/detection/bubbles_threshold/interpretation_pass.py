@@ -161,7 +161,7 @@ class BubblesThresholdInterpretationPass(FieldTypeInterpretationPass):
         # TODO: get this object from field_interpretation through a function?
         self.insert_field_level_aggregates(
             {
-                # TODO: move is_multi_marked logic to a parent class
+                # TODO: move is_multi_marked logic to a parent class(or make copy in parent)
                 "is_multi_marked": field_interpretation.is_multi_marked,
                 "local_threshold_for_field": field_interpretation.local_threshold_for_field,
                 "field_bubble_interpretations": field_interpretation.field_bubble_interpretations,
@@ -180,5 +180,4 @@ class BubblesThresholdInterpretationPass(FieldTypeInterpretationPass):
             field_interpretation.local_threshold_for_field, field
         )
 
-        # TODO: update field_label_wise_local_thresholds
         # TODO: update bubble_field_type_wise_thresholds

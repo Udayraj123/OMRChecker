@@ -7,27 +7,25 @@ import os
 from src.utils.file import PathUtils
 
 # TODO: add shell utilities for simple local images processing such as:
+# From issue: https://github.com/Udayraj123/OMRChecker/issues/213
+# - bulk resize,
+#     - clip to max width (or height)
+#     -  with a conditional trigger if the file size exceeds a provided value
+# - bulk convert :
+#     - pdf to jpg
+#     - png to jpg or vice versa
+#     - tiff
+# - bulk rename files
+#     - adding folder name to file name
+#     - removing non-utf characters from filename (to avoid processing errors)
+# - add watermark to all images
+# - blur a particular section of the images (e.g. student names and signatures)
+# - create a gif from a folder of images
+# - Save output of cropped pages to avoid cropping in each run (and merge with manually cropped images)
+# - Save output of cropped markers to avoid cropping in each run (and merge with manually cropped images)
 
 # Make sure to be cross-os compatible i.e. use Posix paths wherever possible
 
-# compress with file max size,
-
-# resizing with image max shape,
-
-# Create a gif from multiple outputs
-
-# Sorting omr files
-# - Renaming files having non-utf characters (ascii paths - this is needed for loading urls in moderation portal````)
-
-# converting to another format:
-#   - PDF to Image(s) (png, jpg)
-#   - Image to Image (png, tiff, jpg)
-
-# blurring a section,
-# adding a watermark, "Scanned via OMRChecker"
-
-# crop documents pages and save
-# crop markers and save
 
 # Maybe have a common util file for bulk ops and then create one file for each of the above util.
 

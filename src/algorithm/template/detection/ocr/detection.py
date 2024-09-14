@@ -11,3 +11,4 @@ class OCRFieldDetection(FieldDetection):
         # field_bubbles = field.field_bubbles
         # TODO: connect ocr and field config
         self.detections = []
+        # EasyOCR.read_single_text(field.scanZone, gray_image)

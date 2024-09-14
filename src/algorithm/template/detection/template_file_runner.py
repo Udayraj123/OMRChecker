@@ -17,12 +17,12 @@ from src.algorithm.template.template_layout import Field
 from src.processors.constants import FieldDetectionType
 
 
-class TemplateFileLevelRunner(FileLevelRunner):
+class TemplateFileRunner(FileLevelRunner):
     """
-    TemplateFileLevelRunner maintains own template level runners as well as all the field detection type level runners.
+    TemplateFileRunner maintains own template level runners as well as all the field detection type level runners.
     It takes care of detections of an image file using a single template
 
-    We create one instance of TemplateFileLevelRunner per Template.
+    We create one instance of TemplateFileRunner per Template.
     Note: a Template may get reused for multiple directories(in nested case)
     """
 
@@ -34,24 +34,22 @@ class TemplateFileLevelRunner(FileLevelRunner):
     }
 
     def __init__(self, template):
+        self.template = template
         tuning_config = template.tuning_config
         detection_pass = TemplateDetectionPass(tuning_config)
         interpretation_pass = TemplateInterpretationPass(tuning_config)
         super().__init__(tuning_config, detection_pass, interpretation_pass)
-        self.template = template
-        self.all_fields: List[Field] = template.all_fields
-        self.all_field_detection_types = self.template.all_field_detection_types
-
-        self.prepare_field_detection_type_runners()
-
-        initial_directory_path = os.path.dirname(template.path)
-        self.initialize_directory_level_aggregates(initial_directory_path)
-
         # Cast to correct type (TODO: this should not be needed -)
         self.detection_pass: TemplateDetectionPass = self.detection_pass
         self.interpretation_pass: TemplateInterpretationPass = self.interpretation_pass
 
-    def prepare_field_detection_type_runners(self):
+        self.initialize_field_file_runners(template)
+        self.initialize_directory_level_aggregates(template)
+
+    def initialize_field_file_runners(self, template):
+        self.all_fields: List[Field] = template.all_fields
+        self.all_field_detection_types = self.template.all_field_detection_types
+
         # Create instances of all required field type processors
         self.field_detection_type_runners = {
             field_detection_type: self.get_field_detection_type_runner(
@@ -71,7 +69,6 @@ class TemplateFileLevelRunner(FileLevelRunner):
 
     def read_omr_and_update_metrics(self, file_path, gray_image, colored_image):
         # First pass to compute aggregates like global threshold
-        # TODO: populate local thresholds even in first pass? (to enable multiple passes)
 
         # populate detections
         self.run_file_level_detection(file_path, gray_image, colored_image)
@@ -110,7 +107,9 @@ class TemplateFileLevelRunner(FileLevelRunner):
         )
 
     # Overrides
-    def initialize_directory_level_aggregates(self, initial_directory_path):
+    def initialize_directory_level_aggregates(self, template):
+        initial_directory_path = os.path.dirname(template.path)
+
         # super().initialize_directory_level_aggregates(initial_directory_path)
 
         self.detection_pass.initialize_directory_level_aggregates(
@@ -143,11 +142,11 @@ class TemplateFileLevelRunner(FileLevelRunner):
                 file_path
             )
 
+        # Note: we update file level after field levels are updated
         self.detection_pass.update_aggregates_on_processed_file(
             file_path, self.field_detection_type_runners
         )
 
-    # TODO: move into template_interpreter as a subclass of TemplatePass?
     def run_file_level_interpretation(self, file_path, gray_image, colored_image):
         self.initialize_file_level_interpretation_aggregates(file_path)
 
@@ -236,5 +235,8 @@ class TemplateFileLevelRunner(FileLevelRunner):
         # TODO: get_directory_level_confidence_metrics()
 
         # output_metrics = self.directory_level_aggregates
-        # TODO: export directory level stats here
+        # TODO: update export directory level stats here
+        pass
+
+    def get_export_omr_metrics_for_file(self):
         pass

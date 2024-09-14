@@ -1,4 +1,4 @@
-# TODO: create class for this to manage evaluation_meta for the directory? (Similar to TemplateFileLevelRunner?)
+# TODO: create class for this to manage evaluation_meta for the directory? (Similar to TemplateFileRunner?)
 
 
 # A utility to calculate score and metadata

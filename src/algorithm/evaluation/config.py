@@ -6,6 +6,9 @@ from copy import deepcopy
 import pandas as pd
 from rich.table import Table
 
+from src.algorithm.template.detection.bubbles_threshold.interpretation import (
+    BubbleInterpretation,
+)
 from src.schemas.constants import (
     BONUS_SECTION_PREFIX,
     DEFAULT_SECTION_KEY,
@@ -1065,7 +1068,7 @@ class EvaluationConfigForSet:
         self.explanation_table = table
 
     def get_evaluation_meta_for_question(
-        self, question_meta, bubble_detection, image_type
+        self, question_meta, bubble_interpretation: BubbleInterpretation, image_type
     ):
         # TODO: take config for CROSS_TICKS vs BUBBLE_BOUNDARY and call appropriate util
         (
@@ -1094,7 +1097,7 @@ class EvaluationConfigForSet:
             self.verdict_symbol_colors.get,
             ["correct", "incorrect", "neutral", "bonus"],
         )
-        if bubble_detection.is_marked:
+        if bubble_interpretation.is_marked:
             # Always render symbol as per delta (regardless of bonus) for marked bubbles
             if question_meta["delta"] > 0:
                 symbol = symbol_positive

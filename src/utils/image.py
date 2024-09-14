@@ -61,8 +61,10 @@ class ImageUtils:
     def resize_multiple(images, u_width=None, u_height=None):
         if len(images) == 1:
             return ImageUtils.resize_single(images[0], u_width, u_height)
-        return map(
-            lambda image: ImageUtils.resize_single(image, u_width, u_height), images
+        return list(
+            map(
+                lambda image: ImageUtils.resize_single(image, u_width, u_height), images
+            )
         )
 
     @staticmethod
@@ -154,9 +156,13 @@ class ImageUtils:
     def normalize(*images, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX):
         if len(images) == 1:
             return ImageUtils.normalize_single(images[0], alpha, beta, norm_type)
-        return map(
-            lambda image: ImageUtils.normalize_single(image, alpha, beta, norm_type),
-            images,
+        return list(
+            map(
+                lambda image: ImageUtils.normalize_single(
+                    image, alpha, beta, norm_type
+                ),
+                images,
+            )
         )
 
     @staticmethod

@@ -13,6 +13,8 @@ from src.utils.parsing import default_dump
 class BubbleMeanValue(MeanValueItem):
     def __init__(self, mean_value, unit_bubble: FieldBubble):
         super().__init__(mean_value, unit_bubble)
+        # type casting
+        self.item_reference: FieldBubble = self.item_reference
 
     def to_json(self):
         # TODO: mini util for this loop (for export metrics)
@@ -26,9 +28,6 @@ class BubbleMeanValue(MeanValueItem):
             ]
         }
 
-    def __str__(self):
-        return f"{self.item_reference} : {round(self.mean_value, 2)} {'*' if self.is_marked else ''}"
-
 
 class BubblesFieldDetection(FieldDetection):
 
@@ -39,6 +38,8 @@ class BubblesFieldDetection(FieldDetection):
     def run_detection(self, field, gray_image, _colored_image):
         field_bubbles = field.field_bubbles
         self.field_bubble_means = []
+        # TODO: populate local thresholds even in detection pass? (to enable multiple passes)
+
         for unit_bubble in field_bubbles:
             # TODO: cross/check mark detection support (#167)
             # detectCross(gray_image, rect) ? 0 : 255

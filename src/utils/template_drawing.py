@@ -1,5 +1,12 @@
+from typing import List
+
 import cv2
 
+from src.algorithm.evaluation.config import EvaluationConfigForSet
+from src.algorithm.template.detection.bubbles_threshold.interpretation import (
+    BubbleInterpretation,
+)
+from src.algorithm.template.template_layout import FieldBlock
 from src.schemas.constants import AnswerType
 from src.utils.constants import (
     CLR_BLACK,
@@ -15,6 +22,7 @@ from src.utils.interaction import InteractionUtils
 
 
 class TemplateDrawing:
+    # TODO: move this class into template.drawing_handler?
     @staticmethod
     def draw_template_layout(
         gray_image, colored_image, template, config, *args, **kwargs
@@ -267,8 +275,8 @@ class TemplateDrawing:
     def draw_field_with_question_meta(
         marked_image,
         image_type,
-        field_bubble_interpretations,
-        field_block,
+        field_bubble_interpretations: List[BubbleInterpretation],
+        field_block: FieldBlock,
         question_meta,
         evaluation_config_for_response,
     ):
@@ -359,9 +367,9 @@ class TemplateDrawing:
     @staticmethod
     def draw_field_bubbles_and_detections(
         marked_image,
-        field_bubble_interpretations,
-        field_block,
-        evaluation_config_for_response,
+        field_bubble_interpretations: List[BubbleInterpretation],
+        field_block: FieldBlock,
+        evaluation_config_for_response: EvaluationConfigForSet,
     ):
         bubble_dimensions = tuple(field_block.bubble_dimensions)
 
@@ -406,7 +414,9 @@ class TemplateDrawing:
 
     @staticmethod
     def draw_evaluation_summary(
-        marked_image, evaluation_meta, evaluation_config_for_response
+        marked_image,
+        evaluation_meta,
+        evaluation_config_for_response: EvaluationConfigForSet,
     ):
         if evaluation_config_for_response.draw_answers_summary["enabled"]:
             (
@@ -477,9 +487,9 @@ class TemplateDrawing:
         marked_image,
         image_type,
         question_meta,
-        field_bubble_interpretations,
-        field_block,
-        evaluation_config_for_response,
+        field_bubble_interpretations: List[BubbleInterpretation],
+        field_block: FieldBlock,
+        evaluation_config_for_response: EvaluationConfigForSet,
     ):
         # Note: currently draw_answer_groups is limited for questions with upto 4 bubbles
         answer_type = question_meta["answer_type"]
