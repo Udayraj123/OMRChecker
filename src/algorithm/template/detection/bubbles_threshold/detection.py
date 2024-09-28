@@ -5,16 +5,16 @@ import numpy as np
 
 from src.algorithm.template.detection.base.detection import FieldDetection
 from src.algorithm.template.detection.bubbles_threshold.stats import MeanValueItem
-from src.algorithm.template.template_layout import Field, FieldBubble
+from src.algorithm.template.template_layout import BubbleScanBox, Field
 from src.utils.parsing import default_dump
 
 
 # TODO: merge with FieldInterpretation/BubbleInterpretation?
 class BubbleMeanValue(MeanValueItem):
-    def __init__(self, mean_value, unit_bubble: FieldBubble):
+    def __init__(self, mean_value, unit_bubble: BubbleScanBox):
         super().__init__(mean_value, unit_bubble)
         # type casting
-        self.item_reference: FieldBubble = self.item_reference
+        self.item_reference: BubbleScanBox = self.item_reference
 
     def to_json(self):
         # TODO: mini util for this loop (for export metrics)
@@ -35,19 +35,19 @@ class BubblesFieldDetection(FieldDetection):
     Here we find the scan zone and perform the detection for the field at runtime.
     """
 
+    # Note: run_detection is called from the parent constructor
     def run_detection(self, field, gray_image, _colored_image):
-        field_bubbles = field.field_bubbles
         self.field_bubble_means = []
         # TODO: populate local thresholds even in detection pass? (to enable multiple passes)
 
-        for unit_bubble in field_bubbles:
+        for unit_bubble in field.scan_boxes:
             # TODO: cross/check mark detection support (#167)
             # detectCross(gray_image, rect) ? 0 : 255
             bubble_mean_value = self.read_bubble_mean_value(unit_bubble, gray_image)
             self.field_bubble_means.append(bubble_mean_value)
 
     @staticmethod
-    def read_bubble_mean_value(unit_bubble: FieldBubble, gray_image):
+    def read_bubble_mean_value(unit_bubble: BubbleScanBox, gray_image):
         box_w, box_h = unit_bubble.bubble_dimensions
         x, y = unit_bubble.get_shifted_position()
         rect = [y, y + box_h, x, x + box_w]

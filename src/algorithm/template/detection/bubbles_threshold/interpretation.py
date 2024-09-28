@@ -38,7 +38,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def get_detected_string(self):
+    def get_field_interpretation_string(self):
         marked_bubbles = [
             bubble_interpretation.bubble_value
             for bubble_interpretation in self.field_bubble_interpretations
@@ -73,6 +73,12 @@ class BubblesFieldInterpretation(FieldInterpretation):
         field_level_detection_aggregates = file_level_detection_aggregates[
             "field_label_wise_aggregates"
         ][field_label]
+        self.field_bubble_means = field_level_detection_aggregates["field_bubble_means"]
+
+        self.field_bubble_means_std = field_level_detection_aggregates[
+            "field_bubble_means_std"
+        ]
+
         self.file_level_fallback_threshold = file_level_interpretation_aggregates[
             "file_level_fallback_threshold"
         ]
@@ -87,11 +93,6 @@ class BubblesFieldInterpretation(FieldInterpretation):
         # bubble_field_type_average_threshold = file_level_interpretation_aggregates["bubble_field_type_wise_thresholds"][field.bubble_field_type].running_average
         # directory_level_bubble_field_type_average_threshold = directory_level_interpretation_aggregates["bubble_field_type_wise_thresholds"][field.bubble_field_type].running_average
         # directory_level_field_label_average_threshold = directory_level_interpretation_aggregates["field_label_wise_local_thresholds"][field_label].running_average
-
-        self.field_bubble_means = field_level_detection_aggregates["field_bubble_means"]
-        self.field_bubble_means_std = field_level_detection_aggregates[
-            "field_bubble_means_std"
-        ]
 
     def process_field_bubble_means(
         self,

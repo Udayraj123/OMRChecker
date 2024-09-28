@@ -17,6 +17,7 @@ from src.utils.drawing import DrawingUtils
 from src.utils.logger import logger
 from src.utils.math import MathUtils
 from src.utils.parsing import OVERRIDE_MERGER
+from src.utils.shapes import ShapeUtils
 
 
 class CropOnPatchesCommon(WarpOnPointsCommon):
@@ -255,7 +256,11 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         if dot_point is None:
             raise Exception(f"No dot found for zone {zone_label}")
 
-        destination_rect = self.compute_scan_zone_destination_rect(zone_description)
+        destination_rect = np.intp(
+            ShapeUtils.compute_scan_zone_rectangle(
+                zone_description, include_margins=False
+            )
+        )
         destination_point = self.select_point_from_rectangle(
             destination_rect, points_selector
         )
@@ -280,41 +285,13 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             ]
         return None
 
-    @staticmethod
-    def compute_scan_zone_destination_rect(zone_description):
-        x, y = zone_description["origin"]
-        w, h = zone_description["dimensions"]
-        return np.intp(MathUtils.get_rectangle_points(x, y, w, h))
-
     def compute_scan_zone_util(self, image, zone_description):
-        zone_label = zone_description["label"]
-        # parse arguments
-        h, w = image.shape[:2]
-        origin, dimensions, margins = map(
-            zone_description.get, ["origin", "dimensions", "margins"]
+        zone, scan_zone_rectangle = ShapeUtils.extract_image_from_zone_description(
+            image, zone_description
         )
-        # TODO: check bug in margins for scan zone
 
-        # compute zone and clip to image dimensions
-        zone_start = [
-            int(origin[0] - margins["left"]),
-            int(origin[1] - margins["top"]),
-        ]
-        zone_end = [
-            int(origin[0] + margins["right"] + dimensions[0]),
-            int(origin[1] + margins["bottom"] + dimensions[1]),
-        ]
-
-        if zone_start[0] < 0 or zone_start[1] < 0 or zone_end[0] > w or zone_end[1] > h:
-            logger.warning(
-                f"Clipping label {zone_label} with scan rectangle: {[zone_start, zone_end]} to image boundary {[w, h]}."
-            )
-            # zone_start, zone_end = ImageUtils.clip_zone_to_image_bounds([zone_start, zone_end], image)
-            zone_start = [max(0, zone_start[0]), max(0, zone_start[1])]
-            zone_end = [min(w, zone_end[0]), min(h, zone_end[1])]
-
-        # Extract image zone
-        zone = image[zone_start[1] : zone_end[1], zone_start[0] : zone_end[0]]
+        zone_start = scan_zone_rectangle[0]
+        zone_end = scan_zone_rectangle[2]
 
         config = self.tuning_config
         if config.outputs.show_image_level >= 1:

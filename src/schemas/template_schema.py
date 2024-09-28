@@ -310,6 +310,21 @@ _common_field_block_properties = {
             "maxMatchCount": {"$ref": "#/$def/positive_integer"},
         },
     },
+    "fieldLabels": {
+        "description": "The ordered array of labels to use for given fields in this field block",
+        "type": "array",
+        "items": {
+            "$ref": "#/$def/field_string_type",
+        },
+    },
+    "labelsGap": {
+        "$ref": "#/$def/positive_number",
+        "description": "The gap between two labels(top-left to top-left) in the current field block",
+    },
+    "origin": {
+        "$ref": "#/$def/two_positive_numbers",
+        "description": "The top left point of the first bubble in this field block",
+    },
 }
 
 _bubble_field_type_properties = {
@@ -336,21 +351,6 @@ _traditional_field_block_properties = {
         "$ref": "#/$def/positive_number",
         "description": "The gap between two bubbles(top-left to top-left) in the current field block",
     },
-    "fieldLabels": {
-        "description": "The ordered array of labels to use for given fields in this field block",
-        "type": "array",
-        "items": {
-            "$ref": "#/$def/field_string_type",
-        },
-    },
-    "labelsGap": {
-        "$ref": "#/$def/positive_number",
-        "description": "The gap between two labels(top-left to top-left) in the current field block",
-    },
-    "origin": {
-        "$ref": "#/$def/two_positive_numbers",
-        "description": "The top left point of the first bubble in this field block",
-    },
 }
 
 many_field_blocks_description_def = {
@@ -361,7 +361,6 @@ many_field_blocks_description_def = {
             "description": "The key is a unique name for the field block",
             "type": "object",
             "required": [
-                "origin",
                 "fieldDetectionType",
             ],
             "properties": _common_field_block_properties,
@@ -387,6 +386,7 @@ many_field_blocks_description_def = {
                             },
                         },
                         "required": [
+                            "origin",
                             "bubbleFieldType",
                             "bubblesGap",
                             "labelsGap",
@@ -409,7 +409,7 @@ many_field_blocks_description_def = {
                 #         "required": [
                 #             "scanZone",
                 #             "bubbleFieldType",
-                #             "fieldLabel",
+                #             "fieldLabels",
                 #             # TODO: "failIfNotFound"
                 #             # "emptyValue",
                 #         ],
@@ -419,7 +419,7 @@ many_field_blocks_description_def = {
                 #         "properties": {
                 #             **_common_field_block_properties,
                 #             "scanZone": _box_zone_description,
-                #             "fieldLabel": {"type": "string"},
+                #             "fieldLabels": {"type": "string"},
                 #         },
                 #     },
                 # },
@@ -429,18 +429,21 @@ many_field_blocks_description_def = {
                             "fieldDetectionType": {"const": FieldDetectionType.OCR}
                         },
                         "required": [
+                            "origin",
                             "scanZone",
-                            "fieldLabel",
+                            "fieldLabels",
                             # TODO: "failIfNotFound"
-                            # "emptyValue",
                         ],
                     },
                     "then": {
                         "additionalProperties": False,
                         "properties": {
                             **_common_field_block_properties,
-                            "scanZone": _box_zone_description,
-                            "fieldLabel": {"type": "string"},
+                            "scanZone": {
+                                **_box_zone_description,
+                                #  The origin of the scan zone will come from the grid structure itself
+                                "required": ["dimensions", "margins"],
+                            },
                         },
                     },
                 },

@@ -164,7 +164,7 @@ class Template:
         )
 
         # TODO: temp logic until template drawing is not migrated -
-        field_number_to_field_bubble_interpretation = []
+        field_number_to_scan_box_interpretation = []
         for field in self.all_fields:
             field_detection_type, field_label = (
                 field.field_detection_type,
@@ -176,17 +176,18 @@ class Template:
                         "from_field_type_runner"
                     ]["field_bubble_interpretations"]
                 )
-                field_number_to_field_bubble_interpretation.append(
+                # TODO: improve on this logic to use a better identifier
+                field_number_to_scan_box_interpretation.append(
                     field_bubble_interpretations
                 )
 
-        return is_multi_marked, field_number_to_field_bubble_interpretation
+        return is_multi_marked, field_number_to_scan_box_interpretation
 
     # TODO: figure out a structure to output directory metrics apart from from this file one.
     # directory_metrics_path = self.path_utils.image_metrics_dir.joinpath()
     # def export_omr_metrics_for_directory()
     def export_omr_metrics_for_file(
-        self, file_path, evaluation_meta, field_number_to_field_bubble_interpretation
+        self, file_path, evaluation_meta, field_number_to_scan_box_interpretation
     ):
         # TODO: move these inside self.template_file_runner.get_export_omr_metrics_for_file
         # This can be used for drawing the bubbles etc
@@ -221,7 +222,7 @@ class Template:
         field_wise_means_and_refs = []
 
         # TODO: loop over using a list of field_labels now
-        for field_bubble_interpretations in field_number_to_field_bubble_interpretation:
+        for field_bubble_interpretations in field_number_to_scan_box_interpretation:
             field_wise_means_and_refs.extend(field_bubble_interpretations)
         # sorted_global_bubble_means_and_refs = sorted(field_wise_means_and_refs)
 
@@ -232,7 +233,7 @@ class Template:
         template_meta = {
             # "template": template,
             "is_multi_marked": is_multi_marked,
-            "field_number_to_field_bubble_interpretation": field_number_to_field_bubble_interpretation,
+            "field_number_to_scan_box_interpretation": field_number_to_scan_box_interpretation,
             "file_level_fallback_threshold": file_level_fallback_threshold,
             "confidence_metrics_for_file": confidence_metrics_for_file,
         }

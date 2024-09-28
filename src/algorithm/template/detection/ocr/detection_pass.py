@@ -36,9 +36,7 @@ class OCRDetectionPass(FieldTypeDetectionPass):
             field, field_detection
         )
         self.insert_field_level_aggregates(
-            {
-                # TODO: check if any insert needed
-            }
+            {"detected_texts": field_detection.detected_texts}
         )
 
     def update_file_level_aggregates_on_processed_field_detection(

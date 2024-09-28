@@ -31,7 +31,7 @@ class FieldInterpretation:
         raise Exception(f"Not implemented")
 
     @abstractmethod
-    def get_detected_string():
+    def get_field_interpretation_string():
         raise Exception(f"Not implemented")
 
     def get_field_level_confidence_metrics(self):

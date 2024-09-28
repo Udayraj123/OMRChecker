@@ -155,9 +155,7 @@ class TemplateFileRunner(FileLevelRunner):
         for field in self.all_fields:
             self.run_field_level_interpretation(current_omr_response, field)
 
-        self.update_interpretation_aggregates_on_processed_file(
-            file_path, current_omr_response
-        )
+        self.update_interpretation_aggregates_on_processed_file(file_path)
 
         return current_omr_response
 
@@ -184,8 +182,10 @@ class TemplateFileRunner(FileLevelRunner):
             field_type_runner_field_level_aggregates,
         )
 
-        detected_string = field_interpretation.get_detected_string()
-        current_omr_response[field_label] = detected_string
+        field_interpretation_string = (
+            field_interpretation.get_field_interpretation_string()
+        )
+        current_omr_response[field_label] = field_interpretation_string
 
     # This overrides parent definition -
     def initialize_file_level_interpretation_aggregates(self, file_path):
@@ -218,9 +218,7 @@ class TemplateFileRunner(FileLevelRunner):
                 field_label_wise_detection_aggregates,
             )
 
-    def update_interpretation_aggregates_on_processed_file(
-        self, file_path, current_omr_response
-    ):
+    def update_interpretation_aggregates_on_processed_file(self, file_path):
         for field_detection_type_runner in self.field_detection_type_runners.values():
             field_detection_type_runner.update_interpretation_aggregates_on_processed_file(
                 file_path

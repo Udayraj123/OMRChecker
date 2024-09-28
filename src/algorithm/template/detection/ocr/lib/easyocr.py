@@ -1,6 +1,6 @@
 import easyocr
 
-from src.algorithm.template.detection.ocr.textocr import TextOCR
+from src.algorithm.template.detection.ocr.lib.textocr import TextOCR
 
 
 class EasyOCR(TextOCR):
@@ -20,6 +20,8 @@ class EasyOCR(TextOCR):
         filtered_texts_with_boxes = EasyOCR.read_texts_with_boxes(
             image, confidence_threshold, sort_by_score=True
         )
+
+        print("filtered_texts_with_boxes", filtered_texts_with_boxes)
         if len(filtered_texts_with_boxes) == 0:
             return ""
 
