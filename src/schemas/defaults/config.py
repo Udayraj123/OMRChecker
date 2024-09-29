@@ -1,5 +1,7 @@
 from dotmap import DotMap
 
+from src.utils.constants import SUPPORTED_PROCESSOR_NAMES
+
 CONFIG_DEFAULTS = DotMap(
     {
         "thresholding": {
@@ -19,6 +21,12 @@ CONFIG_DEFAULTS = DotMap(
         "outputs": {
             "display_image_dimensions": [720, 1080],
             "show_image_level": 0,
+            "show_preprocessors_diff": {
+                **{
+                    processor_name: False
+                    for processor_name in SUPPORTED_PROCESSOR_NAMES
+                }
+            },
             "save_image_level": 1,
             "show_logs_by_type": {
                 "critical": True,
@@ -28,7 +36,7 @@ CONFIG_DEFAULTS = DotMap(
                 "debug": False,
             },
             "save_detections": True,
-            "colored_outputs_enabled": True,
+            "colored_outputs_enabled": False,
             "save_image_metrics": False,
             "filter_out_multimarked_files": False,
         },

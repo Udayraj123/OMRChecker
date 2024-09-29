@@ -4,6 +4,7 @@
     "display_image_dimensions": [
       2400,
       1800
-    ]
+    ],
+    "colored_outputs_enabled": true
   }
 }

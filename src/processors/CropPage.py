@@ -20,6 +20,9 @@ MIN_PAGE_AREA = 80000
 class CropPage(WarpOnPointsCommon):
     __is_internal_preprocessor__ = False
 
+    def get_class_name(self):
+        return "CropPage"
+
     def validate_and_remap_options_schema(self, options):
         tuning_options = options.get("tuningOptions", {})
 

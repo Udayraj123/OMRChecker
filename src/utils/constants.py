@@ -7,6 +7,16 @@ TEMPLATE_FILENAME = "template.json"
 EVALUATION_FILENAME = "evaluation.json"
 CONFIG_FILENAME = "config.json"
 
+SUPPORTED_PROCESSOR_NAMES = [
+    "CropOnMarkers",
+    "CropPage",
+    "FeatureBasedAlignment",
+    "GaussianBlur",
+    "Levels",
+    "MedianBlur",
+    "AutoRotate",
+]
+
 FIELD_LABEL_NUMBER_REGEX = r"([^\d]+)(\d*)"
 #
 ERROR_CODES = DotMap(

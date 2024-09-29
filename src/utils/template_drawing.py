@@ -82,7 +82,7 @@ class TemplateDrawing:
         field_number_to_field_bubble_means=None,
         save_marked_dir=None,
         evaluation_meta=None,
-        evaluation_config_for_set=None,
+        evaluation_config_for_response=None,
         shifted=False,
         border=-1,
     ):
@@ -117,7 +117,7 @@ class TemplateDrawing:
                         template,
                         field_number_to_field_bubble_means,
                         evaluation_meta=None,
-                        evaluation_config_for_set=None,
+                        evaluation_config_for_response=None,
                     )
                 )
                 if image_type == "GRAYSCALE":
@@ -135,7 +135,7 @@ class TemplateDrawing:
                 template,
                 field_number_to_field_bubble_means,
                 evaluation_meta,
-                evaluation_config_for_set,
+                evaluation_config_for_response,
             )
 
         if should_save_detections:
@@ -148,7 +148,7 @@ class TemplateDrawing:
 
         if should_draw_question_verdicts:
             marked_image = TemplateDrawing.draw_evaluation_summary(
-                marked_image, evaluation_meta, evaluation_config_for_set
+                marked_image, evaluation_meta, evaluation_config_for_response
             )
 
         # Translucent
@@ -222,10 +222,10 @@ class TemplateDrawing:
         template,
         field_number_to_field_bubble_means,
         evaluation_meta,
-        evaluation_config_for_set,
+        evaluation_config_for_response,
     ):
         should_draw_question_verdicts = (
-            evaluation_meta is not None and evaluation_config_for_set is not None
+            evaluation_meta is not None and evaluation_config_for_response is not None
         )
         absolute_field_number = 0
         for field_block in template.field_blocks:
@@ -248,7 +248,7 @@ class TemplateDrawing:
                 if (
                     should_draw_question_verdicts
                     and question_has_verdict
-                    and evaluation_config_for_set.draw_question_verdicts["enabled"]
+                    and evaluation_config_for_response.draw_question_verdicts["enabled"]
                 ):
                     question_meta = evaluation_meta["questions_meta"][field_label]
                     # Draw answer key items
@@ -258,14 +258,14 @@ class TemplateDrawing:
                         field_bubble_means,
                         field_block,
                         question_meta,
-                        evaluation_config_for_set,
+                        evaluation_config_for_response,
                     )
                 else:
                     TemplateDrawing.draw_field_bubbles_and_detections(
                         marked_image,
                         field_bubble_means,
                         field_block,
-                        evaluation_config_for_set,
+                        evaluation_config_for_response,
                     )
 
         return marked_image
@@ -277,7 +277,7 @@ class TemplateDrawing:
         field_bubble_means,
         field_block,
         question_meta,
-        evaluation_config_for_set,
+        evaluation_config_for_response,
     ):
         bubble_dimensions = tuple(field_block.bubble_dimensions)
         bonus_type = question_meta["bonus_type"]
@@ -304,7 +304,7 @@ class TemplateDrawing:
                     verdict_color,
                     verdict_symbol_color,
                     thickness_factor,
-                ) = evaluation_config_for_set.get_evaluation_meta_for_question(
+                ) = evaluation_config_for_response.get_evaluation_meta_for_question(
                     question_meta, bubble_detection, image_type
                 )
 
@@ -332,7 +332,9 @@ class TemplateDrawing:
                 # Symbol of the field value for marked bubble
                 if (
                     bubble_detection.is_marked
-                    and evaluation_config_for_set.draw_detected_bubble_texts["enabled"]
+                    and evaluation_config_for_response.draw_detected_bubble_texts[
+                        "enabled"
+                    ]
                 ):
                     DrawingUtils.draw_text(
                         marked_image,
@@ -351,19 +353,19 @@ class TemplateDrawing:
                     thickness_factor=1 / 10,
                 )
 
-        if evaluation_config_for_set.draw_answer_groups["enabled"]:
+        if evaluation_config_for_response.draw_answer_groups["enabled"]:
             TemplateDrawing.draw_answer_groups(
                 marked_image,
                 image_type,
                 question_meta,
                 field_bubble_means,
                 field_block,
-                evaluation_config_for_set,
+                evaluation_config_for_response,
             )
 
     @staticmethod
     def draw_field_bubbles_and_detections(
-        marked_image, field_bubble_means, field_block, evaluation_config_for_set
+        marked_image, field_bubble_means, field_block, evaluation_config_for_response
     ):
         bubble_dimensions = tuple(field_block.bubble_dimensions)
         for bubble_detection in field_bubble_means:
@@ -382,8 +384,10 @@ class TemplateDrawing:
                 )
                 if (
                     # Note: this mimics the default true behavior for draw_detected_bubble_texts
-                    evaluation_config_for_set is None
-                    or evaluation_config_for_set.draw_detected_bubble_texts["enabled"]
+                    evaluation_config_for_response is None
+                    or evaluation_config_for_response.draw_detected_bubble_texts[
+                        "enabled"
+                    ]
                 ):
                     DrawingUtils.draw_text(
                         marked_image,
@@ -404,15 +408,15 @@ class TemplateDrawing:
 
     @staticmethod
     def draw_evaluation_summary(
-        marked_image, evaluation_meta, evaluation_config_for_set
+        marked_image, evaluation_meta, evaluation_config_for_response
     ):
-        if evaluation_config_for_set.draw_answers_summary["enabled"]:
+        if evaluation_config_for_response.draw_answers_summary["enabled"]:
             (
                 formatted_answers_summary,
                 position,
                 size,
                 thickness,
-            ) = evaluation_config_for_set.get_formatted_answers_summary()
+            ) = evaluation_config_for_response.get_formatted_answers_summary()
             DrawingUtils.draw_text(
                 marked_image,
                 formatted_answers_summary,
@@ -421,13 +425,15 @@ class TemplateDrawing:
                 thickness=thickness,
             )
 
-        if evaluation_config_for_set.draw_score["enabled"]:
+        if evaluation_config_for_response.draw_score["enabled"]:
             (
                 formatted_score,
                 position,
                 size,
                 thickness,
-            ) = evaluation_config_for_set.get_formatted_score(evaluation_meta["score"])
+            ) = evaluation_config_for_response.get_formatted_score(
+                evaluation_meta["score"]
+            )
             DrawingUtils.draw_text(
                 marked_image,
                 formatted_score,
@@ -475,14 +481,16 @@ class TemplateDrawing:
         question_meta,
         field_bubble_means,
         field_block,
-        evaluation_config_for_set,
+        evaluation_config_for_response,
     ):
         # Note: currently draw_answer_groups is limited for questions with upto 4 bubbles
         answer_type = question_meta["answer_type"]
         if answer_type == AnswerType.STANDARD:
             return
         box_edges = ["TOP", "RIGHT", "BOTTOM", "LEFT"]
-        color_sequence = evaluation_config_for_set.draw_answer_groups["color_sequence"]
+        color_sequence = evaluation_config_for_response.draw_answer_groups[
+            "color_sequence"
+        ]
         bubble_dimensions = field_block.bubble_dimensions
         if image_type == "GRAYSCALE":
             color_sequence = [CLR_WHITE] * len(color_sequence)

@@ -23,6 +23,7 @@ class ImageTemplatePreprocessor(Processor):
         self.processing_image_shape = options.get(
             "processingImageShape", default_processing_image_shape
         )
+        self.output = options.get("output")
 
     def get_relative_path(self, path):
         return os.path.join(self.relative_dir, path)

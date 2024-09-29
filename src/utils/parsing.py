@@ -9,7 +9,7 @@ from dotmap import DotMap
 from src.schemas.constants import FIELD_STRING_REGEX_GROUPS
 from src.schemas.defaults import CONFIG_DEFAULTS, TEMPLATE_DEFAULTS
 from src.schemas.defaults.evaluation import EVALUATION_CONFIG_DEFAULTS
-from src.utils.constants import FIELD_LABEL_NUMBER_REGEX
+from src.utils.constants import FIELD_LABEL_NUMBER_REGEX, SUPPORTED_PROCESSOR_NAMES
 from src.utils.file import load_json
 from src.utils.validations import (
     validate_config_json,
@@ -52,7 +52,17 @@ def open_config_with_defaults(config_path):
     user_tuning_config = OVERRIDE_MERGER.merge(
         deepcopy(CONFIG_DEFAULTS), user_tuning_config
     )
+
     validate_config_json(user_tuning_config, config_path)
+
+    # Broadcast the default boolean into preprocessor-wise boolean
+    show_preprocessors_diff = user_tuning_config["outputs"]["show_preprocessors_diff"]
+    if type(show_preprocessors_diff) == bool:
+        user_tuning_config["outputs"]["show_preprocessors_diff"] = {
+            processor_name: show_preprocessors_diff
+            for processor_name in SUPPORTED_PROCESSOR_NAMES
+        }
+
     # https://github.com/drgrib/dotmap/issues/74
     return DotMap(user_tuning_config, _dynamic=False)
 

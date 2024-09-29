@@ -9,6 +9,12 @@
   ],
   "preProcessors": [
     {
+      "name": "AutoRotate",
+      "options": {
+        "referenceImage": "reference.jpg"
+      }
+    },
+    {
       "name": "CropOnMarkers",
       "options": {
         "type": "FOUR_MARKERS",

@@ -19,6 +19,7 @@ from matplotlib import colormaps, pyplot
 
 from src.algorithm.detection import BubbleMeanValue, FieldStdMeanValue
 from src.utils.image import ImageUtils
+from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 
 
@@ -49,8 +50,21 @@ class ImageInstanceOps:
                 colored_image, template.processing_image_shape
             )
 
+        show_preprocessors_diff = config.outputs.show_preprocessors_diff
         # run pre_processors in sequence
         for pre_processor in template.pre_processors:
+            pre_processor_name = pre_processor.get_class_name()
+
+            # Show Before Preview
+            if show_preprocessors_diff[pre_processor_name]:
+                InteractionUtils.show(
+                    f"Before {pre_processor_name}",
+                    colored_image
+                    if config.outputs.colored_outputs_enabled
+                    else gray_image,
+                )
+
+            # Apply filter
             (
                 out_omr,
                 colored_image,
@@ -60,6 +74,15 @@ class ImageInstanceOps:
             )
             gray_image = out_omr
             template = next_template
+
+            # Show After Preview
+            if show_preprocessors_diff[pre_processor_name]:
+                InteractionUtils.show(
+                    f"After {pre_processor_name}",
+                    colored_image
+                    if config.outputs.colored_outputs_enabled
+                    else gray_image,
+                )
 
         if template.output_image_shape:
             # resize to output requirements

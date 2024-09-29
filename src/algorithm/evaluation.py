@@ -251,8 +251,6 @@ class EvaluationConfig:
             self.conditional_sets.append([name, matcher])
         self.validate_conditional_sets()
 
-        self.has_conditional_sets = len(self.conditional_sets) > 0
-
         # TODO: allow default evaluation to not contain any question/answer/config
         self.default_evaluation_config = EvaluationConfigForSet(
             DEFAULT_SET_NAME, curr_dir, default_evaluation_json, template, tuning_config
@@ -304,15 +302,19 @@ class EvaluationConfig:
                 )
             all_names.add(name)
 
-    def get_evaluation_config_for_set(self, concatenated_response):
-        matched_key = self.get_matching_set(concatenated_response)
+    # Public function
+    def get_evaluation_config_for_response(self, concatenated_response, file_path):
+        matched_key = self.get_matching_set(concatenated_response, file_path)
         if matched_key is None:
             return self.default_evaluation_config
         return self.set_mapping[matched_key]
 
-    def get_matching_set(self, concatenated_response):
-        # TODO: support passing file_path and file_name in this
-        formatting_fields = {**concatenated_response}
+    def get_matching_set(self, concatenated_response, file_path):
+        formatting_fields = {
+            **concatenated_response,
+            "file_path": str(file_path),
+            "file_name": str(file_path.name),
+        }
         # loop on all sets and return first matched set
         for name, matcher in self.conditional_sets:
             format_string, match_regex = matcher["formatString"], matcher["matchRegex"]
@@ -372,11 +374,10 @@ class EvaluationConfigForSet:
         if self.draw_question_verdicts["enabled"]:
             self.parse_draw_question_verdicts()
 
-        self.has_custom_marking = False
-
-        # TODO: Find a place for has_conditional_sets (parent class?)
-        self.has_conditional_sets = False
         self.exclude_files = []
+        self.has_custom_marking = False
+        self.has_conditional_sets = parent_evaluation_config is not None
+
         # TODO: separate handlers for these two type
         if source_type == "local":
             # Assign self answers_in_order so that child configs can refer for merging
@@ -778,7 +779,7 @@ class EvaluationConfigForSet:
                 f"The format string should contain only allowed variables ['score']. score_format_string={score_format_string}"
             )
 
-    # Externally called methods have higher abstraction level.
+    # Public function: Externally called methods with higher abstraction level.
     def prepare_and_validate_omr_response(self, omr_response):
         self.reset_evaluation()
 
@@ -804,6 +805,7 @@ class EvaluationConfigForSet:
                 f"No answer given for potential questions in OMR response: {missing_prefixed_questions}"
             )
 
+    # Public function
     def match_answer_for_question(self, current_score, question, marked_answer):
         answer_matcher = self.question_to_answer_matcher[question]
         question_verdict, delta = answer_matcher.get_verdict_marking(marked_answer)
@@ -822,7 +824,6 @@ class EvaluationConfigForSet:
         )
         return delta, question_verdict, answer_matcher, question_schema_verdict
 
-    # TODO: move has_conditional_sets into parent?
     def conditionally_add_explanation(
         self,
         answer_matcher,
@@ -1022,21 +1023,26 @@ class EvaluationConfigForSet:
         return symbol, color, symbol_color, thickness_factor
 
 
-def evaluate_concatenated_response(concatenated_response, evaluation_config_for_set):
-    evaluation_config_for_set.prepare_and_validate_omr_response(concatenated_response)
+# A utility to calculate score and metadata
+def evaluate_concatenated_response(
+    concatenated_response, evaluation_config_for_response
+):
+    evaluation_config_for_response.prepare_and_validate_omr_response(
+        concatenated_response
+    )
     current_score = 0.0
     questions_meta = {}
-    for question in evaluation_config_for_set.questions_in_order:
+    for question in evaluation_config_for_response.questions_in_order:
         marked_answer = concatenated_response[question]
         (
             delta,
             question_verdict,
             answer_matcher,
             question_schema_verdict,
-        ) = evaluation_config_for_set.match_answer_for_question(
+        ) = evaluation_config_for_response.match_answer_for_question(
             current_score, question, marked_answer
         )
-        marking_scheme = evaluation_config_for_set.get_marking_scheme_for_question(
+        marking_scheme = evaluation_config_for_response.get_marking_scheme_for_question(
             question
         )
         bonus_type = marking_scheme.get_bonus_type()
@@ -1052,15 +1058,15 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config_for_
             "question_schema_verdict": question_schema_verdict,
         }
 
-    evaluation_config_for_set.conditionally_print_explanation()
+    evaluation_config_for_response.conditionally_print_explanation()
     (
         formatted_answers_summary,
         *_,
-    ) = evaluation_config_for_set.get_formatted_answers_summary()
+    ) = evaluation_config_for_response.get_formatted_answers_summary()
     evaluation_meta = {
         "score": current_score,
         "questions_meta": questions_meta,
-        # "schema_verdict_counts": evaluation_config_for_set.schema_verdict_counts,
+        # "schema_verdict_counts": evaluation_config_for_response.schema_verdict_counts,
         "formatted_answers_summary": formatted_answers_summary,
     }
     return current_score, evaluation_meta

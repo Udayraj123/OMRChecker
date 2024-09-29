@@ -170,6 +170,12 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             self.append_save_image(
                 f"Anchor Points: {self}", range(3, 7), self.debug_image
             )
+        if self.output:
+            InteractionUtils.show(
+                f"{title_prefix} Preview of Warp: {file_path}",
+                warped_image,
+                pause=True,
+            )
 
         return warped_image, warped_colored_image, _template
 
