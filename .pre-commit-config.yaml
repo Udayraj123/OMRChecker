@@ -108,7 +108,7 @@ repos:
     hooks:
       - id: pytest-on-push
         name: Running all tests before push...
-        entry: coverage run --source src -m pytest -rfpsxEX --disable-warnings --verbose --durations=3 && coverage html -i
+        entry: ./scripts/run_coverage.sh
         language: system
         pass_filenames: false
         always_run: true
