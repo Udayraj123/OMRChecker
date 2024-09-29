@@ -40,6 +40,7 @@ repos:
       - id: optimize-png
       - id: optimize-jpg
         args: ["--quality", "90"]
+        fail_fast: true # Wait for user to commit the files
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0

@@ -19,6 +19,7 @@ OMR stands for Optical Mark Recognition, used to detect and interpret human-mark
 [![GitHub pull-requests closed](https://img.shields.io/github/issues-pr-closed/Udayraj123/OMRChecker.svg)](https://github.com/Udayraj123/OMRChecker/pulls?q=is%3Aclosed)
 [![GitHub issues-closed](https://img.shields.io/github/issues-closed/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/issues?q=is%3Aissue+is%3Aclosed)
 [![Ask me](https://img.shields.io/badge/Discuss-on_Github-purple.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/issues/5)
+
 <!-- [![GitHub contributors](https://img.shields.io/github/contributors/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/graphs/contributors/) -->
 
 [![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
@@ -93,6 +94,13 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 <p align="center">
 	<a href="https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals">
 		<img alt="csv_output" width="550" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/Progress/2019-04-26/images/csv_output.PNG">
+	</a>
+</p>
+
+We now support [colored outputs](https://github.com/Udayraj123/OMRChecker/wiki/%5Bv2%5D-About-Evaluation) as well. Here's a sample output on another image -
+<p align="center">
+	<a href="https://github.com/Udayraj123/OMRChecker/wiki/%5Bv2%5D-About-Evaluation">
+		<img alt="colored_output" width="550" src="./docs/assets/colored_output.jpg">
 	</a>
 </p>
 
@@ -272,9 +280,7 @@ We believe in the power of open source! Currently, OMRChecker is in an intermedi
 
 OMRChecker can be forked and modified. You are encouraged to play with it and we would love to see your own projects in action!
 
-The only requirement is **disclose usage** of this software in your (public) code.
-
-It is published under the [GPLv3 license](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE).
+It is published under the [MIT license](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE).
 
 </details>
 
