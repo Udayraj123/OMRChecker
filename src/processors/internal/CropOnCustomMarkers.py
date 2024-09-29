@@ -10,6 +10,7 @@ from src.processors.constants import (
     WarpMethod,
 )
 from src.processors.internal.CropOnPatchesCommon import CropOnPatchesCommon
+from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -110,7 +111,11 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             parsed_scan_areas.append(
                 {
                     "areaTemplate": area_template,
-                    "areaDescription": local_description,
+                    "areaDescription": {
+                        # Default box dimensions to markerDimensions
+                        "dimensions": defaultDimensions,
+                        **local_description,
+                    },
                     "customOptions": {
                         "referenceImage": reference_image_path,
                         "markerDimensions": defaultDimensions,
@@ -166,10 +171,12 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 # TODO: add colored support later based on image_type passed at parent level
                 reference_image = cv2.imread(reference_image_path, cv2.IMREAD_GRAYSCALE)
                 self.loaded_reference_images[reference_image_path] = reference_image
+
+            # TODO: expose referenceArea support in schema with a better name (to extract an area out of the reference image to use as a marker)
             reference_area = custom_options.get(
                 "referenceArea", self.get_default_scan_area_for_image(reference_image)
             )
-            logger.debug("area_label=", area_label, custom_options)
+            # logger.debug("area_label=", area_label, custom_options)
 
             extracted_marker = self.extract_marker_from_reference(
                 reference_image, reference_area, custom_options
@@ -217,7 +224,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             scan_area["areaTemplate"],
             scan_area["areaDescription"],
         )
-
+        logger.debug(scan_area)
         # Note: currently user input would be restricted to only markers at once (no combination of markers and dots)
         # TODO: >> handle a instance of this class from parent using scannerType for applicable ones!
         # Check for area_template
@@ -251,7 +258,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         )
 
         if config.outputs.show_image_level >= 1:
-            ImageUtils.draw_contour(self.debug_image, absolute_corners)
+            DrawingUtils.draw_contour(self.debug_image, absolute_corners)
 
         return absolute_corners
 
@@ -299,7 +306,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         # Note: now best match is being computed separately inside each patch_area
         (marker_position, optimal_marker) = self.get_best_match(area_label, patch_area)
 
-        if marker_position is None:
+        if marker_position is None or optimal_marker is None:
             return None
 
         h, w = optimal_marker.shape[:2]
@@ -368,12 +375,15 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 self.marker_rescale_range,
             )
         if config.outputs.show_image_level >= 1:
-            # Note: We need images of dtype float for displaying optimal_match_result.
             self.debug_hstack += [
                 patch_area / 255,
-                optimal_marker / 255,
-                optimal_match_result,
             ]
+            if optimal_marker is not None:
+                # Note: We need images of dtype float for displaying optimal_match_result.
+                self.debug_hstack += [
+                    optimal_marker / 255,
+                    optimal_match_result,
+                ]
             self.debug_vstack.append(self.debug_hstack)
             self.debug_hstack = []
 
@@ -382,20 +392,10 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             logger.error(
                 f"Error: No marker found in patch {area_label}, (match_max={optimal_match_max:.2f} < {self.min_matching_threshold:.2f}) for {area_label}! Recheck tuningOptions or output of previous preProcessor."
             )
-            logger.info(
-                f"Sizes: optimal_marker:{optimal_marker.shape[:2]}, patch_area: {patch_area.shape[:2]}"
+            logger.debug(
+                f"Sizes: optimal_marker:{None if optimal_marker is None else optimal_marker.shape[:2]}, patch_area: {patch_area.shape[:2]}"
             )
 
-            if config.outputs.show_image_level >= 1:
-                hstack = ImageUtils.get_padded_hstack(
-                    [patch_area / 255, optimal_marker / 255, optimal_match_result]
-                )
-                InteractionUtils.show(
-                    f"No Markers res_{area_label} ({str(optimal_match_max)})",
-                    hstack,
-                    pause=True,
-                )
-            raise Exception(f"Error: No marker found in patch {area_label}")
         else:
             y, x = np.argwhere(optimal_match_result == optimal_match_max)[0]
             marker_position = [x, y]
@@ -410,15 +410,28 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             hstack = ImageUtils.get_padded_hstack(
                 [
                     self.debug_image / 255,
-                    rescaled_marker / 255,
-                    optimal_match_result,
+                    patch_area / 255,
+                    (rescaled_marker if optimal_marker is None else optimal_marker)
+                    / 255,
+                    (
+                        match_result
+                        if optimal_match_result is None
+                        else optimal_match_result
+                    ),
                 ]
             )
+            title = (
+                f"Template Marker Matching(Error): {area_label} ({optimal_match_max:.2f}/{self.min_matching_threshold:.2f})"
+                if is_not_matching
+                else "Template Marker Matching"
+            )
             InteractionUtils.show(
-                f"Template Marker Matching: {area_label} ({optimal_match_max:.2f}/{self.min_matching_threshold:.2f})",
+                title,
                 hstack,
                 pause=is_not_matching,
             )
+        if is_not_matching:
+            raise Exception(f"Error: No marker found in patch {area_label}")
 
         return marker_position, optimal_marker
 

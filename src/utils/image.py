@@ -4,14 +4,7 @@ from matplotlib import pyplot
 from shapely import LineString, Point
 
 from src.processors.constants import EDGE_TYPES_IN_ORDER, EdgeType
-from src.utils.constants import (
-    CLR_BLACK,
-    CLR_DARK_GRAY,
-    CLR_GRAY,
-    CLR_GREEN,
-    CLR_WHITE,
-    TEXT_SIZE,
-)
+from src.utils.constants import CLR_WHITE
 from src.utils.logger import logger
 from src.utils.math import MathUtils
 
@@ -24,7 +17,7 @@ class ImageUtils:
 
     @staticmethod
     def read_image_util(file_path, tuning_config):
-        if tuning_config.outputs.show_colored_outputs:
+        if tuning_config.outputs.colored_outputs_enabled:
             colored_image = cv2.imread(file_path, cv2.IMREAD_COLOR)
             gray_image = cv2.cvtColor(colored_image, cv2.COLOR_BGR2GRAY)
         else:
@@ -34,7 +27,6 @@ class ImageUtils:
 
     @staticmethod
     def save_img(path, final_marked):
-        logger.info(f"Saving Image to '{path}'")
         cv2.imwrite(path, final_marked)
 
     @staticmethod
@@ -155,7 +147,6 @@ class ImageUtils:
     def get_control_destination_points_from_contour(
         source_contour, destination_line, max_points=None
     ):
-        # TODO: can use shapely intersections too?
         total_points = len(source_contour)
         if max_points is None:
             max_points = total_points
@@ -170,12 +161,12 @@ class ImageUtils:
             )
 
         # TODO: replace with this if the assertion passes on more samples
-        cv2_arclength = cv2.arcLength(
-            np.array(source_contour, dtype="float32"), closed=False
-        )
-        assert (
-            abs(cv2_arclength - contour_length) < 0.001
-        ), f"{contour_length:.3f} != {cv2_arclength:.3f}"
+        # cv2_arclength = cv2.arcLength(
+        #     np.array(source_contour, dtype="float32"), closed=False
+        # )
+        # assert (
+        #     abs(cv2_arclength - contour_length) < 0.001
+        # ), f"{contour_length:.3f} != {cv2_arclength:.3f}"
 
         # average_min_gap = (contour_length / (max_points - 1)) - 1
 
@@ -247,7 +238,7 @@ class ImageUtils:
             ]
             min_distance, nearest_edge_type = min(edge_distances)
             distance_warning = "*" if min_distance > 10 else ""
-            logger.info(
+            logger.debug(
                 f"boundary_point={boundary_point}\t nearest_edge_type={nearest_edge_type}\t min_distance={min_distance:.2f}{distance_warning}"
             )
             # TODO: Each edge contour's points should be in the clockwise order
@@ -320,6 +311,7 @@ class ImageUtils:
 
     @staticmethod
     def pad_image_to_width(image, max_width, value=CLR_WHITE):
+        # Pads from the right side
         return cv2.copyMakeBorder(
             image,
             0,
@@ -346,215 +338,3 @@ class ImageUtils:
         white_image[pad_range[0] : pad_range[1], pad_range[2] : pad_range[3]] = image
 
         return white_image, pad_range
-
-    @staticmethod
-    def draw_matches(image, from_points, warped_image, to_points):
-        horizontal_stack = ImageUtils.get_padded_hstack([image, warped_image])
-        h, w = image.shape[:2]
-        from_points = MathUtils.get_tuple_points(from_points)
-        to_points = MathUtils.get_tuple_points(to_points)
-        for from_point, to_point in zip(from_points, to_points):
-            horizontal_stack = cv2.line(
-                horizontal_stack,
-                from_point,
-                (w + to_point[0], to_point[1]),
-                color=CLR_GREEN,
-                thickness=3,
-            )
-        return horizontal_stack
-
-    @staticmethod
-    def draw_box_diagonal(
-        image,
-        position,
-        position_diagonal,
-        color=CLR_DARK_GRAY,
-        border=3,
-    ):
-        cv2.rectangle(
-            image,
-            position,
-            position_diagonal,
-            color,
-            border,
-        )
-
-    @staticmethod
-    def draw_contour(
-        image,
-        contour,
-        color=CLR_GREEN,
-        thickness=2,
-    ):
-        assert None not in contour, "Invalid contour provided"
-        cv2.drawContours(
-            image,
-            [np.intp(contour)],
-            contourIdx=-1,
-            color=color,
-            thickness=thickness,
-        )
-
-    @staticmethod
-    def draw_box(
-        image,
-        position,
-        box_dimensions,
-        color=None,
-        style="BOX_HOLLOW",
-        thickness_factor=1 / 12,
-        border=3,
-        centered=False,
-    ):
-        assert position is not None
-        x, y = position
-        box_w, box_h = box_dimensions
-
-        position = (
-            int(x + box_w * thickness_factor),
-            int(y + box_h * thickness_factor),
-        )
-        position_diagonal = (
-            int(x + box_w - box_w * thickness_factor),
-            int(y + box_h - box_h * thickness_factor),
-        )
-
-        if centered:
-            centered_position = [
-                (3 * position[0] - position_diagonal[0]) // 2,
-                (3 * position[1] - position_diagonal[1]) // 2,
-            ]
-            centered_diagonal = [
-                (position[0] + position_diagonal[0]) // 2,
-                (position[1] + position_diagonal[1]) // 2,
-            ]
-            position = centered_position
-            position_diagonal = centered_diagonal
-
-        if style == "BOX_HOLLOW":
-            if color is None:
-                color = CLR_GRAY
-        elif style == "BOX_FILLED":
-            if color is None:
-                color = CLR_DARK_GRAY
-            border = -1
-
-        ImageUtils.draw_box_diagonal(
-            image,
-            position,
-            position_diagonal,
-            color,
-            border,
-        )
-        return position, position_diagonal
-
-    @staticmethod
-    def draw_arrows(
-        image,
-        start_points,
-        end_points,
-        color=CLR_GREEN,
-        thickness=2,
-        line_type=cv2.LINE_AA,
-        tip_length=0.1,
-    ):
-        start_points = MathUtils.get_tuple_points(start_points)
-        end_points = MathUtils.get_tuple_points(end_points)
-        for start_point, end_point in zip(start_points, end_points):
-            image = cv2.arrowedLine(
-                image,
-                start_point,
-                end_point,
-                color,
-                thickness,
-                line_type,
-                tipLength=tip_length,
-            )
-
-        return image
-
-    @staticmethod
-    def draw_text(
-        image,
-        text_value,
-        position,
-        centered=False,
-        font_face=cv2.FONT_HERSHEY_SIMPLEX,
-        text_size=TEXT_SIZE,
-        color=CLR_BLACK,
-        thickness=2,
-        # available LineTypes: FILLED, LINE_4, LINE_8, LINE_AA
-        line_type=cv2.LINE_AA,
-    ):
-        if centered:
-            assert not callable(position)
-            text_position = position
-            position = lambda size_x, size_y: (
-                text_position[0] - size_x // 2,
-                text_position[1] + size_y // 2,
-            )
-
-        if callable(position):
-            size_x, size_y = cv2.getTextSize(
-                text_value,
-                font_face,
-                text_size,
-                thickness,
-            )[0]
-            position = position(size_x, size_y)
-
-        position = (int(position[0]), int(position[1]))
-        cv2.putText(
-            image,
-            text_value,
-            position,
-            font_face,
-            text_size,
-            color,
-            thickness,
-            lineType=line_type,
-        )
-
-    @staticmethod
-    def draw_symbol(image, symbol, position, position_diagonal, color=CLR_BLACK):
-        center_position = lambda size_x, size_y: (
-            (position[0] + position_diagonal[0] - size_x) // 2,
-            (position[1] + position_diagonal[1] + size_y) // 2,
-        )
-
-        ImageUtils.draw_text(image, symbol, center_position, color=color)
-
-    @staticmethod
-    def draw_line(image, start, end, color=CLR_BLACK, thickness=3):
-        cv2.line(image, start, end, color, thickness)
-
-    @staticmethod
-    def draw_group(
-        image,
-        start,
-        bubble_dimensions,
-        box_edge,
-        color,
-        thickness=3,
-        thickness_factor=7 / 10,
-    ):
-        start_x, start_y = start
-        box_w, box_h = bubble_dimensions
-        if box_edge == "TOP":
-            end_position = (start_x + int(box_w * thickness_factor), start_y)
-            start = (start_x + int(box_w * (1 - thickness_factor)), start_y)
-            ImageUtils.draw_line(image, start, end_position, color, thickness)
-        elif box_edge == "RIGHT":
-            start = (start_x + box_w, start_y)
-            end_position = (start_x, int(start_y + box_h * thickness_factor))
-            start = (start_x, int(start_y + box_h * (1 - thickness_factor)))
-            ImageUtils.draw_line(image, start, end_position, color, thickness)
-        elif box_edge == "BOTTOM":
-            start = (start_x, start_y + box_h)
-            end_position = (int(start_x + box_w * thickness_factor), start_y)
-            start = (int(start_x + box_w * (1 - thickness_factor)), start_y)
-            ImageUtils.draw_line(image, start, end_position, color, thickness)
-        elif box_edge == "LEFT":
-            end_position = (start_x, int(start_y + box_h * thickness_factor))
-            start = (start_x, int(start_y + box_h * (1 - thickness_factor)))
-            ImageUtils.draw_line(image, start, end_position, color, thickness)

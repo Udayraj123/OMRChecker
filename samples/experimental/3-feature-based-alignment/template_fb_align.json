@@ -20,6 +20,13 @@
       }
     },
     {
+      "name": "AutoAlign",
+      "options": {
+        "image": "symbol.jpg",
+        "position": "topRight"
+      }
+    },
+    {
       "name": "FeatureBasedAlignment",
       "options": {
         "reference": "reference.png",
@@ -57,7 +64,7 @@
       "fieldLabels": [
         "check_1"
       ],
-      "fieldType": "CUSTOM",
+      "fieldType": "CUSTOM_BUBBLES",
       "bubbleValues": [
         "A",
         "B",
@@ -79,7 +86,7 @@
       "fieldLabels": [
         "check_2"
       ],
-      "fieldType": "CUSTOM",
+      "fieldType": "CUSTOM_BUBBLES",
       "bubbleValues": [
         "N",
         "R",
@@ -100,7 +107,7 @@
       "fieldLabels": [
         "stu"
       ],
-      "fieldType": "CUSTOM",
+      "fieldType": "CUSTOM_BUBBLES",
       "bubbleValues": [
         "U",
         "A",

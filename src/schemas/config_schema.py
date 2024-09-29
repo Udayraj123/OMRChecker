@@ -1,8 +1,12 @@
-from src.schemas.constants import two_positive_integers
+from src.schemas.constants import load_common_defs
 
 CONFIG_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/Udayraj123/OMRChecker/tree/master/src/schemas/config-schema.json",
+    "$def": {
+        # The common definitions go here
+        **load_common_defs(["two_positive_integers"]),
+    },
     "title": "Config Schema",
     "description": "OMRChecker config schema for custom tuning",
     "type": "object",
@@ -13,7 +17,7 @@ CONFIG_SCHEMA = {
             "type": "object",
             "additionalProperties": False,
             "properties": {
-                # TODO: rename these variables for better usability
+                # TODO: rename all of these variables for better usability
                 "MIN_GAP_TWO_BUBBLES": {
                     "description": "Minimum difference between all mean values of the bubbles. Used for local thresholding of 2 or 1 bubbles",
                     "type": "integer",
@@ -25,6 +29,12 @@ CONFIG_SCHEMA = {
                     "type": "integer",
                     "minimum": 10,
                     "maximum": 100,
+                },
+                "MIN_JUMP_STD": {
+                    "description": "The MIN_JUMP for the standard deviation plot",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50,
                 },
                 "MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK": {
                     "description": "This value is added to jump value, underconfident bubbles fallback to global_threshold_for_template",
@@ -44,6 +54,12 @@ CONFIG_SCHEMA = {
                     "minimum": 10,
                     "maximum": 100,
                 },
+                "JUMP_DELTA_STD": {
+                    "description": "JUMP_DELTA_STD is the minimum delta to be considered as a jump in the std plot",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50,
+                },
                 "CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY": {
                     "description": "This value is added to jump value to distinguish safe detections vs underconfident detections",
                     "type": "integer",
@@ -55,6 +71,12 @@ CONFIG_SCHEMA = {
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 255,
+                },
+                "GLOBAL_PAGE_THRESHOLD_STD": {
+                    "description": "This option decides the starting value to use for standard deviation threshold which determines outliers",
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 60,
                 },
                 "GAMMA_LOW": {
                     "description": "Used in the CropOnDotLines processor to create a darker image for enhanced line detection (darker boxes)",
@@ -70,7 +92,7 @@ CONFIG_SCHEMA = {
             "additionalProperties": False,
             "properties": {
                 "display_image_dimensions": {
-                    **two_positive_integers,
+                    "$ref": "#/$def/two_positive_integers",
                     "description": "The dimensions (width, height) for images displayed during the execution",
                 },
                 "show_logs_by_type": {
@@ -96,7 +118,7 @@ CONFIG_SCHEMA = {
                     "minimum": 0,
                     "maximum": 6,
                 },
-                "show_colored_outputs": {
+                "colored_outputs_enabled": {
                     "description": "This option shows colored outputs while taking a small toll on the processing speeds",
                     "type": "boolean",
                 },

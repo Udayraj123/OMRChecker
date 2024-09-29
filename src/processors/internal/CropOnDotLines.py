@@ -12,6 +12,7 @@ from src.processors.constants import (
     WarpMethod,
 )
 from src.processors.internal.CropOnPatchesCommon import CropOnPatchesCommon
+from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.math import MathUtils
@@ -288,7 +289,7 @@ class CropOnDotLines(CropOnPatchesCommon):
 
         if edge_contours_map is None:
             raise Exception(
-                f"No line match found at origin: {area_description['origin']} with dimensions: { area_description['dimensions']}"
+                f"No line match found at origin: {area_description['origin']} with dimensions: {area_description['dimensions']}"
             )
         return edge_contours_map
 
@@ -327,15 +328,19 @@ class CropOnDotLines(CropOnPatchesCommon):
             area_start, normalised, area_description
         )
         if corners is None:
-            hstack = ImageUtils.get_padded_hstack([self.debug_image, area, thresholded])
-            InteractionUtils.show(
-                f"No patch/dot debug hstack",
-                ImageUtils.get_padded_hstack(self.debug_hstack),
-                pause=0,
-            )
-            InteractionUtils.show(f"No patch/dot found:", hstack, pause=1)
+            if config.outputs.show_image_level >= 1:
+                hstack = ImageUtils.get_padded_hstack(
+                    [self.debug_image, area, thresholded]
+                )
+                InteractionUtils.show(
+                    f"No patch/dot debug hstack",
+                    ImageUtils.get_padded_hstack(self.debug_hstack),
+                    pause=0,
+                )
+                InteractionUtils.show(f"No patch/dot found:", hstack, pause=1)
+
             raise Exception(
-                f"No patch/dot found at origin: {area_description['origin']} with dimensions: { area_description['dimensions']}"
+                f"No patch/dot found at origin: {area_description['origin']} with dimensions: {area_description['dimensions']}"
             )
 
         return corners
@@ -368,13 +373,13 @@ class CropOnDotLines(CropOnPatchesCommon):
         if config.outputs.show_image_level >= 5:
             h, w = canny_edges.shape[:2]
             contour_overlay = 255 * np.ones((h, w), np.uint8)
-            ImageUtils.draw_contour(contour_overlay, largest_contour)
+            DrawingUtils.draw_contour(contour_overlay, largest_contour)
             self.debug_hstack.append(contour_overlay)
 
         # Convert to list of 2d points
         bounding_contour = np.vstack(largest_contour).squeeze()
 
-        # TODO: >> see if bounding_hull is still needed
+        # TODO: see if bounding_hull is still needed
         bounding_hull = cv2.convexHull(bounding_contour)
 
         if scanner_type == ScannerType.PATCH_DOT:
@@ -406,7 +411,9 @@ class CropOnDotLines(CropOnPatchesCommon):
         if config.outputs.show_image_level >= 5:
             if ordered_patch_corners is not None:
                 corners_contour_overlay = canny_edges.copy()
-                ImageUtils.draw_contour(corners_contour_overlay, ordered_patch_corners)
+                DrawingUtils.draw_contour(
+                    corners_contour_overlay, ordered_patch_corners
+                )
                 self.debug_hstack.append(corners_contour_overlay)
 
             InteractionUtils.show(

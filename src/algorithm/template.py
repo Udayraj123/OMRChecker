@@ -10,6 +10,7 @@
 from src.algorithm.core import ImageInstanceOps
 from src.processors.manager import PROCESSOR_MANAGER
 from src.utils.constants import BUILTIN_FIELD_TYPES
+from src.utils.file import SaveImageOps
 from src.utils.logger import logger
 from src.utils.parsing import (
     custom_sort_output_columns,
@@ -19,10 +20,12 @@ from src.utils.parsing import (
 )
 
 
+# TODO: make a child class TemplateLayout to keep template only about the layouts & json data?
 class Template:
     def __init__(self, template_path, tuning_config):
         self.path = template_path
         self.image_instance_ops = ImageInstanceOps(tuning_config)
+        self.save_image_ops = SaveImageOps(tuning_config)
 
         json_object = open_template_with_defaults(template_path)
         (
@@ -34,7 +37,6 @@ class Template:
             self.global_empty_val,
             self.template_dimensions,
             self.options,
-            self.processing_image_shape,
             self.output_image_shape,
         ) = map(
             json_object.get,
@@ -47,10 +49,14 @@ class Template:
                 "emptyValue",
                 "templateDimensions",
                 "options",
-                "processingImageShape",
                 "outputImageShape",
                 # TODO: support for "sortFiles" key
             ],
+        )
+        page_width, page_height = self.template_dimensions
+
+        self.processing_image_shape = json_object.get(
+            "processingImageShape", [page_height, page_width]
         )
 
         self.parse_output_columns(output_columns_array)
@@ -71,7 +77,6 @@ class Template:
     def parse_output_columns(self, output_columns_array):
         self.output_columns = parse_fields(f"Output Columns", output_columns_array)
 
-    # TODO: make a child class TemplateLayout to keep template only about the layouts & json data?
     def setup_pre_processors(self, pre_processors_object, relative_dir):
         # load image pre_processors
         self.pre_processors = []
@@ -82,7 +87,7 @@ class Template:
             pre_processor_instance = ImageTemplateProcessorClass(
                 options=pre_processor["options"],
                 relative_dir=relative_dir,
-                image_instance_ops=self.image_instance_ops,
+                save_image_ops=self.save_image_ops,
                 default_processing_image_shape=self.processing_image_shape,
             )
             self.pre_processors.append(pre_processor_instance)
@@ -168,7 +173,7 @@ class Template:
         self.validate_parsed_labels(field_block_object["fieldLabels"], block_instance)
 
     def pre_fill_field_block(self, field_block_object):
-        field_type = field_block_object["fieldType"]
+        field_type = field_block_object.get("fieldType", "CUSTOM")
         #  TODO: support for if field_type == "BARCODE":
 
         if field_type in BUILTIN_FIELD_TYPES:
@@ -178,6 +183,7 @@ class Template:
             }
 
         return {
+            "fieldType": field_type,
             "direction": "vertical",
             "emptyValue": self.global_empty_val,
             "bubbleDimensions": self.bubble_dimensions,

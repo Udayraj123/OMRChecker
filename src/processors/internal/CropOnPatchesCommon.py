@@ -12,7 +12,7 @@ from src.processors.constants import (
 )
 from src.processors.internal.WarpOnPointsCommon import WarpOnPointsCommon
 from src.utils.constants import CLR_DARK_GREEN
-from src.utils.image import ImageUtils
+from src.utils.drawing import DrawingUtils
 from src.utils.logger import logger
 from src.utils.math import MathUtils
 from src.utils.parsing import OVERRIDE_MERGER
@@ -37,7 +37,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         return []
 
     def __str__(self):
-        return f"CropOnMarkers[\"{self.options['type']}\"]"
+        return f"CropOnMarkers[\"{self.options['pointsLayout']}\"]"
 
     def prepare_image(self, image):
         return image
@@ -211,16 +211,16 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         if len(area_control_points) > 1:
             if len(area_control_points) == 2:
                 # Draw line if it's just two points
-                ImageUtils.draw_contour(self.debug_image, area_control_points)
+                DrawingUtils.draw_contour(self.debug_image, area_control_points)
             else:
                 # Draw convex hull of the found control points
-                ImageUtils.draw_contour(
+                DrawingUtils.draw_contour(
                     self.debug_image,
                     cv2.convexHull(np.intp(area_control_points)),
                 )
 
         # Helper for alignment
-        ImageUtils.draw_arrows(
+        DrawingUtils.draw_arrows(
             self.debug_image,
             area_control_points,
             area_destination_points,
@@ -228,7 +228,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         )
         for control_point in area_control_points:
             # Show current detections too
-            ImageUtils.draw_box(
+            DrawingUtils.draw_box(
                 self.debug_image,
                 control_point,
                 # TODO: change this based on image shape
@@ -278,7 +278,8 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             ]
         return None
 
-    def compute_scan_area_destination_rect(self, area_description):
+    @staticmethod
+    def compute_scan_area_destination_rect(area_description):
         x, y = area_description["origin"]
         w, h = area_description["dimensions"]
         return np.intp(MathUtils.get_rectangle_points(x, y, w, h))
@@ -290,6 +291,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         origin, dimensions, margins = map(
             area_description.get, ["origin", "dimensions", "margins"]
         )
+        # TODO: check bug in margins for scan area
 
         # compute area and clip to image dimensions
         area_start = [
@@ -303,7 +305,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
 
         if area_start[0] < 0 or area_start[1] < 0 or area_end[0] > w or area_end[1] > h:
             logger.warning(
-                f"Clipping label {area_label} with scan rectangle: {[area_start, area_end]} to image boundary."
+                f"Clipping label {area_label} with scan rectangle: {[area_start, area_end]} to image boundary {[w, h]}."
             )
 
             area_start = [max(0, area_start[0]), max(0, area_start[1])]
@@ -314,7 +316,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
 
         config = self.tuning_config
         if config.outputs.show_image_level >= 1:
-            ImageUtils.draw_box_diagonal(
+            DrawingUtils.draw_box_diagonal(
                 self.debug_image,
                 area_start,
                 area_end,
