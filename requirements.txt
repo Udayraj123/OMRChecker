@@ -1,15 +1,13 @@
 deepmerge==1.1.1
 dotmap==1.3.30
+easyocr===1.7.1
 jsonschema==4.21.1
 matplotlib==3.8.4
 numpy==1.26.4
+opencv-contrib-python==4.9.0.80
+opencv-python==4.9.0.80
 pandas==2.2.1
 rich==13.7.1
-screeninfo==0.8.1
-# External deps
 scipy==1.12.0
+screeninfo==0.8.1
 shapely==2.0.3
-# Note: opencv is excluded from requirements.txt because the installation steps
-# may be different as per your OS. Linux users may want to comment the following two lines
-opencv-python==4.9.0.80
-opencv-contrib-python==4.9.0.80

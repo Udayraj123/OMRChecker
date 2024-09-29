@@ -1,12 +1,3 @@
-"""
-
- OMRChecker
-
- Author: Udayraj Deshmukh
- Github: https://github.com/Udayraj123
-
-"""
-
 import ast
 import os
 import re
@@ -15,6 +6,9 @@ from copy import deepcopy
 import pandas as pd
 from rich.table import Table
 
+from src.algorithm.template.detection.bubbles_threshold.interpretation import (
+    BubbleInterpretation,
+)
 from src.schemas.constants import (
     BONUS_SECTION_PREFIX,
     DEFAULT_SECTION_KEY,
@@ -33,7 +27,6 @@ from src.utils.logger import console, logger
 from src.utils.math import MathUtils
 from src.utils.parsing import (
     OVERRIDE_MERGER,
-    get_concatenated_response,
     open_evaluation_with_defaults,
     parse_fields,
     parse_float_or_fraction,
@@ -106,7 +99,7 @@ class AnswerMatcher:
 
     def set_local_marking_defaults(self, section_marking_scheme):
         answer_type = self.answer_type
-        self.empty_val = section_marking_scheme.empty_val
+        self.empty_value = section_marking_scheme.empty_value
         # Make a copy of section marking locally
         self.marking = deepcopy(section_marking_scheme.marking)
         if answer_type == AnswerType.STANDARD:
@@ -160,7 +153,7 @@ class AnswerMatcher:
 
     def get_standard_verdict(self, marked_answer):
         allowed_answer = self.answer_item
-        if marked_answer == self.empty_val:
+        if marked_answer == self.empty_value:
             return Verdict.UNMARKED
         elif marked_answer == allowed_answer:
             return Verdict.ANSWER_MATCH
@@ -169,7 +162,7 @@ class AnswerMatcher:
 
     def get_multiple_correct_verdict(self, marked_answer):
         allowed_answers = self.answer_item
-        if marked_answer == self.empty_val:
+        if marked_answer == self.empty_value:
             return Verdict.UNMARKED
         elif marked_answer in allowed_answers:
             # e.g. ANSWER-MATCH-BC
@@ -181,7 +174,7 @@ class AnswerMatcher:
         allowed_answers = [
             allowed_answer for allowed_answer, _answer_score in self.answer_item
         ]
-        if marked_answer == self.empty_val:
+        if marked_answer == self.empty_value:
             return Verdict.UNMARKED
         elif marked_answer in allowed_answers:
             return f"{Verdict.ANSWER_MATCH}-{marked_answer}"
@@ -193,9 +186,9 @@ class AnswerMatcher:
 
 
 class SectionMarkingScheme:
-    def __init__(self, section_key, section_scheme, set_name, empty_val):
-        # TODO: get local empty_val from qblock
-        self.empty_val = empty_val
+    def __init__(self, section_key, section_scheme, set_name, empty_value):
+        # TODO: get local empty_value from qblock
+        self.empty_value = empty_value
         self.section_key = section_key
         self.set_name = set_name
         self.marking_type = section_scheme.get("marking_type", "default")
@@ -573,20 +566,17 @@ class EvaluationConfigForSet:
                 gray_image,
                 colored_image,
                 template,
-            ) = template.image_instance_ops.apply_preprocessors(
-                image_path, gray_image, colored_image, template
-            )
+            ) = template.apply_preprocessors(image_path, gray_image, colored_image)
             if gray_image is None:
                 raise Exception(f"Could not read answer key from image {image_path}")
 
-            (response_dict, *_) = template.image_instance_ops.read_omr_response(
-                gray_image, colored_image, template, image_path
+            _, concatenated_omr_response = template.read_omr_response(
+                gray_image, colored_image, image_path
             )
-            omr_response = get_concatenated_response(response_dict, template)
 
-            empty_val = template.global_empty_val
+            empty_value = template.global_empty_val
             empty_answer_regex = (
-                rf"{re.escape(empty_val)}+" if empty_val != "" else r"^$"
+                rf"{re.escape(empty_value)}+" if empty_value != "" else r"^$"
             )
 
             if "questions_in_order" in options:
@@ -596,11 +586,13 @@ class EvaluationConfigForSet:
                 empty_answered_questions = [
                     question
                     for question in questions_in_order
-                    if re.search(empty_answer_regex, omr_response[question])
+                    if re.search(
+                        empty_answer_regex, concatenated_omr_response[question]
+                    )
                 ]
                 if len(empty_answered_questions) > 0:
                     logger.error(
-                        f"Found empty answers for the questions: {empty_answered_questions}, empty value used: '{empty_val}'"
+                        f"Found empty answers for the questions: {empty_answered_questions}, empty value used: '{empty_value}'"
                     )
                     raise Exception(
                         f"Found empty answers in file '{image_path}'. Please check your template again in the --setLayout mode."
@@ -611,11 +603,11 @@ class EvaluationConfigForSet:
                 )
                 questions_in_order = sorted(
                     question
-                    for (question, answer) in omr_response.items()
+                    for (question, answer) in concatenated_omr_response.items()
                     if not re.search(empty_answer_regex, answer)
                 )
             answers_in_order = [
-                omr_response[question] for question in questions_in_order
+                concatenated_omr_response[question] for question in questions_in_order
             ]
             # TODO: save the CSV
         return questions_in_order, answers_in_order
@@ -899,11 +891,13 @@ class EvaluationConfigForSet:
             )
 
     # Public function: Externally called methods with higher abstraction level.
-    def prepare_and_validate_omr_response(self, omr_response, allow_streak=False):
+    def prepare_and_validate_omr_response(
+        self, concatenated_omr_response, allow_streak=False
+    ):
         self.allow_streak = allow_streak
         self.reset_evaluation()
 
-        omr_response_keys = set(omr_response.keys())
+        omr_response_keys = set(concatenated_omr_response.keys())
         all_questions = set(self.questions_in_order)
         missing_questions = sorted(all_questions.difference(omr_response_keys))
         if len(missing_questions) > 0:
@@ -915,7 +909,7 @@ class EvaluationConfigForSet:
             )
 
         prefixed_omr_response_questions = set(
-            [k for k in omr_response.keys() if k.startswith("q")]
+            [k for k in concatenated_omr_response.keys() if k.startswith("q")]
         )
         missing_prefixed_questions = sorted(
             prefixed_omr_response_questions.difference(all_questions)
@@ -1074,7 +1068,7 @@ class EvaluationConfigForSet:
         self.explanation_table = table
 
     def get_evaluation_meta_for_question(
-        self, question_meta, bubble_detection, image_type
+        self, question_meta, bubble_interpretation: BubbleInterpretation, image_type
     ):
         # TODO: take config for CROSS_TICKS vs BUBBLE_BOUNDARY and call appropriate util
         (
@@ -1103,7 +1097,7 @@ class EvaluationConfigForSet:
             self.verdict_symbol_colors.get,
             ["correct", "incorrect", "neutral", "bonus"],
         )
-        if bubble_detection.is_marked:
+        if bubble_interpretation.is_marked:
             # Always render symbol as per delta (regardless of bonus) for marked bubbles
             if question_meta["delta"] > 0:
                 symbol = symbol_positive
@@ -1164,52 +1158,3 @@ class EvaluationConfigForSet:
                 )
 
         return symbol, color, symbol_color, thickness_factor
-
-
-# A utility to calculate score and metadata
-def evaluate_concatenated_response(
-    concatenated_response, evaluation_config_for_response
-):
-    evaluation_config_for_response.prepare_and_validate_omr_response(
-        concatenated_response, allow_streak=True
-    )
-    current_score = 0.0
-    questions_meta = {}
-    for question in evaluation_config_for_response.questions_in_order:
-        marked_answer = concatenated_response[question]
-        (
-            delta,
-            question_verdict,
-            answer_matcher,
-            question_schema_verdict,
-        ) = evaluation_config_for_response.match_answer_for_question(
-            current_score, question, marked_answer
-        )
-        marking_scheme = evaluation_config_for_response.get_marking_scheme_for_question(
-            question
-        )
-        bonus_type = marking_scheme.get_bonus_type()
-        current_score += delta
-        questions_meta[question] = {
-            "question_verdict": question_verdict,
-            "marked_answer": marked_answer,
-            "delta": delta,
-            "current_score": current_score,
-            "answer_item": answer_matcher.answer_item,
-            "answer_type": answer_matcher.answer_type,
-            "bonus_type": bonus_type,
-            "question_schema_verdict": question_schema_verdict,
-        }
-
-    evaluation_config_for_response.conditionally_print_explanation()
-    (
-        formatted_answers_summary,
-        *_,
-    ) = evaluation_config_for_response.get_formatted_answers_summary()
-    evaluation_meta = {
-        "score": current_score,
-        "questions_meta": questions_meta,
-        # "schema_verdict_counts": evaluation_config_for_response.schema_verdict_counts,
-        "formatted_answers_summary": formatted_answers_summary,
-    }
-    return current_score, evaluation_meta

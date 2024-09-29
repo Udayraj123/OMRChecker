@@ -4,7 +4,7 @@ TEMPLATE_BOILERPLATE = {
     "preProcessors": [{"name": "CropPage", "options": {"morphKernel": [10, 10]}}],
     "fieldBlocks": {
         "MCQ_Block_1": {
-            "fieldType": "QTYPE_MCQ5",
+            "bubbleFieldType": "QTYPE_MCQ5",
             "origin": [65, 60],
             "fieldLabels": ["q1..5"],
             "labelsGap": 52,

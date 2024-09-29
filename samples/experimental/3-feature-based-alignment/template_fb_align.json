@@ -53,18 +53,8 @@
       "check_2"
     ]
   },
-  "fieldBlocks": {
-    "Check1": {
-      "origin": [
-        2033,
-        1290
-      ],
-      "bubblesGap": 50,
-      "labelsGap": 50,
-      "fieldLabels": [
-        "check_1"
-      ],
-      "fieldType": "CUSTOM_BUBBLES",
+  "customBubbleFieldTypes": {
+    "CUSTOM_CHECK_1": {
       "bubbleValues": [
         "A",
         "B",
@@ -76,6 +66,41 @@
       ],
       "direction": "vertical"
     },
+    "CUSTOM_CHECK_2": {
+      "bubbleValues": [
+        "N",
+        "R",
+        "U",
+        "W",
+        "X",
+        "Y"
+      ],
+      "direction": "vertical"
+    },
+    "CUSTOM_STU_FIELD": {
+      "bubbleValues": [
+        "U",
+        "A",
+        "HT",
+        "GT"
+      ],
+      "direction": "vertical"
+    }
+  },
+  "fieldBlocks": {
+    "Check1": {
+      "origin": [
+        2033,
+        1290
+      ],
+      "bubblesGap": 50,
+      "labelsGap": 50,
+      "fieldLabels": [
+        "check_1"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_CHECK_1"
+    },
     "Check2": {
       "origin": [
         2083,
@@ -86,16 +111,8 @@
       "fieldLabels": [
         "check_2"
       ],
-      "fieldType": "CUSTOM_BUBBLES",
-      "bubbleValues": [
-        "N",
-        "R",
-        "U",
-        "W",
-        "X",
-        "Y"
-      ],
-      "direction": "vertical"
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_CHECK_2"
     },
     "Stu": {
       "origin": [
@@ -107,17 +124,12 @@
       "fieldLabels": [
         "stu"
       ],
-      "fieldType": "CUSTOM_BUBBLES",
-      "bubbleValues": [
-        "U",
-        "A",
-        "HT",
-        "GT"
-      ],
-      "direction": "vertical"
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_STU_FIELD"
     },
     "Roll": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         1685,
         1290

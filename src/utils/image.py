@@ -48,17 +48,30 @@ class ImageUtils:
         ImageUtils.save_img(image_path, final_marked)
 
     @staticmethod
-    def resize_to_shape(img, image_shape):
+    def resize_to_shape(image_shape, *images):
         h, w = image_shape
-        return ImageUtils.resize_util(img, w, h)
+        return ImageUtils.resize_multiple(images, w, h)
 
     @staticmethod
-    def resize_to_dimensions(img, image_dimensions):
+    def resize_to_dimensions(image_dimensions, *images):
         w, h = image_dimensions
-        return ImageUtils.resize_util(img, w, h)
+        return ImageUtils.resize_multiple(images, w, h)
 
-    def resize_util(img, u_width=None, u_height=None):
-        h, w = img.shape[:2]
+    @staticmethod
+    def resize_multiple(images, u_width=None, u_height=None):
+        if len(images) == 1:
+            return ImageUtils.resize_single(images[0], u_width, u_height)
+        return list(
+            map(
+                lambda image: ImageUtils.resize_single(image, u_width, u_height), images
+            )
+        )
+
+    @staticmethod
+    def resize_single(image, u_width=None, u_height=None):
+        if image is None:
+            return None
+        h, w = image.shape[:2]
         if u_height is None:
             u_height = int(h * u_width / w)
         if u_width is None:
@@ -66,8 +79,8 @@ class ImageUtils:
 
         if u_height == h and u_width == w:
             # No need to resize
-            return img
-        return cv2.resize(img, (int(u_width), int(u_height)))
+            return image
+        return cv2.resize(image, (int(u_width), int(u_height)))
 
     @staticmethod
     def get_cropped_warped_rectangle_points(ordered_page_corners):
@@ -133,8 +146,24 @@ class ImageUtils:
         return cnts
 
     @staticmethod
-    def normalize(img, alpha=0, beta=255):
-        return cv2.normalize(img, alpha, beta, norm_type=cv2.NORM_MINMAX)
+    def normalize_single(image, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX):
+        if image is None or image.max() == image.min():
+            return image
+
+        return cv2.normalize(image, None, alpha, beta, norm_type)
+
+    @staticmethod
+    def normalize(*images, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX):
+        if len(images) == 1:
+            return ImageUtils.normalize_single(images[0], alpha, beta, norm_type)
+        return list(
+            map(
+                lambda image: ImageUtils.normalize_single(
+                    image, alpha, beta, norm_type
+                ),
+                images,
+            )
+        )
 
     @staticmethod
     def auto_canny(image, sigma=0.93):
@@ -373,7 +402,7 @@ class ImageUtils:
         if keep_original_shape:
             image_shape = image.shape[0:2]
             image = cv2.rotate(image, rotation)
-            return ImageUtils.resize_to_shape(image, image_shape)
+            return ImageUtils.resize_to_shape(image_shape, image)
         else:
             return cv2.rotate(image, rotation)
 

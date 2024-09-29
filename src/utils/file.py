@@ -1,13 +1,8 @@
-import argparse
 import json
 import os
 import string
 from collections import defaultdict
-from csv import QUOTE_NONNUMERIC
 from pathlib import PureWindowsPath
-from time import localtime, strftime
-
-import pandas as pd
 
 from src.utils.image import ImageUtils
 from src.utils.logger import logger
@@ -26,12 +21,12 @@ def load_json(path, **rest):
     return loaded
 
 
-class Paths:
+class PathUtils:
     printable_chars = set(string.printable)
 
     @staticmethod
     def remove_non_utf_characters(path_string):
-        return "".join(x for x in path_string if x in Paths.printable_chars)
+        return "".join(x for x in path_string if x in PathUtils.printable_chars)
 
     # @staticmethod
     # def filter_omr_files(omr_files):
@@ -39,7 +34,7 @@ class Paths:
     #     omr_files_set = set()
     #     for omr_file in omr_files:
     #         omr_file_string = omr_file.as_posix()
-    #         filtered_omr_file = Paths.remove_non_utf_characters(omr_file_string)
+    #         filtered_omr_file = PathUtils.remove_non_utf_characters(omr_file_string)
     #         if omr_file_string in omr_files_set:
     #             logger.warning(
     #                 f"Skipping duplicate file after utf-8 encoding: {omr_file_string}"
@@ -55,7 +50,7 @@ class Paths:
         if os.path.sep == "\\" or "\\" in path:
             path = PureWindowsPath(path).as_posix()
 
-        path = Paths.remove_non_utf_characters(path)
+        path = PathUtils.remove_non_utf_characters(path)
 
         return path
 
@@ -69,89 +64,42 @@ class Paths:
         self.multi_marked_dir = self.manual_dir.joinpath("MultiMarkedFiles")
         self.debug_dir = output_dir.joinpath("Debug")
 
+    def create_output_directories(self):
+        logger.info("Checking Directories...")
 
-def setup_dirs_for_paths(paths):
-    logger.info("Checking Directories...")
+        if not os.path.exists(self.save_marked_dir):
+            os.makedirs(self.save_marked_dir)
+        # Main output directories
+        for save_output_dir in [
+            self.save_marked_dir.joinpath("colored"),
+            self.save_marked_dir.joinpath("stack"),
+            self.save_marked_dir.joinpath("stack", "colored"),
+            self.save_marked_dir.joinpath("_MULTI_"),
+            self.save_marked_dir.joinpath("_MULTI_", "colored"),
+        ]:
+            if not os.path.exists(save_output_dir):
+                os.mkdir(save_output_dir)
+                logger.info(f"Created : {save_output_dir}")
 
-    if not os.path.exists(paths.save_marked_dir):
-        os.makedirs(paths.save_marked_dir)
-    # Main output directories
-    for save_output_dir in [
-        paths.save_marked_dir.joinpath("colored"),
-        paths.save_marked_dir.joinpath("stack"),
-        paths.save_marked_dir.joinpath("stack", "colored"),
-        paths.save_marked_dir.joinpath("_MULTI_"),
-        paths.save_marked_dir.joinpath("_MULTI_", "colored"),
-    ]:
-        if not os.path.exists(save_output_dir):
-            os.mkdir(save_output_dir)
-            logger.info(f"Created : {save_output_dir}")
+        # Image buckets
+        for save_output_dir in [
+            self.manual_dir,
+            self.multi_marked_dir,
+            self.errors_dir,
+        ]:
+            if not os.path.exists(save_output_dir):
+                logger.info(f"Created : {save_output_dir}")
+                os.makedirs(save_output_dir)
+                os.mkdir(save_output_dir.joinpath("colored"))
 
-    # Image buckets
-    for save_output_dir in [
-        paths.manual_dir,
-        paths.multi_marked_dir,
-        paths.errors_dir,
-    ]:
-        if not os.path.exists(save_output_dir):
-            logger.info(f"Created : {save_output_dir}")
-            os.makedirs(save_output_dir)
-            os.mkdir(save_output_dir.joinpath("colored"))
-
-    # Non-image directories
-    for save_output_dir in [
-        paths.results_dir,
-        paths.image_metrics_dir,
-    ]:
-        if not os.path.exists(save_output_dir):
-            logger.info(f"Created : {save_output_dir}")
-            os.makedirs(save_output_dir)
-
-
-def setup_outputs_for_template(paths, template, output_mode):
-    # TODO: consider moving this into a class instance
-    ns = argparse.Namespace()
-    logger.info("Checking Files...")
-    ns.omr_response_columns = template.output_columns
-    if output_mode == "moderation":
-        ns.omr_response_columns = list(template.all_parsed_labels)
-    # Include current output paths
-    ns.paths = paths
-
-    ns.empty_resp = [""] * len(ns.omr_response_columns)
-    ns.sheet_columns = [
-        "file_id",
-        "input_path",
-        "output_path",
-        "score",
-    ] + ns.omr_response_columns
-    ns.OUTPUT_SET = []
-    ns.files_obj = {}
-    TIME_NOW_HRS = strftime("%I%p", localtime())
-    ns.filesMap = {
-        "Results": os.path.join(paths.results_dir, f"Results_{TIME_NOW_HRS}.csv"),
-        "MultiMarked": os.path.join(paths.manual_dir, "MultiMarkedFiles.csv"),
-        "Errors": os.path.join(paths.manual_dir, "ErrorFiles.csv"),
-    }
-
-    for file_key, file_name in ns.filesMap.items():
-        if not os.path.exists(file_name):
-            logger.info(f"Created new file: '{file_name}'")
-            # moved handling of files to pandas csv writer
-            ns.files_obj[file_key] = file_name
-            # Create Header Columns
-            pd.DataFrame([ns.sheet_columns], dtype=str).to_csv(
-                ns.files_obj[file_key],
-                mode="a",
-                quoting=QUOTE_NONNUMERIC,
-                header=False,
-                index=False,
-            )
-        else:
-            logger.info(f"Present : appending to '{file_name}'")
-            ns.files_obj[file_key] = open(file_name, "a")
-
-    return ns
+        # Non-image directories
+        for save_output_dir in [
+            self.results_dir,
+            self.image_metrics_dir,
+        ]:
+            if not os.path.exists(save_output_dir):
+                logger.info(f"Created : {save_output_dir}")
+                os.makedirs(save_output_dir)
 
 
 class SaveImageOps:
@@ -219,13 +167,12 @@ class SaveImageOps:
         _display_height, display_width = config.outputs.display_image_dimensions
 
         # TODO: attach title text as header to each stack image!
-        images = [
-            ImageUtils.resize_util(image, display_width)
-            for _title, image in titles_and_images
-        ]
+        images = ImageUtils.resize_multiple(
+            [image for _title, image in titles_and_images], display_width
+        )
         grid_images = MathUtils.chunks(images, images_per_row)
         result = ImageUtils.get_vstack_image_grid(grid_images)
-        result = ImageUtils.resize_util(
+        result = ImageUtils.resize_single(
             result,
             min(
                 len(titles_and_images) * display_width // 3,

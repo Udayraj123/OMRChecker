@@ -5,7 +5,6 @@
 import argparse
 import os
 
-# TODO: check pre-commit support for imports
 from scripts.utils.image_utils import convert_image, get_size_in_kb, get_size_reduction
 
 

@@ -1,7 +1,3 @@
-"""
-https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/
-"""
-
 import cv2
 import numpy as np
 
@@ -15,6 +11,10 @@ from src.utils.logger import logger
 from src.utils.math import MathUtils
 
 MIN_PAGE_AREA = 80000
+
+"""
+ref: https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/
+"""
 
 
 class CropPage(WarpOnPointsCommon):
@@ -33,7 +33,9 @@ class CropPage(WarpOnPointsCommon):
             "tuningOptions": {
                 "warpMethod": tuning_options.get(
                     "warpMethod", WarpMethod.PERSPECTIVE_TRANSFORM
-                )
+                ),
+                "normalizeConfig": [],
+                "cannyConfig": [],
             },
         }
         return parsed_options
@@ -55,6 +57,7 @@ class CropPage(WarpOnPointsCommon):
 
     def extract_control_destination_points(self, image, colored_image, file_path):
         options = self.options
+
         sheet, page_contour = self.find_page_contour_and_corners(
             image, colored_image, file_path
         )
@@ -107,6 +110,7 @@ class CropPage(WarpOnPointsCommon):
 
         _ret, image = cv2.threshold(image, 200, 255, cv2.THRESH_TRUNC)
         image = ImageUtils.normalize(image)
+
         self.append_save_image("Truncate Threshold", [1, 4, 5, 6], image)
 
         if self.use_colored_canny and config.outputs.colored_outputs_enabled:
@@ -115,7 +119,6 @@ class CropPage(WarpOnPointsCommon):
             mask = cv2.inRange(hsv, hsv_white_low, hsv_white_high)
             mask_result = cv2.bitwise_and(image, image, mask=mask)
             self.append_save_image("Mask Result", range(3, 7), mask_result)
-
             # TODO: get hsv mask working for colored separation
             # TODO: test this on more samples
             # InteractionUtils.show("hsv", hsv, 0)

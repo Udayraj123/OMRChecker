@@ -87,9 +87,8 @@
       "cpl1..3"
     ]
   },
-  "fieldBlocks": {
-    "NameBlock": {
-      "fieldType": "CUSTOM_BUBBLES",
+  "customBubbleFieldTypes": {
+    "CUSTOM_NAME_FIELD": {
       "bubbleValues": [
         "A",
         "B",
@@ -118,7 +117,13 @@
         "Y",
         "Z"
       ],
-      "direction": "vertical",
+      "direction": "vertical"
+    }
+  },
+  "fieldBlocks": {
+    "NameBlock": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_NAME_FIELD",
       "origin": [
         72,
         83
@@ -135,7 +140,8 @@
       "labelsGap": 27.81
     },
     "RollNo": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         1037,
         83
@@ -151,7 +157,8 @@
       "labelsGap": 27.81
     },
     "CPLNo": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         820,
         460
@@ -167,7 +174,8 @@
       "labelsGap": 60.81
     },
     "MCQBlock1_20": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         107,
         780
@@ -179,7 +187,8 @@
       "labelsGap": 46.09
     },
     "MCQBlock21_40": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         325,
         780
@@ -191,7 +200,8 @@
       "labelsGap": 46.09
     },
     "MCQBlock41_60": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         543,
         780
@@ -203,7 +213,8 @@
       "labelsGap": 46.09
     },
     "MCQBlock61_80": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         751,
         780
@@ -215,7 +226,8 @@
       "labelsGap": 46.09
     },
     "MCQBlock81_100": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         969,
         780

@@ -15,14 +15,14 @@ TEMPLATE_BOILERPLATE = {
     ],
     "fieldBlocks": {
         "MCQBlock1a1": {
-            "fieldType": "QTYPE_MCQ4",
+            "bubbleFieldType": "QTYPE_MCQ4",
             "origin": [197, 300],
             "bubblesGap": 92,
             "labelsGap": 59.6,
             "fieldLabels": ["q1..17"],
         },
         "MCQBlock1a11": {
-            "fieldType": "QTYPE_MCQ4",
+            "bubbleFieldType": "QTYPE_MCQ4",
             "origin": [1770, 1310],
             "bubblesGap": 92,
             "labelsGap": 59.6,

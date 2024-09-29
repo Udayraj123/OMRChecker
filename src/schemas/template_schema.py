@@ -1,13 +1,18 @@
 from src.processors.constants import (
+    FIELD_DETECTION_TYPES_IN_ORDER,
     MARKER_ZONE_TYPES_IN_ORDER,
     SCANNER_TYPES_IN_ORDER,
     SELECTOR_TYPES_IN_ORDER,
+    FieldDetectionType,
     WarpMethod,
     WarpMethodFlags,
     ZonePreset,
 )
 from src.schemas.constants import load_common_defs
-from src.utils.constants import BUILTIN_FIELD_TYPES, CUSTOM_FIELD_TYPE
+from src.utils.constants import (
+    BUILTIN_BUBBLE_FIELD_TYPES,
+    CUSTOM_BUBBLE_FIELD_TYPE_PATTERN,
+)
 
 margins_schema_def = {
     "description": "The margins to use around a box",
@@ -285,10 +290,15 @@ _common_field_block_properties = {
         "description": "The custom empty bubble value to use in this field block",
         "type": "string",
     },
-    "fieldType": {
-        "description": "The field type to use from a list of ready-made types as well as the custom type",
+    # TODO: move this as required field down to BUBBLES_THRESHOLD level
+    "bubbleFieldType": {
+        "description": "The bubble field type to use from a list of ready-made types as well as the custom type",
         "type": "string",
         # Note: moved enum validation into setup code
+    },
+    "fieldDetectionType": {
+        "description": "The detection type to use for reading the fields in the block",
+        "enum": FIELD_DETECTION_TYPES_IN_ORDER,
     },
     "alignment": {
         "type": "object",
@@ -299,31 +309,6 @@ _common_field_block_properties = {
             "maxDisplacement": {"$ref": "#/$def/positive_integer"},
             "maxMatchCount": {"$ref": "#/$def/positive_integer"},
         },
-    },
-}
-
-_field_type_properties = {
-    "bubbleValues": {
-        "$ref": "#/$def/array_of_strings",
-        "description": "The ordered array of values to use for given bubbles per field in this field block",
-    },
-    "direction": {
-        "description": "The direction of expanding the bubbles layout in this field block",
-        "type": "string",
-        "enum": ["horizontal", "vertical"],
-    },
-}
-
-_traditional_field_block_properties = {
-    **_common_field_block_properties,
-    **_field_type_properties,
-    "bubbleDimensions": {
-        "$ref": "#/$def/two_positive_numbers",
-        "description": "The custom dimensions for the bubbles in the current field block: [width, height]",
-    },
-    "bubblesGap": {
-        "$ref": "#/$def/positive_number",
-        "description": "The gap between two bubbles(top-left to top-left) in the current field block",
     },
     "fieldLabels": {
         "description": "The ordered array of labels to use for given fields in this field block",
@@ -342,6 +327,32 @@ _traditional_field_block_properties = {
     },
 }
 
+_bubble_field_type_properties = {
+    "bubbleValues": {
+        "$ref": "#/$def/array_of_strings",
+        "description": "The ordered array of values to use for given bubbles per field in this field block",
+    },
+    "direction": {
+        "description": "The direction of expanding the bubbles layout in this field block",
+        "type": "string",
+        "enum": ["horizontal", "vertical"],
+    },
+}
+
+# TODO: separate out the schema for other field types
+_traditional_field_block_properties = {
+    **_common_field_block_properties,
+    **_bubble_field_type_properties,
+    "bubbleDimensions": {
+        "$ref": "#/$def/two_positive_numbers",
+        "description": "The custom dimensions for the bubbles in the current field block: [width, height]",
+    },
+    "bubblesGap": {
+        "$ref": "#/$def/positive_number",
+        "description": "The gap between two bubbles(top-left to top-left) in the current field block",
+    },
+}
+
 many_field_blocks_description_def = {
     "description": "Each fieldBlock denotes a small group of adjacent fields",
     "type": "object",
@@ -350,37 +361,36 @@ many_field_blocks_description_def = {
             "description": "The key is a unique name for the field block",
             "type": "object",
             "required": [
-                "origin",
-                "bubblesGap",
-                "labelsGap",
-                "fieldLabels",
-                "fieldType",
+                "fieldDetectionType",
             ],
             "properties": _common_field_block_properties,
             "allOf": [
                 {
                     "if": {
                         "properties": {
-                            "fieldType": {
-                                "enum": [
-                                    *list(BUILTIN_FIELD_TYPES.keys()),
+                            "fieldDetectionType": {
+                                "const": FieldDetectionType.BUBBLES_THRESHOLD
+                            },
+                            "bubbleFieldType": {
+                                "oneOf": [
+                                    {
+                                        "enum": [
+                                            *list(BUILTIN_BUBBLE_FIELD_TYPES.keys()),
+                                        ]
+                                    },
+                                    {
+                                        "type": "string",
+                                        "pattern": CUSTOM_BUBBLE_FIELD_TYPE_PATTERN,
+                                    },
                                 ]
-                            }
+                            },
                         },
-                        "required": ["fieldType"],
-                    },
-                    "then": {
-                        "additionalProperties": False,
-                        "properties": _traditional_field_block_properties,
-                    },
-                },
-                {
-                    "if": {
-                        "properties": {"fieldType": {"const": CUSTOM_FIELD_TYPE}},
                         "required": [
-                            "bubbleValues",
-                            "direction",
-                            "fieldType",
+                            "origin",
+                            "bubbleFieldType",
+                            "bubblesGap",
+                            "labelsGap",
+                            "fieldLabels",
                         ],
                     },
                     "then": {
@@ -388,28 +398,56 @@ many_field_blocks_description_def = {
                         "properties": _traditional_field_block_properties,
                     },
                 },
+                # {
+                #     "if": {
+                #         "properties": {
+                #             "fieldDetectionType": {
+                #                 "const": FieldDetectionType.BARCODE_QR
+                #             }
+                #         },
+                #         # TODO: move barcode specific properties into this if-else
+                #         "required": [
+                #             "scanZone",
+                #             "bubbleFieldType",
+                #             "fieldLabels",
+                #             # TODO: "failIfNotFound"
+                #             # "emptyValue",
+                #         ],
+                #     },
+                #     "then": {
+                #         "additionalProperties": False,
+                #         "properties": {
+                #             **_common_field_block_properties,
+                #             "scanZone": _box_zone_description,
+                #             "fieldLabels": {"type": "string"},
+                #         },
+                #     },
+                # },
                 {
                     "if": {
-                        "properties": {"fieldType": {"const": "BARCODE"}},
-                        # TODO: move barcode specific properties into this if-else
+                        "properties": {
+                            "fieldDetectionType": {"const": FieldDetectionType.OCR}
+                        },
                         "required": [
+                            "origin",
                             "scanZone",
-                            "fieldType",
-                            "fieldLabel",
+                            "fieldLabels",
                             # TODO: "failIfNotFound"
-                            # "emptyValue",
                         ],
                     },
                     "then": {
                         "additionalProperties": False,
                         "properties": {
                             **_common_field_block_properties,
-                            "scanZone": _box_zone_description,
-                            "fieldLabel": {"type": "string"},
+                            "scanZone": {
+                                **_box_zone_description,
+                                #  The origin of the scan zone will come from the grid structure itself
+                                "required": ["dimensions", "margins"],
+                            },
                         },
                     },
                 },
-                # TODO: support for PHOTO_BLOB, OCR custom fields here
+                # TODO: support for more custom fields at top level fieldDetectionType
             ],
         }
     },
@@ -1005,18 +1043,18 @@ TEMPLATE_SCHEMA = {
                 ],
             },
         },
-        "customFieldTypes": {
+        "customBubbleFieldTypes": {
             "type": "object",
             "patternProperties": {
-                "^CUSTOM_.*$": {
-                    "description": "The key is a unique name for the custom field type. It can override built-in field types as well.",
+                CUSTOM_BUBBLE_FIELD_TYPE_PATTERN: {
+                    "description": "The key is a unique name for the custom bubble field type. It can override built-in field types as well.",
                     "type": "object",
                     "required": [
                         "bubbleValues",
                         "direction",
                     ],
                     "additionalProperties": False,
-                    "properties": _field_type_properties,
+                    "properties": _bubble_field_type_properties,
                 },
             },
         },

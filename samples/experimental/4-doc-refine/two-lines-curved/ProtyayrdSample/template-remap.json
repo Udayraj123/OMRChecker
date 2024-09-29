@@ -80,7 +80,8 @@
   },
   "fieldBlocks": {
     "Roll_No": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         107,
         580
@@ -93,7 +94,8 @@
       "labelsGap": 50.2
     },
     "Student_ID": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         471,
         580
@@ -106,7 +108,8 @@
       "labelsGap": 50
     },
     "Exam_ID": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         1029,
         580
@@ -128,7 +131,8 @@
       "fieldLabels": [
         "q1..20"
       ],
-      "fieldType": "QTYPE_MCQ4"
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
     },
     "q02block": {
       "origin": [
@@ -140,7 +144,8 @@
       "fieldLabels": [
         "q21..40"
       ],
-      "fieldType": "QTYPE_MCQ4"
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
     },
     "q03block": {
       "origin": [
@@ -152,7 +157,8 @@
       "fieldLabels": [
         "q41..60"
       ],
-      "fieldType": "QTYPE_MCQ4"
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
     },
     "q04block": {
       "origin": [
@@ -164,7 +170,8 @@
       "fieldLabels": [
         "q61..80"
       ],
-      "fieldType": "QTYPE_MCQ4"
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
     },
     "q05block": {
       "origin": [
@@ -176,7 +183,8 @@
       "fieldLabels": [
         "q81..100"
       ],
-      "fieldType": "QTYPE_MCQ4"
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
     }
   }
 }

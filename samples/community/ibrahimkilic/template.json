@@ -9,13 +9,18 @@
   ],
   "emptyValue": "no",
   "preProcessors": [],
-  "fieldBlocks": {
-    "YesNoBlock1": {
-      "fieldType": "CUSTOM_BUBBLES",
+  "customBubbleFieldTypes": {
+    "CUSTOM_YES_NO": {
       "bubbleValues": [
         "yes"
       ],
-      "direction": "horizontal",
+      "direction": "horizontal"
+    }
+  },
+  "fieldBlocks": {
+    "YesNoBlock1": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_YES_NO",
       "origin": [
         15,
         55

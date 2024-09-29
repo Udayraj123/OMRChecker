@@ -26,7 +26,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
         # process reference image
         self.ref_path = self.relative_dir.joinpath(options["reference"])
         ref_img = cv2.imread(str(self.ref_path), cv2.IMREAD_GRAYSCALE)
-        self.ref_img = ImageUtils.resize_to_shape(ref_img, self.processing_image_shape)
+        self.ref_img = ImageUtils.resize_to_shape(self.processing_image_shape, ref_img)
         # get options with defaults
         self.max_features = int(options.get("maxFeatures", 500))
         self.good_match_percent = options.get("goodMatchPercent", 0.10)
@@ -57,7 +57,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
         # Convert images to grayscale
         # im1Gray = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
         # im2Gray = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
-        image = cv2.normalize(image, 0, 255, norm_type=cv2.NORM_MINMAX)
+        image = cv2.normalize(image, None, 0, 255, norm_type=cv2.NORM_MINMAX)
 
         # Detect Oriented Fast and Rotated Brief (ORB) features and compute descriptors.
         from_keypoints, from_descriptors = self.orb.detectAndCompute(image, None)
@@ -83,7 +83,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
             im_matches = cv2.drawMatches(
                 image, from_keypoints, self.ref_img, self.to_keypoints, matches, None
             )
-            im_matches = ImageUtils.resize_util(
+            im_matches = ImageUtils.resize_single(
                 im_matches, u_height=config.outputs.display_image_dimensions[1]
             )
             InteractionUtils.show(

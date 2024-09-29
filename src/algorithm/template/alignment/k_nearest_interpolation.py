@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.algorithm.alignment.sift_matcher import SiftMatcher
+from src.algorithm.template.alignment.sift_matcher import SiftMatcher
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.math import MathUtils
@@ -63,7 +63,7 @@ def apply_k_nearest_interpolation_inplace(
         field_block, block_image_shifts, anchors_with_displacements, k
     )
     # shift_by_fields(field_block, block_image_shifts, anchors_with_displacements, k)
-    # shift_by_field_bubbles(field_block, block_image_shifts, anchors_with_displacements, k)
+    # shift_by_scan_boxes(field_block, block_image_shifts, anchors_with_displacements, k)
 
     if config.outputs.show_image_level >= 2:
         block_gray_image_after = block_gray_image.copy()
@@ -95,8 +95,8 @@ def shift_by_field_blocks(
                 # field center
                 np.average(
                     [
-                        field_bubble.get_shifted_position(block_image_shifts)
-                        for field_bubble in field.field_bubbles
+                        scan_box.get_shifted_position(block_image_shifts)
+                        for scan_box in field.scan_boxes
                     ],
                     axis=0,
                 )
@@ -120,8 +120,8 @@ def shift_by_field_blocks(
 
     # Shift all bubbles
     for field in field_block.fields:
-        for field_bubble in field.field_bubbles:
-            field_bubble.shifts = average_shifts
+        for scan_box in field.scan_boxes:
+            scan_box.shifts = average_shifts
 
     return average_shifts
 
@@ -132,8 +132,8 @@ def shift_by_fields(field_block, block_image_shifts, anchors_with_displacements,
         # Take average position of all bubbles
         field_center_position = np.average(
             [
-                field_bubble.get_shifted_position(block_image_shifts)
-                for field_bubble in field.field_bubbles
+                scan_box.get_shifted_position(block_image_shifts)
+                for scan_box in field.scan_boxes
             ],
             axis=0,
         ).astype(np.int32)
@@ -149,17 +149,15 @@ def shift_by_fields(field_block, block_image_shifts, anchors_with_displacements,
         ).astype(np.int32)
 
         # Shift all bubbles
-        for field_bubble in field.field_bubbles:
-            field_bubble.shifts = average_shifts
+        for scan_box in field.scan_boxes:
+            scan_box.shifts = average_shifts
 
 
-def shift_by_field_bubbles(
-    field_block, block_image_shifts, anchors_with_displacements, k
-):
+def shift_by_scan_boxes(field_block, block_image_shifts, anchors_with_displacements, k):
     for field in field_block.fields:
-        for field_bubble in field.field_bubbles:
-            field_bubble.reset_shifts()
-            relative_bubble_positions = field_bubble.get_shifted_position(
+        for scan_box in field.scan_boxes:
+            scan_box.reset_shifts()
+            relative_bubble_positions = scan_box.get_shifted_position(
                 block_image_shifts
             )
             nearest_anchors = find_k_nearest_anchors(
@@ -171,4 +169,4 @@ def shift_by_field_bubbles(
                 axis=0,
             ).astype(np.int32)
 
-            field_bubble.shifts = average_shifts
+            scan_box.shifts = average_shifts

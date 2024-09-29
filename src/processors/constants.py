@@ -100,11 +100,29 @@ TARGET_ENDPOINTS_FOR_EDGES = {
 }
 
 
+FieldDetectionType = DotMap(
+    {
+        "BUBBLES_THRESHOLD": "BUBBLES_THRESHOLD",
+        "BUBBLES_BLOB": "BUBBLES_BLOB",
+        "OCR": "OCR",
+        # "PHOTO_BLOB": "PHOTO_BLOB",
+        "BARCODE_QR": "BARCODE_QR",
+    },
+    _dynamic=False,
+)
+FIELD_DETECTION_TYPES_IN_ORDER = [
+    FieldDetectionType.BUBBLES_THRESHOLD,
+    FieldDetectionType.OCR,
+    # FieldDetectionType.BUBBLES_BLOB,
+    # FieldDetectionType.PHOTO_BLOB,
+    # FieldDetectionType.BARCODE_QR,
+]
 ScannerType = DotMap(
     {
         "PATCH_DOT": "PATCH_DOT",
         "PATCH_LINE": "PATCH_LINE",
         "TEMPLATE_MATCH": "TEMPLATE_MATCH",
+        # TODO: OCR, QR
     },
     _dynamic=False,
 )
