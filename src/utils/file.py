@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import string
 from collections import defaultdict
 from csv import QUOTE_NONNUMERIC
 from pathlib import PureWindowsPath
@@ -15,6 +16,7 @@ from src.utils.math import MathUtils
 
 def load_json(path, **rest):
     try:
+        # TODO: see if non-utf characters need to be handled
         with open(path, "r") as f:
             loaded = json.load(f, **rest)
     except json.decoder.JSONDecodeError as error:
@@ -25,11 +27,36 @@ def load_json(path, **rest):
 
 
 class Paths:
+    printable_chars = set(string.printable)
+
     @staticmethod
-    def to_posix_path(path):
+    def remove_non_utf_characters(path_string):
+        return "".join(x for x in path_string if x in Paths.printable_chars)
+
+    # @staticmethod
+    # def filter_omr_files(omr_files):
+    #     filtered_omr_files = []
+    #     omr_files_set = set()
+    #     for omr_file in omr_files:
+    #         omr_file_string = omr_file.as_posix()
+    #         filtered_omr_file = Paths.remove_non_utf_characters(omr_file_string)
+    #         if omr_file_string in omr_files_set:
+    #             logger.warning(
+    #                 f"Skipping duplicate file after utf-8 encoding: {omr_file_string}"
+    #             )
+    #         omr_files_set.add(omr_file_string)
+    #         filtered_omr_files.append(Path(filtered_omr_file))
+    #     return filtered_omr_files
+
+    @staticmethod
+    def sep_based_posix_path(path):
         path = os.path.normpath(path)
-        if os.path.sep == "\\":
+        # TODO: check for this second condition
+        if os.path.sep == "\\" or "\\" in path:
             path = PureWindowsPath(path).as_posix()
+
+        path = Paths.remove_non_utf_characters(path)
+
         return path
 
     def __init__(self, output_dir):
@@ -81,21 +108,23 @@ def setup_dirs_for_paths(paths):
             os.makedirs(save_output_dir)
 
 
-def setup_outputs_for_template(paths, template):
+def setup_outputs_for_template(paths, template, output_mode):
     # TODO: consider moving this into a class instance
     ns = argparse.Namespace()
     logger.info("Checking Files...")
-
+    ns.omr_response_columns = template.output_columns
+    if output_mode == "moderation":
+        ns.omr_response_columns = list(template.all_parsed_labels)
     # Include current output paths
     ns.paths = paths
 
-    ns.empty_resp = [""] * len(template.output_columns)
-    ns.sheetCols = [
+    ns.empty_resp = [""] * len(ns.omr_response_columns)
+    ns.sheet_columns = [
         "file_id",
         "input_path",
         "output_path",
         "score",
-    ] + template.output_columns
+    ] + ns.omr_response_columns
     ns.OUTPUT_SET = []
     ns.files_obj = {}
     TIME_NOW_HRS = strftime("%I%p", localtime())
@@ -111,7 +140,7 @@ def setup_outputs_for_template(paths, template):
             # moved handling of files to pandas csv writer
             ns.files_obj[file_key] = file_name
             # Create Header Columns
-            pd.DataFrame([ns.sheetCols], dtype=str).to_csv(
+            pd.DataFrame([ns.sheet_columns], dtype=str).to_csv(
                 ns.files_obj[file_key],
                 mode="a",
                 quoting=QUOTE_NONNUMERIC,

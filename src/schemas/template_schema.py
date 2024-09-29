@@ -1,10 +1,10 @@
 from src.processors.constants import (
-    MARKER_AREA_TYPES_IN_ORDER,
+    MARKER_ZONE_TYPES_IN_ORDER,
     SCANNER_TYPES_IN_ORDER,
     SELECTOR_TYPES_IN_ORDER,
-    AreaTemplate,
     WarpMethod,
     WarpMethodFlags,
+    ZonePreset,
 )
 from src.schemas.constants import load_common_defs
 from src.utils.constants import BUILTIN_FIELD_TYPES, CUSTOM_FIELD_TYPE
@@ -29,9 +29,9 @@ margins_schema_def = {
         },
     },
 }
-# TODO: deprecate in favor of _scan_area_description (support barcode as scannerType)
-_box_area_description = {
-    "description": "The description of a box area on the image",
+# TODO: deprecate in favor of scan_zone_description (support barcode as scannerType)
+_box_zone_description = {
+    "description": "The description of a box zone on the image",
     "type": "object",
     "required": ["origin", "dimensions", "margins"],
     "additionalProperties": False,
@@ -46,10 +46,10 @@ _box_area_description = {
     },
 }
 
-_scan_area_template = {
-    "description": "The ready-made template to use to prefill description of a scanArea",
+scan_zone_preset = {
+    "description": "The ready-made template to use to prefill description of a scanZone",
     "type": "string",
-    "enum": ["CUSTOM", *AreaTemplate.values()],
+    "enum": ["CUSTOM", *ZonePreset.values()],
 }
 
 _custom_marker_options = {
@@ -71,7 +71,7 @@ _crop_on_marker_custom_options_schema = {
 }
 
 # TODO: actually this one needs to be specific to processor.type
-_common_custom_options_schema = {
+common_custom_options_schema = {
     "description": "Custom options based on the scannerType",
     "type": "object",
     # TODO: add conditional properties here like maxPoints and excludeFromCropping here based on scannerType
@@ -79,12 +79,12 @@ _common_custom_options_schema = {
 }
 
 
-point_selector_patch_area_def = {
-    **_box_area_description,
-    "description": "The detailed description of a patch area with an optional point selector",
+point_selector_patch_zone_def = {
+    **_box_zone_description,
+    "description": "The detailed description of a patch zone with an optional point selector",
     "additionalProperties": False,
     "properties": {
-        **_box_area_description["properties"],
+        **_box_zone_description["properties"],
         "selector": {
             "type": "string",
             "enum": [*SELECTOR_TYPES_IN_ORDER],
@@ -93,13 +93,13 @@ point_selector_patch_area_def = {
 }
 
 
-marker_area_description_def = {
-    **point_selector_patch_area_def,
+marker_zone_description_def = {
+    **point_selector_patch_zone_def,
     "required": ["origin", "margins"],
-    "description": "The detailed description of a patch area for a custom marker",
+    "description": "The detailed description of a patch zone for a custom marker",
     "additionalProperties": False,
     "properties": {
-        **point_selector_patch_area_def["properties"],
+        **point_selector_patch_zone_def["properties"],
         "selector": {
             "type": "string",
             "enum": [*SELECTOR_TYPES_IN_ORDER],
@@ -109,43 +109,43 @@ marker_area_description_def = {
 }
 
 
-_scan_area_description = {
-    **point_selector_patch_area_def,
-    "description": "The detailed description of a scanArea's coordinates and purpose",
+scan_zone_description = {
+    **point_selector_patch_zone_def,
+    "description": "The detailed description of a scanZone's coordinates and purpose",
     # TODO: "required": [...],
     "additionalProperties": False,
     "properties": {
-        **point_selector_patch_area_def["properties"],
+        **point_selector_patch_zone_def["properties"],
         "label": {
-            "description": "The label to use for the scanArea",
+            "description": "The label to use for the scanZone",
             "type": "string",
         },
         "selectorMargins": {
             "$ref": "#/$def/margins_schema",
-            "description": "The margins around the scanArea's box at provided origin",
+            "description": "The margins around the scanZone's box at provided origin",
         },
         "scannerType": {
-            "description": "The scanner type to use in the given scan area",
+            "description": "The scanner type to use in the given scan zone",
             "type": "string",
             "enum": SCANNER_TYPES_IN_ORDER,
         },
         "maxPoints": {
             "$ref": "#/$def/positive_integer",
-            "description": "The maximum points to pick from the given scanArea",
+            "description": "The maximum points to pick from the given scanZone",
         },
     },
 }
-scan_areas_array_def = {
-    "description": "The schema of a scanArea",
+scan_zones_array_def = {
+    "description": "The schema of a scanZone",
     "type": "array",
     "items": {
         "type": "object",
-        "required": ["areaTemplate"],
+        "required": ["zonePreset"],
         "additionalProperties": False,
         "properties": {
-            "areaTemplate": _scan_area_template,
-            "areaDescription": _scan_area_description,
-            "customOptions": _common_custom_options_schema,
+            "zonePreset": scan_zone_preset,
+            "zoneDescription": scan_zone_description,
+            "customOptions": common_custom_options_schema,
         },
     },
 }
@@ -181,7 +181,7 @@ crop_on_markers_options_if_required_attrs = {
     "required": ["type"],
 }
 warp_on_points_options_if_required_attrs = {
-    "required": ["scanAreas"],
+    "required": ["scanZones"],
 }
 pre_processor_options_available_keys = {"processingImageShape": True}
 
@@ -198,7 +198,7 @@ crop_on_markers_tuning_options_available_keys = {
 }
 crop_on_markers_options_available_keys = {
     **pre_processor_options_available_keys,
-    "scanAreas": True,
+    "scanZones": True,
     "defaultSelector": True,
     "tuningOptions": True,
     "type": True,
@@ -220,7 +220,7 @@ warp_on_points_options_available_keys = {
     **pre_processor_options_available_keys,
     "enableCropping": True,
     "defaultSelector": True,
-    "scanAreas": True,
+    "scanZones": True,
     "tuningOptions": True,
 }
 
@@ -233,7 +233,7 @@ crop_on_dot_lines_tuning_options_def = {
         **warp_on_points_tuning_options,
         "dotBlurKernel": {
             "$ref": "#/$def/two_positive_numbers",
-            "description": "The size of the kernel to use for blurring in each dot's scanArea",
+            "description": "The size of the kernel to use for blurring in each dot's scanZone",
         },
         "dotKernel": {
             "$ref": "#/$def/two_positive_numbers",
@@ -289,6 +289,16 @@ _common_field_block_properties = {
         "description": "The field type to use from a list of ready-made types as well as the custom type",
         "type": "string",
         # Note: moved enum validation into setup code
+    },
+    "alignment": {
+        "type": "object",
+        # TODO: description and colocation etc
+        "additionalProperties": False,
+        "properties": {
+            "margins": {"$ref": "#/$def/margins_schema"},
+            "maxDisplacement": {"$ref": "#/$def/positive_integer"},
+            "maxMatchCount": {"$ref": "#/$def/positive_integer"},
+        },
     },
 }
 
@@ -383,7 +393,7 @@ many_field_blocks_description_def = {
                         "properties": {"fieldType": {"const": "BARCODE"}},
                         # TODO: move barcode specific properties into this if-else
                         "required": [
-                            "scanArea",
+                            "scanZone",
                             "fieldType",
                             "fieldLabel",
                             # TODO: "failIfNotFound"
@@ -394,7 +404,7 @@ many_field_blocks_description_def = {
                         "additionalProperties": False,
                         "properties": {
                             **_common_field_block_properties,
-                            "scanArea": _box_area_description,
+                            "scanZone": _box_zone_description,
                             "fieldLabel": {"type": "string"},
                         },
                     },
@@ -423,11 +433,11 @@ TEMPLATE_SCHEMA = {
                 "zero_to_one_number",
             ]
         ),
-        "marker_area_description": marker_area_description_def,
+        "marker_zone_description": marker_zone_description_def,
         "crop_on_four_markers_tuning_options": crop_on_four_markers_tuning_options_def,
-        "scan_areas_array": scan_areas_array_def,
+        "scan_zones_array": scan_zones_array_def,
         "margins_schema": margins_schema_def,
-        "point_selector_patch_area": point_selector_patch_area_def,
+        "point_selector_patch_zone": point_selector_patch_zone_def,
         "crop_on_dot_lines_tuning_options": crop_on_dot_lines_tuning_options_def,
         "many_field_blocks_description": many_field_blocks_description_def,
     },
@@ -443,6 +453,25 @@ TEMPLATE_SCHEMA = {
     "additionalProperties": False,
     "properties": {
         "output": {"type": "boolean"},
+        # TODO: figure out if alignment needs to be nested somewhere
+        "alignment": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "referenceImage": {
+                    "description": "The relative path to reference image",
+                    "type": "string",
+                },
+                # TODO: add "method" and move below items to "options"
+                "margins": {"$ref": "#/$def/margins_schema"},
+                "maxDisplacement": {"$ref": "#/$def/positive_integer"},
+                "maxMatchCount": {"$ref": "#/$def/positive_integer"},
+                "anchorWindowSize": {
+                    "$ref": "#/$def/two_positive_numbers",
+                    "description": "The size of the anchor window for picking best local anchor points",
+                },
+            },
+        },
         "bubbleDimensions": {
             "$ref": "#/$def/two_positive_numbers",
             "description": "The default dimensions for the bubbles in the template overlay: [width, height]",
@@ -503,6 +532,7 @@ TEMPLATE_SCHEMA = {
                             "Levels",
                             "MedianBlur",
                             "AutoRotate",
+                            "Contrast",
                         ],
                     },
                     "options": {
@@ -585,7 +615,7 @@ TEMPLATE_SCHEMA = {
                                             "description": "Type of the matcher to use",
                                             "type": "string",
                                             "enum": [
-                                                "DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING",
+                                                "BRUTEFORCE_HAMMING",
                                                 "NORM_HAMMING",
                                             ],
                                         },
@@ -707,6 +737,31 @@ TEMPLATE_SCHEMA = {
                     },
                     {
                         "if": {
+                            "properties": {"name": {"const": "Contrast"}},
+                            **pre_processor_if_required_attrs,
+                        },
+                        "then": {
+                            "properties": {
+                                "options": {
+                                    "description": "Options for the Contrast pre-processor",
+                                    "type": "object",
+                                    "additionalProperties": False,
+                                    "properties": {
+                                        **pre_processor_options_available_keys,
+                                        "mode": {
+                                            "type": "string",
+                                            "enum": ["manual", "auto"],
+                                        },
+                                        "alpha": {"type": "number"},
+                                        "beta": {"type": "number"},
+                                        "clipPercentage": {"type": "number"},
+                                    },
+                                }
+                            }
+                        },
+                    },
+                    {
+                        "if": {
                             "properties": {"name": {"const": "WarpOnPoints"}},
                             **pre_processor_if_required_attrs,
                         },
@@ -721,12 +776,12 @@ TEMPLATE_SCHEMA = {
                                     "properties": {
                                         **warp_on_points_options_available_keys,
                                         "pointsLayout": {
-                                            "description": "The type of layout of the scanAreas for finding anchor points",
+                                            "description": "The type of layout of the scanZones for finding anchor points",
                                             "type": "string",
                                             "enum": points_layout_types,
                                         },
                                         "defaultSelector": {
-                                            "description": "The default points selector for the given scanAreas",
+                                            "description": "The default points selector for the given scanZones",
                                             "type": "string",
                                             "enum": default_points_selector_types,
                                         },
@@ -745,8 +800,8 @@ TEMPLATE_SCHEMA = {
                                                 ],
                                             },
                                         },
-                                        "scanAreas": {
-                                            "$ref": "#/$def/scan_areas_array"
+                                        "scanZones": {
+                                            "$ref": "#/$def/scan_zones_array"
                                         },
                                     },
                                 }
@@ -769,11 +824,11 @@ TEMPLATE_SCHEMA = {
                                     "properties": {
                                         # Note: the keys need to match with crop_on_markers_options_available_keys
                                         **crop_on_markers_options_available_keys,
-                                        "scanAreas": {
-                                            "$ref": "#/$def/scan_areas_array"
+                                        "scanZones": {
+                                            "$ref": "#/$def/scan_zones_array"
                                         },
                                         "defaultSelector": {
-                                            "description": "The default points selector for the given scanAreas",
+                                            "description": "The default points selector for the given scanZones",
                                             "type": "string",
                                             "enum": default_points_selector_types,
                                         },
@@ -795,17 +850,17 @@ TEMPLATE_SCHEMA = {
                                                 "required": [
                                                     "referenceImage",
                                                     "markerDimensions",
-                                                    # *MARKER_AREA_TYPES_IN_ORDER,
+                                                    # *MARKER_ZONE_TYPES_IN_ORDER,
                                                 ],
                                                 "additionalProperties": False,
                                                 "properties": {
                                                     **crop_on_markers_options_available_keys,
                                                     **_custom_marker_options,
                                                     **{
-                                                        area_template: {
-                                                            "$ref": "#/$def/marker_area_description"
+                                                        zone_preset: {
+                                                            "$ref": "#/$def/marker_zone_description"
                                                         }
-                                                        for area_template in MARKER_AREA_TYPES_IN_ORDER
+                                                        for zone_preset in MARKER_ZONE_TYPES_IN_ORDER
                                                     },
                                                     "tuningOptions": {
                                                         "$ref": "#/$def/crop_on_four_markers_tuning_options"
@@ -836,13 +891,13 @@ TEMPLATE_SCHEMA = {
                                                         "$ref": "#/$def/crop_on_dot_lines_tuning_options"
                                                     },
                                                     "leftLine": {
-                                                        "$ref": "#/$def/point_selector_patch_area"
+                                                        "$ref": "#/$def/point_selector_patch_zone"
                                                     },
                                                     "topRightDot": {
-                                                        "$ref": "#/$def/point_selector_patch_area"
+                                                        "$ref": "#/$def/point_selector_patch_zone"
                                                     },
                                                     "bottomRightDot": {
-                                                        "$ref": "#/$def/point_selector_patch_area"
+                                                        "$ref": "#/$def/point_selector_patch_zone"
                                                     },
                                                 },
                                             },
@@ -869,13 +924,13 @@ TEMPLATE_SCHEMA = {
                                                         "$ref": "#/$def/crop_on_dot_lines_tuning_options"
                                                     },
                                                     "rightLine": {
-                                                        "$ref": "#/$def/point_selector_patch_area"
+                                                        "$ref": "#/$def/point_selector_patch_zone"
                                                     },
                                                     "topLeftDot": {
-                                                        "$ref": "#/$def/point_selector_patch_area"
+                                                        "$ref": "#/$def/point_selector_patch_zone"
                                                     },
                                                     "bottomLeftDot": {
-                                                        "$ref": "#/$def/point_selector_patch_area"
+                                                        "$ref": "#/$def/point_selector_patch_zone"
                                                     },
                                                 },
                                             },
@@ -899,10 +954,10 @@ TEMPLATE_SCHEMA = {
                                                         "$ref": "#/$def/crop_on_dot_lines_tuning_options"
                                                     },
                                                     "leftLine": {
-                                                        "$ref": "#/$def/point_selector_patch_area"
+                                                        "$ref": "#/$def/point_selector_patch_zone"
                                                     },
                                                     "rightLine": {
-                                                        "$ref": "#/$def/point_selector_patch_area"
+                                                        "$ref": "#/$def/point_selector_patch_zone"
                                                     },
                                                 },
                                             },
@@ -928,16 +983,16 @@ TEMPLATE_SCHEMA = {
                                                         "$ref": "#/$def/crop_on_dot_lines_tuning_options"
                                                     },
                                                     "topRightDot": {
-                                                        "$ref": "#/$def/point_selector_patch_area"
+                                                        "$ref": "#/$def/point_selector_patch_zone"
                                                     },
                                                     "bottomRightDot": {
-                                                        "$ref": "#/$def/point_selector_patch_area"
+                                                        "$ref": "#/$def/point_selector_patch_zone"
                                                     },
                                                     "topLeftDot": {
-                                                        "$ref": "#/$def/point_selector_patch_area"
+                                                        "$ref": "#/$def/point_selector_patch_zone"
                                                     },
                                                     "bottomLeftDot": {
-                                                        "$ref": "#/$def/point_selector_patch_area"
+                                                        "$ref": "#/$def/point_selector_patch_zone"
                                                     },
                                                 },
                                             },

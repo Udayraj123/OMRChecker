@@ -28,6 +28,7 @@ def run_entry_point(input_path, output_dir):
         "input_paths": [input_path],
         "output_dir": output_dir,
         "setLayout": False,
+        "output_mode": "default",
     }
     with freeze_time(FROZEN_TIMESTAMP):
         entry_point_for_args(args)
@@ -102,7 +103,9 @@ def extract_all_csv_outputs(output_dir):
     for _dir, _subdir, _files in os.walk(output_dir):
         for file in glob(os.path.join(_dir, "*.csv")):
             output_df = extract_output_data(file)
-            relative_path = Paths.to_posix_path(os.path.relpath(file, output_dir))
+            relative_path = Paths.sep_based_posix_path(
+                os.path.relpath(file, output_dir)
+            )
             # pandas pretty print complete df
             sample_outputs[relative_path] = output_df.to_string()
     return sample_outputs

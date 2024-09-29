@@ -23,6 +23,101 @@ from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 
 
+# source: https://learnopencv.com/blob-detection-using-opencv-python-c/
+def create_bubble_blob_detector(field_block):
+    # Setup SimpleBlobDetector parameters.
+    params = cv2.SimpleBlobDetector_Params()
+    box_w, box_h = field_block.bubble_dimensions
+    box_zone = box_w * box_h
+
+    # # Change thresholds
+    # params.minThreshold = 10;
+    # params.maxThreshold = 200;
+
+    # # Filter by Zone.
+    params.filterByZone = True
+    params.minZone = box_zone * 0.25
+
+    # Filter by Circularity
+    # params.filterByCircularity = True
+    # params.minCircularity = 0.75
+
+    # # Filter by Convexity
+    # params.filterByConvexity = True
+    # params.minConvexity = 0.87
+
+    # # Filter by Inertia
+    params.filterByInertia = True
+    params.minInertiaRatio = 0.09
+
+    # Create a detector with the parameters
+    return cv2.SimpleBlobDetector_create(params)
+
+
+def get_bubble_blob_metrics(
+    detector, final_marked, bubble, field_block, draw_keypoints=True
+):
+    x, y = bubble.get_shifted_position(field_block.shifts)
+
+    box_w, box_h = field_block.bubble_dimensions
+    box_zone = box_w * box_h
+
+    # TODO: apply bubble_likeliness_threshold
+    # Note: assumes direction == "horizontal"
+    x_margin = (min(field_block.bubbles_gap - box_w, box_w) * 11 / 14) // 2
+    y_margin = (min(field_block.labels_gap - box_h, box_h) * 11 / 14) // 2
+
+    scan_rect = [
+        int(y - y_margin),
+        int(y + box_h + y_margin),
+        int(x - x_margin),
+        int(x + box_w + x_margin),
+    ]
+
+    scan_box = final_marked[scan_rect[0] : scan_rect[1], scan_rect[2] : scan_rect[3]]
+    keypoints = detector.detect(scan_box)
+    if len(keypoints) < 1:
+        # TODO: highlight low confidence metric
+        logger.warning(
+            f"No bubble-like blob found in scan zone for the bubble {bubble}"
+        )
+
+    if len(keypoints) > 1:
+        # TODO: highlight low confidence metric
+        logger.warning(f"Found multiple blobs in scan zone for the bubble {bubble}")
+
+    zone_ratio = (
+        0
+        if len(keypoints) == 0
+        else np.square(keypoints[0].size / 2) * math.pi / box_zone
+    )
+
+    logger.info(
+        f"zone_ratio={round(zone_ratio, 2)}",
+        [(keypoint.pt, keypoint) for keypoint in keypoints],
+    )
+    InteractionUtils.show("scan_box", scan_box, 1)
+
+    if draw_keypoints:
+        # Draw detected blobs as red circles.
+        # cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle corresponds to the size of blob
+        im_with_keypoints = cv2.drawKeypoints(
+            scan_box,
+            keypoints,
+            np.array([]),
+            (0, 0, 255),
+            cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS,
+        )
+        im_with_keypoints = cv2.cvtColor(im_with_keypoints, cv2.COLOR_BGR2GRAY)
+        # modify output image
+        final_marked[
+            scan_rect[0] : scan_rect[1], scan_rect[2] : scan_rect[3]
+        ] = im_with_keypoints
+        InteractionUtils.show("im_with_keypoints", im_with_keypoints, 1)
+
+    return keypoints, scan_rect, zone_ratio
+
+
 class ImageInstanceOps:
     """Class to hold fine-tuned utilities for a group of images. One instance for each processing directory."""
 
@@ -37,9 +132,11 @@ class ImageInstanceOps:
 
         # Copy template for this instance op
         template = shallowcopy(original_template)
-
         # Make deepcopy for only parts that are mutated by Processor
         template.field_blocks = deepcopy(template.field_blocks)
+
+        # Reset the shifts in the copied template
+        template.reset_all_shifts()
 
         # resize to conform to common preprocessor input requirements
         gray_image = ImageUtils.resize_to_shape(
@@ -58,10 +155,12 @@ class ImageInstanceOps:
             # Show Before Preview
             if show_preprocessors_diff[pre_processor_name]:
                 InteractionUtils.show(
-                    f"Before {pre_processor_name}",
-                    colored_image
-                    if config.outputs.colored_outputs_enabled
-                    else gray_image,
+                    f"Before {pre_processor_name}: {file_path}",
+                    (
+                        colored_image
+                        if config.outputs.colored_outputs_enabled
+                        else gray_image
+                    ),
                 )
 
             # Apply filter
@@ -78,10 +177,12 @@ class ImageInstanceOps:
             # Show After Preview
             if show_preprocessors_diff[pre_processor_name]:
                 InteractionUtils.show(
-                    f"After {pre_processor_name}",
-                    colored_image
-                    if config.outputs.colored_outputs_enabled
-                    else gray_image,
+                    f"After {pre_processor_name}: {file_path}",
+                    (
+                        colored_image
+                        if config.outputs.colored_outputs_enabled
+                        else gray_image
+                    ),
                 )
 
         if template.output_image_shape:
@@ -102,6 +203,7 @@ class ImageInstanceOps:
 
         gray_image = input_gray_image.copy()
 
+        # TODO: mini util for colored image case.
         gray_image = ImageUtils.resize_to_dimensions(
             gray_image, template.template_dimensions
         )
@@ -133,9 +235,9 @@ class ImageInstanceOps:
         )
         for field_block in template.field_blocks:
             #  TODO: support for if field_block.field_type == "BARCODE":
-
             field_bubble_means_stds = []
             box_w, box_h = field_block.bubble_dimensions
+
             for field in field_block.fields:
                 field_bubbles = field.field_bubbles
                 field_bubble_means = []
@@ -213,6 +315,7 @@ class ImageInstanceOps:
         per_omr_threshold_avg, absolute_field_number = 0, 0
         global_field_confidence_metrics = []
         for field_block in template.field_blocks:
+            # detector = create_bubble_blob_detector(field_block)
             block_field_number = 1
             key = field_block.name[:3]
             box_w, box_h = field_block.bubble_dimensions
@@ -260,8 +363,16 @@ class ImageInstanceOps:
                     for bubble_detection in field_bubble_means
                     if bubble_detection.is_marked
                 ]
+
                 for bubble_detection in detected_bubbles:
                     bubble = bubble_detection.item_reference
+                    # TODO: config
+                    # # apply SimpleBlobDetector
+                    # draw_keypoints = False
+                    # _keypoints, scan_rect, zone_ratio = get_bubble_blob_metrics(
+                    #     detector, img, bubble, field_block, draw_keypoints
+                    # )
+
                     field_label, field_value = (
                         bubble.field_label,
                         bubble.field_value,
@@ -572,6 +683,43 @@ class ImageInstanceOps:
         local_max_jump,
         global_max_jump,
     ):
+        # TODO: see if deepclone is really needed given parent's instance
+        # field_bubble_means = [
+        #     deepcopy(bubble) for bubble in field_bubble_means
+        # ]
+
+        # Main detection logic:
+        for bubble in field_bubble_means:
+            local_bubble_is_marked = local_threshold_for_field > bubble.mean_value
+            # TODO: refactor this mutation to a more appropriate place
+            bubble.is_marked = local_bubble_is_marked
+
+        confidence_metrics = (
+            {}
+            if not config.outputs.show_confidence_metrics
+            else ImageInstanceOps.get_confidence_metrics(
+                field,
+                field_bubble_means,
+                config,
+                local_threshold_for_field,
+                global_threshold_for_template,
+                local_max_jump,
+                global_max_jump,
+            )
+        )
+
+        return field_bubble_means, confidence_metrics
+
+    @staticmethod
+    def get_confidence_metrics(
+        field,
+        field_bubble_means,
+        config,
+        local_threshold_for_field,
+        global_threshold_for_template,
+        local_max_jump,
+        global_max_jump,
+    ):
         (
             MIN_JUMP,
             GLOBAL_THRESHOLD_MARGIN,
@@ -586,11 +734,6 @@ class ImageInstanceOps:
                 "CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY",
             ],
         )
-        # TODO: see if deepclone is really needed given parent's instance
-        # field_bubble_means = [
-        #     deepcopy(bubble) for bubble in field_bubble_means
-        # ]
-
         bubbles_in_doubt = {
             "by_disparity": [],
             "by_jump": [],
@@ -602,12 +745,9 @@ class ImageInstanceOps:
         for bubble in field_bubble_means:
             global_bubble_is_marked = global_threshold_for_template > bubble.mean_value
             local_bubble_is_marked = local_threshold_for_field > bubble.mean_value
-            # TODO: refactor this mutation to a more appropriate place
-            bubble.is_marked = local_bubble_is_marked
             # 1. Disparity in global/local threshold output
             if global_bubble_is_marked != local_bubble_is_marked:
                 bubbles_in_doubt["by_disparity"].append(bubble)
-
         # 5. High confidence if the gap is very large compared to MIN_JUMP
         is_global_jump_confident = (
             global_max_jump > MIN_JUMP + CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY
@@ -740,4 +880,4 @@ class ImageInstanceOps:
             "local_max_jump": local_max_jump,
             "field_label": field.field_label,
         }
-        return field_bubble_means, confidence_metrics
+        return confidence_metrics

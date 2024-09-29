@@ -343,6 +343,12 @@ Here's a snapshot of the [Android OMR Helper App (archived)](https://github.com/
   <img src="https://contrib.rocks/image?repo=Udayraj123/OMRChecker" />
 </a>
 
+<p align="center">
+
+[![GitHub contributors](https://img.shields.io/github/contributors/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/graphs/contributors/)
+
+</p>
+
 ---
 
 ### License

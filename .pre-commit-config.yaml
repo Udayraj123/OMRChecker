@@ -1,37 +1,43 @@
 exclude: "(__snapshots__|__image_snapshots__)/.*$"
 default_install_hook_types: [pre-commit, pre-push]
 repos:
-  # Convert the pngs to jpgs inside samples folder
-  - repo: local
-    hooks:
-      - id: convert-images
-        name: Convert png to jpg in samples
-        entry: scripts/hooks/convert_images_hook.py
-        args: ["--trigger-size", "150"]
-        files: ^samples.*\.(png|PNG)$
-        pass_filenames: true
-        stages: [commit]
-        language: python
-        language_version: python3
-        additional_dependencies: [pillow]
-        always_run: true
-        fail_fast: true # Wait for user to remove the png files
+# TODO: debug
+  # # Convert the pngs to jpgs inside samples folder
+  # - repo: local
+  #   hooks:
+  #     - id: convert-images
+  #       name: Convert png to jpg in samples
+  #       entry: scripts/hooks/convert_images_hook.py
+  #       # TODO: support for imports inside pre-commit
+  #       # env:
+  #       #   PYTHONPATH: $PYTHONPATH:$PWD
+  #       args: ["--trigger-size", "150"]
+  #       files: ^samples.*\.(png|PNG)$
+  #       pass_filenames: true
+  #       stages: [commit]
+  #       language: python
+  #       language_version: python3
+  #       additional_dependencies: [pillow]
+  #       always_run: true
+  #       fail_fast: true # Wait for user to remove the png files
 
-  # Run resize image before the compress image check
-  - repo: local
-    hooks:
-      - id: resize-images
-        name: Resize images
-        entry: scripts/hooks/resize_images_hook.py
-        args: ["--max-width", "1500", "--max-height", "1500", "--trigger-size", "150"]
-        files: \.(png|jpg|jpeg|PNG|JPG|JPEG)$
-        pass_filenames: true
-        stages: [commit]
-        language: python
-        language_version: python3
-        additional_dependencies: [pillow]
-        always_run: true
-        fail_fast: false
+  # # Run resize image before the compress image check
+  # - repo: local
+  #   hooks:
+  #     - id: resize-images
+  #       name: Resize images
+  #       entry: scripts/hooks/resize_images_hook.py
+  #       env:
+  #         PYTHONPATH: $PYTHONPATH:./scripts
+  #       args: ["--max-width", "1500", "--max-height", "1500", "--trigger-size", "150"]
+  #       files: \.(png|jpg|jpeg|PNG|JPG|JPEG)$
+  #       pass_filenames: true
+  #       stages: [commit]
+  #       language: python
+  #       language_version: python3
+  #       additional_dependencies: [pillow]
+  #       always_run: true
+  #       fail_fast: false
 
   # Run image compressor before the large files check
   - repo: https://github.com/boidolr/pre-commit-images
@@ -103,7 +109,7 @@ repos:
     hooks:
       - id: pytest-on-push
         name: Running all tests before push...
-        entry: python3 -m pytest -rfpsxEX --disable-warnings -vv --durations=3
+        entry: ./scripts/run_coverage.sh
         language: system
         pass_filenames: false
         always_run: true

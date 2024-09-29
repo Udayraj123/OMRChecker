@@ -19,7 +19,7 @@ class ImageTemplatePreprocessor(Processor):
         self.tuning_config = save_image_ops.tuning_config
 
         # Note: we're taking this at preProcessor level because it represents
-        # the need of a preProcessor's coordinate system(e.g. area selectors)
+        # the need of a preProcessor's coordinate system(e.g. zone selectors)
         self.processing_image_shape = options.get(
             "processingImageShape", default_processing_image_shape
         )

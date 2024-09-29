@@ -50,6 +50,16 @@ def parse_args():
     )
 
     argparser.add_argument(
+        "-m",
+        "--outputMode",
+        default="default",
+        required=False,
+        choices=["moderation", "default"],
+        dest="output_mode",
+        help="Specify the output mode. Supported: moderation, default",
+    )
+
+    argparser.add_argument(
         "-l",
         "--setLayout",
         required=False,

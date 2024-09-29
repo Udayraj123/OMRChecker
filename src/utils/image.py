@@ -17,17 +17,35 @@ class ImageUtils:
 
     @staticmethod
     def read_image_util(file_path, tuning_config):
+        encoded_path = file_path
         if tuning_config.outputs.colored_outputs_enabled:
             colored_image = cv2.imread(file_path, cv2.IMREAD_COLOR)
+            colored_image = cv2.imdecode(
+                np.fromfile(encoded_path, dtype=np.uint8), cv2.IMREAD_COLOR
+            )
+            if colored_image is None:
+                raise IOError(f"Unable to read image: {file_path}")
             gray_image = cv2.cvtColor(colored_image, cv2.COLOR_BGR2GRAY)
         else:
             gray_image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+            gray_image = cv2.imdecode(
+                np.fromfile(encoded_path, dtype=np.uint8), cv2.IMREAD_GRAYSCALE
+            )
+            if gray_image is None:
+                raise IOError(f"Unable to read image: {file_path}")
             colored_image = None
+
         return gray_image, colored_image
 
     @staticmethod
     def save_img(path, final_marked):
         cv2.imwrite(path, final_marked)
+
+    @staticmethod
+    def save_marked_image(save_marked_dir, file_id, final_marked):
+        image_path = str(save_marked_dir.joinpath(file_id))
+        logger.info(f"Saving Image to '{image_path}'")
+        ImageUtils.save_img(image_path, final_marked)
 
     @staticmethod
     def resize_to_shape(img, image_shape):
@@ -52,7 +70,7 @@ class ImageUtils:
         return cv2.resize(img, (int(u_width), int(u_height)))
 
     @staticmethod
-    def get_cropped_rectangle_destination_points(ordered_page_corners):
+    def get_cropped_warped_rectangle_points(ordered_page_corners):
         # Note: This utility would just find a good size ratio for the cropped image to look more realistic
         # but since we're anyway resizing the image, it doesn't make much sense to use these calculations
         (tl, tr, br, bl) = ordered_page_corners
@@ -72,7 +90,7 @@ class ImageUtils:
         # the set of destination points to obtain a "birds eye view",
         # (i.e. top-down view) of the image
 
-        destination_points = np.array(
+        warped_points = np.array(
             [
                 [0, 0],
                 [max_width - 1, 0],
@@ -81,8 +99,8 @@ class ImageUtils:
             ],
             dtype="float32",
         )
-        warped_dimensions = (max_width, max_height)
-        return destination_points, warped_dimensions
+        warped_box_dimensions = (max_width, max_height)
+        return warped_points, warped_box_dimensions
 
     @staticmethod
     def grab_contours(cnts):
@@ -145,15 +163,15 @@ class ImageUtils:
 
     @staticmethod
     def get_control_destination_points_from_contour(
-        source_contour, destination_line, max_points=None
+        source_contour, warped_line, max_points=None
     ):
         total_points = len(source_contour)
         if max_points is None:
             max_points = total_points
         assert max_points >= 2
-        start, end = destination_line
+        start, end = warped_line
 
-        destination_line_length = MathUtils.distance(start, end)
+        warped_line_length = MathUtils.distance(start, end)
         contour_length = 0
         for i in range(1, total_points):
             contour_length += MathUtils.distance(
@@ -171,7 +189,7 @@ class ImageUtils:
         # average_min_gap = (contour_length / (max_points - 1)) - 1
 
         # Initialize with first point mapping
-        control_points, destination_points = [source_contour[0]], [start]
+        control_points, warped_points = [source_contour[0]], [start]
         current_arc_length = 0
         # current_arc_gap = 0
         previous_point = None
@@ -188,21 +206,20 @@ class ImageUtils:
             # Including all points for now -
             current_arc_length += edge_length
             length_ratio = current_arc_length / contour_length
-            destination_point = MathUtils.get_point_on_line_by_ratio(
-                destination_line, length_ratio
+            warped_point = MathUtils.get_point_on_line_by_ratio(
+                warped_line, length_ratio
             )
             control_points.append(boundary_point)
-            destination_points.append(destination_point)
+            warped_points.append(warped_point)
 
-        assert len(destination_points) <= max_points
+        assert len(warped_points) <= max_points
 
         # Assert that the float error is not skewing the estimations badly
         assert (
-            MathUtils.distance(destination_points[-1], end) / destination_line_length
-            < 0.02
-        ), f"{destination_points[-1]} != {end}"
+            MathUtils.distance(warped_points[-1], end) / warped_line_length < 0.02
+        ), f"{warped_points[-1]} != {end}"
 
-        return control_points, destination_points
+        return control_points, warped_points
 
     @staticmethod
     def split_patch_contour_on_corners(patch_corners, source_contour):
@@ -340,16 +357,16 @@ class ImageUtils:
         return white_image, pad_range
 
     @staticmethod
-    def clip_area_to_image_bounds(rectangle, image):
+    def clip_zone_to_image_bounds(rectangle, image):
         h, w = image.shape[:2]
-        area_start, area_end = rectangle
+        zone_start, zone_end = rectangle
         # Clip to Image top left
-        area_start = [max(0, area_start[0]), max(0, area_start[1])]
-        area_end = [max(0, area_end[0]), max(0, area_end[1])]
+        zone_start = [max(0, zone_start[0]), max(0, zone_start[1])]
+        zone_end = [max(0, zone_end[0]), max(0, zone_end[1])]
         # Clip to Image bottom right
-        area_start = [min(w, area_start[0]), min(h, area_start[1])]
-        area_end = [min(w, area_end[0]), min(h, area_end[1])]
-        return [area_start, area_end]
+        zone_start = [min(w, zone_start[0]), min(h, zone_start[1])]
+        zone_end = [min(w, zone_end[0]), min(h, zone_end[1])]
+        return [zone_start, zone_end]
 
     @staticmethod
     def rotate(image, rotation, keep_original_shape):
@@ -359,3 +376,16 @@ class ImageUtils:
             return ImageUtils.resize_to_shape(image, image_shape)
         else:
             return cv2.rotate(image, rotation)
+
+    @staticmethod
+    def overlay_image(image1, image2, transparency=0.5):
+        overlay = image1.copy()
+        cv2.addWeighted(
+            overlay,
+            transparency,
+            image2,
+            1 - transparency,
+            0,
+            overlay,
+        )
+        return overlay

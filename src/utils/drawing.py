@@ -138,16 +138,18 @@ class DrawingUtils:
         image,
         text_value,
         position,
-        centered=False,
-        font_face=cv2.FONT_HERSHEY_SIMPLEX,
         text_size=TEXT_SIZE,
-        color=CLR_BLACK,
         thickness=2,
+        centered=False,
+        color=CLR_BLACK,
         # available LineTypes: FILLED, LINE_4, LINE_8, LINE_AA
         line_type=cv2.LINE_AA,
+        font_face=cv2.FONT_HERSHEY_SIMPLEX,
     ):
         if centered:
-            assert not callable(position)
+            assert not callable(
+                position
+            ), f"centered={centered} but position={position}"
             text_position = position
             position = lambda size_x, size_y: (
                 text_position[0] - size_x // 2,
@@ -187,6 +189,16 @@ class DrawingUtils:
     @staticmethod
     def draw_line(image, start, end, color=CLR_BLACK, thickness=3):
         cv2.line(image, start, end, color, thickness)
+
+    @staticmethod
+    def draw_polygon(image, points, color=CLR_BLACK, thickness=1, closed=True):
+        n = len(points)
+        for i in range(n):
+            if not closed and i == n - 1:
+                continue
+            DrawingUtils.draw_line(
+                image, points[i % n], points[(i + 1) % n], color, thickness
+            )
 
     @staticmethod
     def draw_group(
