@@ -79,6 +79,7 @@ EVALUATION_SCHEMA = {
                         "type": "object",
                         "properties": {
                             "should_explain_scoring": {"type": "boolean"},
+                            "export_explanation_csv": {"type": "boolean"},
                             "answer_key_csv_path": {"type": "string"},
                             "answer_key_image_path": {"type": "string"},
                             "questions_in_order": ARRAY_OF_STRINGS,
@@ -97,25 +98,19 @@ EVALUATION_SCHEMA = {
                         "type": "object",
                         "properties": {
                             "should_explain_scoring": {"type": "boolean"},
+                            "export_explanation_csv": {"type": "boolean"},
                             "answers_in_order": {
                                 "oneOf": [
                                     {
                                         "type": "array",
                                         "items": {
                                             "oneOf": [
-                                                # "standard": single correct, multi-marked single-correct
-                                                # Example: "q1" --> '67'
                                                 {"type": "string"},
-                                                # "multiple-correct": multiple-correct (for ambiguous/bonus questions)
-                                                # Example: "q1" --> [ 'A', 'B' ]
                                                 {
                                                     "type": "array",
                                                     "items": {"type": "string"},
                                                     "minItems": 2,
                                                 },
-                                                # "multiple-correct-weighted": array of answer-wise weights (marking scheme not applicable)
-                                                # Example 1: "q1" --> [['A', 1], ['B', 2], ['C', 3]] or
-                                                # Example 2: "q2" --> [['A', 1], ['B', 1], ['AB', 2]]
                                                 {
                                                     "type": "array",
                                                     "items": {
@@ -129,9 +124,6 @@ EVALUATION_SCHEMA = {
                                                         ],
                                                     },
                                                 },
-                                                # Multiple-correct with custom marking scheme
-                                                # ["A", ["1", "2", "3"]],
-                                                # [["A", "B", "AB"], ["1", "2", "3"]]
                                             ],
                                         },
                                     },

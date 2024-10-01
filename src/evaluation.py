@@ -194,9 +194,18 @@ class EvaluationConfig:
         options, marking_schemes, source_type = map(
             evaluation_json.get, ["options", "marking_schemes", "source_type"]
         )
-        self.should_explain_scoring = options.get("should_explain_scoring", False)
+        self.should_explain_scoring = options.get("should_explain_scoring", True)
+        self.export_explanation_csv = options.get("export_explanation_csv", True)
         self.has_non_default_section = False
         self.exclude_files = []
+        self.explanation_columns = [
+            "Question",
+            "Marked",
+            "Answer(s)",
+            "Verdict",
+            "Score",
+            "Total Score",
+        ]
 
         if source_type == "csv":
             csv_path = curr_dir.joinpath(options["answer_key_csv_path"])
@@ -317,6 +326,7 @@ class EvaluationConfig:
 
     # Externally called methods have higher abstraction level.
     def prepare_and_validate_omr_response(self, omr_response):
+        self.explanation_data = []
         self.reset_explanation_table()
 
         omr_response_questions = set(omr_response.keys())
@@ -361,6 +371,9 @@ class EvaluationConfig:
 
     def get_exclude_files(self):
         return self.exclude_files
+
+    def get_export_explanation_csv(self):
+        return self.export_explanation_csv
 
     @staticmethod
     def parse_answer_column(answer_column):
@@ -476,13 +489,13 @@ class EvaluationConfig:
         return self.question_to_scheme.get(question, self.default_marking_scheme)
 
     def conditionally_add_explanation(
-        self,
-        answer_matcher,
-        delta,
-        marked_answer,
-        question_verdict,
-        question,
-        current_score,
+            self,
+            answer_matcher,
+            delta,
+            marked_answer,
+            question_verdict,
+            question,
+            current_score,
     ):
         if self.should_explain_scoring:
             next_score = current_score + delta
@@ -505,9 +518,18 @@ class EvaluationConfig:
                 if item is not None
             ]
             self.explanation_table.add_row(*row)
+            self.explanation_data.append(row)
 
 
-def evaluate_concatenated_response(concatenated_response, evaluation_config):
+
+    def conditionally_export_explanation_csv(self, output_path):
+        if self.export_explanation_csv:
+            df = pd.DataFrame(self.explanation_data, columns=self.explanation_columns)
+            df.to_csv(output_path, index=False)
+            logger.info(f"Exported explanation CSV to: {output_path}")
+
+
+def evaluate_concatenated_response(concatenated_response, evaluation_config, file_path):
     evaluation_config.prepare_and_validate_omr_response(concatenated_response)
     current_score = 0.0
     for question in evaluation_config.questions_in_order:
@@ -516,7 +538,12 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
             current_score, question, marked_answer
         )
         current_score += delta
-
+    filename = os.path.basename(file_path)
     evaluation_config.conditionally_print_explanation()
+    print(f"file_path: {file_path}")
+    os.makedirs("outputs/explanations", exist_ok=True)  # Create the directory if it doesn't exist
+    evaluation_config.conditionally_export_explanation_csv(
+        f"outputs/explanations/{filename}.csv"
+    )
 
     return current_score

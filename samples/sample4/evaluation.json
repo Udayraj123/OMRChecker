@@ -21,7 +21,10 @@
       "D",
       "C"
     ],
-    "should_explain_scoring": true
+
+    "should_explain_scoring": true,
+    "export_explanation_csv": true
+
   },
   "marking_schemes": {
     "DEFAULT": {
