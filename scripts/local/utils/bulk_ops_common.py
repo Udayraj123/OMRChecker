@@ -3,7 +3,7 @@ import functools
 import glob
 import operator
 import os
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from src.utils.file import PathUtils
 
 from src.utils.file import PathUtils
