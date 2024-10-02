@@ -41,8 +41,7 @@ def parse_args():
     )
 
     argparser.add_argument(
-        "-o",
-        "--outputDir",
+        "-o","--outputDir",
         default="outputs",
         required=False,
         dest="output_dir",
