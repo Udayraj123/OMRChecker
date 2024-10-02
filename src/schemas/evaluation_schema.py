@@ -105,12 +105,19 @@ EVALUATION_SCHEMA = {
                                         "type": "array",
                                         "items": {
                                             "oneOf": [
+                                                # "standard": single correct, multi-marked single-correct
+                                                # Example: "q1" --> '67'
                                                 {"type": "string"},
+                                                # "multiple-correct": multiple-correct (for ambiguous/bonus questions)
+                                                # Example: "q1" --> [ 'A', 'B' ]
                                                 {
                                                     "type": "array",
                                                     "items": {"type": "string"},
                                                     "minItems": 2,
                                                 },
+                                                # "multiple-correct-weighted": array of answer-wise weights (marking scheme not applicable)
+                                                # Example 1: "q1" --> [['A', 1], ['B', 2], ['C', 3]] or
+                                                # Example 2: "q2" --> [['A', 1], ['B', 1], ['AB', 2]]
                                                 {
                                                     "type": "array",
                                                     "items": {
@@ -124,6 +131,9 @@ EVALUATION_SCHEMA = {
                                                         ],
                                                     },
                                                 },
+                                                # Multiple-correct with custom marking scheme
+                                                # ["A", ["1", "2", "3"]],
+                                                # [["A", "B", "AB"], ["1", "2", "3"]]
                                             ],
                                         },
                                     },

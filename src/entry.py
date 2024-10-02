@@ -273,10 +273,25 @@ def process_files(
 
         score = 0
         if evaluation_config is not None:
-            score = evaluate_concatenated_response(omr_response, evaluation_config, file_path)
+            score = evaluate_concatenated_response(
+                omr_response, evaluation_config, file_path
+            )
             logger.info(
                 f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: '{file_id}'"
             )
+            if evaluation_config.get_export_explanation_csv():
+                # Enter into Evaluation sheet
+                explanation = evaluation_config.get_explanation_data()
+                columns = evaluation_config.get_explanation_columns()
+                new_file_path = outputs_namespace.paths.eval_dir.joinpath(file_name)
+                new_file_path = new_file_path.with_suffix(".csv")
+                pd.DataFrame(explanation, columns=columns).to_csv(
+                    new_file_path,
+                    mode="w",
+                    quoting=QUOTE_NONNUMERIC,
+                    index=False,
+                )
+
         else:
             logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
 
