@@ -5,6 +5,7 @@ from time import time
 
 import pandas as pd
 from rich.table import Table
+from rich_tools import table_to_df
 
 from src.algorithm.evaluation.config import EvaluationConfig
 from src.algorithm.evaluation.evaluation import evaluate_concatenated_response
@@ -326,8 +327,20 @@ def process_directory_files(
             logger.info(
                 f"(/{files_counter}) Graded with score: {round(score, 2)}\t {default_answers_summary} \t file: '{file_id}'"
             )
+            if evaluation_config_for_response.get_should_export_csv():
+                explanation_table = evaluation_config_for_response.get_explanation_table()
+                explanation_table = table_to_df(explanation_table)
+                explanation_table.to_csv(
+                    template.get_eval_dir().joinpath(file_name + ".csv"),
+                    quoting=QUOTE_NONNUMERIC,
+                    index=False,
+                )
+
         else:
             logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
+
+
+
 
         # TODO: move this logic inside the class
         save_marked_dir = template.get_save_marked_dir()
