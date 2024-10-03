@@ -1,22 +1,68 @@
-exclude: "__snapshots__/.*$"
+exclude: "(__snapshots__|__image_snapshots__)/.*$"
 default_install_hook_types: [pre-commit, pre-push]
 repos:
+  # Convert the pngs to jpgs inside samples folder
+  - repo: local
+    hooks:
+      - id: convert-images
+        name: Convert png to jpg in samples
+        entry: ./scripts/run_python_hook.sh scripts/hooks/convert_images_hook.py
+        args: ["--trigger-size", "150"]
+        files: ^.*\.(png|PNG)$
+        pass_filenames: true
+        stages: [commit]
+        language: script
+        always_run: true
+        fail_fast: true # Wait for user to remove the png files
+
+  # # Run resize image before the compress image check
+  - repo: local
+    hooks:
+      - id: resize-images
+        name: Resize images
+        entry: ./scripts/run_python_hook.sh scripts/hooks/resize_images_hook.py
+        args: ["--max-width", "1500", "--max-height", "1500", "--trigger-size", "150"]
+        files: \.(png|jpg|jpeg|PNG|JPG|JPEG)$
+        pass_filenames: true
+        stages: [commit]
+        language: script
+        always_run: true
+        fail_fast: false
+
+  # Run image compressor before the large files check
+  - repo: https://github.com/boidolr/pre-commit-images
+    rev: v1.5.2
+    hooks:
+      - id: optimize-png
+      - id: optimize-jpg
+        args: ["--quality", "90"]
+        fail_fast: true # Wait for user to commit the files
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
       - id: check-yaml
         stages: [commit]
       - id: check-added-large-files
-        args: ['--maxkb=300']
+        args: ["--maxkb=300"]
         fail_fast: false
         stages: [commit]
       - id: pretty-format-json
-        args: ['--autofix', '--no-sort-keys']
+        args: ["--autofix", "--no-sort-keys"]
       - id: end-of-file-fixer
         exclude_types: ["csv", "json"]
         stages: [commit]
       - id: trailing-whitespace
         stages: [commit]
+
+  # Removes unused imports
+  - repo: https://github.com/pycqa/autoflake
+    rev: v2.3.1
+    hooks:
+      - id: autoflake
+        args: ["--remove-all-unused-imports", "--in-place"]
+        stages: [commit]
+
   - repo: https://github.com/pycqa/isort
     rev: 5.12.0
     hooks:
@@ -34,15 +80,26 @@ repos:
     hooks:
       - id: flake8
         args:
-          - "--ignore=E501,W503,E203,E741,F541" # Line too long, Line break occurred before a binary operator, Whitespace before ':'
+          - "--ignore=E203,E231,E501,E713,E731,E741,F403,F405,F541,W503"
+          # https://www.flake8rules.com/
+          # E203: Whitespace before ':'
+          # E231: missing whitespace after ':'
+          # E501: Line too long
+          # E713: test for membership should be 'not in'
+          # E731: do not assign a lambda expression, use a def
+          # E741: Do not use variables named 'I', 'O', or 'l'
+          # F403: unable to detect undefined names
+          # F405: 'Tuple' may be undefined, or defined from star imports
+          # F541: f-string without any placeholders
+          # W503: Line break occurred before a binary operator
         fail_fast: true
         stages: [commit]
   - repo: local
     hooks:
       - id: pytest-on-commit
         name: Running single sample test
-        entry:  python3 -m pytest -rfpsxEX --disable-warnings --verbose -k sample1
-        language: system
+        entry: ./scripts/run_single_test.sh
+        language: script
         pass_filenames: false
         always_run: true
         fail_fast: true
@@ -51,8 +108,8 @@ repos:
     hooks:
       - id: pytest-on-push
         name: Running all tests before push...
-        entry: python3 -m pytest -rfpsxEX --disable-warnings --verbose --durations=3
-        language: system
+        entry: ./scripts/run_all_tests_and_coverage.sh
+        language: script
         pass_filenames: false
         always_run: true
         fail_fast: true

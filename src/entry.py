@@ -1,29 +1,25 @@
-"""
-
- OMRChecker
-
- Author: Udayraj Deshmukh
- Github: https://github.com/Udayraj123
-
-"""
 import os
 from csv import QUOTE_NONNUMERIC
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from time import time
 
-import cv2
 import pandas as pd
 from rich.table import Table
+from rich_tools import table_to_df
 
-from src import constants
-from src.defaults import CONFIG_DEFAULTS
-from src.evaluation import EvaluationConfig, evaluate_concatenated_response
-from src.logger import console, logger
-from src.template import Template
-from src.utils.file import Paths, setup_dirs_for_paths, setup_outputs_for_template
+from src.algorithm.evaluation.config import EvaluationConfig
+from src.algorithm.evaluation.evaluation import evaluate_concatenated_response
+from src.algorithm.template.alignment.template_alignment import apply_template_alignment
+from src.algorithm.template.template import Template
+from src.schemas.constants import DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING
+from src.schemas.defaults import CONFIG_DEFAULTS
+from src.utils import constants
+from src.utils.file import PathUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils, Stats
-from src.utils.parsing import get_concatenated_response, open_config_with_defaults
+from src.utils.logger import console, logger
+from src.utils.parsing import open_config_with_defaults
+from src.utils.template_drawing import TemplateDrawing
 
 # Load processors
 STATS = Stats()
@@ -36,6 +32,7 @@ def entry_point(input_dir, args):
     return process_dir(input_dir, curr_dir, args)
 
 
+# TODO: move into template.directory_handler?
 def print_config_summary(
     curr_dir,
     omr_files,
@@ -51,13 +48,14 @@ def print_config_summary(
     table.add_column("Value", style="magenta")
     table.add_row("Directory Path", f"{curr_dir}")
     table.add_row("Count of Images", f"{len(omr_files)}")
+    table.add_row("Debug Mode ", "ON" if args["debug"] else "OFF")
+    table.add_row("Output Mode ", args["output_mode"])
     table.add_row("Set Layout Mode ", "ON" if args["setLayout"] else "OFF")
     table.add_row(
         "Markers Detection",
-        "ON" if "CropOnMarkers" in template.pre_processors else "OFF",
+        "ON" if "CropOnMarkers" in template.get_pre_processor_names() else "OFF",
     )
-    table.add_row("Auto Alignment", f"{tuning_config.alignment_params.auto_align}")
-    table.add_row("Detected Template Path", f"{template}")
+    table.add_row("Detected Template Path", f"{template.path}")
     if local_config_path:
         table.add_row("Detected Local Config", f"{local_config_path}")
     if evaluation_config:
@@ -65,11 +63,14 @@ def print_config_summary(
 
     table.add_row(
         "Detected pre-processors",
-        f"{[pp.__class__.__name__ for pp in template.pre_processors]}",
+        f"{template.get_pre_processor_names()}",
     )
+    table.add_row("Processing Image Shape", f"{template.get_processing_image_shape()}")
+
     console.print(table, justify="center")
 
 
+# TODO: move into template.directory_handler?
 def process_dir(
     root_dir,
     curr_dir,
@@ -94,20 +95,22 @@ def process_dir(
     # Look for subdirectories for processing
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
 
-    output_dir = Path(args["output_dir"], curr_dir.relative_to(root_dir))
-    paths = Paths(output_dir)
+    output_mode = args["output_mode"]
 
     # look for images in current dir to process
     exts = ("*.[pP][nN][gG]", "*.[jJ][pP][gG]", "*.[jJ][pP][eE][gG]")
     omr_files = sorted([f for ext in exts for f in curr_dir.glob(ext)])
 
+    # omr_files = PathUtils.filter_omr_files(omr_files)
+    omr_files = [Path(PurePosixPath(omr_file).as_posix()) for omr_file in omr_files]
+
     # Exclude images (take union over all pre_processors)
     excluded_files = []
     if template:
-        for pp in template.pre_processors:
-            excluded_files.extend(Path(p) for p in pp.exclude_files())
+        excluded_files.extend(template.get_exclude_files())
 
     local_evaluation_path = curr_dir.joinpath(constants.EVALUATION_FILENAME)
+    # Note: if setLayout is passed, there's no need to load evaluation file
     if not args["setLayout"] and os.path.exists(local_evaluation_path):
         if not local_template_exists:
             logger.warning(
@@ -133,12 +136,15 @@ def process_dir(
                 of '{curr_dir}'. \nPlace {constants.TEMPLATE_FILENAME} in the \
                 appropriate directory."
             )
+            # TODO: restore support for --default-template flag
             raise Exception(
                 f"No template file found in the directory tree of {curr_dir}"
             )
 
-        setup_dirs_for_paths(paths)
-        outputs_namespace = setup_outputs_for_template(paths, template)
+        output_dir = Path(args["output_dir"], curr_dir.relative_to(root_dir))
+
+        # Reset all mutations to the template, and setup output directories
+        template.reset_and_setup_for_directory(output_dir, output_mode)
 
         print_config_summary(
             curr_dir,
@@ -152,12 +158,13 @@ def process_dir(
         if args["setLayout"]:
             show_template_layouts(omr_files, template, tuning_config)
         else:
-            process_files(
+            # TODO: pick these args from self/class instead of prop forwarding
+            process_directory_files(
                 omr_files,
                 template,
                 tuning_config,
                 evaluation_config,
-                outputs_namespace,
+                output_mode,
             )
 
     elif not subdirs:
@@ -179,69 +186,106 @@ def process_dir(
         )
 
 
+# TODO: move into template.template_layout
 def show_template_layouts(omr_files, template, tuning_config):
     for file_path in omr_files:
         file_name = file_path.name
         file_path = str(file_path)
-        in_omr = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-        in_omr = template.image_instance_ops.apply_preprocessors(
-            file_path, in_omr, template
+        gray_image, colored_image = ImageUtils.read_image_util(file_path, tuning_config)
+
+        (
+            gray_image,
+            colored_image,
+            template,
+        ) = template.apply_preprocessors(file_path, gray_image, colored_image)
+        gray_layout, colored_layout = TemplateDrawing.draw_template_layout(
+            gray_image,
+            colored_image,
+            template,
+            tuning_config,
+            shifted=False,
+            border=2,
         )
-        template_layout = template.image_instance_ops.draw_template_layout(
-            in_omr, template, shifted=False, border=2
+        template_layout = (
+            colored_layout
+            if tuning_config.outputs.colored_outputs_enabled
+            else gray_layout
         )
-        InteractionUtils.show(
-            f"Template Layout: {file_name}", template_layout, 1, 1, config=tuning_config
+        # Size is template_dimensions
+        InteractionUtils.show_for_roi(
+            f"Template Layout: {file_name}",
+            template_layout,
         )
 
 
-def process_files(
+# TODO: move into template.directory_handler
+def process_directory_files(
     omr_files,
-    template,
+    template: Template,
     tuning_config,
     evaluation_config,
-    outputs_namespace,
+    output_mode,
 ):
     start_time = int(time())
     files_counter = 0
+    # TODO: move STATS inside template.directory_handler
     STATS.files_not_moved = 0
-
+    logger.set_log_levels(tuning_config.outputs.show_logs_by_type)
     for file_path in omr_files:
         files_counter += 1
-        file_name = file_path.name
+        file_name = PathUtils.remove_non_utf_characters(file_path.name)
+        file_id = str(file_name)
 
-        in_omr = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
+        gray_image, colored_image = ImageUtils.read_image_util(
+            str(file_path), tuning_config
+        )
 
         logger.info("")
         logger.info(
-            f"({files_counter}) Opening image: \t'{file_path}'\tResolution: {in_omr.shape}"
+            f"({files_counter}) Opening image: \t'{file_path}'\tResolution: {gray_image.shape}"
         )
 
-        template.image_instance_ops.reset_all_save_img()
+        # Start with blank saved images list
+        template.save_image_ops.reset_all_save_img()
 
-        template.image_instance_ops.append_save_img(1, in_omr)
-
-        in_omr = template.image_instance_ops.apply_preprocessors(
-            file_path, in_omr, template
+        template.save_image_ops.append_save_image(
+            "Input Image", range(1, 7), gray_image, colored_image
         )
 
-        if in_omr is None:
+        # TODO: use try catch here and store paths to error files
+
+        # Note: the returned template is a copy
+        (
+            gray_image,
+            colored_image,
+            template,
+        ) = template.apply_preprocessors(file_path, gray_image, colored_image)
+
+        # TODO[later]: template & evaluation as a "Processor"?
+        # TODO: move apply_template_alignment into template class
+        gray_image, colored_image, template = apply_template_alignment(
+            gray_image, colored_image, template, tuning_config
+        )
+
+        if gray_image is None:
             # Error OMR case
-            new_file_path = outputs_namespace.paths.errors_dir.joinpath(file_name)
-            outputs_namespace.OUTPUT_SET.append(
-                [file_name] + outputs_namespace.empty_resp
-            )
+            output_file_path = template.get_errors_dir().joinpath(file_name)
+
+            template.append_empty_row(file_name)
+
+            # TODO: move into template.directory_handler
             if check_and_move(
-                constants.ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path
+                constants.ERROR_CODES.NO_MARKER_ERR, file_path, output_file_path
             ):
-                err_line = [
+                error_file_line = [
                     file_name,
                     file_path,
-                    new_file_path,
+                    output_file_path,
                     "NA",
-                ] + outputs_namespace.empty_resp
-                pd.DataFrame(err_line, dtype=str).T.to_csv(
-                    outputs_namespace.files_obj["Errors"],
+                ] + template.get_empty_response_array()
+
+                pd.DataFrame(error_file_line, dtype=str).T.to_csv(
+                    template.get_errors_file(),
                     mode="a",
                     quoting=QUOTE_NONNUMERIC,
                     header=False,
@@ -249,45 +293,45 @@ def process_files(
                 )
             continue
 
-        # uniquify
-        file_id = str(file_name)
-        save_dir = outputs_namespace.paths.save_marked_dir
-        (
-            response_dict,
-            final_marked,
-            multi_marked,
-            _,
-        ) = template.image_instance_ops.read_omr_response(
-            template, image=in_omr, name=file_id, save_dir=save_dir
+        concatenated_omr_response, raw_omr_response = template.read_omr_response(
+            gray_image, colored_image, file_path
         )
 
-        # TODO: move inner try catch here
-        # concatenate roll nos, set unmarked responses, etc
-        omr_response = get_concatenated_response(response_dict, template)
+        # TODO: add a try catch here?
+
+        evaluation_config_for_response = (
+            None
+            if evaluation_config is None
+            else evaluation_config.get_evaluation_config_for_response(
+                concatenated_omr_response, file_path
+            )
+        )
 
         if (
-            evaluation_config is None
-            or not evaluation_config.get_should_explain_scoring()
+            evaluation_config_for_response is None
+            or not evaluation_config_for_response.get_should_explain_scoring()
         ):
-            logger.info(f"Read Response: \n{omr_response}")
+            logger.info(f"Read Response: \n{concatenated_omr_response}")
 
-        score = 0
-        if evaluation_config is not None:
-            score = evaluate_concatenated_response(
-                omr_response, evaluation_config, file_path
+        score, evaluation_meta = 0, None
+        if evaluation_config_for_response is not None:
+            score, evaluation_meta = evaluate_concatenated_response(
+                concatenated_omr_response, evaluation_config_for_response
+            )
+            (
+                default_answers_summary,
+                *_,
+            ) = evaluation_config_for_response.get_formatted_answers_summary(
+                DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING
             )
             logger.info(
-                f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: '{file_id}'"
+                f"(/{files_counter}) Graded with score: {round(score, 2)}\t {default_answers_summary} \t file: '{file_id}'"
             )
-            if evaluation_config.get_export_explanation_csv():
-                # Enter into Evaluation sheet
-                explanation = evaluation_config.get_explanation_data()
-                columns = evaluation_config.get_explanation_columns()
-                new_file_path = outputs_namespace.paths.eval_dir.joinpath(file_name)
-                new_file_path = new_file_path.with_suffix(".csv")
-                pd.DataFrame(explanation, columns=columns).to_csv(
-                    new_file_path,
-                    mode="w",
+            if evaluation_config_for_response.get_should_export_csv():
+                explanation_table = evaluation_config_for_response.get_explanation_table()
+                explanation_table = table_to_df(explanation_table)
+                explanation_table.to_csv(
+                    template.get_eval_dir().joinpath(file_name + ".csv"),
                     quoting=QUOTE_NONNUMERIC,
                     index=False,
                 )
@@ -295,46 +339,132 @@ def process_files(
         else:
             logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
 
-        if tuning_config.outputs.show_image_level >= 2:
-            InteractionUtils.show(
-                f"Final Marked Bubbles : '{file_id}'",
-                ImageUtils.resize_util_h(
-                    final_marked, int(tuning_config.dimensions.display_height * 1.3)
-                ),
-                1,
-                1,
-                config=tuning_config,
+
+
+
+        # TODO: move this logic inside the class
+        save_marked_dir = template.get_save_marked_dir()
+
+        # ----------
+
+        # TODO: refactor this logic
+        (
+            is_multi_marked,
+            field_number_to_scan_box_interpretation,
+        ) = template.get_omr_metrics_for_file(str(file_path))
+
+        # Save output image with bubble values and evaluation meta
+        if output_mode != "moderation":
+            # TODO: move TemplateDrawing functions inside the template class
+            (
+                final_marked,
+                colored_final_marked,
+            ) = TemplateDrawing.draw_template_layout(
+                gray_image,
+                colored_image,
+                template,
+                tuning_config,
+                field_number_to_scan_box_interpretation,
+                evaluation_meta=evaluation_meta,
+                evaluation_config_for_response=evaluation_config_for_response,
+            )
+        else:
+            # No drawing in moderation output mode
+            final_marked, colored_final_marked = gray_image, colored_image
+
+        # TODO(refactor): move to small function
+        should_save_detections = (
+            tuning_config.outputs.save_detections and save_marked_dir is not None
+        )
+
+        if should_save_detections:
+            # TODO: migrate after support for is_multi_marked bucket based on identifier config
+            # if multi_roll:
+            #     save_marked_dir = save_marked_dir.joinpath("_MULTI_")
+            ImageUtils.save_marked_image(save_marked_dir, file_id, final_marked)
+
+            if (
+                tuning_config.outputs.colored_outputs_enabled
+                and save_marked_dir is not None
+            ):
+                # TODO: get dedicated path from top args
+                colored_save_marked_dir = save_marked_dir.joinpath("colored")
+                ImageUtils.save_marked_image(
+                    colored_save_marked_dir, file_id, colored_final_marked
+                )
+
+        # Save output stack images
+        template.save_image_ops.save_image_stacks(
+            file_id,
+            save_marked_dir,
+            key=None,
+            images_per_row=5 if tuning_config.outputs.show_image_level >= 5 else 4,
+        )
+
+        # TODO: move it inside template finalize_file_level_metrics()?
+        # Save output metrics
+        if tuning_config.outputs.save_image_metrics:
+            template.export_omr_metrics_for_file(
+                str(file_path),
+                evaluation_meta,
+                field_number_to_scan_box_interpretation,
             )
 
-        resp_array = []
-        for k in template.output_columns:
-            resp_array.append(omr_response[k])
+        # Save output CSV results
+        output_omr_response = (
+            raw_omr_response
+            if output_mode == "moderation"
+            else concatenated_omr_response
+        )
+        omr_response_array = template.append_output_omr_response(
+            file_name, output_omr_response
+        )
 
-        outputs_namespace.OUTPUT_SET.append([file_name] + resp_array)
+        posix_file_path = PathUtils.sep_based_posix_path(file_path)
 
-        if multi_marked == 0 or not tuning_config.outputs.filter_out_multimarked_files:
+        if (
+            not is_multi_marked
+            or not tuning_config.outputs.filter_out_multimarked_files
+        ):
             STATS.files_not_moved += 1
-            new_file_path = save_dir.joinpath(file_id)
+
+            # Normalize path and convert to posix style
+            output_file_path = PathUtils.sep_based_posix_path(
+                save_marked_dir.joinpath(file_id)
+            )
             # Enter into Results sheet-
-            results_line = [file_name, file_path, new_file_path, score] + resp_array
+            results_line = [
+                file_name,
+                posix_file_path,
+                output_file_path,
+                score,
+            ] + omr_response_array
+
             # Write/Append to results_line file(opened in append mode)
             pd.DataFrame(results_line, dtype=str).T.to_csv(
-                outputs_namespace.files_obj["Results"],
+                template.get_results_file(),
                 mode="a",
                 quoting=QUOTE_NONNUMERIC,
                 header=False,
                 index=False,
             )
         else:
-            # multi_marked file
+            # is_multi_marked file
             logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
-            new_file_path = outputs_namespace.paths.multi_marked_dir.joinpath(file_name)
+            output_file_path = PathUtils.sep_based_posix_path(
+                template.get_multi_marked_dir().joinpath(file_name)
+            )
             if check_and_move(
-                constants.ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path
+                constants.ERROR_CODES.MULTI_BUBBLE_WARN, file_path, output_file_path
             ):
-                mm_line = [file_name, file_path, new_file_path, "NA"] + resp_array
+                mm_line = [
+                    file_name,
+                    posix_file_path,
+                    output_file_path,
+                    "NA",
+                ] + omr_response_array
                 pd.DataFrame(mm_line, dtype=str).T.to_csv(
-                    outputs_namespace.files_obj["MultiMarked"],
+                    template.get_multi_marked_file(),
                     mode="a",
                     quoting=QUOTE_NONNUMERIC,
                     header=False,
@@ -344,15 +474,23 @@ def process_files(
             #     TODO:  Add appropriate record handling here
             #     pass
 
+    logger.reset_log_levels()
+
+    # Calculate folder level stats here
+    template.finalize_directory_metrics()
+    # TODO: export directory level stats here
+
     print_stats(start_time, files_counter, tuning_config)
 
 
 def check_and_move(error_code, file_path, filepath2):
+    # TODO: use StatsByLabel class here
     # TODO: fix file movement into error/multimarked/invalid etc again
     STATS.files_not_moved += 1
     return True
 
 
+# TODO: move into template.directory_handler
 def print_stats(start_time, files_counter, tuning_config):
     time_checking = max(1, round(time() - start_time, 2))
     log = logger.info
@@ -366,10 +504,10 @@ def print_stats(start_time, files_counter, tuning_config):
 
     if tuning_config.outputs.show_image_level <= 0:
         log(
-            f"\nFinished Checking {files_counter} file(s) in {round(time_checking, 1)} seconds i.e. ~{round(time_checking/60, 1)} minute(s)."
+            f"\nFinished Checking {files_counter} file(s) in {round(time_checking, 1)} seconds i.e. ~{round(time_checking / 60, 1)} minute(s)."
         )
         log(
-            f"{'OMR Processing Rate':<27}:\t ~ {round(time_checking/files_counter,2)} seconds/OMR"
+            f"{'OMR Processing Rate':<27}:\t ~ {round(time_checking / files_counter,2)} seconds/OMR"
         )
         log(
             f"{'OMR Processing Speed':<27}:\t ~ {round((files_counter * 60) / time_checking, 2)} OMRs/minute"

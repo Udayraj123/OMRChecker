@@ -1,0 +1,242 @@
+{
+  "templateDimensions": [
+    1189,
+    1682
+  ],
+  "bubbleDimensions": [
+    25,
+    25
+  ],
+  "processingImageShape": [
+    820,
+    666
+  ],
+  "preProcessors": [
+    {
+      "name": "GaussianBlur",
+      "options": {
+        "kSize": [
+          3,
+          3
+        ],
+        "sigmaX": 0
+      }
+    },
+    {
+      "name": "CropOnMarkers",
+      "options": {
+        "processingImageShape": [
+          1132,
+          800
+        ],
+        "tuningOptions": {
+          "lineKernel": [
+            2,
+            10
+          ],
+          "dotKernel": [
+            3,
+            3
+          ]
+        },
+        "type": "TWO_LINES",
+        "defaultSelector": "OUTER_CORNERS",
+        "leftLine": {
+          "origin": [
+            40,
+            161
+          ],
+          "dimensions": [
+            25,
+            940
+          ],
+          "margins": {
+            "top": 25,
+            "right": 20,
+            "bottom": 15,
+            "left": 20
+          }
+        },
+        "rightLine": {
+          "origin": [
+            760,
+            121
+          ],
+          "dimensions": [
+            25,
+            980
+          ],
+          "margins": {
+            "top": 15,
+            "right": 20,
+            "bottom": 15,
+            "left": 20
+          }
+        }
+      }
+    }
+  ],
+  "customLabels": {
+    "Name": [
+      "name1..25"
+    ],
+    "RollNo": [
+      "roll1..3"
+    ],
+    "CplNo": [
+      "cpl1..3"
+    ]
+  },
+  "customBubbleFieldTypes": {
+    "CUSTOM_NAME_FIELD": {
+      "bubbleValues": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z"
+      ],
+      "direction": "vertical"
+    }
+  },
+  "fieldBlocks": {
+    "NameBlock": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_NAME_FIELD",
+      "origin": [
+        72,
+        83
+      ],
+      "bubbleDimensions": [
+        15,
+        15
+      ],
+      "fieldLabels": [
+        "name1..25"
+      ],
+      "emptyValue": " ",
+      "bubblesGap": 23.45,
+      "labelsGap": 27.81
+    },
+    "RollNo": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        1037,
+        83
+      ],
+      "bubbleDimensions": [
+        20,
+        20
+      ],
+      "fieldLabels": [
+        "roll1..3"
+      ],
+      "bubblesGap": 23.45,
+      "labelsGap": 27.81
+    },
+    "CPLNo": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        820,
+        460
+      ],
+      "bubbleDimensions": [
+        20,
+        20
+      ],
+      "fieldLabels": [
+        "cpl1..5"
+      ],
+      "bubblesGap": 23.45,
+      "labelsGap": 60.81
+    },
+    "MCQBlock1_20": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "origin": [
+        107,
+        780
+      ],
+      "fieldLabels": [
+        "q1..20"
+      ],
+      "bubblesGap": 38,
+      "labelsGap": 46.09
+    },
+    "MCQBlock21_40": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "origin": [
+        325,
+        780
+      ],
+      "fieldLabels": [
+        "q21..40"
+      ],
+      "bubblesGap": 38,
+      "labelsGap": 46.09
+    },
+    "MCQBlock41_60": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "origin": [
+        543,
+        780
+      ],
+      "fieldLabels": [
+        "q41..60"
+      ],
+      "bubblesGap": 38,
+      "labelsGap": 46.09
+    },
+    "MCQBlock61_80": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "origin": [
+        751,
+        780
+      ],
+      "fieldLabels": [
+        "q61..80"
+      ],
+      "bubblesGap": 38,
+      "labelsGap": 46.09
+    },
+    "MCQBlock81_100": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "origin": [
+        969,
+        780
+      ],
+      "fieldLabels": [
+        "q81..100"
+      ],
+      "bubblesGap": 38,
+      "labelsGap": 46.09
+    }
+  }
+}

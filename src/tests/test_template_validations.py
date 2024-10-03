@@ -18,6 +18,7 @@ def run_sample(mocker, input_path):
     setup_mocker_patches(mocker)
     output_dir = os.path.join("outputs", input_path)
     run_entry_point(input_path, output_dir)
+    mocker.resetall()
 
 
 write_jsons_and_run = generate_write_jsons_and_run(
@@ -50,29 +51,28 @@ def test_empty_template(mocker):
     def modify_template(_):
         return {}
 
-    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    print("\nExpecting invalid template json error logs:")
+    _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert (
         str(exception)
         == f"Provided Template JSON is Invalid: '{BASE_SAMPLE_TEMPLATE_PATH}'"
     )
 
 
-def test_invalid_field_type(mocker):
+def test_invalid_bubble_field_type(mocker):
     def modify_template(template):
-        template["fieldBlocks"]["MCQ_Block_1"]["fieldType"] = "X"
+        template["fieldBlocks"]["MCQ_Block_1"]["bubbleFieldType"] = "X"
 
-    exception = write_jsons_and_run(mocker, modify_template=modify_template)
-    assert (
-        str(exception)
-        == f"Provided Template JSON is Invalid: '{BASE_SAMPLE_TEMPLATE_PATH}'"
-    )
+    print("\nExpecting invalid template json error logs:")
+    _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    assert str(exception) == f"Invalid field type: X in block MCQ_Block_1"
 
 
 def test_overflow_labels(mocker):
     def modify_template(template):
         template["fieldBlocks"]["MCQ_Block_1"]["fieldLabels"] = ["q1..100"]
 
-    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert (
         str(exception)
         == "Overflowing field block 'MCQ_Block_1' with origin [65, 60] and dimensions [189, 5173] in template with dimensions [300, 400]"
@@ -81,9 +81,9 @@ def test_overflow_labels(mocker):
 
 def test_overflow_safe_dimensions(mocker):
     def modify_template(template):
-        template["pageDimensions"] = [255, 400]
+        template["templateDimensions"] = [255, 400]
 
-    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert str(exception) == "No Error"
 
 
@@ -97,9 +97,9 @@ def test_field_strings_overlap(mocker):
             },
         }
 
-    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert str(exception) == (
-        "The field strings for field block New_Block overlap with other existing fields"
+        "The field strings for field block New_Block overlap with other existing fields: {'q5'}"
     )
 
 
@@ -109,7 +109,7 @@ def test_custom_label_strings_overlap_single(mocker):
             "label1": ["q1..2", "q2..3"],
         }
 
-    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert (
         str(exception)
         == "Given field string 'q2..3' has overlapping field(s) with other fields in 'Custom Label: label1': ['q1..2', 'q2..3']"
@@ -123,7 +123,7 @@ def test_custom_label_strings_overlap_multiple(mocker):
             "label2": ["q2..3"],
         }
 
-    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert (
         str(exception)
         == "The field strings for custom label 'label2' overlap with other existing custom labels"
@@ -134,7 +134,7 @@ def test_missing_field_block_labels(mocker):
     def modify_template(template):
         template["customLabels"] = {"Combined": ["qX", "qY"]}
 
-    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert (
         str(exception)
         == "Missing field block label(s) in the given template for ['qX', 'qY'] from 'Combined'"
@@ -145,7 +145,7 @@ def test_missing_output_columns(mocker):
     def modify_template(template):
         template["outputColumns"] = ["qX", "q1..5"]
 
-    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert str(exception) == (
         "Some columns are missing in the field blocks for the given output columns"
     )
@@ -155,5 +155,5 @@ def test_safe_missing_label_columns(mocker):
     def modify_template(template):
         template["outputColumns"] = ["q1..4"]
 
-    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert str(exception) == "No Error"

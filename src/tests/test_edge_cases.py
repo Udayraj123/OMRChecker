@@ -1,27 +1,20 @@
 import os
-from pathlib import Path
 
-import pandas as pd
-
+from src.tests.constants import (
+    BASE_MULTIMARKED_CSV_PATH,
+    BASE_RESULTS_CSV_PATH,
+    BASE_SAMPLE_PATH,
+)
 from src.tests.test_samples.sample2.boilerplate import (
     CONFIG_BOILERPLATE,
     TEMPLATE_BOILERPLATE,
 )
 from src.tests.utils import (
+    extract_output_data,
     generate_write_jsons_and_run,
     remove_file,
     run_entry_point,
     setup_mocker_patches,
-)
-
-FROZEN_TIMESTAMP = "1970-01-01"
-CURRENT_DIR = Path("src/tests")
-BASE_SAMPLE_PATH = CURRENT_DIR.joinpath("test_samples", "sample2")
-BASE_RESULTS_CSV_PATH = os.path.join(
-    "outputs", BASE_SAMPLE_PATH, "Results", "Results_05AM.csv"
-)
-BASE_MULTIMARKED_CSV_PATH = os.path.join(
-    "outputs", BASE_SAMPLE_PATH, "Manual", "MultiMarkedFiles.csv"
 )
 
 
@@ -29,11 +22,7 @@ def run_sample(mocker, input_path):
     setup_mocker_patches(mocker)
     output_dir = os.path.join("outputs", input_path)
     run_entry_point(input_path, output_dir)
-
-
-def extract_output_data(path):
-    output_data = pd.read_csv(path, keep_default_na=False)
-    return output_data
+    mocker.resetall()
 
 
 write_jsons_and_run = generate_write_jsons_and_run(
@@ -44,14 +33,31 @@ write_jsons_and_run = generate_write_jsons_and_run(
 )
 
 
-def test_config_low_dimensions(mocker):
-    def modify_config(config):
-        config["dimensions"]["processing_height"] = 1000
-        config["dimensions"]["processing_width"] = 1000
+def test_config_low_dimensions_error_case(mocker, snapshot):
+    def modify_template(template):
+        template["preProcessors"][0]["options"]["processingImageShape"] = [
+            1640 // 4,
+            1332 // 4,
+        ]
+        template["preProcessors"][0]["options"]["markerDimensions"] = [20, 20]
 
-    exception = write_jsons_and_run(mocker, modify_config=modify_config)
+    _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    assert str(exception) == snapshot
 
+
+def test_config_low_dimensions_safe_case(mocker, snapshot):
+    def modify_template(template):
+        template["preProcessors"][0]["options"]["processingImageShape"] = [
+            1640 // 2,
+            1332 // 2,
+        ]
+        template["preProcessors"][0]["options"]["markerDimensions"] = [20, 20]
+
+    sample_outputs, exception = write_jsons_and_run(
+        mocker, modify_template=modify_template
+    )
     assert str(exception) == "No Error"
+    assert snapshot == sample_outputs
 
 
 def test_different_bubble_dimensions(mocker):
@@ -59,25 +65,33 @@ def test_different_bubble_dimensions(mocker):
     remove_file(BASE_RESULTS_CSV_PATH)
     remove_file(BASE_MULTIMARKED_CSV_PATH)
 
-    exception = write_jsons_and_run(mocker)
+    _, exception = write_jsons_and_run(mocker)
     assert str(exception) == "No Error"
+
     original_output_data = extract_output_data(BASE_RESULTS_CSV_PATH)
+    assert not original_output_data.empty
+    assert len(original_output_data) == 1
 
     def modify_template(template):
         # Incorrect global bubble size
         template["bubbleDimensions"] = [5, 5]
         # Correct bubble size for MCQBlock1a1
-        template["fieldBlocks"]["MCQBlock1a1"]["bubbleDimensions"] = [32, 32]
+        template["fieldBlocks"]["MCQBlock1a1"]["bubbleDimensions"] = [
+            32,
+            32,
+        ]
         # Incorrect bubble size for MCQBlock1a11
-        template["fieldBlocks"]["MCQBlock1a11"]["bubbleDimensions"] = [10, 10]
+        template["fieldBlocks"]["MCQBlock1a11"]["bubbleDimensions"] = [
+            5,
+            5,
+        ]
 
     remove_file(BASE_RESULTS_CSV_PATH)
     remove_file(BASE_MULTIMARKED_CSV_PATH)
-    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+    _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert str(exception) == "No Error"
 
     results_output_data = extract_output_data(BASE_RESULTS_CSV_PATH)
-
     assert results_output_data.empty
 
     output_data = extract_output_data(BASE_MULTIMARKED_CSV_PATH)

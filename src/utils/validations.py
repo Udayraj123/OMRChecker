@@ -1,19 +1,11 @@
-"""
-
- OMRChecker
-
- Author: Udayraj Deshmukh
- Github: https://github.com/Udayraj123
-
-"""
 import re
 
 import jsonschema
 from jsonschema import validate
 from rich.table import Table
 
-from src.logger import console, logger
 from src.schemas import SCHEMA_JSONS, SCHEMA_VALIDATORS
+from src.utils.logger import console, logger
 
 
 def validate_evaluation_json(json_data, evaluation_path):
@@ -38,6 +30,16 @@ def validate_evaluation_json(json_data, evaluation_path):
                     msg + ". Make sure the spelling of the key is correct",
                 )
             else:
+                if (
+                    key in ["outputs_configuration", "marking_schemes"]
+                    and len(error.path) > 1
+                ):
+                    path = ".".join(list(map(str, error.path)))
+                    key = path
+                    if "color" in path and validator == "oneOf":
+                        color = re.findall(r"'(.*?)'", msg)[0]
+                        msg = f"{color} is not a valid color."
+
                 table.add_row(key, msg)
         console.print(table, justify="center")
         raise Exception(
@@ -62,18 +64,18 @@ def validate_template_json(json_data, template_path):
             key, validator, msg = parse_validation_error(error)
 
             # Print preProcessor name in case of options error
-            if key == "preProcessors":
-                preProcessorName = json_data["preProcessors"][error.path[1]]["name"]
+            if key == "preProcessors" and len(error.path) > 2:
+                preProcessorJson = json_data["preProcessors"][error.path[1]]
+                preProcessorName = preProcessorJson.get("name", "UNKNOWN")
                 preProcessorKey = error.path[2]
-                table.add_row(f"{key}.{preProcessorName}.{preProcessorKey}", msg)
+                key = f"{key}.{preProcessorName}.{preProcessorKey}"
             elif validator == "required":
                 requiredProperty = re.findall(r"'(.*?)'", msg)[0]
-                table.add_row(
-                    f"{key}.{requiredProperty}",
-                    f"{msg}. Check for spelling errors and make sure it is in camelCase",
+                key = f"{key}.{requiredProperty}"
+                msg = (
+                    f"{msg}. Check for spelling errors and make sure it is in camelCase"
                 )
-            else:
-                table.add_row(key, msg)
+            table.add_row(key, msg)
         console.print(table, justify="center")
         raise Exception(
             f"Provided Template JSON is Invalid: '{template_path}'"

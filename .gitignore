@@ -9,6 +9,9 @@ outputs/*
 
 # Misc
 **/.DS_Store
+**/__ignore__
 **/__pycache__
 venv/
 OMRChecker.wiki/
+pytestdebug.log
+.coverage

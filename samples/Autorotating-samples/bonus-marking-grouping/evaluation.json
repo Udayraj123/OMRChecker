@@ -1,0 +1,110 @@
+{
+  "source_type": "local",
+  "options": {
+    "questions_in_order": [
+      "q1..11"
+    ],
+    "answers_in_order": [
+      "B",
+      [
+        [
+          "A",
+          2
+        ],
+        [
+          "D",
+          -1
+        ]
+      ],
+      [
+        [
+          "C",
+          10
+        ],
+        [
+          "D",
+          -1
+        ]
+      ],
+      "B",
+      "D",
+      "C",
+      [
+        "B",
+        "C",
+        "BC"
+      ],
+      "A",
+      "C",
+      "D",
+      "C"
+    ]
+  },
+  "outputs_configuration": {
+    "should_explain_scoring": true,
+    "draw_score": {
+      "enabled": true,
+      "position": [
+        600,
+        650
+      ],
+      "size": 1.5
+    },
+    "draw_answers_summary": {
+      "enabled": true,
+      "position": [
+        300,
+        550
+      ],
+      "size": 1.0
+    },
+    "draw_question_verdicts": {
+      "enabled": true,
+      "verdict_colors": {
+        "correct": "lightgreen",
+        "neutral": "#000000",
+        "incorrect": "#ff0000",
+        "bonus": "#00DDDD"
+      },
+      "verdict_symbol_colors": {
+        "positive": "#000000",
+        "neutral": "#000000",
+        "negative": "#000000",
+        "bonus": "#000000"
+      },
+      "draw_answer_groups": {
+        "enabled": true
+      }
+    },
+    "draw_detected_bubble_texts": {
+      "enabled": false
+    }
+  },
+  "marking_schemes": {
+    "DEFAULT": {
+      "correct": "3",
+      "incorrect": "-1",
+      "unmarked": "0"
+    },
+    "BONUS_MARKS_ON_ATTEMPT": {
+      "marking": {
+        "correct": "3",
+        "incorrect": "3",
+        "unmarked": "0"
+      },
+      "questions": [
+        "q7"
+      ]
+    },
+    "BONUS_MARKS_FOR_ALL": {
+      "marking": {
+        "correct": "3",
+        "incorrect": "3",
+        "unmarked": "3"
+      },
+      "questions": [
+        "q8"
+      ]
+    }
+  }
+}

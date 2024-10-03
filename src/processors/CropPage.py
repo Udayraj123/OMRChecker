@@ -1,112 +1,194 @@
-"""
-https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/
-"""
 import cv2
 import numpy as np
 
-from src.logger import logger
-from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
+from src.processors.constants import EDGE_TYPES_IN_ORDER, WarpMethod
+from src.processors.internal.WarpOnPointsCommon import WarpOnPointsCommon
+from src.utils.constants import CLR_WHITE, hsv_white_high, hsv_white_low
+from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
+from src.utils.logger import logger
+from src.utils.math import MathUtils
 
 MIN_PAGE_AREA = 80000
 
-
-def normalize(image):
-    return cv2.normalize(image, 0, 255, norm_type=cv2.NORM_MINMAX)
-
-
-def check_max_cosine(approx):
-    # assumes 4 pts present
-    max_cosine = 0
-    min_cosine = 1.5
-    for i in range(2, 5):
-        cosine = abs(angle(approx[i % 4], approx[i - 2], approx[i - 1]))
-        max_cosine = max(cosine, max_cosine)
-        min_cosine = min(cosine, min_cosine)
-
-    if max_cosine >= 0.35:
-        logger.warning("Quadrilateral is not a rectangle.")
-        return False
-    return True
+"""
+ref: https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/
+"""
 
 
-def validate_rect(approx):
-    return len(approx) == 4 and check_max_cosine(approx.reshape(4, 2))
+class CropPage(WarpOnPointsCommon):
+    __is_internal_preprocessor__ = False
 
+    def get_class_name(self):
+        return "CropPage"
 
-def angle(p_1, p_2, p_0):
-    dx1 = float(p_1[0] - p_0[0])
-    dy1 = float(p_1[1] - p_0[1])
-    dx2 = float(p_2[0] - p_0[0])
-    dy2 = float(p_2[1] - p_0[1])
-    return (dx1 * dx2 + dy1 * dy2) / np.sqrt(
-        (dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2) + 1e-10
-    )
+    def validate_and_remap_options_schema(self, options):
+        tuning_options = options.get("tuningOptions", {})
 
+        parsed_options = {
+            "morphKernel": options.get("morphKernel"),
+            "useColoredCanny": options.get("useColoredCanny"),
+            "enableCropping": True,
+            "tuningOptions": {
+                "warpMethod": tuning_options.get(
+                    "warpMethod", WarpMethod.PERSPECTIVE_TRANSFORM
+                ),
+                "normalizeConfig": [],
+                "cannyConfig": [],
+            },
+        }
+        return parsed_options
 
-class CropPage(ImagePreprocessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        cropping_ops = self.options
-        self.morph_kernel = tuple(
-            int(x) for x in cropping_ops.get("morphKernel", [10, 10])
+        options = self.options
+        self.use_colored_canny = options.get("useColoredCanny", False)
+
+        self.morph_kernel = cv2.getStructuringElement(
+            cv2.MORPH_RECT, tuple(options.get("morphKernel", (10, 10)))
         )
 
-    def apply_filter(self, image, file_path):
-        image = normalize(cv2.GaussianBlur(image, (3, 3), 0))
+    def __str__(self):
+        return f"CropPage"
 
-        # Resize should be done with another preprocessor is needed
-        sheet = self.find_page(image, file_path)
-        if len(sheet) == 0:
-            logger.error(
-                f"\tError: Paper boundary not found for: '{file_path}'\nHave you accidentally included CropPage preprocessor?"
-            )
-            return None
+    def prepare_image(self, image):
+        return ImageUtils.normalize(image)
 
-        logger.info(f"Found page corners: \t {sheet.tolist()}")
+    def extract_control_destination_points(self, image, colored_image, file_path):
+        options = self.options
 
-        # Warp layer 1
-        image = ImageUtils.four_point_transform(image, sheet)
+        sheet, page_contour = self.find_page_contour_and_corners(
+            image, colored_image, file_path
+        )
+        (
+            ordered_page_corners,
+            edge_contours_map,
+        ) = ImageUtils.split_patch_contour_on_corners(sheet, page_contour)
 
-        # Return preprocessed image
-        return image
+        logger.debug(f"Found page corners: \t {ordered_page_corners}")
+        (
+            destination_page_corners,
+            _,
+        ) = ImageUtils.get_cropped_warped_rectangle_points(ordered_page_corners)
 
-    def find_page(self, image, file_path):
+        if self.warp_method in [
+            WarpMethod.DOC_REFINE,
+            WarpMethod.PERSPECTIVE_TRANSFORM,
+        ]:
+            return ordered_page_corners, destination_page_corners, edge_contours_map
+        else:
+            # TODO: remove this if REMAP method is removed, see if homography REALLY needs page contour points
+            max_points_per_edge = options.get("maxPointsPerEdge", None)
+
+            control_points, destination_points = [], []
+            for edge_type in EDGE_TYPES_IN_ORDER:
+                destination_line = MathUtils.select_edge_from_rectangle(
+                    destination_page_corners, edge_type
+                )
+                # Extrapolates the destination_line to get approximate destination points
+                (
+                    edge_control_points,
+                    edge_destination_points,
+                ) = ImageUtils.get_control_destination_points_from_contour(
+                    edge_contours_map[edge_type], destination_line, max_points_per_edge
+                )
+                # Note: edge-wise duplicates would get added here
+                # TODO: see if we can avoid duplicates at source itself
+                control_points += edge_control_points
+                destination_points += edge_destination_points
+
+            return control_points, destination_points, edge_contours_map
+
+    def find_page_contour_and_corners(self, image, colored_image, file_path):
         config = self.tuning_config
 
-        image = normalize(image)
+        if self.use_colored_canny and not config.outputs.colored_outputs_enabled:
+            logger.warning(
+                f"Cannot process colored image for CropPage. useColoredCanny is true but colored_outputs_enabled is false."
+            )
 
         _ret, image = cv2.threshold(image, 200, 255, cv2.THRESH_TRUNC)
-        image = normalize(image)
+        image = ImageUtils.normalize(image)
 
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, self.morph_kernel)
+        self.append_save_image("Truncate Threshold", [1, 4, 5, 6], image)
 
-        # Close the small holes, i.e. Complete the edges on canny image
-        closed = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
+        if self.use_colored_canny and config.outputs.colored_outputs_enabled:
+            hsv = cv2.cvtColor(colored_image, cv2.COLOR_BGR2HSV)
+            # Mask image to only select white-ish zone
+            mask = cv2.inRange(hsv, hsv_white_low, hsv_white_high)
+            mask_result = cv2.bitwise_and(image, image, mask=mask)
+            self.append_save_image("Mask Result", range(3, 7), mask_result)
+            # TODO: get hsv mask working for colored separation
+            # TODO: test this on more samples
+            # InteractionUtils.show("hsv", hsv, 0)
+            # InteractionUtils.show("colored_image", colored_image, 0)
+            # InteractionUtils.show("mask_result", mask_result, 1)
 
-        edge = cv2.Canny(closed, 185, 55)
+            # TODO: self.append_save_image(2, mask_result)
 
-        if config.outputs.show_image_level >= 5:
-            InteractionUtils.show("edge", edge, config=config)
+            canny_edge = cv2.Canny(mask_result, 185, 55)
+        else:
+            _ret, image = cv2.threshold(image, 200, 255, cv2.THRESH_TRUNC)
+
+            image = ImageUtils.normalize(image)
+
+            # Close the small holes, i.e. Complete the edges on canny image
+            closed = cv2.morphologyEx(image, cv2.MORPH_CLOSE, self.morph_kernel)
+
+            self.append_save_image("Morph Page", range(3, 7), closed)
+
+            # TODO: self.append_save_image(2, closed)
+
+            # TODO: parametrize these tuning params
+            canny_edge = cv2.Canny(closed, 185, 55)
+
+        self.append_save_image("Canny Edges", range(5, 7), canny_edge)
 
         # findContours returns outer boundaries in CW and inner ones, ACW.
-        cnts = ImageUtils.grab_contours(
-            cv2.findContours(edge, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        all_contours = ImageUtils.grab_contours(
+            cv2.findContours(
+                canny_edge, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
+            )  # , cv2.CHAIN_APPROX_NONE)
         )
         # convexHull to resolve disordered curves due to noise
-        cnts = [cv2.convexHull(c) for c in cnts]
-        cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
+        all_contours = [
+            cv2.convexHull(bounding_contour) for bounding_contour in all_contours
+        ]
+        all_contours = sorted(all_contours, key=cv2.contourArea, reverse=True)[:5]
         sheet = []
-        for c in cnts:
-            if cv2.contourArea(c) < MIN_PAGE_AREA:
+        page_contour = None
+        for bounding_contour in all_contours:
+            if cv2.contourArea(bounding_contour) < MIN_PAGE_AREA:
                 continue
-            peri = cv2.arcLength(c, True)
-            approx = cv2.approxPolyDP(c, epsilon=0.025 * peri, closed=True)
-            if validate_rect(approx):
+            peri = cv2.arcLength(bounding_contour, True)
+            approx = cv2.approxPolyDP(
+                bounding_contour, epsilon=0.025 * peri, closed=True
+            )
+            if MathUtils.validate_rect(approx):
                 sheet = np.reshape(approx, (4, -1))
-                cv2.drawContours(image, [approx], -1, (0, 255, 0), 2)
-                cv2.drawContours(edge, [approx], -1, (255, 255, 255), 10)
+                page_contour = np.vstack(bounding_contour).squeeze()
+                DrawingUtils.draw_contour(
+                    canny_edge, approx, color=CLR_WHITE, thickness=10
+                )
+                DrawingUtils.draw_contour(
+                    self.debug_image, approx, color=CLR_WHITE, thickness=10
+                )
+
+                self.append_save_image("Bounding Contour", range(1, 7), canny_edge)
                 break
 
-        return sheet
+        if config.outputs.show_image_level >= 6 or (
+            page_contour is None and config.outputs.show_image_level >= 1
+        ):
+            hstack = ImageUtils.get_padded_hstack([image, closed, canny_edge])
+
+            InteractionUtils.show("Page edges detection", hstack)
+
+        if page_contour is None:
+            logger.error(f"Error: Paper boundary not found for: '{file_path}'")
+            logger.warning(
+                f"Have you accidentally included CropPage preprocessor?\nIf no, increase the processing dimensions from config. Current image size used: {image.shape[:2]}"
+            )
+            raise Exception("Paper boundary not found")
+        return sheet, page_contour

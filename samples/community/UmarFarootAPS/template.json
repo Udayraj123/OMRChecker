@@ -1,5 +1,5 @@
 {
-  "pageDimensions": [
+  "templateDimensions": [
     2550,
     3300
   ],
@@ -7,12 +7,20 @@
     32,
     32
   ],
+  "processingImageShape": [
+    1640,
+    1332
+  ],
   "preProcessors": [
     {
       "name": "CropOnMarkers",
       "options": {
-        "relativePath": "omr_marker.jpg",
-        "sheetToMarkerWidthRatio": 17
+        "type": "FOUR_MARKERS",
+        "referenceImage": "omr_marker.jpg",
+        "markerDimensions": [
+          40,
+          40
+        ]
       }
     }
   ],
@@ -26,7 +34,8 @@
   },
   "fieldBlocks": {
     "Roll_no": {
-      "fieldType": "QTYPE_INT",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
       "origin": [
         2169,
         180
@@ -41,7 +50,8 @@
       "labelsGap": 93
     },
     "MCQBlock1a1": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         197,
         300
@@ -53,7 +63,8 @@
       ]
     },
     "MCQBlock1a2": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         197,
         1310
@@ -65,7 +76,8 @@
       ]
     },
     "MCQBlock1a3": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         197,
         2316
@@ -77,7 +89,8 @@
       ]
     },
     "MCQBlock1a4": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         725,
         300
@@ -89,7 +102,8 @@
       ]
     },
     "MCQBlock1a5": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         725,
         1310
@@ -101,7 +115,8 @@
       ]
     },
     "MCQBlock1a6": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         725,
         2316
@@ -113,7 +128,8 @@
       ]
     },
     "MCQBlock1a7": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         1250,
         300
@@ -125,7 +141,8 @@
       ]
     },
     "MCQBlock1a8": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         1250,
         1310
@@ -137,7 +154,8 @@
       ]
     },
     "MCQBlock1a9": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         1250,
         2316
@@ -149,7 +167,8 @@
       ]
     },
     "MCQBlock1a10": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         1770,
         300
@@ -161,7 +180,8 @@
       ]
     },
     "MCQBlock1a11": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         1770,
         1310
@@ -173,7 +193,8 @@
       ]
     },
     "MCQBlock1a12": {
-      "fieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
       "origin": [
         1770,
         2316

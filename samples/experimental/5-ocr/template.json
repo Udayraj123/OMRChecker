@@ -1,0 +1,139 @@
+{
+  "templateDimensions": [
+    1189,
+    1682
+  ],
+  "bubbleDimensions": [
+    25,
+    25
+  ],
+  "processingImageShape": [
+    820,
+    666
+  ],
+  "preProcessors": [
+    {
+      "name": "CropOnMarkers",
+      "options": {
+        "processingImageShape": [
+          1132,
+          800
+        ],
+        "tuningOptions": {
+          "lineKernel": [
+            2,
+            10
+          ],
+          "dotKernel": [
+            3,
+            3
+          ],
+          "dotThreshold": 120
+        },
+        "type": "TWO_DOTS_ONE_LINE",
+        "defaultSelector": "OUTER_CORNERS",
+        "topLeftDot": {
+          "origin": [
+            2,
+            21
+          ],
+          "dimensions": [
+            50,
+            50
+          ],
+          "margins": {
+            "top": 15,
+            "right": 20,
+            "bottom": 15,
+            "left": 2
+          }
+        },
+        "bottomLeftDot": {
+          "origin": [
+            12,
+            929
+          ],
+          "dimensions": [
+            50,
+            50
+          ],
+          "margins": {
+            "top": 15,
+            "right": 20,
+            "bottom": 15,
+            "left": 12
+          }
+        },
+        "rightLine": {
+          "origin": [
+            760,
+            21
+          ],
+          "dimensions": [
+            15,
+            1000
+          ],
+          "margins": {
+            "top": 15,
+            "right": 20,
+            "bottom": 15,
+            "left": 20
+          }
+        }
+      }
+    }
+  ],
+  "customLabels": {
+    "Roll_No": [
+      "roll1..8"
+    ]
+  },
+  "customBubbleFieldTypes": {
+    "CUSTOM_LANGUAGE_CODE": {
+      "bubbleValues": [
+        "M",
+        "N",
+        "O",
+        "P"
+      ],
+      "direction": "vertical"
+    }
+  },
+  "fieldBlocks": {
+    "Roll_No": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        14,
+        220
+      ],
+      "fieldLabels": [
+        "roll1..8"
+      ],
+      "bubblesGap": 33.5,
+      "labelsGap": 28.5
+    },
+    "OCR_BOOKLET_CODE": {
+      "fieldDetectionType": "OCR",
+      "origin": [
+        580,
+        161
+      ],
+      "scanZone": {
+        "margins": {
+          "top": 10,
+          "bottom": 10,
+          "left": 10,
+          "right": 10
+        },
+        "dimensions": [
+          80,
+          80
+        ]
+      },
+      "fieldLabels": [
+        "OCR_BOOKLET_CODE"
+      ]
+    }
+  }
+}

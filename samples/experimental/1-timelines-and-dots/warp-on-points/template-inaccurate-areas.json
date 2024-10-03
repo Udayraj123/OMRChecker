@@ -1,0 +1,277 @@
+{
+  "templateDimensions": [
+    1189,
+    1682
+  ],
+  "bubbleDimensions": [
+    25,
+    25
+  ],
+  "processingImageShape": [
+    820,
+    666
+  ],
+  "preProcessors": [
+    {
+      "name": "CropOnMarkers",
+      "options": {
+        "processingImageShape": [
+          1132,
+          800
+        ],
+        "tuningOptions": {
+          "lineKernel": [
+            2,
+            10
+          ],
+          "dotKernel": [
+            3,
+            3
+          ],
+          "dotThreshold": 120,
+          "warpMethod": "HOMOGRAPHY"
+        },
+        "type": "TWO_DOTS_ONE_LINE",
+        "defaultSelector": "OUTER_CORNERS",
+        "topLeftDot": {
+          "origin": [
+            2,
+            21
+          ],
+          "dimensions": [
+            50,
+            50
+          ],
+          "margins": {
+            "top": 15,
+            "right": 20,
+            "bottom": 15,
+            "left": 2
+          }
+        },
+        "bottomLeftDot": {
+          "origin": [
+            12,
+            929
+          ],
+          "dimensions": [
+            50,
+            50
+          ],
+          "margins": {
+            "top": 15,
+            "right": 20,
+            "bottom": 15,
+            "left": 12
+          }
+        },
+        "rightLine": {
+          "origin": [
+            760,
+            21
+          ],
+          "dimensions": [
+            15,
+            1000
+          ],
+          "margins": {
+            "top": 15,
+            "right": 20,
+            "bottom": 15,
+            "left": 20
+          }
+        }
+      }
+    }
+  ],
+  "customLabels": {
+    "Roll_No": [
+      "roll1..8"
+    ],
+    "Booklet_No": [
+      "booklet1..7"
+    ]
+  },
+  "customBubbleFieldTypes": {
+    "CUSTOM_LANGUAGE_CODE": {
+      "bubbleValues": [
+        "M",
+        "N",
+        "O",
+        "P"
+      ],
+      "direction": "vertical"
+    }
+  },
+  "fieldBlocks": {
+    "Roll_No": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        14,
+        220
+      ],
+      "fieldLabels": [
+        "roll1..8"
+      ],
+      "bubblesGap": 33.5,
+      "labelsGap": 28.5
+    },
+    "Booklet_No": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        295,
+        220
+      ],
+      "fieldLabels": [
+        "booklet1..7"
+      ],
+      "bubblesGap": 33.5,
+      "labelsGap": 28.5
+    },
+    "Language_Codes": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_LANGUAGE_CODE",
+      "origin": [
+        800,
+        260
+      ],
+      "fieldLabels": [
+        "language_code_1..2"
+      ],
+      "bubblesGap": 66.5,
+      "labelsGap": 220
+    },
+    "MCQBlock1a1": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q1..15"
+      ],
+      "bubblesGap": 26.7,
+      "labelsGap": 33.7,
+      "origin": [
+        237,
+        630
+      ]
+    },
+    "MCQBlock1a2": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q16..30"
+      ],
+      "bubblesGap": 26.7,
+      "labelsGap": 34.2,
+      "origin": [
+        232,
+        1145
+      ]
+    },
+    "MCQBlock2a1": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q31..45"
+      ],
+      "bubblesGap": 26.7,
+      "labelsGap": 34.2,
+      "origin": [
+        435,
+        630
+      ]
+    },
+    "MCQBlock2a2": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q46..60"
+      ],
+      "bubblesGap": 26.7,
+      "labelsGap": 34.2,
+      "origin": [
+        435,
+        1145
+      ]
+    },
+    "MCQBlock3a1": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q61..75"
+      ],
+      "bubblesGap": 26.7,
+      "labelsGap": 34.2,
+      "origin": [
+        630,
+        633
+      ]
+    },
+    "MCQBlock3a2": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q76..90"
+      ],
+      "bubblesGap": 26.7,
+      "labelsGap": 34.2,
+      "origin": [
+        630,
+        1145
+      ]
+    },
+    "MCQBlock4a1": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q91..105"
+      ],
+      "bubblesGap": 26.7,
+      "labelsGap": 34.2,
+      "origin": [
+        823,
+        633
+      ]
+    },
+    "MCQBlock4a2": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q106..120"
+      ],
+      "bubblesGap": 26.7,
+      "labelsGap": 34.2,
+      "origin": [
+        823,
+        1145
+      ]
+    },
+    "MCQBlock5a1": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q121..135"
+      ],
+      "bubblesGap": 26.7,
+      "labelsGap": 34.2,
+      "origin": [
+        1022,
+        633
+      ]
+    },
+    "MCQBlock5a2": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q136..150"
+      ],
+      "bubblesGap": 26.7,
+      "labelsGap": 34.2,
+      "origin": [
+        1022,
+        1145
+      ]
+    }
+  }
+}

@@ -1,7 +1,9 @@
 -r requirements.txt
-flake8>=6.0.0
-freezegun>=1.2.2
-pre-commit>=3.3.3
-pytest-mock>=3.11.1
-pytest>=7.4.0
-syrupy>=4.0.4
+coverage==7.6.0
+flake8==7.0.0
+freezegun==1.4.0
+Pillow==10.3.0
+pre-commit==3.7.0
+pytest-mock==3.14.0
+pytest==8.1.1
+syrupy==4.6.1

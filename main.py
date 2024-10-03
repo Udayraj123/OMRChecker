@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 from src.entry import entry_point
-from src.logger import logger
+from src.utils.logger import logger
 
 
 def parse_args():
@@ -50,13 +50,13 @@ def parse_args():
     )
 
     argparser.add_argument(
-        "-a",
-        "--autoAlign",
+        "-m",
+        "--outputMode",
+        default="default",
         required=False,
-        dest="autoAlign",
-        action="store_true",
-        help="(experimental) Enables automatic template alignment - \
-        use if the scans show slight misalignments.",
+        choices=["moderation", "default"],
+        dest="output_mode",
+        help="Specify the output mode. Supported: moderation, default",
     )
 
     argparser.add_argument(
@@ -77,21 +77,28 @@ def parse_args():
     args = vars(args)
 
     if len(unknown) > 0:
-        logger.warning(f"\nError: Unknown arguments: {unknown}", unknown)
         argparser.print_help()
-        exit(11)
+        raise Exception(f"\nError: Unknown arguments: {unknown}")
     return args
 
 
 def entry_point_for_args(args):
     if args["debug"] is True:
-        # Disable tracebacks
+        # Disable traceback limit
         sys.tracebacklimit = 0
+        # TODO: set log levels
     for root in args["input_paths"]:
-        entry_point(
-            Path(root),
-            args,
-        )
+        try:
+            entry_point(
+                Path(root),
+                args,
+            )
+        except Exception:
+            if args["debug"] is True:
+                logger.critical(
+                    f"OMRChecker crashed. add --debug and run again to see error details"
+                )
+            raise
 
 
 if __name__ == "__main__":

@@ -2,12 +2,14 @@ import re
 from copy import deepcopy
 from fractions import Fraction
 
+import numpy as np
 from deepmerge import Merger
 from dotmap import DotMap
 
-from src.constants import FIELD_LABEL_NUMBER_REGEX
-from src.defaults import CONFIG_DEFAULTS, TEMPLATE_DEFAULTS
 from src.schemas.constants import FIELD_STRING_REGEX_GROUPS
+from src.schemas.defaults import CONFIG_DEFAULTS, TEMPLATE_DEFAULTS
+from src.schemas.defaults.evaluation import EVALUATION_CONFIG_DEFAULTS
+from src.utils.constants import FIELD_LABEL_NUMBER_REGEX, SUPPORTED_PROCESSOR_NAMES
 from src.utils.file import load_json
 from src.utils.validations import (
     validate_config_json,
@@ -32,25 +34,22 @@ OVERRIDE_MERGER = Merger(
 )
 
 
-def get_concatenated_response(omr_response, template):
-    # Multi-column/multi-row questions which need to be concatenated
-    concatenated_response = {}
-    for field_label, concatenate_keys in template.custom_labels.items():
-        custom_label = "".join([omr_response[k] for k in concatenate_keys])
-        concatenated_response[field_label] = custom_label
-
-    for field_label in template.non_custom_labels:
-        concatenated_response[field_label] = omr_response[field_label]
-
-    return concatenated_response
-
-
 def open_config_with_defaults(config_path):
     user_tuning_config = load_json(config_path)
     user_tuning_config = OVERRIDE_MERGER.merge(
         deepcopy(CONFIG_DEFAULTS), user_tuning_config
     )
+
     validate_config_json(user_tuning_config, config_path)
+
+    # Broadcast the default boolean into preprocessor-wise boolean
+    show_preprocessors_diff = user_tuning_config["outputs"]["show_preprocessors_diff"]
+    if type(show_preprocessors_diff) == bool:
+        user_tuning_config["outputs"]["show_preprocessors_diff"] = {
+            processor_name: show_preprocessors_diff
+            for processor_name in SUPPORTED_PROCESSOR_NAMES
+        }
+
     # https://github.com/drgrib/dotmap/issues/74
     return DotMap(user_tuning_config, _dynamic=False)
 
@@ -62,8 +61,11 @@ def open_template_with_defaults(template_path):
     return user_template
 
 
-def open_evaluation_with_validation(evaluation_path):
+def open_evaluation_with_defaults(evaluation_path):
     user_evaluation_config = load_json(evaluation_path)
+    user_evaluation_config = OVERRIDE_MERGER.merge(
+        deepcopy(EVALUATION_CONFIG_DEFAULTS), user_evaluation_config
+    )
     validate_evaluation_json(user_evaluation_config, evaluation_path)
     return user_evaluation_config
 
@@ -102,7 +104,7 @@ def parse_field_string(field_string):
 
 def custom_sort_output_columns(field_label):
     label_prefix, label_suffix = re.findall(FIELD_LABEL_NUMBER_REGEX, field_label)[0]
-    return [label_prefix, int(label_suffix) if len(label_suffix) > 0 else 0]
+    return [label_prefix, int(label_suffix) if len(label_suffix) > 0 else 0, 0]
 
 
 def parse_float_or_fraction(result):
@@ -111,3 +113,17 @@ def parse_float_or_fraction(result):
     else:
         result = float(result)
     return result
+
+
+def default_dump(obj):
+    return (
+        bool(obj)
+        if isinstance(obj, np.bool_)
+        else (
+            obj.to_json()
+            if hasattr(obj, "to_json")
+            else obj.__dict__
+            if hasattr(obj, "__dict__")
+            else obj
+        )
+    )

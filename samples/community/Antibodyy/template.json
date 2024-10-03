@@ -1,5 +1,5 @@
 {
-  "pageDimensions": [
+  "templateDimensions": [
     299,
     398
   ],
@@ -7,20 +7,6 @@
     42,
     42
   ],
-  "fieldBlocks": {
-    "MCQBlock1": {
-      "fieldType": "QTYPE_MCQ5",
-      "origin": [
-        65,
-        79
-      ],
-      "bubblesGap": 43,
-      "labelsGap": 50,
-      "fieldLabels": [
-        "q1..6"
-      ]
-    }
-  },
   "preProcessors": [
     {
       "name": "CropPage",
@@ -31,5 +17,20 @@
         ]
       }
     }
-  ]
+  ],
+  "fieldBlocks": {
+    "MCQBlock1": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ5",
+      "origin": [
+        65,
+        79
+      ],
+      "bubblesGap": 43,
+      "labelsGap": 50,
+      "fieldLabels": [
+        "q1..6"
+      ]
+    }
+  }
 }

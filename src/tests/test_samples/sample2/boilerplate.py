@@ -1,25 +1,28 @@
 TEMPLATE_BOILERPLATE = {
-    "pageDimensions": [2550, 3300],
+    "templateDimensions": [2550, 3300],
     "bubbleDimensions": [32, 32],
+    "processingImageShape": [1640, 1332],
     "preProcessors": [
         {
             "name": "CropOnMarkers",
             "options": {
-                "relativePath": "omr_marker.jpg",
-                "sheetToMarkerWidthRatio": 17,
+                "type": "FOUR_MARKERS",
+                "referenceImage": "omr_marker.jpg",
+                "markerDimensions": [40, 40],
+                "tuningOptions": {"marker_rescale_range": [80, 120]},
             },
         }
     ],
     "fieldBlocks": {
         "MCQBlock1a1": {
-            "fieldType": "QTYPE_MCQ4",
+            "bubbleFieldType": "QTYPE_MCQ4",
             "origin": [197, 300],
             "bubblesGap": 92,
             "labelsGap": 59.6,
             "fieldLabels": ["q1..17"],
         },
         "MCQBlock1a11": {
-            "fieldType": "QTYPE_MCQ4",
+            "bubbleFieldType": "QTYPE_MCQ4",
             "origin": [1770, 1310],
             "bubblesGap": 92,
             "labelsGap": 59.6,
@@ -29,11 +32,9 @@ TEMPLATE_BOILERPLATE = {
 }
 
 CONFIG_BOILERPLATE = {
-    "dimensions": {
-        "display_height": 960,
-        "display_width": 1280,
-        "processing_height": 1640,
-        "processing_width": 1332,
+    "outputs": {
+        "show_image_level": 0,
+        "filter_out_multimarked_files": True,
+        "display_image_dimensions": [960, 1280],
     },
-    "outputs": {"show_image_level": 0, "filter_out_multimarked_files": True},
 }

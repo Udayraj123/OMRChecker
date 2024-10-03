@@ -1,0 +1,361 @@
+{
+  "templateDimensions": [
+    1846,
+    1500
+  ],
+  "bubbleDimensions": [
+    32,
+    32
+  ],
+  "processingImageShape": [
+    2304,
+    1725
+  ],
+  "preProcessors": [
+    {
+      "name": "CropPage",
+      "options": {
+        "morphKernel": [
+          5,
+          5
+        ],
+        "useColoredCanny": true
+      }
+    },
+    {
+      "name": "CropOnMarkers",
+      "options": {
+        "type": "FOUR_MARKERS",
+        "referenceImage": "omr_marker.jpg",
+        "markerDimensions": [
+          82,
+          82
+        ]
+      }
+    }
+  ],
+  "customLabels": {
+    "Roll": [
+      "Squad",
+      "Medium_1",
+      "Medium_2",
+      "roll1..9"
+    ],
+    "q11": [
+      "q11_1",
+      "q11_2"
+    ],
+    "q12": [
+      "q12_1",
+      "q12_2"
+    ],
+    "q13": [
+      "q13_1",
+      "q13_2"
+    ],
+    "q14": [
+      "q14_1",
+      "q14_2"
+    ],
+    "q15": [
+      "q15_1",
+      "q15_2"
+    ],
+    "q16": [
+      "q16_1",
+      "q16_2"
+    ],
+    "q17": [
+      "q17_1",
+      "q17_2"
+    ],
+    "q18": [
+      "q18_1",
+      "q18_2"
+    ],
+    "q19": [
+      "q19_1",
+      "q19_2"
+    ],
+    "q20": [
+      "q20_1",
+      "q20_2"
+    ]
+  },
+  "customBubbleFieldTypes": {
+    "CUSTOM_SQUAD": {
+      "bubbleValues": [
+        "J",
+        "H"
+      ],
+      "direction": "vertical"
+    },
+    "CUSTOM_MEDIUM_1": {
+      "bubbleValues": [
+        "E",
+        "H"
+      ],
+      "direction": "vertical"
+    },
+    "CUSTOM_MEDIUM_2": {
+      "bubbleValues": [
+        "R",
+        "E"
+      ],
+      "direction": "vertical"
+    },
+    "CUSTOM_SET_CODE": {
+      "bubbleValues": [
+        "A",
+        "B"
+      ],
+      "direction": "horizontal"
+    }
+  },
+  "fieldBlocks": {
+    "Squad": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_SQUAD",
+      "origin": [
+        204,
+        274
+      ],
+      "bubblesGap": 40.95,
+      "labelsGap": 0,
+      "fieldLabels": [
+        "Squad"
+      ]
+    },
+    "Medium_1": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_MEDIUM_1",
+      "origin": [
+        204,
+        274
+      ],
+      "bubblesGap": 40.95,
+      "labelsGap": 0,
+      "fieldLabels": [
+        "Medium_1"
+      ]
+    },
+    "Medium_2": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_MEDIUM_2",
+      "origin": [
+        258,
+        274
+      ],
+      "bubblesGap": 40.95,
+      "labelsGap": 0,
+      "fieldLabels": [
+        "Medium_2"
+      ]
+    },
+    "Roll": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        308,
+        274
+      ],
+      "bubblesGap": 40.95,
+      "labelsGap": 49.5,
+      "fieldLabels": [
+        "roll1..9"
+      ]
+    },
+    "Int1": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        938,
+        274
+      ],
+      "bubblesGap": 40.95,
+      "labelsGap": 50.5,
+      "fieldLabels": [
+        "q11_1",
+        "q11_2"
+      ]
+    },
+    "Int2": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        1104,
+        274
+      ],
+      "bubblesGap": 40.95,
+      "labelsGap": 50.5,
+      "fieldLabels": [
+        "q12_1",
+        "q12_2"
+      ]
+    },
+    "Int3": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        1270,
+        274
+      ],
+      "bubblesGap": 40.95,
+      "labelsGap": 50.5,
+      "fieldLabels": [
+        "q13_1",
+        "q13_2"
+      ]
+    },
+    "Int4": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        1437,
+        271
+      ],
+      "bubblesGap": 40.95,
+      "labelsGap": 50.5,
+      "fieldLabels": [
+        "q14_1",
+        "q14_2"
+      ]
+    },
+    "Int5": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        1602,
+        271
+      ],
+      "bubblesGap": 40.95,
+      "labelsGap": 50.5,
+      "fieldLabels": [
+        "q15_1",
+        "q15_2"
+      ]
+    },
+    "Mcq1": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "origin": [
+        198,
+        840
+      ],
+      "bubblesGap": 65,
+      "labelsGap": 55.5,
+      "fieldLabels": [
+        "q1..3"
+      ]
+    },
+    "Mcq2": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "origin": [
+        198,
+        1114
+      ],
+      "bubblesGap": 65,
+      "labelsGap": 55.5,
+      "fieldLabels": [
+        "q4..6"
+      ]
+    },
+    "Mcq3": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "origin": [
+        570,
+        840
+      ],
+      "bubblesGap": 65,
+      "labelsGap": 55.5,
+      "fieldLabels": [
+        "q7..10"
+      ]
+    },
+    "Mcq4": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_SET_CODE",
+      "origin": [
+        638,
+        1175
+      ],
+      "bubblesGap": 65,
+      "labelsGap": 0,
+      "fieldLabels": [
+        "q21"
+      ]
+    },
+    "Int6": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        930,
+        929
+      ],
+      "bubblesGap": 40.95,
+      "labelsGap": 50.5,
+      "fieldLabels": [
+        "q16_1",
+        "q16_2"
+      ]
+    },
+    "Int7": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        1099,
+        929
+      ],
+      "bubblesGap": 40.95,
+      "labelsGap": 50.5,
+      "fieldLabels": [
+        "q17_1",
+        "q17_2"
+      ]
+    },
+    "Int8": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        1265,
+        929
+      ],
+      "bubblesGap": 40.95,
+      "labelsGap": 50.5,
+      "fieldLabels": [
+        "q18_1",
+        "q18_2"
+      ]
+    },
+    "Int9": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        1430,
+        927
+      ],
+      "bubblesGap": 40.95,
+      "labelsGap": 50.5,
+      "fieldLabels": [
+        "q19_1",
+        "q19_2"
+      ]
+    },
+    "Int10": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        1602,
+        927
+      ],
+      "bubblesGap": 40.95,
+      "labelsGap": 50.5,
+      "fieldLabels": [
+        "q20_1",
+        "q20_2"
+      ]
+    }
+  }
+}
