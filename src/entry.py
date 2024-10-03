@@ -45,6 +45,7 @@ def print_config_summary(
     evaluation_config,
     args,
 ):
+    print(args)
     logger.info("")
     table = Table(title="Current Configurations", show_header=False, show_lines=False)
     table.add_column("Key", style="cyan", no_wrap=True)
@@ -273,7 +274,7 @@ def process_files(
 
         score = 0
         if evaluation_config is not None:
-            score = evaluate_concatenated_response(omr_response, evaluation_config)
+            score = evaluate_concatenated_response(omr_response, evaluation_config,file_id)
             logger.info(
                 f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: '{file_id}'"
             )

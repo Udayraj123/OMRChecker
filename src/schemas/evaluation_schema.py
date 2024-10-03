@@ -138,6 +138,7 @@ EVALUATION_SCHEMA = {
                                 ]
                             },
                             "questions_in_order": ARRAY_OF_STRINGS,
+                            "enable_evaluation_table_to_csv": {"type": "boolean", "default": False}
                         },
                     }
                 }
