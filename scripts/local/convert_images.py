@@ -1,59 +1,38 @@
+#!/usr/bin/env python3
 import argparse
+import os
+from scripts.local.utils.bulk_ops_common import convert_image
 
-from scripts.local.utils.bulk_ops_common import add_common_args, run_argparser
-
-
-def convert_image_to():
-    # Wrapper to handle all available extensions
-    pass
-
-
-def convert_images_in_tree(args):
-    input_directory = args.get("input", None)
-    recursive = args.get("recursive", None)
-    output_directory = args.get("output", None)
-    trigger_size = args.get("trigger_size", None)
+def convert_images(filenames, output_format):
     converted_count = 0
-    for image_path in filenames:
-        old_size = get_size_in_kb(image_path)
-        if old_size <= trigger_size:
-            continue
-
-        # Note: the pre-commit hook takes care of ensuring only image files are passed here.
-        new_image_path = convert_image(image_path)
-        new_size = get_size_in_kb(new_image_path)
-        if new_size <= old_size:
-            print(
-                f"Converted png to jpg: {image_path}: {new_size:.2f}KB {get_size_reduction(old_size, new_size)}"
-            )
+    for input_path in filenames:
+        if input_path.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.tif')):
+            name, ext = os.path.splitext(input_path)
+            output_path = f"{name}.{output_format.lower()}"
+            convert_image(input_path, output_path, output_format)
+            print(f"Converted {input_path} to {output_format}")
             converted_count += 1
         else:
-            print(
-                f"Skipping conversion for {image_path} as size is more than before ({new_size:.2f} KB > {old_size:.2f} KB)"
-            )
-            os.remove(new_image_path)
-
+            print(f"Skipping unsupported file: {input_path}")
     return converted_count
 
-
 def parse_args():
-    # construct the argument parse and parse the arguments
-    argparser = argparse.ArgumentParser()
-    add_common_args(argparser, ["--input", "--output", "--trigger-size", "--recursive"])
-    args = run_argparser(argparser)
+    parser = argparse.ArgumentParser(description="Convert images for pre-commit hook")
+    parser.add_argument(
+        "--format", 
+        choices=['jpg', 'png', 'jpeg'], 
+        default='jpg', 
+        help="Output format for images (default: jpg)"
+    )
+    parser.add_argument("filenames", nargs="*", help="Files to convert.")
+    args = parser.parse_args()
     return args
-
 
 if __name__ == "__main__":
     args = parse_args()
-
-    converted_count = convert_images_in_tree(args)
-    trigger_size = args["trigger_size"]
+    converted_count = convert_images(args.filenames, args.format.upper())
     if converted_count > 0:
-        print(
-            f"Note: {converted_count} png images above {trigger_size}KB were converted to jpg.\nPlease manually remove the png files and add your commit again."
-        )
+        print(f"Note: {converted_count} images were converted.")
         exit(1)
     else:
-        # print("All sample images are jpgs. Commit accepted.")
         exit(0)
