@@ -220,7 +220,7 @@ common_evaluation_schema_properties = {
                 "description": "Whether to print the table explaining question-wise verdicts",
                 "type": "boolean",
             },
-            "should_export_csv": {
+            "should_export_explanation_csv": {
                 "description": "Whether to export the explanation of evaluation results as a CSV file",
                 "type": "boolean",
             },

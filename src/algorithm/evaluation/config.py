@@ -458,7 +458,7 @@ class EvaluationConfigForSet:
             self.draw_question_verdicts,
             self.draw_score,
             self.should_explain_scoring,
-            self.should_export_csv,
+            self.should_export_explanation_csv,
         ) = map(
             outputs_configuration.get,
             [
@@ -467,7 +467,7 @@ class EvaluationConfigForSet:
                 "draw_question_verdicts",
                 "draw_score",
                 "should_explain_scoring",
-                "should_export_csv",
+                "should_export_explanation_csv",
             ],
         )
         if self.draw_question_verdicts["enabled"]:
@@ -997,7 +997,6 @@ class EvaluationConfigForSet:
             ]
             self.explanation_table.add_row(*row)
 
-
     @staticmethod
     def get_schema_verdict(answer_type, question_verdict, delta=None):
         # Note: Negative custom weights should be considered as incorrect schema verdict(special case)
@@ -1017,8 +1016,8 @@ class EvaluationConfigForSet:
     def get_should_explain_scoring(self):
         return self.should_explain_scoring
 
-    def get_should_export_csv(self):
-        return self.should_export_csv
+    def get_should_export_explanation_csv(self):
+        return self.should_export_explanation_csv
 
     def get_explanation_table(self):
         return self.explanation_table

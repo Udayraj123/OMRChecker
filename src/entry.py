@@ -327,7 +327,7 @@ def process_directory_files(
             logger.info(
                 f"(/{files_counter}) Graded with score: {round(score, 2)}\t {default_answers_summary} \t file: '{file_id}'"
             )
-            if evaluation_config_for_response.get_should_export_csv():
+            if evaluation_config_for_response.get_should_export_explanation_csv():
                 explanation_table = evaluation_config_for_response.get_explanation_table()
                 explanation_table = table_to_df(explanation_table)
                 explanation_table.to_csv(
@@ -338,9 +338,6 @@ def process_directory_files(
 
         else:
             logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
-
-
-
 
         # TODO: move this logic inside the class
         save_marked_dir = template.get_save_marked_dir()
