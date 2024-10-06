@@ -1,7 +1,9 @@
 {
   "source_type": "custom",
   "options": {
-    "questions_in_order": ["q1..11"],
+    "questions_in_order": [
+      "q1..11"
+    ],
     "answers_in_order": [
       "B",
       "D",
@@ -9,7 +11,11 @@
       "B",
       "D",
       "C",
-      ["B", "C", "BC"],
+      [
+        "B",
+        "C",
+        "BC"
+      ],
       "A",
       "C",
       "D",

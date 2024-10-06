@@ -1,8 +1,8 @@
 import ast
 import os
-from csv import QUOTE_NONNUMERIC
 import re
 from copy import deepcopy
+from csv import QUOTE_NONNUMERIC
 
 import cv2
 import pandas as pd
@@ -354,33 +354,40 @@ class EvaluationConfig:
         )
         return delta
 
-    def conditionally_print_explanation(self,file_id):
+    def conditionally_print_explanation(self, file_id):
         if self.should_explain_scoring:
             console.print(self.explanation_table, justify="center")
 
         self.explanation_to_csv(file_id)
         self.explanation_table_data_for_csv = []
 
-    # Explanation Table to CSV     
-    def explanation_to_csv(self,file_id):
+    # Explanation Table to CSV
+    def explanation_to_csv(self, file_id):
         evaluation_json = open_evaluation_with_validation(self.path)
-        
-        if evaluation_json['options'].get('enable_evaluation_table_to_csv', False):
+
+        if evaluation_json["options"].get("enable_evaluation_table_to_csv", False):
             explanation_table_header = []
             cols = self.explanation_table.columns
-            processed_img_name,ext = file_id.split('.')
+            processed_img_name, ext = file_id.split(".")
 
             for col in cols:
                 explanation_table_header.append(col.header)
-            
-            output_dir = os.path.join(os.path.dirname(os.getcwd()),f'OMRChecker/outputs/Evaluation/{processed_img_name}.csv')
-            
-            pd.DataFrame(self.explanation_table_data_for_csv,columns=explanation_table_header,dtype=str).to_csv(
-                    output_dir,
-                    mode="a",
-                    quoting=QUOTE_NONNUMERIC,
-                    index=False,
-                )
+
+            output_dir = os.path.join(
+                os.path.dirname(os.getcwd()),
+                f"OMRChecker/outputs/Evaluation/{processed_img_name}.csv",
+            )
+
+            pd.DataFrame(
+                self.explanation_table_data_for_csv,
+                columns=explanation_table_header,
+                dtype=str,
+            ).to_csv(
+                output_dir,
+                mode="a",
+                quoting=QUOTE_NONNUMERIC,
+                index=False,
+            )
 
     def get_should_explain_scoring(self):
         return self.should_explain_scoring
@@ -534,7 +541,7 @@ class EvaluationConfig:
             self.explanation_table_data_for_csv.append(row)
 
 
-def evaluate_concatenated_response(concatenated_response, evaluation_config,file_id):
+def evaluate_concatenated_response(concatenated_response, evaluation_config, file_id):
     evaluation_config.prepare_and_validate_omr_response(concatenated_response)
     current_score = 0.0
     for question in evaluation_config.questions_in_order:
