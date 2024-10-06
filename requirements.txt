@@ -6,7 +6,7 @@ matplotlib==3.8.4
 numpy==1.26.4
 opencv-contrib-python==4.9.0.80
 opencv-python==4.9.0.80
-pandas==2.2.1
+pandas==2.2.2
 rich==13.7.1
 rich-tools==0.5.1
 scipy==1.12.0
