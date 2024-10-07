@@ -122,8 +122,8 @@ class Template:
     def get_errors_dir(self):
         return self.directory_handler.path_utils.errors_dir
 
-    def get_eval_dir(self):
-        return self.directory_handler.path_utils.eval_dir
+    def get_evaluations_dir(self):
+        return self.directory_handler.path_utils.evaluations_dir
 
     def read_omr_response(self, input_gray_image, colored_image, file_path):
         # Convert posix path to string

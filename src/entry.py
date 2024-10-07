@@ -331,7 +331,7 @@ def process_directory_files(
                 explanation_table = evaluation_config_for_response.get_explanation_table()
                 explanation_table = table_to_df(explanation_table)
                 explanation_table.to_csv(
-                    template.get_eval_dir().joinpath(file_name + ".csv"),
+                    template.get_evaluations_dir().joinpath(file_name + ".csv"),
                     quoting=QUOTE_NONNUMERIC,
                     index=False,
                 )

@@ -9,6 +9,7 @@ EVALUATION_CONFIG_DEFAULTS = {
     "conditional_sets": [],
     "outputs_configuration": {
         "should_explain_scoring": False,
+        "should_export_explanation_csv": False,
         "draw_score": {
             "enabled": False,
             "position": [200, 200],
