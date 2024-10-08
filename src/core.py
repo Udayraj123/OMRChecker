@@ -243,7 +243,7 @@ class ImageInstanceOps:
             global_thr, _, _ = self.get_global_threshold(all_q_vals, looseness=4)
 
             logger.info(
-                f"Thresholding:\tglobal_thr: {round(global_thr, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_thr == 255) else ''}"
+                f"Thresholding: \tglobal_thr: {round(global_thr, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_thr == 255) else ''}"
             )
             # plt.show()
             # hist = getPlotImg()
