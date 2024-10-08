@@ -62,6 +62,7 @@ class PathUtils:
         self.manual_dir = output_dir.joinpath("Manual")
         self.errors_dir = self.manual_dir.joinpath("ErrorFiles")
         self.multi_marked_dir = self.manual_dir.joinpath("MultiMarkedFiles")
+        self.evaluations_dir = output_dir.joinpath("Evaluations")
         self.debug_dir = output_dir.joinpath("Debug")
 
     def create_output_directories(self):
@@ -96,6 +97,7 @@ class PathUtils:
         for save_output_dir in [
             self.results_dir,
             self.image_metrics_dir,
+            self.evaluations_dir,
         ]:
             if not os.path.exists(save_output_dir):
                 logger.info(f"Created : {save_output_dir}")

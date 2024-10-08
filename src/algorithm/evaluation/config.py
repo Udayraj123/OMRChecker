@@ -458,6 +458,7 @@ class EvaluationConfigForSet:
             self.draw_question_verdicts,
             self.draw_score,
             self.should_explain_scoring,
+            self.should_export_explanation_csv,
         ) = map(
             outputs_configuration.get,
             [
@@ -466,6 +467,7 @@ class EvaluationConfigForSet:
                 "draw_question_verdicts",
                 "draw_score",
                 "should_explain_scoring",
+                "should_export_explanation_csv",
             ],
         )
         if self.draw_question_verdicts["enabled"]:
@@ -1013,6 +1015,12 @@ class EvaluationConfigForSet:
 
     def get_should_explain_scoring(self):
         return self.should_explain_scoring
+
+    def get_should_export_explanation_csv(self):
+        return self.should_export_explanation_csv
+
+    def get_explanation_table(self):
+        return self.explanation_table
 
     def get_formatted_answers_summary(self, answers_summary_format_string=None):
         if answers_summary_format_string is None:
