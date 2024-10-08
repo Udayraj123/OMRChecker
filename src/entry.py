@@ -209,6 +209,9 @@ def process_files(
     for file_path in omr_files:
         files_counter += 1
         file_name = file_path.name
+        evaluation_path = os.path.join(
+            outputs_namespace.paths.evaluation_dir, file_path.stem
+        )
 
         in_omr = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
 
@@ -274,7 +277,7 @@ def process_files(
         score = 0
         if evaluation_config is not None:
             score = evaluate_concatenated_response(
-                omr_response, evaluation_config, file_id
+                omr_response, evaluation_config, evaluation_path
             )
             logger.info(
                 f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: '{file_id}'"

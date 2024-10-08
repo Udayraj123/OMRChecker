@@ -1,7 +1,6 @@
 import argparse
 import json
 import os
-import shutil
 from csv import QUOTE_NONNUMERIC
 from time import localtime, strftime
 
@@ -47,9 +46,9 @@ def setup_dirs_for_paths(paths):
             os.makedirs(save_output_dir)
 
     for save_output_dir in [paths.evaluation_dir]:
-        if os.path.exists(save_output_dir):
-            shutil.rmtree(save_output_dir)
-        os.makedirs(save_output_dir)
+        if not os.path.exists(save_output_dir):
+            logger.info(f"Created : {save_output_dir}")
+            os.makedirs(save_output_dir)
 
     for save_output_dir in [paths.multi_marked_dir, paths.errors_dir]:
         if not os.path.exists(save_output_dir):
