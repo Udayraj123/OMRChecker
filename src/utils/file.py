@@ -40,12 +40,7 @@ def setup_dirs_for_paths(paths):
             os.mkdir(save_output_dir.joinpath("_MULTI_"))
             os.mkdir(save_output_dir.joinpath("_MULTI_", "stack"))
 
-    for save_output_dir in [paths.manual_dir, paths.results_dir]:
-        if not os.path.exists(save_output_dir):
-            logger.info(f"Created : {save_output_dir}")
-            os.makedirs(save_output_dir)
-
-    for save_output_dir in [paths.evaluation_dir]:
+    for save_output_dir in [paths.manual_dir, paths.results_dir, paths.evaluation_dir]:
         if not os.path.exists(save_output_dir):
             logger.info(f"Created : {save_output_dir}")
             os.makedirs(save_output_dir)

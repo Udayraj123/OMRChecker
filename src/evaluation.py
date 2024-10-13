@@ -361,17 +361,17 @@ class EvaluationConfig:
             console.print(self.explanation_table, justify="center")
 
     # Explanation Table to CSV
-    def conditionally_save_explanation_csv(self, evaluation_path):
+    def conditionally_save_explanation_csv(self, file_path, evaluation_output_dir):
         if self.enable_evaluation_table_to_csv:
             data = {col.header: col._cells for col in self.explanation_table.columns}
 
-            output_dir = os.path.join(
-                os.getcwd(),
-                f"{evaluation_path}.csv",
+            output_path = os.path.join(
+                evaluation_output_dir,
+                f"{file_path.stem}_evaluation.csv",
             )
 
             pd.DataFrame(data, dtype=str).to_csv(
-                output_dir,
+                output_path,
                 mode="a",
                 quoting=QUOTE_NONNUMERIC,
                 index=False,
@@ -529,7 +529,7 @@ class EvaluationConfig:
 
 
 def evaluate_concatenated_response(
-    concatenated_response, evaluation_config, evaluation_path
+    concatenated_response, evaluation_config, file_path, evaluation_output_dir
 ):
     evaluation_config.prepare_and_validate_omr_response(concatenated_response)
     current_score = 0.0
@@ -541,6 +541,6 @@ def evaluate_concatenated_response(
         current_score += delta
 
     evaluation_config.conditionally_print_explanation()
-    evaluation_config.conditionally_save_explanation_csv(evaluation_path)
+    evaluation_config.conditionally_save_explanation_csv(file_path, evaluation_output_dir)
 
     return current_score
