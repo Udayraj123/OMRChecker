@@ -1,0 +1,34 @@
+{
+  "pageDimensions": [
+    300,
+    400
+  ],
+  "bubbleDimensions": [
+    10,
+    10
+  ],
+  "customLabels": {},
+  "fieldBlocks": {
+    "MCQBlock1": {
+      "fieldType": "QTYPE_MCQ4",
+      "origin": [
+        58,
+        296
+      ],
+      "fieldLabels": [
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "q5",
+        "q6",
+        "q7",
+        "q8",
+        "q9",
+        "q10"
+      ],
+      "bubblesGap": 10,
+      "labelsGap": 10
+    }
+  }
+}
