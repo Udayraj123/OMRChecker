@@ -273,7 +273,9 @@ def process_files(
 
         score = 0
         if evaluation_config is not None:
-            score = evaluate_concatenated_response(omr_response, evaluation_config)
+            score = evaluate_concatenated_response(
+                omr_response, evaluation_config, file_path, outputs_namespace.paths.evaluation_dir
+            )
             logger.info(
                 f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: '{file_id}'"
             )
@@ -342,25 +344,25 @@ def print_stats(start_time, files_counter, tuning_config):
     time_checking = max(1, round(time() - start_time, 2))
     log = logger.info
     log("")
-    log(f"{'Total file(s) moved':<27}: {STATS.files_moved}")
-    log(f"{'Total file(s) not moved':<27}: {STATS.files_not_moved}")
+    log(f"{'Total file(s) moved': <27}: {STATS.files_moved}")
+    log(f"{'Total file(s) not moved': <27}: {STATS.files_not_moved}")
     log("--------------------------------")
     log(
-        f"{'Total file(s) processed':<27}: {files_counter} ({'Sum Tallied!' if files_counter == (STATS.files_moved + STATS.files_not_moved) else 'Not Tallying!'})"
+        f"{'Total file(s) processed': <27}: {files_counter} ({'Sum Tallied!' if files_counter == (STATS.files_moved + STATS.files_not_moved) else 'Not Tallying!'})"
     )
 
     if tuning_config.outputs.show_image_level <= 0:
         log(
-            f"\nFinished Checking {files_counter} file(s) in {round(time_checking, 1)} seconds i.e. ~{round(time_checking/60, 1)} minute(s)."
+            f"\nFinished Checking {files_counter} file(s) in {round(time_checking, 1)} seconds i.e. ~{round(time_checking / 60, 1)} minute(s)."
         )
         log(
-            f"{'OMR Processing Rate':<27}:\t ~ {round(time_checking/files_counter,2)} seconds/OMR"
+            f"{'OMR Processing Rate': <27}: \t ~ {round(time_checking / files_counter, 2)} seconds/OMR"
         )
         log(
-            f"{'OMR Processing Speed':<27}:\t ~ {round((files_counter * 60) / time_checking, 2)} OMRs/minute"
+            f"{'OMR Processing Speed': <27}: \t ~ {round((files_counter * 60) / time_checking, 2)} OMRs/minute"
         )
     else:
-        log(f"\n{'Total script time':<27}: {time_checking} seconds")
+        log(f"\n{'Total script time': <27}: {time_checking} seconds")
 
     if tuning_config.outputs.show_image_level <= 1:
         log(
