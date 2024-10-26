@@ -38,6 +38,9 @@ class InteractionUtils:
         else:
             img = origin
 
+        if not is_window_available(name):
+            cv2.namedWindow(name)
+
         cv2.imshow(name, img)
 
         if reset_pos:
@@ -92,3 +95,13 @@ def wait_q():
     while cv2.waitKey(1) & 0xFF not in [ord("q"), esc_key]:
         pass
     cv2.destroyAllWindows()
+
+
+def is_window_available(name: str) -> bool:
+    """Checks if a window is available"""
+    try:
+        cv2.getWindowProperty(name, cv2.WND_PROP_VISIBLE)
+        return True
+    except Exception as e:
+        print(e)
+        return False
