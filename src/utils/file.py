@@ -25,6 +25,7 @@ class Paths:
         self.save_marked_dir = output_dir.joinpath("CheckedOMRs")
         self.results_dir = output_dir.joinpath("Results")
         self.manual_dir = output_dir.joinpath("Manual")
+        self.evaluation_dir = output_dir.joinpath("Evaluation")
         self.errors_dir = self.manual_dir.joinpath("ErrorFiles")
         self.multi_marked_dir = self.manual_dir.joinpath("MultiMarkedFiles")
 
@@ -39,7 +40,7 @@ def setup_dirs_for_paths(paths):
             os.mkdir(save_output_dir.joinpath("_MULTI_"))
             os.mkdir(save_output_dir.joinpath("_MULTI_", "stack"))
 
-    for save_output_dir in [paths.manual_dir, paths.results_dir]:
+    for save_output_dir in [paths.manual_dir, paths.results_dir, paths.evaluation_dir]:
         if not os.path.exists(save_output_dir):
             logger.info(f"Created : {save_output_dir}")
             os.makedirs(save_output_dir)

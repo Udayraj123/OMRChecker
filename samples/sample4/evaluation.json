@@ -21,7 +21,8 @@
       "D",
       "C"
     ],
-    "should_explain_scoring": true
+    "should_explain_scoring": true,
+    "enable_evaluation_table_to_csv": true
   },
   "marking_schemes": {
     "DEFAULT": {

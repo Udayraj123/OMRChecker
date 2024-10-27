@@ -2,6 +2,7 @@ import ast
 import os
 import re
 from copy import deepcopy
+from csv import QUOTE_NONNUMERIC
 
 import cv2
 import pandas as pd
@@ -197,6 +198,9 @@ class EvaluationConfig:
         self.should_explain_scoring = options.get("should_explain_scoring", False)
         self.has_non_default_section = False
         self.exclude_files = []
+        self.enable_evaluation_table_to_csv = options.get(
+            "enable_evaluation_table_to_csv", False
+        )
 
         if source_type == "csv":
             csv_path = curr_dir.joinpath(options["answer_key_csv_path"])
@@ -356,6 +360,23 @@ class EvaluationConfig:
         if self.should_explain_scoring:
             console.print(self.explanation_table, justify="center")
 
+    # Explanation Table to CSV
+    def conditionally_save_explanation_csv(self, file_path, evaluation_output_dir):
+        if self.enable_evaluation_table_to_csv:
+            data = {col.header: col._cells for col in self.explanation_table.columns}
+
+            output_path = os.path.join(
+                evaluation_output_dir,
+                f"{file_path.stem}_evaluation.csv",
+            )
+
+            pd.DataFrame(data, dtype=str).to_csv(
+                output_path,
+                mode="a",
+                quoting=QUOTE_NONNUMERIC,
+                index=False,
+            )
+
     def get_should_explain_scoring(self):
         return self.should_explain_scoring
 
@@ -507,7 +528,9 @@ class EvaluationConfig:
             self.explanation_table.add_row(*row)
 
 
-def evaluate_concatenated_response(concatenated_response, evaluation_config):
+def evaluate_concatenated_response(
+    concatenated_response, evaluation_config, file_path, evaluation_output_dir
+):
     evaluation_config.prepare_and_validate_omr_response(concatenated_response)
     current_score = 0.0
     for question in evaluation_config.questions_in_order:
@@ -518,5 +541,6 @@ def evaluate_concatenated_response(concatenated_response, evaluation_config):
         current_score += delta
 
     evaluation_config.conditionally_print_explanation()
+    evaluation_config.conditionally_save_explanation_csv(file_path, evaluation_output_dir)
 
     return current_score
