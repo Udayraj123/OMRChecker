@@ -2,7 +2,7 @@
 coverage==7.6.0
 flake8==7.0.0
 freezegun==1.4.0
-Pillow==10.3.0
+Pillow==11.1.0
 pre-commit==3.7.0
 pytest-mock==3.14.0
 pytest==8.1.1

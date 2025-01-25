@@ -121,6 +121,11 @@ To check if python3 and pip is already installed:
 python3 --version
 python3 -m pip --version
 ```
+```
+Python 3.11.11
+pip 24.3.1 from /opt/homebrew/lib/python3.13/site-packages/pip (python 3.13)
+```
+
 
 <details>
 	<summary><b>Install Python3</b></summary>
@@ -130,6 +135,15 @@ To install python3 follow instructions [here](https://www.python.org/downloads/)
 To install pip - follow instructions [here](https://pip.pypa.io/en/stable/installation/)
 
 </details>
+<details>
+<summary><b>Create a new Python environment</b></summary>
+
+```bash
+python3 -m venv ./venv
+source ./venv/bin/activate
+```
+</details>
+
 <details>
 <summary><b>Install OpenCV</b></summary>
 
@@ -179,7 +193,7 @@ Install pip requirements
 python3 -m pip install --user -r requirements.txt
 ```
 
-_**Note:** If you face a distutils error in pip, use `--ignore-installed` flag in above command._
+<!-- _**Note:** If you face a distutils error in pip, use `--ignore-installed` flag in above command._ -->
 
 <!-- Wiki should not get cloned -->
 

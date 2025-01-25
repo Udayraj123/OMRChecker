@@ -12,6 +12,7 @@ outputs/*
 **/__ignore__
 **/__pycache__
 venv/
+.venv/
 OMRChecker.wiki/
 pytestdebug.log
 .coverage

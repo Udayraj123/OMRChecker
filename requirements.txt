@@ -1,14 +1,14 @@
 deepmerge==1.1.1
 dotmap==1.3.30
-easyocr===1.7.1
+easyocr==1.7.1
 jsonschema==4.21.1
 matplotlib==3.8.4
 numpy==1.26.4
 opencv-contrib-python==4.9.0.80
 opencv-python==4.9.0.80
-pandas==2.2.2
+pandas==2.2.3
 rich==13.8.0
 rich-tools==0.5.1
-scipy==1.12.0
+scipy==1.15.1
 screeninfo==0.8.1
 shapely==2.0.3

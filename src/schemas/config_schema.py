@@ -99,6 +99,7 @@ CONFIG_SCHEMA = {
                 "show_logs_by_type": {
                     "description": "The toggles for enabling logs per level",
                     "type": "object",
+                    "additionalProperties": False,
                     "properties": {
                         "critical": {"type": "boolean"},
                         "error": {"type": "boolean"},

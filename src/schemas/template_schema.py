@@ -430,6 +430,7 @@ many_field_blocks_description_def = {
                         },
                         "required": [
                             "origin",
+                            # "dimensions",
                             "scanZone",
                             "fieldLabels",
                             # TODO: "failIfNotFound"

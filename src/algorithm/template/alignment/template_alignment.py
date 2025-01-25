@@ -1,12 +1,13 @@
 from src.algorithm.template.alignment.k_nearest_interpolation import (
     apply_k_nearest_interpolation_inplace,
 )
+from src.algorithm.template.template import Template
 from src.utils.image import ImageUtils
 from src.utils.logger import logger
 
 
 # TODO: move into template class
-def apply_template_alignment(gray_image, colored_image, template, config):
+def apply_template_alignment(gray_image, colored_image, template: Template, config):
     if "gray_alignment_image" not in template.alignment:
         logger.info(f"Note: Alignment not enabled for template {template}")
         return gray_image, colored_image, template
@@ -37,12 +38,24 @@ def apply_template_alignment(gray_image, colored_image, template, config):
         colored_alignment_image,
     )
 
+    # TODO: wrap this loop body into a function and generalize into passing *any* scanZone in this.
     for field_block in template.field_blocks:
-        field_block_name, origin, dimensions, field_block_alignment = map(
+        (
+            field_block_name,
+            bounding_box_origin,
+            bounding_box_dimensions,
+            field_block_alignment,
+        ) = map(
             lambda attr: getattr(field_block, attr),
-            ["name", "origin", "dimensions", "alignment"],
+            ["name", "bounding_box_origin", "bounding_box_dimensions", "alignment"],
         )
-        # TODO: wrap this loop body into a function and generalize into passing *any* scanZone in this.
+        logger.info(
+            "field_block",
+            field_block_name,
+            bounding_box_origin,
+            bounding_box_dimensions,
+            field_block_alignment,
+        )
 
         margins = field_block_alignment.get("margins", template_margins)
         max_displacement = field_block_alignment.get(
@@ -50,17 +63,19 @@ def apply_template_alignment(gray_image, colored_image, template, config):
         )
 
         if max_displacement == 0:
-            # Skip alignment computation if allowed displacement is zero
+            # Skip alignment computation for this field block if allowed displacement is zero
             continue
 
         # compute zone and clip to image dimensions
         zone_start = [
-            int(origin[0] - margins["left"]),
-            int(origin[1] - margins["top"]),
+            int(bounding_box_origin[0] - margins["left"]),
+            int(bounding_box_origin[1] - margins["top"]),
         ]
         zone_end = [
-            int(origin[0] + margins["right"] + dimensions[0]),
-            int(origin[1] + margins["bottom"] + dimensions[1]),
+            int(bounding_box_origin[0] + margins["right"] + bounding_box_dimensions[0]),
+            int(
+                bounding_box_origin[1] + margins["bottom"] + bounding_box_dimensions[1]
+            ),
         ]
 
         block_gray_image, block_colored_image, block_gray_alignment_image = map(
@@ -89,7 +104,7 @@ def apply_template_alignment(gray_image, colored_image, template, config):
         #     # block_colored_alignment_image,
         #     max_displacement,
         #     margins,
-        #     dimensions,
+        #     bounding_box_dimensions,
         # )
 
         # # TODO: assignment outside loop?

@@ -623,7 +623,6 @@ class FieldBlock:
         }
 
     def setup_field_block(self, field_block_object, field_blocks_offset):
-        logger.info("field_block_object", field_block_object)
         # case mapping
         (
             direction,
