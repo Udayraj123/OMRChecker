@@ -1,3 +1,4 @@
+# TODO: Import heavy dependencies at runtime to save load time
 import easyocr
 
 from src.algorithm.template.detection.ocr.lib.textocr import TextOCR

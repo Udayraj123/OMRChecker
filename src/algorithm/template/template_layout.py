@@ -19,6 +19,7 @@ from src.utils.shapes import ShapeUtils
 
 
 class TemplateLayout:
+    # TODO: pass 'set_layout' arg as part of 'output_mode' value 'set_layout' and consume it in template + pre_processors
     def __init__(self, template, template_path, tuning_config):
         self.path = template_path
         self.template = template
@@ -356,7 +357,9 @@ class TemplateLayout:
         )
         # TODO: support custom field types like Barcode and OCR
         self.field_blocks.append(block_instance)
-        self.validate_parsed_labels(field_block_object["fieldLabels"], block_instance)
+        self.validate_parsed_field_block(
+            field_block_object["fieldLabels"], block_instance
+        )
         return block_instance
 
     def prefill_field_block(self, field_block_object):
@@ -387,7 +390,7 @@ class TemplateLayout:
 
         return filled_field_block_object
 
-    def validate_parsed_labels(self, field_labels, block_instance):
+    def validate_parsed_field_block(self, field_labels, block_instance):
         parsed_field_labels, block_name = (
             block_instance.parsed_field_labels,
             block_instance.name,
@@ -420,7 +423,7 @@ class TemplateLayout:
             or block_start_y < 0
         ):
             raise Exception(
-                f"Overflowing field block '{block_name}' with origin {block_instance.bounding_box_origins} and dimensions {block_instance.bounding_box_dimensions} in template with dimensions {self.template_dimensions}"
+                f"Overflowing field block '{block_name}' with origin {block_instance.bounding_box_origin} and dimensions {block_instance.bounding_box_dimensions} in template with dimensions {self.template_dimensions}"
             )
 
     def reset_all_shifts(self):

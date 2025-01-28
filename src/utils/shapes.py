@@ -16,27 +16,25 @@ class ShapeUtils:
         return MathUtils.get_rectangle_points(x, y, w, h)
 
     @staticmethod
-    def extract_image_from_zone_description(image, zone_description):
+    def extract_image_from_zone_description(
+        image, zone_description, throw_on_overflow=False
+    ):
         # TODO: check bug in margins for scan zone
         zone_label = zone_description["label"]
         scan_zone_rectangle = ShapeUtils.compute_scan_zone_rectangle(
             zone_description, include_margins=True
         )
-        print(
-            "'zone_description",
-            zone_description,
-            "scan_zone_rectangle",
-            scan_zone_rectangle,
-        )
         return (
             ShapeUtils.extract_image_from_zone_rectangle(
-                image, zone_label, scan_zone_rectangle
+                image, zone_label, scan_zone_rectangle, throw_on_overflow
             ),
             scan_zone_rectangle,
         )
 
     @staticmethod
-    def extract_image_from_zone_rectangle(image, zone_label, scan_zone_rectangle):
+    def extract_image_from_zone_rectangle(
+        image, zone_label, scan_zone_rectangle, throw_on_overflow=False
+    ):
         # parse arguments
         h, w = image.shape[:2]
         # compute zone and clip to image dimensions
@@ -44,6 +42,10 @@ class ShapeUtils:
         zone_end = list(map(int, scan_zone_rectangle[2]))
 
         if zone_start[0] < 0 or zone_start[1] < 0 or zone_end[0] > w or zone_end[1] > h:
+            if throw_on_overflow:
+                raise Exception(
+                    f"Zone '{zone_label}' with scan rectangle: {[zone_start, zone_end]} overflows the image boundary {[w, h]}."
+                )
             logger.warning(
                 f"Clipping label {zone_label} with scan rectangle: {[zone_start, zone_end]} to image boundary {[w, h]}."
             )

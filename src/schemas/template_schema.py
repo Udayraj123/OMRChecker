@@ -363,7 +363,7 @@ many_field_blocks_description_def = {
             "required": [
                 "fieldDetectionType",
             ],
-            "properties": _common_field_block_properties,
+            "properties": {**_common_field_block_properties},
             "allOf": [
                 {
                     "if": {
@@ -371,6 +371,19 @@ many_field_blocks_description_def = {
                             "fieldDetectionType": {
                                 "const": FieldDetectionType.BUBBLES_THRESHOLD
                             },
+                        },
+                    },
+                    "then": {
+                        "required": [
+                            "origin",
+                            "bubbleFieldType",
+                            "bubblesGap",
+                            "labelsGap",
+                            "fieldLabels",
+                        ],
+                        "additionalProperties": False,
+                        "properties": {
+                            **_traditional_field_block_properties,
                             "bubbleFieldType": {
                                 "oneOf": [
                                     {
@@ -385,17 +398,6 @@ many_field_blocks_description_def = {
                                 ]
                             },
                         },
-                        "required": [
-                            "origin",
-                            "bubbleFieldType",
-                            "bubblesGap",
-                            "labelsGap",
-                            "fieldLabels",
-                        ],
-                    },
-                    "then": {
-                        "additionalProperties": False,
-                        "properties": _traditional_field_block_properties,
                     },
                 },
                 # {
@@ -405,6 +407,8 @@ many_field_blocks_description_def = {
                 #                 "const": FieldDetectionType.BARCODE_QR
                 #             }
                 #         },
+                #     },
+                #     "then": {
                 #         # TODO: move barcode specific properties into this if-else
                 #         "required": [
                 #             "scanZone",
@@ -413,8 +417,6 @@ many_field_blocks_description_def = {
                 #             # TODO: "failIfNotFound"
                 #             # "emptyValue",
                 #         ],
-                #     },
-                #     "then": {
                 #         "additionalProperties": False,
                 #         "properties": {
                 #             **_common_field_block_properties,
@@ -486,6 +488,7 @@ TEMPLATE_SCHEMA = {
     "required": [
         "bubbleDimensions",
         "templateDimensions",
+        "processingImageShape",
         "preProcessors",
         "fieldBlocks",
     ],

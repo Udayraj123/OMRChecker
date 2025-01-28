@@ -299,9 +299,7 @@ class ImageUtils:
             edge_contour = edge_contours_map[edge_type]
 
             if len(edge_contour) == 0:
-                logger.critical(
-                    ordered_patch_corners, source_contour, edge_contours_map
-                )
+                logger.warning(ordered_patch_corners, source_contour, edge_contours_map)
                 logger.warning(
                     f"No closest points found for {edge_type}: {edge_contours_map}"
                 )

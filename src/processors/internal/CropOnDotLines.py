@@ -18,8 +18,7 @@ from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.math import MathUtils
 
-# from rich.table import Table
-# from src.utils.logger import console
+# from src.utils.logger import logger
 
 
 class CropOnDotLines(CropOnPatchesCommon):
@@ -286,7 +285,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         (
             _,
             edge_contours_map,
-        ) = self.find_morph_corners_and_contours_map(
+        ) = self.find_corners_and_contours_map_using_canny(
             zone_start, line_morphed, zone_description
         )
 
@@ -307,33 +306,63 @@ class CropOnDotLines(CropOnPatchesCommon):
 
         dot_blur_kernel = tuning_options.get("dotBlurKernel", None)
         if dot_blur_kernel:
+            zone_h, zone_w = zone.shape
+            blur_h, blur_w = dot_blur_kernel
+
+            assert (
+                zone_h > blur_h and zone_w > blur_w
+            ), f"The zone '{zone_label}' is smaller than provided dotBlurKernel: {zone.shape} < {dot_blur_kernel}"
             zone = cv2.GaussianBlur(zone, dot_blur_kernel, 0)
 
+        # add white padding (to avoid dilations sticking to edges)
+        kernel_height, kernel_width = self.dot_kernel_morph.shape[:2]
+        white_padded_zone, pad_range = ImageUtils.pad_image_from_center(
+            zone, kernel_width, kernel_height, 255
+        )
+
         # Open : erode then dilate
-        morph_c = cv2.morphologyEx(
-            zone, cv2.MORPH_OPEN, self.dot_kernel_morph, iterations=3
+        morphed_zone = cv2.morphologyEx(
+            white_padded_zone, cv2.MORPH_OPEN, self.dot_kernel_morph, iterations=3
         )
 
         # TODO: try pyrDown to 64 values and find the outlier for black threshold?
         # Dots are expected to be fairly dark
         dot_threshold = tuning_options.get("dotThreshold", 150)
-        _, thresholded = cv2.threshold(morph_c, dot_threshold, 255, cv2.THRESH_TRUNC)
-        normalised = ImageUtils.normalize(thresholded)
 
+        # Threshold-Normalize after morph + white padding
+        _, white_thresholded = cv2.threshold(
+            morphed_zone, dot_threshold, 255, cv2.THRESH_TRUNC
+        )
+        white_normalised = ImageUtils.normalize(white_thresholded)
+
+        # TODO: check if thresholding before morph gives better results (similar to line)
+
+        # remove white padding
+        white_normalised = white_normalised[
+            pad_range[0] : pad_range[1], pad_range[2] : pad_range[3]
+        ]
+
+        # Debug images
         if config.outputs.show_image_level >= 5:
-            self.debug_hstack += [zone, morph_c, thresholded, normalised]
-        elif config.outputs.show_image_level == 4:
+            self.debug_hstack += [
+                zone,
+                morphed_zone,
+                white_thresholded,
+                white_normalised,
+            ]
+
+        if config.outputs.show_image_level >= 4:
             InteractionUtils.show(
-                f"threshold_normalised: {zone_label}", normalised, pause=False
+                f"{zone_label}: threshold_normalised", white_normalised, pause=False
             )
 
-        corners, _ = self.find_morph_corners_and_contours_map(
-            zone_start, normalised, zone_description
+        corners, _ = self.find_corners_and_contours_map_using_canny(
+            zone_start, white_normalised, zone_description
         )
         if corners is None:
             if config.outputs.show_image_level >= 1:
                 hstack = ImageUtils.get_padded_hstack(
-                    [self.debug_image, zone, thresholded]
+                    [self.debug_image, zone, white_thresholded]
                 )
                 InteractionUtils.show(
                     f"No patch/dot debug hstack",
@@ -349,7 +378,9 @@ class CropOnDotLines(CropOnPatchesCommon):
         return corners
 
     # TODO: >> create a Scanzone class and move some methods there
-    def find_morph_corners_and_contours_map(self, zone_start, zone, zone_description):
+    def find_corners_and_contours_map_using_canny(
+        self, zone_start, zone, zone_description
+    ):
         scanner_type, zone_label = (
             zone_description["scannerType"],
             zone_description["label"],
@@ -372,7 +403,11 @@ class CropOnDotLines(CropOnPatchesCommon):
             return None, None
 
         ordered_patch_corners, edge_contours_map = None, None
-        largest_contour = sorted(all_contours, key=cv2.contourArea, reverse=True)[0]
+        sorted_contours_by_area = sorted(
+            all_contours, key=cv2.contourArea, reverse=True
+        )
+        largest_contour = sorted_contours_by_area[0]
+
         if config.outputs.show_image_level >= 5:
             h, w = canny_edges.shape[:2]
             contour_overlay = 255 * np.ones((h, w), np.uint8)

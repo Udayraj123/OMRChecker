@@ -14,6 +14,8 @@ from src.processors.constants import (
 from src.processors.internal.WarpOnPointsCommon import WarpOnPointsCommon
 from src.utils.constants import CLR_DARK_GREEN
 from src.utils.drawing import DrawingUtils
+from src.utils.image import ImageUtils
+from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 from src.utils.math import MathUtils
 from src.utils.parsing import OVERRIDE_MERGER
@@ -164,6 +166,20 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                     zone_control_points, zone_destination_points
                 )
 
+        if config.outputs.show_image_level >= 4:
+            # TODO: show this if --setLayout is passed as well.
+            InteractionUtils.show(
+                f"Zones of the debug image: {file_path}",
+                self.debug_image,
+                pause=1,
+            )
+        if len(self.debug_hstack) > 0 and config.outputs.show_image_level >= 5:
+            InteractionUtils.show(
+                f"Zones debug stack of the image: {file_path}",
+                ImageUtils.get_padded_hstack(self.debug_hstack),
+                pause=1,
+            )
+
         # Fill edge contours
         edge_contours_map = self.get_edge_contours_map_from_zone_points(
             zone_preset_points
@@ -287,7 +303,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
 
     def compute_scan_zone_util(self, image, zone_description):
         zone, scan_zone_rectangle = ShapeUtils.extract_image_from_zone_description(
-            image, zone_description
+            image, zone_description, throw_on_overflow=True
         )
 
         zone_start = scan_zone_rectangle[0]

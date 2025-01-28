@@ -198,6 +198,7 @@ def show_template_layouts(omr_files, template, tuning_config):
             colored_image,
             template,
         ) = template.apply_preprocessors(file_path, gray_image, colored_image)
+
         gray_layout, colored_layout = TemplateDrawing.draw_template_layout(
             gray_image,
             colored_image,
@@ -328,7 +329,9 @@ def process_directory_files(
                 f"(/{files_counter}) Graded with score: {round(score, 2)}\t {default_answers_summary} \t file: '{file_id}'"
             )
             if evaluation_config_for_response.get_should_export_explanation_csv():
-                explanation_table = evaluation_config_for_response.get_explanation_table()
+                explanation_table = (
+                    evaluation_config_for_response.get_explanation_table()
+                )
                 explanation_table = table_to_df(explanation_table)
                 explanation_table.to_csv(
                     template.get_evaluations_dir().joinpath(file_name + ".csv"),
