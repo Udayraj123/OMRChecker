@@ -5,6 +5,10 @@
 import argparse
 import os
 
+import argparse
+import os
+from scripts.local.utils.bulk_ops_common import convert_image, convert_pdf_to_jpg
+
 from scripts.utils.image_utils import convert_image, get_size_in_kb, get_size_reduction
 
 

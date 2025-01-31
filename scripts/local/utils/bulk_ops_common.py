@@ -3,43 +3,20 @@ import functools
 import glob
 import operator
 import os
-
+from PIL import Image
+from pdf2image import convert_from_path
 from src.utils.file import PathUtils
 
-# TODO: add shell utilities for simple local images processing such as:
-# From issue: https://github.com/Udayraj123/OMRChecker/issues/213
-# - bulk resize,
-#     - clip to max width (or height)
-#     -  with a conditional trigger if the file size exceeds a provided value
-# - bulk convert :
-#     - pdf to jpg
-#     - png to jpg or vice versa
-#     - tiff
-# - bulk rename files
-#     - adding folder name to file name
-#     - removing non-utf characters from filename (to avoid processing errors)
-# - add watermark to all images
-# - blur a particular section of the images (e.g. student names and signatures)
-# - create a gif from a folder of images
-# - Save output of cropped pages to avoid cropping in each run (and merge with manually cropped images)
-# - Save output of cropped markers to avoid cropping in each run (and merge with manually cropped images)
-
-# Make sure to be cross-os compatible i.e. use Posix paths wherever possible
-
-
-# Maybe have a common util file for bulk ops and then create one file for each of the above util.
-
-
-# Usual pre-processing commands for speedups (useful during re-runs)
-# python3 scripts/local/convert_images.py -i inputs/ --replace [--filter-ext png,jpg] --output-ext jpg
-# python3 scripts/local/resize_images.py -i inputs/ -o outputs --max-width=1500
-
+# TODO: add shell utilities for bulk image processing, resizing, watermarking, etc.
 
 def walk_and_extract_files(input_dir, file_extensions):
+    """
+    Walks through the directory to extract files with specified extensions.
+    """
     extracted_files = []
     for _dir, _subdir, _files in os.walk(input_dir):
         matching_globs = [
-            glob(os.path.join(_dir, f"*.{file_extension}"))
+            glob.glob(os.path.join(_dir, f"*.{file_extension}"))
             for file_extension in file_extensions
         ]
         matching_files = functools.reduce(operator.iconcat, matching_globs, [])
@@ -49,8 +26,11 @@ def walk_and_extract_files(input_dir, file_extensions):
 
 
 def get_local_argparser():
+    """
+    Returns an argument parser with common input, output, and optional recursive processing flags.
+    """
     local_argparser = argparse.ArgumentParser()
-
+    
     local_argparser.add_argument(
         "-i",
         "--input",
@@ -72,8 +52,7 @@ def get_local_argparser():
     local_argparser.add_argument(
         "-r",
         "--recursive",
-        required=True,
-        type=bool,
+        action='store_true',
         dest="recursive",
         help="Specify whether to process subdirectories recursively",
     )
@@ -81,20 +60,71 @@ def get_local_argparser():
     local_argparser.add_argument(
         "--trigger-size",
         default=200,
-        required=True,
         type=int,
         dest="trigger_size",
-        help="Specify minimum file size to trigger the hook.",
+        help="Specify minimum file size (KB) to trigger the hook.",
     )
+
     return local_argparser
 
 
+def convert_image(input_path, output_path, output_format):
+    """
+    Converts an image to the specified output format.
+    """
+    with Image.open(input_path) as img:
+        if output_format == 'JPG':
+            output_format = 'JPEG'
+        img.save(output_path, output_format)
+
+
+def convert_pdf_to_jpg(input_path, output_dir):
+    """
+    Converts a PDF to a series of JPG images, one per page.
+    """
+    pages = convert_from_path(input_path)
+    for i, page in enumerate(pages):
+        output_path = os.path.join(output_dir, f"page_{i + 1}.jpg")
+        page.save(output_path, 'JPEG')
+
+
+def bulk_convert(input_dir, output_dir, output_format, in_place=False):
+    """
+    Bulk converts images and PDFs to the specified format.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    extensions = ['png', 'jpg', 'jpeg', 'tiff', 'tif', 'pdf']
+
+    filepaths = walk_and_extract_files(input_dir, extensions)
+
+    for input_path in filepaths:
+        relative_path = os.path.relpath(os.path.dirname(input_path), input_dir)
+        output_subdir = os.path.join(output_dir, relative_path) if not in_place else os.path.dirname(input_path)
+        os.makedirs(output_subdir, exist_ok=True)
+
+        filename = os.path.basename(input_path)
+        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.tif')):
+            name, _ = os.path.splitext(filename)
+            output_path = os.path.join(output_subdir, f"{name}.{output_format.lower()}")
+            convert_image(input_path, output_path, output_format)
+            print(f"Converted {filename} to {output_format}")
+        elif filename.lower().endswith('.pdf'):
+            pdf_output_dir = os.path.join(output_subdir, os.path.splitext(filename)[0])
+            os.makedirs(pdf_output_dir, exist_ok=True)
+            convert_pdf_to_jpg(input_path, pdf_output_dir)
+            print(f"Converted {filename} to JPG")
+        else:
+            print(f"Skipping unsupported file: {filename}")
+
+
 def add_common_args(argparser, arguments):
+    """
+    Adds arguments from the local argparser to the main argument parser.
+    """
     local_argparser = get_local_argparser()
     for argument in arguments:
         for action in local_argparser._actions:
             if argument in action.option_strings:
-                # Copy the argument from local_argparser to argparser
                 argparser.add_argument(
                     *action.option_strings,
                     dest=action.dest,
@@ -107,15 +137,44 @@ def add_common_args(argparser, arguments):
 
 
 def run_argparser(argparser):
-    (
-        args,
-        unknown,
-    ) = argparser.parse_known_args()
-
+    """
+    Runs the argument parser and returns parsed arguments.
+    """
+    args, unknown = argparser.parse_known_args()
     args = vars(args)
 
-    if len(unknown) > 0:
+    if unknown:
         argparser.print_help()
         raise Exception(f"\nError: Unknown arguments: {unknown}")
 
     return args
+
+
+def main():
+    """
+    Main entry point for the script. Handles argument parsing and starts the bulk conversion process.
+    """
+    parser = argparse.ArgumentParser(description="Bulk image and PDF converter")
+
+    # Add standard arguments
+    add_common_args(parser, ['-i', '--input', '-o', '--output', '--recursive', '--trigger-size'])
+
+    parser.add_argument(
+        "--format", 
+        choices=['jpg', 'png', 'jpeg'], 
+        default='jpg', 
+        help="Output format for images (default: jpg)"
+    )
+    parser.add_argument(
+        "--in-place", 
+        action='store_true', 
+        help="Modify files in place"
+    )
+
+    args = run_argparser(parser)
+
+    bulk_convert(args['input'], args['output'], args['format'].upper(), args['in_place'])
+
+
+if __name__ == "__main__":
+    main()
