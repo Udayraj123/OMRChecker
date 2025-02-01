@@ -1,6 +1,7 @@
 from dotmap import DotMap
 
 from src.processors.AutoRotate import AutoRotate
+from src.processors.Contrast import Contrast
 from src.processors.CropOnMarkers import CropOnMarkers
 from src.processors.CropPage import CropPage
 from src.processors.FeatureBasedAlignment import FeatureBasedAlignment
@@ -13,14 +14,15 @@ from src.utils.constants import SUPPORTED_PROCESSOR_NAMES
 PROCESSOR_MANAGER = DotMap(
     {
         "processors": {
+            "AutoRotate": AutoRotate,
+            "Contrast": Contrast,
             "CropOnMarkers": CropOnMarkers,
-            # TODO: "WarpOnPoints": WarpOnPointsCommon,
             "CropPage": CropPage,
             "FeatureBasedAlignment": FeatureBasedAlignment,
             "GaussianBlur": GaussianBlur,
             "Levels": Levels,
             "MedianBlur": MedianBlur,
-            "AutoRotate": AutoRotate,
+            # TODO: "WarpOnPoints": WarpOnPointsCommon,
         }
     },
     _dynamic=False,

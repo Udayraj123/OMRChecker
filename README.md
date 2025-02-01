@@ -139,7 +139,9 @@ To install pip - follow instructions [here](https://pip.pypa.io/en/stable/instal
 <summary><b>Create a new Python environment</b></summary>
 
 ```bash
+# Create the environment
 python3 -m venv ./venv
+# Activate the environment before installations
 source ./venv/bin/activate
 ```
 </details>
@@ -207,6 +209,8 @@ python3 -m pip install --user -r requirements.txt
    ```
 2. Run OMRChecker:
    ```bash
+   source ./venv/bin/activate
+
    python3 main.py
    ```
 

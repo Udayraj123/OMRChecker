@@ -12,6 +12,7 @@ from src.schemas.constants import load_common_defs
 from src.utils.constants import (
     BUILTIN_BUBBLE_FIELD_TYPES,
     CUSTOM_BUBBLE_FIELD_TYPE_PATTERN,
+    SUPPORTED_PROCESSOR_NAMES,
 )
 
 margins_schema_def = {
@@ -565,17 +566,7 @@ TEMPLATE_SCHEMA = {
                     "name": {
                         "description": "The name of the pre-processor to use",
                         "type": "string",
-                        "enum": [
-                            "CropOnMarkers",
-                            # TODO: "WarpOnPoints",
-                            "CropPage",
-                            "FeatureBasedAlignment",
-                            "GaussianBlur",
-                            "Levels",
-                            "MedianBlur",
-                            "AutoRotate",
-                            "Contrast",
-                        ],
+                        "enum": SUPPORTED_PROCESSOR_NAMES,
                     },
                     "options": {
                         "description": "The options to pass to the pre-processor",

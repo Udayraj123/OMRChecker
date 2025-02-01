@@ -8,13 +8,14 @@ EVALUATION_FILENAME = "evaluation.json"
 CONFIG_FILENAME = "config.json"
 
 SUPPORTED_PROCESSOR_NAMES = [
+    "AutoRotate",
+    "Contrast",
     "CropOnMarkers",
     "CropPage",
     "FeatureBasedAlignment",
     "GaussianBlur",
     "Levels",
     "MedianBlur",
-    "AutoRotate",
 ]
 
 FIELD_LABEL_NUMBER_REGEX = r"([^\d]+)(\d*)"
