@@ -3,6 +3,8 @@ import functools
 import glob
 import operator
 import os
+from PIL import Image, UnidentifiedImageError
+from src.utils.file import PathUtils
 
 from src.utils.file import PathUtils
 
@@ -119,3 +121,38 @@ def run_argparser(argparser):
         raise Exception(f"\nError: Unknown arguments: {unknown}")
 
     return args
+
+
+def resize_image(
+    input_path, output_path, max_width=None, max_height=None, trigger_size=0
+):
+    """
+    Resize an image based on given width, height, and trigger size.
+
+    :param input_path: Path to the input image.
+    :param output_path: Path to save the resized image.
+    :param max_width: Maximum width for resizing.
+    :param max_height: Maximum height for resizing.
+    :param trigger_size: Minimum file size in bytes to trigger resizing.
+    """
+    try:
+        if os.path.getsize(input_path) > trigger_size:
+            with Image.open(input_path) as img:
+                width, height = img.size
+
+                # Resize based on max width or height while keeping the aspect ratio
+                if max_width and width > max_width:
+                    new_height = int((max_width / width) * height)
+                    img = img.resize((max_width, new_height), Image.ANTIALIAS)
+
+                if max_height and height > max_height:
+                    new_width = int((max_height / height) * width)
+                    img = img.resize((new_width, max_height), Image.ANTIALIAS)
+
+                # Save the resized image
+                img.save(output_path)
+                print(f"Resized image saved at: {output_path}")
+    except UnidentifiedImageError:
+        print(f"Skipping corrupt image: {input_path}")
+    except Exception as e:
+        print(f"Error resizing image {input_path}: {e}")
