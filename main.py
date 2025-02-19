@@ -68,6 +68,31 @@ def parse_args():
         help="Set up OMR template layout - modify your json file and \
         run again until the template is set.",
     )
+ 
+    argparser.add_argument(
+        "--templateFile",
+        type=str,
+        required=False,
+        default=None,
+        dest="template_file",
+        help="Path to template.json (overrides default).",
+    )
+    argparser.add_argument(
+        "--evaluationFile",
+        type=str,
+        required=False,
+        default=None,
+        dest="evaluation_file",
+        help="Path to evaluation.json (overrides default).",
+    )
+    argparser.add_argument(
+        "--configFile",
+        type=str,
+        required=False,
+        default=None,
+        dest="config_file",
+        help="Path to config.json (overrides default).",
+    )
 
     (
         args,
