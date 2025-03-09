@@ -1,5 +1,5 @@
 # TODO support pytesseract methods as well.
-from src.algorithm.template.detection.ocr.lib.textocr import TextOCR
+from src.algorithm.template.detection.ocr.lib.text_ocr import TextOCR
 
 
 class TesseractOCR(TextOCR):

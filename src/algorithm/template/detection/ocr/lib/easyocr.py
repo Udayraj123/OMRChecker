@@ -1,7 +1,7 @@
 # TODO: Import heavy dependencies at runtime to save load time
 import easyocr
 
-from src.algorithm.template.detection.ocr.lib.textocr import TextOCR
+from src.algorithm.template.detection.ocr.lib.text_ocr import TextOCR
 
 
 class EasyOCR(TextOCR):
@@ -38,13 +38,13 @@ class EasyOCR(TextOCR):
 
     @staticmethod
     def read_texts_with_boxes(image, confidence_threshold=0.8, sort_by_score=True):
-        all_texts = EasyOCR.reader.readtext(image)
-        if len(all_texts) == 0:
+        text_results = EasyOCR.reader.readtext(image)
+        if len(text_results) == 0:
             return []
 
         filtered_texts_with_boxes = [
             (box, text, score)
-            for (box, text, score) in all_texts
+            for (box, text, score) in text_results
             if score >= confidence_threshold
         ]
 
