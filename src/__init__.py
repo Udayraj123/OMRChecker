@@ -11,3 +11,6 @@ logger.info(f"Loading OMRChecker modules...")
 VIRTUAL_ENV = os.environ.get("VIRTUAL_ENV", "Not Present")
 
 logger.info(f"VIRTUAL_ENV: {VIRTUAL_ENV}")
+
+if not os.path.exists(VIRTUAL_ENV):
+    logger.warn("Your virtual Environment doesn't exist at the path!")

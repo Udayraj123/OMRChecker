@@ -22,11 +22,12 @@ class EasyOCR(TextOCR):
             image, confidence_threshold, sort_by_score=True
         )
 
-        print("filtered_texts_with_boxes", filtered_texts_with_boxes)
+        # print("filtered_texts_with_boxes", filtered_texts_with_boxes)
         if len(filtered_texts_with_boxes) == 0:
             return ""
 
-        # TODO: support concatenating nearby boxes within a distance param?
+        # TODO: support concatenating nearby boxes within a distance param? (concatenateWithinDistance, order: topLeftDiagonal)
+
         # We will currently rely on easyocr that it is able to cluster nearby texts despite font issues.
         _box, text, score = filtered_texts_with_boxes[0]
         if score <= confidence_threshold:

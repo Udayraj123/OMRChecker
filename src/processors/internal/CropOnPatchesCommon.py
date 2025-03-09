@@ -169,7 +169,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         if config.outputs.show_image_level >= 4:
             # TODO: show this if --setLayout is passed as well.
             InteractionUtils.show(
-                f"Zones of the debug image: {file_path}",
+                f"Control Zones in the debug image: {file_path}",
                 self.debug_image,
                 pause=1,
             )

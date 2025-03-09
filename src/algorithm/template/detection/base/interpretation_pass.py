@@ -223,5 +223,5 @@ class TemplateInterpretationPass(FilePassAggregates):
         read_response_flags = self.file_level_aggregates["read_response_flags"]
 
         if read_response_flags["is_multi_marked"]:
-            print("self.directory_level_aggregates", self.directory_level_aggregates)
+            # print("self.directory_level_aggregates", self.directory_level_aggregates)
             self.directory_level_aggregates["files_by_label_count"].push("multi_marked")

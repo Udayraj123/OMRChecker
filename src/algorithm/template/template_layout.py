@@ -661,10 +661,10 @@ class FieldBlock:
             self.setup_bubbles_field_block(field_block_object)
         elif field_detection_type == FieldDetectionType.OCR:
             self.setup_ocr_field_block(field_block_object)
-        # TODO: support barcode, ocr, etc custom field types
-        logger.info(
-            "field_detection_type", field_detection_type, "labels_gap", labels_gap
-        )
+        # TODO: support barcode, photo blob, etc custom field types
+        # logger.info(
+        #     "field_detection_type", field_detection_type, "labels_gap", labels_gap
+        # )
 
         self.generate_bubble_grid(
             direction,

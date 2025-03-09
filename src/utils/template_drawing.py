@@ -44,14 +44,14 @@ class TemplateDrawing:
             )
             if config.outputs.show_image_level >= 1:
                 InteractionUtils.show(
-                    "Final Marked Bubbles",
+                    "Final Marked Template",
                     final_marked,
                     0,
                     resize_to_height=True,
                     config=config,
                 )
                 InteractionUtils.show(
-                    "Final Marked Bubbles (Colored)",
+                    "Final Marked Template (Colored)",
                     colored_final_marked,
                     1,
                     resize_to_height=True,
@@ -59,7 +59,7 @@ class TemplateDrawing:
                 )
         elif config.outputs.show_image_level >= 1:
             InteractionUtils.show(
-                "Final Marked Bubbles",
+                "Final Marked Template",
                 final_marked,
                 1,
                 resize_to_height=True,
