@@ -4,6 +4,9 @@ from typing import List
 from src.algorithm.template.layout.field.base import Field, ScanBox
 from src.algorithm.template.layout.field.bubble_field import BubbleField
 from src.algorithm.template.layout.field.ocr_field import OCRField
+from src.algorithm.template.layout.field_block.field_block_drawing import (
+    FieldBlockDrawing,
+)
 from src.processors.constants import FieldDetectionType
 from src.utils.parsing import default_dump, parse_fields
 
@@ -20,7 +23,10 @@ class FieldBlock:
         self.plot_bin_name = block_name
         self.shifts = [0, 0]
         self.setup_field_block(field_block_object, field_blocks_offset)
+        self.generate_fields()
+        self.drawing = FieldBlockDrawing(self)
 
+    # Make deepcopy for only parts that are mutated by Processor
     def get_copy_for_shifting(self):
         copied_field_block = shallowcopy(self)
         # No need to deepcopy self.fields since they are not using shifts yet,
@@ -94,13 +100,7 @@ class FieldBlock:
         #     "field_detection_type", field_detection_type, "labels_gap", labels_gap
         # )
 
-        self.generate_bubble_grid(
-            direction,
-            empty_value,
-            field_detection_type,
-            labels_gap,
-        )
-
+    # TODO: move into a BubblesFieldBlock class? But provision to allow multiple field detection types in future.
     def setup_bubbles_field_block(self, field_block_object):
         (
             alignment_object,
@@ -141,17 +141,18 @@ class FieldBlock:
         )
         # Setup custom props
         self.scan_zone = scan_zone
-        # TODO: compute scan zone
+        # TODO: compute scan zone?
 
-    def generate_bubble_grid(
+    def generate_fields(
         self,
-        direction,
-        empty_value,
-        field_detection_type,
-        labels_gap,
     ):
         # TODO: refactor this dependency
         field_block = self
+        direction = self.direction
+        empty_value = self.empty_value
+        field_detection_type = self.field_detection_type
+        labels_gap = self.labels_gap
+
         _v = 0 if (direction == "vertical") else 1
         self.fields: List[Field] = []
         # Generate the bubble grid
@@ -172,9 +173,9 @@ class FieldBlock:
             lead_point[_v] += labels_gap
 
         # TODO: validate for field block overflow outside template dimensions
-        self.calculate_bounding_box()
+        self.update_bounding_box()
 
-    def calculate_bounding_box(self):
+    def update_bounding_box(self):
         all_scan_boxes: List[ScanBox] = []
         for field in self.fields:
             all_scan_boxes += field.scan_boxes

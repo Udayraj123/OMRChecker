@@ -4,7 +4,7 @@ from src.algorithm.template.alignment.sift_matcher import SiftMatcher
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.math import MathUtils
-from src.utils.template_drawing import TemplateDrawing
+from src.utils.template_drawing import TemplateDrawingUtils
 
 
 def find_k_nearest_anchors(origin, anchors_with_displacements, k):
@@ -53,7 +53,7 @@ def apply_k_nearest_interpolation_inplace(
         # Shift the coordinates to the field block's origin to draw on the cropped block
         old_shifts = field_block.shifts
         field_block.shifts = block_image_shifts
-        TemplateDrawing.draw_field_block(
+        TemplateDrawingUtils.draw_field_block(
             field_block, block_gray_image_before, shifted=True, thickness=2
         )
         field_block.shifts = old_shifts
@@ -69,7 +69,7 @@ def apply_k_nearest_interpolation_inplace(
         block_gray_image_after = block_gray_image.copy()
         old_shifts = field_block.shifts
         field_block.shifts = block_image_shifts  # MathUtils.add_points(block_image_shifts, average_shifts)
-        TemplateDrawing.draw_field_block(
+        TemplateDrawingUtils.draw_field_block(
             field_block, block_gray_image_after, shifted=True, thickness=2
         )
         field_block.shifts = old_shifts

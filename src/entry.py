@@ -19,7 +19,7 @@ from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils, Stats
 from src.utils.logger import console, logger
 from src.utils.parsing import open_config_with_defaults
-from src.utils.template_drawing import TemplateDrawing
+from src.utils.template_drawing import TemplateDrawingUtils
 
 # Load processors
 STATS = Stats()
@@ -199,7 +199,7 @@ def show_template_layouts(omr_files, template, tuning_config):
             template,
         ) = template.apply_preprocessors(file_path, gray_image, colored_image)
 
-        gray_layout, colored_layout = TemplateDrawing.draw_template_layout(
+        gray_layout, colored_layout = TemplateDrawingUtils.draw_template_layout(
             gray_image,
             colored_image,
             template,
@@ -355,11 +355,11 @@ def process_directory_files(
 
         # Save output image with bubble values and evaluation meta
         if output_mode != "moderation":
-            # TODO: move TemplateDrawing functions inside the template class
+            # TODO: move TemplateDrawingUtils functions inside the template class
             (
                 final_marked,
                 colored_final_marked,
-            ) = TemplateDrawing.draw_template_layout(
+            ) = TemplateDrawingUtils.draw_template_layout(
                 gray_image,
                 colored_image,
                 template,

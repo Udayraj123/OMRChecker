@@ -22,19 +22,19 @@ from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 
 
-class TemplateDrawing:
+class TemplateDrawingUtils:
     # TODO: move this class into template.drawing_handler?
     @staticmethod
     def draw_template_layout(
         gray_image, colored_image, template, config, *args, **kwargs
     ):
-        final_marked = TemplateDrawing.draw_template_layout_util(
+        final_marked = TemplateDrawingUtils.draw_template_layout_util(
             gray_image, "GRAYSCALE", template, config, *args, **kwargs
         )
 
         colored_final_marked = colored_image
         if config.outputs.colored_outputs_enabled:
-            colored_final_marked = TemplateDrawing.draw_template_layout_util(
+            colored_final_marked = TemplateDrawingUtils.draw_template_layout_util(
                 colored_final_marked,
                 "COLORED",
                 template,
@@ -98,8 +98,8 @@ class TemplateDrawing:
         )
 
         if should_draw_field_block_rectangles:
-            marked_image = TemplateDrawing.draw_field_blocks_layout(
-                marked_image, template, shifted, shouldCopy=False, border=border
+            marked_image = template.drawing.draw_field_blocks_layout(
+                marked_image, shifted, shouldCopy=False, border=border
             )
             return marked_image
 
@@ -107,7 +107,7 @@ class TemplateDrawing:
             if config.outputs.save_image_level >= 1:
                 marked_image_copy = marked_image.copy()
                 marked_image_copy = (
-                    TemplateDrawing.draw_marked_bubbles_with_evaluation_meta(
+                    TemplateDrawingUtils.draw_marked_bubbles_with_evaluation_meta(
                         marked_image_copy,
                         image_type,
                         template,
@@ -125,17 +125,19 @@ class TemplateDrawing:
                         f"Marked Image", range(2, 7), colored_image=marked_image_copy
                     )
 
-            marked_image = TemplateDrawing.draw_marked_bubbles_with_evaluation_meta(
-                marked_image,
-                image_type,
-                template,
-                field_label_to_scan_box_interpretation,
-                evaluation_meta,
-                evaluation_config_for_response,
+            marked_image = (
+                TemplateDrawingUtils.draw_marked_bubbles_with_evaluation_meta(
+                    marked_image,
+                    image_type,
+                    template,
+                    field_label_to_scan_box_interpretation,
+                    evaluation_meta,
+                    evaluation_config_for_response,
+                )
             )
 
         if should_draw_question_verdicts:
-            marked_image = TemplateDrawing.draw_evaluation_summary(
+            marked_image = TemplateDrawingUtils.draw_evaluation_summary(
                 marked_image, evaluation_meta, evaluation_config_for_response
             )
 
@@ -150,76 +152,6 @@ class TemplateDrawing:
         )
 
         return marked_image
-
-    @staticmethod
-    def draw_field_blocks_layout(
-        image, template, shifted=True, shouldCopy=True, thickness=3, border=3
-    ):
-        marked_image = image.copy() if shouldCopy else image
-        for field_block in template.field_blocks:
-            TemplateDrawing.draw_field_block(
-                field_block, marked_image, shifted, thickness, border
-            )
-
-        return marked_image
-
-    @staticmethod
-    def draw_field_block(
-        field_block, marked_image, shifted=True, thickness=3, border=3
-    ):
-        (
-            field_block_name,
-            bounding_box_origin,
-            bounding_box_dimensions,
-        ) = map(
-            lambda attr: getattr(field_block, attr),
-            [
-                "name",
-                "bounding_box_origin",
-                "bounding_box_dimensions",
-            ],
-        )
-
-        # TODO: get this field block using a bounding box of all bubbles instead. (remove shift at field block level)
-        block_position = (
-            field_block.get_shifted_origin() if shifted else bounding_box_origin
-        )
-        if not shifted:
-            # Field block bounding rectangle
-            DrawingUtils.draw_box(
-                marked_image,
-                block_position,
-                bounding_box_dimensions,
-                color=CLR_BLACK,
-                style="BOX_HOLLOW",
-                thickness_factor=0,
-                border=border,
-            )
-
-        for field in field_block.fields:
-            scan_boxes = field.scan_boxes
-            for unit_bubble in scan_boxes:
-                shifted_position = unit_bubble.get_shifted_position(field_block.shifts)
-                dimensions = unit_bubble.dimensions
-                DrawingUtils.draw_box(
-                    marked_image,
-                    shifted_position,
-                    dimensions,
-                    thickness_factor=1 / 10,
-                    border=border,
-                )
-
-        if shifted:
-            text_position = lambda size_x, size_y: (
-                int(block_position[0] + bounding_box_dimensions[0] - size_x),
-                int(block_position[1] - size_y),
-            )
-            text = f"({field_block.shifts}){field_block_name}"
-            DrawingUtils.draw_text(
-                marked_image, text, text_position, thickness=thickness
-            )
-
-        return
 
     @staticmethod
     def draw_marked_bubbles_with_evaluation_meta(
@@ -260,7 +192,7 @@ class TemplateDrawing:
                 ):
                     question_meta = evaluation_meta["questions_meta"][field_label]
                     # Draw answer key items
-                    TemplateDrawing.draw_field_with_question_meta(
+                    TemplateDrawingUtils.draw_field_with_question_meta(
                         marked_image,
                         image_type,
                         field_bubble_interpretations,
@@ -269,7 +201,7 @@ class TemplateDrawing:
                         evaluation_config_for_response,
                     )
                 else:
-                    TemplateDrawing.draw_scan_boxes_and_detections(
+                    TemplateDrawingUtils.draw_scan_boxes_and_detections(
                         marked_image,
                         field_bubble_interpretations,
                         field_block,
@@ -295,7 +227,7 @@ class TemplateDrawing:
             bubble_value = str(bubble.bubble_value)
 
             # Enhanced bounding box for expected answer:
-            if TemplateDrawing.is_part_of_some_answer(question_meta, bubble_value):
+            if TemplateDrawingUtils.is_part_of_some_answer(question_meta, bubble_value):
                 DrawingUtils.draw_box(
                     marked_image,
                     shifted_position,
@@ -362,7 +294,7 @@ class TemplateDrawing:
                 )
 
         if evaluation_config_for_response.draw_answer_groups["enabled"]:
-            TemplateDrawing.draw_answer_groups(
+            TemplateDrawingUtils.draw_answer_groups(
                 marked_image,
                 image_type,
                 question_meta,
@@ -462,7 +394,7 @@ class TemplateDrawing:
     def is_part_of_some_answer(question_meta, bubble_value):
         if question_meta["bonus_type"] is not None:
             return True
-        matched_groups = TemplateDrawing.get_matched_answer_groups(
+        matched_groups = TemplateDrawingUtils.get_matched_answer_groups(
             question_meta, bubble_value
         )
         return len(matched_groups) > 0
@@ -512,7 +444,7 @@ class TemplateDrawing:
             bubble_dimensions = bubble.dimensions
             shifted_position = tuple(bubble.get_shifted_position(field_block.shifts))
             bubble_value = str(bubble.bubble_value)
-            matched_groups = TemplateDrawing.get_matched_answer_groups(
+            matched_groups = TemplateDrawingUtils.get_matched_answer_groups(
                 question_meta, bubble_value
             )
             for answer_index in matched_groups:

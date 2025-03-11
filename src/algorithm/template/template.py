@@ -36,6 +36,7 @@ class Template:
             self.template_layout.get_concatenated_omr_response
         )
         self.template_dimensions = self.template_layout.template_dimensions
+        self.drawing = self.template_layout.drawing
 
         self.template_file_runner = TemplateFileRunner(self)
         self.directory_handler = DirectoryHandler(self)

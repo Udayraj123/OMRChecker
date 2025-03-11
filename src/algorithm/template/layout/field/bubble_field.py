@@ -1,6 +1,7 @@
 from typing import List
 
 from src.algorithm.template.layout.field.base import Field, ScanBox
+from src.algorithm.template.layout.field.field_drawing import BubbleFieldDrawing
 from src.utils.constants import ZERO_MARGINS
 from src.utils.parsing import default_dump
 
@@ -28,6 +29,9 @@ class BubbleField(Field):
             field_label,
             origin,
         )
+
+    def get_drawing_instance(self):
+        return BubbleFieldDrawing(self)
 
     def setup_scan_boxes(self, field_block):
         # populate the field bubbles

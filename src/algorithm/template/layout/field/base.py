@@ -29,9 +29,14 @@ class Field:
         self.scan_boxes: List[ScanBox] = []
         # Child class would populate scan_boxes
         self.setup_scan_boxes(field_block)
+        self.drawing = self.get_drawing_instance()
 
     @abstractmethod
     def setup_scan_boxes(self, field_block):
+        raise Exception("Not implemented")
+
+    @abstractmethod
+    def get_drawing_instance(self):
         raise Exception("Not implemented")
 
     def reset_all_shifts(self):

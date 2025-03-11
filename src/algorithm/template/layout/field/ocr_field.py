@@ -1,6 +1,7 @@
 from typing import List
 
 from src.algorithm.template.layout.field.base import Field, ScanBox
+from src.algorithm.template.layout.field.field_drawing import OCRFieldDrawing
 from src.utils.parsing import default_dump
 from src.utils.shapes import ShapeUtils
 
@@ -23,6 +24,9 @@ class OCRField(Field):
             field_label,
             origin,
         )
+
+    def get_drawing_instance(self):
+        return OCRFieldDrawing(self)
 
     def setup_scan_boxes(self, field_block):
         scan_zone = field_block.scan_zone
