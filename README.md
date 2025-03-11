@@ -136,7 +136,7 @@ To install pip - follow instructions [here](https://pip.pypa.io/en/stable/instal
 
 </details>
 <details>
-<summary><b>Create a new Python environment</b></summary>
+<summary><b>Create a new Python Virtual environment</b></summary>
 
 ```bash
 # Create the environment
@@ -144,6 +144,8 @@ python3 -m venv ./venv
 # Activate the environment before installations
 source ./venv/bin/activate
 ```
+Note: when using a debugger, make sure the correct python is selected. In VSCode, Open Command Pallete > Select Interpreter.
+
 </details>
 
 <details>
