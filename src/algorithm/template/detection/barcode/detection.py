@@ -1,6 +1,8 @@
 from src.algorithm.template.detection.barcode.lib.pyzbar import PyZBar
 from src.algorithm.template.detection.base.detection import FieldDetection
-from src.algorithm.template.template_layout import BarcodeField, Field
+
+# TODO: add BarcodeField
+from src.algorithm.template.layout.field.base import BarcodeField, Field
 from src.utils.shapes import ShapeUtils
 
 

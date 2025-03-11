@@ -1,6 +1,7 @@
 from src.algorithm.template.detection.base.detection import FieldDetection
 from src.algorithm.template.detection.ocr.lib.easyocr import EasyOCR
-from src.algorithm.template.template_layout import Field, OCRField
+from src.algorithm.template.layout.field.base import Field
+from src.algorithm.template.layout.field.ocr_field import OCRField
 from src.utils.shapes import ShapeUtils
 
 

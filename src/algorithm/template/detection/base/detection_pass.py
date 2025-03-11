@@ -2,7 +2,7 @@ from abc import abstractmethod
 
 from src.algorithm.template.detection.base.common_pass import FilePassAggregates
 from src.algorithm.template.detection.base.detection import FieldDetection
-from src.algorithm.template.template_layout import Field
+from src.algorithm.template.layout.field.base import Field
 from src.utils.stats import StatsByLabel
 
 

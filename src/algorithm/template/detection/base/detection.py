@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from src.algorithm.template.template_layout import Field
+from src.algorithm.template.layout.field.base import Field
 
 
 class FieldDetection:

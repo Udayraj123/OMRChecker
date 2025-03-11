@@ -347,10 +347,10 @@ def process_directory_files(
 
         # ----------
 
-        # TODO: refactor this logic
+        # TODO: refactor and consume within template runner
         (
             is_multi_marked,
-            field_number_to_scan_box_interpretation,
+            field_label_to_scan_box_interpretation,
         ) = template.get_omr_metrics_for_file(str(file_path))
 
         # Save output image with bubble values and evaluation meta
@@ -364,7 +364,7 @@ def process_directory_files(
                 colored_image,
                 template,
                 tuning_config,
-                field_number_to_scan_box_interpretation,
+                field_label_to_scan_box_interpretation,
                 evaluation_meta=evaluation_meta,
                 evaluation_config_for_response=evaluation_config_for_response,
             )
@@ -407,7 +407,7 @@ def process_directory_files(
             template.export_omr_metrics_for_file(
                 str(file_path),
                 evaluation_meta,
-                field_number_to_scan_box_interpretation,
+                field_label_to_scan_box_interpretation,
             )
 
         # Save output CSV results

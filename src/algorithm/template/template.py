@@ -3,7 +3,7 @@ from pathlib import Path
 
 from src.algorithm.template.detection.template_file_runner import TemplateFileRunner
 from src.algorithm.template.directory_handler import DirectoryHandler
-from src.algorithm.template.template_layout import TemplateLayout
+from src.algorithm.template.layout.template_layout import TemplateLayout
 from src.processors.constants import FieldDetectionType
 from src.utils.file import PathUtils, SaveImageOps
 from src.utils.image import ImageUtils
@@ -162,35 +162,38 @@ class Template:
         is_multi_marked = template_file_level_interpretation_aggregates[
             "read_response_flags"
         ]["is_multi_marked"]
+
         field_label_wise_interpretation_aggregates = (
             template_file_level_interpretation_aggregates["field_label_wise_aggregates"]
         )
-
         # TODO: temp logic until template drawing is not migrated -
-        field_number_to_scan_box_interpretation = []
+        field_label_to_scan_box_interpretation = {}
         for field in self.all_fields:
-            field_detection_type, field_label = (
-                field.field_detection_type,
-                field.field_label,
+            field_label = field.field_label
+            interpretation_aggregates_from_field_type_runner = (
+                field_label_wise_interpretation_aggregates[field_label][
+                    "from_field_type_runner"
+                ]
             )
-            if field_detection_type == FieldDetectionType.BUBBLES_THRESHOLD:
-                field_bubble_interpretations = (
-                    field_label_wise_interpretation_aggregates[field_label][
-                        "from_field_type_runner"
-                    ]["field_bubble_interpretations"]
-                )
-                # TODO: improve on this logic to use a better identifier
-                field_number_to_scan_box_interpretation.append(
-                    field_bubble_interpretations
-                )
 
-        return is_multi_marked, field_number_to_scan_box_interpretation
+            # TODO: improve on this logic to use a better identifier
+            if field.field_detection_type == FieldDetectionType.BUBBLES_THRESHOLD:
+                field_bubble_interpretations = (
+                    interpretation_aggregates_from_field_type_runner[
+                        "field_bubble_interpretations"
+                    ]
+                )
+                field_label_to_scan_box_interpretation[
+                    field_label
+                ] = field_bubble_interpretations
+
+        return is_multi_marked, field_label_to_scan_box_interpretation
 
     # TODO: figure out a structure to output directory metrics apart from from this file one.
     # directory_metrics_path = self.path_utils.image_metrics_dir.joinpath()
     # def export_omr_metrics_for_directory()
     def export_omr_metrics_for_file(
-        self, file_path, evaluation_meta, field_number_to_scan_box_interpretation
+        self, file_path, evaluation_meta, field_label_to_scan_box_interpretation
     ):
         # TODO: move these inside self.template_file_runner.get_export_omr_metrics_for_file
         # This can be used for drawing the bubbles etc
@@ -223,9 +226,11 @@ class Template:
         ]
 
         field_wise_means_and_refs = []
-
-        # TODO: loop over using a list of field_labels now
-        for field_bubble_interpretations in field_number_to_scan_box_interpretation:
+        # self.all_fields contains fields in the reference order
+        for field in self.all_fields:
+            field_bubble_interpretations = field_label_to_scan_box_interpretation[
+                field.field_label
+            ]
             field_wise_means_and_refs.extend(field_bubble_interpretations)
         # sorted_global_bubble_means_and_refs = sorted(field_wise_means_and_refs)
 
@@ -236,7 +241,7 @@ class Template:
         template_meta = {
             # "template": template,
             "is_multi_marked": is_multi_marked,
-            "field_number_to_scan_box_interpretation": field_number_to_scan_box_interpretation,
+            "field_label_to_scan_box_interpretation": field_label_to_scan_box_interpretation,
             "file_level_fallback_threshold": file_level_fallback_threshold,
             "confidence_metrics_for_file": confidence_metrics_for_file,
         }

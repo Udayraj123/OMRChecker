@@ -6,7 +6,7 @@ from src.algorithm.evaluation.config import EvaluationConfigForSet
 from src.algorithm.template.detection.bubbles_threshold.interpretation import (
     BubbleInterpretation,
 )
-from src.algorithm.template.template_layout import FieldBlock
+from src.algorithm.template.layout.field_block.base import FieldBlock
 from src.processors.constants import FieldDetectionType
 from src.schemas.constants import AnswerType
 from src.utils.constants import (
@@ -78,7 +78,7 @@ class TemplateDrawing:
         image_type,
         template,
         config,
-        field_number_to_scan_box_interpretation=None,
+        field_label_to_scan_box_interpretation=None,
         evaluation_meta=None,
         evaluation_config_for_response=None,
         shifted=False,
@@ -90,9 +90,9 @@ class TemplateDrawing:
 
         transparent_layer = marked_image.copy()
         should_draw_field_block_rectangles = (
-            field_number_to_scan_box_interpretation is None
+            field_label_to_scan_box_interpretation is None
         )
-        should_draw_marked_bubbles = field_number_to_scan_box_interpretation is not None
+        should_draw_marked_bubbles = field_label_to_scan_box_interpretation is not None
         should_draw_question_verdicts = (
             should_draw_marked_bubbles and evaluation_meta is not None
         )
@@ -111,7 +111,7 @@ class TemplateDrawing:
                         marked_image_copy,
                         image_type,
                         template,
-                        field_number_to_scan_box_interpretation,
+                        field_label_to_scan_box_interpretation,
                         evaluation_meta=None,
                         evaluation_config_for_response=None,
                     )
@@ -129,7 +129,7 @@ class TemplateDrawing:
                 marked_image,
                 image_type,
                 template,
-                field_number_to_scan_box_interpretation,
+                field_label_to_scan_box_interpretation,
                 evaluation_meta,
                 evaluation_config_for_response,
             )
@@ -226,26 +226,24 @@ class TemplateDrawing:
         marked_image,
         image_type,
         template,
-        field_number_to_scan_box_interpretation,
+        field_label_to_scan_box_interpretation,
         evaluation_meta,
         evaluation_config_for_response,
     ):
         should_draw_question_verdicts = (
             evaluation_meta is not None and evaluation_config_for_response is not None
         )
-        absolute_field_number = 0
         for field_block in template.field_blocks:
             for field in field_block.fields:
-                # TODO: draw OCR detections separately (after fixing absolute_field_number)
+                # TODO: draw OCR detections separately
                 # if field.field_detection_type == FieldDetectionType.OCR:
                 if field.field_detection_type != FieldDetectionType.BUBBLES_THRESHOLD:
                     continue
 
                 field_label = field.field_label
-                field_bubble_interpretations = field_number_to_scan_box_interpretation[
-                    absolute_field_number
+                field_bubble_interpretations = field_label_to_scan_box_interpretation[
+                    field_label
                 ]
-                absolute_field_number += 1
                 question_has_verdict = (
                     evaluation_meta is not None
                     and field_label in evaluation_meta["questions_meta"]

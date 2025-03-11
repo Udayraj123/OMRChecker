@@ -1,7 +1,7 @@
 from typing import List
 
 from src.algorithm.template.detection.base.interpretation import FieldInterpretation
-from src.algorithm.template.template_layout import Field
+from src.algorithm.template.layout.field.base import Field
 
 
 class BarcodeInterpretation:
@@ -18,6 +18,7 @@ class BarcodeFieldInterpretation(FieldInterpretation):
         super().__init__(*args, **kwargs)
 
     def get_field_interpretation_string(self):
+        # TODO: update this logic
         marked_interpretations = [
             interpretation.get_value()
             for interpretation in self.interpretations
