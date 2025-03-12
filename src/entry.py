@@ -19,18 +19,15 @@ from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils, Stats
 from src.utils.logger import console, logger
 from src.utils.parsing import open_config_with_defaults
-from src.utils.template_drawing import TemplateDrawingUtils
 
 # Load processors
 STATS = Stats()
-
 
 def entry_point(input_dir, args):
     if not os.path.exists(input_dir):
         raise Exception(f"Given input directory does not exist: '{input_dir}'")
     curr_dir = input_dir
     return process_dir(input_dir, curr_dir, args)
-
 
 # TODO: move into template.directory_handler?
 def print_config_summary(
@@ -68,7 +65,6 @@ def print_config_summary(
     table.add_row("Processing Image Shape", f"{template.get_processing_image_shape()}")
 
     console.print(table, justify="center")
-
 
 # TODO: move into template.directory_handler?
 def process_dir(
@@ -185,7 +181,6 @@ def process_dir(
             evaluation_config,
         )
 
-
 # TODO: move into template.template_layout
 def show_template_layouts(omr_files, template, tuning_config):
     for file_path in omr_files:
@@ -199,15 +194,14 @@ def show_template_layouts(omr_files, template, tuning_config):
             template,
         ) = template.apply_preprocessors(file_path, gray_image, colored_image)
 
-        gray_layout, colored_layout = TemplateDrawingUtils.draw_template_layout(
+        gray_layout, colored_layout = template.drawing.draw_template_layout(
             gray_image,
             colored_image,
-            template,
             tuning_config,
             shifted=False,
             border=2,
         )
-        template_layout = (
+        template_layout_image = (
             colored_layout
             if tuning_config.outputs.colored_outputs_enabled
             else gray_layout
@@ -215,11 +209,11 @@ def show_template_layouts(omr_files, template, tuning_config):
         # Size is template_dimensions
         InteractionUtils.show_for_roi(
             f"Template Layout: {file_name}",
-            template_layout,
+            template_layout_image,
         )
 
 
-# TODO: move into template.directory_handler
+# TODO: move into template.directory_handler/directory_runner
 def process_directory_files(
     omr_files,
     template: Template,
@@ -298,8 +292,13 @@ def process_directory_files(
             gray_image, colored_image, file_path
         )
 
-        # TODO: add a try catch here?
+        # TODO: refactor and consume within template runner
+        (
+            is_multi_marked,
+            field_id_to_interpretations,
+        ) = template.get_omr_metrics_for_file(str(file_path))
 
+        # TODO: add a try except here?
         evaluation_config_for_response = (
             None
             if evaluation_config is None
@@ -345,26 +344,16 @@ def process_directory_files(
         # TODO: move this logic inside the class
         save_marked_dir = template.get_save_marked_dir()
 
-        # ----------
-
-        # TODO: refactor and consume within template runner
-        (
-            is_multi_marked,
-            field_label_to_scan_box_interpretation,
-        ) = template.get_omr_metrics_for_file(str(file_path))
-
         # Save output image with bubble values and evaluation meta
         if output_mode != "moderation":
-            # TODO: move TemplateDrawingUtils functions inside the template class
             (
                 final_marked,
                 colored_final_marked,
-            ) = TemplateDrawingUtils.draw_template_layout(
+            ) = template.drawing.draw_template_layout(
                 gray_image,
                 colored_image,
-                template,
                 tuning_config,
-                field_label_to_scan_box_interpretation,
+                field_id_to_interpretations,
                 evaluation_meta=evaluation_meta,
                 evaluation_config_for_response=evaluation_config_for_response,
             )
@@ -407,7 +396,7 @@ def process_directory_files(
             template.export_omr_metrics_for_file(
                 str(file_path),
                 evaluation_meta,
-                field_label_to_scan_box_interpretation,
+                field_id_to_interpretations,
             )
 
         # Save output CSV results
@@ -488,7 +477,6 @@ def check_and_move(error_code, file_path, filepath2):
     # TODO: fix file movement into error/multimarked/invalid etc again
     STATS.files_not_moved += 1
     return True
-
 
 # TODO: move into template.directory_handler
 def print_stats(start_time, files_counter, tuning_config):

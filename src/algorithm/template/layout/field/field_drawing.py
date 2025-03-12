@@ -31,4 +31,5 @@ class BubbleFieldDrawing(FieldDrawing):
 
 
 class OCRFieldDrawing(FieldDrawing):
+    # TODO: Implement custom drawing of the layout for OCR fields
     pass

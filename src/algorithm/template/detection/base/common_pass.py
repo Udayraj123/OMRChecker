@@ -39,6 +39,7 @@ class FilePassAggregates:
         }
 
     def update_aggregates_on_processed_file(self, file_path):
+        # Nested access
         self.directory_level_aggregates["file_wise_aggregates"][
             file_path
         ] = self.file_level_aggregates

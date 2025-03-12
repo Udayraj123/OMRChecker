@@ -8,6 +8,9 @@ from matplotlib import colormaps, pyplot
 
 from src.algorithm.template.detection.base.interpretation import FieldInterpretation
 from src.algorithm.template.detection.bubbles_threshold.detection import BubbleMeanValue
+from src.algorithm.template.detection.bubbles_threshold.interpretation_drawing import (
+    BubblesFieldInterpretationDrawing,
+)
 from src.algorithm.template.layout.field.base import Field
 from src.utils.logger import logger
 
@@ -37,6 +40,9 @@ class BubbleInterpretation:
 class BubblesFieldInterpretation(FieldInterpretation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def get_drawing_instance(self, field_interpretation):
+        return BubblesFieldInterpretationDrawing(self, field_interpretation)
 
     def get_field_interpretation_string(self):
         marked_bubbles = [
@@ -70,6 +76,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
     ):
         field_label = field.field_label
 
+        # TODO: now we can use field.id
         field_level_detection_aggregates = file_level_detection_aggregates[
             "field_label_wise_aggregates"
         ][field_label]

@@ -6,9 +6,7 @@ from copy import deepcopy
 import pandas as pd
 from rich.table import Table
 
-from src.algorithm.template.detection.bubbles_threshold.interpretation import (
-    BubbleInterpretation,
-)
+from src.algorithm.template.detection.base.interpretation import FieldInterpretation
 from src.schemas.constants import (
     BONUS_SECTION_PREFIX,
     DEFAULT_SECTION_KEY,
@@ -39,6 +37,36 @@ class AnswerMatcher:
         self.answer_type = self.get_answer_type(answer_item)
         self.parse_and_set_answer_item(answer_item)
         self.set_local_marking_defaults(section_marking_scheme)
+
+    @staticmethod
+    def is_part_of_some_answer(question_meta, answer_string):
+        if question_meta["bonus_type"] is not None:
+            return True
+        matched_groups = AnswerMatcher.get_matched_answer_groups(
+            question_meta, answer_string
+        )
+        return len(matched_groups) > 0
+
+    @staticmethod
+    def get_matched_answer_groups(question_meta, answer_string):
+        matched_groups = []
+        answer_type, answer_item = map(
+            question_meta.get, ["answer_type", "answer_item"]
+        )
+
+        if answer_type == AnswerType.STANDARD:
+            # Note: implicit check on concatenated answer
+            if answer_string in str(answer_item):
+                matched_groups.append(0)
+        if answer_type == AnswerType.MULTIPLE_CORRECT:
+            for answer_index, allowed_answer in enumerate(answer_item):
+                if answer_string in allowed_answer:
+                    matched_groups.append(answer_index)
+        elif answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
+            for answer_index, (allowed_answer, score) in enumerate(answer_item):
+                if answer_string in allowed_answer and score > 0:
+                    matched_groups.append(answer_index)
+        return matched_groups
 
     @staticmethod
     def is_a_marking_score(answer_element):
@@ -1076,7 +1104,7 @@ class EvaluationConfigForSet:
         self.explanation_table = table
 
     def get_evaluation_meta_for_question(
-        self, question_meta, bubble_interpretation: BubbleInterpretation, image_type
+        self, question_meta, bubble_interpretation: FieldInterpretation, image_type
     ):
         # TODO: take config for CROSS_TICKS vs BUBBLE_BOUNDARY and call appropriate util
         (

@@ -3,6 +3,7 @@ from pathlib import Path
 
 from src.algorithm.template.detection.template_file_runner import TemplateFileRunner
 from src.algorithm.template.directory_handler import DirectoryHandler
+from src.algorithm.template.layout.template_drawing import TemplateDrawing
 from src.algorithm.template.layout.template_layout import TemplateLayout
 from src.processors.constants import FieldDetectionType
 from src.utils.file import PathUtils, SaveImageOps
@@ -36,7 +37,8 @@ class Template:
             self.template_layout.get_concatenated_omr_response
         )
         self.template_dimensions = self.template_layout.template_dimensions
-        self.drawing = self.template_layout.drawing
+        # TODO: check Traits pattern?
+        self.drawing = TemplateDrawing(self)
 
         self.template_file_runner = TemplateFileRunner(self)
         self.directory_handler = DirectoryHandler(self)
@@ -168,7 +170,7 @@ class Template:
             template_file_level_interpretation_aggregates["field_label_wise_aggregates"]
         )
         # TODO: temp logic until template drawing is not migrated -
-        field_label_to_scan_box_interpretation = {}
+        field_id_to_interpretations = {}
         for field in self.all_fields:
             field_label = field.field_label
             interpretation_aggregates_from_field_type_runner = (
@@ -184,17 +186,15 @@ class Template:
                         "field_bubble_interpretations"
                     ]
                 )
-                field_label_to_scan_box_interpretation[
-                    field_label
-                ] = field_bubble_interpretations
+                field_id_to_interpretations[field.id] = field_bubble_interpretations
 
-        return is_multi_marked, field_label_to_scan_box_interpretation
+        return is_multi_marked, field_id_to_interpretations
 
     # TODO: figure out a structure to output directory metrics apart from from this file one.
     # directory_metrics_path = self.path_utils.image_metrics_dir.joinpath()
     # def export_omr_metrics_for_directory()
     def export_omr_metrics_for_file(
-        self, file_path, evaluation_meta, field_label_to_scan_box_interpretation
+        self, file_path, evaluation_meta, field_id_to_interpretations
     ):
         # TODO: move these inside self.template_file_runner.get_export_omr_metrics_for_file
         # This can be used for drawing the bubbles etc
@@ -229,7 +229,7 @@ class Template:
         field_wise_means_and_refs = []
         # self.all_fields contains fields in the reference order
         for field in self.all_fields:
-            field_bubble_interpretations = field_label_to_scan_box_interpretation[
+            field_bubble_interpretations = field_id_to_interpretations[
                 field.field_label
             ]
             field_wise_means_and_refs.extend(field_bubble_interpretations)
@@ -242,7 +242,7 @@ class Template:
         template_meta = {
             # "template": template,
             "is_multi_marked": is_multi_marked,
-            "field_label_to_scan_box_interpretation": field_label_to_scan_box_interpretation,
+            "field_id_to_interpretations": field_id_to_interpretations,
             "file_level_fallback_threshold": file_level_fallback_threshold,
             "confidence_metrics_for_file": confidence_metrics_for_file,
         }

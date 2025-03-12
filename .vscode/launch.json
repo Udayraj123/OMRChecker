@@ -7,7 +7,11 @@
       "request": "launch",
       "python": "${workspaceFolder}/.venv/bin/python",
       "program": "main.py",
-      "args": ["-i", "${input:sampleFolder}", "--debug"],
+      "args": [
+        "-i",
+        "${input:sampleFolder}",
+        "--debug"
+      ],
       "console": "integratedTerminal"
     }
   ],

@@ -19,13 +19,17 @@ class Field:
         field_label,
         origin,
     ):
-        self.field_detection_type = field_detection_type
         self.direction = direction
         self.empty_value = empty_value
-        self.field_label = field_label
-        self.origin = origin
+
         # reference to get shifts at runtime
         self.field_block = field_block
+
+        self.field_detection_type = field_detection_type
+        self.field_label = field_label
+        self.id = f"{field_block.name}_{field_label}"
+        self.origin = origin
+
         self.scan_boxes: List[ScanBox] = []
         # Child class would populate scan_boxes
         self.setup_scan_boxes(field_block)
@@ -52,6 +56,7 @@ class Field:
         return {
             key: default_dump(getattr(self, key))
             for key in [
+                "id",
                 "field_label",
                 "field_detection_type",
                 "direction",

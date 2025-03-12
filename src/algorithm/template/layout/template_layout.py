@@ -4,7 +4,6 @@ from typing import List
 
 from src.algorithm.template.layout.field.base import Field
 from src.algorithm.template.layout.field_block.base import FieldBlock
-from src.algorithm.template.layout.template_drawing import TemplateDrawing
 from src.processors.constants import FieldDetectionType
 from src.processors.manager import PROCESSOR_MANAGER
 from src.utils.constants import BUILTIN_BUBBLE_FIELD_TYPES
@@ -88,9 +87,6 @@ class TemplateLayout:
 
         # TODO: this is dependent on other calls to finish
         self.setup_alignment(alignment_object, template_path.parent)
-
-        # Traits
-        self.drawing = TemplateDrawing(self)
 
     def get_copy_for_shifting(self):
         # Copy template for this instance op
