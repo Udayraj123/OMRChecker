@@ -19,7 +19,7 @@
     {
       "id": "sampleFolder",
       "type": "promptString",
-      "default": "samples/experimental/5-ocr",
+      "default": "samples/1-mobile-camera",
       "description": "Path to the input folder"
     }
   ]

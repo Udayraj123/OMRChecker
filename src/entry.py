@@ -23,11 +23,13 @@ from src.utils.parsing import open_config_with_defaults
 # Load processors
 STATS = Stats()
 
+
 def entry_point(input_dir, args):
     if not os.path.exists(input_dir):
         raise Exception(f"Given input directory does not exist: '{input_dir}'")
     curr_dir = input_dir
     return process_dir(input_dir, curr_dir, args)
+
 
 # TODO: move into template.directory_handler?
 def print_config_summary(
@@ -65,6 +67,7 @@ def print_config_summary(
     table.add_row("Processing Image Shape", f"{template.get_processing_image_shape()}")
 
     console.print(table, justify="center")
+
 
 # TODO: move into template.directory_handler?
 def process_dir(
@@ -181,6 +184,7 @@ def process_dir(
             evaluation_config,
         )
 
+
 # TODO: move into template.template_layout
 def show_template_layouts(omr_files, template, tuning_config):
     for file_path in omr_files:
@@ -295,7 +299,7 @@ def process_directory_files(
         # TODO: refactor and consume within template runner
         (
             is_multi_marked,
-            field_id_to_interpretations,
+            field_id_to_interpretation,
         ) = template.get_omr_metrics_for_file(str(file_path))
 
         # TODO: add a try except here?
@@ -353,7 +357,7 @@ def process_directory_files(
                 gray_image,
                 colored_image,
                 tuning_config,
-                field_id_to_interpretations,
+                field_id_to_interpretation,
                 evaluation_meta=evaluation_meta,
                 evaluation_config_for_response=evaluation_config_for_response,
             )
@@ -396,7 +400,7 @@ def process_directory_files(
             template.export_omr_metrics_for_file(
                 str(file_path),
                 evaluation_meta,
-                field_id_to_interpretations,
+                field_id_to_interpretation,
             )
 
         # Save output CSV results
@@ -477,6 +481,7 @@ def check_and_move(error_code, file_path, filepath2):
     # TODO: fix file movement into error/multimarked/invalid etc again
     STATS.files_not_moved += 1
     return True
+
 
 # TODO: move into template.directory_handler
 def print_stats(start_time, files_counter, tuning_config):

@@ -308,11 +308,11 @@ common_evaluation_schema_properties = {
                         "required": ["correct", "neutral", "incorrect", "bonus"],
                         "properties": {
                             "correct": {
-                                "description": "The color of the bubble box when delta > 0",
+                                "description": "The color of the field box when delta > 0",
                                 "$ref": "#/$def/matplotlib_color",
                             },
                             "neutral": {
-                                "description": "The color of the bubble box when delta == 0 (defaults to incorrect)",
+                                "description": "The color of the field box when delta == 0 (defaults to incorrect)",
                                 "oneOf": [
                                     {"$ref": "#/$def/matplotlib_color"},
                                     # Allow null for default to incorrect color
@@ -320,11 +320,11 @@ common_evaluation_schema_properties = {
                                 ],
                             },
                             "incorrect": {
-                                "description": "The color of the bubble box when delta < 0",
+                                "description": "The color of the field box when delta < 0",
                                 "$ref": "#/$def/matplotlib_color",
                             },
                             "bonus": {
-                                "description": "The color of the bubble box when delta > 0 and question is part of a bonus scheme",
+                                "description": "The color of the field box when delta > 0 and question is part of a bonus scheme",
                                 "$ref": "#/$def/matplotlib_color",
                             },
                         },

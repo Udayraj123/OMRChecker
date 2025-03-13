@@ -15,6 +15,7 @@ class BarcodeInterpretation:
 
 class BarcodeFieldInterpretation(FieldInterpretation):
     def __init__(self, *args, **kwargs):
+        self.interpretations: List[BarcodeInterpretation] = None
         super().__init__(*args, **kwargs)
 
     def get_field_interpretation_string(self):

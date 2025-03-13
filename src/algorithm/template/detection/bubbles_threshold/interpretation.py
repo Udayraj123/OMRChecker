@@ -39,15 +39,16 @@ class BubbleInterpretation:
 
 class BubblesFieldInterpretation(FieldInterpretation):
     def __init__(self, *args, **kwargs):
+        self.bubble_interpretations: List[BubbleInterpretation] = None
         super().__init__(*args, **kwargs)
 
-    def get_drawing_instance(self, field_interpretation):
-        return BubblesFieldInterpretationDrawing(self, field_interpretation)
+    def get_drawing_instance(self):
+        return BubblesFieldInterpretationDrawing(self)
 
     def get_field_interpretation_string(self):
         marked_bubbles = [
             bubble_interpretation.bubble_value
-            for bubble_interpretation in self.field_bubble_interpretations
+            for bubble_interpretation in self.bubble_interpretations
             if bubble_interpretation.is_marked
         ]
         # Empty value logic
@@ -66,7 +67,13 @@ class BubblesFieldInterpretation(FieldInterpretation):
         self.initialize_from_file_level_aggregates(
             field, file_level_detection_aggregates, file_level_interpretation_aggregates
         )
-        self.process_field_bubble_means()
+
+        self.update_local_threshold_for_field()
+        self.update_interpretations_for_field()
+
+        # TODO: see if parent can call this function -
+        self.update_common_interpretations()
+        self.update_field_level_confidence_metrics()
 
     def initialize_from_file_level_aggregates(
         self,
@@ -101,16 +108,6 @@ class BubblesFieldInterpretation(FieldInterpretation):
         # directory_level_bubble_field_type_average_threshold = directory_level_interpretation_aggregates["bubble_field_type_wise_thresholds"][field.bubble_field_type].running_average
         # directory_level_field_label_average_threshold = directory_level_interpretation_aggregates["field_label_wise_local_thresholds"][field_label].running_average
 
-    def process_field_bubble_means(
-        self,
-    ):
-        self.update_local_threshold_for_field()
-        self.update_interpretations_for_field()
-
-        # TODO: see if parent can call this function -
-        self.update_common_interpretations()
-        self.update_field_level_confidence_metrics()
-
     def update_local_threshold_for_field(self):
         field = self.field
         config = self.tuning_config
@@ -133,11 +130,11 @@ class BubblesFieldInterpretation(FieldInterpretation):
         )
 
     def update_interpretations_for_field(self):
-        self.field_bubble_interpretations: List[BubbleInterpretation] = []
+        self.bubble_interpretations: List[BubbleInterpretation] = []
 
         # Main detection/thresholding logic here:
         for field_bubble_mean in self.field_bubble_means:
-            self.field_bubble_interpretations.append(
+            self.bubble_interpretations.append(
                 BubbleInterpretation(field_bubble_mean, self.local_threshold_for_field)
             )
 
@@ -145,7 +142,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
         # TODO: can we move it to a common wrapper since is_multi_marked is independent of field detection type?
         marked_bubbles = [
             bubble_interpretation.bubble_value
-            for bubble_interpretation in self.field_bubble_interpretations
+            for bubble_interpretation in self.bubble_interpretations
             if bubble_interpretation.is_marked
         ]
         self.is_multi_marked = len(marked_bubbles) > 1
@@ -424,7 +421,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
     @staticmethod
     def calculate_field_level_confidence_metrics(
         field: Field,
-        # TODO: call from FieldInterpretation? using field_bubble_interpretations?
+        # TODO: call from FieldInterpretation? using bubble_interpretations?
         field_bubble_means: List[BubbleMeanValue],
         config,
         local_threshold_for_field,

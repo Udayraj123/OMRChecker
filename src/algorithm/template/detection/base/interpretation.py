@@ -19,13 +19,14 @@ class FieldInterpretation:
         # self.field_block = field.field_block
         self.empty_value = field.empty_value
         self.field_level_confidence_metrics = {}
+        self.drawing = self.get_drawing_instance()
 
         self.run_interpretation(
             field, file_level_detection_aggregates, file_level_interpretation_aggregates
         )
 
     @abstractmethod
-    def get_drawing_instance(self, field_interpretation):
+    def get_drawing_instance(self):
         raise Exception(f"Not implemented")
 
     @abstractmethod

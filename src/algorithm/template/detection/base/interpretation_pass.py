@@ -38,6 +38,7 @@ class FieldTypeInterpretationPass(FilePassAggregates):
         self.insert_file_level_aggregates(
             {
                 "confidence_metrics_for_file": {},
+                "field_id_to_interpretation": {},
             }
         )
 
@@ -75,6 +76,10 @@ class FieldTypeInterpretationPass(FilePassAggregates):
             field.field_label
         ] = field_interpretation.get_field_level_confidence_metrics()
 
+        self.file_level_aggregates["field_id_to_interpretation"][
+            field.id
+        ] = field_interpretation
+
         super().update_file_level_aggregates_on_processed_field(
             field, field_level_aggregates
         )
@@ -102,6 +107,7 @@ class TemplateInterpretationPass(FilePassAggregates):
         self.insert_file_level_aggregates(
             {
                 "confidence_metrics_for_file": {},
+                "field_id_to_interpretation": {},
                 "files_by_label_count": StatsByLabel("processed", "multi_marked"),
                 "read_response_flags": {
                     "is_multi_marked": False,
@@ -186,6 +192,10 @@ class TemplateInterpretationPass(FilePassAggregates):
         super().update_file_level_aggregates_on_processed_field(
             field, template_field_level_aggregates
         )
+
+        self.file_level_aggregates["field_id_to_interpretation"][
+            field.id
+        ] = field_interpretation
 
         self.file_level_aggregates["confidence_metrics_for_file"][
             field.field_label
