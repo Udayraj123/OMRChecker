@@ -1,6 +1,7 @@
 import os
 from typing import List
 
+from src.algorithm.template.detection.barcode.file_runner import BarcodeFileRunner
 from src.algorithm.template.detection.base.detection_pass import TemplateDetectionPass
 from src.algorithm.template.detection.base.file_runner import (
     FieldTypeFileLevelRunner,
@@ -28,7 +29,7 @@ class TemplateFileRunner(FileLevelRunner):
     field_detection_type_to_runner = {
         FieldDetectionType.BUBBLES_THRESHOLD: BubblesThresholdFileRunner,
         FieldDetectionType.OCR: OCRFileRunner,
-        # FieldDetectionType.BARCODE_QR: BarcodeQRRunner,
+        FieldDetectionType.BARCODE_QR: BarcodeFileRunner,
         # FieldDetectionType.BUBBLES_BLOB: BubblesBlobRunner,
     }
 

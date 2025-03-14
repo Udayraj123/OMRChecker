@@ -1,6 +1,7 @@
 from copy import copy as shallowcopy
 from typing import List
 
+from src.algorithm.template.layout.field.barcode_field import BarcodeField
 from src.algorithm.template.layout.field.base import Field, ScanBox
 from src.algorithm.template.layout.field.bubble_field import BubbleField
 from src.algorithm.template.layout.field.ocr_field import OCRField
@@ -15,6 +16,7 @@ class FieldBlock:
     field_detection_type_to_field_class = {
         FieldDetectionType.BUBBLES_THRESHOLD: BubbleField,
         FieldDetectionType.OCR: OCRField,
+        FieldDetectionType.BARCODE_QR: BarcodeField,
     }
 
     def __init__(self, block_name, field_block_object, field_blocks_offset):
@@ -95,6 +97,10 @@ class FieldBlock:
             self.setup_bubbles_field_block(field_block_object)
         elif field_detection_type == FieldDetectionType.OCR:
             self.setup_ocr_field_block(field_block_object)
+        elif field_detection_type == FieldDetectionType.BARCODE_QR:
+            self.setup_barcode_qr_field_block(field_block_object)
+        else:
+            raise Exception(f"Unsupported field detection type: {field_detection_type}")
         # TODO: support barcode, photo blob, etc custom field types
         # logger.info(
         #     "field_detection_type", field_detection_type, "labels_gap", labels_gap
@@ -142,6 +148,15 @@ class FieldBlock:
         # Setup custom props
         self.scan_zone = scan_zone
         # TODO: compute scan zone?
+
+    def setup_barcode_qr_field_block(self, field_block_object):
+        (scan_zone,) = map(
+            field_block_object.get,
+            [
+                "scanZone",
+            ],
+        )
+        self.scan_zone = scan_zone
 
     def generate_fields(
         self,

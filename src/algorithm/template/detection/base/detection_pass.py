@@ -7,6 +7,13 @@ from src.utils.stats import StatsByLabel
 
 
 class FieldTypeDetectionPass(FilePassAggregates):
+    """ "
+    FieldTypeDetectionPass implements detection pass for specific field types, managing the detection-related aggregates."
+    It is responsible for executing detection logic on the image from the field information.
+    It does not determine the actual field values, that is left to the interpretation pass
+    which can make use of aggregate data collected during the detection pass.
+    """
+
     def __init__(self, tuning_config, field_detection_type):
         self.field_detection_type = field_detection_type
         super().__init__(tuning_config)

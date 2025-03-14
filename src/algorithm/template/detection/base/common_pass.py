@@ -3,6 +3,10 @@ from src.utils.stats import StatsByLabel
 
 
 class FilePassAggregates:
+    """
+    Interface defining methods for collecting and managing data during file processing at various levels (field, file, directory).
+    """
+
     def __init__(self, tuning_config):
         self.tuning_config = tuning_config
 

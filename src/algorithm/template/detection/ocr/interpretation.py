@@ -5,6 +5,7 @@ from src.algorithm.template.detection.ocr.interpretation_drawing import (
     OCRFieldInterpretationDrawing,
 )
 from src.algorithm.template.layout.field.base import Field
+from src.utils.logger import logger
 
 
 class OCRInterpretation:
@@ -68,6 +69,9 @@ class OCRFieldInterpretation(FieldInterpretation):
             OCRInterpretation(detection)
             for detection in field_level_detection_aggregates["detections"]
         ]
+
+        if len(self.interpretations) == 0:
+            logger.warning(f"No OCR detection for field: {self.field.id}")
 
     def update_common_interpretations(self):
         # TODO: can we move it to a common wrapper since is_multi_marked is independent of field detection type?

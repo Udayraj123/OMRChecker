@@ -15,11 +15,11 @@ class EasyOCR(TextOCR):
         filtered_texts_with_boxes = EasyOCR.read_texts_with_boxes(
             image, confidence_threshold, sort_by_score=True
         )
-        filtered_texts = [
+        filtered_detections = [
             EasyOCR.convert_to_text_detection(box, text, score, clear_whitespace)
             for (box, text, score) in filtered_texts_with_boxes
         ]
-        return filtered_texts
+        return filtered_detections
 
     @staticmethod
     def get_single_text_detection(
@@ -71,7 +71,7 @@ class EasyOCR(TextOCR):
         return found_box
 
     @staticmethod
-    def convert_to_text_detection(box, text, score, clear_whitespace=True):
+    def convert_to_text_detection(box, text, score, clear_whitespace):
         ordered_box, _ordered_indices = MathUtils.order_four_points(box)
 
         # Since easyocr doesn't return rotated rectangle, we pass box as the closest value.
@@ -80,4 +80,4 @@ class EasyOCR(TextOCR):
         # Process to a cv2 printable text
         processed_text = TextOCR.postprocess_text(text, clear_whitespace)
 
-        return TextDetection(processed_text, box, rotated_rect, score)
+        return TextDetection(processed_text, ordered_box, rotated_rect, score)

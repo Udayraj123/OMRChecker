@@ -6,7 +6,7 @@ from src.utils.drawing import DrawingUtils
 from src.utils.math import MathUtils
 
 
-class OCRFieldInterpretationDrawing(FieldInterpretationDrawing):
+class BarcodeFieldInterpretationDrawing(FieldInterpretationDrawing):
     def __init__(self, field_interpretation):
         super().__init__(field_interpretation)
 
@@ -24,6 +24,7 @@ class OCRFieldInterpretationDrawing(FieldInterpretationDrawing):
             bounding_box = interpretation.detection.bounding_box
             DrawingUtils.draw_contour(marked_image, bounding_box, color=CLR_BLACK)
             all_bounding_box_points.extend(bounding_box)
+
         combined_bounding_box, _dimensions = MathUtils.get_bounding_box_of_points(
             all_bounding_box_points
         )
@@ -59,7 +60,7 @@ class OCRFieldInterpretationDrawing(FieldInterpretationDrawing):
             marked_image, combined_bounding_box, color=combined_bounding_box_color
         )
 
-        # This string is the interpreted text from the OCR detection
+        # This string is the interpreted text from the Barcode detection
         interpreted_text = field_interpretation.get_field_interpretation_string()
         DrawingUtils.draw_text_responsive(
             marked_image, interpreted_text, text_position, color=CLR_BLACK, thickness=3

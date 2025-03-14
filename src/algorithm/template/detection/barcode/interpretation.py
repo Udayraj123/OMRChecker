@@ -1,7 +1,11 @@
 from typing import List
 
+from src.algorithm.template.detection.barcode.interpretation_drawing import (
+    BarcodeFieldInterpretationDrawing,
+)
 from src.algorithm.template.detection.base.interpretation import FieldInterpretation
 from src.algorithm.template.layout.field.base import Field
+from src.utils.logger import logger
 
 
 class BarcodeInterpretation:
@@ -19,6 +23,9 @@ class BarcodeFieldInterpretation(FieldInterpretation):
         self.interpretations: List[BarcodeInterpretation] = None
         super().__init__(*args, **kwargs)
 
+    def get_drawing_instance(self):
+        return BarcodeFieldInterpretationDrawing(self)
+
     def get_field_interpretation_string(self):
         # TODO: update this logic
         marked_interpretations = [
@@ -30,10 +37,9 @@ class BarcodeFieldInterpretation(FieldInterpretation):
         if len(marked_interpretations) == 0:
             return self.empty_value
 
-        # TODO: if self.interpretation_config.concatenation.enabled:
-        # return "".join(marked_interpretations)
-
-        return marked_interpretations[0]
+        # TODO: if not self.interpretation_config.concatenation.enabled:
+        #   return marked_interpretations[0]
+        return "".join(marked_interpretations)
 
     def run_interpretation(
         self,
@@ -64,15 +70,15 @@ class BarcodeFieldInterpretation(FieldInterpretation):
             for detection in field_level_detection_aggregates["detections"]
         ]
 
+        if len(self.interpretations) == 0:
+            logger.warning(f"No Barcode detection for field: {self.field.id}")
+
     def update_common_interpretations(self):
         # TODO: can we move it to a common wrapper since is_multi_marked is independent of field detection type?
-        for interpretation in self.interpretations:
-            if interpretation.get_value() == "":
-                interpretation.is_marked = False
-
         marked_interpretations = [
             interpretation.get_value()
             for interpretation in self.interpretations
             if interpretation.is_marked
         ]
+        self.is_marked = len(marked_interpretations) > 0
         self.is_multi_marked = len(marked_interpretations) > 1

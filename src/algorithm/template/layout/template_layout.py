@@ -208,15 +208,14 @@ class TemplateLayout:
                     raise Exception(
                         f"Invalid bubble field type: {bubble_field_type} in block {block_name}"
                     )
-            elif field_block_object["fieldDetectionType"] == FieldDetectionType.OCR:
-                field_labels = field_block_object["fieldLabels"]
-                if len(field_labels) > 1 and "labelsGap" not in field_block_object:
-                    logger.critical(
-                        f"More than one fieldLabels({field_labels}) provided, but labelsGap not present for block {block_name}"
-                    )
-                    raise Exception(
-                        f"More than one fieldLabels provided, but labelsGap not present for block {block_name}"
-                    )
+            field_labels = field_block_object["fieldLabels"]
+            if len(field_labels) > 1 and "labelsGap" not in field_block_object:
+                logger.critical(
+                    f"More than one fieldLabels({field_labels}) provided, but labelsGap not present for block {block_name}"
+                )
+                raise Exception(
+                    f"More than one fieldLabels provided, but labelsGap not present for block {block_name}"
+                )
 
     # TODO: move out to template_alignment.py
     def setup_alignment(self, alignment_object, relative_dir):
@@ -383,6 +382,12 @@ class TemplateLayout:
                 **field_type_data,
             }
         elif field_block_object["fieldDetectionType"] == FieldDetectionType.OCR:
+            filled_field_block_object = {
+                "emptyValue": self.global_empty_val,
+                "labelsGap": 0,
+                **filled_field_block_object,
+            }
+        elif field_block_object["fieldDetectionType"] == FieldDetectionType.BARCODE_QR:
             filled_field_block_object = {
                 "emptyValue": self.global_empty_val,
                 "labelsGap": 0,

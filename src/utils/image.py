@@ -396,7 +396,7 @@ class ImageUtils:
         return [zone_start, zone_end]
 
     @staticmethod
-    def rotate(image, rotation, keep_original_shape):
+    def rotate(image, rotation, keep_original_shape=False):
         if keep_original_shape:
             image_shape = image.shape[0:2]
             image = cv2.rotate(image, rotation)

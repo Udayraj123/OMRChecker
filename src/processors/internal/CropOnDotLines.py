@@ -361,13 +361,14 @@ class CropOnDotLines(CropOnPatchesCommon):
         )
         if corners is None:
             if config.outputs.show_image_level >= 1:
+                if len(self.debug_hstack) > 0:
+                    InteractionUtils.show(
+                        f"No patch/dot debug hstack",
+                        ImageUtils.get_padded_hstack(self.debug_hstack),
+                        pause=0,
+                    )
                 hstack = ImageUtils.get_padded_hstack(
                     [self.debug_image, zone, white_thresholded]
-                )
-                InteractionUtils.show(
-                    f"No patch/dot debug hstack",
-                    ImageUtils.get_padded_hstack(self.debug_hstack),
-                    pause=0,
                 )
                 InteractionUtils.show(f"No patch/dot found:", hstack, pause=1)
 

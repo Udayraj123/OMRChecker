@@ -401,31 +401,6 @@ many_field_blocks_description_def = {
                         },
                     },
                 },
-                # {
-                #     "if": {
-                #         "properties": {
-                #             "fieldDetectionType": {
-                #                 "const": FieldDetectionType.BARCODE_QR
-                #             }
-                #         },
-                #     },
-                #     "then": {
-                #         # TODO: move barcode specific properties into this if-else
-                #         "required": [
-                #             "scanZone",
-                #             "bubbleFieldType",
-                #             "fieldLabels",
-                #             # TODO: "failIfNotFound"
-                #             # "emptyValue",
-                #         ],
-                #         "additionalProperties": False,
-                #         "properties": {
-                #             **_common_field_block_properties,
-                #             "scanZone": _box_zone_description,
-                #             "fieldLabels": {"type": "string"},
-                #         },
-                #     },
-                # },
                 {
                     "if": {
                         "properties": {
@@ -451,6 +426,30 @@ many_field_blocks_description_def = {
                         },
                     },
                 },
+                {
+                    "if": {
+                        "properties": {
+                            "fieldDetectionType": {
+                                "const": FieldDetectionType.BARCODE_QR
+                            }
+                        },
+                        "required": [
+                            "origin",
+                            "scanZone",
+                            "fieldLabels",
+                        ],
+                    },
+                    "then": {
+                        "additionalProperties": False,
+                        "properties": {
+                            **_common_field_block_properties,
+                            "scanZone": {
+                                **_box_zone_description,
+                                "required": ["dimensions", "margins"],
+                            },
+                        },
+                    },
+                }
                 # TODO: support for more custom fields at top level fieldDetectionType
             ],
         }

@@ -7,6 +7,10 @@ from src.utils.stats import StatsByLabel
 
 
 class FieldTypeInterpretationPass(FilePassAggregates):
+    """
+    Implements interpretation pass for field types, managing the interpretation-related aggregates.
+    """
+
     def __init__(self, tuning_config, field_detection_type):
         self.field_detection_type = field_detection_type
         super().__init__(tuning_config)
