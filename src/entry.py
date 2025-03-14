@@ -302,7 +302,6 @@ def process_directory_files(
             field_id_to_interpretation,
         ) = template.get_omr_metrics_for_file(str(file_path))
 
-        # TODO: add a try except here?
         evaluation_config_for_response = (
             None
             if evaluation_config is None
@@ -311,14 +310,11 @@ def process_directory_files(
             )
         )
 
-        if (
-            evaluation_config_for_response is None
-            or not evaluation_config_for_response.get_should_explain_scoring()
-        ):
-            logger.info(f"Read Response: \n{concatenated_omr_response}")
-
         score, evaluation_meta = 0, None
         if evaluation_config_for_response is not None:
+            if not evaluation_config_for_response.get_should_explain_scoring():
+                logger.info(f"Read Response: \n{concatenated_omr_response}")
+            # TODO: add a try except here?
             score, evaluation_meta = evaluate_concatenated_response(
                 concatenated_omr_response, evaluation_config_for_response
             )
@@ -343,6 +339,7 @@ def process_directory_files(
                 )
 
         else:
+            logger.info(f"Read Response: \n{concatenated_omr_response}")
             logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
 
         # TODO: move this logic inside the class

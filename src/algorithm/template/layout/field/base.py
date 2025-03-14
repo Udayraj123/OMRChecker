@@ -27,7 +27,7 @@ class Field:
 
         self.field_detection_type = field_detection_type
         self.field_label = field_label
-        self.id = f"{field_block.name}_{field_label}"
+        self.id = f"{field_block.name}::{field_label}"
         self.origin = origin
 
         self.scan_boxes: List[ScanBox] = []
@@ -49,7 +49,7 @@ class Field:
             bubble.reset_shifts()
 
     def __str__(self):
-        return self.field_label
+        return self.id
 
     # Make the class serializable
     def to_json(self):

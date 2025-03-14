@@ -189,7 +189,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
                 f"Expected 4 control points for perspective transform, found {len(parsed_control_points)}. If you want to use a different method, pass it in tuningOptions['warpMethod']"
             )
         # TODO: order the points from outside in parsing itself
-        parsed_control_points, ordered_indices = MathUtils.order_four_points(
+        parsed_control_points, _ = MathUtils.order_four_points(
             parsed_control_points, dtype="float32"
         )
         # TODO: fix use _parsed_destination_points and make it work?

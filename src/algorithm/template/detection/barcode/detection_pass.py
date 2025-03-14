@@ -35,9 +35,7 @@ class BarcodeDetectionPass(FieldTypeDetectionPass):
         super().update_field_level_aggregates_on_processed_field_detection(
             field, field_detection
         )
-        self.insert_field_level_aggregates(
-            {"detected_texts": field_detection.detected_texts}
-        )
+        self.insert_field_level_aggregates({"detections": field_detection.detections})
 
     def update_file_level_aggregates_on_processed_field_detection(
         self,

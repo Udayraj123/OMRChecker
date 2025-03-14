@@ -67,6 +67,7 @@ class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
         question_meta,
         evaluation_config_for_response,
     ):
+        # TODO: check whether the custom label(if any) using this field was part of a correct answer
         for bubble_interpretation in bubble_interpretations:
             BubblesFieldInterpretationDrawing.draw_unit_bubble_interpretation_with_verdicts(
                 bubble_interpretation,
@@ -108,7 +109,7 @@ class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
                     thickness_factor=1 / 12,
                 )
                 if (
-                    # Note: this mimics the default true behavior for draw_detected_bubble_texts
+                    # Note: this mimics the default true behaviour for draw_detected_bubble_texts
                     evaluation_config_for_response is None
                     or evaluation_config_for_response.draw_detected_bubble_texts[
                         "enabled"
@@ -147,6 +148,8 @@ class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
         shifted_position = tuple(bubble.get_shifted_position())
         bubble_value = str(bubble.bubble_value)
 
+        # TODO: support for customLabels may change this logic
+
         # Enhanced bounding box for expected answer:
         if AnswerMatcher.is_part_of_some_answer(question_meta, bubble_value):
             DrawingUtils.draw_box(
@@ -166,7 +169,7 @@ class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
                 verdict_symbol_color,
                 thickness_factor,
             ) = evaluation_config_for_response.get_evaluation_meta_for_question(
-                question_meta, bubble_interpretation, image_type
+                question_meta, bubble_interpretation.is_marked, image_type
             )
 
             # Bounding box for marked bubble or bonus bubble

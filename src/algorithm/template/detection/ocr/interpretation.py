@@ -8,9 +8,10 @@ from src.algorithm.template.layout.field.base import Field
 
 
 class OCRInterpretation:
-    def __init__(self, detected_text):
-        self.is_marked = True
-        self.detected_text = detected_text
+    def __init__(self, detection):
+        self.detection = detection
+        self.is_marked = detection is not None
+        self.detected_text = detection.detected_text if self.is_marked else ""
 
     def get_value(self):
         return self.detected_text
@@ -35,10 +36,9 @@ class OCRFieldInterpretation(FieldInterpretation):
         if len(marked_interpretations) == 0:
             return self.empty_value
 
-        # TODO: if self.interpretation_config.concatenation.enabled:
-        # return "".join(marked_interpretations)
-
-        return marked_interpretations[0]
+        # TODO: if not self.interpretation_config.concatenation.enabled:
+        #   return marked_interpretations[0]
+        return "".join(marked_interpretations)
 
     def run_interpretation(
         self,
@@ -65,18 +65,16 @@ class OCRFieldInterpretation(FieldInterpretation):
 
         # map detections to interpretations
         self.interpretations: List[OCRInterpretation] = [
-            OCRInterpretation(detected_text)
-            for detected_text in field_level_detection_aggregates["detected_texts"]
+            OCRInterpretation(detection)
+            for detection in field_level_detection_aggregates["detections"]
         ]
 
     def update_common_interpretations(self):
         # TODO: can we move it to a common wrapper since is_multi_marked is independent of field detection type?
-        for interpretation in self.interpretations:
-            if interpretation.get_value() == "":
-                interpretation.is_marked = False
         marked_interpretations = [
             interpretation.get_value()
             for interpretation in self.interpretations
             if interpretation.is_marked
         ]
+        self.is_marked = len(marked_interpretations) > 0
         self.is_multi_marked = len(marked_interpretations) > 1

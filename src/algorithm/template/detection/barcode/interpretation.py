@@ -5,9 +5,10 @@ from src.algorithm.template.layout.field.base import Field
 
 
 class BarcodeInterpretation:
-    def __init__(self, detected_text):
-        self.is_marked = True
-        self.detected_text = detected_text
+    def __init__(self, detection):
+        self.detection = detection
+        self.is_marked = detection is not None
+        self.detected_text = detection.detected_text if self.is_marked else ""
 
     def get_value(self):
         return self.detected_text
@@ -59,8 +60,8 @@ class BarcodeFieldInterpretation(FieldInterpretation):
 
         # map detections to interpretations
         self.interpretations: List[BarcodeInterpretation] = [
-            BarcodeInterpretation(detected_text)
-            for detected_text in field_level_detection_aggregates["detected_texts"]
+            BarcodeInterpretation(detection)
+            for detection in field_level_detection_aggregates["detections"]
         ]
 
     def update_common_interpretations(self):

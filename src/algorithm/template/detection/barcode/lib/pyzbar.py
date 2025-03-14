@@ -6,7 +6,7 @@ from src.algorithm.template.detection.barcode.lib.text_barcode import TextBarcod
 
 class PyZBar(TextBarcode):
     @staticmethod
-    def read_texts(image, confidence_threshold=0.8):
+    def get_all_text_detections(image, confidence_threshold=0.8):
         filtered_texts_with_boxes = PyZBar.read_texts_with_boxes(
             image, confidence_threshold
         )
@@ -16,7 +16,9 @@ class PyZBar(TextBarcode):
         return filtered_texts
 
     @staticmethod
-    def read_single_text(image, confidence_threshold=0.8, clear_whitespace=True):
+    def get_single_text_detection(
+        image, confidence_threshold=0.8, clear_whitespace=True
+    ):
         filtered_texts_with_boxes = PyZBar.read_texts_with_boxes(
             image, confidence_threshold, sort_by_score=True
         )

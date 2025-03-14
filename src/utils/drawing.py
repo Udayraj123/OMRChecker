@@ -134,6 +134,15 @@ class DrawingUtils:
         return image
 
     @staticmethod
+    def draw_text_responsive(image, text, position, *args, **kwargs):
+        h, w = image.shape[:2]
+        text_position = lambda size_x, size_y: (
+            position[0] - max(0, position[0] + size_x - w),
+            position[1] - max(0, position[1] + size_y - h),
+        )
+        DrawingUtils.draw_text(image, text, text_position, *args, **kwargs)
+
+    @staticmethod
     def draw_text(
         image,
         text_value,

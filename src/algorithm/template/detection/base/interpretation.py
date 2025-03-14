@@ -15,7 +15,7 @@ class FieldInterpretation:
         self.field = field
 
         # TODO: replace is_marked with is_attempted
-        self.is_attempted = None
+        self.is_marked = None
         # self.field_block = field.field_block
         self.empty_value = field.empty_value
         self.field_level_confidence_metrics = {}

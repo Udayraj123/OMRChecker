@@ -24,8 +24,10 @@ class BarcodeFieldDetection(FieldDetection):
         image_zone = ShapeUtils.extract_image_from_zone_rectangle(
             gray_image, zone_label, scan_zone_rectangle
         )
-        detected_text = PyZBar.read_single_text(image_zone, confidence_threshold=0.8)
+        text_detection = PyZBar.get_single_text_detection(
+            image_zone, confidence_threshold=0.8
+        )
 
-        self.detected_texts = [detected_text]
+        self.detections = [text_detection]
 
-        return self.detected_texts
+        return self.detections

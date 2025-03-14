@@ -104,7 +104,7 @@ def shift_by_field_blocks(
             axis=0,
         ).astype(np.int32)
         if centered
-        else MathUtils.add_points(block_image_shifts, field_block.origin)
+        else MathUtils.add_points(field_block.origin, block_image_shifts)
     )
 
     nearest_anchors = find_k_nearest_anchors(

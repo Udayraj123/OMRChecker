@@ -3,11 +3,13 @@ import re
 
 class TextBarcode:
     @staticmethod
-    def read_texts(image, confidence_threshold=0.8):
+    def get_all_text_detections(image, confidence_threshold=0.8):
         raise Exception(f"Not implemented")
 
     @staticmethod
-    def read_single_text(image, confidence_threshold=0.8, clear_whitespace=True):
+    def get_single_text_detection(
+        image, confidence_threshold=0.8, clear_whitespace=True
+    ):
         raise Exception(f"Not implemented")
 
     @staticmethod
