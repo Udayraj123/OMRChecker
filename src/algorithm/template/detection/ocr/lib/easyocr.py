@@ -1,14 +1,18 @@
-# TODO: Import heavy dependencies at runtime to save load time
-import easyocr
-
 from src.algorithm.template.detection.base.detection import TextDetection
 from src.algorithm.template.detection.ocr.lib.text_ocr import TextOCR
+from src.utils.logger import logger
 from src.utils.math import MathUtils
 
 
 class EasyOCR(TextOCR):
-    # this needs to run only once to load the model into memory
-    reader = easyocr.Reader(["en"], gpu=True)
+    reader = None
+
+    @staticmethod
+    def initialize():
+        import easyocr
+
+        # this needs to run only once to load the model into memory
+        EasyOCR.reader = easyocr.Reader(["en"], gpu=True)
 
     @staticmethod
     def get_all_text_detections(image, confidence_threshold=0.8, clear_whitespace=True):
@@ -45,6 +49,10 @@ class EasyOCR(TextOCR):
 
     @staticmethod
     def read_texts_with_boxes(image, confidence_threshold=0.8, sort_by_score=True):
+        # Lazy load the reader when needed
+        if EasyOCR.reader is None:
+            logger.info("Initializing EasyOCR reader...")
+            EasyOCR.initialize()
         text_results = EasyOCR.reader.readtext(image)
         if len(text_results) == 0:
             return []

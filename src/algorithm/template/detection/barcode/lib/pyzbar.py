@@ -1,12 +1,18 @@
-# Todo: import pyzbar only if class is instantia
-from pyzbar.pyzbar import decode as decode_barcode
-
 from src.algorithm.template.detection.barcode.lib.text_barcode import TextBarcode
 from src.algorithm.template.detection.base.detection import TextDetection
+from src.utils.logger import logger
 from src.utils.math import MathUtils
 
 
 class PyZBar(TextBarcode):
+    decode_barcode = None
+
+    @staticmethod
+    def initialize():
+        from pyzbar.pyzbar import decode as decode_barcode
+
+        PyZBar.decode_barcode = decode_barcode
+
     @staticmethod
     def get_all_text_detections(image, confidence_threshold=0.8, clear_whitespace=True):
         filtered_texts_with_boxes = PyZBar.read_texts_with_boxes(
@@ -53,7 +59,12 @@ class PyZBar(TextBarcode):
 
     @staticmethod
     def read_texts_with_boxes(image, confidence_threshold=0.8, sort_by_score=True):
-        text_results = decode_barcode(image)
+        # Lazy loading
+        if PyZBar.decode_barcode is None:
+            logger.info("Initializing PyZBar reader...")
+            PyZBar.initialize()
+
+        text_results = PyZBar.decode_barcode(image)
         if len(text_results) == 0:
             return []
 
