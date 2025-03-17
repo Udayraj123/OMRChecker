@@ -1,6 +1,6 @@
 import cv2
 
-from src.algorithm.evaluation.config import EvaluationConfigForSet
+from src.algorithm.evaluation.evaluation_config_for_set import EvaluationConfigForSet
 from src.utils.constants import MARKED_TEMPLATE_TRANSPARENCY
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils

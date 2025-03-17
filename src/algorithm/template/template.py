@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from src.algorithm.template.detection.template_file_runner import TemplateFileRunner
-from src.algorithm.template.directory_handler import DirectoryHandler
+from src.algorithm.template.directory_handler import TemplateDirectoryHandler
 from src.algorithm.template.layout.template_drawing import TemplateDrawing
 from src.algorithm.template.layout.template_layout import TemplateLayout
 from src.processors.constants import FieldDetectionType
@@ -41,7 +41,7 @@ class Template:
         self.drawing = TemplateDrawing(self)
 
         self.template_file_runner = TemplateFileRunner(self)
-        self.directory_handler = DirectoryHandler(self)
+        self.directory_handler = TemplateDirectoryHandler(self)
 
     # TODO: move some other functions here
     def apply_preprocessors(self, file_path, gray_image, colored_image):

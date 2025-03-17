@@ -9,7 +9,7 @@ from src.utils.logger import logger
 
 
 # Process files + directory
-class DirectoryHandler:
+class TemplateDirectoryHandler:
     def __init__(self, template):
         self.template = template
         self.path_utils = None

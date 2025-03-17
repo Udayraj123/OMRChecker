@@ -7,8 +7,8 @@ import pandas as pd
 from rich.table import Table
 from rich_tools import table_to_df
 
-from src.algorithm.evaluation.config import EvaluationConfig
-from src.algorithm.evaluation.evaluation import evaluate_concatenated_response
+from src.algorithm.evaluation.evaluation_config import EvaluationConfig
+from src.algorithm.evaluation.evaluation_meta import evaluate_concatenated_response
 from src.algorithm.template.alignment.template_alignment import apply_template_alignment
 from src.algorithm.template.template import Template
 from src.schemas.constants import DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING

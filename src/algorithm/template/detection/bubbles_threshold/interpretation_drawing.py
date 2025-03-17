@@ -1,6 +1,7 @@
 from typing import List
 
-from src.algorithm.evaluation.config import AnswerMatcher, EvaluationConfigForSet
+from src.algorithm.evaluation.answer_matcher import AnswerMatcher
+from src.algorithm.evaluation.evaluation_config_for_set import EvaluationConfigForSet
 from src.algorithm.template.detection.base.interpretation import FieldInterpretation
 from src.algorithm.template.detection.base.interpretation_drawing import (
     FieldInterpretationDrawing,
