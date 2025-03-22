@@ -31,12 +31,10 @@ class BubbleMeanValue(MeanValueItem):
 
 
 class FieldStdMeanValue(MeanValueItem):
-    def __init__(
-        self, field_bubble_means: List[BubbleMeanValue], item_reference: Field
-    ):
+    def __init__(self, field_bubble_means: List[BubbleMeanValue], field: Field):
         mean_value = np.std([item.mean_value for item in field_bubble_means])
 
-        super().__init__(mean_value, item_reference)
+        super().__init__(mean_value, field)
 
     def to_json(self):
         return {

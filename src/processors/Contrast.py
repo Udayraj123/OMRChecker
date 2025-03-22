@@ -43,6 +43,11 @@ def automatic_brightness_and_contrast(image, clip_hist_percent=1):
 
 
 class Contrast(ImageTemplatePreprocessor):
+    __is_internal_preprocessor__ = False
+
+    def get_class_name(self):
+        return "Contrast"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         tuning_options = self.tuning_options
@@ -51,10 +56,10 @@ class Contrast(ImageTemplatePreprocessor):
         self.beta = tuning_options.get("beta", 0)
         self.mode = tuning_options.get("mode", "manual")
 
-    def apply_filter(self, image, _template, _file_path):
+    def apply_filter(self, image, _colored_image, _template, _file_path):
         if self.mode == "auto":
             image, *_ = automatic_brightness_and_contrast(image, self.clip_hist_percent)
         else:
             image = cv2.convertScaleAbs(image, alpha=self.alpha, beta=self.beta)
 
-        return image
+        return image, _colored_image, _template

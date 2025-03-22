@@ -251,7 +251,6 @@ class BubblesFieldInterpretation(FieldInterpretation):
         original_bin_names = [
             x.item_reference.plot_bin_name for x in plot_means_and_refs
         ]
-        plot_labels = [x.item_reference_name for x in plot_means_and_refs]
 
         # TODO: move into individual utils
         sorted_unique_bin_names, unique_label_indices = np.unique(
@@ -268,6 +267,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
         plot_colors = plot_color_sampler(
             [shuffled_color_indices[i] for i in unique_label_indices]
         )
+        plot_labels = [x.item_reference.name for x in plot_means_and_refs]
         bar_container = ax.bar(
             range(len(plot_means_and_refs)),
             plot_values,

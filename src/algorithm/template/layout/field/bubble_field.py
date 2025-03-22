@@ -20,6 +20,7 @@ class BubbleField(Field):
         self.bubble_values = field_block.bubble_values
         self.bubbles_gap = field_block.bubbles_gap
         self.bubble_field_type = field_block.bubble_field_type
+        # self.plot_bin_name = field_label
 
         super().__init__(
             direction,
@@ -65,10 +66,10 @@ class BubblesScanBox(ScanBox):
         self.bubble_field_type = field.bubble_field_type
         self.bubble_dimensions = field.bubble_dimensions
 
-        self.plot_bin_name = self.field_label
         self.shifts = [0, 0]
         self.bubble_value = bubble_value
         self.name = f"{self.field_label}_{self.bubble_value}"
+        self.plot_bin_name = self.field_label
 
     # Make the class serializable
     def to_json(self):

@@ -28,6 +28,9 @@ class Field:
         self.field_detection_type = field_detection_type
         self.field_label = field_label
         self.id = f"{field_block.name}::{field_label}"
+        self.name = field_label
+        self.plot_bin_name = field_label
+
         self.origin = origin
 
         self.scan_boxes: List[ScanBox] = []
