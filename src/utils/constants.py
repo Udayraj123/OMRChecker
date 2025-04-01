@@ -75,3 +75,12 @@ WAIT_KEYS = DotMap(
 )
 
 ZERO_MARGINS = {"top": 0, "bottom": 0, "left": 0, "right": 0}
+
+OUTPUT_MODES = DotMap(
+    {
+        "SET_LAYOUT": "setLayout",
+        "DEFAULT": "default",
+        "MODERATION": "moderation",
+    },
+    _dynamic=False,
+)

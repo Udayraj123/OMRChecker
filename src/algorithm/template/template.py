@@ -60,12 +60,13 @@ class Template:
     def __str__(self):
         return str(self.path)
 
-    def reset_and_setup_for_directory(self, output_dir, output_mode):
+    def reset_and_setup_for_directory(self, output_dir):
         """Reset all mutations to the template and setup output directories"""
         self.template_layout.reset_all_shifts()
-        self.reset_and_setup_outputs(output_dir, output_mode)
+        self.reset_and_setup_outputs(output_dir)
 
-    def reset_and_setup_outputs(self, output_dir, output_mode):
+    def reset_and_setup_outputs(self, output_dir):
+        output_mode = self.tuning_config.outputs.output_mode
         self.directory_handler.reset_path_utils(output_dir, output_mode)
 
     def get_exclude_files(self):

@@ -12,7 +12,7 @@ from src.processors.constants import (
     WarpMethod,
 )
 from src.processors.internal.WarpOnPointsCommon import WarpOnPointsCommon
-from src.utils.constants import CLR_DARK_GREEN
+from src.utils.constants import CLR_DARK_GREEN, OUTPUT_MODES
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
@@ -166,8 +166,10 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                     zone_control_points, zone_destination_points
                 )
 
-        if config.outputs.show_image_level >= 4:
-            # TODO: show this if --setLayout is passed as well.
+        if (
+            config.outputs.show_image_level >= 4
+            or config.outputs.output_mode == OUTPUT_MODES.SET_LAYOUT
+        ):
             InteractionUtils.show(
                 f"Control Zones in the debug image: {file_path}",
                 self.debug_image,

@@ -184,7 +184,7 @@ pre_processor_if_required_attrs = {
     "required": ["name", "options"],
 }
 crop_on_markers_options_if_required_attrs = {
-    "required": ["type"],
+    "required": ["type", "processingImageShape"],
 }
 warp_on_points_options_if_required_attrs = {
     "required": ["scanZones"],
@@ -559,7 +559,7 @@ TEMPLATE_SCHEMA = {
             "items": {
                 "type": "object",
                 **pre_processor_if_required_attrs,
-                "additionalProperties": True,
+                "additionalProperties": False,
                 "properties": {
                     # Common properties to be used here
                     "name": {

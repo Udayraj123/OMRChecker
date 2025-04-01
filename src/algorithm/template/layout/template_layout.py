@@ -60,6 +60,7 @@ class TemplateLayout:
 
         page_width, page_height = self.template_dimensions
 
+        # Default processingImageShape will be the page dimensions
         self.processing_image_shape = json_object.get(
             "processingImageShape", [page_height, page_width]
         )
@@ -98,7 +99,7 @@ class TemplateLayout:
 
         return template_layout
 
-    # TODO: separate out preprocessing?
+    # TODO: separate out preprocessing into a class?
     def apply_preprocessors(self, file_path, gray_image, colored_image):
         config = self.tuning_config
 

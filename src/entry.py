@@ -48,7 +48,7 @@ def print_config_summary(
     table.add_row("Directory Path", f"{curr_dir}")
     table.add_row("Count of Images", f"{len(omr_files)}")
     table.add_row("Debug Mode ", "ON" if args["debug"] else "OFF")
-    table.add_row("Output Mode ", args["output_mode"])
+    table.add_row("Output Mode ", args["outputMode"])
     table.add_row("Set Layout Mode ", "ON" if args["setLayout"] else "OFF")
     table.add_row(
         "Markers Detection",
@@ -81,7 +81,8 @@ def process_dir(
     # Update local tuning_config (in current recursion stack)
     local_config_path = curr_dir.joinpath(constants.CONFIG_FILENAME)
     if os.path.exists(local_config_path):
-        tuning_config = open_config_with_defaults(local_config_path)
+        tuning_config = open_config_with_defaults(local_config_path, args)
+        logger.set_log_levels(tuning_config.outputs.show_logs_by_type)
 
     # Update local template (in current recursion stack)
     local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
@@ -89,12 +90,11 @@ def process_dir(
     if local_template_exists:
         template = Template(
             local_template_path,
+            # TODO: reduce coupling between config and template (or merge them)
             tuning_config,
         )
     # Look for subdirectories for processing
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
-
-    output_mode = args["output_mode"]
 
     # look for images in current dir to process
     exts = ("*.[pP][nN][gG]", "*.[jJ][pP][gG]", "*.[jJ][pP][eE][gG]")
@@ -143,7 +143,7 @@ def process_dir(
         output_dir = Path(args["output_dir"], curr_dir.relative_to(root_dir))
 
         # Reset all mutations to the template, and setup output directories
-        template.reset_and_setup_for_directory(output_dir, output_mode)
+        template.reset_and_setup_for_directory(output_dir)
 
         print_config_summary(
             curr_dir,
@@ -155,9 +155,10 @@ def process_dir(
             args,
         )
         if args["setLayout"]:
-            show_template_layouts(omr_files, template, tuning_config)
+            show_template_in_set_layout_mode(omr_files, template, tuning_config)
         else:
-            # TODO: pick these args from self/class instead of prop forwarding
+            output_mode = args["outputMode"]
+            # TODO: pick these args from self or a global class instead of prop forwarding
             process_directory_files(
                 omr_files,
                 template,
@@ -186,7 +187,8 @@ def process_dir(
 
 
 # TODO: move into template.template_layout
-def show_template_layouts(omr_files, template, tuning_config):
+def show_template_in_set_layout_mode(omr_files, template, tuning_config):
+    # TODO: refactor into class level?
     for file_path in omr_files:
         file_name = file_path.name
         file_path = str(file_path)
@@ -229,7 +231,6 @@ def process_directory_files(
     files_counter = 0
     # TODO: move STATS inside template.directory_handler
     STATS.files_not_moved = 0
-    logger.set_log_levels(tuning_config.outputs.show_logs_by_type)
     for file_path in omr_files:
         files_counter += 1
         file_name = PathUtils.remove_non_utf_characters(file_path.name)
@@ -346,7 +347,7 @@ def process_directory_files(
         save_marked_dir = template.get_save_marked_dir()
 
         # Save output image with bubble values and evaluation meta
-        if output_mode != "moderation":
+        if output_mode != constants.OUTPUT_MODES.MODERATION:
             (
                 final_marked,
                 colored_final_marked,
@@ -403,7 +404,7 @@ def process_directory_files(
         # Save output CSV results
         output_omr_response = (
             raw_omr_response
-            if output_mode == "moderation"
+            if output_mode == constants.OUTPUT_MODES.MODERATION
             else concatenated_omr_response
         )
         omr_response_array = template.append_output_omr_response(

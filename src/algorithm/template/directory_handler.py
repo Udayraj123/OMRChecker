@@ -4,6 +4,7 @@ from time import localtime, strftime
 
 import pandas as pd
 
+from src.utils.constants import OUTPUT_MODES
 from src.utils.file import PathUtils
 from src.utils.logger import logger
 
@@ -15,6 +16,10 @@ class TemplateDirectoryHandler:
         self.path_utils = None
 
     def reset_path_utils(self, output_dir, output_mode):
+        if output_mode == OUTPUT_MODES.SET_LAYOUT:
+            logger.info("Note: Skipped files creation in setLayout mode")
+            return
+
         # Override the paths utils
         self.path_utils = PathUtils(output_dir)
         self.path_utils.create_output_directories()
@@ -24,7 +29,7 @@ class TemplateDirectoryHandler:
         logger.info("Checking Files...")
         self.omr_response_columns = (
             list(self.template.all_parsed_labels)
-            if output_mode == "moderation"
+            if output_mode == OUTPUT_MODES.MODERATION
             else self.template.output_columns
         )
 

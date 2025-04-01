@@ -77,6 +77,7 @@ def validate_template_json(json_data, template_path):
                 )
             table.add_row(key, msg)
         console.print(table, justify="center")
+        # logger.debug(json.dumps(json_data, indent=4))
         raise Exception(
             f"Provided Template JSON is Invalid: '{template_path}'"
         ) from None

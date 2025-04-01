@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 
 from src.entry import entry_point
+from src.utils.constants import OUTPUT_MODES
 from src.utils.logger import logger
 
 
@@ -36,7 +37,7 @@ def parse_args():
         "--debug",
         required=False,
         dest="debug",
-        action="store_false",
+        action="store_true",
         help="Enables debugging mode for showing detailed errors",
     )
 
@@ -54,8 +55,8 @@ def parse_args():
         "--outputMode",
         default="default",
         required=False,
-        choices=["moderation", "default"],
-        dest="output_mode",
+        choices=[*list(OUTPUT_MODES.values())],
+        dest="outputMode",
         help="Specify the output mode. Supported: moderation, default",
     )
 
@@ -79,11 +80,18 @@ def parse_args():
     if len(unknown) > 0:
         argparser.print_help()
         raise Exception(f"\nError: Unknown arguments: {unknown}")
+
+    if args["setLayout"] is True:
+        if args["outputMode"] not in [OUTPUT_MODES.SET_LAYOUT, OUTPUT_MODES.DEFAULT]:
+            raise Exception(
+                f"Error: --setLayout cannot be used together with --outputMode={args['outputMode']}"
+            )
+        args["outputMode"] = "setLayout"
     return args
 
 
 def entry_point_for_args(args):
-    if args["debug"] is True:
+    if args["debug"] is False:
         # Disable traceback limit
         sys.tracebacklimit = 0
         # TODO: set log levels
@@ -94,7 +102,7 @@ def entry_point_for_args(args):
                 args,
             )
         except Exception:
-            if args["debug"] is True:
+            if args["debug"] is False:
                 logger.critical(
                     f"OMRChecker crashed. add --debug and run again to see error details"
                 )

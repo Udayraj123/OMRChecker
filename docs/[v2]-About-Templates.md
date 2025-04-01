@@ -8,7 +8,7 @@
 
 <!-- - TODO: add Links to Readmes inside individual samples -->
 
-# Template Documentation
+# Template Documentation (WIP - ai generated)
 
 The template file defines how OMRChecker should process and interpret OMR sheets. It includes configurations for image preprocessing, field layouts, bubble arrangements, and output formatting.
 
@@ -21,7 +21,7 @@ The dimensions to which each page will be resized before applying the template.
 ```
 
 ### processingImageShape
-The shape of the processing image after all pre-processors are applied.
+The shape of the processing image when applying pre-processors.
 ```json
 "processingImageShape": [900, 650] // [height, width]
 ```

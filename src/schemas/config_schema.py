@@ -1,5 +1,5 @@
 from src.schemas.constants import load_common_defs
-from src.utils.constants import SUPPORTED_PROCESSOR_NAMES
+from src.utils.constants import OUTPUT_MODES, SUPPORTED_PROCESSOR_NAMES
 
 CONFIG_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -92,6 +92,11 @@ CONFIG_SCHEMA = {
             "type": "object",
             "additionalProperties": False,
             "properties": {
+                "output_mode": {
+                    "type": "string",
+                    "enum": [*list(OUTPUT_MODES.values())],
+                    "description": "The output mode for the OMRChecker. Supported: default, moderation, setLayout",
+                },
                 "display_image_dimensions": {
                     "$ref": "#/$def/two_positive_integers",
                     "description": "The dimensions (width, height) for images displayed during the execution",

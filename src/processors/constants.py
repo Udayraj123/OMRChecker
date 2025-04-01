@@ -127,6 +127,7 @@ ScannerType = DotMap(
     _dynamic=False,
 )
 
+
 SCANNER_TYPES_IN_ORDER = [
     ScannerType.PATCH_DOT,
     ScannerType.PATCH_LINE,
