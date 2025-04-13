@@ -128,7 +128,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         parsed_options = {
             "defaultSelector": options.get("defaultSelector", "CENTERS"),
             "pointsLayout": layout_type,
-            "enableCropping": True,
+            "enableCropping": options.get("enableCropping", True),  # temp
             "tuningOptions": {
                 "warpMethod": tuning_options.get(
                     "warpMethod", WarpMethod.PERSPECTIVE_TRANSFORM
@@ -144,12 +144,13 @@ class CropOnDotLines(CropOnPatchesCommon):
             *[
                 {
                     "zonePreset": zone_preset,
-                    "zoneDescription": options.get(zone_preset, {}),
+                    "zoneDescription": options[zone_preset],
                     "customOptions": {
                         # TODO: get customOptions here
                     },
                 }
                 for zone_preset in self.scan_zone_presets_for_layout[layout_type]
+                if zone_preset in options
             ],
         ]
         return parsed_options
@@ -235,7 +236,8 @@ class CropOnDotLines(CropOnPatchesCommon):
         zone_label = zone_description["label"]
         config = self.tuning_config
         tuning_options = self.tuning_options
-        zone, zone_start = self.compute_scan_zone_util(image, zone_description)
+
+        zone, zone_start, _ = self.compute_scan_zone_util(image, zone_description)
 
         # Make boxes darker (less gamma)
         darker_image = ImageUtils.adjust_gamma(zone, config.thresholding.GAMMA_LOW)
@@ -300,8 +302,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         tuning_options = self.tuning_options
         zone_label = zone_description["label"]
 
-        zone, zone_start = self.compute_scan_zone_util(image, zone_description)
-
+        zone, zone_start, _ = self.compute_scan_zone_util(image, zone_description)
         # TODO: simple colored thresholding to clear out noise?
 
         dot_blur_kernel = tuning_options.get("dotBlurKernel", None)
@@ -370,7 +371,9 @@ class CropOnDotLines(CropOnPatchesCommon):
                 hstack = ImageUtils.get_padded_hstack(
                     [self.debug_image, zone, white_thresholded]
                 )
-                InteractionUtils.show(f"No patch/dot found:", hstack, pause=1)
+                InteractionUtils.show(
+                    f"No patch/dot found for {zone_label}", hstack, pause=1
+                )
 
             raise Exception(
                 f"No patch/dot found at origin: {zone_description['origin']} with dimensions: {zone_description['dimensions']}"

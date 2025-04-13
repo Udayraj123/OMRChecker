@@ -16,6 +16,7 @@ SUPPORTED_PROCESSOR_NAMES = [
     "GaussianBlur",
     "Levels",
     "MedianBlur",
+    # "WarpOnPoints",
 ]
 
 FIELD_LABEL_NUMBER_REGEX = r"([^\d]+)(\d*)"

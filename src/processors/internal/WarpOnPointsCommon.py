@@ -226,7 +226,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
     ):
         config = self.tuning_config
 
-        # Crop the image
+        # Crop/warp the image
         warped_image = cv2.warpPerspective(
             image, transform_matrix, warped_dimensions, flags=self.warp_method_flag
         )

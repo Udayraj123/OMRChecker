@@ -303,7 +303,10 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
     def find_marker_corners_in_patch(self, zone_description, image, file_path):
         zone_label = zone_description["label"]
 
-        patch_zone, zone_start = self.compute_scan_zone_util(image, zone_description)
+        patch_zone, zone_start, zone_end = self.compute_scan_zone_util(
+            image, zone_description
+        )
+
         # Note: now best match is being computed separately inside each patch_zone
         (marker_position, optimal_marker) = self.get_best_match(zone_label, patch_zone)
 

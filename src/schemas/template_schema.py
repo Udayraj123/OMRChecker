@@ -204,6 +204,7 @@ crop_on_markers_tuning_options_available_keys = {
 }
 crop_on_markers_options_available_keys = {
     **pre_processor_options_available_keys,
+    "enableCropping": True,
     "scanZones": True,
     "defaultSelector": True,
     "tuningOptions": True,
@@ -449,7 +450,7 @@ many_field_blocks_description_def = {
                             },
                         },
                     },
-                }
+                },
                 # TODO: support for more custom fields at top level fieldDetectionType
             ],
         }
@@ -856,6 +857,10 @@ TEMPLATE_SCHEMA = {
                                     "properties": {
                                         # Note: the keys need to match with crop_on_markers_options_available_keys
                                         **crop_on_markers_options_available_keys,
+                                        "enableCropping": {
+                                            "description": "Whether to crop the image to a bounding box of the given anchor points",
+                                            "type": "boolean",
+                                        },
                                         "scanZones": {
                                             "$ref": "#/$def/scan_zones_array"
                                         },
@@ -911,10 +916,17 @@ TEMPLATE_SCHEMA = {
                                             },
                                             "then": {
                                                 # TODO: check that "topLeftDot": False, etc here is not passable
-                                                "required": [
-                                                    "leftLine",
-                                                    "topRightDot",
-                                                    "bottomRightDot",
+                                                "oneOf": [
+                                                    {
+                                                        "required": ["scanZones"],
+                                                    },
+                                                    {
+                                                        "required": [
+                                                            "leftLine",
+                                                            "topRightDot",
+                                                            "bottomRightDot",
+                                                        ],
+                                                    },
                                                 ],
                                                 "additionalProperties": False,
                                                 "properties": {
@@ -944,10 +956,17 @@ TEMPLATE_SCHEMA = {
                                                 },
                                             },
                                             "then": {
-                                                "required": [
-                                                    "rightLine",
-                                                    "topLeftDot",
-                                                    "bottomLeftDot",
+                                                "oneOf": [
+                                                    {
+                                                        "required": ["scanZones"],
+                                                    },
+                                                    {
+                                                        "required": [
+                                                            "rightLine",
+                                                            "topLeftDot",
+                                                            "bottomLeftDot",
+                                                        ]
+                                                    },
                                                 ],
                                                 "additionalProperties": False,
                                                 "properties": {
@@ -975,9 +994,16 @@ TEMPLATE_SCHEMA = {
                                                 },
                                             },
                                             "then": {
-                                                "required": [
-                                                    "leftLine",
-                                                    "rightLine",
+                                                "oneOf": [
+                                                    {
+                                                        "required": ["scanZones"],
+                                                    },
+                                                    {
+                                                        "required": [
+                                                            "leftLine",
+                                                            "rightLine",
+                                                        ]
+                                                    },
                                                 ],
                                                 "additionalProperties": False,
                                                 "properties": {
@@ -1002,11 +1028,18 @@ TEMPLATE_SCHEMA = {
                                                 },
                                             },
                                             "then": {
-                                                "required": [
-                                                    "topRightDot",
-                                                    "bottomRightDot",
-                                                    "topLeftDot",
-                                                    "bottomLeftDot",
+                                                "oneOf": [
+                                                    {
+                                                        "required": ["scanZones"],
+                                                    },
+                                                    {
+                                                        "required": [
+                                                            "topRightDot",
+                                                            "bottomRightDot",
+                                                            "topLeftDot",
+                                                            "bottomLeftDot",
+                                                        ]
+                                                    },
                                                 ],
                                                 "additionalProperties": False,
                                                 "properties": {

@@ -12,7 +12,7 @@ from src.processors.constants import (
     WarpMethod,
 )
 from src.processors.internal.WarpOnPointsCommon import WarpOnPointsCommon
-from src.utils.constants import CLR_DARK_GREEN, OUTPUT_MODES
+from src.utils.constants import CLR_DARK_GREEN, CLR_NEAR_BLACK, OUTPUT_MODES
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
@@ -117,17 +117,35 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             [],
         )
 
-        # TODO: use shapely and corner points to split easily?
+        for scan_zone in self.scan_zones:
+            # Note: zone_description is computed at runtime(e.g. for CropOnCustomMarkers with default quadrants)
+            zone_description = self.get_runtime_zone_description_with_defaults(
+                image, scan_zone
+            )
+            # Inject runtime zone description
+            scan_zone["runtimeZoneDescription"] = zone_description
 
+            self.draw_scan_zone_util(zone_description)
+
+        if (
+            config.outputs.show_image_level >= 4
+            or config.outputs.output_mode == OUTPUT_MODES.SET_LAYOUT
+        ):
+            # TODO: move this before detection part to avoid seeing errors
+            InteractionUtils.show(
+                f"Control Zones in the debug image: {file_path}",
+                self.debug_image,
+                pause=1,
+            )
+
+        # TODO: use shapely and corner points to split easily?
         zone_preset_points = {}
         page_corners, destination_page_corners = [], []
         for scan_zone in self.scan_zones:
             zone_preset = scan_zone["zonePreset"]
-            zone_description = self.get_runtime_zone_description_with_defaults(
-                image, scan_zone
-            )
+            zone_description = scan_zone["runtimeZoneDescription"]
             scanner_type = zone_description["scannerType"]
-            # Note: zone_description is computed at runtime(e.g. for CropOnCustomMarkers with default quadrants)
+
             if (
                 scanner_type == ScannerType.PATCH_DOT
                 or scanner_type == ScannerType.TEMPLATE_MATCH
@@ -166,15 +184,6 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                     zone_control_points, zone_destination_points
                 )
 
-        if (
-            config.outputs.show_image_level >= 4
-            or config.outputs.output_mode == OUTPUT_MODES.SET_LAYOUT
-        ):
-            InteractionUtils.show(
-                f"Control Zones in the debug image: {file_path}",
-                self.debug_image,
-                pause=1,
-            )
         if len(self.debug_hstack) > 0 and config.outputs.show_image_level >= 5:
             InteractionUtils.show(
                 f"Zones debug stack of the image: {file_path}",
@@ -310,7 +319,19 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
 
         zone_start = scan_zone_rectangle[0]
         zone_end = scan_zone_rectangle[2]
+        return zone, np.array(zone_start), np.array(zone_end)
 
+    def draw_scan_zone_util(self, zone_description):
+        scan_zone_rectangle = ShapeUtils.compute_scan_zone_rectangle(
+            zone_description, include_margins=True
+        )
+        scan_zone_rectangle_without_margins = ShapeUtils.compute_scan_zone_rectangle(
+            zone_description, include_margins=False
+        )
+        zone_start = scan_zone_rectangle[0]
+        zone_end = scan_zone_rectangle[2]
+        zone_start_without_margins = scan_zone_rectangle_without_margins[0]
+        zone_end_without_margins = scan_zone_rectangle_without_margins[2]
         config = self.tuning_config
         if config.outputs.show_image_level >= 1:
             DrawingUtils.draw_box_diagonal(
@@ -320,4 +341,10 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                 color=CLR_DARK_GREEN,
                 border=2,
             )
-        return zone, np.array(zone_start)
+            DrawingUtils.draw_box_diagonal(
+                self.debug_image,
+                zone_start_without_margins,
+                zone_end_without_margins,
+                color=CLR_NEAR_BLACK,
+                border=1,
+            )

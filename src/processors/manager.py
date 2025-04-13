@@ -22,7 +22,7 @@ PROCESSOR_MANAGER = DotMap(
             "GaussianBlur": GaussianBlur,
             "Levels": Levels,
             "MedianBlur": MedianBlur,
-            # TODO: "WarpOnPoints": WarpOnPointsCommon,
+            # TODO: extract AlignOnMarkers preprocess from WarpOnPoints instead, or rename CropOnMarkers to something better with enableCropping support?
         }
     },
     _dynamic=False,
