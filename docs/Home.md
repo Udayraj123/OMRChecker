@@ -7,7 +7,7 @@ Click on one of the pages to get started.
 ## v2 documentation (latest)
 
 <ol>
-<li> <a href="https://github.com/Udayraj123/OMRChecker/wiki/%5Bv1%5D-User-Guide">User Guide</a></li> 
+<li> <a href="https://github.com/Udayraj123/OMRChecker/wiki/%5Bv1%5D-User-Guide">User Guide</a></li>
 <li> <a href="https://github.com/Udayraj123/OMRChecker/wiki/%5Bv1%5D-About-Templates">About Templates</a> </li>
 <!-- <li> <a href="https://github.com/Udayraj123/OMRChecker/wiki/%5Bv1%5D-Rich-Visuals">Rich Visuals</a> </li> -->
 <!-- <li> <a href="https://github.com/Udayraj123/OMRChecker/wiki/%5Bv1%5D-Diagrams">Diagrams</a> </li> -->
@@ -16,7 +16,7 @@ Click on one of the pages to get started.
 ## v1 documentation
 
 <ol>
-<li><a href="https://github.com/Udayraj123/OMRChecker/wiki/%5Bv1%5D-User-Guide">User Guide</a></li> 
+<li><a href="https://github.com/Udayraj123/OMRChecker/wiki/%5Bv1%5D-User-Guide">User Guide</a></li>
 <li> <a href="https://github.com/Udayraj123/OMRChecker/wiki/%5Bv1%5D-About-Templates">About Templates</a> </li>
 <li> <a href="https://github.com/Udayraj123/OMRChecker/wiki/%5Bv1%5D-Rich-Visuals">Rich Visuals</a> </li>
 <li> <a href="https://github.com/Udayraj123/OMRChecker/wiki/%5Bv1%5D-Diagrams">Diagrams</a> </li>

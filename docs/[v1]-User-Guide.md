@@ -48,7 +48,7 @@ Note that we have put `"origin": [0, 0],` which means the overlay will start fro
 <p align="center">
   <img alt="Initial Layout" width="400" src="./images/initial_layout.png">
 </p>
-Now let's adjust the top left corner(origin). Change origin from [0,0] to a better coordinate, say [50, 50] and run above command again. After multiple trials, you should find that origin is best fit at [65, 60]. Update the origin in json file : 
+Now let's adjust the top left corner(origin). Change origin from [0,0] to a better coordinate, say [50, 50] and run above command again. After multiple trials, you should find that origin is best fit at [65, 60]. Update the origin in json file :
 
 ```
     "origin": [65, 60],
@@ -59,8 +59,8 @@ Run the command again.
   <img alt="Origin Step" width="400" src="./images/origin_step.png">
 </p>
 
-Now let's tweak over the two gaps `bubblesGap` and `labelsGap`. 
-Clearly we need to update the gaps to be bigger. Also, horizontal gaps are smaller than vertical ones. Tweaked gaps come out to be- 
+Now let's tweak over the two gaps `bubblesGap` and `labelsGap`.
+Clearly we need to update the gaps to be bigger. Also, horizontal gaps are smaller than vertical ones. Tweaked gaps come out to be-
 ```
     "bubblesGap" : 41,
     "labelsGap" : 52,
@@ -77,7 +77,7 @@ Run the command again to get the arranged layout.
 
 Note the "preProcessors" array, there are various plugins to use. Each plugin is described with a `name` and an `options` object that contains the configuration of the plugin. In our case, we use the 'CropPage' plugin with a (default) option of using morph kernel of size [10, 10].
 
-Above is the simplest version of what the template.json can do. 
+Above is the simplest version of what the template.json can do.
 
 For more templates see [sample folders](https://github.com/Udayraj123/OMRChecker/tree/master/samples).
 

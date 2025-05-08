@@ -22,21 +22,21 @@ Inputs Mobile Xxeroxed
 
 ![inputs_mobile_xeroxed](./extras/mini_scripts/outputs/gif/inputs_mobile_xeroxed.gif)
 
-## Gifs: 
+## Gifs:
 ### Code in Action:
-Document Scanner 
+Document Scanner
 
 ![document_scanner](./extras/mini_scripts/outputs/gif/document_scanner.gif)
 
-Checking Inputs Mobile 
+Checking Inputs Mobile
 
 ![checking_inputs_mobile](./extras/mini_scripts/outputs/gif/checking_inputs_mobile.gif)
 
-Checking Xeroxed Mobile 
+Checking Xeroxed Mobile
 
 ![checking_xeroxed_mobile](./extras/mini_scripts/outputs/gif/checking_xeroxed_mobile.gif)
 
-Checking Xeroxed Scanned 
+Checking Xeroxed Scanned
 
 ![checking_xeroxed_scanned](./extras/mini_scripts/outputs/gif/checking_xeroxed_scanned.gif)
 
@@ -49,15 +49,15 @@ Xeroxed OMR:
 
 ![commonxerox](./extras/Progress/2019-04-26/images/commonxerox.PNG)
 
-Histogram for Dark image: 
+Histogram for Dark image:
 
 ![dark_hist](./extras/Progress/2019-04-26/images/dark_hist.PNG)
 
-Histogram on High bubbling: 
+Histogram on High bubbling:
 
 ![largebubbles](./extras/Progress/2019-04-26/images/largebubbles.PNG)
 
-Histogram on Images with Shadow: 
+Histogram on Images with Shadow:
 
 ![shadowxerox](./extras/Progress/2019-04-26/images/shadowxerox.PNG)
 
@@ -72,11 +72,11 @@ Various Histograms
 ![histograms_2](./extras/Progress/2019-04-26/images/histograms_2.PNG)
 
 ### Boxplots
-Boxplot for Dark image: 
+Boxplot for Dark image:
 
 ![dark_boxplots](./extras/Progress/2019-04-26/images/dark_boxplots.PNG)
 
-### Intermediate Steps: 
+### Intermediate Steps:
 
 #### Finding the page
 
@@ -134,7 +134,7 @@ Sidefolding:
 ![sidefolding](./extras/Progress/2019-04-26/images/sidefolding.PNG)
 
 ### The ultimate output
-CSV File: 
+CSV File:
 
 ![csv_output](./extras/Progress/2019-04-26/images/csv_output.PNG)
 
@@ -144,4 +144,3 @@ CSV File:
 
 ### Android App Sneak Peek
 ![app_flow](./extras/Progress/2019-04-26/images/app_flow.PNG)
-
