@@ -1,0 +1,56 @@
+{
+  "bubbleDimensions": [
+    7,
+    7
+  ],
+  "templateDimensions": [
+    746,
+    1100
+  ],
+  "processingImageShape": [
+    1100,
+    746
+  ],
+  "preProcessors": [],
+  "fieldBlocks": {
+    "Physics_MCQ": {
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "fieldLabels": [
+        "q1..30"
+      ],
+      "bubblesGap": 43,
+      "labelsGap": 12.7,
+      "origin": [
+        110,
+        594
+      ]
+    },
+    "Chemistry_MCQ": {
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "fieldLabels": [
+        "q31..60"
+      ],
+      "bubblesGap": 40.7,
+      "labelsGap": 12.7,
+      "origin": [
+        327,
+        595
+      ]
+    },
+    "Maths_MCQ": {
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "fieldLabels": [
+        "q61..90"
+      ],
+      "bubblesGap": 40.7,
+      "labelsGap": 12.7,
+      "origin": [
+        536,
+        596
+      ]
+    }
+  }
+}

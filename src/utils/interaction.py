@@ -1,9 +1,10 @@
+import os
 from dataclasses import dataclass
 
 import cv2
 from matplotlib import pyplot
 from screeninfo import Monitor, get_monitors
-import os
+
 from src.utils.constants import WAIT_KEYS
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils

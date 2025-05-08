@@ -1,6 +1,6 @@
 ## Meaning of parameters used in the template.json file
 
-Let's take an example of sample1 from the [samples](https://github.com/Udayraj123/OMRChecker/tree/master/samples). 
+Let's take an example of sample1 from the [samples](https://github.com/Udayraj123/OMRChecker/tree/master/samples).
 
 You may use below commands from project root to load the sample template.
 ```bash
@@ -44,12 +44,12 @@ Let's examine the template.json used in this sample.
       "options": {
         // path to marker file
         "relativePath": "omr_marker.jpg",
-        // a factor by which marker shall be resized relative to input image 
+        // a factor by which marker shall be resized relative to input image
         "sheetToMarkerWidthRatio": 17
       }
     }
   ],
-  
+
 // The customLabels contain fields that need to be joined together before generating the results sheet
   "customLabels": {
     // Here the "Roll" key corresponds to a single column in the results
@@ -72,7 +72,7 @@ Let's examine the template.json used in this sample.
     ],
     // ...
   },
-  // Each rectangular box you see in the template overlay image is an item in fieldBlocks 
+  // Each rectangular box you see in the template overlay image is an item in fieldBlocks
   "fieldBlocks": {
     // ...
 
@@ -91,7 +91,7 @@ Let's examine the template.json used in this sample.
       // The starting point of the block (top left)
       "origin": [121, 860]
     },
-    
+
     // This shows how integer type questions are created.
     "Int_Block_Q5": {
       // Here, QTYPE_INT is a built-in field type with vertical arrangement of 0-9 integers
@@ -119,7 +119,7 @@ Let's examine the template.json used in this sample.
       "bubblesGap": 41,
       // Custom values for the bubbles (length of this array is the number of bubbles per field)
       "bubbleValues": ["E", "H"],
-      // The labels for fields in the block 
+      // The labels for fields in the block
       "fieldLabels": ["Medium"],
       // Since we have only one label in this block, we set labelsGap as 0
       "labelsGap": 0,

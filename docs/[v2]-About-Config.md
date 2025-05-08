@@ -1,4 +1,4 @@
-### Config schema 
+### Config schema
 OMRChecker config schema for custom tuning
 
 ```js
