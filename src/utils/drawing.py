@@ -33,8 +33,8 @@ class DrawingUtils:
     ):
         cv2.rectangle(
             image,
-            position,
-            position_diagonal,
+            [int(position[0]), int(position[1])],
+            [int(position_diagonal[0]), int(position_diagonal[1])],
             color,
             border,
         )

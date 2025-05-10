@@ -532,7 +532,7 @@ class EvaluationConfigForSet:
             current_streak,
             updated_streak,
         ) = answer_matcher.get_verdict_marking(marked_answer, self.allow_streak)
-        question_schema_verdict = EvaluationConfigForSet.get_schema_verdict(
+        question_schema_verdict = AnswerMatcher.get_schema_verdict(
             answer_matcher.answer_type, question_verdict, delta
         )
         self.schema_verdict_counts[question_schema_verdict] += 1
