@@ -8,13 +8,15 @@ EVALUATION_FILENAME = "evaluation.json"
 CONFIG_FILENAME = "config.json"
 
 SUPPORTED_PROCESSOR_NAMES = [
+    "AutoRotate",
+    "Contrast",
     "CropOnMarkers",
     "CropPage",
     "FeatureBasedAlignment",
     "GaussianBlur",
     "Levels",
     "MedianBlur",
-    "AutoRotate",
+    # "WarpOnPoints",
 ]
 
 FIELD_LABEL_NUMBER_REGEX = r"([^\d]+)(\d*)"
@@ -60,7 +62,13 @@ CLR_GREEN = (100, 200, 100)
 CLR_WHITE = (255, 255, 255)
 MARKED_TEMPLATE_TRANSPARENCY = 0.65
 
-hsv_white_low, hsv_white_high = np.array([0, 0, 100]), np.array([180, 150, 255])
+
+PAPER_VALUE_THRESHOLD = 180
+PAPER_SATURATION_THRESHOLD = 40
+hsv_white_low, hsv_white_high = np.array([0, 0, PAPER_VALUE_THRESHOLD]), np.array(
+    [180, PAPER_SATURATION_THRESHOLD, 255]
+)
+
 
 MATPLOTLIB_COLORS = matplotlib.colors.get_named_colors_mapping()
 
@@ -74,3 +82,12 @@ WAIT_KEYS = DotMap(
 )
 
 ZERO_MARGINS = {"top": 0, "bottom": 0, "left": 0, "right": 0}
+
+OUTPUT_MODES = DotMap(
+    {
+        "SET_LAYOUT": "setLayout",
+        "DEFAULT": "default",
+        "MODERATION": "moderation",
+    },
+    _dynamic=False,
+)

@@ -46,6 +46,10 @@
     {
       "name": "CropOnMarkers",
       "options": {
+        "processingImageShape": [
+          900,
+          650
+        ],
         "type": "FOUR_MARKERS",
         "referenceImage": "omr_marker.jpg",
         "tuningOptions": {

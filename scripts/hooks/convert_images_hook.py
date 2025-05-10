@@ -46,6 +46,7 @@ def parse_args():
         dest="trigger_size",
         help="Specify minimum file size to trigger the hook.",
     )
+
     argparser.add_argument("filenames", nargs="*", help="Files to optimize.")
 
     (

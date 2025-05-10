@@ -19,6 +19,7 @@ CONFIG_DEFAULTS = DotMap(
             "GLOBAL_PAGE_THRESHOLD_STD": 10,
         },
         "outputs": {
+            "output_mode": "default",
             "display_image_dimensions": [720, 1080],
             "show_image_level": 0,
             "show_preprocessors_diff": {

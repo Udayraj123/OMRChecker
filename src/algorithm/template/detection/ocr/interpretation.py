@@ -1,13 +1,18 @@
 from typing import List
 
 from src.algorithm.template.detection.base.interpretation import FieldInterpretation
-from src.algorithm.template.template_layout import Field
+from src.algorithm.template.detection.ocr.interpretation_drawing import (
+    OCRFieldInterpretationDrawing,
+)
+from src.algorithm.template.layout.field.base import Field
+from src.utils.logger import logger
 
 
 class OCRInterpretation:
-    def __init__(self, detected_text):
-        self.is_marked = True
-        self.detected_text = detected_text
+    def __init__(self, detection):
+        self.detection = detection
+        self.is_marked = detection is not None
+        self.detected_text = detection.detected_text if self.is_marked else ""
 
     def get_value(self):
         return self.detected_text
@@ -15,9 +20,14 @@ class OCRInterpretation:
 
 class OCRFieldInterpretation(FieldInterpretation):
     def __init__(self, *args, **kwargs):
+        self.interpretations: List[OCRInterpretation] = None
         super().__init__(*args, **kwargs)
 
+    def get_drawing_instance(self):
+        return OCRFieldInterpretationDrawing(self)
+
     def get_field_interpretation_string(self):
+        # TODO: update this logic
         marked_interpretations = [
             interpretation.get_value()
             for interpretation in self.interpretations
@@ -27,10 +37,9 @@ class OCRFieldInterpretation(FieldInterpretation):
         if len(marked_interpretations) == 0:
             return self.empty_value
 
-        # TODO: if self.interpretation_config.concatenation.enabled:
-        # return "".join(marked_interpretations)
-
-        return marked_interpretations[0]
+        # TODO: if not self.interpretation_config.concatenation.enabled:
+        #   return marked_interpretations[0]
+        return "".join(marked_interpretations)
 
     def run_interpretation(
         self,
@@ -57,18 +66,19 @@ class OCRFieldInterpretation(FieldInterpretation):
 
         # map detections to interpretations
         self.interpretations: List[OCRInterpretation] = [
-            OCRInterpretation(detected_text)
-            for detected_text in field_level_detection_aggregates["detected_texts"]
+            OCRInterpretation(detection)
+            for detection in field_level_detection_aggregates["detections"]
         ]
+
+        if len(self.interpretations) == 0:
+            logger.warning(f"No OCR detection for field: {self.field.id}")
 
     def update_common_interpretations(self):
         # TODO: can we move it to a common wrapper since is_multi_marked is independent of field detection type?
-        for interpretation in self.interpretations:
-            if interpretation.get_value() == "":
-                interpretation.is_marked = False
         marked_interpretations = [
             interpretation.get_value()
             for interpretation in self.interpretations
             if interpretation.is_marked
         ]
+        self.is_marked = len(marked_interpretations) > 0
         self.is_multi_marked = len(marked_interpretations) > 1

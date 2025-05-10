@@ -6,6 +6,7 @@ TEMPLATE_BOILERPLATE = {
         {
             "name": "CropOnMarkers",
             "options": {
+                "processingImageShape": [1640, 1332],
                 "type": "FOUR_MARKERS",
                 "referenceImage": "omr_marker.jpg",
                 "markerDimensions": [40, 40],

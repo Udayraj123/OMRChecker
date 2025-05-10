@@ -2,7 +2,7 @@ from src.algorithm.template.detection.base.interpretation_pass import (
     FieldTypeInterpretationPass,
 )
 from src.algorithm.template.detection.ocr.interpretation import OCRFieldInterpretation
-from src.algorithm.template.template_layout import Field
+from src.algorithm.template.layout.field.base import Field
 
 
 class OCRInterpretationPass(FieldTypeInterpretationPass):

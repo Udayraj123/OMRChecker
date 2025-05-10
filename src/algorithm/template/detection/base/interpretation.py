@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from src.algorithm.template.template_layout import Field
+from src.algorithm.template.layout.field.base import Field
 
 
 class FieldInterpretation:
@@ -13,13 +13,21 @@ class FieldInterpretation:
     ):
         self.tuning_config = tuning_config
         self.field = field
+
+        # TODO: replace is_marked with is_attempted
+        self.is_marked = None
         # self.field_block = field.field_block
         self.empty_value = field.empty_value
         self.field_level_confidence_metrics = {}
+        self.drawing = self.get_drawing_instance()
 
         self.run_interpretation(
             field, file_level_detection_aggregates, file_level_interpretation_aggregates
         )
+
+    @abstractmethod
+    def get_drawing_instance(self):
+        raise Exception(f"Not implemented")
 
     @abstractmethod
     def run_interpretation(
