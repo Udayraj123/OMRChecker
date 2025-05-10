@@ -743,14 +743,18 @@ TEMPLATE_SCHEMA = {
                                     "description": "Options for the AutoRotate pre-processor",
                                     "type": "object",
                                     "additionalProperties": False,
-                                    "required": ["referenceImage"],
+                                    "required": [
+                                        "referenceImage",
+                                        "markerDimensions",
+                                        "threshold",
+                                    ],
                                     "properties": {
                                         "referenceImage": {
                                             "description": "The relative path to reference image",
                                             "type": "string",
                                         },
                                         "markerDimensions": {
-                                            "description": "Dimensions of reference image",
+                                            "description": "Dimensions of the reference image",
                                             "$ref": "#/$def/two_positive_numbers",
                                         },
                                         "threshold": {

@@ -1,3 +1,5 @@
+import os
+
 import cv2
 
 from src.processors.interfaces.ImageTemplatePreprocessor import (
@@ -17,6 +19,8 @@ class AutoRotate(ImageTemplatePreprocessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         path = self.get_relative_path(self.options["referenceImage"])
+        if not os.path.exists(path):
+            raise Exception(f"Reference image for AutoRotate not found at {path}")
         self.reference_image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
         self.marker_dimensions = self.options.get("markerDimensions", None)
         self.resized_reference = self.reference_image
@@ -45,38 +49,47 @@ class AutoRotate(ImageTemplatePreprocessor):
             res = cv2.matchTemplate(
                 rotated_img, self.resized_reference, cv2.TM_CCOEFF_NORMED
             )
-            if config.outputs.show_image_level >= 4:
-                InteractionUtils.show(f"Image for rotation: {rotation}", rotated_img, 0)
-                InteractionUtils.show(
-                    f"Reference for rotation: {rotation}", self.resized_reference, 0
-                )
-                InteractionUtils.show(
-                    f"Template Matching Result for rotation: {rotation}", res
-                )
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-            # logger.info(rotation, max_val)
+
+            if config.outputs.show_image_level >= 5:
+                hstack = ImageUtils.get_padded_hstack(
+                    [rotated_img, self.resized_reference]
+                )
+                InteractionUtils.show("Template matching result", res, 0)
+                InteractionUtils.show(
+                    f"Template Matching for rotation: {'No Rotation' if rotation is None else 90 * (1 + rotation)} ({max_val:.2f})",
+                    hstack,
+                )
+
             if max_val > best_val:
                 best_val = max_val
                 best_rotation = rotation
 
-        if self.threshold is not None:
-            if self.threshold["value"] > best_val:
-                if self.threshold["passthrough"]:
-                    logger.warning(
-                        "The autorotate score is below threshold. Continuing due to passthrough flag."
-                    )
-                else:
-                    logger.error(
-                        "The autorotate score is below threshold. Adjust your threshold or check the reference marker and input image."
-                    )
-                    raise Exception(f"The autorotate score is below threshold")
+        if self.threshold is not None and self.threshold["value"] > best_val:
+            if self.threshold["passthrough"]:
+                logger.warning(
+                    "The autorotate score is below threshold. Continuing due to passthrough flag."
+                )
+            else:
+                logger.error(
+                    "The autorotate score is below threshold. Adjust your threshold or check the reference marker and input image."
+                )
+                raise Exception(f"The autorotate score is below threshold")
+
         logger.info(
-            "AutoRotate Applied with rotation", best_rotation, "best value", best_val
+            f"AutoRotate Applied with rotation {best_rotation} and value {best_val}"
         )
         if best_rotation is None:
             return image, colored_image, _template
 
         image = ImageUtils.rotate(image, best_rotation, keep_original_shape=True)
+
+        if config.outputs.show_image_level >= 4:
+            InteractionUtils.show(
+                f"Image after AutoRotate: rotation - {best_rotation}",
+                image,
+                1,
+            )
         if self.tuning_config.outputs.colored_outputs_enabled:
             colored_image = ImageUtils.rotate(
                 colored_image, best_rotation, keep_original_shape=True
