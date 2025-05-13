@@ -52,9 +52,10 @@ def print_config_summary(
     table.add_row("Directory Path", f"{curr_dir}")
     table.add_row("Count of Images", f"{len(omr_files)}")
     table.add_row("Set Layout Mode ", "ON" if args["setLayout"] else "OFF")
+    pre_processor_names = [pp.__class__.__name__ for pp in template.pre_processors]
     table.add_row(
         "Markers Detection",
-        "ON" if "CropOnMarkers" in template.pre_processors else "OFF",
+        "ON" if "CropOnMarkers" in pre_processor_names else "OFF",
     )
     table.add_row("Auto Alignment", f"{tuning_config.alignment_params.auto_align}")
     table.add_row("Detected Template Path", f"{template}")
@@ -65,7 +66,7 @@ def print_config_summary(
 
     table.add_row(
         "Detected pre-processors",
-        f"{[pp.__class__.__name__ for pp in template.pre_processors]}",
+        ", ".join(pre_processor_names),
     )
     console.print(table, justify="center")
 
