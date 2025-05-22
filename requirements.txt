@@ -12,4 +12,4 @@ rich-tools==0.5.1
 rich==13.8.0
 scipy==1.15.1
 screeninfo==0.8.1
-shapely==2.0.3
+shapely==2.1.1
