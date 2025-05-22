@@ -196,6 +196,7 @@ crop_on_markers_tuning_options_available_keys = {
     "dotKernel": True,
     "lineThreshold": True,
     "dotBlurKernel": True,
+    "lineBlurKernel": True,
     "lineKernel": True,
     "apply_erode_subtract": True,
     "marker_rescale_range": True,
@@ -238,16 +239,21 @@ crop_on_dot_lines_tuning_options_def = {
     "properties": {
         **crop_on_markers_tuning_options_available_keys,
         **warp_on_points_tuning_options,
+        # TODO: separate out dot and line configs for better validation
         "dotBlurKernel": {
-            "$ref": "#/$def/two_positive_numbers",
+            "$ref": "#/$def/two_odd_integers",
             "description": "The size of the kernel to use for blurring in each dot's scanZone",
         },
+        "lineBlurKernel": {
+            "$ref": "#/$def/two_odd_integers",
+            "description": "The size of the kernel to use for blurring in each line's scanZone",
+        },
         "dotKernel": {
-            "$ref": "#/$def/two_positive_numbers",
+            "$ref": "#/$def/two_positive_integers",
             "description": "The size of the morph kernel to use for smudging each dot",
         },
         "lineKernel": {
-            "$ref": "#/$def/two_positive_numbers",
+            "$ref": "#/$def/two_positive_integers",
             "description": "The size of the morph kernel to use for smudging each line",
         },
         "dotThreshold": {
@@ -472,6 +478,7 @@ TEMPLATE_SCHEMA = {
                 "two_integers",
                 "two_positive_integers",
                 "two_positive_numbers",
+                "two_odd_integers",
                 "zero_to_one_number",
             ]
         ),

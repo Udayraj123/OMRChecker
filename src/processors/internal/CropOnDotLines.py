@@ -239,6 +239,16 @@ class CropOnDotLines(CropOnPatchesCommon):
 
         zone, zone_start, _ = self.compute_scan_zone_util(image, zone_description)
 
+        line_blur_kernel = tuning_options.get("lineBlurKernel", None)
+        if line_blur_kernel:
+            zone_h, zone_w = zone.shape
+            blur_h, blur_w = line_blur_kernel
+
+            assert (
+                zone_h > blur_h and zone_w > blur_w
+            ), f"The zone '{zone_label}' is smaller than provided lineBlurKernel: {zone.shape} < {line_blur_kernel}"
+            zone = cv2.GaussianBlur(zone, line_blur_kernel, 0)
+
         # Make boxes darker (less gamma)
         darker_image = ImageUtils.adjust_gamma(zone, config.thresholding.GAMMA_LOW)
 
@@ -249,11 +259,10 @@ class CropOnDotLines(CropOnPatchesCommon):
             darker_image, line_threshold, 255, cv2.THRESH_TRUNC
         )
         normalised = ImageUtils.normalize(thresholded)
-
         # add white padding
         kernel_height, kernel_width = self.line_kernel_morph.shape[:2]
         white, pad_range = ImageUtils.pad_image_from_center(
-            normalised, kernel_width, kernel_height, 255
+            normalised, kernel_width * 2, kernel_height * 2, 255
         )
 
         # Threshold-Normalize after morph + white padding
@@ -277,6 +286,7 @@ class CropOnDotLines(CropOnPatchesCommon):
                 darker_image,
                 normalised,
                 white_thresholded,
+                white_normalised,
                 line_morphed,
             ]
         elif config.outputs.show_image_level == 4:
@@ -318,7 +328,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         # add white padding (to avoid dilations sticking to edges)
         kernel_height, kernel_width = self.dot_kernel_morph.shape[:2]
         white_padded_zone, pad_range = ImageUtils.pad_image_from_center(
-            zone, kernel_width, kernel_height, 255
+            zone, kernel_width * 2, kernel_height * 2, 255
         )
 
         # Open : erode then dilate
