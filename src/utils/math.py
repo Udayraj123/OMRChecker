@@ -24,7 +24,7 @@ class MathUtils:
         )
 
     @staticmethod
-    def add_points(point, new_origin):
+    def add_points(new_origin, point):
         return [
             new_origin[0] + point[0],
             new_origin[1] + point[1],

@@ -1,0 +1,130 @@
+{
+  "bubbleDimensions": [
+    15,
+    15
+  ],
+  "templateDimensions": [
+    800,
+    1132
+  ],
+  "processingImageShape": [
+    1132,
+    800
+  ],
+  "preProcessors": [
+    {
+      "name": "CropPage",
+      "options": {
+        "morphKernel": [
+          10,
+          10
+        ],
+        "processingImageShape": [
+          1132,
+          800
+        ]
+      }
+    },
+    {
+      "name": "CropOnMarkers",
+      "options": {
+        "processingImageShape": [
+          1132,
+          800
+        ],
+        "tuningOptions": {
+          "lineThreshold": 140,
+          "lineKernel": [
+            5,
+            80
+          ],
+          "lineBlurKernel": [
+            5,
+            5
+          ]
+        },
+        "type": "TWO_LINES",
+        "defaultSelector": "OUTER_CORNERS",
+        "leftLine": {
+          "origin": [
+            40,
+            170
+          ],
+          "dimensions": [
+            14,
+            840
+          ],
+          "margins": {
+            "top": 35,
+            "right": 25,
+            "bottom": 40,
+            "left": 10
+          }
+        },
+        "rightLine": {
+          "origin": [
+            768,
+            170
+          ],
+          "dimensions": [
+            14,
+            840
+          ],
+          "margins": {
+            "top": 40,
+            "right": 12,
+            "bottom": 30,
+            "left": 10
+          }
+        }
+      }
+    },
+    {
+      "name": "Contrast",
+      "options": {
+        "mode": "auto"
+      }
+    }
+  ],
+  "fieldBlocks": {
+    "Physics_MCQ": {
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "fieldLabels": [
+        "q1..30"
+      ],
+      "bubblesGap": 45.75,
+      "labelsGap": 18.46,
+      "origin": [
+        85,
+        581
+      ]
+    },
+    "Chemistry_MCQ": {
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "fieldLabels": [
+        "q31..60"
+      ],
+      "bubblesGap": 45.75,
+      "labelsGap": 18.46,
+      "origin": [
+        333,
+        581
+      ]
+    },
+    "Maths_MCQ": {
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "fieldLabels": [
+        "q61..90"
+      ],
+      "bubblesGap": 45.75,
+      "labelsGap": 18.46,
+      "origin": [
+        575,
+        581
+      ]
+    }
+  }
+}

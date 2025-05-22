@@ -128,7 +128,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         parsed_options = {
             "defaultSelector": options.get("defaultSelector", "CENTERS"),
             "pointsLayout": layout_type,
-            "enableCropping": True,
+            "enableCropping": options.get("enableCropping", True),  # temp
             "tuningOptions": {
                 "warpMethod": tuning_options.get(
                     "warpMethod", WarpMethod.PERSPECTIVE_TRANSFORM
@@ -144,12 +144,13 @@ class CropOnDotLines(CropOnPatchesCommon):
             *[
                 {
                     "zonePreset": zone_preset,
-                    "zoneDescription": options.get(zone_preset, {}),
+                    "zoneDescription": options[zone_preset],
                     "customOptions": {
                         # TODO: get customOptions here
                     },
                 }
                 for zone_preset in self.scan_zone_presets_for_layout[layout_type]
+                if zone_preset in options
             ],
         ]
         return parsed_options
@@ -235,7 +236,18 @@ class CropOnDotLines(CropOnPatchesCommon):
         zone_label = zone_description["label"]
         config = self.tuning_config
         tuning_options = self.tuning_options
-        zone, zone_start = self.compute_scan_zone_util(image, zone_description)
+
+        zone, zone_start, _ = self.compute_scan_zone_util(image, zone_description)
+
+        line_blur_kernel = tuning_options.get("lineBlurKernel", None)
+        if line_blur_kernel:
+            zone_h, zone_w = zone.shape
+            blur_h, blur_w = line_blur_kernel
+
+            assert (
+                zone_h > blur_h and zone_w > blur_w
+            ), f"The zone '{zone_label}' is smaller than provided lineBlurKernel: {zone.shape} < {line_blur_kernel}"
+            zone = cv2.GaussianBlur(zone, line_blur_kernel, 0)
 
         # Make boxes darker (less gamma)
         darker_image = ImageUtils.adjust_gamma(zone, config.thresholding.GAMMA_LOW)
@@ -247,11 +259,10 @@ class CropOnDotLines(CropOnPatchesCommon):
             darker_image, line_threshold, 255, cv2.THRESH_TRUNC
         )
         normalised = ImageUtils.normalize(thresholded)
-
         # add white padding
         kernel_height, kernel_width = self.line_kernel_morph.shape[:2]
         white, pad_range = ImageUtils.pad_image_from_center(
-            normalised, kernel_width, kernel_height, 255
+            normalised, kernel_width * 2, kernel_height * 2, 255
         )
 
         # Threshold-Normalize after morph + white padding
@@ -275,6 +286,7 @@ class CropOnDotLines(CropOnPatchesCommon):
                 darker_image,
                 normalised,
                 white_thresholded,
+                white_normalised,
                 line_morphed,
             ]
         elif config.outputs.show_image_level == 4:
@@ -300,8 +312,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         tuning_options = self.tuning_options
         zone_label = zone_description["label"]
 
-        zone, zone_start = self.compute_scan_zone_util(image, zone_description)
-
+        zone, zone_start, _ = self.compute_scan_zone_util(image, zone_description)
         # TODO: simple colored thresholding to clear out noise?
 
         dot_blur_kernel = tuning_options.get("dotBlurKernel", None)
@@ -317,7 +328,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         # add white padding (to avoid dilations sticking to edges)
         kernel_height, kernel_width = self.dot_kernel_morph.shape[:2]
         white_padded_zone, pad_range = ImageUtils.pad_image_from_center(
-            zone, kernel_width, kernel_height, 255
+            zone, kernel_width * 2, kernel_height * 2, 255
         )
 
         # Open : erode then dilate
@@ -361,15 +372,18 @@ class CropOnDotLines(CropOnPatchesCommon):
         )
         if corners is None:
             if config.outputs.show_image_level >= 1:
+                if len(self.debug_hstack) > 0:
+                    InteractionUtils.show(
+                        f"No patch/dot debug hstack",
+                        ImageUtils.get_padded_hstack(self.debug_hstack),
+                        pause=0,
+                    )
                 hstack = ImageUtils.get_padded_hstack(
                     [self.debug_image, zone, white_thresholded]
                 )
                 InteractionUtils.show(
-                    f"No patch/dot debug hstack",
-                    ImageUtils.get_padded_hstack(self.debug_hstack),
-                    pause=0,
+                    f"No patch/dot found for {zone_label}", hstack, pause=1
                 )
-                InteractionUtils.show(f"No patch/dot found:", hstack, pause=1)
 
             raise Exception(
                 f"No patch/dot found at origin: {zone_description['origin']} with dimensions: {zone_description['dimensions']}"

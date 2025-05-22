@@ -1,7 +1,8 @@
 # Any directory starting with a dot
 **/\.*/
-# Except .github
+# Exceptions for dot directories -
 !.github/
+!.vscode/
 
 # Everything in inputs/ and outputs/
 inputs/*

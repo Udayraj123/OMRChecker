@@ -24,6 +24,10 @@
     {
       "name": "CropOnMarkers",
       "options": {
+        "processingImageShape": [
+          1280,
+          906
+        ],
         "type": "FOUR_DOTS",
         "tuningOptions": {
           "dotBlurKernel": [

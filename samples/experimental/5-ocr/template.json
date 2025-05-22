@@ -121,10 +121,10 @@
       ],
       "scanZone": {
         "margins": {
-          "top": 10,
-          "bottom": 10,
-          "left": 10,
-          "right": 10
+          "top": 30,
+          "bottom": 30,
+          "left": 30,
+          "right": 30
         },
         "dimensions": [
           80,
@@ -133,6 +133,28 @@
       },
       "fieldLabels": [
         "OCR_BOOKLET_CODE"
+      ]
+    },
+    "PAPER_BARCODE": {
+      "fieldDetectionType": "BARCODE_QR",
+      "origin": [
+        1,
+        1001
+      ],
+      "scanZone": {
+        "margins": {
+          "top": 30,
+          "bottom": 30,
+          "left": 1,
+          "right": 30
+        },
+        "dimensions": [
+          150,
+          450
+        ]
+      },
+      "fieldLabels": [
+        "BARCODE"
       ]
     }
   }

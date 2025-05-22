@@ -32,6 +32,9 @@ class ImageTemplatePreprocessor(Processor):
         """Apply filter to the image and returns modified image"""
         raise NotImplementedError
 
+    def get_class_name(self):
+        raise NotImplementedError
+
     def resize_and_apply_filter(self, in_image, colored_image, _template, _file_path):
         config = self.tuning_config
 

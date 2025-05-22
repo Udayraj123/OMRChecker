@@ -1,8 +1,12 @@
-from src.algorithm.template.template_layout import Field
+from src.algorithm.template.layout.field.base import Field
 from src.utils.stats import StatsByLabel
 
 
 class FilePassAggregates:
+    """
+    Interface defining methods for collecting and managing data during file processing at various levels (field, file, directory).
+    """
+
     def __init__(self, tuning_config):
         self.tuning_config = tuning_config
 
@@ -39,6 +43,7 @@ class FilePassAggregates:
         }
 
     def update_aggregates_on_processed_file(self, file_path):
+        # Nested access
         self.directory_level_aggregates["file_wise_aggregates"][
             file_path
         ] = self.file_level_aggregates
@@ -67,6 +72,7 @@ class FilePassAggregates:
         self, field: Field, field_level_aggregates
     ):
         field_label = field.field_label
+        # TODO: convert into field_id_wise_aggregates
         self.file_level_aggregates["field_label_wise_aggregates"][
             field_label
         ] = field_level_aggregates

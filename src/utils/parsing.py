@@ -34,8 +34,20 @@ OVERRIDE_MERGER = Merger(
 )
 
 
-def open_config_with_defaults(config_path):
+def open_config_with_defaults(config_path, args):
+    output_mode = args["outputMode"]
+    debug_mode = args["debug"]
     user_tuning_config = load_json(config_path)
+    defaults_from_args = {
+        "outputs": {
+            "output_mode": output_mode,
+            "show_logs_by_type": {
+                "debug": debug_mode,
+            },
+        }
+    }
+    # precedence: file > args > CONFIG_DEFAULTS
+    user_tuning_config = OVERRIDE_MERGER.merge(defaults_from_args, user_tuning_config)
     user_tuning_config = OVERRIDE_MERGER.merge(
         deepcopy(CONFIG_DEFAULTS), user_tuning_config
     )

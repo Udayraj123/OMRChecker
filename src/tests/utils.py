@@ -28,7 +28,7 @@ def run_entry_point(input_path, output_dir):
         "input_paths": [input_path],
         "output_dir": output_dir,
         "setLayout": False,
-        "output_mode": "default",
+        "outputMode": "default",
     }
     with freeze_time(FROZEN_TIMESTAMP):
         entry_point_for_args(args)

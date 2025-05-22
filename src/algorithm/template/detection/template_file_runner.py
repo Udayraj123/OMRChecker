@@ -1,6 +1,7 @@
 import os
 from typing import List
 
+from src.algorithm.template.detection.barcode.file_runner import BarcodeFileRunner
 from src.algorithm.template.detection.base.detection_pass import TemplateDetectionPass
 from src.algorithm.template.detection.base.file_runner import (
     FieldTypeFileLevelRunner,
@@ -13,23 +14,22 @@ from src.algorithm.template.detection.bubbles_threshold.file_runner import (
     BubblesThresholdFileRunner,
 )
 from src.algorithm.template.detection.ocr.file_runner import OCRFileRunner
-from src.algorithm.template.template_layout import Field
+from src.algorithm.template.layout.field.base import Field
 from src.processors.constants import FieldDetectionType
 
 
 class TemplateFileRunner(FileLevelRunner):
     """
-    TemplateFileRunner maintains own template level runners as well as all the field detection type level runners.
-    It takes care of detections of an image file using a single template
-
-    We create one instance of TemplateFileRunner per Template.
+    Template File Runner is responsible for running the file level detection and interpretation steps.
+    It maintains own template level runners as well as all the field detection type level runners.
+    We create one instance of TemplateFileRunner per Template - thus it is reused for all images mapped to that Template.
     Note: a Template may get reused for multiple directories(in nested case)
     """
 
     field_detection_type_to_runner = {
         FieldDetectionType.BUBBLES_THRESHOLD: BubblesThresholdFileRunner,
         FieldDetectionType.OCR: OCRFileRunner,
-        # FieldDetectionType.BARCODE_QR: BarcodeQRRunner,
+        FieldDetectionType.BARCODE_QR: BarcodeFileRunner,
         # FieldDetectionType.BUBBLES_BLOB: BubblesBlobRunner,
     }
 
@@ -153,6 +153,7 @@ class TemplateFileRunner(FileLevelRunner):
         current_omr_response = {}
         # Perform interpretation step for each field
         for field in self.all_fields:
+            # Intentional arg mutation
             self.run_field_level_interpretation(current_omr_response, field)
 
         self.update_interpretation_aggregates_on_processed_file(file_path)

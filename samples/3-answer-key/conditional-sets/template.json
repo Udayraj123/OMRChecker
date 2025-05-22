@@ -24,6 +24,10 @@
     },
     {
       "name": "CropOnMarkers",
+      "processingImageShape": [
+        2304,
+        1725
+      ],
       "options": {
         "type": "FOUR_MARKERS",
         "referenceImage": "omr_marker.jpg",

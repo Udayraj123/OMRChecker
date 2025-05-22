@@ -94,6 +94,7 @@ ALL_COMMON_DEFS = {
         "pattern": "^([^\\.]+|[^\\.\\d]+\\d+\\.{2,3}\\d+)$",
     },
     "positive_number": {"type": "number", "minimum": 0},
+    "odd_integer": {"type": "integer", "minimum": 1, "not": {"multipleOf": 2}},
     "positive_integer": {"type": "integer", "minimum": 0},
     "two_integers": {
         "type": "array",
@@ -134,6 +135,19 @@ ALL_COMMON_DEFS = {
         "maxItems": 2,
         "minItems": 2,
     },
+    "two_odd_integers": {
+        "type": "array",
+        "prefixItems": [
+            {
+                "$ref": "#/$def/odd_integer",
+            },
+            {
+                "$ref": "#/$def/odd_integer",
+            },
+        ],
+        "maxItems": 2,
+        "minItems": 2,
+    },
     "zero_to_one_number": {
         "type": "number",
         "minimum": 0,
@@ -164,5 +178,7 @@ def load_common_defs(keys):
         keys += ["positive_integer"]
     if "two_positive_numbers" in keys:
         keys += ["positive_number"]
+    if "two_odd_integers" in keys:
+        keys += ["odd_integer"]
     keys = set(keys)
     return {key: ALL_COMMON_DEFS[key] for key in keys}

@@ -4,7 +4,7 @@ from src.algorithm.template.detection.base.interpretation_pass import (
 from src.algorithm.template.detection.bubbles_threshold.interpretation import (
     BubblesFieldInterpretation,
 )
-from src.algorithm.template.template_layout import Field
+from src.algorithm.template.layout.field.base import Field
 from src.utils.logger import logger
 from src.utils.stats import NumberAggregate
 
@@ -164,7 +164,7 @@ class BubblesThresholdInterpretationPass(FieldTypeInterpretationPass):
                 # TODO: move is_multi_marked logic to a parent class(or make copy in parent)
                 "is_multi_marked": field_interpretation.is_multi_marked,
                 "local_threshold_for_field": field_interpretation.local_threshold_for_field,
-                "field_bubble_interpretations": field_interpretation.field_bubble_interpretations,
+                "bubble_interpretations": field_interpretation.bubble_interpretations,
                 # Needed for exporting?
                 # "field_bubble_means": field_interpretation.field_bubble_means,
             }

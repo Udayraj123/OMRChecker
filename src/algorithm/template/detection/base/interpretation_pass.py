@@ -2,11 +2,15 @@ from abc import abstractmethod
 
 from src.algorithm.template.detection.base.common_pass import FilePassAggregates
 from src.algorithm.template.detection.base.interpretation import FieldInterpretation
-from src.algorithm.template.template_layout import Field
+from src.algorithm.template.layout.field.base import Field
 from src.utils.stats import StatsByLabel
 
 
 class FieldTypeInterpretationPass(FilePassAggregates):
+    """
+    Implements interpretation pass for field types, managing the interpretation-related aggregates.
+    """
+
     def __init__(self, tuning_config, field_detection_type):
         self.field_detection_type = field_detection_type
         super().__init__(tuning_config)
@@ -38,6 +42,7 @@ class FieldTypeInterpretationPass(FilePassAggregates):
         self.insert_file_level_aggregates(
             {
                 "confidence_metrics_for_file": {},
+                "field_id_to_interpretation": {},
             }
         )
 
@@ -75,6 +80,10 @@ class FieldTypeInterpretationPass(FilePassAggregates):
             field.field_label
         ] = field_interpretation.get_field_level_confidence_metrics()
 
+        self.file_level_aggregates["field_id_to_interpretation"][
+            field.id
+        ] = field_interpretation
+
         super().update_file_level_aggregates_on_processed_field(
             field, field_level_aggregates
         )
@@ -102,6 +111,7 @@ class TemplateInterpretationPass(FilePassAggregates):
         self.insert_file_level_aggregates(
             {
                 "confidence_metrics_for_file": {},
+                "field_id_to_interpretation": {},
                 "files_by_label_count": StatsByLabel("processed", "multi_marked"),
                 "read_response_flags": {
                     "is_multi_marked": False,
@@ -187,6 +197,10 @@ class TemplateInterpretationPass(FilePassAggregates):
             field, template_field_level_aggregates
         )
 
+        self.file_level_aggregates["field_id_to_interpretation"][
+            field.id
+        ] = field_interpretation
+
         self.file_level_aggregates["confidence_metrics_for_file"][
             field.field_label
         ] = field_interpretation.get_field_level_confidence_metrics()
@@ -223,5 +237,5 @@ class TemplateInterpretationPass(FilePassAggregates):
         read_response_flags = self.file_level_aggregates["read_response_flags"]
 
         if read_response_flags["is_multi_marked"]:
-            print("self.directory_level_aggregates", self.directory_level_aggregates)
+            # print("self.directory_level_aggregates", self.directory_level_aggregates)
             self.directory_level_aggregates["files_by_label_count"].push("multi_marked")

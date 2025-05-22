@@ -12,6 +12,7 @@ from src.schemas.constants import load_common_defs
 from src.utils.constants import (
     BUILTIN_BUBBLE_FIELD_TYPES,
     CUSTOM_BUBBLE_FIELD_TYPE_PATTERN,
+    SUPPORTED_PROCESSOR_NAMES,
 )
 
 margins_schema_def = {
@@ -183,7 +184,7 @@ pre_processor_if_required_attrs = {
     "required": ["name", "options"],
 }
 crop_on_markers_options_if_required_attrs = {
-    "required": ["type"],
+    "required": ["type", "processingImageShape"],
 }
 warp_on_points_options_if_required_attrs = {
     "required": ["scanZones"],
@@ -195,6 +196,7 @@ crop_on_markers_tuning_options_available_keys = {
     "dotKernel": True,
     "lineThreshold": True,
     "dotBlurKernel": True,
+    "lineBlurKernel": True,
     "lineKernel": True,
     "apply_erode_subtract": True,
     "marker_rescale_range": True,
@@ -203,6 +205,7 @@ crop_on_markers_tuning_options_available_keys = {
 }
 crop_on_markers_options_available_keys = {
     **pre_processor_options_available_keys,
+    "enableCropping": True,
     "scanZones": True,
     "defaultSelector": True,
     "tuningOptions": True,
@@ -236,16 +239,21 @@ crop_on_dot_lines_tuning_options_def = {
     "properties": {
         **crop_on_markers_tuning_options_available_keys,
         **warp_on_points_tuning_options,
+        # TODO: separate out dot and line configs for better validation
         "dotBlurKernel": {
-            "$ref": "#/$def/two_positive_numbers",
+            "$ref": "#/$def/two_odd_integers",
             "description": "The size of the kernel to use for blurring in each dot's scanZone",
         },
+        "lineBlurKernel": {
+            "$ref": "#/$def/two_odd_integers",
+            "description": "The size of the kernel to use for blurring in each line's scanZone",
+        },
         "dotKernel": {
-            "$ref": "#/$def/two_positive_numbers",
+            "$ref": "#/$def/two_positive_integers",
             "description": "The size of the morph kernel to use for smudging each dot",
         },
         "lineKernel": {
-            "$ref": "#/$def/two_positive_numbers",
+            "$ref": "#/$def/two_positive_integers",
             "description": "The size of the morph kernel to use for smudging each line",
         },
         "dotThreshold": {
@@ -400,31 +408,6 @@ many_field_blocks_description_def = {
                         },
                     },
                 },
-                # {
-                #     "if": {
-                #         "properties": {
-                #             "fieldDetectionType": {
-                #                 "const": FieldDetectionType.BARCODE_QR
-                #             }
-                #         },
-                #     },
-                #     "then": {
-                #         # TODO: move barcode specific properties into this if-else
-                #         "required": [
-                #             "scanZone",
-                #             "bubbleFieldType",
-                #             "fieldLabels",
-                #             # TODO: "failIfNotFound"
-                #             # "emptyValue",
-                #         ],
-                #         "additionalProperties": False,
-                #         "properties": {
-                #             **_common_field_block_properties,
-                #             "scanZone": _box_zone_description,
-                #             "fieldLabels": {"type": "string"},
-                #         },
-                #     },
-                # },
                 {
                     "if": {
                         "properties": {
@@ -445,6 +428,30 @@ many_field_blocks_description_def = {
                             "scanZone": {
                                 **_box_zone_description,
                                 #  The origin of the scan zone will come from the grid structure itself
+                                "required": ["dimensions", "margins"],
+                            },
+                        },
+                    },
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "fieldDetectionType": {
+                                "const": FieldDetectionType.BARCODE_QR
+                            }
+                        },
+                        "required": [
+                            "origin",
+                            "scanZone",
+                            "fieldLabels",
+                        ],
+                    },
+                    "then": {
+                        "additionalProperties": False,
+                        "properties": {
+                            **_common_field_block_properties,
+                            "scanZone": {
+                                **_box_zone_description,
                                 "required": ["dimensions", "margins"],
                             },
                         },
@@ -471,6 +478,7 @@ TEMPLATE_SCHEMA = {
                 "two_integers",
                 "two_positive_integers",
                 "two_positive_numbers",
+                "two_odd_integers",
                 "zero_to_one_number",
             ]
         ),
@@ -559,23 +567,13 @@ TEMPLATE_SCHEMA = {
             "items": {
                 "type": "object",
                 **pre_processor_if_required_attrs,
-                "additionalProperties": True,
+                "additionalProperties": False,
                 "properties": {
                     # Common properties to be used here
                     "name": {
                         "description": "The name of the pre-processor to use",
                         "type": "string",
-                        "enum": [
-                            "CropOnMarkers",
-                            # TODO: "WarpOnPoints",
-                            "CropPage",
-                            "FeatureBasedAlignment",
-                            "GaussianBlur",
-                            "Levels",
-                            "MedianBlur",
-                            "AutoRotate",
-                            "Contrast",
-                        ],
+                        "enum": SUPPORTED_PROCESSOR_NAMES,
                     },
                     "options": {
                         "description": "The options to pass to the pre-processor",
@@ -752,14 +750,18 @@ TEMPLATE_SCHEMA = {
                                     "description": "Options for the AutoRotate pre-processor",
                                     "type": "object",
                                     "additionalProperties": False,
-                                    "required": ["referenceImage"],
+                                    "required": [
+                                        "referenceImage",
+                                        "markerDimensions",
+                                        "threshold",
+                                    ],
                                     "properties": {
                                         "referenceImage": {
                                             "description": "The relative path to reference image",
                                             "type": "string",
                                         },
                                         "markerDimensions": {
-                                            "description": "Dimensions of reference image",
+                                            "description": "Dimensions of the reference image",
                                             "$ref": "#/$def/two_positive_numbers",
                                         },
                                         "threshold": {
@@ -866,6 +868,10 @@ TEMPLATE_SCHEMA = {
                                     "properties": {
                                         # Note: the keys need to match with crop_on_markers_options_available_keys
                                         **crop_on_markers_options_available_keys,
+                                        "enableCropping": {
+                                            "description": "Whether to crop the image to a bounding box of the given anchor points",
+                                            "type": "boolean",
+                                        },
                                         "scanZones": {
                                             "$ref": "#/$def/scan_zones_array"
                                         },
@@ -921,10 +927,17 @@ TEMPLATE_SCHEMA = {
                                             },
                                             "then": {
                                                 # TODO: check that "topLeftDot": False, etc here is not passable
-                                                "required": [
-                                                    "leftLine",
-                                                    "topRightDot",
-                                                    "bottomRightDot",
+                                                "oneOf": [
+                                                    {
+                                                        "required": ["scanZones"],
+                                                    },
+                                                    {
+                                                        "required": [
+                                                            "leftLine",
+                                                            "topRightDot",
+                                                            "bottomRightDot",
+                                                        ],
+                                                    },
                                                 ],
                                                 "additionalProperties": False,
                                                 "properties": {
@@ -954,10 +967,17 @@ TEMPLATE_SCHEMA = {
                                                 },
                                             },
                                             "then": {
-                                                "required": [
-                                                    "rightLine",
-                                                    "topLeftDot",
-                                                    "bottomLeftDot",
+                                                "oneOf": [
+                                                    {
+                                                        "required": ["scanZones"],
+                                                    },
+                                                    {
+                                                        "required": [
+                                                            "rightLine",
+                                                            "topLeftDot",
+                                                            "bottomLeftDot",
+                                                        ]
+                                                    },
                                                 ],
                                                 "additionalProperties": False,
                                                 "properties": {
@@ -985,9 +1005,16 @@ TEMPLATE_SCHEMA = {
                                                 },
                                             },
                                             "then": {
-                                                "required": [
-                                                    "leftLine",
-                                                    "rightLine",
+                                                "oneOf": [
+                                                    {
+                                                        "required": ["scanZones"],
+                                                    },
+                                                    {
+                                                        "required": [
+                                                            "leftLine",
+                                                            "rightLine",
+                                                        ]
+                                                    },
                                                 ],
                                                 "additionalProperties": False,
                                                 "properties": {
@@ -1012,11 +1039,18 @@ TEMPLATE_SCHEMA = {
                                                 },
                                             },
                                             "then": {
-                                                "required": [
-                                                    "topRightDot",
-                                                    "bottomRightDot",
-                                                    "topLeftDot",
-                                                    "bottomLeftDot",
+                                                "oneOf": [
+                                                    {
+                                                        "required": ["scanZones"],
+                                                    },
+                                                    {
+                                                        "required": [
+                                                            "topRightDot",
+                                                            "bottomRightDot",
+                                                            "topLeftDot",
+                                                            "bottomLeftDot",
+                                                        ]
+                                                    },
                                                 ],
                                                 "additionalProperties": False,
                                                 "properties": {

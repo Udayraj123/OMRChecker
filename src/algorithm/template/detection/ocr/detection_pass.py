@@ -1,6 +1,6 @@
 from src.algorithm.template.detection.base.detection_pass import FieldTypeDetectionPass
 from src.algorithm.template.detection.ocr.detection import OCRFieldDetection
-from src.algorithm.template.template_layout import Field
+from src.algorithm.template.layout.field.base import Field
 
 
 class OCRDetectionPass(FieldTypeDetectionPass):
@@ -35,9 +35,7 @@ class OCRDetectionPass(FieldTypeDetectionPass):
         super().update_field_level_aggregates_on_processed_field_detection(
             field, field_detection
         )
-        self.insert_field_level_aggregates(
-            {"detected_texts": field_detection.detected_texts}
-        )
+        self.insert_field_level_aggregates({"detections": field_detection.detections})
 
     def update_file_level_aggregates_on_processed_field_detection(
         self,
