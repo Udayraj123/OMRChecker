@@ -1,0 +1,80 @@
+repo_name: udayraj123/OMRChecker
+repo_url: https://github.com/udayraj123/OMRChecker
+site_name: OMRChecker
+site_url: https://udayraj123.github.io/OMRChecker
+
+theme:
+  name: material
+
+  icon:
+    repo: fontawesome/brands/github
+
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      primary: blue grey
+      scheme: light
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      primary: blue grey
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+  features:
+    - content.code.copy
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - pymdownx.blocks.caption
+  - pymdownx.highlight:
+      linenums: true
+  - pymdownx.keys
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: Home.md
+  - Getting Started:
+      - ../README.md
+  - Guides:
+      - "[v2]-User-Guide.md"
+      - User Guide: "[v2]-User-Guide.md"
+      - Templates: "[v2]-About-Templates.md"
+      - Config: "[v2]-About-Config.md"
+      - Evaluation: "[v2]-About-Evaluation.md"
+      - For Contributors: For Contributors.md
+      - v1 Guide:
+          - User Guide: "[v1]-User-Guide.md"
+          - Templates: "[v1]-About-Templates.md"
+          - TODOs: TODOs.md
+  - Visualizations:
+      - Diagrams: "[v1]-Diagrams.md"
+      - Rich Visuals: "[v1]-Rich Visuals.md"
+  - About:
+      - License: ../LICENSE.md
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/udayraj123
+      name: udayraj123 on GitHub
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/in/udayraj123/
+      name: udayraj123 on LinkedIn
+    - icon: fontawesome/brands/x-twitter
+      link: https://x.com/udayraj123
+      name: udayraj123 on X
+
+copyright: Copyright &copy; 2025 udayraj123

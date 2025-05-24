@@ -1,0 +1,51 @@
+{
+    "name": "uv",
+    "build": {
+        "context": "..",
+        "dockerfile": "Dockerfile",
+        "args": {
+            "UV_VERSION": "latest",
+            "DEBIAN_VERSION": "bookworm"
+        }
+    },
+    "features": {
+        "ghcr.io/dhoeric/features/hadolint:1": {}
+        // https://github.com/iansan5653/open-mcr/commit/2187c80983266a02220d0f77c835d92112ef792f
+        // "ghcr.io/devcontainers/features/desktop-lite:1": {
+        // 	"version": "latest",
+        // 	"noVncVersion": "1.2.0",
+        // 	"password": "vscode",
+        // 	"webPort": "6080",
+        // 	"vncPort": "5901"
+        // }
+    },
+    // "forwardPorts": [6080],
+    // "postCreateCommand": "pip3 install -r requirements.txt && sudo apt-get update && sudo apt-get -y install python3-opencv python3-tk"
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "charliermarsh.ruff",
+                "exiasr.hadolint",
+                "kevinrose.vsc-python-indent",
+                "mosapride.zenkaku",
+                "ms-azuretools.vscode-docker",
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "njpwerner.autodocstring",
+                "redhat.vscode-yaml",
+                "shardulm94.trailing-spaces",
+                "tamasfe.even-better-toml",
+                "yzhang.markdown-all-in-one"
+            ]
+        }
+    },
+    "containerEnv": {
+        "DISPLAY": "dummy",
+        "PYTHONUNBUFFERED": "True",
+        "UV_LINK_MODE": "copy",
+        "UV_PROJECT_ENVIRONMENT": "/home/vscode/.venv"
+    },
+    "postCreateCommand": "uv sync --frozen",
+    "postStartCommand": "uv run pre-commit install",
+    "remoteUser": "vscode"
+}

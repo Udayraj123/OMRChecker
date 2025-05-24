@@ -3,6 +3,7 @@
 # Exceptions for dot directories -
 !.github/
 !.vscode/
+!.devcontainer/
 
 # Everything in inputs/ and outputs/
 inputs/*

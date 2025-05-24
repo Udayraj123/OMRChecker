@@ -1,3 +1,3 @@
 #!/bin/sh
-echo "PYTHONPATH=$PWD:$PYTHONPATH python3 $@"
-PYTHONPATH="$PWD:$PYTHONPATH" python3 "$@"
+echo "PYTHONPATH=$PWD:$PYTHONPATH uv run python3 $@"
+PYTHONPATH="$PWD:$PYTHONPATH" uv run python3 "$@"

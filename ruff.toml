@@ -1,0 +1,128 @@
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.13
+target-version = "py313"
+
+[lint]
+# This ruff configuration replaces several pre-commit tools:
+# - autoflake: F401 (unused imports) is enabled and auto-fixable
+# - isort: Import sorting configured below with black profile
+# - black: Formatter configured in [format] section
+# - trailing-whitespace & end-of-file-fixer: W291, W292 enabled
+# "I001" isort
+select = ["ALL"]
+ignore = [
+    # Reference: https://www.flake8rules.com/
+    # Code formatting and style rules
+    "COM812", # Missing trailing comma in function call
+    "COM819", # Trailing comma prohibited
+
+    # Documentation rules
+    "D100", # Missing docstring in public module
+    "D203", # 1 blank line required before class docstring
+    "D213", # Multi-line docstring summary should start at the second line
+    "D300", # Use """triple double quotes"""
+
+    # Indentation rules
+    "E111", # Indentation is not a multiple of four
+    "E114", # Indentation is not a multiple of four (comment)
+    "E117", # Over-indented
+
+    # Import sorting rules
+    "ISC001", # Implicitly concatenated string literals on one line
+    "ISC002", # Implicitly concatenated string literals over multiple lines
+
+    # Quote style rules
+    "Q000", # Remove bad quotes (double quotes preferred)
+    "Q001", # Remove bad quotes (single quotes preferred)
+    "Q002", # Remove bad quotes (avoid escaped quotes)
+    "Q003", # Remove bad quotes (avoid escaped quotes in f-strings)
+
+    # Whitespace rules
+    "E203", # Whitespace before ':'
+    "E231", # Missing whitespace after ':'
+    "W191", # Indentation contains tabs
+    # Not implemented by ruff - https://github.com/astral-sh/ruff/issues/4125
+    # "W503", # Line break occurred before a binary operator
+
+    # Other pycodestyle rules
+    "E501", # Line too long (82 > 79 characters)
+    "E713", # Test for membership should be 'not in'
+    "E731", # Do not assign a lambda expression, use a def
+    "E741", # Do not use variables named 'I', 'O', or 'l'
+
+    # Pyflakes rules
+    "F403", # 'from module import *' used; unable to detect undefined names
+    "F405", # Name may be undefined, or defined from star imports
+    "F541", # f-string without any placeholders
+
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+[lint.per-file-ignores]
+# Ignore all directories named `tests`.
+"tests/**" = ["INP001", "S101"]
+
+# Import sorting configuration (replaces isort)
+[lint.isort]
+profile = "black" # Match the isort profile used in pre-commit
+known-first-party = []
+known-third-party = []
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "first-party",
+    "local-folder",
+]

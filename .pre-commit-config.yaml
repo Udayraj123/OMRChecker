@@ -1,6 +1,24 @@
 exclude: "(__snapshots__|__image_snapshots__)/.*$"
 default_install_hook_types: [pre-commit, pre-push]
+# default_stages: [pre-commit]
 repos:
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    # uv version.
+    rev: 0.7.8
+    hooks:
+      - id: uv-lock
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.2
+    hooks:
+      - id: ruff
+        name: Ruff check
+        description: "Run 'ruff check' for extremely fast Python linting"
+        args: [--fix]
+
+      - id: ruff-format
+        name: Ruff format
+        description: "Run 'ruff format' for extremely fast Python formatting"
+
   # Convert the pngs to jpgs inside samples folder
   - repo: local
     hooks:
@@ -21,7 +39,15 @@ repos:
       - id: resize-images
         name: Resize images
         entry: ./scripts/run_python_hook.sh scripts/hooks/resize_images_hook.py
-        args: ["--max-width", "1500", "--max-height", "1500", "--trigger-size", "150"]
+        args:
+          [
+            "--max-width",
+            "1500",
+            "--max-height",
+            "1500",
+            "--trigger-size",
+            "150",
+          ]
         files: \.(png|jpg|jpeg|PNG|JPG|JPEG)$
         pass_filenames: true
         stages: [commit]
@@ -38,62 +64,23 @@ repos:
         args: ["--quality", "90"]
         fail_fast: true # Wait for user to commit the files
 
+  # TODO: migrate these into ruff config
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
       - id: check-yaml
         stages: [commit]
+        fail_fast: false
       - id: check-added-large-files
         args: ["--maxkb=300"]
+        exclude: ^.*\.(lock)$
         fail_fast: false
         stages: [commit]
       - id: pretty-format-json
         args: ["--autofix", "--no-sort-keys"]
-      - id: end-of-file-fixer
-        exclude_types: ["csv", "json"]
-        stages: [commit]
-      - id: trailing-whitespace
-        stages: [commit]
-
-  # Removes unused imports
-  - repo: https://github.com/pycqa/autoflake
-    rev: v2.3.1
-    hooks:
-      - id: autoflake
-        args: ["--remove-all-unused-imports", "--in-place"]
-        stages: [commit]
-
-  - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
-        args: ["--profile", "black"]
-        stages: [commit]
-  - repo: https://github.com/psf/black
-    rev: 23.3.0
-    hooks:
-      - id: black
+        exclude: ^.*(devcontainer.json)$
         fail_fast: true
-        stages: [commit]
-  - repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
-    hooks:
-      - id: flake8
-        args:
-          - "--ignore=E203,E231,E501,E713,E731,E741,F403,F405,F541,W503"
-          # https://www.flake8rules.com/
-          # E203: Whitespace before ':'
-          # E231: missing whitespace after ':'
-          # E501: Line too long
-          # E713: test for membership should be 'not in'
-          # E731: do not assign a lambda expression, use a def
-          # E741: Do not use variables named 'I', 'O', or 'l'
-          # F403: unable to detect undefined names
-          # F405: 'Tuple' may be undefined, or defined from star imports
-          # F541: f-string without any placeholders
-          # W503: Line break occurred before a binary operator
-        fail_fast: true
-        stages: [commit]
+
   - repo: local
     hooks:
       - id: pytest-on-commit
@@ -114,3 +101,6 @@ repos:
         always_run: true
         fail_fast: true
         stages: [push]
+
+ci:
+  autoupdate_schedule: weekly
