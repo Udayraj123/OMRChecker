@@ -44,39 +44,25 @@ markdown_extensions:
       alternate_style: true
 
 nav:
-  - Home: index.md
+  - Home: Home.md
   - Getting Started:
-      - getting-started/index.md
-      - Docker: getting-started/docker.md
-      - VS Code: getting-started/vscode.md
-      - Dev Container: getting-started/devcontainer.md
+      - ../README.md
   - Guides:
-      - guides/index.md
-      - uv: guides/uv.md
-      - Ruff: guides/ruff.md
-      - Pyright: guides/pyright.md
-      - pre-commit: guides/pre-commit.md
-      - Test: guides/test.md
-      - cookiecutter: guides/cookiecutter.md
-      - tools:
-          - guides/tools/index.md
-          - config: guides/tools/config.md
-          - logger: guides/tools/logger.md
-          - trace: guides/tools/tracer.md
-  - Configurations:
-      - configurations/index.md
-      - uv: configurations/uv.md
-      - Ruff: configurations/ruff.md
-      - Pyright: configurations/pyright.md
-      - pre-commit: configurations/pre-commit.md
-      - Test: configurations/test.md
-  - Usecases:
-      - usecases/index.md
-      - JupyterNotebook: usecases/jupyter.md
-      - FastAPI: usecases/fastapi.md
-      - OpenCV: usecases/opencv.md
+      - "[v2]-User-Guide.md"
+      - User Guide: "[v2]-User-Guide.md"
+      - Templates: "[v2]-About-Templates.md"
+      - Config: "[v2]-About-Config.md"
+      - Evaluation: "[v2]-About-Evaluation.md"
+      - For Contributors: For Contributors.md
+      - v1 Guide:
+          - User Guide: "[v1]-User-Guide.md"
+          - Templates: "[v1]-About-Templates.md"
+          - TODOs: TODOs.md
+  - Visualizations:
+      - Diagrams: "[v1]-Diagrams.md"
+      - Rich Visuals: "[v1]-Rich Visuals.md"
   - About:
-      - License: about/license.md
+      - License: ../LICENSE.md
 
 extra:
   generator: false
