@@ -1,0 +1,20 @@
+name: Configure Git Credentials
+description: |
+  This GitHub Action sets the Git user name and user email.
+
+inputs:
+  name:
+    description: Git user name
+    required: true
+  email:
+    description: Git user email
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Sets the Git user name and user email
+      run: |
+        git config user.name github-actions[bot]
+        git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+      shell: bash

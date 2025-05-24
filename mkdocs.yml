@@ -1,0 +1,94 @@
+repo_name: udayraj123/OMRChecker
+repo_url: https://github.com/udayraj123/OMRChecker
+site_name: OMRChecker
+site_url: https://udayraj123.github.io/OMRChecker
+
+theme:
+  name: material
+
+  icon:
+    repo: fontawesome/brands/github
+
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      primary: blue grey
+      scheme: light
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      primary: blue grey
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+  features:
+    - content.code.copy
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - pymdownx.blocks.caption
+  - pymdownx.highlight:
+      linenums: true
+  - pymdownx.keys
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - getting-started/index.md
+      - Docker: getting-started/docker.md
+      - VS Code: getting-started/vscode.md
+      - Dev Container: getting-started/devcontainer.md
+  - Guides:
+      - guides/index.md
+      - uv: guides/uv.md
+      - Ruff: guides/ruff.md
+      - Pyright: guides/pyright.md
+      - pre-commit: guides/pre-commit.md
+      - Test: guides/test.md
+      - cookiecutter: guides/cookiecutter.md
+      - tools:
+          - guides/tools/index.md
+          - config: guides/tools/config.md
+          - logger: guides/tools/logger.md
+          - trace: guides/tools/tracer.md
+  - Configurations:
+      - configurations/index.md
+      - uv: configurations/uv.md
+      - Ruff: configurations/ruff.md
+      - Pyright: configurations/pyright.md
+      - pre-commit: configurations/pre-commit.md
+      - Test: configurations/test.md
+  - Usecases:
+      - usecases/index.md
+      - JupyterNotebook: usecases/jupyter.md
+      - FastAPI: usecases/fastapi.md
+      - OpenCV: usecases/opencv.md
+  - About:
+      - License: about/license.md
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/udayraj123
+      name: udayraj123 on GitHub
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/in/udayraj123/
+      name: udayraj123 on LinkedIn
+    - icon: fontawesome/brands/x-twitter
+      link: https://x.com/udayraj123
+      name: udayraj123 on X
+
+copyright: Copyright &copy; 2025 udayraj123
