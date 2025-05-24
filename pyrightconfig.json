@@ -1,0 +1,15 @@
+{
+  "pythonVersion": "3.13",
+  "pythonPlatform": "All",
+  "venv": ".venv",
+  "typeCheckingMode": "standard",
+  "include": [
+    "tools"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv"
+  ]
+}
