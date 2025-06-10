@@ -69,6 +69,28 @@ def parse_args():
         run again until the template is set.",
     )
 
+    # NEW: Add CLI arguments for configuration files (Issue #201)
+    argparser.add_argument(
+        "--templateFile",
+        required=False,
+        dest="template_file",
+        help="Path to template.json file",
+    )
+
+    argparser.add_argument(
+        "--configFile",
+        required=False,
+        dest="config_file",
+        help="Path to config.json file",
+    )
+
+    argparser.add_argument(
+        "--evaluationFile",
+        required=False,
+        dest="evaluation_file",
+        help="Path to evaluation.json file",
+    )
+
     (
         args,
         unknown,
@@ -87,6 +109,15 @@ def entry_point_for_args(args):
     if args["debug"] is True:
         # Disable tracebacks
         sys.tracebacklimit = 0
+
+    # NEW: Log configuration file sources for Issue #201
+    if args.get("template_file"):
+        logger.info(f"Using custom template file: {args['template_file']}")
+    if args.get("config_file"):
+        logger.info(f"Using custom config file: {args['config_file']}")
+    if args.get("evaluation_file"):
+        logger.info(f"Using custom evaluation file: {args['evaluation_file']}")
+
     for root in args["input_paths"]:
         entry_point(
             Path(root),
