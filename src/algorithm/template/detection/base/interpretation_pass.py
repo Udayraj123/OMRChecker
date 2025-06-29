@@ -7,9 +7,7 @@ from src.utils.stats import StatsByLabel
 
 
 class FieldTypeInterpretationPass(FilePassAggregates):
-    """
-    Implements interpretation pass for field types, managing the interpretation-related aggregates.
-    """
+    """Implements interpretation pass for field types, managing the interpretation-related aggregates."""
 
     def __init__(self, tuning_config, field_detection_type):
         self.field_detection_type = field_detection_type
@@ -76,13 +74,13 @@ class FieldTypeInterpretationPass(FilePassAggregates):
         field_interpretation: FieldInterpretation,
         field_level_aggregates,
     ):
-        self.file_level_aggregates["confidence_metrics_for_file"][
-            field.field_label
-        ] = field_interpretation.get_field_level_confidence_metrics()
+        self.file_level_aggregates["confidence_metrics_for_file"][field.field_label] = (
+            field_interpretation.get_field_level_confidence_metrics()
+        )
 
-        self.file_level_aggregates["field_id_to_interpretation"][
-            field.id
-        ] = field_interpretation
+        self.file_level_aggregates["field_id_to_interpretation"][field.id] = (
+            field_interpretation
+        )
 
         super().update_file_level_aggregates_on_processed_field(
             field, field_level_aggregates
@@ -197,13 +195,13 @@ class TemplateInterpretationPass(FilePassAggregates):
             field, template_field_level_aggregates
         )
 
-        self.file_level_aggregates["field_id_to_interpretation"][
-            field.id
-        ] = field_interpretation
+        self.file_level_aggregates["field_id_to_interpretation"][field.id] = (
+            field_interpretation
+        )
 
-        self.file_level_aggregates["confidence_metrics_for_file"][
-            field.field_label
-        ] = field_interpretation.get_field_level_confidence_metrics()
+        self.file_level_aggregates["confidence_metrics_for_file"][field.field_label] = (
+            field_interpretation.get_field_level_confidence_metrics()
+        )
 
     def update_directory_level_aggregates_on_processed_field_interpretation(
         self, field: Field, field_interpretation, template_field_level_aggregates

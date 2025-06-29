@@ -105,43 +105,42 @@ class TemplateDrawingUtils:
                 marked_image, shifted, shouldCopy=False, border=border
             )
             return marked_image
-        else:
-            if config.outputs.save_image_level >= 1:
-                # Create a copy of the marked image for saving
-                marked_image_copy = marked_image.copy()
+        if config.outputs.save_image_level >= 1:
+            # Create a copy of the marked image for saving
+            marked_image_copy = marked_image.copy()
 
-                # Draw marked bubbles without evaluation meta
-                marked_image_copy = TemplateDrawingUtils.draw_all_fields(
-                    marked_image_copy,
-                    image_type,
-                    template,
-                    field_id_to_interpretation,
-                    evaluation_meta=None,
-                    evaluation_config_for_response=None,
-                )
-                if image_type == "GRAYSCALE":
-                    template.save_image_ops.append_save_image(
-                        f"Marked Image", range(2, 7), marked_image_copy
-                    )
-                else:
-                    template.save_image_ops.append_save_image(
-                        f"Marked Image", range(2, 7), colored_image=marked_image_copy
-                    )
-
-            marked_image = TemplateDrawingUtils.draw_all_fields(
-                marked_image,
+            # Draw marked bubbles without evaluation meta
+            marked_image_copy = TemplateDrawingUtils.draw_all_fields(
+                marked_image_copy,
                 image_type,
                 template,
                 field_id_to_interpretation,
-                evaluation_meta,
-                evaluation_config_for_response,
+                evaluation_meta=None,
+                evaluation_config_for_response=None,
             )
-
-            # Draw evaluation summary
-            if evaluation_meta is not None:
-                marked_image = TemplateDrawingUtils.draw_evaluation_summary(
-                    marked_image, evaluation_meta, evaluation_config_for_response
+            if image_type == "GRAYSCALE":
+                template.save_image_ops.append_save_image(
+                    f"Marked Image", range(2, 7), marked_image_copy
                 )
+            else:
+                template.save_image_ops.append_save_image(
+                    f"Marked Image", range(2, 7), colored_image=marked_image_copy
+                )
+
+        marked_image = TemplateDrawingUtils.draw_all_fields(
+            marked_image,
+            image_type,
+            template,
+            field_id_to_interpretation,
+            evaluation_meta,
+            evaluation_config_for_response,
+        )
+
+        # Draw evaluation summary
+        if evaluation_meta is not None:
+            marked_image = TemplateDrawingUtils.draw_evaluation_summary(
+                marked_image, evaluation_meta, evaluation_config_for_response
+            )
 
         # Translucent
         cv2.addWeighted(

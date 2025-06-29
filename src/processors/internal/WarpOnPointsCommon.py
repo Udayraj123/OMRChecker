@@ -1,3 +1,5 @@
+from typing import Any
+
 import cv2
 import numpy as np
 from scipy.interpolate import griddata
@@ -25,7 +27,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         WarpMethodFlags.INTER_NEAREST: cv2.INTER_NEAREST,
     }
 
-    def validate_and_remap_options_schema(self):
+    def validate_and_remap_options_schema(self, options) -> dict:
         raise Exception(f"Not implemented")
 
     def __init__(
@@ -70,6 +72,11 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
 
     def prepare_image(self, image):
         return image
+
+    def extract_control_destination_points(
+        self, image, colored_image, file_path
+    ) -> tuple[Any, Any, Any]:
+        raise Exception("Not implemented")
 
     def apply_filter(self, image, colored_image, _template, file_path):
         config = self.tuning_config
@@ -128,9 +135,11 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             warped_image, warped_colored_image = self.remap_with_doc_refine_rectify(
                 image, colored_image, edge_contours_map
             )
+        else:
+            raise Exception(f"Invalid warp method: {self.warp_method}")
 
+        title_prefix = "Warped Image"
         if config.outputs.show_image_level >= 4:
-            title_prefix = "Warped Image"
             if self.enable_cropping:
                 title_prefix = "Cropped Image"
                 # Draw the convex hull of all control points
@@ -170,7 +179,8 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             self.append_save_image(
                 f"Anchor Points: {self}", range(3, 7), self.debug_image
             )
-        if self.output:
+
+        if config.outputs.show_image_level >= 4:
             InteractionUtils.show(
                 f"{title_prefix} Preview of Warp: {file_path}",
                 warped_image,
@@ -246,7 +256,9 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
 
         # de-dupe
         control_points_set = set()
-        for control_point, destination_point in zip(control_points, destination_points):
+        for control_point, destination_point in zip(
+            control_points, destination_points, strict=False
+        ):
             control_point_tuple = tuple(control_point)
             if control_point_tuple not in control_points_set:
                 control_points_set.add(control_point_tuple)

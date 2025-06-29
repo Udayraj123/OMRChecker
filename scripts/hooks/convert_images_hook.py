@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Convert png images within the repository."""
 
-
 import argparse
 import os
 

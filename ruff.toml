@@ -116,7 +116,6 @@ line-ending = "auto"
 
 # Import sorting configuration (replaces isort)
 [lint.isort]
-profile = "black" # Match the isort profile used in pre-commit
 known-first-party = []
 known-third-party = []
 section-order = [

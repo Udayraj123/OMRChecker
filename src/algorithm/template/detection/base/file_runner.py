@@ -7,9 +7,7 @@ from src.algorithm.template.layout.field.base import Field
 
 
 class FileLevelRunner:
-    """
-    Coordinates detection and interpretation passes at file level. It manages aggregates at different levels (file, directory) for both detection and interpretation processes.
-    """
+    """Coordinates detection and interpretation passes at file level. It manages aggregates at different levels (file, directory) for both detection and interpretation processes."""
 
     def __init__(
         self,
@@ -91,8 +89,7 @@ class FileLevelRunner:
 
 
 class FieldTypeFileLevelRunner(FileLevelRunner):
-    """
-    FieldTypeFileLevelRunner Specializes FileLevelRunner for specific field types. Handles detection and interpretation for specific fields.
+    """FieldTypeFileLevelRunner Specializes FileLevelRunner for specific field types. Handles detection and interpretation for specific fields.
 
     It contains the external contract to be used by TemplateFileRunner for each of the field_detection_types
     It is static per template instance. Instantiated once per field type from the template.json

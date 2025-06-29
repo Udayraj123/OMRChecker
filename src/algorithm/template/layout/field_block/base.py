@@ -1,5 +1,4 @@
 from copy import copy as shallowcopy
-from typing import List
 
 from src.algorithm.template.layout.field.barcode_field import BarcodeField
 from src.algorithm.template.layout.field.base import Field, ScanBox
@@ -169,7 +168,7 @@ class FieldBlock:
         labels_gap = self.labels_gap
 
         _v = 0 if (direction == "vertical") else 1
-        self.fields: List[Field] = []
+        self.fields: list[Field] = []
         # Generate the bubble grid
         lead_point = [float(self.origin[0]), float(self.origin[1])]
         for field_label in self.parsed_field_labels:
@@ -191,7 +190,7 @@ class FieldBlock:
         self.update_bounding_box()
 
     def update_bounding_box(self):
-        all_scan_boxes: List[ScanBox] = []
+        all_scan_boxes: list[ScanBox] = []
         for field in self.fields:
             all_scan_boxes += field.scan_boxes
 

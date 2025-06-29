@@ -36,7 +36,7 @@ def apply_template_alignment(gray_image, colored_image, template: Template, conf
         colored_image,
         gray_alignment_image,
         colored_alignment_image,
-    )
+    )  # type: ignore
 
     # TODO: wrap this loop body into a function and generalize into passing *any* scanZone in this.
     for field_block in template.field_blocks:

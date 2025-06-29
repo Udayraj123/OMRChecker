@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Resize images within the repository."""
 
-
 import argparse
 import os
 import shutil
 
-from scripts.utils.image_utils import get_size_in_kb, resize_image_and_save
+from scripts.utils.image_utils import (
+    get_size_in_kb,
+    get_size_reduction,
+    resize_image_and_save,
+)
 
 
 def resize_images_in_tree(args):

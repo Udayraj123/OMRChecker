@@ -244,9 +244,9 @@ class CropOnDotLines(CropOnPatchesCommon):
             zone_h, zone_w = zone.shape
             blur_h, blur_w = line_blur_kernel
 
-            assert (
-                zone_h > blur_h and zone_w > blur_w
-            ), f"The zone '{zone_label}' is smaller than provided lineBlurKernel: {zone.shape} < {line_blur_kernel}"
+            assert zone_h > blur_h and zone_w > blur_w, (
+                f"The zone '{zone_label}' is smaller than provided lineBlurKernel: {zone.shape} < {line_blur_kernel}"
+            )
             zone = cv2.GaussianBlur(zone, line_blur_kernel, 0)
 
         # Make boxes darker (less gamma)
@@ -273,7 +273,10 @@ class CropOnDotLines(CropOnPatchesCommon):
 
         # Open : erode then dilate
         line_morphed = cv2.morphologyEx(
-            white_normalised, cv2.MORPH_OPEN, self.line_kernel_morph, iterations=3
+            white_normalised,
+            cv2.MORPH_OPEN,
+            self.line_kernel_morph,
+            iterations=3,
         )
 
         # remove white padding
@@ -320,9 +323,9 @@ class CropOnDotLines(CropOnPatchesCommon):
             zone_h, zone_w = zone.shape
             blur_h, blur_w = dot_blur_kernel
 
-            assert (
-                zone_h > blur_h and zone_w > blur_w
-            ), f"The zone '{zone_label}' is smaller than provided dotBlurKernel: {zone.shape} < {dot_blur_kernel}"
+            assert zone_h > blur_h and zone_w > blur_w, (
+                f"The zone '{zone_label}' is smaller than provided dotBlurKernel: {zone.shape} < {dot_blur_kernel}"
+            )
             zone = cv2.GaussianBlur(zone, dot_blur_kernel, 0)
 
         # add white padding (to avoid dilations sticking to edges)
@@ -392,6 +395,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         return corners
 
     # TODO: >> create a Scanzone class and move some methods there
+    # TODO: add support for more methods for finding corners (like hough lines, convex hull, etc)
     def find_corners_and_contours_map_using_canny(
         self, zone_start, zone, zone_description
     ):

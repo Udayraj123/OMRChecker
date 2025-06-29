@@ -412,7 +412,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             marker_position = [x, y]
 
             logger.info(
-                f"{zone_label}:\toptimal_match_max={str(round(optimal_match_max, 2))}\t optimal_scale={optimal_scale}\t"
+                f"{zone_label}:\toptimal_match_max={round(optimal_match_max, 2)!s}\t optimal_scale={optimal_scale}\t"
             )
 
         if config.outputs.show_image_level >= 4 or (
@@ -422,7 +422,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 [
                     self.debug_image / 255,
                     patch_zone / 255,
-                    (rescaled_marker if optimal_marker is None else optimal_marker)
+                    (rescaled_marker if optimal_marker is None else optimal_marker)  # type: ignore
                     / 255,
                     (
                         match_result
@@ -436,10 +436,11 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 if is_not_matching
                 else "Template Marker Matching"
             )
+            pause = config.outputs.show_image_level <= 4 or is_not_matching
             InteractionUtils.show(
                 title,
                 hstack,
-                pause=is_not_matching,
+                pause=pause,
             )
         if is_not_matching:
             raise Exception(f"Error: No marker found in patch {zone_label}")
@@ -447,7 +448,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         return marker_position, optimal_marker
 
     def exclude_files(self):
-        return self.loaded_reference_images.keys()
+        return list(self.loaded_reference_images.keys())
 
     def prepare_image(self, image):
         # TODO: remove apply_erode_subtract?

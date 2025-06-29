@@ -1,5 +1,3 @@
-from typing import List
-
 from src.algorithm.evaluation.answer_matcher import AnswerMatcher
 from src.algorithm.evaluation.evaluation_config_for_set import EvaluationConfigForSet
 from src.algorithm.template.detection.base.interpretation import FieldInterpretation
@@ -64,7 +62,7 @@ class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
     def draw_bubbles_and_detections_with_verdicts(
         marked_image,
         image_type,
-        bubble_interpretations: List[FieldInterpretation],
+        bubble_interpretations: list[FieldInterpretation],
         question_meta,
         evaluation_config_for_response,
     ):
@@ -90,7 +88,7 @@ class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
     @staticmethod
     def draw_bubbles_and_detections_without_verdicts(
         marked_image,
-        bubble_interpretations: List[FieldInterpretation],
+        bubble_interpretations: list[FieldInterpretation],
         evaluation_config_for_response: EvaluationConfigForSet,
     ):
         # TODO: make this generic, consume FieldInterpretation
@@ -221,7 +219,7 @@ class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
         marked_image,
         image_type,
         question_meta,
-        bubble_interpretations: List[FieldInterpretation],
+        bubble_interpretations: list[FieldInterpretation],
         evaluation_config_for_response: EvaluationConfigForSet,
     ):
         # Note: currently draw_answer_groups is limited for questions with upto 4 values

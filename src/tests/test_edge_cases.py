@@ -103,7 +103,7 @@ def test_different_bubble_dimensions(mocker):
     )
 
     unequal_columns = [f"q{i}" for i in range(168, 185)]
-    assert not (
+    assert (
         output_data[unequal_columns].iloc[0].to_list()
-        == original_output_data[unequal_columns].iloc[0].to_list()
+        != original_output_data[unequal_columns].iloc[0].to_list()
     )

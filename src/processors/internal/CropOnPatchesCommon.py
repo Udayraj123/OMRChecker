@@ -1,4 +1,5 @@
 from copy import deepcopy
+from typing import Any
 
 import cv2
 import numpy as np
@@ -25,6 +26,19 @@ from src.utils.shapes import ShapeUtils
 class CropOnPatchesCommon(WarpOnPointsCommon):
     __is_internal_preprocessor__ = True
     default_scan_zone_descriptions = {}
+    # Expected to be overridden by child
+    default_points_selector_map = {}
+    scan_zone_presets_for_layout = {}
+
+    def find_and_select_points_from_line(
+        self, image, zone_preset, zone_description, file_path
+    ) -> tuple[Any, Any, Any]:
+        raise Exception("Not implemented")
+
+    def find_dot_corners_from_options(
+        self, image, zone_description, file_path
+    ) -> tuple[Any, Any]:
+        raise Exception("Not implemented")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -42,7 +56,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         return []
 
     def __str__(self):
-        return f"CropOnMarkers[\"{self.options['pointsLayout']}\"]"
+        return f'CropOnMarkers["{self.options["pointsLayout"]}"]'
 
     def prepare_image(self, image):
         return image
@@ -153,9 +167,10 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                 dot_point, destination_point = self.find_and_select_point_from_dot(
                     image, zone_description, file_path
                 )
-                zone_control_points, zone_destination_points = [dot_point], [
-                    destination_point
-                ]
+                zone_control_points, zone_destination_points = (
+                    [dot_point],
+                    [destination_point],
+                )
                 zone_preset_points[zone_preset] = zone_control_points
 
                 page_corners.append(dot_point)

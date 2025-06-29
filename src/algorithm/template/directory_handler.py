@@ -13,7 +13,6 @@ from src.utils.logger import logger
 class TemplateDirectoryHandler:
     def __init__(self, template):
         self.template = template
-        self.path_utils = None
 
     def reset_path_utils(self, output_dir, output_mode):
         if output_mode == OUTPUT_MODES.SET_LAYOUT:
@@ -71,3 +70,6 @@ class TemplateDirectoryHandler:
             else:
                 logger.info(f"Present : appending to '{file_name}'")
                 self.output_files[file_key] = open(file_name, "a")
+
+    def get_empty_response_array(self):
+        return self.empty_response_array

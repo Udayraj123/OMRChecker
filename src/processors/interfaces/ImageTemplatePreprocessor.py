@@ -52,7 +52,6 @@ class ImageTemplatePreprocessor(Processor):
 
         return out_image, colored_image, _template
 
-    @staticmethod
-    def exclude_files():
+    def exclude_files(self):
         """Returns a list of file paths that should be excluded from processing"""
         return []

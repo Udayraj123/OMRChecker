@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 
 from src.algorithm.template.alignment.sift_matcher import SiftMatcher
@@ -6,7 +8,7 @@ from src.utils.interaction import InteractionUtils
 from src.utils.math import MathUtils
 
 
-def find_k_nearest_anchors(origin, anchors_with_displacements, k):
+def find_k_nearest_anchors(origin, anchors_with_displacements, k) -> list[Any]:
     # TODO: any further optimization needed?
     sorted_by_distance = sorted(
         [

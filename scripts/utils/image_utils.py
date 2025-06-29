@@ -1,6 +1,6 @@
-import cv2
 import os
 
+import cv2
 from PIL import Image
 
 
@@ -17,7 +17,7 @@ def convert_image(image_path):
     with Image.open(image_path) as image:
         # Note: using hardcoded -4 as we're expected to receive .png or .PNG files only
         new_image_path = f"{image_path[:-4]}.jpg"
-        if not image.mode == "RGB":
+        if image.mode != "RGB":
             image = image.convert("RGB")
         image.save(new_image_path, "JPEG", quality=90, optimize=True)
 
@@ -45,7 +45,7 @@ def resize_util(image, u_width=None, u_height=None):
         w, h, u_width=u_width, u_height=None
     )
 
-    if resized_height >= u_height:
+    if u_height is not None and resized_height >= u_height:
         # Resize by height
         resized_width, resized_height = get_capped_resize_dimensions(
             w, h, u_width=None, u_height=u_height

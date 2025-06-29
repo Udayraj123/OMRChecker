@@ -1,5 +1,4 @@
 import os
-from typing import List
 
 from src.algorithm.template.detection.barcode.file_runner import BarcodeFileRunner
 from src.algorithm.template.detection.base.detection_pass import TemplateDetectionPass
@@ -19,8 +18,7 @@ from src.processors.constants import FieldDetectionType
 
 
 class TemplateFileRunner(FileLevelRunner):
-    """
-    Template File Runner is responsible for running the file level detection and interpretation steps.
+    """Template File Runner is responsible for running the file level detection and interpretation steps.
     It maintains own template level runners as well as all the field detection type level runners.
     We create one instance of TemplateFileRunner per Template - thus it is reused for all images mapped to that Template.
     Note: a Template may get reused for multiple directories(in nested case)
@@ -47,7 +45,7 @@ class TemplateFileRunner(FileLevelRunner):
         self.initialize_directory_level_aggregates(template)
 
     def initialize_field_file_runners(self, template):
-        self.all_fields: List[Field] = template.all_fields
+        self.all_fields: list[Field] = template.all_fields
         self.all_field_detection_types = self.template.all_field_detection_types
 
         # Create instances of all required field type processors

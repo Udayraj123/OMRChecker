@@ -267,11 +267,9 @@ def process_directory_files(
             gray_image, colored_image, template, tuning_config
         )
 
+        # Error OMR case
         if gray_image is None:
-            # Error OMR case
             output_file_path = template.get_errors_dir().joinpath(file_name)
-
-            template.append_empty_row(file_name)
 
             # TODO: move into template.directory_handler
             if check_and_move(
@@ -498,7 +496,7 @@ def print_stats(start_time, files_counter, tuning_config):
             f"\nFinished Checking {files_counter} file(s) in {round(time_checking, 1)} seconds i.e. ~{round(time_checking / 60, 1)} minute(s)."
         )
         log(
-            f"{'OMR Processing Rate':<27}:\t ~ {round(time_checking / files_counter,2)} seconds/OMR"
+            f"{'OMR Processing Rate':<27}:\t ~ {round(time_checking / files_counter, 2)} seconds/OMR"
         )
         log(
             f"{'OMR Processing Speed':<27}:\t ~ {round((files_counter * 60) / time_checking, 2)} OMRs/minute"

@@ -1,5 +1,3 @@
-from typing import List
-
 from src.algorithm.template.detection.base.interpretation import FieldInterpretation
 from src.algorithm.template.detection.ocr.interpretation_drawing import (
     OCRFieldInterpretationDrawing,
@@ -20,7 +18,7 @@ class OCRInterpretation:
 
 class OCRFieldInterpretation(FieldInterpretation):
     def __init__(self, *args, **kwargs):
-        self.interpretations: List[OCRInterpretation] = None
+        self.interpretations: list[OCRInterpretation] = None
         super().__init__(*args, **kwargs)
 
     def get_drawing_instance(self):
@@ -65,7 +63,7 @@ class OCRFieldInterpretation(FieldInterpretation):
         ][field_label]
 
         # map detections to interpretations
-        self.interpretations: List[OCRInterpretation] = [
+        self.interpretations: list[OCRInterpretation] = [
             OCRInterpretation(detection)
             for detection in field_level_detection_aggregates["detections"]
         ]

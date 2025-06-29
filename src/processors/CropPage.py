@@ -19,6 +19,10 @@ ref: https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edg
 
 class CropPage(WarpOnPointsCommon):
     __is_internal_preprocessor__ = False
+    defaults = {
+        "morphKernel": (10, 10),
+        "useColoredCanny": False,
+    }
 
     def get_class_name(self):
         return "CropPage"
@@ -27,8 +31,11 @@ class CropPage(WarpOnPointsCommon):
         tuning_options = options.get("tuningOptions", {})
 
         parsed_options = {
-            "morphKernel": options.get("morphKernel"),
-            "useColoredCanny": options.get("useColoredCanny"),
+            # Local defaults
+            "morphKernel": options.get("morphKernel", self.defaults["morphKernel"]),
+            "useColoredCanny": options.get(
+                "useColoredCanny", self.defaults["useColoredCanny"]
+            ),
             "enableCropping": True,
             "tuningOptions": {
                 "warpMethod": tuning_options.get(
@@ -43,10 +50,10 @@ class CropPage(WarpOnPointsCommon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         options = self.options
-        self.use_colored_canny = options.get("useColoredCanny", False)
+        self.use_colored_canny = options["useColoredCanny"]
 
         self.morph_kernel = cv2.getStructuringElement(
-            cv2.MORPH_RECT, tuple(options.get("morphKernel", (10, 10)))
+            cv2.MORPH_RECT, tuple(options["morphKernel"])
         )
 
     def __str__(self):
@@ -77,28 +84,27 @@ class CropPage(WarpOnPointsCommon):
             WarpMethod.PERSPECTIVE_TRANSFORM,
         ]:
             return ordered_page_corners, destination_page_corners, edge_contours_map
-        else:
-            # TODO: remove this if REMAP method is removed, see if homography REALLY needs page contour points
-            max_points_per_edge = options.get("maxPointsPerEdge", None)
+        # TODO: remove this if REMAP method is removed, see if homography REALLY needs page contour points
+        max_points_per_edge = options.get("maxPointsPerEdge", None)
 
-            control_points, destination_points = [], []
-            for edge_type in EDGE_TYPES_IN_ORDER:
-                destination_line = MathUtils.select_edge_from_rectangle(
-                    destination_page_corners, edge_type
-                )
-                # Extrapolates the destination_line to get approximate destination points
-                (
-                    edge_control_points,
-                    edge_destination_points,
-                ) = ImageUtils.get_control_destination_points_from_contour(
-                    edge_contours_map[edge_type], destination_line, max_points_per_edge
-                )
-                # Note: edge-wise duplicates would get added here
-                # TODO: see if we can avoid duplicates at source itself
-                control_points += edge_control_points
-                destination_points += edge_destination_points
+        control_points, destination_points = [], []
+        for edge_type in EDGE_TYPES_IN_ORDER:
+            destination_line = MathUtils.select_edge_from_rectangle(
+                destination_page_corners, edge_type
+            )
+            # Extrapolates the destination_line to get approximate destination points
+            (
+                edge_control_points,
+                edge_destination_points,
+            ) = ImageUtils.get_control_destination_points_from_contour(
+                edge_contours_map[edge_type], destination_line, max_points_per_edge
+            )
+            # Note: edge-wise duplicates would get added here
+            # TODO: see if we can avoid duplicates at source itself
+            control_points += edge_control_points
+            destination_points += edge_destination_points
 
-            return control_points, destination_points, edge_contours_map
+        return control_points, destination_points, edge_contours_map
 
     def find_page_contour_and_corners(self, image, colored_image, file_path):
         config = self.tuning_config
@@ -178,7 +184,7 @@ class CropPage(WarpOnPointsCommon):
                 self.append_save_image("Bounding Contour", range(1, 7), canny_edge)
                 break
 
-        if config.outputs.show_image_level >= 6 or (
+        if config.outputs.show_image_level >= 5 or (
             page_contour is None and config.outputs.show_image_level >= 1
         ):
             hstack = ImageUtils.get_padded_hstack([image, closed, canny_edge])

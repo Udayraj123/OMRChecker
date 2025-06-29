@@ -95,7 +95,7 @@ class Template:
         return self.template_layout.processing_image_shape
 
     def get_empty_response_array(self):
-        return self.directory_handler.empty_response_array
+        return self.directory_handler.get_empty_response_array()
 
     def append_output_omr_response(self, file_name, output_omr_response):
         omr_response_array = []
@@ -108,7 +108,7 @@ class Template:
         return self.directory_handler.output_files["Results"]
 
     # TODO: replace these utils with more dynamic flagged files (FileStatsByLabel?)
-    def get_multimarked_file(self):
+    def get_multi_marked_file(self):
         return self.directory_handler.output_files["MultiMarked"]
 
     def get_errors_file(self):

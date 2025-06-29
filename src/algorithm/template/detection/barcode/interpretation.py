@@ -1,5 +1,3 @@
-from typing import List
-
 from src.algorithm.template.detection.barcode.interpretation_drawing import (
     BarcodeFieldInterpretationDrawing,
 )
@@ -20,7 +18,7 @@ class BarcodeInterpretation:
 
 class BarcodeFieldInterpretation(FieldInterpretation):
     def __init__(self, *args, **kwargs):
-        self.interpretations: List[BarcodeInterpretation] = None
+        self.interpretations: list[BarcodeInterpretation] = None
         super().__init__(*args, **kwargs)
 
     def get_drawing_instance(self):
@@ -65,7 +63,7 @@ class BarcodeFieldInterpretation(FieldInterpretation):
         ][field_label]
 
         # map detections to interpretations
-        self.interpretations: List[BarcodeInterpretation] = [
+        self.interpretations: list[BarcodeInterpretation] = [
             BarcodeInterpretation(detection)
             for detection in field_level_detection_aggregates["detections"]
         ]

@@ -1,7 +1,6 @@
 import math
 import random
 import re
-from typing import List
 
 import numpy as np
 from matplotlib import colormaps, pyplot
@@ -39,7 +38,7 @@ class BubbleInterpretation:
 
 class BubblesFieldInterpretation(FieldInterpretation):
     def __init__(self, *args, **kwargs):
-        self.bubble_interpretations: List[BubbleInterpretation] = None
+        self.bubble_interpretations: list[BubbleInterpretation] = None
         super().__init__(*args, **kwargs)
 
     def get_drawing_instance(self):
@@ -130,7 +129,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
         )
 
     def update_interpretations_for_field(self):
-        self.bubble_interpretations: List[BubbleInterpretation] = []
+        self.bubble_interpretations: list[BubbleInterpretation] = []
 
         # Main detection/thresholding logic here:
         for field_bubble_mean in self.field_bubble_means:
@@ -174,8 +173,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
         sort_in_plot=True,
         looseness=1,
     ):
-        """
-        Note: Cannot assume qStrip has only-gray or only-white bg (no jump).
+        """Note: Cannot assume qStrip has only-gray or only-white bg (no jump).
             So it's assumed that there will be either 1 or 2 jumps.
         1 Jump :
                 ......
@@ -295,14 +293,15 @@ class BubblesFieldInterpretation(FieldInterpretation):
                 *sorted(
                     [
                         (h, l)
-                        for i, (h, l) in enumerate(zip(handles, labels))
+                        for i, (h, l) in enumerate(zip(handles, labels, strict=False))
                         if l not in labels[:i]
                     ],
                     key=lambda s: [
                         int(t) if t.isdigit() else t.lower()
                         for t in re.split("(\\d+)", s[1])
                     ],
-                )
+                ),
+                strict=False,
             )
         )
         ax.set_title(plot_title)
@@ -328,8 +327,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
         plot_show,
         config,
     ):
-        """
-        TODO: Update this documentation too-
+        """TODO: Update this documentation too-
 
         0 Jump :
                         <-- safe THR?
@@ -360,11 +358,14 @@ class BubblesFieldInterpretation(FieldInterpretation):
         # Small no of pts cases:
         # base case: 1 or 2 pts
         if len(sorted_bubble_means) < 3:
-            max1, thr1 = config.thresholding.MIN_JUMP, (
-                file_level_fallback_threshold
-                if np.max(sorted_bubble_means) - np.min(sorted_bubble_means)
-                < config.thresholding.MIN_GAP_TWO_BUBBLES
-                else np.mean(sorted_bubble_means)
+            max1, thr1 = (
+                config.thresholding.MIN_JUMP,
+                (
+                    file_level_fallback_threshold
+                    if np.max(sorted_bubble_means) - np.min(sorted_bubble_means)
+                    < config.thresholding.MIN_GAP_TWO_BUBBLES
+                    else np.mean(sorted_bubble_means)
+                ),
             )
         else:
             l = len(sorted_bubble_means) - 1
@@ -422,7 +423,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
     def calculate_field_level_confidence_metrics(
         field: Field,
         # TODO: call from FieldInterpretation? using bubble_interpretations?
-        field_bubble_means: List[BubbleMeanValue],
+        field_bubble_means: list[BubbleMeanValue],
         config,
         local_threshold_for_field,
         file_level_fallback_threshold,
@@ -506,11 +507,11 @@ class BubblesFieldInterpretation(FieldInterpretation):
             bubbles_in_doubt["global_lower"] = [
                 bubble
                 for bubble in field_bubble_means
-                if GLOBAL_THRESHOLD_MARGIN
-                > max(
+                if max(
                     GLOBAL_THRESHOLD_MARGIN,
                     file_level_fallback_threshold - bubble.mean_value,
                 )
+                < GLOBAL_THRESHOLD_MARGIN
             ]
 
             if len(bubbles_in_doubt["global_lower"]) > 0:
@@ -522,11 +523,11 @@ class BubblesFieldInterpretation(FieldInterpretation):
             bubbles_in_doubt["global_higher"] = [
                 bubble
                 for bubble in field_bubble_means
-                if GLOBAL_THRESHOLD_MARGIN
-                > max(
+                if max(
                     GLOBAL_THRESHOLD_MARGIN,
                     bubble.mean_value - file_level_fallback_threshold,
                 )
+                < GLOBAL_THRESHOLD_MARGIN
             ]
 
             if len(bubbles_in_doubt["global_higher"]) > 0:
@@ -547,11 +548,11 @@ class BubblesFieldInterpretation(FieldInterpretation):
                 bubbles_in_doubt["by_jump"] = [
                     bubble
                     for jump, bubble in jumps_in_bubble_means
-                    if MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK
-                    > max(
+                    if max(
                         MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK,
                         MIN_JUMP - jump,
                     )
+                    < MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK
                 ]
 
                 if len(bubbles_in_doubt["by_jump"]) > 0:
@@ -575,7 +576,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
         return field_level_confidence_metrics
 
     @staticmethod
-    def get_jumps_in_bubble_means(field_bubble_means: List[BubbleMeanValue]):
+    def get_jumps_in_bubble_means(field_bubble_means: list[BubbleMeanValue]):
         # get sorted array
         sorted_field_bubble_means = sorted(
             field_bubble_means,

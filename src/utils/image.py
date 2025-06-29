@@ -24,7 +24,7 @@ class ImageUtils:
                 np.fromfile(encoded_path, dtype=np.uint8), cv2.IMREAD_COLOR
             )
             if colored_image is None:
-                raise IOError(f"Unable to read image: {file_path}")
+                raise OSError(f"Unable to read image: {file_path}")
             gray_image = cv2.cvtColor(colored_image, cv2.COLOR_BGR2GRAY)
         else:
             gray_image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
@@ -32,7 +32,7 @@ class ImageUtils:
                 np.fromfile(encoded_path, dtype=np.uint8), cv2.IMREAD_GRAYSCALE
             )
             if gray_image is None:
-                raise IOError(f"Unable to read image: {file_path}")
+                raise OSError(f"Unable to read image: {file_path}")
             colored_image = None
 
         return gray_image, colored_image
@@ -134,12 +134,10 @@ class ImageUtils:
         # signature yet again and I have no idea WTH is going on
         else:
             raise Exception(
-                (
-                    "Contours tuple must have length 2 or 3, "
-                    "otherwise OpenCV changed their cv2.findContours return "
-                    "signature yet again. Refer to OpenCV's documentation "
-                    "in that case"
-                )
+                "Contours tuple must have length 2 or 3, "
+                "otherwise OpenCV changed their cv2.findContours return "
+                "signature yet again. Refer to OpenCV's documentation "
+                "in that case"
             )
 
         # return the actual contours array
@@ -244,9 +242,9 @@ class ImageUtils:
         assert len(warped_points) <= max_points
 
         # Assert that the float error is not skewing the estimations badly
-        assert (
-            MathUtils.distance(warped_points[-1], end) / warped_line_length < 0.02
-        ), f"{warped_points[-1]} != {end}"
+        assert MathUtils.distance(warped_points[-1], end) / warped_line_length < 0.02, (
+            f"{warped_points[-1]} != {end}"
+        )
 
         return control_points, warped_points
 
@@ -274,7 +272,7 @@ class ImageUtils:
             )
 
         #  segments = split(boundary, MultiPoint(corners)).geoms
-        for boundary_point in source_contour:
+        for boundary_point in source_contour:  # type: ignore
             edge_distances = [
                 (
                     Point(boundary_point).distance(edge_line_strings[edge_type]),
@@ -303,12 +301,11 @@ class ImageUtils:
                 logger.warning(
                     f"No closest points found for {edge_type}: {edge_contours_map}"
                 )
-            else:
-                # Ensure correct order
-                if MathUtils.distance(
-                    start_point, edge_contour[-1]
-                ) < MathUtils.distance(start_point, edge_contour[0]):
-                    edge_contours_map[edge_type].reverse()
+            # Ensure correct order
+            elif MathUtils.distance(start_point, edge_contour[-1]) < MathUtils.distance(
+                start_point, edge_contour[0]
+            ):
+                edge_contours_map[edge_type].reverse()
 
             # Each contour should necessarily start & end with a corner point
             edge_contours_map[edge_type].insert(0, tuple(start_point))
@@ -366,6 +363,7 @@ class ImageUtils:
             value,
         )
 
+    @staticmethod
     def pad_image_from_center(image, padding_width, padding_height=0, value=255):
         # TODO: support colored images for this util
         input_height, input_width = image.shape[:2]
@@ -401,8 +399,7 @@ class ImageUtils:
             image_shape = image.shape[0:2]
             image = cv2.rotate(image, rotation)
             return ImageUtils.resize_to_shape(image_shape, image)
-        else:
-            return cv2.rotate(image, rotation)
+        return cv2.rotate(image, rotation)
 
     @staticmethod
     def overlay_image(image1, image2, transparency=0.5):

@@ -1,5 +1,3 @@
-from typing import List
-
 from dotmap import DotMap
 
 from src.algorithm.template.detection.barcode.lib.pyzbar import PyZBar
@@ -50,12 +48,10 @@ class BarcodeDetection(TextDetection):
 
 
 class BarcodeFieldDetection(FieldDetection):
-    """
-    Here we find the scan zone and perform the detection for the field at runtime.
-    """
+    """Here we find the scan zone and perform the detection for the field at runtime."""
 
     def __init__(self, field: Field, gray_image, colored_image):
-        self.detections: List[BarcodeDetection] = None
+        self.detections: list[BarcodeDetection] = None
         super().__init__(field, gray_image, colored_image)
 
     # Note: run_detection is called from the parent constructor

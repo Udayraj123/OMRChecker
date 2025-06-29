@@ -32,13 +32,11 @@ def create_identity_meshgrid(resolution: Union[int, Tuple], with_margin: bool = 
 
 
 def scale_map(input_map: np.ndarray, output_shape: Union[int, Tuple[int, int]]):
-    try:
-        output_shape = (int(output_shape), int(output_shape))
-    except (ValueError, TypeError):
-        output_shape = tuple(int(v) for v in output_shape)
+    if isinstance(output_shape, int):
+        output_shape = (output_shape, output_shape)
 
     H, W, C = input_map.shape
-    if H == output_shape[0] and W == output_shape[1]:
+    if output_shape[0] == H and output_shape[1] == W:
         return input_map.copy()
 
     if np.any(np.isnan(input_map)):
@@ -84,7 +82,8 @@ def scale_map(input_map: np.ndarray, output_shape: Union[int, Tuple[int, int]]):
 
 
 def _create_backward_map(
-    segments: Dict[str, LineString], resolution: int  # Tuple[int, int]
+    segments: Dict[str, LineString],
+    resolution: int,  # Tuple[int, int]
 ) -> np.ndarray:
     # map geometric objects to normalized space
     coord_map = {
@@ -194,14 +193,14 @@ def _split_polygon(polygon: Polygon, corners: List[Point]) -> List[LineString]:
     assert len(segments) in [4, 5]
 
     if len(segments) == 4:
-        return segments
+        return segments  # type: ignore
 
     return [
         linemerge([segments[0], segments[4]]),
         segments[1],
         segments[2],
         segments[3],
-    ]
+    ]  # type: ignore
 
 
 def _classify_segments(
@@ -232,7 +231,7 @@ def _classify_segments(
         for assignment in assignments
     ]
 
-    min_assignment = min(zip(costs, assignments))[1]
+    min_assignment = min(zip(costs, assignments, strict=False))[1]
     df["corner_x"] = approx_points[min_assignment][:, 0]
     df["corner_y"] = approx_points[min_assignment][:, 1]
 
@@ -257,4 +256,4 @@ def _classify_segments(
         "bottom": get_directed_segment("bottom-left", "bottom-right"),
         "left": get_directed_segment("top-left", "bottom-left"),
         "right": get_directed_segment("top-right", "bottom-right"),
-    }
+    }  # type: ignore

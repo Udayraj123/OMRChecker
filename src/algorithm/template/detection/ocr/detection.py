@@ -1,5 +1,3 @@
-from typing import List
-
 from dotmap import DotMap
 
 from src.algorithm.template.detection.base.detection import (
@@ -50,12 +48,10 @@ class OCRDetection(TextDetection):
 
 
 class OCRFieldDetection(FieldDetection):
-    """
-    Here we find the scan zone and perform the detection for the field at runtime.
-    """
+    """Here we find the scan zone and perform the detection for the field at runtime."""
 
     def __init__(self, field: Field, gray_image, colored_image):
-        self.detections: List[OCRDetection] = None
+        self.detections: list[OCRDetection] = None
         super().__init__(field, gray_image, colored_image)
 
     # Note: run_detection is called from the parent constructor

@@ -20,8 +20,7 @@ def rectify(
     # output_shape: Tuple[int, int],
     # resolution_map: int = 512,
 ) -> np.ndarray:
-    """
-    Rectifies an image based on the given mask. Corners can be provided to speed up the rectification.
+    """Rectifies an image based on the given mask. Corners can be provided to speed up the rectification.
 
     Args:
         image (np.ndarray): The input image as a NumPy array. Shape: (height, width, channels).
@@ -32,8 +31,8 @@ def rectify(
 
     Returns:
         np.ndarray: The rectified image as a NumPy array.
-    """
 
+    """
     segments = {
         edge_type.lower(): LineString(edge_contours_map[edge_type])
         for edge_type in EDGE_TYPES_IN_ORDER
@@ -149,7 +148,7 @@ def _create_backward_output_map(
     )
 
     # TODO: >> see if RegularGridInterpolator can be used for making this efficient!
-    grid_step_points_h = list(range(0, resolution_h))  # np.linspace(0, 1, resolution_h)
+    grid_step_points_h = list(range(resolution_h))  # np.linspace(0, 1, resolution_h)
     edge_cases = {0: 0, resolution_h - 1: -1}
 
     # calculate y - values by interpolating x values
@@ -194,14 +193,14 @@ def _create_backward_output_map(
         stretched_x_line = np.linspace(
             intersections[0].x, intersections[1].x, resolution_w
         )
-        transformed_backward_points_map[
-            y_grid_index, 0:resolution_w, 0
-        ] = stretched_x_line
+        transformed_backward_points_map[y_grid_index, 0:resolution_w, 0] = (
+            stretched_x_line
+        )
 
     transformed_box_with_horizontal_curves = MultiLineString(
         [transformed_segments["top"], transformed_segments["bottom"]]
     )
-    grid_step_points_w = list(range(0, resolution_w))  # np.linspace(0, 1, resolution_w)
+    grid_step_points_w = list(range(resolution_w))  # np.linspace(0, 1, resolution_w)
     edge_cases = {0: 0, resolution_w - 1: -1}
     # calculate x - values by interpolating y values
     for x_grid_index, grid_step_point in enumerate(grid_step_points_w):
@@ -234,9 +233,9 @@ def _create_backward_output_map(
         stretched_y_line = np.linspace(
             intersections[0].y, intersections[1].y, resolution_h
         )
-        transformed_backward_points_map[
-            0:resolution_h, x_grid_index, 1
-        ] = stretched_y_line
+        transformed_backward_points_map[0:resolution_h, x_grid_index, 1] = (
+            stretched_y_line
+        )
 
     # transform grid back to original space
     # (resolution_h, resolution_w, 2) -> (resolution_h * resolution_w, 2)
@@ -253,7 +252,7 @@ def _create_backward_output_map(
     # flip x and y coordinate: first y, then x
     # backward_points_map = np.roll(backward_points_map, shift=1, axis=-1)
     backward_points_map = np.float32(backward_points_map)
-    return backward_points_map
+    return backward_points_map  # type: ignore
 
 
 def print_points_mapping_table(title, control_points, destination_points):
@@ -264,6 +263,6 @@ def print_points_mapping_table(title, control_points, destination_points):
     )
     table.add_column("Control", style="cyan", no_wrap=True)
     table.add_column("Destination", style="magenta")
-    for c, d in zip(control_points, destination_points):
+    for c, d in zip(control_points, destination_points, strict=False):
         table.add_row(str(c), str(d))
     console.print(table, justify="center")

@@ -1,5 +1,3 @@
-from typing import List
-
 from src.algorithm.template.layout.field.base import Field, ScanBox
 from src.algorithm.template.layout.field.field_drawing import BarcodeFieldDrawing
 from src.utils.parsing import default_dump
@@ -35,7 +33,7 @@ class BarcodeField(Field):
         # TODO: support for multiple scan zones per field (grid structure)
         field_index = 0
         scan_box = BarcodeScanBox(field_index, field, origin, scan_zone)
-        self.scan_boxes: List[BarcodeScanBox] = [scan_box]
+        self.scan_boxes: list[BarcodeScanBox] = [scan_box]
 
     # Make the class serializable
     def to_json(self):

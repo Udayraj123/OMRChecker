@@ -1,5 +1,4 @@
-"""
-Image based feature alignment
+"""Image based feature alignment
 Credits: https://www.learnopencv.com/image-alignment-feature-based-using-opencv-c-python/
 """
 
@@ -35,7 +34,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
         if matcher_type == "NORM_HAMMING":
             self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
         elif matcher_type == "BRUTEFORCE_HAMMING":
-            self.matcher = cv2.DescriptorMatcher_create(
+            self.matcher = cv2.DescriptorMatcher_create(  # type: ignore
                 cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING
             )
 

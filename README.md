@@ -175,15 +175,27 @@ uv sync
    uv run main.py
    ```
    _Note: first time setup may take a while._
+   This command will make sure the uv virtual environment is activated.
 
-Alternatively if can also use `uv run main.py -i ./samples/sample1`.
-
-Each example in the samples folder demonstrates different ways in which OMRChecker can be used.
+   Alternatively you can manually run -
+   ```bash
+   source ./.venv/bin/activate
+   python3 main.py -i <path/to/dir>
+   ```
+   Each example in the samples folder demonstrates different ways in which OMRChecker can be used.
 
 ## OMRChecker for custom OMR Sheets
 
 1. First, [create your own template.json](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide).
-2. Configure the tuning parameters.
+2. Configure the tuning parameters. Also use `show_image_level` value to see debug images. Create a `config.json` in the same folder as your input images -
+```json
+{
+   "outputs": {
+      "show_image_level": 4
+   }
+}
+```
+
 3. Run OMRChecker with appropriate arguments (See full usage).
 <!-- 4. Add answer key( TODO: add answer key/marking scheme guide)  -->
 

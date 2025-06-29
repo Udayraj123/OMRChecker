@@ -1,5 +1,3 @@
-from typing import List
-
 import cv2
 import numpy as np
 
@@ -31,7 +29,7 @@ class BubbleMeanValue(MeanValueItem):
 
 
 class FieldStdMeanValue(MeanValueItem):
-    def __init__(self, field_bubble_means: List[BubbleMeanValue], field: Field):
+    def __init__(self, field_bubble_means: list[BubbleMeanValue], field: Field):
         mean_value = np.std([item.mean_value for item in field_bubble_means])
 
         super().__init__(mean_value, field)
@@ -47,10 +45,7 @@ class FieldStdMeanValue(MeanValueItem):
 
 
 class BubblesFieldDetection(FieldDetection):
-
-    """
-    Here we find the scan zone and perform the detection for the field at runtime.
-    """
+    """Here we find the scan zone and perform the detection for the field at runtime."""
 
     # Note: run_detection is called from the parent constructor
     def run_detection(self, field, gray_image, _colored_image):

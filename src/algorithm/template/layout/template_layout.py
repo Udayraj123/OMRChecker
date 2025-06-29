@@ -1,6 +1,5 @@
 import os
 from copy import copy as shallowcopy
-from typing import List
 
 from src.algorithm.template.layout.field.base import Field
 from src.algorithm.template.layout.field_block.base import FieldBlock
@@ -250,18 +249,18 @@ class TemplateLayout:
             )
             # Pre-processed alignment image
             self.alignment["gray_alignment_image"] = processed_gray_alignment_image
-            self.alignment[
-                "colored_alignment_image"
-            ] = processed_colored_alignment_image
+            self.alignment["colored_alignment_image"] = (
+                processed_colored_alignment_image
+            )
 
     def setup_layout(self, field_blocks_object):
         # TODO: try for better readability here
-        self.all_fields: List[Field] = []
+        self.all_fields: list[Field] = []
         all_field_detection_types = set()
         # TODO: see if labels part can be moved out of template layout?
         self.all_parsed_labels = set()
         # Add field_blocks
-        self.field_blocks: List[FieldBlock] = []
+        self.field_blocks: list[FieldBlock] = []
         # TODO: add support for parsing "conditionalSets" with their matcher
         for block_name, field_block_object in field_blocks_object.items():
             block_instance = self.parse_and_add_field_block(
@@ -382,13 +381,10 @@ class TemplateLayout:
                 **filled_field_block_object,
                 **field_type_data,
             }
-        elif field_block_object["fieldDetectionType"] == FieldDetectionType.OCR:
-            filled_field_block_object = {
-                "emptyValue": self.global_empty_val,
-                "labelsGap": 0,
-                **filled_field_block_object,
-            }
-        elif field_block_object["fieldDetectionType"] == FieldDetectionType.BARCODE_QR:
+        elif (
+            field_block_object["fieldDetectionType"] == FieldDetectionType.OCR
+            or field_block_object["fieldDetectionType"] == FieldDetectionType.BARCODE_QR
+        ):
             filled_field_block_object = {
                 "emptyValue": self.global_empty_val,
                 "labelsGap": 0,

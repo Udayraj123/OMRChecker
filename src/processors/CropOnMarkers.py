@@ -13,6 +13,7 @@ class CropOnMarkers(ImageTemplatePreprocessor):
         if self.options["type"] == "FOUR_MARKERS":
             self.instance = CropOnCustomMarkers(*args, **kwargs)
         else:
+            # TODO: convex hull method for the sparse blobs
             self.instance = CropOnDotLines(*args, **kwargs)
 
     def exclude_files(self):
