@@ -1,4 +1,5 @@
-import os
+from pathlib import Path
+from typing import ClassVar
 
 import cv2
 import numpy as np
@@ -20,11 +21,11 @@ from src.utils.parsing import OVERRIDE_MERGER
 
 # TODO: add support for showing patch zone centers during setLayout option?!
 class CropOnCustomMarkers(CropOnPatchesCommon):
-    __is_internal_preprocessor__ = True
-    scan_zone_presets_for_layout = {
+    __is_internal_preprocessor__: ClassVar = True
+    scan_zone_presets_for_layout: ClassVar = {
         "FOUR_MARKERS": MARKER_ZONE_TYPES_IN_ORDER,
     }
-    default_scan_zone_descriptions = {
+    default_scan_zone_descriptions: ClassVar = {
         **{
             zone_preset: {
                 "scannerType": ScannerType.TEMPLATE_MATCH,
@@ -37,7 +38,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         "CUSTOM": {},
     }
 
-    default_points_selector_map = {
+    default_points_selector_map: ClassVar = {
         "CENTERS": {
             ZonePreset.topLeftMarker: "SELECT_CENTER",
             ZonePreset.topRightMarker: "SELECT_CENTER",
@@ -70,7 +71,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         },
     }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         tuning_options = self.tuning_options
         self.threshold_circles = []
@@ -102,7 +103,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
 
         # TODO: add default values for provided scanZones?
         # Allow non-marker scanZones here too?
-        defaultDimensions = options.get("markerDimensions", None)
+        default_dimensions = options.get("markerDimensions", None)
         # inject scanZones (Note: override merge with defaults will happen in parent class)
         parsed_scan_zones = []
         for zone_preset in self.scan_zone_presets_for_layout[layout_type]:
@@ -114,12 +115,12 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                     "zonePreset": zone_preset,
                     "zoneDescription": {
                         # Default box dimensions to markerDimensions
-                        "dimensions": defaultDimensions,
+                        "dimensions": default_dimensions,
                         **local_description,
                     },
                     "customOptions": {
                         "referenceImage": reference_image_path,
-                        "markerDimensions": defaultDimensions,
+                        "markerDimensions": default_dimensions,
                         **local_custom_options,
                     },
                 }
@@ -127,7 +128,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         parsed_options["scanZones"] = parsed_scan_zones
         return parsed_options
 
-    def validate_scan_zones(self):
+    def validate_scan_zones(self) -> None:
         super().validate_scan_zones()
         # Additional marker related validations
         for scan_zone in self.scan_zones:
@@ -137,19 +138,17 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             zone_label = zone_description["label"]
             if zone_preset in self.scan_zone_presets_for_layout["FOUR_MARKERS"]:
                 if "referenceImage" not in custom_options:
-                    raise Exception(
-                        f"referenceImage not provided for custom marker zone {zone_label}"
-                    )
+                    msg = f"referenceImage not provided for custom marker zone {zone_label}"
+                    raise Exception(msg)
                 reference_image_path = self.get_relative_path(
                     custom_options["referenceImage"]
                 )
 
-                if not os.path.exists(reference_image_path):
-                    raise Exception(
-                        f"Marker reference image not found for {zone_label} at path provided: {reference_image_path}"
-                    )
+                if not Path(reference_image_path).exists():
+                    msg = f"Marker reference image not found for {zone_label} at path provided: {reference_image_path}"
+                    raise Exception(msg)
 
-    def init_resized_markers(self):
+    def init_resized_markers(self) -> None:
         self.loaded_reference_images = {}
         self.marker_for_zone_label = {}
         for scan_zone in self.scan_zones:
@@ -277,7 +276,8 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         elif patch_type == ZonePreset.bottomLeftMarker:
             zone_start, zone_end = [1, half_height], [half_width, h]
         else:
-            raise Exception(f"Unexpected quadrant patch_type {patch_type}")
+            msg = f"Unexpected quadrant patch_type {patch_type}"
+            raise Exception(msg)
 
         origin = [
             (zone_start[0] + zone_end[0] - marker_w) // 2,
@@ -300,10 +300,10 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             "scannerType": "TEMPLATE_MARKER",
         }
 
-    def find_marker_corners_in_patch(self, zone_description, image, file_path):
+    def find_marker_corners_in_patch(self, zone_description, image, _file_path):
         zone_label = zone_description["label"]
 
-        patch_zone, zone_start, zone_end = self.compute_scan_zone_util(
+        patch_zone, zone_start, _zone_end = self.compute_scan_zone_util(
             image, zone_description
         )
 
@@ -317,14 +317,16 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         x, y = marker_position
         ordered_patch_corners = MathUtils.get_rectangle_points(x, y, w, h)
 
-        absolute_corners = MathUtils.shift_points_from_origin(
-            zone_start, ordered_patch_corners
-        )
-        return absolute_corners
+        return MathUtils.shift_points_from_origin(zone_start, ordered_patch_corners)
 
     # Resizing the marker within scaleRange at rate of descent_per_step to
     # find the best match.
-    def get_best_match(self, zone_label, patch_zone):
+    def get_best_match(
+        # ruff: noqa: C901
+        self,
+        zone_label,
+        patch_zone,
+    ):
         config = self.tuning_config
         descent_per_step = (
             self.marker_rescale_range[1] - self.marker_rescale_range[0]
@@ -422,7 +424,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 [
                     self.debug_image / 255,
                     patch_zone / 255,
-                    (rescaled_marker if optimal_marker is None else optimal_marker)  # type: ignore
+                    (rescaled_marker if optimal_marker is None else optimal_marker)  # pyright: ignore [reportOptionalOperand]
                     / 255,
                     (
                         match_result
@@ -443,7 +445,8 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 pause=pause,
             )
         if is_not_matching:
-            raise Exception(f"Error: No marker found in patch {zone_label}")
+            msg = f"Error: No marker found in patch {zone_label}"
+            raise Exception(msg)
 
         return marker_position, optimal_marker
 

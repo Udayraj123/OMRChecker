@@ -7,7 +7,9 @@ from src.utils.parsing import OVERRIDE_MERGER, open_evaluation_with_defaults
 
 
 class EvaluationConfig:
-    def __init__(self, curr_dir, local_evaluation_path, template, tuning_config):
+    def __init__(
+        self, curr_dir, local_evaluation_path, template, tuning_config
+    ) -> None:
         self.path = local_evaluation_path
         default_evaluation_json = open_evaluation_with_defaults(local_evaluation_path)
         # .pop() will delete the conditional_sets key from the default json if it exists
@@ -55,19 +57,18 @@ class EvaluationConfig:
             self.set_mapping[set_name] = evaluation_config_for_set
             self.exclude_files += evaluation_config_for_set.get_exclude_files()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.path)
 
     def get_exclude_files(self):
         return self.exclude_files
 
-    def validate_conditional_sets(self):
+    def validate_conditional_sets(self) -> None:
         all_names = set()
         for name, _ in self.conditional_sets:
             if name in all_names:
-                raise Exception(
-                    f"Repeated set name {name} in conditional_sets in the given evaluation.json: {self.path}"
-                )
+                msg = f"Repeated set name {name} in conditional_sets in the given evaluation.json: {self.path}"
+                raise Exception(msg)
             all_names.add(name)
 
     # Public function
@@ -90,6 +91,7 @@ class EvaluationConfig:
                 formatted_string = format_string.format(**formatting_fields)
                 if re.search(match_regex, formatted_string) is not None:
                     return name
-            except:  # NOQA
+            # ruff: noqa: BLE001
+            except Exception:
                 return None
         return None

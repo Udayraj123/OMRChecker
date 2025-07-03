@@ -2,46 +2,35 @@ import json
 import os
 import string
 from collections import defaultdict
-from pathlib import PureWindowsPath
+from pathlib import Path, PureWindowsPath
+from typing import Any, ClassVar
 
 from src.utils.image import ImageUtils
 from src.utils.logger import logger
 from src.utils.math import MathUtils
 
 
-def load_json(path, **rest):
+def load_json(path, **rest) -> dict[str, Any]:
     try:
         # TODO: see if non-utf characters need to be handled
-        with open(path, "r") as f:
+        with Path.open(path) as f:
             loaded = json.load(f, **rest)
     except json.decoder.JSONDecodeError as error:
         logger.critical(error)
-        raise Exception(f"Error when loading json file at: '{path}'")
+        msg = f"Error when loading json file at: '{path}'"
+        raise Exception(msg) from None
 
     return loaded
 
 
 class PathUtils:
-    printable_chars = set(string.printable)
+    printable_chars: ClassVar = set(string.printable)
 
     @staticmethod
     def remove_non_utf_characters(path_string):
         return "".join(x for x in path_string if x in PathUtils.printable_chars)
 
-    # @staticmethod
-    # def filter_omr_files(omr_files):
-    #     filtered_omr_files = []
-    #     omr_files_set = set()
-    #     for omr_file in omr_files:
-    #         omr_file_string = omr_file.as_posix()
-    #         filtered_omr_file = PathUtils.remove_non_utf_characters(omr_file_string)
-    #         if omr_file_string in omr_files_set:
-    #             logger.warning(
-    #                 f"Skipping duplicate file after utf-8 encoding: {omr_file_string}"
-    #             )
-    #         omr_files_set.add(omr_file_string)
-    #         filtered_omr_files.append(Path(filtered_omr_file))
-    #     return filtered_omr_files
+    # TODO: add util to skip duplicate files after removing utf-8 encoding
 
     @staticmethod
     def sep_based_posix_path(path):
@@ -50,11 +39,9 @@ class PathUtils:
         if os.path.sep == "\\" or "\\" in path:
             path = PureWindowsPath(path).as_posix()
 
-        path = PathUtils.remove_non_utf_characters(path)
+        return PathUtils.remove_non_utf_characters(path)
 
-        return path
-
-    def __init__(self, output_dir):
+    def __init__(self, output_dir) -> None:
         self.output_dir = output_dir
         self.save_marked_dir = output_dir.joinpath("CheckedOMRs")
         self.image_metrics_dir = output_dir.joinpath("ImageMetrics")
@@ -65,11 +52,11 @@ class PathUtils:
         self.evaluations_dir = output_dir.joinpath("Evaluations")
         self.debug_dir = output_dir.joinpath("Debug")
 
-    def create_output_directories(self):
+    def create_output_directories(self) -> None:
         logger.info("Checking Directories...")
 
-        if not os.path.exists(self.save_marked_dir):
-            os.makedirs(self.save_marked_dir)
+        if not self.save_marked_dir.exists():
+            Path.mkdir(self.save_marked_dir, parents=True)
         # Main output directories
         for save_output_dir in [
             self.save_marked_dir.joinpath("colored"),
@@ -78,8 +65,8 @@ class PathUtils:
             self.save_marked_dir.joinpath("_MULTI_"),
             self.save_marked_dir.joinpath("_MULTI_", "colored"),
         ]:
-            if not os.path.exists(save_output_dir):
-                os.mkdir(save_output_dir)
+            if not save_output_dir.exists():
+                Path.mkdir(save_output_dir)
                 logger.info(f"Created : {save_output_dir}")
 
         # Image buckets
@@ -88,10 +75,10 @@ class PathUtils:
             self.multi_marked_dir,
             self.errors_dir,
         ]:
-            if not os.path.exists(save_output_dir):
+            if not save_output_dir.exists():
                 logger.info(f"Created : {save_output_dir}")
-                os.makedirs(save_output_dir)
-                os.mkdir(save_output_dir.joinpath("colored"))
+                Path.mkdir(save_output_dir, parents=True)
+                Path.mkdir(save_output_dir.joinpath("colored"))
 
         # Non-image directories
         for save_output_dir in [
@@ -99,21 +86,25 @@ class PathUtils:
             self.image_metrics_dir,
             self.evaluations_dir,
         ]:
-            if not os.path.exists(save_output_dir):
+            if not save_output_dir.exists():
                 logger.info(f"Created : {save_output_dir}")
-                os.makedirs(save_output_dir)
+                Path.mkdir(save_output_dir, parents=True)
 
 
 class SaveImageOps:
-    def __init__(self, tuning_config):
+    def __init__(self, tuning_config) -> None:
         self.gray_images = defaultdict(list)
         self.colored_images = defaultdict(list)
         self.tuning_config = tuning_config
         self.save_image_level = tuning_config.outputs.save_image_level
 
-    def append_save_image(self, title, keys, gray_image=None, colored_image=None):
-        assert type(title) == str
-        if type(keys) == int:
+    def append_save_image(
+        self, title, keys, gray_image=None, colored_image=None
+    ) -> None:
+        if not isinstance(title, str):
+            msg = f"title={title} is not a string"
+            raise TypeError(msg)
+        if isinstance(keys, int):
             keys = [keys]
         gray_image_copy, colored_image_copy = None, None
         if gray_image is not None:
@@ -128,17 +119,19 @@ class SaveImageOps:
             if colored_image_copy is not None:
                 self.colored_images[key].append([title, colored_image_copy])
 
-    def save_image_stacks(self, filename, save_marked_dir, key=None, images_per_row=4):
+    def save_image_stacks(
+        self, file_path: Path, save_marked_dir: Path, key=None, images_per_row=4
+    ) -> None:
         key = self.save_image_level if key is None else key
         if self.save_image_level >= int(key):
-            name, _ext = os.path.splitext(filename)
+            stem = file_path.stem
             logger.info(
                 f"Stack level: {key}", [title for title, _ in self.gray_images[key]]
             )
 
             if len(self.gray_images[key]) > 0:
                 result = self.get_result_hstack(self.gray_images[key], images_per_row)
-                stack_path = f"{save_marked_dir}/stack/{name}_{str(key)}_stack.jpg"
+                stack_path = f"{save_marked_dir}/stack/{stem}_{key!s}_stack.jpg"
                 logger.info(f"Saved stack image to: {stack_path}")
                 ImageUtils.save_img(stack_path, result)
             else:
@@ -151,7 +144,7 @@ class SaveImageOps:
                     self.colored_images[key], images_per_row
                 )
                 colored_stack_path = (
-                    f"{save_marked_dir}/stack/colored/{name}_{str(key)}_stack.jpg"
+                    f"{save_marked_dir}/stack/colored/{stem}_{key!s}_stack.jpg"
                 )
                 logger.info(f"Saved colored stack image to: {colored_stack_path}")
 
@@ -174,16 +167,15 @@ class SaveImageOps:
         )
         grid_images = MathUtils.chunks(images, images_per_row)
         result = ImageUtils.get_vstack_image_grid(grid_images)
-        result = ImageUtils.resize_single(
+        return ImageUtils.resize_single(
             result,
             min(
                 len(titles_and_images) * display_width // 3,
                 int(display_width * 2.5),
             ),
         )
-        return result
 
-    def reset_all_save_img(self):
+    def reset_all_save_img(self) -> None:
         # Max save image level is 6
         for i in range(7):
             self.gray_images[i + 1] = []

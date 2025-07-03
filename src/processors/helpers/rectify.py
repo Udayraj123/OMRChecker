@@ -10,29 +10,10 @@ from src.processors.constants import EDGE_TYPES_IN_ORDER
 from src.utils.logger import console, logger
 from src.utils.math import MathUtils
 
-# from .mapping import scale_map
-
 
 def rectify(
-    *,
     edge_contours_map: Dict[str, List[Tuple[int, int]]],
-    enable_cropping: bool,
-    # output_shape: Tuple[int, int],
-    # resolution_map: int = 512,
 ) -> np.ndarray:
-    """Rectifies an image based on the given mask. Corners can be provided to speed up the rectification.
-
-    Args:
-        image (np.ndarray): The input image as a NumPy array. Shape: (height, width, channels).
-        mask (np.ndarray): The mask indicating the region of interest as a NumPy array. Shape: (height, width).
-        output_shape (Tuple[int, int]): The desired output shape of the rectified image. First element: height, second element: width.
-        corners (Optional[List[Tuple[int, int]]], optional): The corners of the region of interest. List of points with first x, then y coordinate. Has to contain exactly 4 points. Defaults to None.
-        resolution_map (int, optional): The resolution of the mapping grid. Higher grid size increases computation time but generates better results.  Defaults to 512.
-
-    Returns:
-        np.ndarray: The rectified image as a NumPy array.
-
-    """
     segments = {
         edge_type.lower(): LineString(edge_contours_map[edge_type])
         for edge_type in EDGE_TYPES_IN_ORDER
@@ -47,10 +28,9 @@ def rectify(
     #     DrawingUtils.draw_contour(given_segments, list(segment.coords))
     # InteractionUtils.show("given_segments", given_segments)
 
-    output_shape = _get_output_shape_for_segments(edge_contours_map, enable_cropping)
+    output_shape = _get_output_shape_for_segments(edge_contours_map)
 
-    scaled_map = _create_backward_output_map(segments, output_shape, enable_cropping)
-    return scaled_map
+    return _create_backward_output_map(segments, output_shape)
     # resolution_map = 10  # temp
     # backward_map = _create_backward_map(segments, resolution_map)
     # logger.info("backward_map.shape", backward_map.shape)
@@ -60,33 +40,30 @@ def rectify(
 
 
 def _get_output_shape_for_segments(
-    edge_contours_map: Dict[str, List[Tuple[int, int]]], enable_cropping: bool
-):
+    edge_contours_map: Dict[str, List[Tuple[int, int]]],
+    # enable_cropping: bool,
+) -> tuple[int, int]:
     max_width = max(
-        [
-            MathUtils.distance(edge_contours_map[name][0], edge_contours_map[name][-1])
-            for name in ["TOP", "BOTTOM"]
-        ]
+        MathUtils.distance(edge_contours_map[name][0], edge_contours_map[name][-1])
+        for name in ["TOP", "BOTTOM"]
     )
     max_height = max(
-        [
-            MathUtils.distance(edge_contours_map[name][0], edge_contours_map[name][-1])
-            for name in ["LEFT", "RIGHT"]
-        ]
+        MathUtils.distance(edge_contours_map[name][0], edge_contours_map[name][-1])
+        for name in ["LEFT", "RIGHT"]
     )
     return int(max_height), int(max_width)
 
 
-def transform_line(line, M):
+def transform_line(line, transform_matrix):
     line_points = np.array(line.coords).reshape(-1, 1, 2)
-    line_points = cv2.perspectiveTransform(line_points, M).squeeze()
+    line_points = cv2.perspectiveTransform(line_points, transform_matrix).squeeze()
     return LineString(line_points)
 
 
 def _create_backward_output_map(
     segments: Dict[str, LineString],
     output_shape: Tuple[int, int],
-    enable_cropping: bool,
+    # TODO: _enable_cropping: bool,
 ) -> np.ndarray:
     resolution_h, resolution_w = output_shape
     transformed_backward_points_map = np.zeros((resolution_h, resolution_w, 2))
@@ -102,13 +79,13 @@ def _create_backward_output_map(
     # Get page corners tranform matrix
     dst = np.array(list(coord_map.keys())).astype("float32")
     src = np.array(list(coord_map.values())).astype("float32")
-    print_points_mapping_table(f"Corners Transform", src, dst)
+    print_points_mapping_table("Corners Transform", src, dst)
 
     # TODO: can get this matrix from homography as well! (for inplace alignment)
-    M = cv2.getPerspectiveTransform(src=src, dst=dst)
+    transform_matrix = cv2.getPerspectiveTransform(src=src, dst=dst)
 
     transformed_segments = {
-        name: transform_line(segments[name], M) for name in segments.keys()
+        name: transform_line(segments[name], transform_matrix) for name in segments
     }
 
     combined_segments = Polygon(linemerge(segments.values()))
@@ -118,7 +95,7 @@ def _create_backward_output_map(
     combined_segments_points = np.array(combined_segments.exterior.coords)
     combined_segments_points_for_transform = combined_segments_points.reshape(-1, 1, 2)
     cropped_combined_segments_points = cv2.perspectiveTransform(
-        combined_segments_points_for_transform, M
+        combined_segments_points_for_transform, transform_matrix
     ).squeeze()
 
     cropped_combined_segments = Polygon(cropped_combined_segments_points)
@@ -136,7 +113,7 @@ def _create_backward_output_map(
         [int(point[0]), int(point[1])] for point in cropped_combined_segments_points
     ]
     print_points_mapping_table(
-        f"Contours Approx Transform", control_points, destination_points
+        "Contours Approx Transform", control_points, destination_points
     )
 
     logger.debug(
@@ -174,7 +151,7 @@ def _create_backward_output_map(
             )
 
         if len(intersections) > 2:
-            # TODO later: here we can find non-corner anchor points to align too!
+            # TODO: later: here we can find non-corner anchor points to align too!
             logger.warning(grid_step_point, intersections)
 
         intersections = [
@@ -242,7 +219,7 @@ def _create_backward_output_map(
     backward_map_points = transformed_backward_points_map.reshape(-1, 1, 2)
     # The values represent curve's points
     ordered_rich_curve_points = cv2.perspectiveTransform(
-        backward_map_points, np.linalg.inv(M)
+        backward_map_points, np.linalg.inv(transform_matrix)
     ).squeeze()
     #  (resolution_h * resolution_w, 2) -> (resolution_h, resolution_w, 2)
     backward_points_map = ordered_rich_curve_points.reshape(
@@ -251,11 +228,10 @@ def _create_backward_output_map(
 
     # flip x and y coordinate: first y, then x
     # backward_points_map = np.roll(backward_points_map, shift=1, axis=-1)
-    backward_points_map = np.float32(backward_points_map)
-    return backward_points_map  # type: ignore
+    return np.float32(backward_points_map)
 
 
-def print_points_mapping_table(title, control_points, destination_points):
+def print_points_mapping_table(title, control_points, destination_points) -> None:
     table = Table(
         title=title,
         show_header=True,

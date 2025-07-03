@@ -36,7 +36,7 @@ def apply_template_alignment(gray_image, colored_image, template: Template, conf
         colored_image,
         gray_alignment_image,
         colored_alignment_image,
-    )  # type: ignore
+    )  # pyright: ignore [reportGeneralTypeIssues]
 
     # TODO: wrap this loop body into a function and generalize into passing *any* scanZone in this.
     for field_block in template.field_blocks:
@@ -45,9 +45,14 @@ def apply_template_alignment(gray_image, colored_image, template: Template, conf
             bounding_box_origin,
             bounding_box_dimensions,
             field_block_alignment,
-        ) = map(
-            lambda attr: getattr(field_block, attr),
-            ["name", "bounding_box_origin", "bounding_box_dimensions", "alignment"],
+        ) = (
+            getattr(field_block, attr)
+            for attr in [
+                "name",
+                "bounding_box_origin",
+                "bounding_box_dimensions",
+                "alignment",
+            ]
         )
         logger.info(
             "field_block",
@@ -78,13 +83,13 @@ def apply_template_alignment(gray_image, colored_image, template: Template, conf
             ),
         ]
 
-        block_gray_image, block_colored_image, block_gray_alignment_image = map(
-            lambda image: (
+        block_gray_image, _block_colored_image, block_gray_alignment_image = (
+            (
                 None
                 if image is None
                 else image[zone_start[1] : zone_end[1], zone_start[0] : zone_end[0]]
-            ),
-            [gray_image, colored_image, gray_alignment_image],
+            )
+            for image in [gray_image, colored_image, gray_alignment_image]
         )
 
         # Method 1

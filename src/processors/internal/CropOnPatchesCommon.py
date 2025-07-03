@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Any
+from typing import Any, ClassVar
 
 import cv2
 import numpy as np
@@ -25,22 +25,24 @@ from src.utils.shapes import ShapeUtils
 
 class CropOnPatchesCommon(WarpOnPointsCommon):
     __is_internal_preprocessor__ = True
-    default_scan_zone_descriptions = {}
+    default_scan_zone_descriptions: ClassVar = {}
     # Expected to be overridden by child
-    default_points_selector_map = {}
-    scan_zone_presets_for_layout = {}
+    default_points_selector_map: ClassVar = {}
+    scan_zone_presets_for_layout: ClassVar = {}
 
     def find_and_select_points_from_line(
-        self, image, zone_preset, zone_description, file_path
+        self, _image, _zone_preset, _zone_description, _file_path
     ) -> tuple[Any, Any, Any]:
-        raise Exception("Not implemented")
+        msg = "Not implemented"
+        raise Exception(msg)
 
     def find_dot_corners_from_options(
-        self, image, zone_description, file_path
+        self, _image, _zone_description, _file_path
     ) -> tuple[Any, Any]:
-        raise Exception("Not implemented")
+        msg = "Not implemented"
+        raise Exception(msg)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.parse_and_apply_scan_zone_presets_and_defaults()
         self.validate_scan_zones()
@@ -55,13 +57,13 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
     def exclude_files(self):
         return []
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'CropOnMarkers["{self.options["pointsLayout"]}"]'
 
     def prepare_image(self, image):
         return image
 
-    def parse_and_apply_scan_zone_presets_and_defaults(self):
+    def parse_and_apply_scan_zone_presets_and_defaults(self) -> None:
         options = self.options
         scan_zones = options["scanZones"]
         scan_zones_with_defaults = []
@@ -85,7 +87,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         self.scan_zones = scan_zones_with_defaults
         # logger.debug(self.scan_zones)
 
-    def validate_scan_zones(self):
+    def validate_scan_zones(self) -> None:
         seen_labels = set()
         repeat_labels = set()
         for scan_zone in self.scan_zones:
@@ -94,31 +96,28 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                 repeat_labels.add(zone_label)
             seen_labels.add(zone_label)
         if len(repeat_labels) > 0:
-            raise Exception(f"Found repeated labels in scanZones: {repeat_labels}")
+            msg = f"Found repeated labels in scanZones: {repeat_labels}"
+            raise Exception(msg)
 
     # TODO: check if this needs to move into child for working properly (accessing self attributes declared in child in parent's constructor)
-    def validate_points_layouts(self):
+    def validate_points_layouts(self) -> None:
         options = self.options
         points_layout = options["pointsLayout"]
         if (
             points_layout not in self.scan_zone_presets_for_layout
             and points_layout != "CUSTOM"
         ):
-            raise Exception(
-                f"Invalid pointsLayout provided: {points_layout} for {self}"
-            )
+            msg = f"Invalid pointsLayout provided: {points_layout} for {self}"
+            raise Exception(msg)
 
         expected_templates = set(self.scan_zone_presets_for_layout[points_layout])
-        provided_templates = set(
-            [scan_zone["zonePreset"] for scan_zone in self.scan_zones]
-        )
+        provided_templates = {scan_zone["zonePreset"] for scan_zone in self.scan_zones}
         not_provided_zone_presets = expected_templates.difference(provided_templates)
 
         if len(not_provided_zone_presets) > 0:
             logger.error(f"not_provided_zone_presets={not_provided_zone_presets}")
-            raise Exception(
-                f"Missing a few zonePresets for the pointsLayout {points_layout}"
-            )
+            msg = f"Missing a few zonePresets for the pointsLayout {points_layout}"
+            raise Exception(msg)
 
     def extract_control_destination_points(self, image, _colored_image, file_path):
         config = self.tuning_config
@@ -160,10 +159,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             zone_description = scan_zone["runtimeZoneDescription"]
             scanner_type = zone_description["scannerType"]
 
-            if (
-                scanner_type == ScannerType.PATCH_DOT
-                or scanner_type == ScannerType.TEMPLATE_MATCH
-            ):
+            if scanner_type in {ScannerType.PATCH_DOT, ScannerType.TEMPLATE_MATCH}:
                 dot_point, destination_point = self.find_and_select_point_from_dot(
                     image, zone_description, file_path
                 )
@@ -211,9 +207,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             zone_preset_points
         )
 
-        if self.warp_method in [
-            WarpMethod.PERSPECTIVE_TRANSFORM,
-        ]:
+        if self.warp_method == WarpMethod.PERSPECTIVE_TRANSFORM:
             ordered_page_corners, ordered_indices = MathUtils.order_four_points(
                 page_corners, dtype="float32"
             )
@@ -225,7 +219,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         # TODO: sort edge_contours_map manually?
         return control_points, destination_points, edge_contours_map
 
-    def get_runtime_zone_description_with_defaults(self, image, scan_zone):
+    def get_runtime_zone_description_with_defaults(self, _image, scan_zone):
         return scan_zone["zoneDescription"]
 
     def get_edge_contours_map_from_zone_points(self, zone_preset_points):
@@ -252,9 +246,10 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
 
     def draw_zone_contours_and_anchor_shifts(
         self, zone_control_points, zone_destination_points
-    ):
+    ) -> None:
         if len(zone_control_points) > 1:
-            if len(zone_control_points) == 2:
+            two_points = 2
+            if len(zone_control_points) == two_points:
                 # Draw line if it's just two points
                 DrawingUtils.draw_contour(self.debug_image, zone_control_points)
             else:
@@ -296,7 +291,8 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         dot_point = self.select_point_from_rectangle(dot_rect, points_selector)
 
         if dot_point is None:
-            raise Exception(f"No dot found for zone {zone_label}")
+            msg = f"No dot found for zone {zone_label}"
+            raise Exception(msg)
 
         destination_rect = np.intp(
             ShapeUtils.compute_scan_zone_rectangle(
@@ -329,14 +325,14 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
 
     def compute_scan_zone_util(self, image, zone_description):
         zone, scan_zone_rectangle = ShapeUtils.extract_image_from_zone_description(
-            image, zone_description, throw_on_overflow=True
+            image, zone_description
         )
 
         zone_start = scan_zone_rectangle[0]
         zone_end = scan_zone_rectangle[2]
         return zone, np.array(zone_start), np.array(zone_end)
 
-    def draw_scan_zone_util(self, zone_description):
+    def draw_scan_zone_util(self, zone_description) -> None:
         scan_zone_rectangle = ShapeUtils.compute_scan_zone_rectangle(
             zone_description, include_margins=True
         )

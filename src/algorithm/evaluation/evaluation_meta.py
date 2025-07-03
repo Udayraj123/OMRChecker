@@ -3,6 +3,7 @@
 
 class QuestionMeta:
     def __init__(
+        # ruff: noqa: PLR0913
         self,
         question,
         question_verdict,
@@ -12,7 +13,7 @@ class QuestionMeta:
         answer_matcher,
         bonus_type,
         question_schema_verdict,
-    ):
+    ) -> None:
         self.question = question
         self.question_verdict = question_verdict
         self.marked_answer = marked_answer
@@ -37,11 +38,11 @@ class QuestionMeta:
 
 
 class EvaluationMeta:
-    def __init__(self):
+    def __init__(self) -> None:
         self.score = 0.0
         self.questions_meta = {}
 
-    def add_question_meta(self, question, question_meta):
+    def add_question_meta(self, question, question_meta) -> None:
         self.questions_meta[question] = question_meta.to_dict()
 
     def to_dict(self, formatted_answers_summary):

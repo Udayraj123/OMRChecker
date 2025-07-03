@@ -1,16 +1,14 @@
 from abc import abstractmethod
-from typing import List
+from typing import Never
 
 from src.utils.parsing import default_dump
 
 
 class Field:
-    """
-    Container for a Field on the OMR i.e. a group of ScanBoxes with a collective field_label
-
-    """
+    """Container for a Field on the OMR i.e. a group of ScanBoxes with a collective field_label."""
 
     def __init__(
+        # ruff: noqa: PLR0913
         self,
         direction,
         empty_value,
@@ -18,7 +16,7 @@ class Field:
         field_detection_type,
         field_label,
         origin,
-    ):
+    ) -> None:
         self.direction = direction
         self.empty_value = empty_value
 
@@ -33,25 +31,27 @@ class Field:
 
         self.origin = origin
 
-        self.scan_boxes: List[ScanBox] = []
+        self.scan_boxes: list[ScanBox] = []
         # Child class would populate scan_boxes
         self.setup_scan_boxes(field_block)
         self.drawing = self.get_drawing_instance()
 
     @abstractmethod
-    def setup_scan_boxes(self, field_block):
-        raise Exception("Not implemented")
+    def setup_scan_boxes(self, field_block) -> Never:
+        msg = "Not implemented"
+        raise Exception(msg)
 
     @abstractmethod
-    def get_drawing_instance(self):
-        raise Exception("Not implemented")
+    def get_drawing_instance(self) -> Never:
+        msg = "Not implemented"
+        raise Exception(msg)
 
-    def reset_all_shifts(self):
+    def reset_all_shifts(self) -> None:
         # Note: no shifts needed at bubble level
         for bubble in self.scan_boxes:
             bubble.reset_shifts()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.id
 
     # Make the class serializable
@@ -69,12 +69,12 @@ class Field:
 
 
 class ScanBox:
-    """
-    The smallest unit in the template layout.
-    TODO: update docs
+    """The smallest unit in the template layout.
+
+    TODO: update docs.
     """
 
-    def __init__(self, field_index, field: Field, origin, dimensions, margins):
+    def __init__(self, field_index, field: Field, origin, dimensions, margins) -> None:
         self.field_index = field_index
         self.dimensions = dimensions
         self.margins = margins
@@ -92,10 +92,10 @@ class ScanBox:
         self.field_detection_type = field.field_detection_type
         self.name = f"{self.field_label}_{self.field_index}"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
-    def reset_shifts(self):
+    def reset_shifts(self) -> None:
         self.shifts = [0, 0]
 
     def get_shifted_position(self, shifts=None):

@@ -7,7 +7,7 @@ from src.processors.constants import FieldDetectionType
 
 
 class OCRFileRunner(FieldTypeFileLevelRunner):
-    def __init__(self, tuning_config):
+    def __init__(self, tuning_config) -> None:
         field_detection_type = FieldDetectionType.OCR
         detection_pass = OCRDetectionPass(tuning_config, field_detection_type)
         interpretation_pass = OCRInterpretationPass(tuning_config, field_detection_type)

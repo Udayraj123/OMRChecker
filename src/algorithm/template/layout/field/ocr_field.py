@@ -1,5 +1,3 @@
-from typing import List
-
 from src.algorithm.template.layout.field.base import Field, ScanBox
 from src.algorithm.template.layout.field.field_drawing import OCRFieldDrawing
 from src.utils.parsing import default_dump
@@ -8,6 +6,7 @@ from src.utils.shapes import ShapeUtils
 
 class OCRField(Field):
     def __init__(
+        # ruff: noqa: PLR0913
         self,
         direction,
         empty_value,
@@ -15,7 +14,7 @@ class OCRField(Field):
         field_detection_type,
         field_label,
         origin,
-    ):
+    ) -> None:
         super().__init__(
             direction,
             empty_value,
@@ -28,14 +27,14 @@ class OCRField(Field):
     def get_drawing_instance(self):
         return OCRFieldDrawing(self)
 
-    def setup_scan_boxes(self, field_block):
+    def setup_scan_boxes(self, field_block) -> None:
         scan_zone = field_block.scan_zone
         origin = field_block.origin
         field = self
         # TODO: support for multiple scan zones per field (grid structure)
         field_index = 0
         scan_box = OCRScanBox(field_index, field, origin, scan_zone)
-        self.scan_boxes: List[OCRScanBox] = [scan_box]
+        self.scan_boxes: list[OCRScanBox] = [scan_box]
 
     # Make the class serializable
     def to_json(self):
@@ -50,7 +49,7 @@ class OCRField(Field):
 
 
 class OCRScanBox(ScanBox):
-    def __init__(self, field_index, field: OCRField, origin, scan_zone):
+    def __init__(self, field_index, field: OCRField, origin, scan_zone) -> None:
         dimensions = scan_zone["dimensions"]
         margins = scan_zone["margins"]
         super().__init__(field_index, field, origin, dimensions, margins)

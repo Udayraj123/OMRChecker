@@ -1,4 +1,4 @@
-import matplotlib
+import matplotlib as mpl
 import numpy as np
 from dotmap import DotMap
 
@@ -20,7 +20,6 @@ SUPPORTED_PROCESSOR_NAMES = [
 ]
 
 FIELD_LABEL_NUMBER_REGEX = r"([^\d]+)(\d*)"
-#
 ERROR_CODES = DotMap(
     {
         "MULTI_BUBBLE_WARN": 1,
@@ -65,12 +64,13 @@ MARKED_TEMPLATE_TRANSPARENCY = 0.65
 
 PAPER_VALUE_THRESHOLD = 180
 PAPER_SATURATION_THRESHOLD = 40
-hsv_white_low, hsv_white_high = np.array([0, 0, PAPER_VALUE_THRESHOLD]), np.array(
-    [180, PAPER_SATURATION_THRESHOLD, 255]
+hsv_white_low, hsv_white_high = (
+    np.array([0, 0, PAPER_VALUE_THRESHOLD]),
+    np.array([180, PAPER_SATURATION_THRESHOLD, 255]),
 )
 
 
-MATPLOTLIB_COLORS = matplotlib.colors.get_named_colors_mapping()
+MATPLOTLIB_COLORS = mpl.colors.get_named_colors_mapping()
 
 WAIT_KEYS = DotMap(
     {

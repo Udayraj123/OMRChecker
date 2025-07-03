@@ -45,10 +45,10 @@ def automatic_brightness_and_contrast(image, clip_hist_percent=1):
 class Contrast(ImageTemplatePreprocessor):
     __is_internal_preprocessor__ = False
 
-    def get_class_name(self):
+    def get_class_name(self) -> str:
         return "Contrast"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         tuning_options = self.tuning_options
         self.clip_hist_percent = tuning_options.get("clipPercentage", 1)

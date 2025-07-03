@@ -7,7 +7,7 @@ from src.utils.interaction import InteractionUtils
 
 def show_displacement_overlay(
     block_gray_alignment_image, block_gray_image, shifted_block_image
-):
+) -> None:
     # ..
     overlay = ImageUtils.overlay_image(block_gray_alignment_image, block_gray_image)
     overlay_shifted = ImageUtils.overlay_image(

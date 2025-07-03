@@ -23,10 +23,7 @@ CONFIG_DEFAULTS = DotMap(
             "display_image_dimensions": [720, 1080],
             "show_image_level": 0,
             "show_preprocessors_diff": {
-                **{
-                    processor_name: False
-                    for processor_name in SUPPORTED_PROCESSOR_NAMES
-                }
+                **dict.fromkeys(SUPPORTED_PROCESSOR_NAMES, False)
             },
             "save_image_level": 1,
             "show_logs_by_type": {

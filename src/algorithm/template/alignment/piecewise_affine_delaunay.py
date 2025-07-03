@@ -18,16 +18,14 @@ def draw_voronoi(image, subdiv):
     voronoi_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     (facets, centers) = subdiv.getVoronoiFacetList([])
 
-    for i in range(0, len(facets)):
-        ifacet_arr = []
-        for f in facets[i]:
-            ifacet_arr.append(f)
-
-        ifacet = np.array(ifacet_arr, int)
+    for i in range(len(facets)):
+        ifacet = np.array(facets[i], dtype=int)
+        # ruff: noqa: S311
         color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
         cv2.fillConvexPoly(voronoi_image, ifacet, color, cv2.LINE_AA, 0)
         ifacets = np.array([ifacet])
+        # ruff: noqa: FBT003,S311
         cv2.polylines(voronoi_image, ifacets, True, (0, 0, 0), 1, cv2.LINE_AA, 0)
         cv2.circle(
             voronoi_image,
@@ -68,8 +66,9 @@ def apply_piecewise_affine(
     # ##
 
     # Make a copy for warping
-    warped_block_image, warped_colored_image = gray_block_image.copy(), (
-        None if colored_block_image is None else colored_block_image.copy()
+    warped_block_image, warped_colored_image = (
+        gray_block_image.copy(),
+        (None if colored_block_image is None else colored_block_image.copy()),
     )
 
     # Bulk insert all destination points
@@ -91,7 +90,7 @@ def apply_piecewise_affine(
     destination_delaunay_triangles = [
         triangle
         for triangle in destination_delaunay_triangles_list
-        # TODO[think]: why exactly do we need to filter outside triangles at start?
+        # TODO: [think] why exactly do we need to filter outside triangles at start?
         # How to get rid of "zero-sized triangles" e.g. lines
         if all(
             MathUtils.rectangle_contains(point, warped_rectangle) for point in triangle
@@ -125,7 +124,7 @@ def apply_piecewise_affine(
     #  then loop over triangles
 
     for source_points, destination_points in zip(
-        source_delaunay_triangles, destination_delaunay_triangles
+        source_delaunay_triangles, destination_delaunay_triangles, strict=False
     ):
         # TODO: modify this loop to support 4-point transforms too!
         # if len(source_points == 4):

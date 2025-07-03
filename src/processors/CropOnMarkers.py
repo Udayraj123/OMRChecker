@@ -8,7 +8,7 @@ from src.processors.internal.CropOnDotLines import CropOnDotLines
 class CropOnMarkers(ImageTemplatePreprocessor):
     __is_internal_preprocessor__ = False
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         if self.options["type"] == "FOUR_MARKERS":
             self.instance = CropOnCustomMarkers(*args, **kwargs)
@@ -19,10 +19,10 @@ class CropOnMarkers(ImageTemplatePreprocessor):
     def exclude_files(self):
         return self.instance.exclude_files()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.instance.__str__()
 
-    def get_class_name(self):
+    def get_class_name(self) -> str:
         return "CropOnMarkers"
 
     def apply_filter(self, *args, **kwargs):

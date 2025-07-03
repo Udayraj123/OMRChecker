@@ -16,7 +16,7 @@ The main interface for interacting with all template json related operations
 
 
 class Template:
-    def __init__(self, template_path, tuning_config):
+    def __init__(self, template_path, tuning_config) -> None:
         # TODO: load template json file at this level?
         self.tuning_config = tuning_config
         # template_json =
@@ -57,15 +57,15 @@ class Template:
         next_template = self
         return gray_image, colored_image, next_template
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.path)
 
-    def reset_and_setup_for_directory(self, output_dir):
-        """Reset all mutations to the template and setup output directories"""
+    def reset_and_setup_for_directory(self, output_dir) -> None:
+        """Reset all mutations to the template and setup output directories."""
         self.template_layout.reset_all_shifts()
         self.reset_and_setup_outputs(output_dir)
 
-    def reset_and_setup_outputs(self, output_dir):
+    def reset_and_setup_outputs(self, output_dir) -> None:
         output_mode = self.tuning_config.outputs.output_mode
         self.directory_handler.reset_path_utils(output_dir, output_mode)
 
@@ -97,12 +97,11 @@ class Template:
     def get_empty_response_array(self):
         return self.directory_handler.get_empty_response_array()
 
-    def append_output_omr_response(self, file_name, output_omr_response):
-        omr_response_array = []
-        for field in self.directory_handler.omr_response_columns:
-            omr_response_array.append(output_omr_response[field])
-
-        return omr_response_array
+    def append_output_omr_response(self, _file_name, output_omr_response):
+        return [
+            output_omr_response[field]
+            for field in self.directory_handler.omr_response_columns
+        ]
 
     def get_results_file(self):
         return self.directory_handler.output_files["Results"]
@@ -139,7 +138,7 @@ class Template:
         )
         # Resize to template dimensions for saved outputs
         self.save_image_ops.append_save_image(
-            f"Resized Image", range(3, 7), gray_image, colored_image
+            "Resized Image", range(3, 7), gray_image, colored_image
         )
 
         gray_image, colored_image = ImageUtils.normalize(gray_image, colored_image)
@@ -177,7 +176,7 @@ class Template:
     # def export_omr_metrics_for_directory()
     def export_omr_metrics_for_file(
         self, file_path, evaluation_meta, field_id_to_interpretation
-    ):
+    ) -> None:
         # TODO: move these inside self.template_file_runner.get_export_omr_metrics_for_file
         # This can be used for drawing the bubbles etc
         directory_level_interpretation_aggregates = (
@@ -232,7 +231,7 @@ class Template:
             "template_meta": template_meta,
             "evaluation_meta": (evaluation_meta if evaluation_meta is not None else {}),
         }
-        with open(
+        with Path.open(
             image_metrics_path,
             "w",
         ) as f:

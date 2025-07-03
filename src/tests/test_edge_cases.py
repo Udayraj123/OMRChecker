@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from src.tests.constants import (
     BASE_MULTIMARKED_CSV_PATH,
@@ -18,9 +18,9 @@ from src.tests.utils import (
 )
 
 
-def run_sample(mocker, input_path):
+def run_sample(mocker, input_path) -> None:
     setup_mocker_patches(mocker)
-    output_dir = os.path.join("outputs", input_path)
+    output_dir = Path("outputs", input_path)
     run_entry_point(input_path, output_dir)
     mocker.resetall()
 
@@ -33,8 +33,8 @@ write_jsons_and_run = generate_write_jsons_and_run(
 )
 
 
-def test_config_low_dimensions_error_case(mocker, snapshot):
-    def modify_template(template):
+def test_config_low_dimensions_error_case(mocker, snapshot) -> None:
+    def modify_template(template) -> None:
         template["preProcessors"][0]["options"]["processingImageShape"] = [
             1640 // 4,
             1332 // 4,
@@ -45,8 +45,8 @@ def test_config_low_dimensions_error_case(mocker, snapshot):
     assert str(exception) == snapshot
 
 
-def test_config_low_dimensions_safe_case(mocker, snapshot):
-    def modify_template(template):
+def test_config_low_dimensions_safe_case(mocker, snapshot) -> None:
+    def modify_template(template) -> None:
         template["preProcessors"][0]["options"]["processingImageShape"] = [
             1640 // 2,
             1332 // 2,
@@ -60,7 +60,7 @@ def test_config_low_dimensions_safe_case(mocker, snapshot):
     assert snapshot == sample_outputs
 
 
-def test_different_bubble_dimensions(mocker):
+def test_different_bubble_dimensions(mocker) -> None:
     # Prevent appending to output csv:
     remove_file(BASE_RESULTS_CSV_PATH)
     remove_file(BASE_MULTIMARKED_CSV_PATH)
@@ -72,7 +72,7 @@ def test_different_bubble_dimensions(mocker):
     assert not original_output_data.empty
     assert len(original_output_data) == 1
 
-    def modify_template(template):
+    def modify_template(template) -> None:
         # Incorrect global bubble size
         template["bubbleDimensions"] = [5, 5]
         # Correct bubble size for MCQBlock1a1

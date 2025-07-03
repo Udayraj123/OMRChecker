@@ -1,4 +1,4 @@
-import os
+from typing import ClassVar
 
 from src.algorithm.template.detection.barcode.file_runner import BarcodeFileRunner
 from src.algorithm.template.detection.base.detection_pass import TemplateDetectionPass
@@ -18,20 +18,22 @@ from src.processors.constants import FieldDetectionType
 
 
 class TemplateFileRunner(FileLevelRunner):
-    """Template File Runner is responsible for running the file level detection and interpretation steps.
+    """Template File Runner.
+
+    It is responsible for running the file level detection and interpretation steps.
     It maintains own template level runners as well as all the field detection type level runners.
     We create one instance of TemplateFileRunner per Template - thus it is reused for all images mapped to that Template.
-    Note: a Template may get reused for multiple directories(in nested case)
+    Note: a Template may get reused for multiple directories(in nested case).
     """
 
-    field_detection_type_to_runner = {
+    field_detection_type_to_runner: ClassVar = {
         FieldDetectionType.BUBBLES_THRESHOLD: BubblesThresholdFileRunner,
         FieldDetectionType.OCR: OCRFileRunner,
         FieldDetectionType.BARCODE_QR: BarcodeFileRunner,
         # FieldDetectionType.BUBBLES_BLOB: BubblesBlobRunner,
     }
 
-    def __init__(self, template):
+    def __init__(self, template) -> None:
         self.template = template
         tuning_config = template.tuning_config
         detection_pass = TemplateDetectionPass(tuning_config)
@@ -44,7 +46,7 @@ class TemplateFileRunner(FileLevelRunner):
         self.initialize_field_file_runners(template)
         self.initialize_directory_level_aggregates(template)
 
-    def initialize_field_file_runners(self, template):
+    def initialize_field_file_runners(self, template) -> None:
         self.all_fields: list[Field] = template.all_fields
         self.all_field_detection_types = self.template.all_field_detection_types
 
@@ -60,6 +62,7 @@ class TemplateFileRunner(FileLevelRunner):
         self, field_detection_type
     ) -> FieldTypeFileLevelRunner:
         tuning_config = self.tuning_config
+        # ruff: noqa: N806
         FieldTypeProcessorClass = self.field_detection_type_to_runner[
             field_detection_type
         ]
@@ -72,14 +75,10 @@ class TemplateFileRunner(FileLevelRunner):
         self.run_file_level_detection(file_path, gray_image, colored_image)
 
         # populate interpretations
-        omr_response = self.run_file_level_interpretation(
-            file_path, gray_image, colored_image
-        )
-
-        return omr_response
+        return self.run_file_level_interpretation(file_path, gray_image, colored_image)
 
     # FieldTypeFileLevelRunner::run_field_level_detection
-    def run_file_level_detection(self, file_path, gray_image, colored_image):
+    def run_file_level_detection(self, file_path, gray_image, colored_image) -> None:
         self.initialize_file_level_detection_aggregates(file_path)
 
         # Perform detection step for each field
@@ -89,7 +88,9 @@ class TemplateFileRunner(FileLevelRunner):
 
         self.update_detection_aggregates_on_processed_file(file_path)
 
-    def run_field_level_detection(self, field: Field, gray_image, colored_image):
+    def run_field_level_detection(
+        self, field: Field, gray_image, colored_image
+    ) -> None:
         self.detection_pass.initialize_field_level_aggregates(field)
 
         field_detection_type_runner = self.field_detection_type_runners[
@@ -105,8 +106,8 @@ class TemplateFileRunner(FileLevelRunner):
         )
 
     # Overrides
-    def initialize_directory_level_aggregates(self, template):
-        initial_directory_path = os.path.dirname(template.path)
+    def initialize_directory_level_aggregates(self, template) -> None:
+        initial_directory_path = template.path.parent
 
         # super().initialize_directory_level_aggregates(initial_directory_path)
 
@@ -122,7 +123,7 @@ class TemplateFileRunner(FileLevelRunner):
                 initial_directory_path
             )
 
-    def initialize_file_level_detection_aggregates(self, file_path):
+    def initialize_file_level_detection_aggregates(self, file_path) -> None:
         # super().initialize_file_level_detection_aggregates(file_path)
         self.detection_pass.initialize_file_level_aggregates(
             file_path, self.all_field_detection_types
@@ -134,7 +135,7 @@ class TemplateFileRunner(FileLevelRunner):
                 file_path
             )
 
-    def update_detection_aggregates_on_processed_file(self, file_path):
+    def update_detection_aggregates_on_processed_file(self, file_path) -> None:
         for field_detection_type_runner in self.field_detection_type_runners.values():
             field_detection_type_runner.update_detection_aggregates_on_processed_file(
                 file_path
@@ -145,7 +146,7 @@ class TemplateFileRunner(FileLevelRunner):
             file_path, self.field_detection_type_runners
         )
 
-    def run_file_level_interpretation(self, file_path, gray_image, colored_image):
+    def run_file_level_interpretation(self, file_path, _gray_image, _colored_image):
         self.initialize_file_level_interpretation_aggregates(file_path)
 
         current_omr_response = {}
@@ -158,7 +159,7 @@ class TemplateFileRunner(FileLevelRunner):
 
         return current_omr_response
 
-    def run_field_level_interpretation(self, current_omr_response, field):
+    def run_field_level_interpretation(self, current_omr_response, field) -> None:
         self.interpretation_pass.initialize_field_level_aggregates(field)
 
         field_label = field.field_label
@@ -187,7 +188,7 @@ class TemplateFileRunner(FileLevelRunner):
         current_omr_response[field_label] = field_interpretation_string
 
     # This overrides parent definition -
-    def initialize_file_level_interpretation_aggregates(self, file_path):
+    def initialize_file_level_interpretation_aggregates(self, file_path) -> None:
         # Note: Interpretation loop needs access to the file level detection aggregates
         all_file_level_detection_aggregates = (
             self.detection_pass.directory_level_aggregates["file_wise_aggregates"][
@@ -217,7 +218,7 @@ class TemplateFileRunner(FileLevelRunner):
                 field_label_wise_detection_aggregates,
             )
 
-    def update_interpretation_aggregates_on_processed_file(self, file_path):
+    def update_interpretation_aggregates_on_processed_file(self, file_path) -> None:
         for field_detection_type_runner in self.field_detection_type_runners.values():
             field_detection_type_runner.update_interpretation_aggregates_on_processed_file(
                 file_path
@@ -228,12 +229,12 @@ class TemplateFileRunner(FileLevelRunner):
             file_path, self.field_detection_type_runners
         )
 
-    def finalize_directory_metrics(self):
+    def finalize_directory_metrics(self) -> None:
         # TODO: get_directory_level_confidence_metrics()
 
         # output_metrics = self.directory_level_aggregates
         # TODO: update export directory level stats here
         pass
 
-    def get_export_omr_metrics_for_file(self):
+    def get_export_omr_metrics_for_file(self) -> None:
         pass

@@ -1,5 +1,7 @@
-import os
 import shutil
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any
 
 from src.tests.utils import (
     extract_all_csv_outputs,
@@ -8,40 +10,36 @@ from src.tests.utils import (
 )
 
 
-def run_sample_parser_hook(parser):
+def run_sample_parser_hook(parser) -> None:
     parser.addoption(
         "--keep-outputs", action="store_true", help="Keep outputs after running sample"
     )
 
 
-def run_sample_core(mocker, sample_path):
+def run_sample_core(mocker, sample_path) -> tuple[dict[str, str], Callable]:
     setup_mocker_patches(mocker)
 
-    input_path = os.path.join("samples", sample_path)
-    output_dir = os.path.join("outputs", sample_path)
+    input_path = Path("samples", sample_path)
+    output_dir = Path("outputs", sample_path)
 
-    if os.path.exists(output_dir):
-        print(f"Warning: output directory already exists: {output_dir}. Removing it.")
+    if output_dir.exists():
         shutil.rmtree(output_dir)
 
     run_entry_point(input_path, output_dir)
 
     sample_outputs = extract_all_csv_outputs(output_dir)
 
-    def remove_sample_output_dir():
-        if os.path.exists(output_dir):
-            print(f"Note: removing output directory: {output_dir}")
+    def remove_sample_output_dir() -> None:
+        if output_dir.exists():
             shutil.rmtree(output_dir)
-        else:
-            print(f"Note: output directory already deleted: {output_dir}")
 
     mocker.resetall()
 
     return sample_outputs, remove_sample_output_dir
 
 
-def run_sample_fixture(request):
-    def run_sample(*args, **kwargs):
+def run_sample_fixture(request) -> Callable:
+    def run_sample(*args, **kwargs) -> dict[str, Any]:
         config = request.config
         keep_outputs = config.getoption("--keep-outputs")
         sample_outputs, remove_sample_output_dir = run_sample_core(*args, **kwargs)
@@ -49,8 +47,6 @@ def run_sample_fixture(request):
         # https://docs.pytest.org/en/6.2.x/fixture.html#adding-finalizers-directly
         if not keep_outputs:
             request.addfinalizer(remove_sample_output_dir)
-        else:
-            print("Note: keeping outputs of the test since --keep-outputs is passed")
         return sample_outputs
 
     return run_sample

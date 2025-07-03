@@ -1,14 +1,14 @@
-import os
+from pathlib import Path
 
 import cv2
 from PIL import Image
 
 
 def get_size_in_kb(path):
-    return os.path.getsize(path) / 1000
+    return Path(path).stat().st_size / 1000
 
 
-def get_size_reduction(old_size, new_size):
+def get_size_reduction(old_size, new_size) -> str:
     percent = 100 * (new_size - old_size) / old_size
     return f"({percent:.2f}%)"
 
@@ -17,9 +17,10 @@ def convert_image(image_path):
     with Image.open(image_path) as image:
         # Note: using hardcoded -4 as we're expected to receive .png or .PNG files only
         new_image_path = f"{image_path[:-4]}.jpg"
+        image_to_save = image
         if image.mode != "RGB":
-            image = image.convert("RGB")
-        image.save(new_image_path, "JPEG", quality=90, optimize=True)
+            image_to_save = image.convert("RGB")
+        image_to_save.save(new_image_path, "JPEG", quality=90, optimize=True)
 
         return new_image_path
 
@@ -27,7 +28,8 @@ def convert_image(image_path):
 def get_capped_resize_dimensions(image_width, image_height, u_width, u_height):
     if u_height is None:
         if u_width is None:
-            raise Exception(f"Both u_width and u_height unavailable")
+            msg = "Both u_width and u_height unavailable"
+            raise Exception(msg)
 
         u_height = int(image_height * u_width / image_width)
 
@@ -59,19 +61,18 @@ def resize_util(image, u_width=None, u_height=None):
 
 
 def resize_image_and_save(image_path, max_width, max_height):
-    without_extension, extension = os.path.splitext(image_path)
-    temp_image_path = f"{without_extension}-tmp{extension}"
+    stem, suffix = Path.stem(image_path), Path.suffix(image_path)
+    temp_image_path = f"{stem}-tmp{suffix}"
     with Image.open(image_path) as image:
         old_image_size = image.size[:2]
         w, h = old_image_size
         resized = False
-
         if h > max_height or w > max_width:
-            image = resize_util(image, u_width=max_width, u_height=max_height)
+            image_to_save = resize_util(image, u_width=max_width, u_height=max_height)
             resized = True
-            image.save(temp_image_path)
+            image_to_save.save(temp_image_path)
 
-        return resized, temp_image_path, old_image_size, image.size
+        return resized, temp_image_path, old_image_size, image_to_save.size
 
 
 def load_image(file_path):

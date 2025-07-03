@@ -1,3 +1,4 @@
+import operator
 from typing import Any
 
 import numpy as np
@@ -15,7 +16,7 @@ def find_k_nearest_anchors(origin, anchors_with_displacements, k) -> list[Any]:
             [MathUtils.distance(origin, anchor_point), [anchor_point, displacement]]
             for anchor_point, displacement in anchors_with_displacements
         ],
-        key=lambda item: item[0],
+        key=operator.itemgetter(0),
     )
 
     return [
@@ -25,6 +26,7 @@ def find_k_nearest_anchors(origin, anchors_with_displacements, k) -> list[Any]:
 
 
 def apply_k_nearest_interpolation_inplace(
+    # ruff: noqa: PLR0913
     field_block,
     block_gray_image,
     block_gray_alignment_image,
@@ -32,7 +34,7 @@ def apply_k_nearest_interpolation_inplace(
     margins,
     config,
     k=4,
-):
+) -> None:
     field_block_name = field_block.name
     displacement_pairs = SiftMatcher.get_matches(
         field_block_name,
@@ -127,7 +129,9 @@ def shift_by_field_blocks(
     return average_shifts
 
 
-def shift_by_fields(field_block, block_image_shifts, anchors_with_displacements, k):
+def shift_by_fields(
+    field_block, block_image_shifts, anchors_with_displacements, k
+) -> None:
     # modify bubble level shifts
     for field in field_block.fields:
         # Take average position of all bubbles
@@ -154,7 +158,9 @@ def shift_by_fields(field_block, block_image_shifts, anchors_with_displacements,
             scan_box.shifts = average_shifts
 
 
-def shift_by_scan_boxes(field_block, block_image_shifts, anchors_with_displacements, k):
+def shift_by_scan_boxes(
+    field_block, block_image_shifts, anchors_with_displacements, k
+) -> None:
     for field in field_block.fields:
         for scan_box in field.scan_boxes:
             scan_box.reset_shifts()

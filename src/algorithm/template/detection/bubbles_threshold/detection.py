@@ -10,7 +10,7 @@ from src.utils.parsing import default_dump
 
 # TODO: merge with FieldInterpretation/BubbleInterpretation?
 class BubbleMeanValue(MeanValueItem):
-    def __init__(self, mean_value, unit_bubble: BubblesScanBox):
+    def __init__(self, mean_value, unit_bubble: BubblesScanBox) -> None:
         super().__init__(mean_value, unit_bubble)
         # type casting
         self.item_reference: BubblesScanBox = self.item_reference
@@ -29,7 +29,7 @@ class BubbleMeanValue(MeanValueItem):
 
 
 class FieldStdMeanValue(MeanValueItem):
-    def __init__(self, field_bubble_means: list[BubbleMeanValue], field: Field):
+    def __init__(self, field_bubble_means: list[BubbleMeanValue], field: Field) -> None:
         mean_value = np.std([item.mean_value for item in field_bubble_means])
 
         super().__init__(mean_value, field)
@@ -48,7 +48,7 @@ class BubblesFieldDetection(FieldDetection):
     """Here we find the scan zone and perform the detection for the field at runtime."""
 
     # Note: run_detection is called from the parent constructor
-    def run_detection(self, field, gray_image, _colored_image):
+    def run_detection(self, field, gray_image, _colored_image) -> None:
         self.field_bubble_means = []
         # TODO: populate local thresholds even in detection pass? (to enable multiple passes)
 
@@ -64,5 +64,4 @@ class BubblesFieldDetection(FieldDetection):
         x, y = unit_bubble.get_shifted_position()
         rect = [y, y + box_h, x, x + box_w]
         mean_value = cv2.mean(gray_image[rect[0] : rect[1], rect[2] : rect[3]])[0]
-        bubble_mean_value = BubbleMeanValue(mean_value, unit_bubble)
-        return bubble_mean_value
+        return BubbleMeanValue(mean_value, unit_bubble)

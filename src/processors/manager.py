@@ -28,4 +28,6 @@ PROCESSOR_MANAGER = DotMap(
     _dynamic=False,
 )
 
-assert set(PROCESSOR_MANAGER.processors.keys()) == set(SUPPORTED_PROCESSOR_NAMES)
+if set(PROCESSOR_MANAGER.processors.keys()) != set(SUPPORTED_PROCESSOR_NAMES):
+    msg = f"Processor keys mismatch: {set(PROCESSOR_MANAGER.processors.keys())} != {set(SUPPORTED_PROCESSOR_NAMES)}"
+    raise Exception(msg)

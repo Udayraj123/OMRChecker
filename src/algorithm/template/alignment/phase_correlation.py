@@ -7,9 +7,8 @@ from src.utils.logger import logger
 
 
 def phase_correlation(a, b):
-    R = np.fft.fft2(a) * np.fft.fft2(b).conj()
-    r = np.abs(np.fft.ifft2(R))
-    return r
+    correlation_r = np.fft.fft2(a) * np.fft.fft2(b).conj()
+    return np.abs(np.fft.ifft2(correlation_r))
 
 
 def get_phase_correlation_shifts(alignment_image, gray_image):
@@ -37,11 +36,13 @@ def apply_phase_correlation_shifts(
     )
     logger.info(field_block.name, field_block.shifts)
 
-    M = np.float32(
+    correlation_m = np.float32(
         [[1, 0, -1 * field_block.shifts[0]], [0, 1, -1 * field_block.shifts[1]]]
     )
     shifted_block_image = cv2.warpAffine(
-        block_gray_image, M, (block_gray_image.shape[1], block_gray_image.shape[0])
+        block_gray_image,
+        correlation_m,
+        (block_gray_image.shape[1], block_gray_image.shape[0]),
     )
     InteractionUtils.show("Correlation", corr_image, 0)
 

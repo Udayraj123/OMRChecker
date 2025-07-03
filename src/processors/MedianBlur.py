@@ -6,10 +6,10 @@ from src.processors.interfaces.ImageTemplatePreprocessor import (
 
 
 class MedianBlur(ImageTemplatePreprocessor):
-    def get_class_name(self):
-        return f"MedianBlur"
+    def get_class_name(self) -> str:
+        return "MedianBlur"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         options = self.options
         self.kSize = int(options.get("kSize", 5))

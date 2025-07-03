@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 import cv2
 import numpy as np
 
@@ -22,9 +24,9 @@ from src.utils.math import MathUtils
 
 
 class CropOnDotLines(CropOnPatchesCommon):
-    __is_internal_preprocessor__ = True
+    __is_internal_preprocessor__: ClassVar = True
 
-    scan_zone_presets_for_layout = {
+    scan_zone_presets_for_layout: ClassVar = {
         "ONE_LINE_TWO_DOTS": [
             ZonePreset.topRightDot,
             ZonePreset.bottomRightDot,
@@ -46,7 +48,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         "FOUR_DOTS": DOT_ZONE_TYPES_IN_ORDER,
     }
 
-    default_scan_zone_descriptions = {
+    default_scan_zone_descriptions: ClassVar = {
         **{
             zone_preset: {
                 "scannerType": ScannerType.PATCH_DOT,
@@ -65,7 +67,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         "CUSTOM": {},
     }
 
-    default_points_selector_map = {
+    default_points_selector_map: ClassVar = {
         "CENTERS": {
             ZonePreset.topLeftDot: "SELECT_CENTER",
             ZonePreset.topRightDot: "SELECT_CENTER",
@@ -108,7 +110,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         },
     }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         tuning_options = self.tuning_options
         self.line_kernel_morph = cv2.getStructuringElement(
@@ -155,7 +157,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         ]
         return parsed_options
 
-    edge_selector_map = {
+    edge_selector_map: ClassVar = {
         ZonePreset.topLine: {
             "LINE_INNER_EDGE": EdgeType.BOTTOM,
             "LINE_OUTER_EDGE": EdgeType.TOP,
@@ -180,10 +182,7 @@ class CropOnDotLines(CropOnPatchesCommon):
             zone_description["origin"], zone_description["dimensions"]
         )
 
-        destination_line = MathUtils.select_edge_from_rectangle(
-            destination_rectangle, edge_type
-        )
-        return destination_line
+        return MathUtils.select_edge_from_rectangle(destination_rectangle, edge_type)
 
     def find_and_select_points_from_line(
         self, image, zone_preset, zone_description, _file_path
@@ -244,9 +243,9 @@ class CropOnDotLines(CropOnPatchesCommon):
             zone_h, zone_w = zone.shape
             blur_h, blur_w = line_blur_kernel
 
-            assert zone_h > blur_h and zone_w > blur_w, (
-                f"The zone '{zone_label}' is smaller than provided lineBlurKernel: {zone.shape} < {line_blur_kernel}"
-            )
+            if not (zone_h > blur_h and zone_w > blur_w):
+                msg = f"The zone '{zone_label}' is smaller than provided lineBlurKernel: {zone.shape} < {line_blur_kernel}"
+                raise Exception(msg)
             zone = cv2.GaussianBlur(zone, line_blur_kernel, 0)
 
         # Make boxes darker (less gamma)
@@ -305,9 +304,8 @@ class CropOnDotLines(CropOnPatchesCommon):
         )
 
         if edge_contours_map is None:
-            raise Exception(
-                f"No line match found at origin: {zone_description['origin']} with dimensions: {zone_description['dimensions']}"
-            )
+            msg = f"No line match found at origin: {zone_description['origin']} with dimensions: {zone_description['dimensions']}"
+            raise Exception(msg)
         return edge_contours_map
 
     def find_dot_corners_from_options(self, image, zone_description, _file_path):
@@ -323,9 +321,9 @@ class CropOnDotLines(CropOnPatchesCommon):
             zone_h, zone_w = zone.shape
             blur_h, blur_w = dot_blur_kernel
 
-            assert zone_h > blur_h and zone_w > blur_w, (
-                f"The zone '{zone_label}' is smaller than provided dotBlurKernel: {zone.shape} < {dot_blur_kernel}"
-            )
+            if not (zone_h > blur_h and zone_w > blur_w):
+                msg = f"The zone '{zone_label}' is smaller than provided dotBlurKernel: {zone.shape} < {dot_blur_kernel}"
+                raise Exception(msg)
             zone = cv2.GaussianBlur(zone, dot_blur_kernel, 0)
 
         # add white padding (to avoid dilations sticking to edges)
@@ -377,7 +375,7 @@ class CropOnDotLines(CropOnPatchesCommon):
             if config.outputs.show_image_level >= 1:
                 if len(self.debug_hstack) > 0:
                     InteractionUtils.show(
-                        f"No patch/dot debug hstack",
+                        "No patch/dot debug hstack",
                         ImageUtils.get_padded_hstack(self.debug_hstack),
                         pause=0,
                     )
@@ -388,9 +386,8 @@ class CropOnDotLines(CropOnPatchesCommon):
                     f"No patch/dot found for {zone_label}", hstack, pause=1
                 )
 
-            raise Exception(
-                f"No patch/dot found at origin: {zone_description['origin']} with dimensions: {zone_description['dimensions']}"
-            )
+            msg = f"No patch/dot found at origin: {zone_description['origin']} with dimensions: {zone_description['dimensions']}"
+            raise Exception(msg)
 
         return corners
 
@@ -461,7 +458,8 @@ class CropOnDotLines(CropOnPatchesCommon):
                 patch_corners, bounding_contour
             )
         else:
-            raise Exception(f"Unsupported scanner type: {scanner_type}")
+            msg = f"Unsupported scanner type: {scanner_type}"
+            raise Exception(msg)
 
         # TODO: less confidence if given dimensions differ from matched block size (also give a warning)
         if config.outputs.show_image_level >= 5:

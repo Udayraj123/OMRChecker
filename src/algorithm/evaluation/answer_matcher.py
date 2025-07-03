@@ -12,7 +12,7 @@ from src.utils.parsing import parse_float_or_fraction
 
 
 class AnswerMatcher:
-    def __init__(self, answer_item, section_marking_scheme):
+    def __init__(self, answer_item, section_marking_scheme) -> None:
         self.section_marking_scheme = section_marking_scheme
         self.answer_type = self.get_answer_type(answer_item)
         self.parse_and_set_answer_item(answer_item)
@@ -34,11 +34,12 @@ class AnswerMatcher:
             question_meta.get, ["answer_type", "answer_item"]
         )
 
-        if answer_type == AnswerType.STANDARD:
+        if answer_type == AnswerType.STANDARD and (
             # Note: implicit check on concatenated answer
-            if answer_string in str(answer_item):
-                matched_groups.append(0)
-        if answer_type == AnswerType.MULTIPLE_CORRECT:
+            answer_string in str(answer_item)
+        ):
+            matched_groups.append(0)
+        elif answer_type == AnswerType.MULTIPLE_CORRECT:
             for answer_index, allowed_answer in enumerate(answer_item):
                 if answer_string in allowed_answer:
                     matched_groups.append(answer_index)
@@ -52,27 +53,31 @@ class AnswerMatcher:
     def is_a_marking_score(answer_element):
         # Note: strict type checking is already done at schema validation level,
         # Here we focus on overall struct type
-        return type(answer_element) == str or type(answer_element) == int
+        return isinstance(answer_element, (str, int))
 
     @staticmethod
     def is_standard_answer(answer_element):
-        return type(answer_element) == str and len(answer_element) >= 1
+        return isinstance(answer_element, str) and len(answer_element) >= 1
 
     @staticmethod
     def get_schema_verdict(answer_type, question_verdict, delta=None):
         # Note: Negative custom weights should be considered as incorrect schema verdict(special case)
-        if delta < 0 and answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
+        if (
+            delta is not None
+            and delta < 0
+            and answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED
+        ):
             return SchemaVerdict.INCORRECT
-        else:
-            for verdict in VERDICTS_IN_ORDER:
-                # using startswith to handle cases like matched-A
-                if question_verdict.startswith(verdict):
-                    schema_verdict = VERDICT_TO_SCHEMA_VERDICT[verdict]
-                    return schema_verdict
+        for verdict in VERDICTS_IN_ORDER:
+            # using startswith to handle cases like matched-A
+            if question_verdict.startswith(verdict):
+                return VERDICT_TO_SCHEMA_VERDICT[verdict]
+        msg = f"Unable to determine schema verdict for question_verdict: {question_verdict}"
+        raise Exception(msg)
 
     @staticmethod
     def parse_verdict_marking(marking):
-        if type(marking) == list:
+        if isinstance(marking, list):
             return list(map(parse_float_or_fraction, marking))
 
         return parse_float_or_fraction(marking)
@@ -80,21 +85,26 @@ class AnswerMatcher:
     def get_answer_type(self, answer_item):
         if self.is_standard_answer(answer_item):
             return AnswerType.STANDARD
-        elif type(answer_item) == list:
+        if isinstance(answer_item, list):
+            multiple_correct_min_length = 2
             if (
                 # Array of answer elements: ['A', 'B', 'AB']
-                len(answer_item) >= 2
+                len(answer_item) >= multiple_correct_min_length
                 and all(
                     self.is_standard_answer(answers_or_score)
                     for answers_or_score in answer_item
                 )
             ):
                 return AnswerType.MULTIPLE_CORRECT
-            elif (
+
+            multiple_correct_weighted_min_length = 1
+            multiple_correct_weighted_tuple_length = 2
+            if (
                 # Array of two-tuples: [['A', 1], ['B', 1], ['C', 3], ['AB', 2]]
-                len(answer_item) >= 1
+                len(answer_item) >= multiple_correct_weighted_min_length
                 and all(
-                    type(answer_and_score) == list and len(answer_and_score) == 2
+                    isinstance(answer_and_score, list)
+                    and len(answer_and_score) == multiple_correct_weighted_tuple_length
                     for answer_and_score in answer_item
                 )
                 and all(
@@ -108,9 +118,10 @@ class AnswerMatcher:
         logger.critical(
             f"Unable to determine answer type for answer item: {answer_item}"
         )
-        raise Exception("Unable to determine answer type")
+        msg = "Unable to determine answer type"
+        raise Exception(msg)
 
-    def parse_and_set_answer_item(self, answer_item):
+    def parse_and_set_answer_item(self, answer_item) -> None:
         answer_type = self.answer_type
         if answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
             # parse answer scores for weighted answers
@@ -124,7 +135,7 @@ class AnswerMatcher:
         else:
             self.answer_item = answer_item
 
-    def set_local_marking_defaults(self, section_marking_scheme):
+    def set_local_marking_defaults(self, section_marking_scheme) -> None:
         answer_type = self.answer_type
         self.empty_value = section_marking_scheme.empty_value
         # Make a copy of section marking locally
@@ -141,19 +152,20 @@ class AnswerMatcher:
                 ]
         elif answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
             for allowed_answer, parsed_answer_score in self.answer_item:
-                self.marking[
-                    f"{Verdict.ANSWER_MATCH}-{allowed_answer}"
-                ] = parsed_answer_score
+                self.marking[f"{Verdict.ANSWER_MATCH}-{allowed_answer}"] = (
+                    parsed_answer_score
+                )
 
     # def get_marking_scheme(self):
     #     return self.section_marking_scheme
 
     def get_section_explanation(self):
         answer_type = self.answer_type
-        if answer_type in [AnswerType.STANDARD, AnswerType.MULTIPLE_CORRECT]:
+        if answer_type in {AnswerType.STANDARD, AnswerType.MULTIPLE_CORRECT}:
             return self.section_marking_scheme.section_key
-        elif answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
+        if answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
             return f"Custom Weights: {self.marking}"
+        return None
 
     def get_matched_set_name(self):
         return self.section_marking_scheme.set_name
@@ -182,20 +194,18 @@ class AnswerMatcher:
         allowed_answer = self.answer_item
         if marked_answer == self.empty_value:
             return Verdict.UNMARKED
-        elif marked_answer == allowed_answer:
+        if marked_answer == allowed_answer:
             return Verdict.ANSWER_MATCH
-        else:
-            return Verdict.NO_ANSWER_MATCH
+        return Verdict.NO_ANSWER_MATCH
 
     def get_multiple_correct_verdict(self, marked_answer):
         allowed_answers = self.answer_item
         if marked_answer == self.empty_value:
             return Verdict.UNMARKED
-        elif marked_answer in allowed_answers:
+        if marked_answer in allowed_answers:
             # e.g. ANSWER-MATCH-BC
             return f"{Verdict.ANSWER_MATCH}-{marked_answer}"
-        else:
-            return Verdict.NO_ANSWER_MATCH
+        return Verdict.NO_ANSWER_MATCH
 
     def get_multiple_correct_weighted_verdict(self, marked_answer):
         allowed_answers = [
@@ -203,10 +213,9 @@ class AnswerMatcher:
         ]
         if marked_answer == self.empty_value:
             return Verdict.UNMARKED
-        elif marked_answer in allowed_answers:
+        if marked_answer in allowed_answers:
             return f"{Verdict.ANSWER_MATCH}-{marked_answer}"
-        else:
-            return Verdict.NO_ANSWER_MATCH
+        return Verdict.NO_ANSWER_MATCH
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.answer_item}"

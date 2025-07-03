@@ -9,6 +9,9 @@ from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 from src.utils.math import MathUtils
 
+MIN_MATCH_COUNT = 10
+FLANN_INDEX_KDTREE = 0
+
 
 class SiftMatcher:
     sift = None
@@ -18,9 +21,8 @@ class SiftMatcher:
         # Initiate SIFT detector
         SiftMatcher.sift = cv2.SIFT_create()
 
-        FLANN_INDEX_KDTREE = 0
-        index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
-        search_params = dict(checks=50)
+        index_params = {"algorithm": FLANN_INDEX_KDTREE, "trees": 5}
+        search_params = {"checks": 50}
 
         # Initiate Flann matcher
         SiftMatcher.flann = cv2.FlannBasedMatcher(index_params, search_params)
@@ -39,13 +41,12 @@ class SiftMatcher:
 
         matches = SiftMatcher.flann.knnMatch(des1, des2, k=2)
         # TODO: sort the matches and add maxMatchCount argument
-        MIN_MATCH_COUNT = 10
 
         # store all the good matches as per Lowe's ratio test.
         good = []
         displacement_pairs = []
 
-        for i, (m, n) in enumerate(matches):
+        for m, n in matches:
             # TODO: fix the max displacement filter for a more general case
             # print(m.distance, n.distance, max_displacement)
             source_feature_point, destination_feature_point = (
@@ -73,34 +74,42 @@ class SiftMatcher:
                 [destination_features[m.trainIdx].pt for m in good]
             ).reshape(-1, 1, 2)
 
-            # TODO: understand matchesMask and need of homography for SIFT
-            M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, max_displacement)
-            matchesMask = mask.ravel().tolist()
+            # TODO: understand matches_mask and need of homography for SIFT
+            homography_matrix, mask = cv2.findHomography(
+                src_pts, dst_pts, cv2.RANSAC, max_displacement
+            )
+            matches_mask = mask.ravel().tolist()
 
             h, w = alignment_image.shape
             pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]]).reshape(
                 -1, 1, 2
             )
-            dst = cv2.perspectiveTransform(pts, M)
+            dst = cv2.perspectiveTransform(pts, homography_matrix)
 
             gray_image = cv2.polylines(
-                gray_image, [np.int32(dst)], True, 155, 3, cv2.LINE_AA
+                # ruff: noqa: FBT003
+                gray_image,
+                [np.int32(dst)],
+                True,
+                155,
+                3,
+                cv2.LINE_AA,
             )
 
         else:
             logger.critical(
                 f"Not enough matches are found - {len(good)}/{MIN_MATCH_COUNT}"
             )
-            matchesMask = None
+            matches_mask = None
 
         if config.outputs.show_image_level >= 2:
-            draw_params = dict(
-                matchColor=(0, 255, 0),  # draw matches in green color
-                singlePointColor=None,
-                # TODO: debug how to filter displacement_pairs using matchesMask
-                matchesMask=matchesMask,  # draw only inliers
-                flags=2,
-            )
+            draw_params = {
+                "matchColor": (0, 255, 0),  # draw matches in green color
+                "singlePointColor": None,
+                # TODO: debug how to filter displacement_pairs using matches_mask
+                "matchesMask": matches_mask,  # draw only inliers
+                "flags": 2,
+            }
 
             display_feature_matches = cv2.drawMatches(
                 alignment_image,
@@ -124,6 +133,7 @@ SiftMatcher.singleton_init()
 
 
 def apply_sift_shifts(
+    # ruff: noqa: PLR0913
     field_block_name,
     block_gray_image,
     block_colored_image,
@@ -166,7 +176,9 @@ def apply_sift_shifts(
         warped_rectangle,
         config,
     )
-    assert warped_block_image.shape == block_gray_image.shape
+    if warped_block_image.shape != block_gray_image.shape:
+        msg = f"Warped block image shape {warped_block_image.shape} does not match the original block image shape {block_gray_image.shape}"
+        raise Exception(msg)
 
     show_displacement_overlay(
         block_gray_alignment_image, block_gray_image, warped_block_image

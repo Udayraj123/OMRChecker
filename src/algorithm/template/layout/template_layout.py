@@ -1,7 +1,7 @@
-import os
 from copy import copy as shallowcopy
+from pathlib import Path
+from typing import TYPE_CHECKING
 
-from src.algorithm.template.layout.field.base import Field
 from src.algorithm.template.layout.field_block.base import FieldBlock
 from src.processors.constants import FieldDetectionType
 from src.processors.manager import PROCESSOR_MANAGER
@@ -16,10 +16,13 @@ from src.utils.parsing import (
     parse_fields,
 )
 
+if TYPE_CHECKING:
+    from src.algorithm.template.layout.field.base import Field
+
 
 class TemplateLayout:
     # TODO: pass 'set_layout' arg as part of 'output_mode' value 'set_layout' and consume it in template + pre_processors
-    def __init__(self, template, template_path, tuning_config):
+    def __init__(self, template, template_path, tuning_config) -> None:
         self.path = template_path
         self.template = template
         self.tuning_config = tuning_config
@@ -166,13 +169,14 @@ class TemplateLayout:
 
         return gray_image, colored_image, template_layout
 
-    def parse_output_columns(self, output_columns_array):
-        self.output_columns = parse_fields(f"Output Columns", output_columns_array)
+    def parse_output_columns(self, output_columns_array) -> None:
+        self.output_columns = parse_fields("Output Columns", output_columns_array)
 
-    def setup_pre_processors(self, pre_processors_object, relative_dir):
+    def setup_pre_processors(self, pre_processors_object, relative_dir) -> None:
         # load image pre_processors
         self.pre_processors = []
         for pre_processor in pre_processors_object:
+            # ruff: noqa: N806
             ImageTemplateProcessorClass = PROCESSOR_MANAGER.processors[
                 pre_processor["name"]
             ]
@@ -184,7 +188,7 @@ class TemplateLayout:
             )
             self.pre_processors.append(pre_processor_instance)
 
-    def parse_custom_bubble_field_types(self, custom_bubble_field_types):
+    def parse_custom_bubble_field_types(self, custom_bubble_field_types) -> None:
         if custom_bubble_field_types is None:
             self.bubble_field_types_data = BUILTIN_BUBBLE_FIELD_TYPES
         else:
@@ -193,7 +197,7 @@ class TemplateLayout:
                 **custom_bubble_field_types,
             }
 
-    def validate_field_blocks(self, field_blocks_object):
+    def validate_field_blocks(self, field_blocks_object) -> None:
         for block_name, field_block_object in field_blocks_object.items():
             # TODO: Check for validations if any for OCR
             if (
@@ -205,20 +209,18 @@ class TemplateLayout:
                     logger.critical(
                         f"Cannot find definition for {bubble_field_type} in customBubbleFieldTypes"
                     )
-                    raise Exception(
-                        f"Invalid bubble field type: {bubble_field_type} in block {block_name}"
-                    )
+                    msg = f"Invalid bubble field type: {bubble_field_type} in block {block_name}"
+                    raise Exception(msg)
             field_labels = field_block_object["fieldLabels"]
             if len(field_labels) > 1 and "labelsGap" not in field_block_object:
                 logger.critical(
                     f"More than one fieldLabels({field_labels}) provided, but labelsGap not present for block {block_name}"
                 )
-                raise Exception(
-                    f"More than one fieldLabels provided, but labelsGap not present for block {block_name}"
-                )
+                msg = f"More than one fieldLabels provided, but labelsGap not present for block {block_name}"
+                raise Exception(msg)
 
     # TODO: move out to template_alignment.py
-    def setup_alignment(self, alignment_object, relative_dir):
+    def setup_alignment(self, alignment_object, relative_dir) -> None:
         tuning_config = self.tuning_config
         self.alignment = alignment_object
         self.alignment["margins"] = alignment_object["margins"]
@@ -228,9 +230,7 @@ class TemplateLayout:
         # TODO: add more setup steps here
 
         if relative_path is not None:
-            self.alignment["reference_image_path"] = os.path.join(
-                relative_dir, relative_path
-            )
+            self.alignment["reference_image_path"] = Path(relative_dir, relative_path)
             # logger.debug(self.alignment)
             gray_alignment_image, colored_alignment_image = ImageUtils.read_image_util(
                 self.alignment["reference_image_path"], tuning_config
@@ -253,7 +253,7 @@ class TemplateLayout:
                 processed_colored_alignment_image
             )
 
-    def setup_layout(self, field_blocks_object):
+    def setup_layout(self, field_blocks_object) -> None:
         # TODO: try for better readability here
         self.all_fields: list[Field] = []
         all_field_detection_types = set()
@@ -273,7 +273,7 @@ class TemplateLayout:
         self.all_field_detection_types = list(all_field_detection_types)
 
     # TODO: see if labels part can be moved out of template layout?
-    def parse_custom_labels(self, custom_labels_object):
+    def parse_custom_labels(self, custom_labels_object) -> None:
         all_parsed_custom_labels = set()
         self.custom_labels = {}
         for custom_label, label_strings in custom_labels_object.items():
@@ -288,18 +288,16 @@ class TemplateLayout:
                 logger.critical(
                     f"For '{custom_label}', Missing labels - {missing_custom_labels}"
                 )
-                raise Exception(
-                    f"Missing field block label(s) in the given template for {missing_custom_labels} from '{custom_label}'"
-                )
+                msg = f"Missing field block label(s) in the given template for {missing_custom_labels} from '{custom_label}'"
+                raise Exception(msg)
 
             if not all_parsed_custom_labels.isdisjoint(parsed_labels_set):
                 # Note: this can be made a warning, but it's a choice
                 logger.critical(
                     f"field strings overlap for labels: {label_strings} and existing custom labels: {all_parsed_custom_labels}"
                 )
-                raise Exception(
-                    f"The field strings for custom label '{custom_label}' overlap with other existing custom labels"
-                )
+                msg = f"The field strings for custom label '{custom_label}' overlap with other existing custom labels"
+                raise Exception(msg)
 
             all_parsed_custom_labels.update(parsed_labels)
 
@@ -319,14 +317,14 @@ class TemplateLayout:
 
         return concatenated_omr_response
 
-    def fill_output_columns(self, non_custom_columns, all_custom_columns):
+    def fill_output_columns(self, non_custom_columns, all_custom_columns) -> None:
         all_template_columns = non_custom_columns + all_custom_columns
         # Typical case: sort alpha-numerical (natural sort)
         self.output_columns = sorted(
             all_template_columns, key=custom_sort_output_columns
         )
 
-    def validate_template_columns(self, non_custom_columns, all_custom_columns):
+    def validate_template_columns(self, non_custom_columns, all_custom_columns) -> None:
         output_columns_set = set(self.output_columns)
         all_custom_columns_set = set(all_custom_columns)
 
@@ -337,9 +335,8 @@ class TemplateLayout:
         )
         if len(missing_output_columns) > 0:
             logger.critical(f"Missing output columns: {missing_output_columns}")
-            raise Exception(
-                f"Some columns are missing in the field blocks for the given output columns"
-            )
+            msg = "Some columns are missing in the field blocks for the given output columns"
+            raise Exception(msg)
 
         all_template_columns_set = set(non_custom_columns + all_custom_columns)
         missing_label_columns = sorted(
@@ -393,7 +390,7 @@ class TemplateLayout:
 
         return filled_field_block_object
 
-    def validate_parsed_field_block(self, field_labels, block_instance):
+    def validate_parsed_field_block(self, field_labels, block_instance) -> None:
         parsed_field_labels, block_name = (
             block_instance.parsed_field_labels,
             block_instance.name,
@@ -405,9 +402,8 @@ class TemplateLayout:
             logger.critical(
                 f"An overlap found between field string: {field_labels} in block '{block_name}' and existing labels: {self.all_parsed_labels}"
             )
-            raise Exception(
-                f"The field strings for field block {block_name} overlap with other existing fields: {overlap}"
-            )
+            msg = f"The field strings for field block {block_name} overlap with other existing fields: {overlap}"
+            raise Exception(msg)
         self.all_parsed_labels.update(field_labels_set)
 
         page_width, page_height = self.template_dimensions
@@ -425,16 +421,15 @@ class TemplateLayout:
             or block_start_x < 0
             or block_start_y < 0
         ):
-            raise Exception(
-                f"Overflowing field block '{block_name}' with origin {block_instance.bounding_box_origin} and dimensions {block_instance.bounding_box_dimensions} in template with dimensions {self.template_dimensions}"
-            )
+            msg = f"Overflowing field block '{block_name}' with origin {block_instance.bounding_box_origin} and dimensions {block_instance.bounding_box_dimensions} in template with dimensions {self.template_dimensions}"
+            raise Exception(msg)
 
-    def reset_all_shifts(self):
+    def reset_all_shifts(self) -> None:
         # Note: field blocks offset is static and independent of "shifts"
         for field_block in self.field_blocks:
             field_block.reset_all_shifts()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.path)
 
     # Make the class serializable

@@ -6,6 +6,7 @@ from src.utils.parsing import default_dump
 
 class BubbleField(Field):
     def __init__(
+        # ruff: noqa: PLR0913
         self,
         direction,
         empty_value,
@@ -13,7 +14,7 @@ class BubbleField(Field):
         field_detection_type,
         field_label,
         origin,
-    ):
+    ) -> None:
         self.bubble_dimensions = field_block.bubble_dimensions
         self.bubble_values = field_block.bubble_values
         self.bubbles_gap = field_block.bubbles_gap
@@ -32,9 +33,9 @@ class BubbleField(Field):
     def get_drawing_instance(self):
         return BubbleFieldDrawing(self)
 
-    def setup_scan_boxes(self, field_block):
+    def setup_scan_boxes(self, _field_block) -> None:
         # populate the field bubbles
-        _h = 1 if (self.direction == "vertical") else 0
+        h = 1 if (self.direction == "vertical") else 0
 
         field = self
         bubble_point = self.origin.copy()
@@ -43,20 +44,21 @@ class BubbleField(Field):
             bubble_origin = bubble_point.copy()
             scan_box = BubblesScanBox(field_index, field, bubble_origin, bubble_value)
             scan_boxes.append(scan_box)
-            bubble_point[_h] += self.bubbles_gap
+            bubble_point[h] += self.bubbles_gap
 
         self.scan_boxes = scan_boxes
 
 
 class BubblesScanBox(ScanBox):
-    """(TODO: update docs)
+    """(TODO: update docs).
+
     Container for a Point Box on the OMR
     field_label is the point's property- field to which this point belongs to
     It can be used as a roll number column as well. (eg roll1)
-    It can also correspond to a single digit of integer type Q (eg q5d1)
+    It can also correspond to a single digit of integer type Q (eg q5d1).
     """
 
-    def __init__(self, field_index, field: BubbleField, origin, bubble_value):
+    def __init__(self, field_index, field: BubbleField, origin, bubble_value) -> None:
         dimensions = field.bubble_dimensions
         margins = ZERO_MARGINS
         super().__init__(field_index, field, origin, dimensions, margins)

@@ -6,10 +6,10 @@ from src.processors.interfaces.ImageTemplatePreprocessor import (
 
 
 class GaussianBlur(ImageTemplatePreprocessor):
-    def get_class_name(self):
-        return f"GaussianBlur"
+    def get_class_name(self) -> str:
+        return "GaussianBlur"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         options = self.options
         self.kSize = tuple(int(x) for x in options.get("kSize", (3, 3)))

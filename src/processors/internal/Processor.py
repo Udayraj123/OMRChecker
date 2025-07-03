@@ -5,11 +5,11 @@ class Processor:
         self,
         options,
         relative_dir,
-    ):
+    ) -> None:
         self.options = options
         self.tuning_options = options.get("tuningOptions", {})
         self.relative_dir = relative_dir
         self.description = "UNKNOWN"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.__module__

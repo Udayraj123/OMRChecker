@@ -7,14 +7,14 @@ from src.utils.stats import StatsByLabel
 
 
 class FieldTypeDetectionPass(FilePassAggregates):
-    """ "
-    FieldTypeDetectionPass implements detection pass for specific field types, managing the detection-related aggregates."
+    """FieldTypeDetectionPass implements detection pass for specific field types, managing the detection-related aggregates.".
+
     It is responsible for executing detection logic on the image from the field information.
     It does not determine the actual field values, that is left to the interpretation pass
     which can make use of aggregate data collected during the detection pass.
     """
 
-    def __init__(self, tuning_config, field_detection_type):
+    def __init__(self, tuning_config, field_detection_type) -> None:
         self.field_detection_type = field_detection_type
         super().__init__(tuning_config)
 
@@ -22,11 +22,12 @@ class FieldTypeDetectionPass(FilePassAggregates):
     def get_field_detection(
         self, field: Field, gray_image, colored_image
     ) -> FieldDetection:
-        raise Exception("Not implemented")
+        msg = "Not implemented"
+        raise Exception(msg)
 
     def update_aggregates_on_processed_field_detection(
         self, field: Field, field_detection: FieldDetection
-    ):
+    ) -> None:
         self.update_field_level_aggregates_on_processed_field_detection(
             field, field_detection
         )
@@ -42,21 +43,21 @@ class FieldTypeDetectionPass(FilePassAggregates):
         )
 
     def update_field_level_aggregates_on_processed_field_detection(
-        self, field, field_detection
-    ):
+        self, field, _field_detection
+    ) -> None:
         super().update_field_level_aggregates_on_processed_field(field)
 
     def update_file_level_aggregates_on_processed_field_detection(
-        self, field, field_detection, field_level_aggregates
-    ):
+        self, field, _field_detection, field_level_aggregates
+    ) -> None:
         super().update_file_level_aggregates_on_processed_field(
             field, field_level_aggregates
         )
         # detection confidence metrics?
 
     def update_directory_level_aggregates_on_processed_field_detection(
-        self, field, field_detection, field_level_aggregates
-    ):
+        self, field, _field_detection, field_level_aggregates
+    ) -> None:
         super().update_directory_level_aggregates_on_processed_field(
             field, field_level_aggregates
         )
@@ -66,7 +67,7 @@ class FieldTypeDetectionPass(FilePassAggregates):
 class TemplateDetectionPass(FilePassAggregates):
     def initialize_directory_level_aggregates(
         self, initial_directory_path, all_field_detection_types
-    ):
+    ) -> None:
         super().initialize_directory_level_aggregates(initial_directory_path)
         self.insert_directory_level_aggregates(
             {
@@ -78,7 +79,9 @@ class TemplateDetectionPass(FilePassAggregates):
             }
         )
 
-    def initialize_file_level_aggregates(self, file_path, all_field_detection_types):
+    def initialize_file_level_aggregates(
+        self, file_path, all_field_detection_types
+    ) -> None:
         super().initialize_file_level_aggregates(file_path)
         self.insert_file_level_aggregates(
             {
@@ -91,7 +94,7 @@ class TemplateDetectionPass(FilePassAggregates):
 
     def update_aggregates_on_processed_field_detection(
         self, field: Field, field_detection: FieldDetection
-    ):
+    ) -> None:
         self.update_field_level_aggregates_on_processed_field_detection(
             field, field_detection
         )
@@ -107,21 +110,21 @@ class TemplateDetectionPass(FilePassAggregates):
         )
 
     def update_field_level_aggregates_on_processed_field_detection(
-        self, field, field_detection
-    ):
+        self, field, _field_detection
+    ) -> None:
         super().update_field_level_aggregates_on_processed_field(field)
 
     def update_file_level_aggregates_on_processed_field_detection(
-        self, field, field_detection, field_level_aggregates
-    ):
+        self, field, _field_detection, field_level_aggregates
+    ) -> None:
         super().update_file_level_aggregates_on_processed_field(
             field, field_level_aggregates
         )
         # detection confidence metrics?
 
     def update_directory_level_aggregates_on_processed_field_detection(
-        self, field: Field, field_detection, field_level_aggregates
-    ):
+        self, field: Field, _field_detection, field_level_aggregates
+    ) -> None:
         super().update_directory_level_aggregates_on_processed_field(
             field, field_level_aggregates
         )
@@ -136,7 +139,7 @@ class TemplateDetectionPass(FilePassAggregates):
     # TODO: check if passing runners is really needed or not here -
     def update_aggregates_on_processed_file(
         self, file_path, field_detection_type_runners
-    ):
+    ) -> None:
         super().update_aggregates_on_processed_file(file_path)
 
         field_detection_type_wise_aggregates = self.file_level_aggregates[

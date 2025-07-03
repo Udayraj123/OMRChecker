@@ -8,7 +8,7 @@ from src.algorithm.template.layout.field.base import Field
 
 
 class BarcodeInterpretationPass(FieldTypeInterpretationPass):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
     # Note: This is used by parent to generate the interpretation: detected string etc
@@ -31,7 +31,7 @@ class BarcodeInterpretationPass(FieldTypeInterpretationPass):
         file_path,
         field_detection_type_wise_detection_aggregates,
         field_label_wise_detection_aggregates,
-    ):
+    ) -> None:
         super().initialize_file_level_aggregates(
             file_path,
             field_detection_type_wise_detection_aggregates,
@@ -45,7 +45,7 @@ class BarcodeInterpretationPass(FieldTypeInterpretationPass):
 
     def update_field_level_aggregates_on_processed_field_interpretation(
         self, field: Field, field_interpretation: BarcodeFieldInterpretation
-    ):
+    ) -> None:
         super().update_field_level_aggregates_on_processed_field_interpretation(
             field, field_interpretation
         )
@@ -59,7 +59,7 @@ class BarcodeInterpretationPass(FieldTypeInterpretationPass):
 
     def update_file_level_aggregates_on_processed_field_interpretation(
         self, field, field_interpretation, field_level_aggregates
-    ):
+    ) -> None:
         super().update_file_level_aggregates_on_processed_field_interpretation(
             field, field_interpretation, field_level_aggregates
         )

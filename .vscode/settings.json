@@ -47,10 +47,11 @@
     "editor.insertSpaces": true,
     "editor.tabSize": 4
   },
+  "pyright.disableOrganizeImports": true,
   "[python]": {
     "editor.codeActionsOnSave": {
       "source.fixAll": "explicit",
-      "source.organizeImports": "explicit"
+      "source.organizeImports": "never"
     },
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.formatOnSave": true,

@@ -7,14 +7,14 @@ from src.processors.interfaces.ImageTemplatePreprocessor import (
 
 
 class Levels(ImageTemplatePreprocessor):
-    def get_class_name(self):
-        return f"Levels"
+    def get_class_name(self) -> str:
+        return "Levels"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         options = self.options
 
-        def output_level(value, low, high, gamma):
+        def output_level(value: float, low: float, high: float, gamma: float) -> float:
             if value <= low:
                 return 0
             if value >= high:

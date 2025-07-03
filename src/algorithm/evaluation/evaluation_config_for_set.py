@@ -1,5 +1,4 @@
 import ast
-import os
 import re
 
 import pandas as pd
@@ -22,9 +21,10 @@ from src.utils.parsing import parse_fields
 
 
 class EvaluationConfigForSet:
-    """Note: this instance will be reused for multiple omr sheets"""
+    """Note: this instance will be reused for multiple omr sheets."""
 
     def __init__(
+        # ruff: noqa: PLR0913
         self,
         set_name,
         curr_dir,
@@ -32,7 +32,7 @@ class EvaluationConfigForSet:
         template,
         tuning_config,
         parent_evaluation_config=None,
-    ):
+    ) -> None:
         self.set_name = set_name
         (
             options,
@@ -83,7 +83,7 @@ class EvaluationConfigForSet:
                 local_questions_in_order,
                 local_answers_in_order,
             ) = self.parse_local_question_answers(options)
-        elif source_type == "image_and_csv" or source_type == "csv":
+        elif source_type in {"image_and_csv", "csv"}:
             (
                 local_questions_in_order,
                 local_answers_in_order,
@@ -126,11 +126,11 @@ class EvaluationConfigForSet:
     def parse_csv_question_answers(self, curr_dir, options, tuning_config, template):
         questions_in_order = None
         csv_path = curr_dir.joinpath(options["answer_key_csv_path"])
-        if not os.path.exists(csv_path):
+        if not csv_path.exists():
             logger.warning(f"Answer key csv does not exist at: '{csv_path}'.")
 
         answer_key_image_path = options.get("answer_key_image_path", None)
-        if os.path.exists(csv_path):
+        if csv_path.exists():
             # TODO: CSV parsing/validation for each row with a (qNo, <ans string/>) pair
             answer_key = pd.read_csv(
                 csv_path,
@@ -145,14 +145,14 @@ class EvaluationConfigForSet:
             questions_in_order = answer_key["question"].to_list()
             answers_in_order = answer_key["answer"].to_list()
         elif not answer_key_image_path:
-            raise Exception(
-                f"Answer key csv not found at '{csv_path}' and answer key image not provided to generate the csv"
-            )
+            msg = f"Answer key csv not found at '{csv_path}' and answer key image not provided to generate the csv"
+            raise Exception(msg)
         else:
             # Attempt answer key image to generate the csv
-            image_path = str(curr_dir.joinpath(answer_key_image_path))
-            if not os.path.exists(image_path):
-                raise Exception(f"Answer key image not found at '{image_path}'")
+            image_path = curr_dir.joinpath(answer_key_image_path)
+            if not image_path.exists():
+                msg = f"Answer key image not found at '{image_path}'"
+                raise Exception(msg)
 
             self.exclude_files.append(image_path)
 
@@ -167,7 +167,8 @@ class EvaluationConfigForSet:
                 template,
             ) = template.apply_preprocessors(image_path, gray_image, colored_image)
             if gray_image is None:
-                raise Exception(f"Could not read answer key from image {image_path}")
+                msg = f"Could not read answer key from image {image_path}"
+                raise Exception(msg)
 
             _, concatenated_omr_response = template.read_omr_response(
                 gray_image, colored_image, image_path
@@ -193,12 +194,11 @@ class EvaluationConfigForSet:
                     logger.error(
                         f"Found empty answers for the questions: {empty_answered_questions}, empty value used: '{empty_value}'"
                     )
-                    raise Exception(
-                        f"Found empty answers in file '{image_path}'. Please check your template again in the --setLayout mode."
-                    )
+                    msg = f"Found empty answers in file '{image_path}'. Please check your template again in the --setLayout mode."
+                    raise Exception(msg)
             else:
                 logger.warning(
-                    f"questions_in_order not provided, proceeding to use non-empty values as answer key"
+                    "questions_in_order not provided, proceeding to use non-empty values as answer key"
                 )
                 questions_in_order = sorted(
                     question
@@ -226,7 +226,7 @@ class EvaluationConfigForSet:
             parsed_answer = answer_column
         return parsed_answer
 
-    def parse_draw_question_verdicts(self):
+    def parse_draw_question_verdicts(self) -> None:
         (
             verdict_colors,
             verdict_symbol_colors,
@@ -278,17 +278,14 @@ class EvaluationConfigForSet:
             parent_evaluation_config.questions_in_order,
             parent_evaluation_config.answers_in_order,
         )
-        local_question_to_answer_item = {
-            question: answer_item
-            for question, answer_item in zip(
-                local_questions_in_order, local_answers_in_order
-            )
-        }
+        local_question_to_answer_item = dict(
+            zip(local_questions_in_order, local_answers_in_order, strict=False)
+        )
 
         merged_questions_in_order, merged_answers_in_order = [], []
         # Append existing questions from parent
         for parent_question, parent_answer_item in zip(
-            parent_questions_in_order, parent_answers_in_order
+            parent_questions_in_order, parent_answers_in_order, strict=False
         ):
             merged_questions_in_order.append(parent_question)
             # override from child set if present
@@ -303,7 +300,7 @@ class EvaluationConfigForSet:
 
         # Append new questions from child set at the end
         for question, answer_item in zip(
-            local_questions_in_order, local_answers_in_order
+            local_questions_in_order, local_answers_in_order, strict=False
         ):
             if question not in parent_questions_set:
                 merged_questions_in_order.append(question)
@@ -311,7 +308,7 @@ class EvaluationConfigForSet:
 
         return merged_questions_in_order, merged_answers_in_order
 
-    def validate_questions(self):
+    def validate_questions(self) -> None:
         questions_in_order, answers_in_order = (
             self.questions_in_order,
             self.answers_in_order,
@@ -323,20 +320,20 @@ class EvaluationConfigForSet:
         #         if len(answer) != len(firstBubbleValues):
         #           logger.warning(f"The question {question} is a custom label and its answer does not have same length as the custom label")
 
-        len_questions_in_order, len_answers_in_order = len(questions_in_order), len(
-            answers_in_order
+        len_questions_in_order, len_answers_in_order = (
+            len(questions_in_order),
+            len(answers_in_order),
         )
         if len_questions_in_order != len_answers_in_order:
             logger.critical(
                 f"questions_in_order({len_questions_in_order}): {questions_in_order}\nanswers_in_order({len_answers_in_order}): {answers_in_order}"
             )
-            raise Exception(
-                f"Unequal lengths for questions_in_order and answers_in_order ({len_questions_in_order} != {len_answers_in_order})"
-            )
+            msg = f"Unequal lengths for questions_in_order and answers_in_order ({len_questions_in_order} != {len_answers_in_order})"
+            raise Exception(msg)
 
     def set_parsed_marking_schemes(
         self, marking_schemes, parent_evaluation_config, template
-    ):
+    ) -> None:
         self.section_marking_schemes, self.question_to_scheme = {}, {}
 
         # Precedence to local marking schemes (Note: default scheme is compulsory)
@@ -348,7 +345,7 @@ class EvaluationConfigForSet:
                 self.default_marking_scheme = section_marking_scheme
             else:
                 self.section_marking_schemes[section_key] = section_marking_scheme
-                for q in section_marking_scheme.questions:
+                for q in section_marking_scheme.questions:  # pyright: ignore[reportOptionalIterable]
                     self.question_to_scheme[q] = section_marking_scheme
                 self.has_custom_marking = True
 
@@ -361,7 +358,7 @@ class EvaluationConfigForSet:
         if parent_evaluation_config is not None:
             self.update_marking_schemes_from_parent(parent_evaluation_config)
 
-    def update_marking_schemes_from_parent(self, parent_evaluation_config):
+    def update_marking_schemes_from_parent(self, parent_evaluation_config) -> None:
         # Parse parents schemes to inject the question_to_scheme map
         parent_marking_schemes = parent_evaluation_config.section_marking_schemes
         # Loop over parent's custom marking schemes to map remaining questions if any
@@ -402,7 +399,7 @@ class EvaluationConfigForSet:
             for q in parent_section_marking_scheme.questions:
                 self.question_to_scheme[q] = subset_marking_scheme
 
-    def validate_marking_schemes(self):
+    def validate_marking_schemes(self) -> None:
         section_marking_schemes = self.section_marking_schemes
         section_questions = set()
         for section_key, section_scheme in section_marking_schemes.items():
@@ -410,23 +407,23 @@ class EvaluationConfigForSet:
                 continue
             current_set = set(section_scheme.questions)
             if not section_questions.isdisjoint(current_set):
-                raise Exception(
-                    f"Section '{section_key}' has overlapping question(s) with other sections locally"
-                )
+                msg = f"Section '{section_key}' has overlapping question(s) with other sections locally"
+                raise Exception(msg)
             section_questions = section_questions.union(current_set)
 
         all_questions = set(self.questions_in_order)
         missing_questions = sorted(section_questions.difference(all_questions))
         if len(missing_questions) > 0:
             logger.critical(f"Missing answer key for: {missing_questions}")
-            raise Exception(
-                f"Some questions are missing in the answer key for the given marking scheme(s)"
-            )
+            msg = "Some questions are missing in the answer key for the given marking scheme(s)"
+            raise Exception(msg)
 
     def parse_answers_and_map_questions(self):
         answers_in_order = self.answers_in_order
         question_to_answer_matcher = {}
-        for question, answer_item in zip(self.questions_in_order, answers_in_order):
+        for question, answer_item in zip(
+            self.questions_in_order, answers_in_order, strict=False
+        ):
             section_marking_scheme = self.get_marking_scheme_for_question(question)
             answer_matcher = AnswerMatcher(answer_item, section_marking_scheme)
             question_to_answer_matcher[question] = answer_matcher
@@ -441,34 +438,37 @@ class EvaluationConfigForSet:
     def get_marking_scheme_for_question(self, question):
         return self.question_to_scheme.get(question, self.default_marking_scheme)
 
-    def validate_answers(self, tuning_config):
+    def validate_answers(self, tuning_config) -> None:
         answer_matcher_map, answers_in_order = (
             self.question_to_answer_matcher,
             self.answers_in_order,
         )
-        if tuning_config.outputs.filter_out_multimarked_files:
-            contains_multi_marked_answer = False
-            for question, answer_item in zip(self.questions_in_order, answers_in_order):
-                answer_type = answer_matcher_map[question].answer_type
-                if answer_type == AnswerType.STANDARD:
+        if not tuning_config.outputs.filter_out_multimarked_files:
+            return
+        contains_multi_marked_answer = False
+        for question, answer_item in zip(
+            self.questions_in_order, answers_in_order, strict=False
+        ):
+            answer_type = answer_matcher_map[question].answer_type
+            match answer_type:
+                case AnswerType.STANDARD:
                     if len(answer_item) > 1:
                         contains_multi_marked_answer = True
-                if answer_type == AnswerType.MULTIPLE_CORRECT:
+                case AnswerType.MULTIPLE_CORRECT:
                     for single_answer in answer_item:
                         if len(single_answer) > 1:
                             contains_multi_marked_answer = True
                             break
-                if answer_type == AnswerType.MULTIPLE_CORRECT_WEIGHTED:
+                case AnswerType.MULTIPLE_CORRECT_WEIGHTED:
                     for single_answer, _answer_score in answer_item:
                         if len(single_answer) > 1:
                             contains_multi_marked_answer = True
 
-                if contains_multi_marked_answer:
-                    raise Exception(
-                        f"Provided answer key contains multiple correct answer(s), but config.filter_out_multimarked_files is True. Scoring will get skipped."
-                    )
+            if contains_multi_marked_answer:
+                msg = "Provided answer key contains multiple correct answer(s), but config.filter_out_multimarked_files is True. Scoring will get skipped."
+                raise Exception(msg)
 
-    def validate_format_strings(self):
+    def validate_format_strings(self) -> None:
         answers_summary_format_string = self.draw_answers_summary[
             "answers_summary_format_string"
         ]
@@ -476,23 +476,23 @@ class EvaluationConfigForSet:
             # TODO: Support for total_positive, total_negative,
             # TODO: Same aggregates section-wise: correct/incorrect verdict counts in formatted_answers_summary
             answers_summary_format_string.format(**self.schema_verdict_counts)
-        except:  # NOQA
-            raise Exception(
-                f"The format string should contain only allowed variables {SCHEMA_VERDICTS_IN_ORDER}. answers_summary_format_string={answers_summary_format_string}"
-            )
+        # ruff: noqa: BLE001
+        except Exception:
+            msg = f"The format string should contain only allowed variables {SCHEMA_VERDICTS_IN_ORDER}. answers_summary_format_string={answers_summary_format_string}"
+            raise Exception(msg) from None
 
         score_format_string = self.draw_score["score_format_string"]
         try:
             score_format_string.format(score=0)
-        except:  # NOQA
-            raise Exception(
-                f"The format string should contain only allowed variables ['score']. score_format_string={score_format_string}"
-            )
+        # ruff: noqa: BLE001
+        except Exception:
+            msg = f"The format string should contain only allowed variables ['score']. score_format_string={score_format_string}"
+            raise Exception(msg) from None
 
     # Public function: Externally called methods with higher abstraction level.
     def prepare_and_validate_omr_response(
         self, concatenated_omr_response, allow_streak=False
-    ):
+    ) -> None:
         self.allow_streak = allow_streak
         self.reset_evaluation()
 
@@ -503,13 +503,12 @@ class EvaluationConfigForSet:
             logger.critical(
                 f"Missing OMR response for: {missing_questions} in omr response keys: {omr_response_keys}"
             )
-            raise Exception(
-                f"Some question keys are missing in the OMR response for the given answer key"
-            )
+            msg = "Some question keys are missing in the OMR response for the given answer key"
+            raise Exception(msg)
 
-        prefixed_omr_response_questions = set(
-            [k for k in concatenated_omr_response.keys() if k.startswith("q")]
-        )
+        prefixed_omr_response_questions = {
+            k for k in concatenated_omr_response if k.startswith("q")
+        }
         missing_prefixed_questions = sorted(
             prefixed_omr_response_questions.difference(all_questions)
         )
@@ -551,6 +550,7 @@ class EvaluationConfigForSet:
         return delta, question_verdict, answer_matcher, question_schema_verdict
 
     def conditionally_add_explanation(
+        # ruff: noqa: PLR0913
         self,
         answer_matcher,
         delta,
@@ -561,7 +561,7 @@ class EvaluationConfigForSet:
         current_score,
         current_streak,
         updated_streak,
-    ):
+    ) -> None:
         if self.should_explain_scoring:
             next_score = current_score + delta
             # Conditionally add cells
@@ -594,7 +594,7 @@ class EvaluationConfigForSet:
             ]
             self.explanation_table.add_row(*row)
 
-    def conditionally_print_explanation(self):
+    def conditionally_print_explanation(self) -> None:
         if self.should_explain_scoring:
             console.print(self.explanation_table, justify="center")
 
@@ -629,18 +629,16 @@ class EvaluationConfigForSet:
         thickness = int(self.draw_score["size"] * 2)
         return score_format, position, size, thickness
 
-    def reset_evaluation(self):
+    def reset_evaluation(self) -> None:
         self.explanation_table = None
 
         for section_scheme in self.section_marking_schemes.values():
             section_scheme.reset_all_streaks()
 
-        self.schema_verdict_counts = {
-            schema_verdict: 0 for schema_verdict in SCHEMA_VERDICTS_IN_ORDER
-        }
+        self.schema_verdict_counts = dict.fromkeys(SCHEMA_VERDICTS_IN_ORDER, 0)
         self.prepare_explanation_table()
 
-    def prepare_explanation_table(self):
+    def prepare_explanation_table(self) -> None:
         # TODO: provide a way to export this as csv/pdf
         if not self.should_explain_scoring:
             return
@@ -661,7 +659,11 @@ class EvaluationConfigForSet:
         self.explanation_table = table
 
     def get_evaluation_meta_for_question(
-        self, question_meta, is_field_marked, image_type
+        # ruff: noqa: C901, PLR0912
+        self,
+        question_meta,
+        is_field_marked,
+        image_type,
     ):
         # TODO: take config for CROSS_TICKS vs BUBBLE_BOUNDARY and call appropriate util
         (
@@ -722,10 +724,10 @@ class EvaluationConfigForSet:
                     )
 
                 # Override bonus colors if bubble was marked but verdict was not correct
-                if bonus_type is not None and question_verdict in [
+                if bonus_type is not None and question_verdict in {
                     Verdict.UNMARKED,
                     Verdict.NO_ANSWER_MATCH,
-                ]:
+                }:
                     color, symbol_color = (
                         color_bonus,
                         symbol_color_bonus,

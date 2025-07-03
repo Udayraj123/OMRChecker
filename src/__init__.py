@@ -2,15 +2,16 @@
 
 # Note: This import is added to the root __init__.py to adjust for perceived loading time
 import os
+from pathlib import Path
 
 from src.utils.logger import logger
 
 # It takes a few seconds for the imports
-logger.info(f"Loading OMRChecker modules...")
+logger.info("Loading OMRChecker modules...")
 
 VIRTUAL_ENV = os.environ.get("VIRTUAL_ENV", "Not Present")
 
 logger.info(f"VIRTUAL_ENV: {VIRTUAL_ENV}")
 
-if not os.path.exists(VIRTUAL_ENV):
+if not Path(VIRTUAL_ENV).exists():
     logger.warning("Your virtual Environment doesn't exist at the path!")

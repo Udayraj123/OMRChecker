@@ -21,6 +21,6 @@ def run_sample(request):
 
 
 # Add hook
-def pytest_addoption(parser):
+def pytest_addoption(parser) -> None:
     run_sample_parser_hook(parser)
     image_snapshot_parser_hook(parser)

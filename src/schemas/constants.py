@@ -1,3 +1,5 @@
+from typing import Any
+
 from dotmap import DotMap
 
 from src.utils.constants import MATPLOTLIB_COLORS
@@ -172,7 +174,7 @@ ALL_COMMON_DEFS = {
 FIELD_STRING_REGEX_GROUPS = r"([^\.\d]+)(\d+)\.{2,3}(\d+)"
 
 
-def load_common_defs(keys):
+def load_common_defs(keys) -> dict[str, Any]:
     # inject dependencies
     if "two_positive_integers" in keys:
         keys += ["positive_integer"]

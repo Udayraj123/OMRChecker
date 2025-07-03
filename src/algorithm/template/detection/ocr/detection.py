@@ -21,7 +21,7 @@ class OCRDetection(TextDetection):
         bounding_box,
         rotated_rectangle,
         confident_score,
-    ):
+    ) -> None:
         self.library = OCR_LIBS.EASY_OCR
         self.scan_zone_rectangle = scan_zone_rectangle
         super().__init__(
@@ -50,7 +50,7 @@ class OCRDetection(TextDetection):
 class OCRFieldDetection(FieldDetection):
     """Here we find the scan zone and perform the detection for the field at runtime."""
 
-    def __init__(self, field: Field, gray_image, colored_image):
+    def __init__(self, field: Field, gray_image, colored_image) -> None:
         self.detections: list[OCRDetection] = None
         super().__init__(field, gray_image, colored_image)
 

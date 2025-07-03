@@ -14,13 +14,13 @@ class FileLevelRunner:
         tuning_config,
         detection_pass: FilePassAggregates,
         interpretation_pass: FilePassAggregates,
-    ):
+    ) -> None:
         self.tuning_config = tuning_config
         self.detection_pass = detection_pass
         self.interpretation_pass = interpretation_pass
 
     # Common wrappers
-    def initialize_directory_level_aggregates(self, initial_directory_path):
+    def initialize_directory_level_aggregates(self, initial_directory_path) -> None:
         self.detection_pass.initialize_directory_level_aggregates(
             initial_directory_path
         )
@@ -102,7 +102,7 @@ class FieldTypeFileLevelRunner(FileLevelRunner):
         field_detection_type,
         detection_pass: FieldTypeDetectionPass,
         interpretation_pass: FieldTypeInterpretationPass,
-    ):
+    ) -> None:
         self.field_detection_type = field_detection_type
         self.detection_pass: FieldTypeDetectionPass = None
         self.interpretation_pass: FieldTypeInterpretationPass = None

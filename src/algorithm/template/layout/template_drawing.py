@@ -8,7 +8,7 @@ from src.utils.interaction import InteractionUtils
 
 
 class TemplateDrawing:
-    def __init__(self, template):
+    def __init__(self, template) -> None:
         self.template = template
 
     def draw_template_layout(self, gray_image, colored_image, config, *args, **kwargs):
@@ -19,18 +19,24 @@ class TemplateDrawing:
         )
 
     def draw_only_field_blocks(
-        self, image, shifted=True, shouldCopy=True, thickness=3, border=3
+        self, image, shifted=True, should_copy=True, thickness=3, border=3
     ):
         template = self.template
         return TemplateDrawing.draw_field_blocks_layout_util(
-            template, image, shifted, shouldCopy, thickness, border
+            template, image, shifted, should_copy, thickness, border
         )
 
     @staticmethod
     def draw_field_blocks_layout_util(
-        template, image, shifted=True, shouldCopy=True, thickness=3, border=3
+        # ruff: noqa: PLR0913
+        template,
+        image,
+        shifted=True,
+        should_copy=True,
+        thickness=3,
+        border=3,
     ):
-        marked_image = image.copy() if shouldCopy else image
+        marked_image = image.copy() if should_copy else image
         for field_block in template.field_blocks:
             field_block.drawing.draw_field_block(
                 marked_image, shifted, thickness, border
@@ -84,6 +90,7 @@ class TemplateDrawingUtils:
 
     @staticmethod
     def draw_template_layout_util(
+        # ruff: noqa: PLR0913
         image,
         image_type,
         template,
@@ -101,10 +108,9 @@ class TemplateDrawingUtils:
         transparent_layer = marked_image.copy()
 
         if field_id_to_interpretation is None:
-            marked_image = template.drawing.draw_only_field_blocks(
-                marked_image, shifted, shouldCopy=False, border=border
+            return template.drawing.draw_only_field_blocks(
+                marked_image, shifted, should_copy=False, border=border
             )
-            return marked_image
         if config.outputs.save_image_level >= 1:
             # Create a copy of the marked image for saving
             marked_image_copy = marked_image.copy()
@@ -120,11 +126,11 @@ class TemplateDrawingUtils:
             )
             if image_type == "GRAYSCALE":
                 template.save_image_ops.append_save_image(
-                    f"Marked Image", range(2, 7), marked_image_copy
+                    "Marked Image", range(2, 7), marked_image_copy
                 )
             else:
                 template.save_image_ops.append_save_image(
-                    f"Marked Image", range(2, 7), colored_image=marked_image_copy
+                    "Marked Image", range(2, 7), colored_image=marked_image_copy
                 )
 
         marked_image = TemplateDrawingUtils.draw_all_fields(
@@ -156,6 +162,7 @@ class TemplateDrawingUtils:
 
     @staticmethod
     def draw_all_fields(
+        # ruff: noqa: PLR0913
         marked_image,
         image_type,
         template,

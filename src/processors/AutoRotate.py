@@ -1,5 +1,3 @@
-import os
-
 import cv2
 
 from src.processors.interfaces.ImageTemplatePreprocessor import (
@@ -13,14 +11,15 @@ from src.utils.logger import logger
 class AutoRotate(ImageTemplatePreprocessor):
     __is_internal_preprocessor__ = False
 
-    def get_class_name(self):
+    def get_class_name(self) -> str:
         return "AutoRotate"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         path = self.get_relative_path(self.options["referenceImage"])
-        if not os.path.exists(path):
-            raise Exception(f"Reference image for AutoRotate not found at {path}")
+        if not path.exists():
+            msg = f"Reference image for AutoRotate not found at {path}"
+            raise Exception(msg)
         self.reference_image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
         self.marker_dimensions = self.options.get("markerDimensions", None)
         self.resized_reference = self.reference_image
@@ -30,7 +29,7 @@ class AutoRotate(ImageTemplatePreprocessor):
                 self.marker_dimensions, self.reference_image
             )
 
-    def apply_filter(self, image, colored_image, _template, file_path):
+    def apply_filter(self, image, colored_image, _template, _file_path):
         config = self.tuning_config
         best_val, best_rotation = -1, None
         rotations = [
@@ -49,7 +48,7 @@ class AutoRotate(ImageTemplatePreprocessor):
             res = cv2.matchTemplate(
                 rotated_img, self.resized_reference, cv2.TM_CCOEFF_NORMED
             )
-            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+            _min_val, max_val, _min_loc, _max_loc = cv2.minMaxLoc(res)
 
             if config.outputs.show_image_level >= 5:
                 hstack = ImageUtils.get_padded_hstack(
@@ -74,7 +73,8 @@ class AutoRotate(ImageTemplatePreprocessor):
                 logger.error(
                     "The autorotate score is below threshold. Adjust your threshold or check the reference marker and input image."
                 )
-                raise Exception(f"The autorotate score is below threshold")
+                msg = "The autorotate score is below threshold"
+                raise Exception(msg)
 
         logger.info(
             f"AutoRotate Applied with rotation {best_rotation} and value {best_val}"

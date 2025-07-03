@@ -1,20 +1,26 @@
 import re
+from typing import Never
 
 
 class TextBarcode:
     @staticmethod
-    def get_all_text_detections(image, confidence_threshold=0.8):
-        raise Exception(f"Not implemented")
+    def get_all_text_detections(_image, _confidence_threshold=0.8) -> Never:
+        msg = "Not implemented"
+        raise Exception(msg)
 
     @staticmethod
     def get_single_text_detection(
-        image, confidence_threshold=0.8, clear_whitespace=True
-    ):
-        raise Exception(f"Not implemented")
+        _image, _confidence_threshold=0.8, _clear_whitespace=True
+    ) -> Never:
+        msg = "Not implemented"
+        raise Exception(msg)
 
     @staticmethod
-    def read_texts_with_boxes(image, confidence_threshold=0.8, sort_by_score=True):
-        raise Exception(f"Not implemented")
+    def read_texts_with_boxes(
+        _image, _confidence_threshold=0.8, _sort_by_score=True
+    ) -> Never:
+        msg = "Not implemented"
+        raise Exception(msg)
 
     @staticmethod
     def cleanup_text(text):

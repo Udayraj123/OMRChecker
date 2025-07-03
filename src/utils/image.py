@@ -1,6 +1,9 @@
+from pathlib import Path
+
 import cv2
 import numpy as np
-from matplotlib import pyplot
+from dotmap import DotMap
+from matplotlib import pyplot as plt
 from shapely import LineString, Point
 
 from src.processors.constants import EDGE_TYPES_IN_ORDER, EdgeType
@@ -8,41 +11,43 @@ from src.utils.constants import CLR_WHITE
 from src.utils.logger import logger
 from src.utils.math import MathUtils
 
-pyplot.rcParams["figure.figsize"] = (10.0, 8.0)
+plt.rcParams["figure.figsize"] = (10.0, 8.0)
 CLAHE_HELPER = cv2.createCLAHE(clipLimit=5.0, tileGridSize=(8, 8))
 
 
 class ImageUtils:
-    """A Static-only Class to hold common image processing utilities & wrappers over OpenCV functions"""
+    """A Static-only Class to hold common image processing utilities & wrappers over OpenCV functions."""
 
     @staticmethod
-    def read_image_util(file_path, tuning_config):
-        encoded_path = file_path
+    def read_image_util(file_path: Path, tuning_config: DotMap):
+        encoded_path = str(file_path)
         if tuning_config.outputs.colored_outputs_enabled:
-            colored_image = cv2.imread(file_path, cv2.IMREAD_COLOR)
-            colored_image = cv2.imdecode(
-                np.fromfile(encoded_path, dtype=np.uint8), cv2.IMREAD_COLOR
-            )
+            colored_image = cv2.imread(encoded_path, cv2.IMREAD_COLOR)
+            # colored_image = cv2.imdecode(
+            #     np.fromfile(encoded_path, dtype=np.uint8), cv2.IMREAD_COLOR
+            # )
             if colored_image is None:
-                raise OSError(f"Unable to read image: {file_path}")
+                msg = f"Unable to read image: {file_path}"
+                raise OSError(msg)
             gray_image = cv2.cvtColor(colored_image, cv2.COLOR_BGR2GRAY)
         else:
-            gray_image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-            gray_image = cv2.imdecode(
-                np.fromfile(encoded_path, dtype=np.uint8), cv2.IMREAD_GRAYSCALE
-            )
+            gray_image = cv2.imread(encoded_path, cv2.IMREAD_GRAYSCALE)
+            # gray_image = cv2.imdecode(
+            #     np.fromfile(encoded_path, dtype=np.uint8), cv2.IMREAD_GRAYSCALE
+            # )
             if gray_image is None:
-                raise OSError(f"Unable to read image: {file_path}")
+                msg = f"Unable to read image: {file_path}"
+                raise OSError(msg)
             colored_image = None
 
         return gray_image, colored_image
 
     @staticmethod
-    def save_img(path, final_marked):
+    def save_img(path, final_marked) -> None:
         cv2.imwrite(path, final_marked)
 
     @staticmethod
-    def save_marked_image(save_marked_dir, file_id, final_marked):
+    def save_marked_image(save_marked_dir, file_id, final_marked) -> None:
         image_path = str(save_marked_dir.joinpath(file_id))
         logger.info(f"Saving Image to '{image_path}'")
         ImageUtils.save_img(image_path, final_marked)
@@ -61,11 +66,7 @@ class ImageUtils:
     def resize_multiple(images, u_width=None, u_height=None):
         if len(images) == 1:
             return ImageUtils.resize_single(images[0], u_width, u_height)
-        return list(
-            map(
-                lambda image: ImageUtils.resize_single(image, u_width, u_height), images
-            )
-        )
+        return [ImageUtils.resize_single(image, u_width, u_height) for image in images]
 
     @staticmethod
     def resize_single(image, u_width=None, u_height=None):
@@ -117,28 +118,31 @@ class ImageUtils:
 
     @staticmethod
     def grab_contours(cnts):
-        # source: imutils package
+        contours_length_cv2 = 2
+        contours_length_cv3 = 3
 
+        # source: imutils package
         # if the length the contours tuple returned by cv2.findContours
         # is '2' then we are using either OpenCV v2.4, v4-beta, or
         # v4-official
-        if len(cnts) == 2:
+        if len(cnts) == contours_length_cv2:
             cnts = cnts[0]
 
         # if the length of the contours tuple is '3' then we are using
         # either OpenCV v3, v4-pre, or v4-alpha
-        elif len(cnts) == 3:
+        elif len(cnts) == contours_length_cv3:
             cnts = cnts[1]
 
         # otherwise OpenCV has changed their cv2.findContours return
         # signature yet again and I have no idea WTH is going on
         else:
-            raise Exception(
+            msg = (
                 "Contours tuple must have length 2 or 3, "
                 "otherwise OpenCV changed their cv2.findContours return "
                 "signature yet again. Refer to OpenCV's documentation "
-                "in that case"
+                f"in that case. provided: {len(cnts)}"
             )
+            raise Exception(msg)
 
         # return the actual contours array
         return cnts
@@ -154,14 +158,10 @@ class ImageUtils:
     def normalize(*images, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX):
         if len(images) == 1:
             return ImageUtils.normalize_single(images[0], alpha, beta, norm_type)
-        return list(
-            map(
-                lambda image: ImageUtils.normalize_single(
-                    image, alpha, beta, norm_type
-                ),
-                images,
-            )
-        )
+        return [
+            ImageUtils.normalize_single(image, alpha, beta, norm_type)
+            for image in images
+        ]
 
     @staticmethod
     def auto_canny(image, sigma=0.93):
@@ -171,10 +171,9 @@ class ImageUtils:
         # apply automatic Canny edge detection using the computed median
         lower = int(max(0, (1.0 - sigma) * v))
         upper = int(min(255, (1.0 + sigma) * v))
-        edged = cv2.Canny(image, lower, upper)
+        return cv2.Canny(image, lower, upper)
 
         # return the edged image
-        return edged
 
     @staticmethod
     def adjust_gamma(image, gamma=1.0):
@@ -195,7 +194,10 @@ class ImageUtils:
         total_points = len(source_contour)
         if max_points is None:
             max_points = total_points
-        assert max_points >= 2
+        allowed_min_points = 2
+        if max_points < allowed_min_points:
+            msg = f"max_points={max_points} < {allowed_min_points}"
+            raise Exception(msg)
         start, end = warped_line
 
         warped_line_length = MathUtils.distance(start, end)
@@ -239,12 +241,18 @@ class ImageUtils:
             control_points.append(boundary_point)
             warped_points.append(warped_point)
 
-        assert len(warped_points) <= max_points
+        if len(warped_points) > max_points:
+            msg = f"len(warped_points)={len(warped_points)} > max_points={max_points}"
+            raise Exception(msg)
 
         # Assert that the float error is not skewing the estimations badly
-        assert MathUtils.distance(warped_points[-1], end) / warped_line_length < 0.02, (
-            f"{warped_points[-1]} != {end}"
-        )
+        allowed_error = 0.02
+        if (
+            MathUtils.distance(warped_points[-1], end) / warped_line_length
+            < allowed_error
+        ):
+            msg = f"{warped_points[-1]} != {end}"
+            raise Exception(msg)
 
         return control_points, warped_points
 
@@ -271,8 +279,7 @@ class ImageUtils:
                 [ordered_patch_corners[i], ordered_patch_corners[(i + 1) % 4]]
             )
 
-        #  segments = split(boundary, MultiPoint(corners)).geoms
-        for boundary_point in source_contour:  # type: ignore
+        for boundary_point in source_contour:  # pyright: ignore [reportGeneralTypeIssues]
             edge_distances = [
                 (
                     Point(boundary_point).distance(edge_line_strings[edge_type]),
@@ -281,7 +288,8 @@ class ImageUtils:
                 for edge_type in EDGE_TYPES_IN_ORDER
             ]
             min_distance, nearest_edge_type = min(edge_distances)
-            distance_warning = "*" if min_distance > 10 else ""
+            warn_distance = 10
+            distance_warning = "*" if min_distance > warn_distance else ""
             logger.debug(
                 f"boundary_point={boundary_point}\t nearest_edge_type={nearest_edge_type}\t min_distance={min_distance:.2f}{distance_warning}"
             )

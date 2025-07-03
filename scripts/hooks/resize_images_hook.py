@@ -4,12 +4,9 @@
 import argparse
 import os
 import shutil
+import sys
 
-from scripts.utils.image_utils import (
-    get_size_in_kb,
-    get_size_reduction,
-    resize_image_and_save,
-)
+from scripts.utils.image_utils import get_size_in_kb, resize_image_and_save
 
 
 def resize_images_in_tree(args):
@@ -25,21 +22,15 @@ def resize_images_in_tree(args):
         (
             resized_and_saved,
             temp_image_path,
-            old_image_size,
-            new_image_size,
+            _old_image_size,
+            _new_image_size,
         ) = resize_image_and_save(image_path, max_width, max_height)
         if resized_and_saved:
             new_size = get_size_in_kb(temp_image_path)
             if new_size >= old_size:
-                print(
-                    f"Skipping resize for {image_path} as size is more than before ({new_size:.2f} KB > {old_size:.2f} KB)"
-                )
                 os.remove(temp_image_path)
             else:
                 shutil.move(temp_image_path, image_path)
-                print(
-                    f"Resized: {image_path} {old_image_size} -> {new_image_size} with file size {new_size:.2f}KB {get_size_reduction(old_size, new_size)}"
-                )
                 resized_count += 1
     return resized_count
 
@@ -85,7 +76,8 @@ def parse_args():
 
     if len(unknown) > 0:
         argparser.print_help()
-        raise Exception(f"\nError: Unknown arguments: {unknown}")
+        msg = f"\nError: Unknown arguments: {unknown}"
+        raise Exception(msg)
 
     return args
 
@@ -94,10 +86,6 @@ if __name__ == "__main__":
     args = parse_args()
     resized_count = resize_images_in_tree(args)
     if resized_count > 0:
-        print(
-            f"Note: {resized_count} images were resized. Please check, add and commit again."
-        )
-        exit(1)
+        sys.exit(1)
     else:
-        # print("All images are of the appropriate size. Commit accepted.")
-        exit(0)
+        sys.exit(0)

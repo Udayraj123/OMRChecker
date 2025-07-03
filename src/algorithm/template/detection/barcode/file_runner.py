@@ -7,7 +7,7 @@ from src.processors.constants import FieldDetectionType
 
 
 class BarcodeFileRunner(FieldTypeFileLevelRunner):
-    def __init__(self, tuning_config):
+    def __init__(self, tuning_config) -> None:
         field_detection_type = FieldDetectionType.BARCODE_QR
         detection_pass = BarcodeDetectionPass(tuning_config, field_detection_type)
         interpretation_pass = BarcodeInterpretationPass(

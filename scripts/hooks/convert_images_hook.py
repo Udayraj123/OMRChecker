@@ -3,8 +3,10 @@
 
 import argparse
 import os
+import sys
 
 from scripts.utils.image_utils import convert_image, get_size_in_kb, get_size_reduction
+from src.utils.logger import logger
 
 
 def convert_images_in_tree(args):
@@ -20,12 +22,12 @@ def convert_images_in_tree(args):
         new_image_path = convert_image(image_path)
         new_size = get_size_in_kb(new_image_path)
         if new_size <= old_size:
-            print(
+            logger.info(
                 f"Converted png to jpg: {image_path}: {new_size:.2f}KB {get_size_reduction(old_size, new_size)}"
             )
             converted_count += 1
         else:
-            print(
+            logger.info(
                 f"Skipping conversion for {image_path} as size is more than before ({new_size:.2f} KB > {old_size:.2f} KB)"
             )
             os.remove(new_image_path)
@@ -57,7 +59,8 @@ def parse_args():
 
     if len(unknown) > 0:
         argparser.print_help()
-        raise Exception(f"\nError: Unknown arguments: {unknown}")
+        msg = f"\nError: Unknown arguments: {unknown}"
+        raise Exception(msg)
     return args
 
 
@@ -67,10 +70,6 @@ if __name__ == "__main__":
     converted_count = convert_images_in_tree(args)
     trigger_size = args["trigger_size"]
     if converted_count > 0:
-        print(
-            f"Note: {converted_count} png images above {trigger_size}KB were converted to jpg.\nPlease manually remove the png files and add your commit again."
-        )
-        exit(1)
+        sys.exit(1)
     else:
-        # print("All sample images are jpgs. Commit accepted.")
-        exit(0)
+        sys.exit(0)

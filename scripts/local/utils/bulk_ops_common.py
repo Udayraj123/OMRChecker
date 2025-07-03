@@ -1,8 +1,8 @@
 import argparse
 import functools
-import glob
 import operator
 import os
+from pathlib import Path
 
 from src.utils.file import PathUtils
 
@@ -39,12 +39,12 @@ def walk_and_extract_files(input_dir, file_extensions):
     extracted_files = []
     for _dir, _subdir, _files in os.walk(input_dir):
         matching_globs = [
-            glob(os.path.join(_dir, f"*.{file_extension}"))
-            for file_extension in file_extensions
+            Path(_dir).glob(f"*.{file_extension}") for file_extension in file_extensions
         ]
         matching_files = functools.reduce(operator.iconcat, matching_globs, [])
-        for file_path in matching_files:
-            extracted_files.append(PathUtils.sep_based_posix_path(file_path))
+        extracted_files.extend(
+            PathUtils.sep_based_posix_path(file_path) for file_path in matching_files
+        )
     return extracted_files
 
 
@@ -89,10 +89,10 @@ def get_local_argparser():
     return local_argparser
 
 
-def add_common_args(argparser, arguments):
+def add_common_args(argparser, arguments) -> None:
     local_argparser = get_local_argparser()
     for argument in arguments:
-        for action in local_argparser._actions:
+        for action in local_argparser._actions:  # NOQA: SLF001
             if argument in action.option_strings:
                 # Copy the argument from local_argparser to argparser
                 argparser.add_argument(
@@ -116,6 +116,7 @@ def run_argparser(argparser):
 
     if len(unknown) > 0:
         argparser.print_help()
-        raise Exception(f"\nError: Unknown arguments: {unknown}")
+        msg = f"\nError: Unknown arguments: {unknown}"
+        raise Exception(msg)
 
     return args

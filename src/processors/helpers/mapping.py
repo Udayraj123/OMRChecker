@@ -19,7 +19,11 @@ from shapely.geometry import (
 from shapely.ops import linemerge, nearest_points, snap, split
 
 
-def create_identity_meshgrid(resolution: Union[int, Tuple], with_margin: bool = False):
+def create_identity_meshgrid(
+    # ruff: noqa: FBT001
+    resolution: Union[int, Tuple],
+    with_margin: bool = False,
+):
     if isinstance(resolution, int):
         resolution = (resolution, resolution)
 
@@ -35,25 +39,23 @@ def scale_map(input_map: np.ndarray, output_shape: Union[int, Tuple[int, int]]):
     if isinstance(output_shape, int):
         output_shape = (output_shape, output_shape)
 
-    H, W, C = input_map.shape
-    if output_shape[0] == H and output_shape[1] == W:
+    h, w, channels = input_map.shape
+    if output_shape[0] == h and output_shape[1] == w:
         return input_map.copy()
 
     if np.any(np.isnan(input_map)):
-        print(
-            "WARNING: scaling maps containing nan values will result in unsteady borders!"
-        )
+        pass
 
     # The range of x and y coordinates to get a cross product
-    x = np.linspace(0, 1, W)
-    y = np.linspace(0, 1, H)
+    x = np.linspace(0, 1, w)
+    y = np.linspace(0, 1, h)
     # Fit the interpolator grid to input_map
     interp = RegularGridInterpolator((y, x), input_map, method="linear")
 
     # xi = values to evaluate at
     xi = create_identity_meshgrid(output_shape, with_margin=False).reshape(-1, 2)
 
-    return interp(xi).reshape(*output_shape, C)
+    return interp(xi).reshape(*output_shape, channels)
 
 
 # def apply_map(
@@ -94,17 +96,17 @@ def _create_backward_map(
     }
     dst = np.array(list(coord_map.keys())).astype("float32")
     src = np.array(list(coord_map.values())).astype("float32")
-    M = cv2.getPerspectiveTransform(src=src, dst=dst)
+    transform_matrix = cv2.getPerspectiveTransform(src=src, dst=dst)
 
     polygon = Polygon(linemerge(segments.values()))
     pts = np.array(polygon.exterior.coords).reshape(-1, 1, 2)
-    pts = cv2.perspectiveTransform(pts, M).squeeze()
+    pts = cv2.perspectiveTransform(pts, transform_matrix).squeeze()
 
     p_norm = Polygon(pts)
 
-    def transform_line(line):
+    def transform_line(line: LineString) -> LineString:
         line_points = np.array(line.coords).reshape(-1, 1, 2)
-        line_points = cv2.perspectiveTransform(line_points, M).squeeze()
+        line_points = cv2.perspectiveTransform(line_points, transform_matrix).squeeze()
         return LineString(line_points)
 
     h_norm = [transform_line(segments[name]) for name in ["top", "bottom"]]
@@ -133,7 +135,9 @@ def _create_backward_map(
                 max(intersections, key=lambda p: p.x),
             ]
 
-        assert len(intersections) == 2, "Unexpected number of intersections!"
+        if len(intersections) != 2:
+            msg = "Unexpected number of intersections!"
+            raise Exception(msg)
 
         # stretching 'x' intersections to the resolution grid size
         stretched_x_line = np.linspace(
@@ -156,7 +160,9 @@ def _create_backward_map(
                 max(intersections, key=lambda p: p.y),
             ]
 
-            assert len(intersections) == 2, "Unexpected number of intersections!"
+            if len(intersections) != 2:
+                msg = "Unexpected number of intersections!"
+                raise Exception(msg)
 
         # stretching 'y' intersections to the resolution grid size
         stretched_y_line = np.linspace(
@@ -170,37 +176,39 @@ def _create_backward_map(
     backward_map_points = backward_map.reshape(-1, 1, 2)
     # The values represent curve's points
     ordered_rich_curve_points = cv2.perspectiveTransform(
-        backward_map_points, np.linalg.inv(M)
+        backward_map_points, np.linalg.inv(transform_matrix)
     ).squeeze()
     # (resolution * resolution, 2) -> (resolution, resolution, 2)
     backward_map = ordered_rich_curve_points.reshape(resolution, resolution, 2)
 
     # flip x and y coordinate: first y, then x
-    backward_map = np.roll(backward_map, shift=1, axis=-1)
-
-    return backward_map
+    return np.roll(backward_map, shift=1, axis=-1)
 
 
 def _snap_corners(polygon: Polygon, corners: List[Point]) -> List[Point]:
     corners = [nearest_points(polygon, point)[0] for point in corners]
-    assert len(corners) == 4
+    if len(corners) != 4:
+        msg = "Unexpected number of corners!"
+        raise Exception(msg)
     return corners
 
 
 def _split_polygon(polygon: Polygon, corners: List[Point]) -> List[LineString]:
     boundary = snap(polygon.boundary, MultiPoint(corners), 0.0000001)
     segments = split(boundary, MultiPoint(corners)).geoms
-    assert len(segments) in [4, 5]
+    if len(segments) not in {4, 5}:
+        msg = "Unexpected number of segments!"
+        raise Exception(msg)
 
     if len(segments) == 4:
-        return segments  # type: ignore
+        return segments  # pyright: ignore [reportReturnType]
 
     return [
         linemerge([segments[0], segments[4]]),
         segments[1],
         segments[2],
         segments[3],
-    ]  # type: ignore
+    ]  # pyright: ignore [reportReturnType]
 
 
 def _classify_segments(
@@ -210,15 +218,23 @@ def _classify_segments(
     bbox_points = np.array(bbox.exterior.coords[:-1])
 
     # classify bbox nodes
-    df = pd.DataFrame(data=bbox_points, columns=["bbox_x", "bbox_y"])
-    name_x = (df.bbox_x == df.bbox_x.min()).replace({True: "left", False: "right"})
-    name_y = (df.bbox_y == df.bbox_y.min()).replace({True: "top", False: "bottom"})
-    df["name"] = name_y + "-" + name_x
-    assert len(df.name.unique()) == 4
+    data_frame = pd.DataFrame(data=bbox_points, columns=["bbox_x", "bbox_y"])
+    name_x = (data_frame.bbox_x == data_frame.bbox_x.min()).replace(
+        {True: "left", False: "right"}
+    )
+    name_y = (data_frame.bbox_y == data_frame.bbox_y.min()).replace(
+        {True: "top", False: "bottom"}
+    )
+    data_frame["name"] = name_y + "-" + name_x
+    if len(data_frame.name.unique()) != 4:
+        msg = "Unexpected number of unique names!"
+        raise Exception(msg)
 
     # find bbox node to corner node association
     approx_points = np.array([c.xy for c in corners]).squeeze()
-    assert approx_points.shape == (4, 2)
+    if approx_points.shape != (4, 2):
+        msg = "Unexpected number of points!"
+        raise Exception(msg)
 
     assignments = [
         np.roll(np.array(range(4))[::step], shift=i)
@@ -232,17 +248,17 @@ def _classify_segments(
     ]
 
     min_assignment = min(zip(costs, assignments, strict=False))[1]
-    df["corner_x"] = approx_points[min_assignment][:, 0]
-    df["corner_y"] = approx_points[min_assignment][:, 1]
+    data_frame["corner_x"] = approx_points[min_assignment][:, 0]
+    data_frame["corner_y"] = approx_points[min_assignment][:, 1]
 
     # retrieve correct segment and fix direction if necessary
     segment_endpoints = {frozenset([s.coords[0], s.coords[-1]]): s for s in segments}
 
-    def get_directed_segment(start_name, end_name):
-        start = df[df.name == start_name]
+    def get_directed_segment(start_name: str, end_name: str) -> LineString:
+        start = data_frame[data_frame.name == start_name]
         start = (float(start.corner_x), float(start.corner_y))
 
-        end = df[df.name == end_name]
+        end = data_frame[data_frame.name == end_name]
         end = (float(end.corner_x), float(end.corner_y))
 
         segment = segment_endpoints[frozenset([start, end])]
@@ -256,4 +272,4 @@ def _classify_segments(
         "bottom": get_directed_segment("bottom-left", "bottom-right"),
         "left": get_directed_segment("top-left", "bottom-left"),
         "right": get_directed_segment("top-right", "bottom-right"),
-    }  # type: ignore
+    }  # pyright: ignore [reportReturnType]

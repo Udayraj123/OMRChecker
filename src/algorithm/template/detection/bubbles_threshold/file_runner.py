@@ -9,7 +9,7 @@ from src.processors.constants import FieldDetectionType
 
 
 class BubblesThresholdFileRunner(FieldTypeFileLevelRunner):
-    def __init__(self, tuning_config):
+    def __init__(self, tuning_config) -> None:
         field_detection_type = FieldDetectionType.BUBBLES_THRESHOLD
         detection_pass = BubblesThresholdDetectionPass(
             tuning_config, field_detection_type

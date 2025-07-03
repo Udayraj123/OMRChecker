@@ -1,16 +1,17 @@
 # Use all imports relative to root directory
-import os
+from pathlib import Path
+from typing import Never
 
 from src.processors.internal.Processor import Processor
 from src.utils.image import ImageUtils
 
 
 class ImageTemplatePreprocessor(Processor):
-    """Base class for an extension that applies some preprocessing to the input image"""
+    """Base class for an extension that applies some preprocessing to the input image."""
 
     def __init__(
         self, options, relative_dir, save_image_ops, default_processing_image_shape
-    ):
+    ) -> None:
         super().__init__(
             options,
             relative_dir,
@@ -26,13 +27,13 @@ class ImageTemplatePreprocessor(Processor):
         self.output = options.get("output")
 
     def get_relative_path(self, path):
-        return os.path.join(self.relative_dir, path)
+        return Path(self.relative_dir, path)
 
-    def apply_filter(self, _image, _colored_image, _template, _file_path):
-        """Apply filter to the image and returns modified image"""
+    def apply_filter(self, _image, _colored_image, _template, _file_path) -> Never:
+        """Apply filter to the image and returns modified image."""
         raise NotImplementedError
 
-    def get_class_name(self):
+    def get_class_name(self) -> Never:
         raise NotImplementedError
 
     def resize_and_apply_filter(self, in_image, colored_image, _template, _file_path):
@@ -53,5 +54,5 @@ class ImageTemplatePreprocessor(Processor):
         return out_image, colored_image, _template
 
     def exclude_files(self):
-        """Returns a list of file paths that should be excluded from processing"""
+        """Return a list of file paths that should be excluded from processing."""
         return []

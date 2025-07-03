@@ -1,3 +1,5 @@
+import operator
+
 from src.algorithm.template.detection.barcode.lib.text_barcode import TextBarcode
 from src.algorithm.template.detection.base.detection import TextDetection
 from src.utils.logger import logger
@@ -8,7 +10,7 @@ class PyZBar(TextBarcode):
     decode_barcode = None
 
     @staticmethod
-    def initialize():
+    def initialize() -> None:
         from pyzbar.pyzbar import decode as decode_barcode
 
         PyZBar.decode_barcode = decode_barcode
@@ -18,13 +20,12 @@ class PyZBar(TextBarcode):
         filtered_texts_with_boxes = PyZBar.read_texts_with_boxes(
             image, confidence_threshold
         )
-        filtered_detections = [
+        return [
             PyZBar.convert_to_text_detection(
                 box, text, score, polygon, clear_whitespace
             )
             for (box, text, score, polygon) in filtered_texts_with_boxes
         ]
-        return filtered_detections
 
     @staticmethod
     def get_single_text_detection(
@@ -75,9 +76,10 @@ class PyZBar(TextBarcode):
         ]
 
         if sort_by_score:
-            return sorted(filtered_texts_with_boxes, key=lambda x: x[1], reverse=True)
-        else:
-            return filtered_texts_with_boxes
+            return sorted(
+                filtered_texts_with_boxes, key=operator.itemgetter(1), reverse=True
+            )
+        return filtered_texts_with_boxes
 
     @staticmethod
     def convert_to_text_detection(box, text, score, polygon, clear_whitespace):

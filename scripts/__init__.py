@@ -4,4 +4,4 @@
 from src.utils.logger import logger
 
 # It takes a few seconds for the imports
-logger.info(f"Loading scripts...")
+logger.info("Loading scripts...")

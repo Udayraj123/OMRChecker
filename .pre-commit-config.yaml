@@ -28,7 +28,7 @@ repos:
         args: ["--trigger-size", "150"]
         files: ^.*\.(png|PNG)$
         pass_filenames: true
-        stages: [commit]
+        stages: [pre-commit]
         language: script
         always_run: true
         fail_fast: true # Wait for user to remove the png files
@@ -50,7 +50,7 @@ repos:
           ]
         files: \.(png|jpg|jpeg|PNG|JPG|JPEG)$
         pass_filenames: true
-        stages: [commit]
+        stages: [pre-commit]
         language: script
         always_run: true
         fail_fast: false
@@ -69,13 +69,13 @@ repos:
     rev: v4.4.0
     hooks:
       - id: check-yaml
-        stages: [commit]
+        stages: [pre-commit]
         fail_fast: false
       - id: check-added-large-files
         args: ["--maxkb=300"]
         exclude: ^.*\.(lock)$
         fail_fast: false
-        stages: [commit]
+        stages: [pre-commit]
       - id: pretty-format-json
         args: ["--autofix", "--no-sort-keys"]
         exclude: ^.*(devcontainer.json)$
@@ -90,7 +90,7 @@ repos:
         pass_filenames: false
         always_run: true
         fail_fast: true
-        stages: [commit]
+        stages: [pre-commit]
   - repo: local
     hooks:
       - id: pytest-on-push
@@ -100,7 +100,7 @@ repos:
         pass_filenames: false
         always_run: true
         fail_fast: true
-        stages: [push]
+        stages: [pre-push]
 
 ci:
   autoupdate_schedule: weekly

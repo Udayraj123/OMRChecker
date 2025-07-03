@@ -1,3 +1,5 @@
+import operator
+
 from src.algorithm.template.detection.base.detection import TextDetection
 from src.algorithm.template.detection.ocr.lib.text_ocr import TextOCR
 from src.utils.logger import logger
@@ -8,7 +10,7 @@ class EasyOCR(TextOCR):
     reader = None
 
     @staticmethod
-    def initialize():
+    def initialize() -> None:
         import easyocr
 
         # this needs to run only once to load the model into memory
@@ -19,11 +21,10 @@ class EasyOCR(TextOCR):
         filtered_texts_with_boxes = EasyOCR.read_texts_with_boxes(
             image, confidence_threshold, sort_by_score=True
         )
-        filtered_detections = [
+        return [
             EasyOCR.convert_to_text_detection(box, text, score, clear_whitespace)
             for (box, text, score) in filtered_texts_with_boxes
         ]
-        return filtered_detections
 
     @staticmethod
     def get_single_text_detection(
@@ -64,19 +65,21 @@ class EasyOCR(TextOCR):
         ]
 
         if sort_by_score:
-            return sorted(filtered_texts_with_boxes, key=lambda x: x[2], reverse=True)
-        else:
-            return filtered_texts_with_boxes
+            return sorted(
+                filtered_texts_with_boxes, key=operator.itemgetter(2), reverse=True
+            )
+        return filtered_texts_with_boxes
 
     @staticmethod
-    def read_text_for_matching_rule(image, text_to_find, confidence_threshold=0.3):
-        found_box = None
+    def read_text_for_matching_rule(
+        _image, _text_to_find, _confidence_threshold=0.3
+    ) -> None:
+        return None
         # Firstly postprocess all texts before searching.
 
         # TODO: add (fuzzy?) search logic or regex match
 
         # Note: the caller should take care of extracting center vs corners of the box
-        return found_box
 
     @staticmethod
     def convert_to_text_detection(box, text, score, clear_whitespace):

@@ -16,7 +16,7 @@ from src.utils.parsing import parse_fields
 
 
 class SectionMarkingScheme:
-    def __init__(self, section_key, section_scheme, set_name, empty_value):
+    def __init__(self, section_key, section_scheme, set_name, empty_value) -> None:
         # TODO: get local empty_value from qblock
         self.empty_value = empty_value
         self.section_key = section_key
@@ -35,12 +35,10 @@ class SectionMarkingScheme:
             )
         self.validate_marking_scheme()
 
-    def reset_all_streaks(self):
+    def reset_all_streaks(self) -> None:
         # TODO: support for MarkingSchemeType.SECTION_LEVEL_STREAK
         if self.marking_type == MarkingSchemeType.VERDICT_LEVEL_STREAK:
-            self.streaks = {
-                schema_verdict: 0 for schema_verdict in SCHEMA_VERDICTS_IN_ORDER
-            }
+            self.streaks = dict.fromkeys(SCHEMA_VERDICTS_IN_ORDER, 0)
         else:
             self.section_level_streak = 0
             self.previous_streak_verdict = None
@@ -48,14 +46,13 @@ class SectionMarkingScheme:
     def get_delta_for_verdict(
         self, answer_matcher_marking, question_verdict, current_streak
     ):
-        if type(answer_matcher_marking[question_verdict]) == list:
+        if isinstance(answer_matcher_marking[question_verdict], list):
             return answer_matcher_marking[question_verdict][current_streak]
-        else:
-            if current_streak > 0:
-                logger.warning(
-                    f"Non zero streak({current_streak}) for verdict {question_verdict} in scheme {self}. Using non-streak score for this verdict."
-                )
-            return answer_matcher_marking[question_verdict]
+        if current_streak > 0:
+            logger.warning(
+                f"Non zero streak({current_streak}) for verdict {question_verdict} in scheme {self}. Using non-streak score for this verdict."
+            )
+        return answer_matcher_marking[question_verdict]
 
     def get_delta_and_update_streak(
         self, answer_matcher_marking, answer_type, question_verdict, allow_streak
@@ -71,10 +68,9 @@ class SectionMarkingScheme:
             # reset all
             self.reset_all_streaks()
 
-            if allow_streak:
-                # increase only current verdict streak
-                if schema_verdict != SchemaVerdict.UNMARKED:
-                    self.streaks[schema_verdict] = current_streak + 1
+            # increase only current verdict streak
+            if allow_streak and schema_verdict != SchemaVerdict.UNMARKED:
+                self.streaks[schema_verdict] = current_streak + 1
 
             delta = self.get_delta_for_verdict(
                 answer_matcher_marking, question_verdict, current_streak
@@ -90,10 +86,11 @@ class SectionMarkingScheme:
             # reset all
             self.reset_all_streaks()
 
-            if allow_streak:
-                # increase only current verdict streak
-                if previous_verdict is None or schema_verdict == previous_verdict:
-                    self.section_level_streak = current_streak + 1
+            # increase only current verdict streak
+            if (
+                allow_streak and previous_verdict is None
+            ) or schema_verdict == previous_verdict:
+                self.section_level_streak = current_streak + 1
 
             delta = self.get_delta_for_verdict(
                 answer_matcher_marking, question_verdict, current_streak
@@ -112,15 +109,15 @@ class SectionMarkingScheme:
         clone.update_questions(questions)
         return clone
 
-    def update_questions(self, questions):
+    def update_questions(self, questions) -> None:
         self.questions = questions
         self.validate_marking_scheme()
 
-    def validate_marking_scheme(self):
+    def validate_marking_scheme(self) -> None:
         # TODO: add validation on maximum streak possible vs length of provided section verdict marking
         pass
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.section_key
 
     def parse_verdict_marking_from_scheme(self, section_scheme):
@@ -145,14 +142,14 @@ class SectionMarkingScheme:
 
         return parsed_marking
 
-    def get_bonus_type(self):
-        if self.marking_type == MarkingSchemeType.VERDICT_LEVEL_STREAK:
+    def get_bonus_type(self) -> str | None:
+        if (
+            self.marking_type == MarkingSchemeType.VERDICT_LEVEL_STREAK
+            or self.marking[Verdict.NO_ANSWER_MATCH] <= 0
+        ):
             return None
-        elif self.marking[Verdict.NO_ANSWER_MATCH] <= 0:
-            return None
-        elif self.marking[Verdict.UNMARKED] > 0:
+        if self.marking[Verdict.UNMARKED] > 0:
             return "BONUS_FOR_ALL"
-        elif self.marking[Verdict.UNMARKED] == 0:
+        if self.marking[Verdict.UNMARKED] == 0:
             return "BONUS_ON_ATTEMPT"
-        else:
-            return None
+        return None

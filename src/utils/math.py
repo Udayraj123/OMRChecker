@@ -1,14 +1,14 @@
 import math
 
-import matplotlib.colors as colors
 import numpy as np
+from matplotlib import colors
 
 from src.processors.constants import EdgeType
 from src.utils.logger import logger
 
 
 class MathUtils:
-    """A Static-only Class to hold common math utilities & wrappers for easy integration with OpenCV and OMRChecker"""
+    """A Static-only Class to hold common math utilities & wrappers for easy integration with OpenCV and OMRChecker."""
 
     @staticmethod
     def distance(point1, point2):
@@ -16,12 +16,7 @@ class MathUtils:
 
     @staticmethod
     def shift_points_from_origin(new_origin, list_of_points):
-        return list(
-            map(
-                lambda point: MathUtils.add_points(new_origin, point),
-                list_of_points,
-            )
-        )
+        return [MathUtils.add_points(new_origin, point) for point in list_of_points]
 
     @staticmethod
     def add_points(new_origin, point):
@@ -39,12 +34,9 @@ class MathUtils:
 
     @staticmethod
     def shift_points_to_origin(new_origin, list_of_points):
-        return list(
-            map(
-                lambda point: MathUtils.subtract_points(point, new_origin),
-                list_of_points,
-            )
-        )
+        return [
+            MathUtils.subtract_points(point, new_origin) for point in list_of_points
+        ]
 
     @staticmethod
     def get_point_on_line_by_ratio(edge_line, length_ratio):
@@ -60,12 +52,12 @@ class MathUtils:
 
         # the top-left point will have the smallest sum, whereas
         # the bottom-right point will have the largest sum
-        sum = points.sum(axis=1)
+        sum_of_points = points.sum(axis=1)
         diff = np.diff(points, axis=1)
         ordered_indices = [
-            np.argmin(sum),
+            np.argmin(sum_of_points),
             np.argmin(diff),
-            np.argmax(sum),
+            np.argmax(sum_of_points),
             np.argmax(diff),
         ]
         rect = points[ordered_indices]
@@ -89,6 +81,7 @@ class MathUtils:
 
     @staticmethod
     def validate_rect(approx):
+        # ruff: noqa: PLR2004
         return len(approx) == 4 and MathUtils.check_max_cosine(approx.reshape(4, 2))
 
     @staticmethod
@@ -122,7 +115,7 @@ class MathUtils:
         return [tl, tr]
 
     @staticmethod
-    def rectangle_contains(point, rect):
+    def rectangle_contains(point, rect) -> bool:
         # Note: this function accepts a rectangle in a 4-tuple
         rect_start, rect_end = rect[0:2], rect[2:4]
         return not (
@@ -132,8 +125,10 @@ class MathUtils:
             or point[1] > rect_end[1]
         )
 
+    MAX_COSINE = 0.35
+
     @staticmethod
-    def check_max_cosine(approx):
+    def check_max_cosine(approx) -> bool:
         # assumes 4 points present
         max_cosine = 0
         min_cosine = 1.5
@@ -142,7 +137,7 @@ class MathUtils:
             max_cosine = max(cosine, max_cosine)
             min_cosine = min(cosine, min_cosine)
 
-        if max_cosine >= 0.35:
+        if max_cosine >= MathUtils.MAX_COSINE:
             logger.warning("Quadrilateral is not a rectangle.")
             return False
         return True
@@ -176,6 +171,9 @@ class MathUtils:
         return (b, g, r)
 
     @staticmethod
-    def chunks(list, chunk_size):
+    def chunks(input_list, chunk_size):
         chunk_size = max(1, chunk_size)
-        return (list[i : i + chunk_size] for i in range(0, len(list), chunk_size))
+        return (
+            input_list[i : i + chunk_size]
+            for i in range(0, len(input_list), chunk_size)
+        )

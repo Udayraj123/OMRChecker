@@ -10,10 +10,10 @@ class DrawingUtils:
     @staticmethod
     def draw_matches(image, from_points, warped_image, to_points):
         horizontal_stack = ImageUtils.get_padded_hstack([image, warped_image])
-        h, w = image.shape[:2]
+        _h, w = image.shape[:2]
         from_points = MathUtils.get_tuple_points(from_points)
         to_points = MathUtils.get_tuple_points(to_points)
-        for from_point, to_point in zip(from_points, to_points):
+        for from_point, to_point in zip(from_points, to_points, strict=False):
             horizontal_stack = cv2.line(
                 horizontal_stack,
                 from_point,
@@ -30,7 +30,7 @@ class DrawingUtils:
         position_diagonal,
         color=CLR_DARK_GRAY,
         border=3,
-    ):
+    ) -> None:
         cv2.rectangle(
             image,
             [int(position[0]), int(position[1])],
@@ -45,8 +45,10 @@ class DrawingUtils:
         contour,
         color=CLR_GREEN,
         thickness=2,
-    ):
-        assert None not in contour, "Invalid contour provided"
+    ) -> None:
+        if None in contour:
+            msg = "Invalid contour provided"
+            raise Exception(msg)
         cv2.drawContours(
             image,
             [np.intp(contour)],
@@ -66,7 +68,6 @@ class DrawingUtils:
         border=3,
         centered=False,
     ):
-        assert position is not None
         x, y = position
         box_w, box_h = box_dimensions
 
@@ -110,6 +111,7 @@ class DrawingUtils:
 
     @staticmethod
     def draw_arrows(
+        # ruff: noqa: PLR0913
         image,
         start_points,
         end_points,
@@ -120,7 +122,7 @@ class DrawingUtils:
     ):
         start_points = MathUtils.get_tuple_points(start_points)
         end_points = MathUtils.get_tuple_points(end_points)
-        for start_point, end_point in zip(start_points, end_points):
+        for start_point, end_point in zip(start_points, end_points, strict=False):
             image = cv2.arrowedLine(
                 image,
                 start_point,
@@ -134,12 +136,15 @@ class DrawingUtils:
         return image
 
     @staticmethod
-    def draw_text_responsive(image, text, position, *args, **kwargs):
+    def draw_text_responsive(image, text, position, *args, **kwargs) -> None:
         h, w = image.shape[:2]
-        text_position = lambda size_x, size_y: (
-            position[0] - max(0, position[0] + size_x - w),
-            position[1] - max(0, position[1] + size_y - h),
-        )
+
+        def text_position(size_x: int, size_y: int) -> tuple[int, int]:
+            return (
+                position[0] - max(0, position[0] + size_x - w),
+                position[1] - max(0, position[1] + size_y - h),
+            )
+
         DrawingUtils.draw_text(image, text, text_position, *args, **kwargs)
 
     @staticmethod
@@ -154,16 +159,18 @@ class DrawingUtils:
         # available LineTypes: FILLED, LINE_4, LINE_8, LINE_AA
         line_type=cv2.LINE_AA,
         font_face=cv2.FONT_HERSHEY_SIMPLEX,
-    ):
+    ) -> None:
         if centered:
-            assert not callable(
-                position
-            ), f"centered={centered} but position={position}"
+            if callable(position):
+                msg = f"centered={centered} but position is a callable: {position}"
+                raise Exception(msg)
             text_position = position
-            position = lambda size_x, size_y: (
-                text_position[0] - size_x // 2,
-                text_position[1] + size_y // 2,
-            )
+
+            def position(size_x: int, size_y: int) -> tuple[int, int]:
+                return (
+                    text_position[0] - size_x // 2,
+                    text_position[1] + size_y // 2,
+                )
 
         if callable(position):
             size_x, size_y = cv2.getTextSize(
@@ -187,20 +194,23 @@ class DrawingUtils:
         )
 
     @staticmethod
-    def draw_symbol(image, symbol, position, position_diagonal, color=CLR_BLACK):
-        center_position = lambda size_x, size_y: (
-            (position[0] + position_diagonal[0] - size_x) // 2,
-            (position[1] + position_diagonal[1] + size_y) // 2,
-        )
+    def draw_symbol(
+        image, symbol, position, position_diagonal, color=CLR_BLACK
+    ) -> None:
+        def center_position(size_x: int, size_y: int) -> tuple[int, int]:
+            return (
+                (position[0] + position_diagonal[0] - size_x) // 2,
+                (position[1] + position_diagonal[1] + size_y) // 2,
+            )
 
         DrawingUtils.draw_text(image, symbol, center_position, color=color)
 
     @staticmethod
-    def draw_line(image, start, end, color=CLR_BLACK, thickness=3):
+    def draw_line(image, start, end, color=CLR_BLACK, thickness=3) -> None:
         cv2.line(image, start, end, color, thickness)
 
     @staticmethod
-    def draw_polygon(image, points, color=CLR_BLACK, thickness=1, closed=True):
+    def draw_polygon(image, points, color=CLR_BLACK, thickness=1, closed=True) -> None:
         n = len(points)
         for i in range(n):
             if not closed and i == n - 1:
@@ -211,6 +221,7 @@ class DrawingUtils:
 
     @staticmethod
     def draw_group(
+        # ruff: noqa: PLR0913
         image,
         start,
         bubble_dimensions,
@@ -218,7 +229,7 @@ class DrawingUtils:
         color,
         thickness=3,
         thickness_factor=7 / 10,
-    ):
+    ) -> None:
         start_x, start_y = start
         box_w, box_h = bubble_dimensions
         if box_edge == "TOP":

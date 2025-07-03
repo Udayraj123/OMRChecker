@@ -8,7 +8,7 @@ from src.utils.stats import NumberAggregate
 
 
 class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
     # Note: This is used by parent to generate the detection
@@ -17,7 +17,7 @@ class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
     ) -> BubblesFieldDetection:
         return BubblesFieldDetection(field, gray_image, colored_image)
 
-    def initialize_directory_level_aggregates(self, initial_directory_path):
+    def initialize_directory_level_aggregates(self, initial_directory_path) -> None:
         super().initialize_directory_level_aggregates(initial_directory_path)
         self.insert_directory_level_aggregates(
             {
@@ -25,7 +25,7 @@ class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
             }
         )
 
-    def initialize_file_level_aggregates(self, file_path):
+    def initialize_file_level_aggregates(self, file_path) -> None:
         super().initialize_file_level_aggregates(file_path)
         self.insert_file_level_aggregates(
             {
@@ -37,7 +37,7 @@ class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
 
     def update_field_level_aggregates_on_processed_field_detection(
         self, field: Field, field_detection: BubblesFieldDetection
-    ):
+    ) -> None:
         super().update_field_level_aggregates_on_processed_field_detection(
             field, field_detection
         )
@@ -59,7 +59,7 @@ class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
         field: Field,
         field_detection: BubblesFieldDetection,
         field_level_aggregates,
-    ):
+    ) -> None:
         super().update_file_level_aggregates_on_processed_field_detection(
             field, field_detection, field_level_aggregates
         )
@@ -74,4 +74,4 @@ class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
         # fields count++ for field_detection_type(self) and bubble_field_type
         # self.file_level_aggregates["fields_count"].push(field.bubble_field_type)
 
-        # TODO ...
+        # TODO: ...

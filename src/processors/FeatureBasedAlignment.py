@@ -1,5 +1,6 @@
-"""Image based feature alignment
-Credits: https://www.learnopencv.com/image-alignment-feature-based-using-opencv-c-python/
+"""Image based feature alignment.
+
+Credits: https://www.learnopencv.com/image-alignment-feature-based-using-opencv-c-python/.
 """
 
 import cv2
@@ -15,10 +16,10 @@ from src.utils.interaction import InteractionUtils
 
 
 class FeatureBasedAlignment(ImageTemplatePreprocessor):
-    def get_class_name(self):
-        return f"FeatureBasedAlignment"
+    def get_class_name(self) -> str:
+        return "FeatureBasedAlignment"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         options = self.options
 
@@ -34,7 +35,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
         if matcher_type == "NORM_HAMMING":
             self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
         elif matcher_type == "BRUTEFORCE_HAMMING":
-            self.matcher = cv2.DescriptorMatcher_create(  # type: ignore
+            self.matcher = cv2.DescriptorMatcher_create(
                 cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING
             )
 
@@ -45,7 +46,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
             self.ref_img, None
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.ref_path.name
 
     def exclude_files(self):

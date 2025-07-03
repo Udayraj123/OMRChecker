@@ -1,9 +1,9 @@
-import os
 from csv import QUOTE_NONNUMERIC
 from pathlib import Path, PurePosixPath
 from time import time
 
 import pandas as pd
+from dotmap import DotMap
 from rich.table import Table
 from rich_tools import table_to_df
 
@@ -24,23 +24,24 @@ from src.utils.parsing import open_config_with_defaults
 STATS = Stats()
 
 
-def entry_point(input_dir, args):
-    if not os.path.exists(input_dir):
-        raise Exception(f"Given input directory does not exist: '{input_dir}'")
+def entry_point(input_dir: Path, args: dict) -> None:
+    if not input_dir.exists():
+        msg = f"Given input directory does not exist: '{input_dir}'"
+        raise Exception(msg)
     curr_dir = input_dir
     return process_dir(input_dir, curr_dir, args)
 
 
 # TODO: move into template.directory_handler?
 def print_config_summary(
+    # ruff: noqa: PLR0913
     curr_dir,
     omr_files,
-    template,
-    tuning_config,
+    template: Template,
     local_config_path,
     evaluation_config,
-    args,
-):
+    args: dict,
+) -> None:
     logger.info("")
     table = Table(title="Current Configurations", show_header=False, show_lines=False)
     table.add_column("Key", style="cyan", no_wrap=True)
@@ -71,23 +72,23 @@ def print_config_summary(
 
 # TODO: move into template.directory_handler?
 def process_dir(
-    root_dir,
-    curr_dir,
-    args,
-    template=None,
-    tuning_config=CONFIG_DEFAULTS,
-    evaluation_config=None,
-):
+    # ruff: noqa: PLR0913, C901
+    root_dir: Path,
+    curr_dir: Path,
+    args: dict,
+    template: Template | None = None,
+    tuning_config: DotMap = CONFIG_DEFAULTS,
+    evaluation_config: EvaluationConfig | None = None,
+) -> None:
     # Update local tuning_config (in current recursion stack)
     local_config_path = curr_dir.joinpath(constants.CONFIG_FILENAME)
-    if os.path.exists(local_config_path):
+    if local_config_path.exists():
         tuning_config = open_config_with_defaults(local_config_path, args)
         logger.set_log_levels(tuning_config.outputs.show_logs_by_type)
 
     # Update local template (in current recursion stack)
     local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
-    local_template_exists = os.path.exists(local_template_path)
-    if local_template_exists:
+    if local_template_path.exists():
         template = Template(
             local_template_path,
             # TODO: reduce coupling between config and template (or merge them)
@@ -110,8 +111,8 @@ def process_dir(
 
     local_evaluation_path = curr_dir.joinpath(constants.EVALUATION_FILENAME)
     # Note: if setLayout is passed, there's no need to load evaluation file
-    if not args["setLayout"] and os.path.exists(local_evaluation_path):
-        if not local_template_exists:
+    if not args["setLayout"] and local_evaluation_path.exists():
+        if not local_template_path.exists():
             logger.warning(
                 f"Found an evaluation file without a parent template file: {local_evaluation_path}"
             )
@@ -136,9 +137,8 @@ def process_dir(
                 appropriate directory."
             )
             # TODO: restore support for --default-template flag
-            raise Exception(
-                f"No template file found in the directory tree of {curr_dir}"
-            )
+            msg = f"No template file found in the directory tree of {curr_dir}"
+            raise Exception(msg)
 
         output_dir = Path(args["output_dir"], curr_dir.relative_to(root_dir))
 
@@ -149,7 +149,6 @@ def process_dir(
             curr_dir,
             omr_files,
             template,
-            tuning_config,
             local_config_path,
             evaluation_config,
             args,
@@ -187,11 +186,10 @@ def process_dir(
 
 
 # TODO: move into template.template_layout
-def show_template_in_set_layout_mode(omr_files, template, tuning_config):
+def show_template_in_set_layout_mode(omr_files, template, tuning_config) -> None:
     # TODO: refactor into class level?
     for file_path in omr_files:
         file_name = file_path.name
-        file_path = str(file_path)
         gray_image, colored_image = ImageUtils.read_image_util(file_path, tuning_config)
 
         (
@@ -221,12 +219,13 @@ def show_template_in_set_layout_mode(omr_files, template, tuning_config):
 
 # TODO: move into template.directory_handler/directory_runner
 def process_directory_files(
+    # ruff: noqa: PLR0912, C901, PLR0915
     omr_files,
     template: Template,
     tuning_config,
     evaluation_config,
     output_mode,
-):
+) -> None:
     start_time = int(time())
     files_counter = 0
     # TODO: move STATS inside template.directory_handler
@@ -236,9 +235,7 @@ def process_directory_files(
         file_name = PathUtils.remove_non_utf_characters(file_path.name)
         file_id = str(file_name)
 
-        gray_image, colored_image = ImageUtils.read_image_util(
-            str(file_path), tuning_config
-        )
+        gray_image, colored_image = ImageUtils.read_image_util(file_path, tuning_config)
 
         logger.info("")
         logger.info(
@@ -261,7 +258,7 @@ def process_directory_files(
             template,
         ) = template.apply_preprocessors(file_path, gray_image, colored_image)
 
-        # TODO[later]: template & evaluation as a "Processor"?
+        # TODO: [later] template & evaluation as a "Processor"?
         # TODO: move apply_template_alignment into template class
         gray_image, colored_image, template = apply_template_alignment(
             gray_image, colored_image, template, tuning_config
@@ -280,7 +277,8 @@ def process_directory_files(
                     file_path,
                     output_file_path,
                     "NA",
-                ] + template.get_empty_response_array()
+                    *template.get_empty_response_array(),
+                ]
 
                 pd.DataFrame(error_file_line, dtype=str).T.to_csv(
                     template.get_errors_file(),
@@ -384,7 +382,7 @@ def process_directory_files(
 
         # Save output stack images
         template.save_image_ops.save_image_stacks(
-            file_id,
+            file_path,
             save_marked_dir,
             key=None,
             images_per_row=5 if tuning_config.outputs.show_image_level >= 5 else 4,
@@ -427,7 +425,8 @@ def process_directory_files(
                 posix_file_path,
                 output_file_path,
                 score,
-            ] + omr_response_array
+                *omr_response_array,
+            ]
 
             # Write/Append to results_line file(opened in append mode)
             pd.DataFrame(results_line, dtype=str).T.to_csv(
@@ -451,7 +450,8 @@ def process_directory_files(
                     posix_file_path,
                     output_file_path,
                     "NA",
-                ] + omr_response_array
+                    *omr_response_array,
+                ]
                 pd.DataFrame(mm_line, dtype=str).T.to_csv(
                     template.get_multi_marked_file(),
                     mode="a",
@@ -472,7 +472,7 @@ def process_directory_files(
     print_stats(start_time, files_counter, tuning_config)
 
 
-def check_and_move(error_code, file_path, filepath2):
+def check_and_move(_error_code, _file_path, _filepath2) -> bool:
     # TODO: use StatsByLabel class here
     # TODO: fix file movement into error/multimarked/invalid etc again
     STATS.files_not_moved += 1
@@ -480,7 +480,7 @@ def check_and_move(error_code, file_path, filepath2):
 
 
 # TODO: move into template.directory_handler
-def print_stats(start_time, files_counter, tuning_config):
+def print_stats(start_time, files_counter, tuning_config) -> None:
     time_checking = max(1, round(time() - start_time, 2))
     log = logger.info
     log("")

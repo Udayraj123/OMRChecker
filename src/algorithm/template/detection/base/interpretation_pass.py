@@ -9,7 +9,7 @@ from src.utils.stats import StatsByLabel
 class FieldTypeInterpretationPass(FilePassAggregates):
     """Implements interpretation pass for field types, managing the interpretation-related aggregates."""
 
-    def __init__(self, tuning_config, field_detection_type):
+    def __init__(self, tuning_config, field_detection_type) -> None:
         self.field_detection_type = field_detection_type
         super().__init__(tuning_config)
 
@@ -20,9 +20,10 @@ class FieldTypeInterpretationPass(FilePassAggregates):
         file_level_detection_aggregates,
         file_level_aggregates,
     ) -> FieldInterpretation:
-        raise Exception("Not implemented")
+        msg = "Not implemented"
+        raise Exception(msg)
 
-    def initialize_field_level_aggregates(self, field):
+    def initialize_field_level_aggregates(self, field) -> None:
         super().initialize_field_level_aggregates(field)
         self.insert_field_level_aggregates(
             {
@@ -33,9 +34,9 @@ class FieldTypeInterpretationPass(FilePassAggregates):
     def initialize_file_level_aggregates(
         self,
         file_path,
-        field_detection_type_wise_detection_aggregates,
-        field_label_wise_detection_aggregates,
-    ):
+        _field_detection_type_wise_detection_aggregates,
+        _field_label_wise_detection_aggregates,
+    ) -> None:
         super().initialize_file_level_aggregates(file_path)
         self.insert_file_level_aggregates(
             {
@@ -46,7 +47,7 @@ class FieldTypeInterpretationPass(FilePassAggregates):
 
     def update_aggregates_on_processed_field_interpretation(
         self, field: Field, field_interpretation: FieldInterpretation
-    ):
+    ) -> None:
         self.update_field_level_aggregates_on_processed_field_interpretation(
             field, field_interpretation
         )
@@ -60,7 +61,7 @@ class FieldTypeInterpretationPass(FilePassAggregates):
 
     def update_field_level_aggregates_on_processed_field_interpretation(
         self, field: Field, field_interpretation: FieldInterpretation
-    ):
+    ) -> None:
         self.insert_field_level_aggregates(
             {
                 "field_level_confidence_metrics": field_interpretation.get_field_level_confidence_metrics(),
@@ -73,7 +74,7 @@ class FieldTypeInterpretationPass(FilePassAggregates):
         field: Field,
         field_interpretation: FieldInterpretation,
         field_level_aggregates,
-    ):
+    ) -> None:
         self.file_level_aggregates["confidence_metrics_for_file"][field.field_label] = (
             field_interpretation.get_field_level_confidence_metrics()
         )
@@ -89,9 +90,9 @@ class FieldTypeInterpretationPass(FilePassAggregates):
     def update_directory_level_aggregates_on_processed_field_interpretation(
         self,
         field: Field,
-        field_interpretation: FieldInterpretation,
+        _field_interpretation: FieldInterpretation,
         field_level_aggregates,
-    ):
+    ) -> None:
         super().update_directory_level_aggregates_on_processed_field(
             field, field_level_aggregates
         )
@@ -102,9 +103,9 @@ class TemplateInterpretationPass(FilePassAggregates):
         self,
         file_path,
         all_field_detection_types,
-        field_detection_type_wise_detection_aggregates,
-        field_label_wise_detection_aggregates,
-    ):
+        _field_detection_type_wise_detection_aggregates,
+        _field_label_wise_detection_aggregates,
+    ) -> None:
         super().initialize_file_level_aggregates(file_path)
         self.insert_file_level_aggregates(
             {
@@ -125,7 +126,7 @@ class TemplateInterpretationPass(FilePassAggregates):
 
     def initialize_directory_level_aggregates(
         self, initial_directory_path, all_field_detection_types
-    ):
+    ) -> None:
         super().initialize_directory_level_aggregates(initial_directory_path)
         self.insert_directory_level_aggregates(
             {
@@ -145,7 +146,7 @@ class TemplateInterpretationPass(FilePassAggregates):
         field_interpretation: FieldInterpretation,
         # TODO: see if detection also needs this arg (field_type_runner_field_level_aggregates)
         field_type_runner_field_level_aggregates,
-    ):
+    ) -> None:
         self.update_field_level_aggregates_on_processed_field_interpretation(
             current_omr_response,
             field,
@@ -163,11 +164,11 @@ class TemplateInterpretationPass(FilePassAggregates):
 
     def update_field_level_aggregates_on_processed_field_interpretation(
         self,
-        current_omr_response,
+        _current_omr_response,
         field: Field,
-        field_interpretation: FieldInterpretation,
+        _field_interpretation: FieldInterpretation,
         field_type_runner_field_level_aggregates,
-    ):
+    ) -> None:
         read_response_flags = self.file_level_aggregates["read_response_flags"]
 
         if field_type_runner_field_level_aggregates["is_multi_marked"]:
@@ -190,7 +191,7 @@ class TemplateInterpretationPass(FilePassAggregates):
         field: Field,
         field_interpretation: FieldInterpretation,
         template_field_level_aggregates,
-    ):
+    ) -> None:
         super().update_file_level_aggregates_on_processed_field(
             field, template_field_level_aggregates
         )
@@ -204,8 +205,8 @@ class TemplateInterpretationPass(FilePassAggregates):
         )
 
     def update_directory_level_aggregates_on_processed_field_interpretation(
-        self, field: Field, field_interpretation, template_field_level_aggregates
-    ):
+        self, field: Field, _field_interpretation, template_field_level_aggregates
+    ) -> None:
         super().update_directory_level_aggregates_on_processed_field(
             field, template_field_level_aggregates
         )
@@ -220,7 +221,7 @@ class TemplateInterpretationPass(FilePassAggregates):
     # TODO: check if passing runners is really needed or not here (can move inside field_detection_type_runner?) -
     def update_aggregates_on_processed_file(
         self, file_path, field_detection_type_runners
-    ):
+    ) -> None:
         super().update_aggregates_on_processed_file(file_path)
 
         field_detection_type_wise_aggregates = self.file_level_aggregates[

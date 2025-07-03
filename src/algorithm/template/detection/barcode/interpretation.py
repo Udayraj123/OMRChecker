@@ -7,7 +7,7 @@ from src.utils.logger import logger
 
 
 class BarcodeInterpretation:
-    def __init__(self, detection):
+    def __init__(self, detection) -> None:
         self.detection = detection
         self.is_marked = detection is not None
         self.detected_text = detection.detected_text if self.is_marked else ""
@@ -17,7 +17,7 @@ class BarcodeInterpretation:
 
 
 class BarcodeFieldInterpretation(FieldInterpretation):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         self.interpretations: list[BarcodeInterpretation] = None
         super().__init__(*args, **kwargs)
 
@@ -44,7 +44,7 @@ class BarcodeFieldInterpretation(FieldInterpretation):
         field: Field,
         file_level_detection_aggregates,
         file_level_interpretation_aggregates,
-    ):
+    ) -> None:
         self.initialize_from_file_level_aggregates(
             field, file_level_detection_aggregates, file_level_interpretation_aggregates
         )
@@ -54,8 +54,8 @@ class BarcodeFieldInterpretation(FieldInterpretation):
         self,
         field,
         file_level_detection_aggregates,
-        file_level_interpretation_aggregates,
-    ):
+        _file_level_interpretation_aggregates,
+    ) -> None:
         field_label = field.field_label
 
         field_level_detection_aggregates = file_level_detection_aggregates[
@@ -71,7 +71,7 @@ class BarcodeFieldInterpretation(FieldInterpretation):
         if len(self.interpretations) == 0:
             logger.warning(f"No Barcode detection for field: {self.field.id}")
 
-    def update_common_interpretations(self):
+    def update_common_interpretations(self) -> None:
         # TODO: can we move it to a common wrapper since is_multi_marked is independent of field detection type?
         marked_interpretations = [
             interpretation.get_value()

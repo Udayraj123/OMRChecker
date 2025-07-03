@@ -3,10 +3,12 @@ from src.utils.drawing import DrawingUtils
 
 
 class FieldBlockDrawing:
-    def __init__(self, field_block):
+    def __init__(self, field_block) -> None:
         self.field_block = field_block
 
-    def draw_field_block(self, marked_image, shifted=True, thickness=3, border=3):
+    def draw_field_block(
+        self, marked_image, shifted=True, thickness=3, border=3
+    ) -> None:
         field_block = self.field_block
         # TODO: get this field block using a bounding box of all bubbles instead. (remove shift at field block level)
         FieldBlockDrawing.draw_bounding_rectangle(
@@ -24,16 +26,16 @@ class FieldBlockDrawing:
         )
 
     @staticmethod
-    def draw_bounding_rectangle(field_block, marked_image, shifted, border):
+    def draw_bounding_rectangle(field_block, marked_image, shifted, border) -> None:
         (
             bounding_box_origin,
             bounding_box_dimensions,
-        ) = map(
-            lambda attr: getattr(field_block, attr),
-            [
+        ) = (
+            getattr(field_block, attr)
+            for attr in [
                 "bounding_box_origin",
                 "bounding_box_dimensions",
-            ],
+            ]
         )
         block_position = (
             field_block.get_shifted_origin() if shifted else bounding_box_origin
@@ -50,27 +52,30 @@ class FieldBlockDrawing:
             )
 
     @staticmethod
-    def draw_field_block_label(field_block, marked_image, shifted, thickness):
+    def draw_field_block_label(field_block, marked_image, shifted, thickness) -> None:
         (
             field_block_name,
             bounding_box_origin,
             bounding_box_dimensions,
-        ) = map(
-            lambda attr: getattr(field_block, attr),
-            [
+        ) = (
+            getattr(field_block, attr)
+            for attr in [
                 "name",
                 "bounding_box_origin",
                 "bounding_box_dimensions",
-            ],
+            ]
         )
 
         block_position = (
             field_block.get_shifted_origin() if shifted else bounding_box_origin
         )
-        text_position = lambda size_x, size_y: (
-            int(block_position[0] + bounding_box_dimensions[0] - size_x),
-            int(block_position[1] - size_y),
-        )
+
+        def text_position(size_x: int, size_y: int) -> tuple[int, int]:
+            return (
+                int(block_position[0] + bounding_box_dimensions[0] - size_x),
+                int(block_position[1] - size_y),
+            )
+
         text = field_block_name
         if shifted:
             text = f"({field_block.shifts}){field_block_name}"

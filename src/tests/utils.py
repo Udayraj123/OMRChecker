@@ -1,7 +1,9 @@
 import json
 import os
+from collections.abc import Callable
 from copy import deepcopy
-from glob import glob
+from pathlib import Path
+from typing import Literal
 
 import pandas as pd
 from freezegun import freeze_time
@@ -11,7 +13,7 @@ from src.tests.constants import FROZEN_TIMESTAMP, IMAGE_SNAPSHOTS_PATH
 from src.utils.file import PathUtils
 
 
-def setup_mocker_patches(mocker):
+def setup_mocker_patches(mocker) -> None:
     mock_imshow = mocker.patch("cv2.imshow")
     mock_imshow.return_value = True
 
@@ -22,7 +24,7 @@ def setup_mocker_patches(mocker):
     mock_wait_key.return_value = ord("q")
 
 
-def run_entry_point(input_path, output_dir):
+def run_entry_point(input_path, output_dir) -> None:
     args = {
         "debug": True,
         "input_paths": [input_path],
@@ -34,7 +36,7 @@ def run_entry_point(input_path, output_dir):
         entry_point_for_args(args)
 
 
-def write_modified(modify_content, boilerplate, sample_json_path):
+def write_modified(modify_content, boilerplate, sample_json_path) -> None:
     if boilerplate is None:
         return
 
@@ -45,12 +47,12 @@ def write_modified(modify_content, boilerplate, sample_json_path):
         if returned_value is not None:
             content = returned_value
 
-    with open(sample_json_path, "w") as f:
+    with Path.open(sample_json_path, "w") as f:
         json.dump(content, f)
 
 
-def remove_file(path):
-    if os.path.exists(path):
+def remove_file(path) -> None:
+    if path.exists():
         os.remove(path)
 
 
@@ -60,18 +62,17 @@ def generate_write_jsons_and_run(
     template_boilerplate=None,
     config_boilerplate=None,
     evaluation_boilerplate=None,
-):
+) -> Callable:
     if (template_boilerplate or config_boilerplate or evaluation_boilerplate) is None:
-        raise Exception(
-            f"No boilerplates found. Provide atleast one boilerplate to write json."
-        )
+        msg = "No boilerplates found. Provide atleast one boilerplate to write json."
+        raise Exception(msg)
 
     def write_jsons_and_run(
         mocker,
         modify_template=None,
         modify_config=None,
         modify_evaluation=None,
-    ):
+    ) -> tuple[str, Exception | Literal["No Error"]]:
         sample_template_path, sample_config_path, sample_evaluation_path = (
             sample_path.joinpath("template.json"),
             sample_path.joinpath("config.json"),
@@ -86,6 +87,7 @@ def generate_write_jsons_and_run(
         sample_outputs, exception = "No output", "No Error"
         try:
             sample_outputs = run_sample(mocker, sample_path)
+        # ruff: noqa: BLE001
         except Exception as e:
             exception = e
 
@@ -98,10 +100,10 @@ def generate_write_jsons_and_run(
     return write_jsons_and_run
 
 
-def extract_all_csv_outputs(output_dir):
+def extract_all_csv_outputs(output_dir) -> dict[str, str]:
     sample_outputs = {}
     for _dir, _subdir, _files in os.walk(output_dir):
-        for file in glob(os.path.join(_dir, "*.csv")):
+        for file in Path(_dir).glob("*.csv"):
             output_df = extract_output_data(file)
             relative_path = PathUtils.sep_based_posix_path(
                 os.path.relpath(file, output_dir)
@@ -111,12 +113,11 @@ def extract_all_csv_outputs(output_dir):
     return sample_outputs
 
 
-def extract_output_data(path):
-    output_data = pd.read_csv(path, keep_default_na=False)
-    return output_data
+def extract_output_data(path) -> pd.DataFrame:
+    return pd.read_csv(path, keep_default_na=False)
 
 
-def assert_image_snapshot(output_dir, image_path, image_snapshot):
-    output_path = str(os.path.join(output_dir, image_path))
+def assert_image_snapshot(output_dir, image_path, image_snapshot) -> None:
+    output_path = str(Path(output_dir, image_path))
     # Note: image snapshots are updated using the --image-snapshot-update flag
     image_snapshot(output_path, IMAGE_SNAPSHOTS_PATH.joinpath(image_path))

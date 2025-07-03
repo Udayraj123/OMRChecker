@@ -7,12 +7,12 @@ from src.utils.math import MathUtils
 
 
 class BarcodeFieldInterpretationDrawing(FieldInterpretationDrawing):
-    def __init__(self, field_interpretation):
+    def __init__(self, field_interpretation) -> None:
         super().__init__(field_interpretation)
 
     def draw_field_interpretation(
         self, marked_image, image_type, evaluation_meta, evaluation_config_for_response
-    ):
+    ) -> None:
         field_label = self.field.field_label
         field_interpretation = self.field_interpretation
         if len(field_interpretation.interpretations) == 0:

@@ -14,7 +14,7 @@ class ImageWarpUtils:
     @staticmethod
     def warp_triangle_inplace(
         image, warped_image, source_triangle, warped_triangle, show_image_level=False
-    ):
+    ) -> None:
         if MathUtils.check_collinear_points(*source_triangle):
             logger.critical(
                 f"Found collinear points. Skipping warp step for the source triangle {source_triangle}"
@@ -28,17 +28,23 @@ class ImageWarpUtils:
 
         # Find bounding box and crop input image
         (
-            source_tl,
-            _source_tr,
-            source_br,
-            _source_bl,
-        ), source_box_dimensions = MathUtils.get_bounding_box_of_points(source_triangle)
+            (
+                source_tl,
+                _source_tr,
+                source_br,
+                _source_bl,
+            ),
+            _source_box_dimensions,
+        ) = MathUtils.get_bounding_box_of_points(source_triangle)
         (
-            warped_tl,
-            _warped_tr,
-            warped_br,
-            _warped_bl,
-        ), warped_box_dimensions = MathUtils.get_bounding_box_of_points(warped_triangle)
+            (
+                warped_tl,
+                _warped_tr,
+                warped_br,
+                _warped_bl,
+            ),
+            warped_box_dimensions,
+        ) = MathUtils.get_bounding_box_of_points(warped_triangle)
 
         source_shifted_triangle = MathUtils.shift_points_to_origin(
             source_tl, source_triangle
@@ -72,9 +78,9 @@ class ImageWarpUtils:
             borderMode=cv2.BORDER_REFLECT_101,
         )
         # Note: the warped image dimensions will match to that of the warped triangle's bounding box(with black filling)
-        assert warped_triangle_box.shape == tuple(
-            reversed(warped_box_dimensions)
-        ), f"{warped_triangle_box.shape} != {tuple(reversed(warped_box_dimensions))}"
+        if warped_triangle_box.shape != tuple(reversed(warped_box_dimensions)):
+            msg = f"{warped_triangle_box.shape} != {tuple(reversed(warped_box_dimensions))}"
+            raise Exception(msg)
 
         logger.info(source_triangle_box.shape, warped_triangle_box.shape)
 
@@ -97,8 +103,7 @@ class ImageWarpUtils:
             warped_image,
             warped_shifted_triangle,
             warped_triangle_box,
-            warped_tl,
-            warped_br,
+            (warped_tl, warped_br),
             warped_box_dimensions,
         )
         if show_image_level >= 5:
@@ -131,10 +136,11 @@ class ImageWarpUtils:
         source_image,
         shifted_triangle,
         warped_triangle_box,
-        warped_tl,
-        warped_br,
+        warped_tl_br,
         warped_box_dimensions,
     ):
+        tl, br = warped_tl_br
+        dest_w, dest_h = warped_box_dimensions
         logger.info("shifted_triangle", shifted_triangle)
         logger.info(
             "source_image",
@@ -142,16 +148,15 @@ class ImageWarpUtils:
             "warped_triangle_box",
             warped_triangle_box.shape,
         )
+        num_channels_gray = 1
+        shape_length_gray = 2
+        num_channels_colored = 3
         channels = (
-            1 if len(warped_triangle_box.shape) == 2 else warped_triangle_box.shape[2]
+            num_channels_gray
+            if len(warped_triangle_box.shape) == shape_length_gray
+            else warped_triangle_box.shape[2]
         )
-        tl, br, dest_w, dest_h = (
-            warped_tl,
-            warped_br,
-            warped_box_dimensions[0],
-            warped_box_dimensions[1],
-        )
-        if channels == 3:
+        if channels == num_channels_colored:
             # Get a white triangle mask
             # Note: we use shifted triangle to reduce mask size (as outside the box will have zeroes anyway)
             white_triangle = np.zeros((dest_h, dest_w, channels), dtype=np.float32)

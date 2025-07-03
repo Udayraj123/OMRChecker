@@ -1,7 +1,8 @@
-from typing import Any
+from typing import Any, ClassVar
 
 import cv2
 import numpy as np
+from cv2.typing import MatLike
 from scipy.interpolate import griddata
 
 from src.processors.constants import WarpMethod, WarpMethodFlags
@@ -19,20 +20,21 @@ from src.utils.parsing import OVERRIDE_MERGER
 
 # Internal Processor for separation of code
 class WarpOnPointsCommon(ImageTemplatePreprocessor):
-    __is_internal_preprocessor__ = True
+    __is_internal_preprocessor__: ClassVar = True
 
-    warp_method_flags_map = {
+    warp_method_flags_map: ClassVar = {
         WarpMethodFlags.INTER_LINEAR: cv2.INTER_LINEAR,
         WarpMethodFlags.INTER_CUBIC: cv2.INTER_CUBIC,
         WarpMethodFlags.INTER_NEAREST: cv2.INTER_NEAREST,
     }
 
-    def validate_and_remap_options_schema(self, options) -> dict:
-        raise Exception(f"Not implemented")
+    def validate_and_remap_options_schema(self, _options) -> dict:
+        msg = "Not implemented"
+        raise Exception(msg)
 
     def __init__(
         self, options, relative_dir, save_image_ops, default_processing_image_shape
-    ):
+    ) -> None:
         # TODO: need to fix this (self attributes will be overridden by parent and may cause inconsistency)
         self.tuning_config = save_image_ops.tuning_config
 
@@ -74,9 +76,10 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         return image
 
     def extract_control_destination_points(
-        self, image, colored_image, file_path
+        self, _image, _colored_image, _file_path
     ) -> tuple[Any, Any, Any]:
-        raise Exception("Not implemented")
+        msg = "Not implemented"
+        raise Exception(msg)
 
     def apply_filter(self, image, colored_image, _template, file_path):
         config = self.tuning_config
@@ -136,7 +139,8 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
                 image, colored_image, edge_contours_map
             )
         else:
-            raise Exception(f"Invalid warp method: {self.warp_method}")
+            msg = f"Invalid warp method: {self.warp_method}"
+            raise Exception(msg)
 
         title_prefix = "Warped Image"
         if config.outputs.show_image_level >= 4:
@@ -195,9 +199,8 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
     ):
         if len(parsed_control_points) > 4:
             logger.critical(f"Too many parsed_control_points={parsed_control_points}")
-            raise Exception(
-                f"Expected 4 control points for perspective transform, found {len(parsed_control_points)}. If you want to use a different method, pass it in tuningOptions['warpMethod']"
-            )
+            msg = f"Expected 4 control points for perspective transform, found {len(parsed_control_points)}. If you want to use a different method, pass it in tuningOptions['warpMethod']"
+            raise Exception(msg)
         # TODO: order the points from outside in parsing itself
         parsed_control_points, _ = MathUtils.order_four_points(
             parsed_control_points, dtype="float32"
@@ -310,7 +313,9 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
     ):
         config = self.tuning_config
 
-        assert image.shape[:2] == colored_image.shape[:2]
+        if image.shape[:2] != colored_image.shape[:2]:
+            msg = f"Image shape {image.shape[:2]} does not match colored image shape {colored_image.shape[:2]}"
+            raise Exception(msg)
 
         if self.enable_cropping:
             # TODO: >> get this more reliably - use minZoneRect instead?
@@ -349,12 +354,15 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
 
         return warped_image, warped_colored_image
 
-    def remap_with_doc_refine_rectify(self, image, colored_image, edge_contours_map):
+    def remap_with_doc_refine_rectify(
+        self, image, colored_image, edge_contours_map
+    ) -> tuple[MatLike, MatLike]:
         config = self.tuning_config
 
         # TODO: adapt this contract in the remap framework (use griddata vs scanline interchangeably?)
         scaled_map = rectify(
-            edge_contours_map=edge_contours_map, enable_cropping=self.enable_cropping
+            edge_contours_map=edge_contours_map,
+            # enable_cropping=self.enable_cropping
         )
 
         warped_image = cv2.remap(

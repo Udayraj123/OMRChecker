@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 import cv2
 import numpy as np
 
@@ -18,19 +20,19 @@ ref: https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edg
 
 
 class CropPage(WarpOnPointsCommon):
-    __is_internal_preprocessor__ = False
-    defaults = {
+    __is_internal_preprocessor__: ClassVar = False
+    defaults: ClassVar = {
         "morphKernel": (10, 10),
         "useColoredCanny": False,
     }
 
-    def get_class_name(self):
+    def get_class_name(self) -> str:
         return "CropPage"
 
     def validate_and_remap_options_schema(self, options):
         tuning_options = options.get("tuningOptions", {})
 
-        parsed_options = {
+        return {
             # Local defaults
             "morphKernel": options.get("morphKernel", self.defaults["morphKernel"]),
             "useColoredCanny": options.get(
@@ -45,9 +47,8 @@ class CropPage(WarpOnPointsCommon):
                 "cannyConfig": [],
             },
         }
-        return parsed_options
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         options = self.options
         self.use_colored_canny = options["useColoredCanny"]
@@ -56,8 +57,8 @@ class CropPage(WarpOnPointsCommon):
             cv2.MORPH_RECT, tuple(options["morphKernel"])
         )
 
-    def __str__(self):
-        return f"CropPage"
+    def __str__(self) -> str:
+        return "CropPage"
 
     def prepare_image(self, image):
         return ImageUtils.normalize(image)
@@ -79,10 +80,10 @@ class CropPage(WarpOnPointsCommon):
             _,
         ) = ImageUtils.get_cropped_warped_rectangle_points(ordered_page_corners)
 
-        if self.warp_method in [
+        if self.warp_method in {
             WarpMethod.DOC_REFINE,
             WarpMethod.PERSPECTIVE_TRANSFORM,
-        ]:
+        }:
             return ordered_page_corners, destination_page_corners, edge_contours_map
         # TODO: remove this if REMAP method is removed, see if homography REALLY needs page contour points
         max_points_per_edge = options.get("maxPointsPerEdge", None)
@@ -111,7 +112,7 @@ class CropPage(WarpOnPointsCommon):
 
         if self.use_colored_canny and not config.outputs.colored_outputs_enabled:
             logger.warning(
-                f"Cannot process colored image for CropPage. useColoredCanny is true but colored_outputs_enabled is false."
+                "Cannot process colored image for CropPage. useColoredCanny is true but colored_outputs_enabled is false."
             )
 
         _ret, image = cv2.threshold(image, 200, 255, cv2.THRESH_TRUNC)
@@ -167,7 +168,11 @@ class CropPage(WarpOnPointsCommon):
         for bounding_contour in all_contours:
             if cv2.contourArea(bounding_contour) < MIN_PAGE_AREA:
                 continue
-            peri = cv2.arcLength(bounding_contour, True)
+            peri = cv2.arcLength(
+                # ruff: noqa: FBT003
+                bounding_contour,
+                True,
+            )
             approx = cv2.approxPolyDP(
                 bounding_contour, epsilon=0.025 * peri, closed=True
             )
@@ -196,5 +201,6 @@ class CropPage(WarpOnPointsCommon):
             logger.warning(
                 f"Have you accidentally included CropPage preprocessor?\nIf no, increase the processing dimensions from config. Current image size used: {image.shape[:2]}"
             )
-            raise Exception("Paper boundary not found")
+            msg = "Paper boundary not found"
+            raise Exception(msg)
         return sheet, page_contour

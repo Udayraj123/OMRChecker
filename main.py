@@ -1,12 +1,3 @@
-"""
-
- OMRChecker
-
- Author: Udayraj Deshmukh
- Github: https://github.com/Udayraj123
-
-"""
-
 import argparse
 import sys
 from pathlib import Path
@@ -79,18 +70,18 @@ def parse_args():
 
     if len(unknown) > 0:
         argparser.print_help()
-        raise Exception(f"\nError: Unknown arguments: {unknown}")
+        msg = f"\nError: Unknown arguments: {unknown}"
+        raise Exception(msg)
 
     if args["setLayout"] is True:
-        if args["outputMode"] not in [OUTPUT_MODES.SET_LAYOUT, OUTPUT_MODES.DEFAULT]:
-            raise Exception(
-                f"Error: --setLayout cannot be used together with --outputMode={args['outputMode']}"
-            )
+        if args["outputMode"] not in {OUTPUT_MODES.SET_LAYOUT, OUTPUT_MODES.DEFAULT}:
+            msg = f"Error: --setLayout cannot be used together with --outputMode={args['outputMode']}"
+            raise Exception(msg)
         args["outputMode"] = "setLayout"
     return args
 
 
-def entry_point_for_args(args):
+def entry_point_for_args(args) -> None:
     if args["debug"] is False:
         # Disable traceback limit
         sys.tracebacklimit = 0
@@ -104,7 +95,7 @@ def entry_point_for_args(args):
         except Exception:
             if args["debug"] is False:
                 logger.critical(
-                    f"OMRChecker crashed. add --debug and run again to see error details"
+                    "OMRChecker crashed. add --debug and run again to see error details"
                 )
             raise
 

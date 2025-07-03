@@ -1,7 +1,7 @@
 from copy import copy as shallowcopy
+from typing import TYPE_CHECKING, ClassVar
 
 from src.algorithm.template.layout.field.barcode_field import BarcodeField
-from src.algorithm.template.layout.field.base import Field, ScanBox
 from src.algorithm.template.layout.field.bubble_field import BubbleField
 from src.algorithm.template.layout.field.ocr_field import OCRField
 from src.algorithm.template.layout.field_block.field_block_drawing import (
@@ -10,15 +10,18 @@ from src.algorithm.template.layout.field_block.field_block_drawing import (
 from src.processors.constants import FieldDetectionType
 from src.utils.parsing import default_dump, parse_fields
 
+if TYPE_CHECKING:
+    from src.algorithm.template.layout.field.base import Field, ScanBox
+
 
 class FieldBlock:
-    field_detection_type_to_field_class = {
+    field_detection_type_to_field_class: ClassVar = {
         FieldDetectionType.BUBBLES_THRESHOLD: BubbleField,
         FieldDetectionType.OCR: OCRField,
         FieldDetectionType.BARCODE_QR: BarcodeField,
     }
 
-    def __init__(self, block_name, field_block_object, field_blocks_offset):
+    def __init__(self, block_name, field_block_object, field_blocks_offset) -> None:
         self.name = block_name
         # TODO: Move plot_bin_name into child class
         self.plot_bin_name = block_name
@@ -29,12 +32,11 @@ class FieldBlock:
 
     # Make deepcopy for only parts that are mutated by Processor
     def get_copy_for_shifting(self):
-        copied_field_block = shallowcopy(self)
+        return shallowcopy(self)
         # No need to deepcopy self.fields since they are not using shifts yet,
         # also we are resetting them anyway before runs.
-        return copied_field_block
 
-    def reset_all_shifts(self):
+    def reset_all_shifts(self) -> None:
         self.shifts = [0, 0]
         for field in self.fields:
             field.reset_all_shifts()
@@ -60,7 +62,7 @@ class FieldBlock:
             ]
         }
 
-    def setup_field_block(self, field_block_object, field_blocks_offset):
+    def setup_field_block(self, field_block_object, field_blocks_offset) -> None:
         # case mapping
         (
             direction,
@@ -99,14 +101,15 @@ class FieldBlock:
         elif field_detection_type == FieldDetectionType.BARCODE_QR:
             self.setup_barcode_qr_field_block(field_block_object)
         else:
-            raise Exception(f"Unsupported field detection type: {field_detection_type}")
+            msg = f"Unsupported field detection type: {field_detection_type}"
+            raise Exception(msg)
         # TODO: support barcode, photo blob, etc custom field types
         # logger.info(
         #     "field_detection_type", field_detection_type, "labels_gap", labels_gap
         # )
 
     # TODO: move into a BubblesFieldBlock class? But provision to allow multiple field detection types in future.
-    def setup_bubbles_field_block(self, field_block_object):
+    def setup_bubbles_field_block(self, field_block_object) -> None:
         (
             alignment_object,
             bubble_dimensions,
@@ -130,14 +133,13 @@ class FieldBlock:
         self.bubble_field_type = bubble_field_type
 
         # Setup alignment
-        DEFAULT_ALIGNMENT = {
+        self.alignment = {
             # TODO: copy defaults from template's maxDisplacement value
         }
-        self.alignment = (
-            alignment_object if alignment_object is not None else DEFAULT_ALIGNMENT
-        )
+        if alignment_object is not None:
+            self.alignment.update(alignment_object)
 
-    def setup_ocr_field_block(self, field_block_object):
+    def setup_ocr_field_block(self, field_block_object) -> None:
         (scan_zone,) = map(
             field_block_object.get,
             [
@@ -148,7 +150,7 @@ class FieldBlock:
         self.scan_zone = scan_zone
         # TODO: compute scan zone?
 
-    def setup_barcode_qr_field_block(self, field_block_object):
+    def setup_barcode_qr_field_block(self, field_block_object) -> None:
         (scan_zone,) = map(
             field_block_object.get,
             [
@@ -159,7 +161,7 @@ class FieldBlock:
 
     def generate_fields(
         self,
-    ):
+    ) -> None:
         # TODO: refactor this dependency
         field_block = self
         direction = self.direction
@@ -167,12 +169,13 @@ class FieldBlock:
         field_detection_type = self.field_detection_type
         labels_gap = self.labels_gap
 
-        _v = 0 if (direction == "vertical") else 1
+        v = 0 if (direction == "vertical") else 1
         self.fields: list[Field] = []
         # Generate the bubble grid
         lead_point = [float(self.origin[0]), float(self.origin[1])]
         for field_label in self.parsed_field_labels:
             origin = lead_point.copy()
+            # ruff: noqa: N806
             FieldClass = self.field_detection_type_to_field_class[field_detection_type]
             self.fields.append(
                 FieldClass(
@@ -184,12 +187,12 @@ class FieldBlock:
                     origin,
                 )
             )
-            lead_point[_v] += labels_gap
+            lead_point[v] += labels_gap
 
         # TODO: validate for field block overflow outside template dimensions
         self.update_bounding_box()
 
-    def update_bounding_box(self):
+    def update_bounding_box(self) -> None:
         all_scan_boxes: list[ScanBox] = []
         for field in self.fields:
             all_scan_boxes += field.scan_boxes

@@ -17,12 +17,12 @@ from src.utils.drawing import DrawingUtils
 
 
 class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
-    def __init__(self, field_interpretation):
+    def __init__(self, field_interpretation) -> None:
         super().__init__(field_interpretation)
 
     def draw_field_interpretation(
         self, marked_image, image_type, evaluation_meta, evaluation_config_for_response
-    ):
+    ) -> None:
         field_label = self.field.field_label
         bubble_interpretations = self.field_interpretation.bubble_interpretations
         should_draw_question_verdicts = (
@@ -65,7 +65,7 @@ class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
         bubble_interpretations: list[FieldInterpretation],
         question_meta,
         evaluation_config_for_response,
-    ):
+    ) -> None:
         # TODO: check whether the custom label(if any) using this field was part of a correct answer
         for bubble_interpretation in bubble_interpretations:
             BubblesFieldInterpretationDrawing.draw_unit_bubble_interpretation_with_verdicts(
@@ -90,7 +90,7 @@ class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
         marked_image,
         bubble_interpretations: list[FieldInterpretation],
         evaluation_config_for_response: EvaluationConfigForSet,
-    ):
+    ) -> None:
         # TODO: make this generic, consume FieldInterpretation
         for field_interpretation in bubble_interpretations:
             bubble = field_interpretation.item_reference
@@ -133,13 +133,14 @@ class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
 
     @staticmethod
     def draw_unit_bubble_interpretation_with_verdicts(
+        # ruff: noqa: PLR0913
         bubble_interpretation,
         marked_image,
         evaluation_config_for_response,
         question_meta,
         image_type,
         thickness_factor=1 / 12,
-    ):
+    ) -> None:
         bonus_type = question_meta["bonus_type"]
 
         bubble = bubble_interpretation.item_reference
@@ -221,7 +222,7 @@ class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
         question_meta,
         bubble_interpretations: list[FieldInterpretation],
         evaluation_config_for_response: EvaluationConfigForSet,
-    ):
+    ) -> None:
         # Note: currently draw_answer_groups is limited for questions with upto 4 values
         answer_type = question_meta["answer_type"]
         if answer_type == AnswerType.STANDARD:
