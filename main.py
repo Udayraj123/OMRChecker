@@ -85,7 +85,7 @@ def entry_point_for_args(args) -> None:
     if args["debug"] is False:
         # Disable traceback limit
         sys.tracebacklimit = 0
-        # TODO: set log levels
+        logger.set_log_levels({"debug": True})
     for root in args["input_paths"]:
         try:
             entry_point(

@@ -27,10 +27,9 @@ jobs:
         run: mkdir -p ./.github-pytest/coverage
 
       - name: Run pytest
-        # TODO: use run_all_tests_and_coverage.sh here
         run: |
           set -o pipefail
-          uv run pytest --junitxml=./.github-pytest/pytest-output.xml | tee .github-pytest/pytest-coverage.txt
+          uv run pytest --cov-fail-under=70 --junitxml=./.github-pytest/pytest-output.xml | tee .github-pytest/pytest-coverage.txt
 
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@v1

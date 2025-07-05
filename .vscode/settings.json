@@ -55,10 +55,7 @@
     "editor.tabSize": 2
   },
   "[json][jsonc]": {
-    "editor.defaultFormatter": "vscode.json-language-features",
-    "editor.formatOnSave": true,
-    "editor.insertSpaces": true,
-    "editor.tabSize": 4
+    "editor.formatOnSave": false
   },
   "[toml]": {
     "editor.defaultFormatter": "tamasfe.even-better-toml",
