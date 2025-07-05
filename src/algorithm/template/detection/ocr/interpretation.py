@@ -72,7 +72,6 @@ class OCRFieldInterpretation(FieldInterpretation):
             logger.warning(f"No OCR detection for field: {self.field.id}")
 
     def update_common_interpretations(self) -> None:
-        # TODO: can we move it to a common wrapper since is_multi_marked is independent of field detection type?
         marked_interpretations = [
             interpretation.get_value()
             for interpretation in self.interpretations

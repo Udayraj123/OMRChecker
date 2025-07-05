@@ -138,17 +138,19 @@ class TemplateDetectionPass(FilePassAggregates):
 
     # TODO: check if passing runners is really needed or not here -
     def update_aggregates_on_processed_file(
-        self, file_path, field_detection_type_runners
+        self, file_path, field_detection_type_file_runners
     ) -> None:
         super().update_aggregates_on_processed_file(file_path)
 
         field_detection_type_wise_aggregates = self.file_level_aggregates[
             "field_detection_type_wise_aggregates"
         ]
-        for field_detection_type_runner in field_detection_type_runners.values():
+        for (
+            field_detection_type_file_runner
+        ) in field_detection_type_file_runners.values():
             field_detection_type_wise_aggregates[
-                field_detection_type_runner.field_detection_type
-            ] = field_detection_type_runner.get_file_level_detection_aggregates()
+                field_detection_type_file_runner.field_detection_type
+            ] = field_detection_type_file_runner.get_file_level_detection_aggregates()
 
         # TODO: uncomment if needed for directory level graphs
         # self.directory_level_aggregates["field_label_wise_aggregates"][file_path] = self.field_label_wise_aggregates

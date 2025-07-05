@@ -53,7 +53,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
         self.update_local_threshold_for_field()
         self.update_interpretations_for_field()
 
-        # TODO: see if parent can call this function -
+        # TODO: find a better lifecycle hook to call this function -
         self.update_common_interpretations()
         self.update_field_level_confidence_metrics()
 
@@ -121,7 +121,6 @@ class BubblesFieldInterpretation(FieldInterpretation):
             )
 
     def update_common_interpretations(self) -> None:
-        # TODO: can we move it to a common wrapper since is_multi_marked is independent of field detection type?
         marked_bubbles = [
             bubble_interpretation.bubble_value
             for bubble_interpretation in self.bubble_interpretations

@@ -51,14 +51,14 @@ class TemplateFileRunner(FileLevelRunner):
         self.all_field_detection_types = self.template.all_field_detection_types
 
         # Create instances of all required field type processors
-        self.field_detection_type_runners = {
-            field_detection_type: self.get_field_detection_type_runner(
+        self.field_detection_type_file_runners = {
+            field_detection_type: self.get_field_detection_type_file_runner(
                 field_detection_type
             )
             for field_detection_type in self.all_field_detection_types
         }
 
-    def get_field_detection_type_runner(
+    def get_field_detection_type_file_runner(
         self, field_detection_type
     ) -> FieldTypeFileLevelRunner:
         tuning_config = self.tuning_config
@@ -93,11 +93,11 @@ class TemplateFileRunner(FileLevelRunner):
     ) -> None:
         self.detection_pass.initialize_field_level_aggregates(field)
 
-        field_detection_type_runner = self.field_detection_type_runners[
+        field_detection_type_file_runner = self.field_detection_type_file_runners[
             field.field_detection_type
         ]
 
-        field_detection = field_detection_type_runner.run_field_level_detection(
+        field_detection = field_detection_type_file_runner.run_field_level_detection(
             field, gray_image, colored_image
         )
 
@@ -118,8 +118,10 @@ class TemplateFileRunner(FileLevelRunner):
             initial_directory_path, self.all_field_detection_types
         )
 
-        for field_detection_type_runner in self.field_detection_type_runners.values():
-            field_detection_type_runner.initialize_directory_level_aggregates(
+        for (
+            field_detection_type_file_runner
+        ) in self.field_detection_type_file_runners.values():
+            field_detection_type_file_runner.initialize_directory_level_aggregates(
                 initial_directory_path
             )
 
@@ -130,20 +132,24 @@ class TemplateFileRunner(FileLevelRunner):
         )
 
         # Setup field type wise metrics
-        for field_detection_type_runner in self.field_detection_type_runners.values():
-            field_detection_type_runner.initialize_file_level_detection_aggregates(
+        for (
+            field_detection_type_file_runner
+        ) in self.field_detection_type_file_runners.values():
+            field_detection_type_file_runner.initialize_file_level_detection_aggregates(
                 file_path
             )
 
     def update_detection_aggregates_on_processed_file(self, file_path) -> None:
-        for field_detection_type_runner in self.field_detection_type_runners.values():
-            field_detection_type_runner.update_detection_aggregates_on_processed_file(
+        for (
+            field_detection_type_file_runner
+        ) in self.field_detection_type_file_runners.values():
+            field_detection_type_file_runner.update_detection_aggregates_on_processed_file(
                 file_path
             )
 
         # Note: we update file level after field levels are updated
         self.detection_pass.update_aggregates_on_processed_file(
-            file_path, self.field_detection_type_runners
+            file_path, self.field_detection_type_file_runners
         )
 
     def run_file_level_interpretation(self, file_path, _gray_image, _colored_image):
@@ -153,39 +159,36 @@ class TemplateFileRunner(FileLevelRunner):
         # Perform interpretation step for each field
         for field in self.all_fields:
             # Intentional arg mutation
-            self.run_field_level_interpretation(current_omr_response, field)
+            self.run_field_level_interpretation(field, current_omr_response)
 
         self.update_interpretation_aggregates_on_processed_file(file_path)
 
         return current_omr_response
 
-    def run_field_level_interpretation(self, current_omr_response, field) -> None:
+    def run_field_level_interpretation(self, field, current_omr_response) -> None:
         self.interpretation_pass.initialize_field_level_aggregates(field)
 
-        field_label = field.field_label
-
-        field_detection_type_runner = self.field_detection_type_runners[
+        field_detection_type_file_runner = self.field_detection_type_file_runners[
             field.field_detection_type
         ]
+
         field_interpretation = (
-            field_detection_type_runner.run_field_level_interpretation(field)
+            field_detection_type_file_runner.run_field_level_interpretation(field)
         )
 
         field_type_runner_field_level_aggregates = (
-            field_detection_type_runner.get_field_level_interpretation_aggregates()
+            field_detection_type_file_runner.get_field_level_interpretation_aggregates()
         )
-
-        self.interpretation_pass.update_aggregates_on_processed_field_interpretation(
-            current_omr_response,
+        self.interpretation_pass.run_field_level_interpretation(
             field,
             field_interpretation,
             field_type_runner_field_level_aggregates,
+            current_omr_response,
         )
 
-        field_interpretation_string = (
+        current_omr_response[field.field_label] = (
             field_interpretation.get_field_interpretation_string()
         )
-        current_omr_response[field_label] = field_interpretation_string
 
     # This overrides parent definition -
     def initialize_file_level_interpretation_aggregates(self, file_path) -> None:
@@ -211,22 +214,26 @@ class TemplateFileRunner(FileLevelRunner):
         )
 
         # Setup field type wise metrics
-        for field_detection_type_runner in self.field_detection_type_runners.values():
-            field_detection_type_runner.initialize_file_level_interpretation_aggregates(
+        for (
+            field_detection_type_file_runner
+        ) in self.field_detection_type_file_runners.values():
+            field_detection_type_file_runner.initialize_file_level_interpretation_aggregates(
                 file_path,
                 field_detection_type_wise_detection_aggregates,
                 field_label_wise_detection_aggregates,
             )
 
     def update_interpretation_aggregates_on_processed_file(self, file_path) -> None:
-        for field_detection_type_runner in self.field_detection_type_runners.values():
-            field_detection_type_runner.update_interpretation_aggregates_on_processed_file(
+        for (
+            field_detection_type_file_runner
+        ) in self.field_detection_type_file_runners.values():
+            field_detection_type_file_runner.update_interpretation_aggregates_on_processed_file(
                 file_path
             )
 
         # Note: we update file level after field levels are updated
         self.interpretation_pass.update_aggregates_on_processed_file(
-            file_path, self.field_detection_type_runners
+            file_path, self.field_detection_type_file_runners
         )
 
     def finish_processing_directory(self) -> None:

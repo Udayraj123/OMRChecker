@@ -126,18 +126,6 @@ class FieldTypeFileLevelRunner(FileLevelRunner):
         file_level_detection_aggregates = (
             self.detection_pass.get_file_level_aggregates()
         )
-        file_level_interpretation_aggregates = (
-            self.interpretation_pass.get_file_level_aggregates()
+        return self.interpretation_pass.run_field_level_interpretation(
+            field, file_level_detection_aggregates
         )
-        # TODO: directly call .run_field_interpretation()
-        field_interpretation = self.interpretation_pass.get_field_interpretation(
-            field,
-            file_level_detection_aggregates,
-            file_level_interpretation_aggregates,
-        )
-
-        self.interpretation_pass.update_aggregates_on_processed_field_interpretation(
-            field, field_interpretation
-        )
-
-        return field_interpretation

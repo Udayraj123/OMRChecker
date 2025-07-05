@@ -45,9 +45,15 @@ class FieldTypeInterpretationPass(FilePassAggregates):
             }
         )
 
-    def update_aggregates_on_processed_field_interpretation(
-        self, field: Field, field_interpretation: FieldInterpretation
-    ) -> None:
+    def run_field_level_interpretation(self, field, file_level_detection_aggregates):
+        file_level_interpretation_aggregates = self.get_file_level_aggregates()
+        field_interpretation = self.get_field_interpretation(
+            field,
+            file_level_detection_aggregates,
+            file_level_interpretation_aggregates,
+        )
+
+        # update_aggregates_on_processed_field_interpretation
         self.update_field_level_aggregates_on_processed_field_interpretation(
             field, field_interpretation
         )
@@ -58,6 +64,8 @@ class FieldTypeInterpretationPass(FilePassAggregates):
         self.update_directory_level_aggregates_on_processed_field_interpretation(
             field, field_interpretation, field_level_aggregates
         )
+
+        return field_interpretation
 
     def update_field_level_aggregates_on_processed_field_interpretation(
         self, field: Field, field_interpretation: FieldInterpretation
@@ -138,15 +146,15 @@ class TemplateInterpretationPass(FilePassAggregates):
             }
         )
 
-    # This overrides parent definition -
-    def update_aggregates_on_processed_field_interpretation(
+    def run_field_level_interpretation(
         self,
-        current_omr_response,
-        field: Field,
-        field_interpretation: FieldInterpretation,
-        # TODO: see if detection also needs this arg (field_type_runner_field_level_aggregates)
+        field,
+        field_interpretation,
         field_type_runner_field_level_aggregates,
-    ) -> None:
+        current_omr_response,
+    ):
+        # update_aggregates_on_processed_field_interpretation
+        # TODO: see if detection also needs this arg (field_type_runner_field_level_aggregates)
         self.update_field_level_aggregates_on_processed_field_interpretation(
             current_omr_response,
             field,
@@ -218,19 +226,21 @@ class TemplateInterpretationPass(FilePassAggregates):
         # Update the processed field count for that runner
         field_detection_type_wise_aggregates["fields_count"].push("processed")
 
-    # TODO: check if passing runners is really needed or not here (can move inside field_detection_type_runner?) -
+    # TODO: check if passing runners is really needed or not here (can move inside field_detection_type_file_runner?) -
     def update_aggregates_on_processed_file(
-        self, file_path, field_detection_type_runners
+        self, file_path, field_detection_type_file_runners
     ) -> None:
         super().update_aggregates_on_processed_file(file_path)
 
         field_detection_type_wise_aggregates = self.file_level_aggregates[
             "field_detection_type_wise_aggregates"
         ]
-        for field_detection_type_runner in field_detection_type_runners.values():
+        for (
+            field_detection_type_file_runner
+        ) in field_detection_type_file_runners.values():
             field_detection_type_wise_aggregates[
-                field_detection_type_runner.field_detection_type
-            ] = field_detection_type_runner.get_file_level_interpretation_aggregates()
+                field_detection_type_file_runner.field_detection_type
+            ] = field_detection_type_file_runner.get_file_level_interpretation_aggregates()
 
         # Update read_response_flags
         read_response_flags = self.file_level_aggregates["read_response_flags"]
