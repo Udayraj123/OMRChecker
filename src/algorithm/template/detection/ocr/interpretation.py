@@ -9,8 +9,8 @@ from src.utils.logger import logger
 class OCRInterpretation:
     def __init__(self, detection) -> None:
         self.detection = detection
-        self.is_marked = detection is not None
-        self.detected_text = detection.detected_text if self.is_marked else ""
+        self.is_attempted = detection is not None
+        self.detected_text = detection.detected_text if self.is_attempted else ""
 
     def get_value(self):
         return self.detected_text
@@ -29,7 +29,7 @@ class OCRFieldInterpretation(FieldInterpretation):
         marked_interpretations = [
             interpretation.get_value()
             for interpretation in self.interpretations
-            if interpretation.is_marked
+            if interpretation.is_attempted
         ]
         # Empty value logic
         if len(marked_interpretations) == 0:
@@ -76,7 +76,7 @@ class OCRFieldInterpretation(FieldInterpretation):
         marked_interpretations = [
             interpretation.get_value()
             for interpretation in self.interpretations
-            if interpretation.is_marked
+            if interpretation.is_attempted
         ]
-        self.is_marked = len(marked_interpretations) > 0
+        self.is_attempted = len(marked_interpretations) > 0
         self.is_multi_marked = len(marked_interpretations) > 1

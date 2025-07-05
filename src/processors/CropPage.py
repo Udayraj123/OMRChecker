@@ -60,7 +60,7 @@ class CropPage(WarpOnPointsCommon):
     def __str__(self) -> str:
         return "CropPage"
 
-    def prepare_image(self, image):
+    def prepare_image_before_extraction(self, image):
         return ImageUtils.normalize(image)
 
     def extract_control_destination_points(self, image, colored_image, file_path):

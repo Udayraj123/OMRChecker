@@ -1,3 +1,6 @@
+from pathlib import Path
+
+
 class Processor:
     """Base class that each processor must inherit from."""
 
@@ -8,7 +11,7 @@ class Processor:
     ) -> None:
         self.options = options
         self.tuning_options = options.get("tuningOptions", {})
-        self.relative_dir = relative_dir
+        self.relative_dir = Path(relative_dir)
         self.description = "UNKNOWN"
 
     def __str__(self) -> str:

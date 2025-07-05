@@ -105,9 +105,11 @@ def process_dir(
     omr_files = [Path(PurePosixPath(omr_file).as_posix()) for omr_file in omr_files]
 
     # Exclude images (take union over all pre_processors)
-    excluded_files = []
+    excluded_files: set[str] = set()
     if template:
-        excluded_files.extend(template.get_exclude_files())
+        excluded_files.update(
+            str(exclude_file) for exclude_file in template.get_exclude_files()
+        )
 
     local_evaluation_path = curr_dir.joinpath(constants.EVALUATION_FILENAME)
     # Note: if setLayout is passed, there's no need to load evaluation file
@@ -123,11 +125,11 @@ def process_dir(
             tuning_config,
         )
 
-        excluded_files.extend(
-            Path(exclude_file) for exclude_file in evaluation_config.get_exclude_files()
+        excluded_files.update(
+            str(exclude_file) for exclude_file in evaluation_config.get_exclude_files()
         )
 
-    omr_files = [f for f in omr_files if f not in excluded_files]
+    omr_files = [f for f in omr_files if str(f) not in excluded_files]
 
     if omr_files:
         if not template:
@@ -169,9 +171,9 @@ def process_dir(
     elif not subdirs:
         # Each subdirectory should have images or should be non-leaf
         logger.info(
-            f"No valid images or sub-folders found in {curr_dir}.\
-            Empty directories not allowed."
+            f"No valid images or sub-folders found in '{curr_dir}'. Empty directories not allowed."
         )
+        return
 
     # recursively process sub-folders
     for d in subdirs:
@@ -466,7 +468,7 @@ def process_directory_files(
     logger.reset_log_levels()
 
     # Calculate folder level stats here
-    template.finalize_directory_metrics()
+    template.finish_processing_directory()
     # TODO: export directory level stats here
 
     print_stats(start_time, files_counter, tuning_config)

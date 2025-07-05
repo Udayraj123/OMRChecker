@@ -20,7 +20,7 @@ class BubbleMeanValue(MeanValueItem):
         return {
             key: default_dump(getattr(self, key))
             for key in [
-                # "is_marked",
+                # "is_attempted",
                 # "shifted_position": unit_bubble.item_reference.get_shifted_position(field_block.shifts),
                 # "item_reference_name",
                 "mean_value",

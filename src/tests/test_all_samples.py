@@ -115,3 +115,8 @@ def test_run_community_Shamanth(run_sample, mocker, snapshot) -> None:
 def test_run_community_UmarFarootAPS(run_sample, mocker, snapshot) -> None:
     sample_outputs = run_sample(mocker, "community/UmarFarootAPS")
     assert snapshot == sample_outputs
+
+
+def test_run_community_JoyChopra1298(run_sample, mocker, snapshot) -> None:
+    sample_outputs = run_sample(mocker, "community/JoyChopra1298")
+    assert snapshot == sample_outputs

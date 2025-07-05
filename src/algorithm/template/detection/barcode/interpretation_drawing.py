@@ -45,7 +45,7 @@ class BarcodeFieldInterpretationDrawing(FieldInterpretationDrawing):
                 bonus_type = question_meta["bonus_type"]
 
                 # Filled box in case of marked bubble or bonus case
-                if field_interpretation.is_marked or bonus_type is not None:
+                if field_interpretation.is_attempted or bonus_type is not None:
                     (
                         _verdict_symbol,
                         verdict_color,

@@ -1,4 +1,5 @@
 import math
+import os
 import random
 import re
 
@@ -7,6 +8,9 @@ from matplotlib import colormaps
 from matplotlib import pyplot as plt
 
 from src.algorithm.template.detection.base.interpretation import FieldInterpretation
+from src.algorithm.template.detection.bubbles_threshold.bubble_interpretation import (
+    BubbleInterpretation,
+)
 from src.algorithm.template.detection.bubbles_threshold.detection import BubbleMeanValue
 from src.algorithm.template.detection.bubbles_threshold.interpretation_drawing import (
     BubblesFieldInterpretationDrawing,
@@ -15,31 +19,9 @@ from src.algorithm.template.layout.field.base import Field
 from src.utils.logger import logger
 
 
-class BubbleInterpretation:
-    def __init__(self, field_bubble_mean: BubbleMeanValue, local_threshold) -> None:
-        self.is_marked = None
-        # self.field_bubble_mean = field_bubble_mean
-        self.mean_value = field_bubble_mean.mean_value
-        self.bubble_value = field_bubble_mean.item_reference.bubble_value
-        self.local_threshold = local_threshold
-        # TODO: decouple this -  needed for drawing (else not needed here?)
-        self.item_reference = field_bubble_mean.item_reference
-        # self.unit_bubble = field_bubble_mean.item_reference
-
-        self.update_interpretation(local_threshold)
-
-    def update_interpretation(self, local_threshold):
-        is_marked = local_threshold > self.mean_value
-        self.is_marked = is_marked
-        return is_marked
-
-    def __str__(self) -> str:
-        return f"{self.item_reference} : {round(self.mean_value, 2)} {'*' if self.is_marked else ''}"
-
-
 class BubblesFieldInterpretation(FieldInterpretation):
     def __init__(self, *args, **kwargs) -> None:
-        self.bubble_interpretations: list[BubbleInterpretation] = None
+        self.bubble_interpretations: list[BubbleInterpretation] = []
         super().__init__(*args, **kwargs)
 
     def get_drawing_instance(self):
@@ -49,7 +31,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
         marked_bubbles = [
             bubble_interpretation.bubble_value
             for bubble_interpretation in self.bubble_interpretations
-            if bubble_interpretation.is_marked
+            if bubble_interpretation.is_attempted
         ]
         # Empty value logic
         if len(marked_bubbles) == 0:
@@ -143,7 +125,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
         marked_bubbles = [
             bubble_interpretation.bubble_value
             for bubble_interpretation in self.bubble_interpretations
-            if bubble_interpretation.is_marked
+            if bubble_interpretation.is_attempted
         ]
         self.is_multi_marked = len(marked_bubbles) > 1
 
@@ -245,6 +227,8 @@ class BubblesFieldInterpretation(FieldInterpretation):
     def plot_for_global_threshold(
         plot_means_and_refs, plot_title, file_level_fallback_threshold, thr2
     ) -> None:
+        if os.environ.get("OMR_CHECKER_CONTAINER"):
+            return
         _, ax = plt.subplots()
         # TODO: move into individual utils
 

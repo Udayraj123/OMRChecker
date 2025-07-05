@@ -1,4 +1,5 @@
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, ClassVar
 
 import cv2
@@ -54,13 +55,13 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             options.get("defaultSelector")
         ]
 
-    def exclude_files(self):
+    def exclude_files(self) -> list[Path]:
         return []
 
     def __str__(self) -> str:
         return f'CropOnMarkers["{self.options["pointsLayout"]}"]'
 
-    def prepare_image(self, image):
+    def prepare_image_before_extraction(self, image):
         return image
 
     def parse_and_apply_scan_zone_presets_and_defaults(self) -> None:

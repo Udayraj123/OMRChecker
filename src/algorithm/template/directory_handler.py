@@ -1,12 +1,16 @@
 from csv import QUOTE_NONNUMERIC
 from pathlib import Path
 from time import localtime, strftime
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
 from src.utils.constants import OUTPUT_MODES
 from src.utils.file import PathUtils
 from src.utils.logger import logger
+
+if TYPE_CHECKING:
+    from io import TextIOWrapper
 
 
 # Process files + directory
@@ -43,7 +47,7 @@ class TemplateDirectoryHandler:
             *self.omr_response_columns,
         ]
 
-        self.output_files = {}
+        self.output_files: dict[str, TextIOWrapper] = {}
         time_now_hrs = strftime("%I%p", localtime())
         files_map = {
             "Results": Path(self.path_utils.results_dir, f"Results_{time_now_hrs}.csv"),
@@ -54,11 +58,9 @@ class TemplateDirectoryHandler:
         for file_key, file_path in files_map.items():
             if not file_path.exists():
                 logger.info(f"Created new file: '{file_path}'")
-                # moved handling of files to pandas csv writer
-                self.output_files[file_key] = file_path
                 # Create Header Columns
                 pd.DataFrame([self.sheet_columns], dtype=str).to_csv(
-                    self.output_files[file_key],
+                    file_path,
                     mode="a",
                     quoting=QUOTE_NONNUMERIC,
                     header=False,
@@ -66,8 +68,13 @@ class TemplateDirectoryHandler:
                 )
             else:
                 logger.info(f"Present : appending to '{file_path}'")
-                with Path.open(file_path, "a") as f:
-                    self.output_files[file_key] = f
+
+            self.output_files[file_key] = Path.open(file_path, "a")
+
+    def finish_processing_directory(self):
+        for file_key, file_handler in self.output_files.items():
+            file_handler.close()
+            logger.debug(f"Closed file {file_key}")
 
     def get_empty_response_array(self):
         return self.empty_response_array

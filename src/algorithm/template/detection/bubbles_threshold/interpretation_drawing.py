@@ -1,10 +1,11 @@
 from src.algorithm.evaluation.answer_matcher import AnswerMatcher
 from src.algorithm.evaluation.evaluation_config_for_set import EvaluationConfigForSet
-from src.algorithm.template.detection.base.interpretation import FieldInterpretation
 from src.algorithm.template.detection.base.interpretation_drawing import (
     FieldInterpretationDrawing,
 )
-from src.processors.constants import FieldDetectionType
+from src.algorithm.template.detection.bubbles_threshold.bubble_interpretation import (
+    BubbleInterpretation,
+)
 from src.schemas.constants import AnswerType
 from src.utils.constants import (
     CLR_BLACK,
@@ -62,7 +63,7 @@ class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
     def draw_bubbles_and_detections_with_verdicts(
         marked_image,
         image_type,
-        bubble_interpretations: list[FieldInterpretation],
+        bubble_interpretations: list[BubbleInterpretation],
         question_meta,
         evaluation_config_for_response,
     ) -> None:
@@ -88,17 +89,16 @@ class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
     @staticmethod
     def draw_bubbles_and_detections_without_verdicts(
         marked_image,
-        bubble_interpretations: list[FieldInterpretation],
+        bubble_interpretations: list[BubbleInterpretation],
         evaluation_config_for_response: EvaluationConfigForSet,
     ) -> None:
-        # TODO: make this generic, consume FieldInterpretation
-        for field_interpretation in bubble_interpretations:
-            bubble = field_interpretation.item_reference
+        for bubble_interpretation in bubble_interpretations:
+            bubble = bubble_interpretation.item_reference
             bubble_dimensions = bubble.dimensions
             shifted_position = tuple(bubble.get_shifted_position())
             bubble_value = str(bubble.bubble_value)
 
-            if field_interpretation.is_marked:
+            if bubble_interpretation.is_attempted:
                 DrawingUtils.draw_box(
                     marked_image,
                     shifted_position,
@@ -162,14 +162,14 @@ class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
             )
 
         # Filled box in case of marked bubble or bonus case
-        if bubble_interpretation.is_marked or bonus_type is not None:
+        if bubble_interpretation.is_attempted or bonus_type is not None:
             (
                 verdict_symbol,
                 verdict_color,
                 verdict_symbol_color,
                 thickness_factor,
             ) = evaluation_config_for_response.get_evaluation_meta_for_question(
-                question_meta, bubble_interpretation.is_marked, image_type
+                question_meta, bubble_interpretation.is_attempted, image_type
             )
 
             # Bounding box for marked bubble or bonus bubble
@@ -195,7 +195,7 @@ class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
 
             # Symbol of the field value for marked bubble
             if (
-                bubble_interpretation.is_marked
+                bubble_interpretation.is_attempted
                 and evaluation_config_for_response.draw_detected_bubble_texts["enabled"]
             ):
                 DrawingUtils.draw_text(
@@ -220,7 +220,7 @@ class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
         marked_image,
         image_type,
         question_meta,
-        bubble_interpretations: list[FieldInterpretation],
+        bubble_interpretations: list[BubbleInterpretation],
         evaluation_config_for_response: EvaluationConfigForSet,
     ) -> None:
         # Note: currently draw_answer_groups is limited for questions with upto 4 values
@@ -234,12 +234,8 @@ class BubblesFieldInterpretationDrawing(FieldInterpretationDrawing):
         if image_type == "GRAYSCALE":
             color_sequence = [CLR_WHITE] * len(color_sequence)
 
-        for field_interpretation in bubble_interpretations:
-            field = field_interpretation.field
-            if field.field_detection_type != FieldDetectionType.BUBBLES_THRESHOLD:
-                continue
-
-            bubble = field_interpretation.item_reference
+        for bubble_interpretation in bubble_interpretations:
+            bubble = bubble_interpretation.item_reference
             bubble_dimensions = bubble.dimensions
             shifted_position = tuple(bubble.get_shifted_position())
             bubble_value = str(bubble.bubble_value)

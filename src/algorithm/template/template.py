@@ -70,15 +70,10 @@ class Template:
         self.directory_handler.reset_path_utils(output_dir, output_mode)
 
     def get_exclude_files(self):
-        excluded_files = []
-        if self.template_layout.alignment["reference_image_path"] is not None:
-            # Note: reference_image_path is already Path()
-            excluded_files.extend(
-                self.template_layout.alignment["reference_image_path"]
-            )
+        excluded_files = self.template_layout.get_exclude_files()
 
         for pp in self.get_pre_processors():
-            excluded_files.extend(Path(p) for p in pp.exclude_files())
+            excluded_files.extend(p for p in pp.exclude_files())
 
         return excluded_files
 
@@ -113,8 +108,9 @@ class Template:
     def get_errors_file(self):
         return self.directory_handler.output_files["Errors"]
 
-    def finalize_directory_metrics(self):
-        return self.template_file_runner.finalize_directory_metrics()
+    def finish_processing_directory(self):
+        self.directory_handler.finish_processing_directory()
+        return self.template_file_runner.finish_processing_directory()
 
     def get_save_marked_dir(self):
         return self.directory_handler.path_utils.save_marked_dir

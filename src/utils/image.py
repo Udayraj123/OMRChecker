@@ -249,7 +249,7 @@ class ImageUtils:
         allowed_error = 0.02
         if (
             MathUtils.distance(warped_points[-1], end) / warped_line_length
-            < allowed_error
+            > allowed_error
         ):
             msg = f"{warped_points[-1]} != {end}"
             raise Exception(msg)

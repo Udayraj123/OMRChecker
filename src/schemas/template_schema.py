@@ -752,8 +752,8 @@ TEMPLATE_SCHEMA = {
                                     "additionalProperties": False,
                                     "required": [
                                         "referenceImage",
-                                        "markerDimensions",
-                                        "threshold",
+                                        # "markerDimensions",
+                                        # "threshold",
                                     ],
                                     "properties": {
                                         "referenceImage": {

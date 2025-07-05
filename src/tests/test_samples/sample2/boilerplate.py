@@ -16,6 +16,7 @@ TEMPLATE_BOILERPLATE = {
     ],
     "fieldBlocks": {
         "MCQBlock1a1": {
+            "fieldDetectionType": "BUBBLES_THRESHOLD",
             "bubbleFieldType": "QTYPE_MCQ4",
             "origin": [197, 300],
             "bubblesGap": 92,
@@ -23,6 +24,7 @@ TEMPLATE_BOILERPLATE = {
             "fieldLabels": ["q1..17"],
         },
         "MCQBlock1a11": {
+            "fieldDetectionType": "BUBBLES_THRESHOLD",
             "bubbleFieldType": "QTYPE_MCQ4",
             "origin": [1770, 1310],
             "bubblesGap": 92,

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import cv2
 
 from src.processors.interfaces.ImageTemplatePreprocessor import (
@@ -96,6 +98,6 @@ class AutoRotate(ImageTemplatePreprocessor):
             )
         return image, colored_image, _template
 
-    def exclude_files(self):
+    def exclude_files(self) -> list[Path]:
         path = self.get_relative_path(self.options["referenceImage"])
         return [path]

@@ -14,12 +14,11 @@ class FieldInterpretation:
     ) -> None:
         self.tuning_config = tuning_config
         self.field = field
-
-        # TODO: replace is_marked with is_attempted
-        self.is_marked = None
+        self.is_attempted = None
         # self.field_block = field.field_block
         self.empty_value = field.empty_value
         self.field_level_confidence_metrics = {}
+        # TODO: make get_drawing_instance fetch singleton classes?
         self.drawing = self.get_drawing_instance()
 
         self.run_interpretation(

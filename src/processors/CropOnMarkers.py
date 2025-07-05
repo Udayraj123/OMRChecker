@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from src.processors.interfaces.ImageTemplatePreprocessor import (
     ImageTemplatePreprocessor,
 )
@@ -16,7 +18,7 @@ class CropOnMarkers(ImageTemplatePreprocessor):
             # TODO: convex hull method for the sparse blobs
             self.instance = CropOnDotLines(*args, **kwargs)
 
-    def exclude_files(self):
+    def exclude_files(self) -> list[Path]:
         return self.instance.exclude_files()
 
     def __str__(self) -> str:

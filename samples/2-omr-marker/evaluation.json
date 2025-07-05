@@ -91,6 +91,6 @@
   },
   "outputs_configuration": {
     "should_explain_scoring": true,
-    "should_export_explanation_csv": true,
+    "should_export_explanation_csv": true
   }
 }

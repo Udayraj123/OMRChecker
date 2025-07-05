@@ -26,6 +26,7 @@ class TemplateLayout:
         self.path = template_path
         self.template = template
         self.tuning_config = tuning_config
+        self.template_dimensions: list[int] = [0, 0]
 
         json_object = open_template_with_defaults(template_path)
         (
@@ -90,6 +91,13 @@ class TemplateLayout:
 
         # TODO: this is dependent on other calls to finish
         self.setup_alignment(alignment_object, template_path.parent)
+
+    def get_exclude_files(self):
+        excluded_files = []
+        if self.alignment["reference_image_path"] is not None:
+            # Note: reference_image_path is already Path()
+            excluded_files.append(self.alignment["reference_image_path"])
+        return excluded_files
 
     def get_copy_for_shifting(self):
         # Copy template for this instance op

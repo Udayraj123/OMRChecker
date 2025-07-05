@@ -23,28 +23,28 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Creating .github-pytest and coverage folders
+        run: mkdir -p ./.github-pytest/coverage
+
       - name: Run pytest
         # TODO: use run_all_tests_and_coverage.sh here
         run: |
           set -o pipefail
-          uv run pytest --junitxml=pytest.xml | tee pytest-coverage.txt
+          uv run pytest --junitxml=./.github-pytest/pytest-output.xml | tee .github-pytest/pytest-coverage.txt
 
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@v1
         with:
-          pytest-coverage-path: ./pytest-coverage.txt
-          junitxml-path: ./pytest.xml
+          pytest-coverage-path: ./.github-pytest/pytest-coverage.txt
+          junitxml-path: ./.github-pytest/pytest-output.xml
 
-      - name: Creating coverage folder
-        run: mkdir -p coverage
-
-      - name: Coverage Bagdge
+      - name: Coverage Badge
         uses: tj-actions/coverage-badge-py@v2
         with:
-          output: coverage/coverage.svg
+          output: .github-pytest/coverage/coverage.svg
 
       - name: Publish coverage report to coverage-badge branch
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: coverage-badge
-          folder: coverage
+          folder: .github-pytest/coverage

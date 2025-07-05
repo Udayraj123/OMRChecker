@@ -7,6 +7,7 @@ from src.tests.utils import (
     run_entry_point,
     setup_mocker_patches,
 )
+from src.utils.logger import logger
 
 FROZEN_TIMESTAMP = "1970-01-01"
 CURRENT_DIR = Path("src/tests")
@@ -50,9 +51,10 @@ def test_no_template(mocker) -> None:
 
 
 def test_empty_template(mocker) -> None:
-    def modify_template(_) -> None:
-        return
+    def modify_template(_) -> dict:
+        return {}
 
+    logger.debug("\nExpecting invalid template json error logs:")
     _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert (
         str(exception)
@@ -64,8 +66,12 @@ def test_invalid_bubble_field_type(mocker) -> None:
     def modify_template(template) -> None:
         template["fieldBlocks"]["MCQ_Block_1"]["bubbleFieldType"] = "X"
 
+    logger.debug("\nExpecting invalid template json error logs:")
     _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
-    assert str(exception) == "Invalid field type: X in block MCQ_Block_1"
+    assert (
+        str(exception)
+        == f"Provided Template JSON is Invalid: '{BASE_SAMPLE_TEMPLATE_PATH}'"
+    )
 
 
 def test_overflow_labels(mocker) -> None:
@@ -75,7 +81,7 @@ def test_overflow_labels(mocker) -> None:
     _, exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert (
         str(exception)
-        == "Overflowing field block 'MCQ_Block_1' with origin [65, 60] and dimensions [189, 5173] in template with dimensions [300, 400]"
+        == "Overflowing field block 'MCQ_Block_1' with origin [65.0, 60.0] and dimensions [189.0, 5173.0] in template with dimensions [300, 400]"
     )
 
 

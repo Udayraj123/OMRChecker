@@ -16,8 +16,8 @@ def load_json(path, **rest) -> dict[str, Any]:
         with Path.open(path) as f:
             loaded = json.load(f, **rest)
     except json.decoder.JSONDecodeError as error:
-        logger.critical(error)
         msg = f"Error when loading json file at: '{path}'"
+        logger.critical(msg, error)
         raise Exception(msg) from None
 
     return loaded

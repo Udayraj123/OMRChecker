@@ -144,7 +144,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                     custom_options["referenceImage"]
                 )
 
-                if not Path(reference_image_path).exists():
+                if not reference_image_path.exists():
                     msg = f"Marker reference image not found for {zone_label} at path provided: {reference_image_path}"
                     raise Exception(msg)
 
@@ -169,7 +169,9 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 reference_image = self.loaded_reference_images[reference_image_path]
             else:
                 # TODO: add colored support later based on image_type passed at parent level
-                reference_image = cv2.imread(reference_image_path, cv2.IMREAD_GRAYSCALE)
+                reference_image = cv2.imread(
+                    str(reference_image_path), cv2.IMREAD_GRAYSCALE
+                )
                 self.loaded_reference_images[reference_image_path] = reference_image
 
             # TODO: expose referenceZone support in schema with a better name (to extract an zone out of the reference image to use as a marker)
@@ -450,10 +452,10 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
 
         return marker_position, optimal_marker
 
-    def exclude_files(self):
-        return list(self.loaded_reference_images.keys())
+    def exclude_files(self) -> list[Path]:
+        return [Path(key) for key in self.loaded_reference_images]
 
-    def prepare_image(self, image):
+    def prepare_image_before_extraction(self, image):
         # TODO: remove apply_erode_subtract?
         return ImageUtils.normalize(
             image

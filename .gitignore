@@ -1,5 +1,6 @@
 # Any directory starting with a dot
 **/\.*/
+
 # Exceptions for dot directories -
 !.github/
 !.vscode/
@@ -16,5 +17,12 @@ outputs/*
 venv/
 .venv/
 OMRChecker.wiki/
+
+# pytest
 pytestdebug.log
 .coverage
+.pytest_cache
+
+# ruff
+.ruff_cache
+

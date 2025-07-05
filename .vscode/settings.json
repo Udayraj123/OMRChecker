@@ -1,6 +1,9 @@
 {
   "files.insertFinalNewline": false,
   "files.trimTrailingWhitespace": true,
+  "python.analysis.extraPaths": [
+    "./src"
+  ],
   "python.defaultInterpreterPath": "/home/vscode/.venv/bin/python",
   "python.testing.autoTestDiscoverOnSaveEnabled": false,
   "python.testing.pytestEnabled": true,
@@ -13,6 +16,16 @@
     "zsh": {
       "path": "/bin/zsh"
     }
+  },
+  "pyright.disableOrganizeImports": true,
+  "[python]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "never"
+    },
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4
   },
   "[dockercompose]": {
     "editor.autoIndent": "advanced",
@@ -45,16 +58,6 @@
     "editor.defaultFormatter": "vscode.json-language-features",
     "editor.formatOnSave": true,
     "editor.insertSpaces": true,
-    "editor.tabSize": 4
-  },
-  "pyright.disableOrganizeImports": true,
-  "[python]": {
-    "editor.codeActionsOnSave": {
-      "source.fixAll": "explicit",
-      "source.organizeImports": "never"
-    },
-    "editor.defaultFormatter": "charliermarsh.ruff",
-    "editor.formatOnSave": true,
     "editor.tabSize": 4
   },
   "[toml]": {

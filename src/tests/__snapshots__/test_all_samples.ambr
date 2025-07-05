@@ -130,6 +130,25 @@
     ''',
   })
 # ---
+# name: test_run_community_JoyChopra1298
+  dict({
+    'Manual/ErrorFiles.csv': '''
+      Empty DataFrame
+      Columns: [file_id, input_path, output_path, score, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14, q15, q16, q17, q18, q19, q20, q21, q22, q23, q24, q25, q26, q27, q28, q29, q30, q31, q32, q33, q34, q35, q36, q37, q38, q39, q40, q41, q42, q43, q44, q45, q46, q47, q48, q49, q50, q51, q52, q53, q54, q55, q56, q57, q58, q59, q60, q61, q62, q63, q64, q65, q66, q67, q68, q69, q70, q71, q72, q73, q74, q75, q76, q77, q78, q79, q80, q81, q82, q83, q84, q85, q86, q87, q88, q89, q90]
+      Index: []
+    ''',
+    'Manual/MultiMarkedFiles.csv': '''
+      Empty DataFrame
+      Columns: [file_id, input_path, output_path, score, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14, q15, q16, q17, q18, q19, q20, q21, q22, q23, q24, q25, q26, q27, q28, q29, q30, q31, q32, q33, q34, q35, q36, q37, q38, q39, q40, q41, q42, q43, q44, q45, q46, q47, q48, q49, q50, q51, q52, q53, q54, q55, q56, q57, q58, q59, q60, q61, q62, q63, q64, q65, q66, q67, q68, q69, q70, q71, q72, q73, q74, q75, q76, q77, q78, q79, q80, q81, q82, q83, q84, q85, q86, q87, q88, q89, q90]
+      Index: []
+    ''',
+    'Results/Results_05AM.csv': '''
+                     file_id                                           input_path                                                      output_path  score q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 q11 q12 q13 q14 q15 q16 q17 q18 q19 q20 q21 q22 q23 q24 q25 q26 q27 q28 q29 q30 q31 q32 q33 q34 q35 q36 q37 q38 q39 q40 q41 q42 q43 q44 q45 q46 q47 q48 q49 q50 q51 q52 q53 q54 q55 q56 q57 q58 q59 q60 q61 q62 q63 q64 q65 q66 q67 q68 q69 q70 q71 q72 q73 q74 q75 q76 q77 q78 q79 q80 q81 q82 q83 q84 q85 q86 q87 q88 q89 q90
+      0  JEE Mains OMR 1.jpg  samples/community/JoyChopra1298/JEE Mains OMR 1.jpg  outputs/community/JoyChopra1298/CheckedOMRs/JEE Mains OMR 1.jpg   23.0  A  A  C     B  C  A  A  D   C   C   D           B       C       A       B   C   B   B   C   B           C       B   A       A       D       D       D   C   B   C   D   B   C   B               A   A   A   B   C           B       D   A       B       A       A   A   B   A   A   A   B   C   D   C   C   C   C   B   A           C           C           B
+      1  JEE Mains OMR 2.jpg  samples/community/JoyChopra1298/JEE Mains OMR 2.jpg  outputs/community/JoyChopra1298/CheckedOMRs/JEE Mains OMR 2.jpg   23.0  A  A  C     B  C  A  A  D   C   C   D           B       C       A       B   C   B   B   C   B           C       B   A       A       D       D       D   C   B   C   D   B   C   B               A   A   A   B   C           B       D   A       B       A       A   A   B   A   A   A   B   C   D   C   C   C   C   B   A           C           C           B
+    ''',
+  })
+# ---
 # name: test_run_community_Sandeep_1507
   dict({
     'NEET-2021/Manual/ErrorFiles.csv': '''
@@ -205,35 +224,6 @@
     ''',
   })
 # ---
-# name: test_run_community_JoyChopra1298
-  dict({
-    'Manual/ErrorFiles.csv': '''
-      Empty DataFrame
-      Columns: [file_id, input_path, output_path, score, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10,
-      q11, q12, q13, q14, q15, q16, q17, q18, q19, q20, q21, q22, q23, q24, q25, q26, q27, q28,
-      q29, q30, q31, q32, q33, q34, q35, q36, q37, q38, q39, q40, q41, q42, q43, q44, q45, q46,
-      q47, q48, q49, q50, q51, q52, q53, q54, q55, q56, q57, q58, q59, q60, q61, q62, q63, q64,
-      q65, q66, q67, q68, q69, q70, q71, q72, q73, q74, q75, q76, q77, q78, q79, q80, q81, q82,
-      q83, q84, q85, q86, q87, q88, q89, q90]
-      Index: []
-    ''',
-    'Manual/MultiMarkedFiles.csv': '''
-      Empty DataFrame
-      Columns: [file_id, input_path, output_path, score, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10,
-      q11, q12, q13, q14, q15, q16, q17, q18, q19, q20, q21, q22, q23, q24, q25, q26, q27, q28,
-      q29, q30, q31, q32, q33, q34, q35, q36, q37, q38, q39, q40, q41, q42, q43, q44, q45, q46,
-      q47, q48, q49, q50, q51, q52, q53, q54, q55, q56, q57, q58, q59, q60, q61, q62, q63, q64,
-      q65, q66, q67, q68, q69, q70, q71, q72, q73, q74, q75, q76, q77, q78, q79, q80, q81, q82,
-      q83, q84, q85, q86, q87, q88, q89, q90]
-      Index: []
-    ''',
-    'Results/Results_05PM.csv': '''
-      file_id input_path output_path score q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 q11 q12 q13 q14 q15 q16 q17 q18 q19 q20 q21 q22 q23 q24 q25 q26 q27 q28 q29 q30 q31 q32 q33 q34 q35 q36 q37 q38 q39 q40 q41 q42 q43 q44 q45 q46 q47 q48 q49 q50 q51 q52 q53 q54 q55 q56 q57 q58 q59 q60 q61 q62 q63 q64 q65 q66 q67 q68 q69 q70 q71 q72 q73 q74 q75 q76 q77 q78 q79 q80 q81 q82 q83 q84 q85 q86 q87 q88 q89 q90
-      JEE Mains.jpg inputs/JoyChopra1298/JEE Mains OMR 1.jpg outputs/JoyChopra1298/CheckedOMRs/JEE Mains OMR 1.jpg 23.0 A A C  B C A A D C C D   B   C   A   B C B B C B   C   B A   A   D   D   D C B C D B C B   A A A B C   B   D A   B   A   A A B A A A B C D C C C C B A   C   C   C   B
-      JEE Mains.jpg inputs/JoyChopra1298/JEE Mains OMR 2.jpg outputs/JoyChopra1298/CheckedOMRs/JEE Mains OMR 2.jpg 23.0 A A C  B C A A D C C D   B   C   A   B C B B C B   C   B A   A   D   D   D C B C D B C B   A A A B C   B   D A   B   A   A A B A A A B C D C C C C B A   C   C   C   B
-    ''',
-  })
-# ---
 # name: test_run_crop_four_dots
   dict({
     'Manual/ErrorFiles.csv': '''
@@ -292,6 +282,31 @@
 # ---
 # name: test_run_omr_marker
   dict({
+    'ScanBatch1/Evaluations/camscanner-1.jpg.csv': '''
+               Marking Scheme Question Marked    Answer(s)                      Verdict  Delta  Score
+      0           BOOMERANG_1       q1      D            C  Incorrect (no-answer-match)   -1.0   -1.0
+      1           BOOMERANG_1       q2      C            C       Correct (answer-match)    4.0    3.0
+      2           BOOMERANG_1       q3      A            B  Incorrect (no-answer-match)   -1.0    2.0
+      3           BOOMERANG_1       q4      C            C       Correct (answer-match)    4.0    6.0
+      4           BOOMERANG_1       q5      B            C  Incorrect (no-answer-match)   -1.0    5.0
+      5           PROXIMITY_1       q6     08  ['1', '01']  Incorrect (no-answer-match)   -1.0    4.0
+      6           PROXIMITY_1       q7     52           19  Incorrect (no-answer-match)   -1.0    3.0
+      7           PROXIMITY_1       q8     21           10  Incorrect (no-answer-match)   -1.0    2.0
+      8           PROXIMITY_1       q9     85           10  Incorrect (no-answer-match)   -1.0    1.0
+      9           PROXIMITY_1      q10     36           18  Incorrect (no-answer-match)   -1.0    0.0
+      10  FIBONACCI_SECTION_1      q11      B            D  Incorrect (no-answer-match)   -1.0   -1.0
+      11  FIBONACCI_SECTION_1      q12      C            A  Incorrect (no-answer-match)   -1.0   -2.0
+      12  FIBONACCI_SECTION_1      q13      A            D  Incorrect (no-answer-match)   -1.0   -3.0
+      13  FIBONACCI_SECTION_1      q14      A            D  Incorrect (no-answer-match)   -1.0   -4.0
+      14      POWER_SECTION_1      q15      D            D       Correct (answer-match)    1.0   -3.0
+      15      POWER_SECTION_1      q16      C            C       Correct (answer-match)    1.0   -2.0
+      16      POWER_SECTION_1      q17      C            C       Correct (answer-match)    1.0   -1.0
+      17      POWER_SECTION_1      q18     AD            C  Incorrect (no-answer-match)    0.0   -1.0
+      18  FIBONACCI_SECTION_2      q19      A            C  Incorrect (no-answer-match)   -1.0   -2.0
+      19  FIBONACCI_SECTION_2      q20      A            D  Incorrect (no-answer-match)   -1.0   -3.0
+      20  FIBONACCI_SECTION_2      q21      D            B  Incorrect (no-answer-match)   -1.0   -4.0
+      21  FIBONACCI_SECTION_2      q22                   A          Unmarked (unmarked)    0.0   -4.0
+    ''',
     'ScanBatch1/Manual/ErrorFiles.csv': '''
       Empty DataFrame
       Columns: [file_id, input_path, output_path, score, Roll, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14, q15, q16, q17, q18, q19, q20, q21, q22]
@@ -305,6 +320,31 @@
     'ScanBatch1/Results/Results_05AM.csv': '''
                   file_id                                        input_path                                                   output_path  score        Roll q1 q2 q3 q4 q5  q6  q7  q8  q9  q10 q11 q12 q13 q14 q15 q16 q17 q18 q19 q20 q21 q22
       0  camscanner-1.jpg  samples/2-omr-marker/ScanBatch1/camscanner-1.jpg  outputs/2-omr-marker/ScanBatch1/CheckedOMRs/camscanner-1.jpg   -4.0  E204420102  D  C  A  C  B   8  52  21  85   36   B   C   A   A   D   C   C  AD   A   A   D    
+    ''',
+    'ScanBatch2/Evaluations/camscanner-2.jpg.csv': '''
+               Marking Scheme Question Marked    Answer(s)                    Verdict  Delta  Score
+      0           BOOMERANG_1       q1      C            C     Correct (answer-match)    4.0    4.0
+      1           BOOMERANG_1       q2      C            C     Correct (answer-match)    4.0    8.0
+      2           BOOMERANG_1       q3      B            B     Correct (answer-match)    4.0   12.0
+      3           BOOMERANG_1       q4      C            C     Correct (answer-match)    4.0   16.0
+      4           BOOMERANG_1       q5      C            C     Correct (answer-match)    4.0   20.0
+      5           PROXIMITY_1       q6     01  ['1', '01']  Correct (answer-match-01)    3.0   23.0
+      6           PROXIMITY_1       q7     19           19     Correct (answer-match)    3.0   26.0
+      7           PROXIMITY_1       q8     10           10     Correct (answer-match)    3.0   29.0
+      8           PROXIMITY_1       q9     10           10     Correct (answer-match)    3.0   32.0
+      9           PROXIMITY_1      q10     18           18     Correct (answer-match)    3.0   35.0
+      10  FIBONACCI_SECTION_1      q11      D            D     Correct (answer-match)    2.0   37.0
+      11  FIBONACCI_SECTION_1      q12      A            A     Correct (answer-match)    2.0   39.0
+      12  FIBONACCI_SECTION_1      q13      D            D     Correct (answer-match)    2.0   41.0
+      13  FIBONACCI_SECTION_1      q14      D            D     Correct (answer-match)    2.0   43.0
+      14      POWER_SECTION_1      q15      D            D     Correct (answer-match)    1.0   44.0
+      15      POWER_SECTION_1      q16      C            C     Correct (answer-match)    1.0   45.0
+      16      POWER_SECTION_1      q17      C            C     Correct (answer-match)    1.0   46.0
+      17      POWER_SECTION_1      q18      C            C     Correct (answer-match)    1.0   47.0
+      18  FIBONACCI_SECTION_2      q19      C            C     Correct (answer-match)    2.0   49.0
+      19  FIBONACCI_SECTION_2      q20      D            D     Correct (answer-match)    2.0   51.0
+      20  FIBONACCI_SECTION_2      q21      B            B     Correct (answer-match)    2.0   53.0
+      21  FIBONACCI_SECTION_2      q22      A            A     Correct (answer-match)    2.0   55.0
     ''',
     'ScanBatch2/Manual/ErrorFiles.csv': '''
       Empty DataFrame
@@ -342,6 +382,21 @@
 # ---
 # name: test_run_template_shifts
   dict({
+    'alignment/Manual/ErrorFiles.csv': '''
+      Empty DataFrame
+      Columns: [file_id, input_path, output_path, score, Booklet_No, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14, q15, q16, q17, q18, q19, q20, q21, q22, q23, q24, q25, q26, q27, q28, q29, q30, q31, q32, q33, q34, q35, q36, q37, q38, q39, q40, q41, q42, q43, q44, q45, q46, q47, q48, q49, q50, q51, q52, q53, q54, q55, q56, q57, q58, q59, q60, q61, q62, q63, q64, q65, q66, q67, q68, q69, q70, q71, q72, q73, q74, q75, q76, q77, q78, q79, q80, q81, q82, q83, q84, q85, q86, q87, q88, q89, q90, q91, q92, q93, q94, q95, ...]
+      Index: []
+    ''',
+    'alignment/Manual/MultiMarkedFiles.csv': '''
+      Empty DataFrame
+      Columns: [file_id, input_path, output_path, score, Booklet_No, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14, q15, q16, q17, q18, q19, q20, q21, q22, q23, q24, q25, q26, q27, q28, q29, q30, q31, q32, q33, q34, q35, q36, q37, q38, q39, q40, q41, q42, q43, q44, q45, q46, q47, q48, q49, q50, q51, q52, q53, q54, q55, q56, q57, q58, q59, q60, q61, q62, q63, q64, q65, q66, q67, q68, q69, q70, q71, q72, q73, q74, q75, q76, q77, q78, q79, q80, q81, q82, q83, q84, q85, q86, q87, q88, q89, q90, q91, q92, q93, q94, q95, ...]
+      Index: []
+    ''',
+    'alignment/Results/Results_05AM.csv': '''
+           file_id                                                  input_path                                                             output_path  score  Booklet_No q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 q11 q12 q13 q14 q15 q16 q17 q18 q19 q20 q21 q22 q23 q24 q25 q26 q27 q28 q29 q30 q31 q32 q33 q34 q35 q36 q37 q38 q39 q40 q41 q42 q43 q44 q45 q46 q47 q48 q49 q50 q51 q52 q53 q54 q55 q56 q57 q58 q59 q60 q61 q62 q63 q64 q65 q66 q67 q68 q69 q70 q71 q72 q73 q74 q75 q76 q77 q78 q79 q80 q81 q82 q83 q84 q85 q86 q87 q88 q89 q90 q91 q92 q93 q94 q95 q96 q97 q98 q99 q100 q101 q102 q103 q104 q105 q106 q107 q108 q109 q110 q111 q112 q113 q114 q115 q116 q117 q118 q119 q120 q121 q122 q123 q124 q125 q126 q127 q128 q129 q130 q131 q132 q133 q134 q135 q136 q137 q138 q139 q140 q141 q142 q143 q144 q145 q146 q147 q148 q149 q150 q151 q152 q153 q154 q155 q156 q157 q158 q159 q160 q161 q162 q163 q164 q165 q166 q167 q168 q169 q170 q171 q172 q173 q174 q175 q176 q177 q178 q179 q180 q181 q182 q183 q184 q185 q186 q187 q188 q189 q190 q191 q192 q193 q194 q195 q196 q197 q198 q199 q200
+      0  omr-2.png  samples/experimental/2-template-shifts/alignment/omr-2.png  outputs/experimental/2-template-shifts/alignment/CheckedOMRs/omr-2.png      0       46233  B  A  C  D  A  D  D  A  C   A   A   B   C   A   A   C   A   B   A   D   C   C   A   D   D   C   C   C   A   C   C   B   B   D   D   C           C   B           D   A   A   A   A       A   C   C   C   D   C       A   B   C   D   B   C   C   C   D   A   B   B   B   D   D   B   B   C   D   B   D   A   B   A   B   C   A   C   A   C   D           A   B       B   C   D   A   D   D            C    D    B    B    A    A    D    D    B    A    B    B    C    C    D    D    C    A    D    C    D    C    C    B    C    D    C    D    A    B    D    C    B    D    B    B    A    D         B    D    B    B    C    A    D    A    C    A    C         B    C    A    B    B    D    D    D    B    A    D    D    A    D    D    C    B    B    D    C    B    A    C    D    A    D    D    A    C    A    B    D    C    C    C    A    D              B    B         C    C    B    B    C              B
+      1  omr-3.png  samples/experimental/2-template-shifts/alignment/omr-3.png  outputs/experimental/2-template-shifts/alignment/CheckedOMRs/omr-3.png      0         922  A  B  B  A  D  C  B  D  C   D   D   D   B   B   D   D   D   B   C   C   A   A   B   A   D   A   A   B   A   C   A   C   D   D   D           C   C   B   B   B       D       C   D       D   B   A   D   B   A   C   A   C   A   C   B   A   D   C   B   C   B   C   D   B   B   D   C   C   D   D   A   D   A   D   C   B   D   C   A   C       C   B   B       A   A   D       B   A       C   A    D    D    C    C    A    C    A    C    D    A    A    A    D    D    B    C    B    B    B    D    A    C    D    D    A    A    A    C    D    C    C    B    D    A    A    C    B         D    A    C    C    C                   A    C         D    A    B    A    A    C    A    D    B    B    A    D    A    B    C    A    C    D    D    D    C    A    C    A    C    D    A    A    A    D    A    B    A    B    C    B    A         B    C    D    D              D    C    C    C         C    A     
+    ''',
     'colored-thick-sheet/Manual/ErrorFiles.csv': '''
       Empty DataFrame
       Columns: [file_id, input_path, output_path, score, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14, q15, q16, q17, q18, q19, q20, q21, q22, q23, q24, q25, q26, q27, q28, q29, q30, q31, q32, q33, q34, q35, q36, q37, q38, q39, q40, q41, q42, q43, q44, q45, q46, q47, q48, q49, q50, q51, q52, q53, q54, q55, q56, q57, q58, q59, q60, q61, q62, q63, q64, q65, q66, q67, q68, q69, q70, q71, q72, q73, q74, q75, q76, q77, q78, q79, q80, q81, q82, q83, q84, q85, q86, q87, q88, q89, q90, q91, q92, q93, q94, q95, q96, ...]

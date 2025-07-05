@@ -229,7 +229,7 @@ class TemplateFileRunner(FileLevelRunner):
             file_path, self.field_detection_type_runners
         )
 
-    def finalize_directory_metrics(self) -> None:
+    def finish_processing_directory(self) -> None:
         # TODO: get_directory_level_confidence_metrics()
 
         # output_metrics = self.directory_level_aggregates

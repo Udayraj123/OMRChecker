@@ -69,7 +69,7 @@ def image_diff(image1, image2) -> bool:
 
 def image_snapshot_fixture(request) -> Callable:
     def _image_snapshot(source_image_path, snapshot_path) -> None:
-        snapshot_path = Path(snapshot_path)
+        source_image_path, snapshot_path = Path(source_image_path), Path(snapshot_path)
         config = request.config
         update_snapshots = config.getoption("--image-snapshot-update")
         show_on_fail = config.getoption("--show-images-on-fail")

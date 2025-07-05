@@ -3,6 +3,8 @@
 Credits: https://www.learnopencv.com/image-alignment-feature-based-using-opencv-c-python/.
 """
 
+from pathlib import Path
+
 import cv2
 import numpy as np
 
@@ -24,7 +26,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
         options = self.options
 
         # process reference image
-        self.ref_path = self.relative_dir.joinpath(options["reference"])
+        self.ref_path = self.get_relative_path(options["reference"])
         ref_img = cv2.imread(str(self.ref_path), cv2.IMREAD_GRAYSCALE)
         self.ref_img = ImageUtils.resize_to_shape(self.processing_image_shape, ref_img)
         # get options with defaults
@@ -49,7 +51,7 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
     def __str__(self) -> str:
         return self.ref_path.name
 
-    def exclude_files(self):
+    def exclude_files(self) -> list[Path]:
         return [self.ref_path]
 
     def apply_filter(self, image, colored_image, _template, _file_path):

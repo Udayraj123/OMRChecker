@@ -1,6 +1,8 @@
 # Use all imports relative to root directory
 from pathlib import Path
-from typing import Never
+from typing import Any, Never
+
+from cv2.typing import MatLike
 
 from src.processors.internal.Processor import Processor
 from src.utils.image import ImageUtils
@@ -27,9 +29,11 @@ class ImageTemplatePreprocessor(Processor):
         self.output = options.get("output")
 
     def get_relative_path(self, path):
-        return Path(self.relative_dir, path)
+        return self.relative_dir.joinpath(path)
 
-    def apply_filter(self, _image, _colored_image, _template, _file_path) -> Never:
+    def apply_filter(
+        self, _image, _colored_image, _template, _file_path
+    ) -> tuple[MatLike, MatLike, Any]:
         """Apply filter to the image and returns modified image."""
         raise NotImplementedError
 
@@ -53,6 +57,6 @@ class ImageTemplatePreprocessor(Processor):
 
         return out_image, colored_image, _template
 
-    def exclude_files(self):
+    def exclude_files(self) -> list[Path]:
         """Return a list of file paths that should be excluded from processing."""
         return []

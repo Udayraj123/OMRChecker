@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, ClassVar
 
 import cv2
@@ -69,11 +70,12 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             tuning_options.get("warpMethodFlag", "INTER_LINEAR")
         )
 
-    def exclude_files(self):
+    def exclude_files(self) -> list[Path]:
         return []
 
-    def prepare_image(self, image):
-        return image
+    def prepare_image_before_extraction(self, _image):
+        msg = "Not Implemented"
+        raise Exception(msg)
 
     def extract_control_destination_points(
         self, _image, _colored_image, _file_path
@@ -87,7 +89,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         self.debug_hstack = []
         self.debug_vstack = []
 
-        image = self.prepare_image(image)
+        image = self.prepare_image_before_extraction(image)
 
         (
             control_points,
