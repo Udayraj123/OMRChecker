@@ -1,3 +1,5 @@
+from typing import Generic, TypeVar
+
 from src.algorithm.template.detection.base.common_pass import FilePassAggregates
 from src.algorithm.template.detection.base.detection_pass import FieldTypeDetectionPass
 from src.algorithm.template.detection.base.interpretation_pass import (
@@ -5,15 +7,18 @@ from src.algorithm.template.detection.base.interpretation_pass import (
 )
 from src.algorithm.template.layout.field.base import Field
 
+DetectionPassT = TypeVar("DetectionPassT", bound=FilePassAggregates)
+InterpretationPassT = TypeVar("InterpretationPassT", bound=FilePassAggregates)
 
-class FileLevelRunner:
+
+class FileLevelRunner(Generic[DetectionPassT, InterpretationPassT]):
     """Coordinates detection and interpretation passes at file level. It manages aggregates at different levels (file, directory) for both detection and interpretation processes."""
 
     def __init__(
         self,
         tuning_config,
-        detection_pass: FilePassAggregates,
-        interpretation_pass: FilePassAggregates,
+        detection_pass: DetectionPassT,
+        interpretation_pass: InterpretationPassT,
     ) -> None:
         self.tuning_config = tuning_config
         self.detection_pass = detection_pass
@@ -88,7 +93,9 @@ class FileLevelRunner:
         return self.interpretation_pass.get_directory_level_aggregates()
 
 
-class FieldTypeFileLevelRunner(FileLevelRunner):
+class FieldTypeFileLevelRunner(
+    FileLevelRunner[FieldTypeDetectionPass, FieldTypeInterpretationPass]
+):
     """FieldTypeFileLevelRunner Specializes FileLevelRunner for specific field types. Handles detection and interpretation for specific fields.
 
     It contains the external contract to be used by TemplateFileRunner for each of the field_detection_types
@@ -104,8 +111,6 @@ class FieldTypeFileLevelRunner(FileLevelRunner):
         interpretation_pass: FieldTypeInterpretationPass,
     ) -> None:
         self.field_detection_type = field_detection_type
-        self.detection_pass: FieldTypeDetectionPass = None
-        self.interpretation_pass: FieldTypeInterpretationPass = None
         super().__init__(tuning_config, detection_pass, interpretation_pass)
 
     def run_field_level_detection(self, field, gray_image, colored_image):

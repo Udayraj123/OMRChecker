@@ -51,7 +51,7 @@ class OCRFieldDetection(FieldDetection):
     """Here we find the scan zone and perform the detection for the field at runtime."""
 
     def __init__(self, field: Field, gray_image, colored_image) -> None:
-        self.detections: list[OCRDetection] = None
+        self.detections: list[OCRDetection] | None = None
         super().__init__(field, gray_image, colored_image)
 
     # Note: run_detection is called from the parent constructor

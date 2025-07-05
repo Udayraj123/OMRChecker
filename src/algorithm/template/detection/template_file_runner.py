@@ -17,7 +17,9 @@ from src.algorithm.template.layout.field.base import Field
 from src.processors.constants import FieldDetectionType
 
 
-class TemplateFileRunner(FileLevelRunner):
+class TemplateFileRunner(
+    FileLevelRunner[TemplateDetectionPass, TemplateInterpretationPass]
+):
     """Template File Runner.
 
     It is responsible for running the file level detection and interpretation steps.
@@ -39,10 +41,6 @@ class TemplateFileRunner(FileLevelRunner):
         detection_pass = TemplateDetectionPass(tuning_config)
         interpretation_pass = TemplateInterpretationPass(tuning_config)
         super().__init__(tuning_config, detection_pass, interpretation_pass)
-        # Cast to correct type (TODO: this should not be needed -)
-        self.detection_pass: TemplateDetectionPass = self.detection_pass
-        self.interpretation_pass: TemplateInterpretationPass = self.interpretation_pass
-
         self.initialize_field_file_runners(template)
         self.initialize_directory_level_aggregates(template)
 

@@ -21,7 +21,7 @@ class BarcodeFieldInterpretationDrawing(FieldInterpretationDrawing):
         # Draw all bounding boxes
         all_bounding_box_points = []
         for interpretation in field_interpretation.interpretations:
-            bounding_box = interpretation.detection.bounding_box
+            bounding_box = interpretation.text_detection.bounding_box
             DrawingUtils.draw_contour(marked_image, bounding_box, color=CLR_BLACK)
             all_bounding_box_points.extend(bounding_box)
 

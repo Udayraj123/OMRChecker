@@ -1,4 +1,7 @@
-from src.algorithm.template.detection.base.interpretation import FieldInterpretation
+from src.algorithm.template.detection.base.interpretation import (
+    BaseInterpretation,
+    FieldInterpretation,
+)
 from src.algorithm.template.detection.ocr.interpretation_drawing import (
     OCRFieldInterpretationDrawing,
 )
@@ -6,14 +9,9 @@ from src.algorithm.template.layout.field.base import Field
 from src.utils.logger import logger
 
 
-class OCRInterpretation:
+class OCRInterpretation(BaseInterpretation):
     def __init__(self, detection) -> None:
-        self.detection = detection
-        self.is_attempted = detection is not None
-        self.detected_text = detection.detected_text if self.is_attempted else ""
-
-    def get_value(self):
-        return self.detected_text
+        super().__init__(detection)
 
 
 class OCRFieldInterpretation(FieldInterpretation):
@@ -63,7 +61,7 @@ class OCRFieldInterpretation(FieldInterpretation):
         ][field_label]
 
         # map detections to interpretations
-        self.interpretations: list[OCRInterpretation] = [
+        self.interpretations = [
             OCRInterpretation(detection)
             for detection in field_level_detection_aggregates["detections"]
         ]

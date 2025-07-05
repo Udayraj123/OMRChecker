@@ -1,7 +1,20 @@
 from abc import abstractmethod
 from typing import Never
 
+from src.algorithm.template.detection.base.detection import (
+    TextDetection,
+)
 from src.algorithm.template.layout.field.base import Field
+
+
+class BaseInterpretation:
+    def __init__(self, text_detection: TextDetection) -> None:
+        self.text_detection = text_detection
+        self.is_attempted = text_detection is not None
+        self.detected_text = text_detection.detected_text if self.is_attempted else ""
+
+    def get_value(self):
+        return self.detected_text
 
 
 class FieldInterpretation:
@@ -18,6 +31,8 @@ class FieldInterpretation:
         # self.field_block = field.field_block
         self.empty_value = field.empty_value
         self.field_level_confidence_metrics = {}
+        # To be updated by child classes
+        self.interpretations: list[BaseInterpretation] = []
         # TODO: make get_drawing_instance fetch singleton classes?
         self.drawing = self.get_drawing_instance()
 
@@ -41,7 +56,7 @@ class FieldInterpretation:
         raise Exception(msg)
 
     @abstractmethod
-    def get_field_interpretation_string() -> Never:
+    def get_field_interpretation_string() -> str:
         msg = "Not implemented"
         raise Exception(msg)
 

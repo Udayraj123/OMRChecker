@@ -9,11 +9,9 @@ from src.utils.parsing import default_dump
 
 
 # TODO: merge with FieldInterpretation/BubbleInterpretation?
-class BubbleMeanValue(MeanValueItem):
+class BubbleMeanValue(MeanValueItem[BubblesScanBox]):
     def __init__(self, mean_value, unit_bubble: BubblesScanBox) -> None:
         super().__init__(mean_value, unit_bubble)
-        # type casting
-        self.item_reference: BubblesScanBox = self.item_reference
 
     def to_json(self):
         # TODO: mini util for this loop (for export metrics)
@@ -28,9 +26,9 @@ class BubbleMeanValue(MeanValueItem):
         }
 
 
-class FieldStdMeanValue(MeanValueItem):
+class FieldStdMeanValue(MeanValueItem[Field]):
     def __init__(self, field_bubble_means: list[BubbleMeanValue], field: Field) -> None:
-        mean_value = np.std([item.mean_value for item in field_bubble_means])
+        mean_value = float(np.std([item.mean_value for item in field_bubble_means]))
 
         super().__init__(mean_value, field)
 
