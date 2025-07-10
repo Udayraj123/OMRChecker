@@ -183,9 +183,9 @@ class BubblesFieldInterpretation(FieldInterpretation):
 
         # Find the FIRST LARGE GAP and set it as threshold:
         ls = (looseness + 1) // 2
-        l = len(sorted_bubble_means) - ls
+        total_bubbles_loose = len(sorted_bubble_means) - ls
         max1, thr1 = MIN_JUMP, global_default_threshold
-        for i in range(ls, l):
+        for i in range(ls, total_bubbles_loose):
             jump = sorted_bubble_means[i + ls] - sorted_bubble_means[i - ls]
             if jump > max1:
                 max1 = jump
@@ -202,7 +202,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
         # values at detected jumps would be atleast 20
         max2, thr2 = MIN_JUMP, global_default_threshold
         # Requires atleast 1 gray box to be present (Roll field will ensure this)
-        for i in range(ls, l):
+        for i in range(ls, total_bubbles_loose):
             jump = sorted_bubble_means[i + ls] - sorted_bubble_means[i - ls]
             new_thr = sorted_bubble_means[i - ls] + jump / 2
             if jump > max2 and abs(thr1 - new_thr) > JUMP_DELTA:
@@ -278,9 +278,11 @@ class BubblesFieldInterpretation(FieldInterpretation):
             *zip(
                 *sorted(
                     [
-                        (h, l)
-                        for i, (h, l) in enumerate(zip(handles, labels, strict=False))
-                        if l not in labels[:i]
+                        (handle, label)
+                        for i, (handle, label) in enumerate(
+                            zip(handles, labels, strict=False)
+                        )
+                        if label not in labels[:i]
                     ],
                     key=lambda s: [
                         int(t) if t.isdigit() else t.lower()
@@ -354,9 +356,9 @@ class BubblesFieldInterpretation(FieldInterpretation):
                 ),
             )
         else:
-            l = len(sorted_bubble_means) - 1
+            total_bubbles = len(sorted_bubble_means) - 1
             max1, thr1 = config.thresholding.MIN_JUMP, 255
-            for i in range(1, l):
+            for i in range(1, total_bubbles):
                 jump = sorted_bubble_means[i + 1] - sorted_bubble_means[i - 1]
                 if jump > max1:
                     max1 = jump

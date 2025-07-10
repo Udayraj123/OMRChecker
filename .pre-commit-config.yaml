@@ -64,7 +64,6 @@ repos:
         args: ["--quality", "90"]
         fail_fast: true # Wait for user to commit the files
 
-  # TODO: migrate these into ruff config
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:

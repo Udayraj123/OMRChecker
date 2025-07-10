@@ -40,25 +40,25 @@ target-version = "py313"
 # Enable the isort rules.
 extend-select = [
     # https://www.reddit.com/r/Python/comments/1kttfst/comment/mtwfzfi
-    # "A",   # detect shadowed builtins
-    # "BLE", # disallow catch-all exceptions
-    # "C4",       # Catch incorrect use of comprehensions, dict, list, etc
-    # "E",        # PyCodeStyle errors
-    # "F",        # Pyflakes rules
-    "I", # Sort imports properly
-    # "FA",       # Enforce from __future__ import annotations
-    # "ICN",      # Use common import conventions
-    # "ISC",      # Good use of string concatenation
-    # "NPY",      # Some numpy-specific things
-    # "PTH",      # Use pathlib instead of os.path
-    # "RET",      # Good return practices
-    # "S",   # disallow things like "exec"; also restricts "assert" but I just NOQA it when I really need it
-    # "SIM",      # Common simplification rules
-    # "TC",       # Enforce importing certain types in a TYPE_CHECKING block
-    # "TD",       # Be diligent with TODO comments
-    # "TID",      # Some good import practices
-    # "UP",       # Warn if certain things can changed due to newer Python versions
-    # "W",        # PyCodeStyle warnings
+    "A",   # detect shadowed builtins
+    "BLE", # disallow catch-all exceptions
+    "C4",  # Catch incorrect use of comprehensions, dict, list, etc
+    "E",   # PyCodeStyle errors
+    "F",   # Pyflakes rules
+    "I",   # Sort imports properly
+    "FA",  # Enforce from __future__ import annotations
+    "ICN", # Use common import conventions
+    "ISC", # Good use of string concatenation
+    "NPY", # Some numpy-specific things
+    "PTH", # Use pathlib instead of os.path
+    "RET", # Good return practices
+    "S",   # disallow things like "exec"; also restricts "assert" but I just NOQA it when I really need it
+    "SIM", # Common simplification rules
+    "TC",  # Enforce importing certain types in a TYPE_CHECKING block
+    "TD",  # Be diligent with TODO comments
+    "TID", # Some good import practices
+    "UP",  # Warn if certain things can changed due to newer Python versions
+    "W",   # PyCodeStyle warnings
 ]
 # This ruff configuration replaces several pre-commit tools:
 # - autoflake: F401 (unused imports) is enabled and auto-fixable
@@ -68,49 +68,51 @@ extend-select = [
 # "I001" isort
 select = ["ALL"]
 ignore = [
+    # Note: The commented rules were resolved manually in previous code. Kept here for reference.
+
     # Reference: https://www.flake8rules.com/
     # Code formatting and style rules
     "COM812", # Missing trailing comma in function call
-    "COM819", # Trailing comma prohibited
+    # "COM819", # Trailing comma prohibited
 
     # Documentation rules
     "D100", # Missing docstring in public module
-    "D203", # 1 blank line required before class docstring
-    "D213", # Multi-line docstring summary should start at the second line
-    "D300", # Use """triple double quotes"""
+    # "D203", # 1 blank line required before class docstring
+    # "D213", # Multi-line docstring summary should start at the second line
+    # "D300", # Use """triple double quotes"""
 
     # Indentation rules
-    "E111", # Indentation is not a multiple of four
-    "E114", # Indentation is not a multiple of four (comment)
-    "E117", # Over-indented
+    # "E111", # Indentation is not a multiple of four
+    # "E114", # Indentation is not a multiple of four (comment)
+    # "E117", # Over-indented
 
     # Import sorting rules
-    "ISC001", # Implicitly concatenated string literals on one line
-    "ISC002", # Implicitly concatenated string literals over multiple lines
+    # "ISC001", # Implicitly concatenated string literals on one line
+    # "ISC002", # Implicitly concatenated string literals over multiple lines
 
     # Quote style rules
-    "Q000", # Remove bad quotes (double quotes preferred)
-    "Q001", # Remove bad quotes (single quotes preferred)
-    "Q002", # Remove bad quotes (avoid escaped quotes)
-    "Q003", # Remove bad quotes (avoid escaped quotes in f-strings)
+    # "Q000", # Remove bad quotes (double quotes preferred)
+    # "Q001", # Remove bad quotes (single quotes preferred)
+    # "Q002", # Remove bad quotes (avoid escaped quotes)
+    # "Q003", # Remove bad quotes (avoid escaped quotes in f-strings)
 
     # Whitespace rules
-    "E203", # Whitespace before ':'
-    "E231", # Missing whitespace after ':'
-    "W191", # Indentation contains tabs
-    # Not implemented by ruff - https://github.com/astral-sh/ruff/issues/4125
+    # "E203", # Whitespace before ':'
+    # "E231", # Missing whitespace after ':'
+    # "W191", # Indentation contains tabs
+    # Note: W503 is not implemented by ruff - https://github.com/astral-sh/ruff/issues/4125
     # "W503", # Line break occurred before a binary operator
 
     # Other pycodestyle rules
-    "E501", # Line too long (82 > 79 characters)
-    "E713", # Test for membership should be 'not in'
-    "E731", # Do not assign a lambda expression, use a def
-    "E741", # Do not use variables named 'I', 'O', or 'l'
+    "E501", # Line too long
+    # "E713", # Test for membership should be 'not in'
+    # "E731", # Do not assign a lambda expression, use a def
+    # "E741", # Do not use variables named 'I', 'O', or 'l'
 
     # Pyflakes rules
-    "F403", # 'from module import *' used; unable to detect undefined names
-    "F405", # Name may be undefined, or defined from star imports
-    "F541", # f-string without any placeholders
+    # "F403", # 'from module import *' used; unable to detect undefined names
+    # "F405", # Name may be undefined, or defined from star imports
+    # "F541", # f-string without any placeholders
 
     # Ruff checks (ignored)
     "A005",    # Module shadows a Python standard-library module"

@@ -1,5 +1,3 @@
-from typing import *
-
 import cv2
 import numpy as np
 from rich.table import Table
@@ -12,7 +10,7 @@ from src.utils.math import MathUtils
 
 
 def rectify(
-    edge_contours_map: Dict[str, List[Tuple[int, int]]],
+    edge_contours_map: dict[str, list[tuple[int, int]]],
 ) -> np.ndarray:
     segments = {
         edge_type.lower(): LineString(edge_contours_map[edge_type])
@@ -40,7 +38,7 @@ def rectify(
 
 
 def _get_output_shape_for_segments(
-    edge_contours_map: Dict[str, List[Tuple[int, int]]],
+    edge_contours_map: dict[str, list[tuple[int, int]]],
     # enable_cropping: bool,
 ) -> tuple[int, int]:
     max_width = max(
@@ -61,8 +59,8 @@ def transform_line(line, transform_matrix):
 
 
 def _create_backward_output_map(
-    segments: Dict[str, LineString],
-    output_shape: Tuple[int, int],
+    segments: dict[str, LineString],
+    output_shape: tuple[int, int],
     # TODO: _enable_cropping: bool,
 ) -> np.ndarray:
     resolution_h, resolution_w = output_shape
@@ -228,7 +226,8 @@ def _create_backward_output_map(
 
     # flip x and y coordinate: first y, then x
     # backward_points_map = np.roll(backward_points_map, shift=1, axis=-1)
-    return np.float32(backward_points_map)
+    backward_points_map: np.ndarray = np.float32(backward_points_map)
+    return backward_points_map
 
 
 def print_points_mapping_table(title, control_points, destination_points) -> None:

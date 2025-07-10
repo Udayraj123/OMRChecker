@@ -1,5 +1,3 @@
-from typing import *
-
 import cv2
 import numpy as np
 import pandas as pd
@@ -21,7 +19,7 @@ from shapely.ops import linemerge, nearest_points, snap, split
 
 def create_identity_meshgrid(
     # ruff: noqa: FBT001
-    resolution: Union[int, Tuple],
+    resolution: int | tuple,
     with_margin: bool = False,
 ):
     if isinstance(resolution, int):
@@ -35,7 +33,7 @@ def create_identity_meshgrid(
     ].transpose(1, 2, 0)
 
 
-def scale_map(input_map: np.ndarray, output_shape: Union[int, Tuple[int, int]]):
+def scale_map(input_map: np.ndarray, output_shape: int | tuple[int, int]):
     if isinstance(output_shape, int):
         output_shape = (output_shape, output_shape)
 
@@ -84,7 +82,7 @@ def scale_map(input_map: np.ndarray, output_shape: Union[int, Tuple[int, int]]):
 
 
 def _create_backward_map(
-    segments: Dict[str, LineString],
+    segments: dict[str, LineString],
     resolution: int,  # Tuple[int, int]
 ) -> np.ndarray:
     # map geometric objects to normalized space
@@ -185,7 +183,7 @@ def _create_backward_map(
     return np.roll(backward_map, shift=1, axis=-1)
 
 
-def _snap_corners(polygon: Polygon, corners: List[Point]) -> List[Point]:
+def _snap_corners(polygon: Polygon, corners: list[Point]) -> list[Point]:
     corners = [nearest_points(polygon, point)[0] for point in corners]
     if len(corners) != 4:
         msg = "Unexpected number of corners!"
@@ -193,7 +191,7 @@ def _snap_corners(polygon: Polygon, corners: List[Point]) -> List[Point]:
     return corners
 
 
-def _split_polygon(polygon: Polygon, corners: List[Point]) -> List[LineString]:
+def _split_polygon(polygon: Polygon, corners: list[Point]) -> list[LineString]:
     boundary = snap(polygon.boundary, MultiPoint(corners), 0.0000001)
     segments = split(boundary, MultiPoint(corners)).geoms
     if len(segments) not in {4, 5}:
@@ -212,8 +210,8 @@ def _split_polygon(polygon: Polygon, corners: List[Point]) -> List[LineString]:
 
 
 def _classify_segments(
-    segments: Dict[str, LineString], corners: List[Point]
-) -> Dict[str, LineString]:
+    segments: dict[str, LineString], corners: list[Point]
+) -> dict[str, LineString]:
     bbox = box(*MultiLineString(segments).bounds)
     bbox_points = np.array(bbox.exterior.coords[:-1])
 
@@ -252,7 +250,9 @@ def _classify_segments(
     data_frame["corner_y"] = approx_points[min_assignment][:, 1]
 
     # retrieve correct segment and fix direction if necessary
-    segment_endpoints = {frozenset([s.coords[0], s.coords[-1]]): s for s in segments}
+    segment_endpoints = {
+        frozenset([s.coords[0], s.coords[-1]]): s for s in segments.values()
+    }
 
     def get_directed_segment(start_name: str, end_name: str) -> LineString:
         start = data_frame[data_frame.name == start_name]
@@ -272,4 +272,4 @@ def _classify_segments(
         "bottom": get_directed_segment("bottom-left", "bottom-right"),
         "left": get_directed_segment("top-left", "bottom-left"),
         "right": get_directed_segment("top-right", "bottom-right"),
-    }  # pyright: ignore [reportReturnType]
+    }
