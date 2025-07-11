@@ -1,13 +1,51 @@
 repo_name: udayraj123/OMRChecker
 repo_url: https://github.com/udayraj123/OMRChecker
 site_name: OMRChecker
-site_url: https://udayraj123.github.io/OMRChecker
+site_url: https://udayraj123.github.io/OMRChecker/ # Trailing slash is recommended
+
+# Paths relative to docs/ folder
+nav:
+  - Home: ../README.md
+  - About:
+      - License: ../LICENSE.md
+  - Getting Started:
+      - ../README.md
+  - Guides:
+      - "v2/User-Guide.md"
+      - User Guide: "v2/User-Guide.md"
+      - Templates: "v2/About-Templates.md"
+      - Config: "v2/About-Config.md"
+      - Evaluation: "v2/About-Evaluation.md"
+      - For Contributors: For Contributors.md
+      - v1 Guide:
+          - User Guide: "v1/User-Guide.md"
+          - Templates: "v1/About-Templates.md"
+          - TODOs: TODOs.md
+  - Visualizations:
+      - Diagrams: "v1/Diagrams.md"
+      - Rich Visuals: "v1/Rich Visuals.md"
+
+validation:
+  # https://github.com/squidfunk/mkdocs-material/discussions/5897
+  links:
+    absolute_links: relative_to_docs
 
 theme:
   name: material
+  custom_dir: docs/overrides
+
+  features:
+    - content.code.copy
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
 
   icon:
+    logo: omrchecker-icon
+    favicon: images/favicon.png
     repo: fontawesome/brands/github
+    previous: fontawesome/solid/angle-left
+    next: fontawesome/solid/angle-right
 
   palette:
     - media: "(prefers-color-scheme: light)"
@@ -23,14 +61,7 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
 
-  features:
-    - content.code.copy
-    - navigation.expand
-    - navigation.indexes
-    - navigation.top
-
-extra_css:
-  - stylesheets/extra.css
+  highlightjs: true
 
 markdown_extensions:
   - admonition
@@ -43,29 +74,39 @@ markdown_extensions:
   - pymdownx.tabbed:
       alternate_style: true
 
-nav:
-  - Home: Home.md
-  - Getting Started:
-      - ../README.md
-  - Guides:
-      - "[v2]-User-Guide.md"
-      - User Guide: "[v2]-User-Guide.md"
-      - Templates: "[v2]-About-Templates.md"
-      - Config: "[v2]-About-Config.md"
-      - Evaluation: "[v2]-About-Evaluation.md"
-      - For Contributors: For Contributors.md
-      - v1 Guide:
-          - User Guide: "[v1]-User-Guide.md"
-          - Templates: "[v1]-About-Templates.md"
-          - TODOs: TODOs.md
-  - Visualizations:
-      - Diagrams: "[v1]-Diagrams.md"
-      - Rich Visuals: "[v1]-Rich Visuals.md"
-  - About:
-      - License: ../LICENSE.md
+  - pymdownx.snippets
+    # https://stackoverflow.com/q/73828765/6242649
+    # base_path: !relative $config_dir
+
+  # # https://squidfunk.github.io/mkdocs-material/setup/changing-the-logo-and-icons/
+  # - pymdownx.emoji:
+  #     emoji_index: !!python/name:material.extensions.emoji.twemoji
+  #     emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  #     options:
+  #       custom_icons:
+  #         - overrides/.icons
+
+plugins:
+  - mike:
+      # https://github.com/jimporter/mike
+      alias_type: symlink
+      redirect_template: null
+      deploy_prefix: ""
+      canonical_version: null
+      version_selector: true
+      css_dir: css
+      javascript_dir: js
+
+extra_css:
+  - assets/stylesheets/extra.css
 
 extra:
   generator: false
+  version:
+    # mike makes it easy to deploy multiple versions of your project documentation.
+    # It integrates natively with Material for MkDocs and can be enabled via mkdocs.yml:
+    provider: mike
+    default: latest
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/udayraj123

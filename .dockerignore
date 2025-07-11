@@ -1,3 +1,7 @@
+# OMRChecker inputs
+inputs
+samples
+
 # Byte-compiled / optimized / DLL files
 **/__pycache__/
 **/*.py[cod]
@@ -150,6 +154,8 @@
 
 # mkdocs documentation
 **/site
+**/docs
+
 
 # mypy
 **/.mypy_cache/

@@ -6,6 +6,16 @@
     - Added conditionalSets in the schema.
     - Support for outputImageShape
 
+
+<!-- TODO: test this -
+<details>
+<summary> Template Schema File </summary>
+```python
+--8<-- "src/schemas/template_schema.py"
+```
+</details>
+-->
+
 <!-- - TODO: add Links to Readmes inside individual samples -->
 
 # Template Documentation (WIP - ai generated)

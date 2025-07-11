@@ -5,6 +5,10 @@
 !.github/
 !.vscode/
 !.devcontainer/
+!docs/overrides/.icons
+
+# mkdocs generated site
+docs/site
 
 # Everything in inputs/ and outputs/
 inputs/*
