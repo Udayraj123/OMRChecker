@@ -1,16 +1,30 @@
-name: Docs
+name: Deploy MkDocs
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
+      - dev
+      - feature/mkdocs-debug # temp
+
   pull_request:
     branches: [master]
 
 permissions:
   contents: write
 
+env:
+  IS_NOT_A_FORK: ${{ github.event.pull_request.head.repo.fork == false }}
+  IS_PULL_REQUEST: ${{ github.event_name == 'pull_request' }}
+  IS_PUSH: ${{ github.event_name == 'push' }}
+  BRANCH_NAME: ${{ github.ref_name }}
+  IS_MASTER: ${{ BRANCH_NAME == 'master' }}
+  IS_DEV: ${{ BRANCH_NAME == 'dev' }}
+  MIKE_DEPLOY_VERSION: ${{ $IS_MASTER && '1.x' || ($IS_DEV && '2.x' || '$BRANCH_NAME') }}
+
 jobs:
   deploy:
+    if: ${{ ($IS_PUSH || $IS_NOT_A_FORK) && $MIKE_DEPLOY_VERSION != '' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -38,4 +52,4 @@ jobs:
           path: .cache
           restore-keys: mkdocs-material-
 
-      - run: uv run mkdocs gh-deploy --force
+      - run: uv run mike deploy "$MIKE_DEPLOY_VERSION"

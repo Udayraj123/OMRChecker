@@ -8,7 +8,7 @@
 !docs/overrides/.icons
 
 # mkdocs generated site
-docs/site
+site/
 
 # Everything in inputs/ and outputs/
 inputs/*

@@ -16,7 +16,7 @@ To understand the structure and usage of the `evaluation.json` file for custom e
 
 <p align="center">
 	<a href="https://github.com/Udayraj123/OMRChecker/wiki/%5Bv2%5D-About-Evaluation">
-		<img alt="colored_output" width="550" src="./images/colored_output.jpg">
+		<img alt="colored_output" width="550" src="{{ config.extra.CDN_PREFIX }}/images/colored_output.jpg">
 	</a>
 </p>
 
@@ -102,7 +102,7 @@ To understand the structure and usage of the `evaluation.json` file for custom e
   },
 ```
 
-### Symbols and Color Notations 
+### Symbols and Color Notations
 When `draw_question_verdicts` is enabled, the output images will contain the answer key and corresponding question verdicts. Both the gray and colored images follow a set of notations to show the different types of answers supported. The diagram below(initial draft) explains the possible answer key cases covered in a single picture:
 ![evaluation-outputs-export](https://github.com/Udayraj123/OMRChecker/assets/16881051/844895f4-c3ce-47dc-9688-60cd9bc6a3e3)
 

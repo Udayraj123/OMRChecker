@@ -5,25 +5,35 @@ site_url: https://udayraj123.github.io/OMRChecker/ # Trailing slash is recommend
 
 # Paths relative to docs/ folder
 nav:
-  - Home: ../README.md
-  - About:
-      - License: ../LICENSE.md
-  - Getting Started:
-      - ../README.md
+  - Home: index.md
   - Guides:
-      - "v2/User-Guide.md"
       - User Guide: "v2/User-Guide.md"
       - Templates: "v2/About-Templates.md"
       - Config: "v2/About-Config.md"
       - Evaluation: "v2/About-Evaluation.md"
-      - For Contributors: For Contributors.md
+      - For Contributors: "v1/For Contributors.md"
       - v1 Guide:
           - User Guide: "v1/User-Guide.md"
           - Templates: "v1/About-Templates.md"
-          - TODOs: TODOs.md
+          - TODOs: "v1/TODOs.md"
   - Visualizations:
       - Diagrams: "v1/Diagrams.md"
       - Rich Visuals: "v1/Rich Visuals.md"
+
+plugins:
+  - search
+  # - mkdocstrings // TODO: enable mkdocstrings plugin
+  - macros:
+      module_name: mkdocs
+      on_undefined: strict
+  - mike:
+      alias_type: symlink
+      redirect_template: null
+      deploy_prefix: ""
+      css_dir: css
+      javascript_dir: js
+      canonical_version: null
+      version_selector: true
 
 validation:
   # https://github.com/squidfunk/mkdocs-material/discussions/5897
@@ -66,6 +76,9 @@ theme:
 markdown_extensions:
   - admonition
   - attr_list
+  - def_list
+  - toc:
+      permalink: §
   - pymdownx.blocks.caption
   - pymdownx.highlight:
       linenums: true
@@ -75,8 +88,6 @@ markdown_extensions:
       alternate_style: true
 
   - pymdownx.snippets
-    # https://stackoverflow.com/q/73828765/6242649
-    # base_path: !relative $config_dir
 
   # # https://squidfunk.github.io/mkdocs-material/setup/changing-the-logo-and-icons/
   # - pymdownx.emoji:
@@ -86,17 +97,6 @@ markdown_extensions:
   #       custom_icons:
   #         - overrides/.icons
 
-plugins:
-  - mike:
-      # https://github.com/jimporter/mike
-      alias_type: symlink
-      redirect_template: null
-      deploy_prefix: ""
-      canonical_version: null
-      version_selector: true
-      css_dir: css
-      javascript_dir: js
-
 extra_css:
   - assets/stylesheets/extra.css
 
@@ -104,7 +104,6 @@ extra:
   generator: false
   version:
     # mike makes it easy to deploy multiple versions of your project documentation.
-    # It integrates natively with Material for MkDocs and can be enabled via mkdocs.yml:
     provider: mike
     default: latest
   social:
@@ -117,5 +116,6 @@ extra:
     - icon: fontawesome/brands/x-twitter
       link: https://x.com/udayraj123
       name: udayraj123 on X
+  CDN_PREFIX: "https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker"
 
 copyright: Copyright &copy; 2025 udayraj123

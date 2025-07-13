@@ -1,24 +1,6 @@
-# wip
-
-## V1 to V2 Migration
-    - Renamed pageDimensions -> templateDimensions
-    - Support for a top level processingImageShape as well as pre-processor level processingImageShape
-    - Added conditionalSets in the schema.
-    - Support for outputImageShape
-
-
-<!-- TODO: test this -
-<details>
-<summary> Template Schema File </summary>
-```python
---8<-- "src/schemas/template_schema.py"
-```
-</details>
--->
-
 <!-- - TODO: add Links to Readmes inside individual samples -->
 
-# Template Documentation (WIP - ai generated)
+# (WIP) Template Documentation
 
 The template file defines how OMRChecker should process and interpret OMR sheets. It includes configurations for image preprocessing, field layouts, bubble arrangements, and output formatting.
 
@@ -168,3 +150,26 @@ Configures how processed files should be organized.
   }
 }
 ```
+
+## V1 to V2 Migration
+
+<details>
+<summary open> Changes in Template Schema </summary>
+
+```yaml
+- Renamed pageDimensions -> templateDimensions
+- Support for a top level processingImageShape as well as pre-processor level processingImageShape
+- Added conditionalSets in the schema.
+- Support for outputImageShape
+```
+
+</details>
+
+# Complete Reference
+
+<details>
+<summary> Template Schema Info </summary>
+
+--8<-- "docs/v2/about_template_schema.md"
+
+</details>

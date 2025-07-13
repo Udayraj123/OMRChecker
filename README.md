@@ -23,8 +23,8 @@ OMR stands for Optical Mark Recognition, used to detect and interpret human-mark
 <!-- [![GitHub contributors](https://img.shields.io/github/contributors/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/graphs/contributors/) -->
 
 [![GitHub stars](https://img.shields.io/github/stars/Udayraj123/OMRChecker.svg?style=social&label=Stars✯)](https://GitHub.com/Udayraj123/OMRChecker/stargazers/)
-[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FUdayraj123%2FOMRChecker&count_bg=%2379C83D&title_bg=%23555555&icon=googlecast.svg&icon_color=%23E7E7E7&title=hits%2829.09.2022%29&edge_flat=false)](https://hits.seeyoufarm.com)
-[![Join](https://img.shields.io/badge/Join-Discord_group-purple.svg?style=flat-square)](https://discord.gg/qFv2Vqf)
+<!-- [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FUdayraj123%2FOMRChecker&count_bg=%2379C83D&title_bg=%23555555&icon=googlecast.svg&icon_color=%23E7E7E7&title=hits%2829.09.2022%29&edge_flat=false)](https://hits.seeyoufarm.com) -->
+
 
 <!-- [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/gist/Udayraj123/a125b1531c61cceed5f06994329cba66/omrchecker-on-cloud.ipynb) -->
 
@@ -241,8 +241,6 @@ This project was born out of a student-led organization called as [Technothlon](
 
 We believe in the power of open source! Currently, OMRChecker is in an intermediate stage where only developers can use it. We hope to see it become more user-friendly as well as robust from exposure to different inputs from you all!
 
-[![Open Source](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badges/)
-
 </details>
 
 <details>
@@ -252,33 +250,19 @@ We believe in the power of open source! Currently, OMRChecker is in an intermedi
 
 OMRChecker can be forked and modified. You are encouraged to play with it and we would love to see your own projects in action!
 
-It is published under the [MIT license](https://github.com/Udayraj123/OMRChecker/blob/master/LICENSE).
+It is published under the MIT license.
 
 </details>
 
-<details>
-<summary>
-<b>What are the ways to contribute?</b>
-</summary>
-
-- Join the developer community on [Discord](https://discord.gg/qFv2Vqf) to fix [issues](https://github.com/Udayraj123/OMRChecker/issues) with OMRChecker.
-
-- If this project saved you some costs on OMR Software licenses, or saved efforts to make one. Consider donating an amount of your choice(donate section).
-
-<!-- ![☕](https://miro.medium.com/fit/c/256/256/1*br7aoq_JVfxeg73x5tF_Sw.png) -->
-<!-- [![paypal.me](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Z5BNNK7AVFVH8&source=url) -->
-<!-- https://www.amazon.in/hz/wishlist/ls/3V0TDQBI3T8IL -->
-
-</details>
 
 ## Credits
 
 _A Huge thanks to:_
-_**Adrian Rosebrock** for his exemplary blog:_ https://pyimagesearch.com
+_**Adrian Rosebrock** for his exemplary blog:_ [https://pyimagesearch.com](https://pyimagesearch.com)
 
 _**Harrison Kinsley** aka sentdex for his [video tutorials](https://www.youtube.com/watch?v=Z78zbnLlPUA&list=PLQVvvaa0QuDdttJXlLtAJxJetJcqmqlQq) and many other resources._
 
-_**Satya Mallic** for his resourceful blog:_ https://www.learnopencv.com
+_**Satya Mallic** for his resourceful blog:_ [https://www.learnopencv.com](https://www.learnopencv.com)
 
 _And to other amazing people from all over the globe who've made significant improvements in this project._
 
@@ -293,6 +277,9 @@ Here's a snapshot of the [Android OMR Helper App (archived)](https://github.com/
 		<img height="300" src="https://raw.githubusercontent.com/wiki/Udayraj123/OMRChecker/extras/Progress/2019-04-26/images/app_flow.PNG">
 	</a>
 </p>
+
+## External Links
+- Deepwiki Docs(Devin): [https://deepwiki.com/Udayraj123/OMRChecker](https://deepwiki.com/Udayraj123/OMRChecker)
 
 ## Stargazers over time
 
