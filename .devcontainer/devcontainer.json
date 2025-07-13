@@ -22,6 +22,12 @@
     // "forwardPorts": [6080],
     // "postCreateCommand": "pip3 install -r requirements.txt && sudo apt-get update && sudo apt-get -y install python3-opencv python3-tk"
     "customizations": {
+        "codespaces": {
+            "openFiles": [
+                "main.py",
+                "README.md"
+            ]
+        },
         "vscode": {
             "extensions": [
                 "charliermarsh.ruff",

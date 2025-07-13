@@ -29,44 +29,28 @@ class TemplateLayout:
         self.template_dimensions: list[int] = [0, 0]
 
         json_object = open_template_with_defaults(template_path)
-        (
-            custom_labels_object,
-            field_blocks_object,
-            alignment_object,
-            output_columns_array,
-            pre_processors_object,
-            self.bubble_dimensions,
-            self.global_empty_val,
-            self.template_dimensions,
-            self.options,
-            self.output_image_shape,
-            self.field_blocks_offset,
-            custom_bubble_field_types,
-        ) = map(
-            json_object.get,
-            [
-                "customLabels",
-                "fieldBlocks",
-                "alignment",
-                "outputColumns",
-                "preProcessors",
-                "bubbleDimensions",
-                "emptyValue",
-                "templateDimensions",
-                "options",
-                "outputImageShape",
-                "fieldBlocksOffset",
-                "customBubbleFieldTypes",
-                # TODO: support for "sortFiles" key
-            ],
-        )
+        # Required properties
+        self.bubble_dimensions = json_object["bubbleDimensions"]
+        self.template_dimensions = json_object["templateDimensions"]
+        # Properties with defaults
+        field_blocks_object = json_object["fieldBlocks"]
+        pre_processors_object = json_object["preProcessors"]
+        alignment_object = json_object["alignment"]
+        custom_bubble_field_types = json_object["customBubbleFieldTypes"]
+        custom_labels_object = json_object["customLabels"]
+        output_columns_array = json_object["outputColumns"]
+        self.field_blocks_offset = json_object["fieldBlocksOffset"]
+        self.global_empty_val = json_object["emptyValue"]
 
+        # Properties without defaults
+        self.output_image_shape = json_object.get("outputImageShape", None)
         page_width, page_height = self.template_dimensions
-
-        # Default processingImageShape will be the page dimensions
         self.processing_image_shape = json_object.get(
-            "processingImageShape", [page_height, page_width]
+            # Default processingImageShape will be the page dimensions
+            "processingImageShape",
+            [page_height, page_width],
         )
+        # TODO: support for "sortFiles" key
 
         self.parse_output_columns(output_columns_array)
 
