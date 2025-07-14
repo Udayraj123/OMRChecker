@@ -52,6 +52,9 @@ def open_config_with_defaults(config_path, args) -> dict[str, Any]:
 
     validate_config_json(user_tuning_config, config_path)
 
+    # Inject config path
+    user_tuning_config["path"] = config_path
+
     # Broadcast the default boolean into preprocessor-wise boolean
     show_preprocessors_diff = user_tuning_config["outputs"]["show_preprocessors_diff"]
     if isinstance(show_preprocessors_diff, bool):

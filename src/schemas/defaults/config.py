@@ -4,6 +4,7 @@ from src.utils.constants import SUPPORTED_PROCESSOR_NAMES
 
 CONFIG_DEFAULTS = DotMap(
     {
+        "path": "config.json",
         "thresholding": {
             "GAMMA_LOW": 0.7,
             "MIN_GAP_TWO_BUBBLES": 30,

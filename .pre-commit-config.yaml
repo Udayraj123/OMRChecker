@@ -14,10 +14,12 @@ repos:
         name: Ruff check
         description: "Run 'ruff check' for extremely fast Python linting"
         args: [--fix]
+        fail_fast: true
 
       - id: ruff-format
         name: Ruff format
         description: "Run 'ruff format' for extremely fast Python formatting"
+        fail_fast: true
 
   # Convert the pngs to jpgs inside samples folder
   - repo: local

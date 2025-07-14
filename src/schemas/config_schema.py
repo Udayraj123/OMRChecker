@@ -13,6 +13,10 @@ CONFIG_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "properties": {
+        "path": {
+            "description": "The path to the config file",
+            "type": "string",
+        },
         "thresholding": {
             "description": "The values used in the core algorithm of OMRChecker",
             "type": "object",

@@ -60,19 +60,26 @@ def resize_util(image, u_width=None, u_height=None):
     return image.resize((int(resized_width), int(resized_height)), Image.LANCZOS)
 
 
-def resize_image_and_save(image_path, max_width, max_height):
-    stem, suffix = Path.stem(image_path), Path.suffix(image_path)
-    temp_image_path = f"{stem}-tmp{suffix}"
+TEMP_DIRECTORY = Path(".tmp")
+
+
+def resize_image_and_save(image_path: Path, max_width: int, max_height: int):
+    stem, suffix = image_path.stem, image_path.suffix
+    if not TEMP_DIRECTORY.exists():
+        TEMP_DIRECTORY.mkdir()
+    temp_image_path = TEMP_DIRECTORY / f"{stem}-tmp{suffix}"
     with Image.open(image_path) as image:
         old_image_size = image.size[:2]
         w, h = old_image_size
         resized = False
+        new_image_size = image.size
         if h > max_height or w > max_width:
             image_to_save = resize_util(image, u_width=max_width, u_height=max_height)
             resized = True
-            image_to_save.save(temp_image_path)
+            new_image_size = image_to_save.size
+            image_to_save.save(str(temp_image_path))
 
-        return resized, temp_image_path, old_image_size, image_to_save.size
+        return resized, temp_image_path, old_image_size, new_image_size
 
 
 def load_image(file_path):

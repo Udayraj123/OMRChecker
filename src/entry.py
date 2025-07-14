@@ -29,7 +29,7 @@ def entry_point(input_dir: Path, args: dict) -> None:
         msg = f"Given input directory does not exist: '{input_dir}'"
         raise Exception(msg)
     curr_dir = input_dir
-    return process_dir(input_dir, curr_dir, args)
+    return process_directory_wise(input_dir, curr_dir, args)
 
 
 # TODO: move into template.directory_handler?
@@ -71,12 +71,14 @@ def print_config_summary(
 
 
 # TODO: move into template.directory_handler?
-def process_dir(
+# Recursive function to process directory-wise files
+def process_directory_wise(
     # ruff: noqa: PLR0913, C901
     root_dir: Path,
     curr_dir: Path,
     args: dict,
     template: Template | None = None,
+    # TODO: a custom class for tuning_config
     tuning_config: DotMap = CONFIG_DEFAULTS,
     evaluation_config: EvaluationConfig | None = None,
 ) -> None:
@@ -168,6 +170,11 @@ def process_dir(
                 output_mode,
             )
 
+            if tuning_config.outputs.show_image_level <= 1:
+                logger.info(
+                    f"\nTip: To see some awesome visuals, open '{tuning_config.path}' and increase `outputs.show_image_level`"
+                )
+
     elif not subdirs:
         # Each subdirectory should have images or should be non-leaf
         logger.info(
@@ -177,7 +184,7 @@ def process_dir(
 
     # recursively process sub-folders
     for d in subdirs:
-        process_dir(
+        process_directory_wise(
             root_dir,
             d,
             args,
@@ -219,6 +226,7 @@ def show_template_in_set_layout_mode(omr_files, template, tuning_config) -> None
         )
 
 
+# Non-recursive function that processes a single directory
 # TODO: move into template.directory_handler/directory_runner
 def process_directory_files(
     # ruff: noqa: PLR0912, C901, PLR0915
@@ -505,8 +513,3 @@ def print_stats(start_time, files_counter, tuning_config) -> None:
         )
     else:
         log(f"\n{'Total script time':<27}: {time_checking} seconds")
-
-    if tuning_config.outputs.show_image_level <= 1:
-        log(
-            "\nTip: To see some awesome visuals, open config.json and increase 'show_image_level'"
-        )

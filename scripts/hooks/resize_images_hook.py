@@ -5,8 +5,10 @@ import argparse
 import os
 import shutil
 import sys
+from pathlib import Path
 
 from scripts.utils.image_utils import get_size_in_kb, resize_image_and_save
+from src.utils.logger import logger
 
 
 def resize_images_in_tree(args):
@@ -15,7 +17,11 @@ def resize_images_in_tree(args):
     trigger_size = args.get("trigger_size", None)
     filenames = args.get("filenames", None)
     resized_count = 0
-    for image_path in filenames:
+    for file_name in filenames:
+        image_path = Path(file_name)
+        if not image_path.is_file():
+            logger.warning(f"Skipping non-file: {image_path}")
+            continue
         old_size = get_size_in_kb(image_path)
         if old_size <= trigger_size:
             continue
