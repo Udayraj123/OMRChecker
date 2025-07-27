@@ -15,15 +15,23 @@ Also, try to use commits with [conventional messages](https://www.conventionalco
 
 
 # Code Formatting
-Before committing your code, make sure to run the following command to format your code according to the PEP8 style guide:
-```.sh
-pip install -r requirements.dev.txt && pre-commit install
+Make sure to run uv ruff check (with optionally --fix) to format your code
+```
+uv ruff check
 ```
 
-Run `pre-commit` before committing your changes:
-```.sh
-git add .
-pre-commit run -a
+# Documentation
+- Update Contributors.md file with your name
+- Any changes in the functionality of the tool, especially in the configuration schema should be documented. For documentation we are using mike(internally uses mkdocs).
+- To view documentation site locally, use mike:
+```bash
+# https://github.com/mkdocs-material/example-versioning/blob/master/README.md
+# List versions -
+uv run mike list
+# Update and commit given version's docs in the gh-pages branch
+uv run mike deploy <version>
+# Serve the docs
+uv run mike serve
 ```
 
 # Where to contribute from
