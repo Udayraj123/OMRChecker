@@ -269,9 +269,10 @@ def process_directory_files(
 
         # TODO: [later] template & evaluation as a "Processor"?
         # TODO: move apply_template_alignment into template class
-        gray_image, colored_image, template = apply_template_alignment(
-            gray_image, colored_image, template, tuning_config
-        )
+        if gray_image is not None and "gray_alignment_image" in template.alignment:
+            gray_image, colored_image, template = apply_template_alignment(
+                gray_image, colored_image, template, tuning_config
+            )
 
         # Error OMR case
         if gray_image is None:

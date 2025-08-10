@@ -54,7 +54,7 @@ def apply_k_nearest_interpolation_inplace(
         block_gray_image_before = block_gray_image.copy()
 
         # Shift the coordinates to the field block's origin to draw on the cropped block
-        old_shifts = field_block.shifts
+        old_shifts = field_block.shifts.copy()
         field_block.shifts = block_image_shifts
         field_block.drawing.draw_field_block(
             block_gray_image_before, shifted=True, thickness=2
@@ -70,7 +70,7 @@ def apply_k_nearest_interpolation_inplace(
 
     if config.outputs.show_image_level >= 2:
         block_gray_image_after = block_gray_image.copy()
-        old_shifts = field_block.shifts
+        old_shifts = field_block.shifts.copy()
         field_block.shifts = block_image_shifts  # MathUtils.add_points(block_image_shifts, average_shifts)
         field_block.drawing.draw_field_block(
             block_gray_image_after, shifted=True, thickness=2
@@ -85,6 +85,8 @@ def apply_k_nearest_interpolation_inplace(
         )
 
     # Method 2: Get affine transform on the bubble coordinates
+
+    # TODO: uncomment this
     # field_block.shifts = average_shifts
 
 

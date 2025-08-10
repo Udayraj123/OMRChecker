@@ -8,10 +8,6 @@ from src.utils.logger import logger
 
 # TODO: move into template class
 def apply_template_alignment(gray_image, colored_image, template: Template, config):
-    if "gray_alignment_image" not in template.alignment:
-        logger.info(f"Note: Alignment not enabled for template {template}")
-        return gray_image, colored_image, template
-
     # Parsed
     template_margins, template_max_displacement = (
         template.alignment["margins"],
@@ -40,27 +36,10 @@ def apply_template_alignment(gray_image, colored_image, template: Template, conf
 
     # TODO: wrap this loop body into a function and generalize into passing *any* scanZone in this.
     for field_block in template.field_blocks:
-        (
-            field_block_name,
-            bounding_box_origin,
-            bounding_box_dimensions,
-            field_block_alignment,
-        ) = (
-            getattr(field_block, attr)
-            for attr in [
-                "name",
-                "bounding_box_origin",
-                "bounding_box_dimensions",
-                "alignment",
-            ]
-        )
-        logger.info(
-            "field_block",
-            field_block_name,
-            bounding_box_origin,
-            bounding_box_dimensions,
-            field_block_alignment,
-        )
+        field_block_name = field_block.name
+        bounding_box_origin = field_block.bounding_box_origin
+        bounding_box_dimensions = field_block.bounding_box_dimensions
+        field_block_alignment = field_block.alignment
 
         margins = field_block_alignment.get("margins", template_margins)
         max_displacement = field_block_alignment.get(
@@ -136,5 +115,14 @@ def apply_template_alignment(gray_image, colored_image, template: Template, conf
         # Method 4
         # Warp each field in the image
         # TODO: figure out how to apply detection on these copies to support overlapping field blocks!
+
+        logger.debug(
+            "field_block",
+            field_block_name,
+            bounding_box_origin,
+            bounding_box_dimensions,
+            field_block_alignment,
+            field_block.shifts,
+        )
 
     return gray_image, colored_image, template
