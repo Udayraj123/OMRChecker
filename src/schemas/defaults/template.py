@@ -6,6 +6,7 @@ TEMPLATE_DEFAULTS = {
     },
     "conditionalSets": [],
     "customLabels": {},
+    "customBubbleFieldTypes": {},
     "emptyValue": "",
     "fieldBlocks": {},
     "fieldBlocksOffset": [0, 0],

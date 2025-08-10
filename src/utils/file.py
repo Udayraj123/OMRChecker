@@ -41,7 +41,7 @@ class PathUtils:
 
         return PathUtils.remove_non_utf_characters(path)
 
-    def __init__(self, output_dir) -> None:
+    def __init__(self, output_dir: Path) -> None:
         self.output_dir = output_dir
         self.save_marked_dir = output_dir.joinpath("CheckedOMRs")
         self.image_metrics_dir = output_dir.joinpath("ImageMetrics")

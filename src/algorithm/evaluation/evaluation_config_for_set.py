@@ -49,7 +49,7 @@ class EvaluationConfigForSet:
                 "source_type",
             ],
         )
-        self.evaluations_dir = template.get_evaluations_dir()
+        self.get_evaluations_dir = template.get_evaluations_dir
 
         (
             self.draw_answers_summary,
@@ -609,7 +609,7 @@ class EvaluationConfigForSet:
             explanation_table = self.get_explanation_table()
             explanation_table = table_to_df(explanation_table)
             explanation_table.to_csv(
-                self.evaluations_dir.joinpath(file_path.stem + ".csv"),
+                self.get_evaluations_dir().joinpath(file_path.stem + ".csv"),
                 quoting=QUOTE_NONNUMERIC,
                 index=False,
             )

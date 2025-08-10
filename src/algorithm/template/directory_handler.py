@@ -18,7 +18,7 @@ class TemplateDirectoryHandler:
     def __init__(self, template) -> None:
         self.template = template
 
-    def reset_path_utils(self, output_dir, output_mode) -> None:
+    def reset_path_utils(self, output_dir: Path, output_mode) -> None:
         if output_mode == OUTPUT_MODES.SET_LAYOUT:
             logger.info("Note: Skipped files creation in setLayout mode")
             return
@@ -50,9 +50,9 @@ class TemplateDirectoryHandler:
         self.output_files: dict[str, TextIOWrapper] = {}
         time_now_hrs = strftime("%I%p", localtime())
         files_map = {
-            "Results": Path(self.path_utils.results_dir, f"Results_{time_now_hrs}.csv"),
-            "MultiMarked": Path(self.path_utils.manual_dir, "MultiMarkedFiles.csv"),
-            "Errors": Path(self.path_utils.manual_dir, "ErrorFiles.csv"),
+            "Results": self.path_utils.results_dir / f"Results_{time_now_hrs}.csv",
+            "MultiMarked": self.path_utils.manual_dir / "MultiMarkedFiles.csv",
+            "Errors": self.path_utils.manual_dir / "ErrorFiles.csv",
         }
 
         for file_key, file_path in files_map.items():
