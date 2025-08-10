@@ -11,6 +11,7 @@ class PyZBar(TextBarcode):
 
     @staticmethod
     def initialize() -> None:
+        # ruff: noqa: PLC0415
         from pyzbar.pyzbar import decode as decode_barcode
 
         PyZBar.decode_barcode = decode_barcode

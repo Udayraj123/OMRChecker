@@ -8,7 +8,7 @@ repos:
     hooks:
       - id: uv-lock
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.2
+    rev: v0.12.8 # Note: this version should match with that of ruff in pyproject.toml to avoid unknown rules
     hooks:
       - id: ruff
         name: Ruff check
@@ -59,7 +59,7 @@ repos:
 
   # Run image compressor before the large files check
   - repo: https://github.com/boidolr/pre-commit-images
-    rev: v1.5.2
+    rev: v1.9.0
     hooks:
       - id: optimize-png
       - id: optimize-jpg
@@ -67,7 +67,7 @@ repos:
         fail_fast: true # Wait for user to commit the files
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v6.0.0
     hooks:
       - id: check-yaml
         stages: [pre-commit]

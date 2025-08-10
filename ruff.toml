@@ -138,6 +138,7 @@ ignore = [
     "TD003",   # Missing issue link for this TODO
     "TRY002",  # Create your own exception
     "UP038",   # Use `X | Y` in `isinstance` call instead of `(X, Y)`
+    "UP046",   # Generic class uses `Generic` subclass instead of type parameters
 
     # Ruff checks (resolved)
     # "ANN202", # Missing return type annotation for private function

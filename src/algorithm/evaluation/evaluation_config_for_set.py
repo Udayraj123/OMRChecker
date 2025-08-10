@@ -479,7 +479,6 @@ class EvaluationConfigForSet:
             # TODO: Support for total_positive, total_negative,
             # TODO: Same aggregates section-wise: correct/incorrect verdict counts in formatted_answers_summary
             answers_summary_format_string.format(**self.schema_verdict_counts)
-        # ruff: noqa: BLE001
         except Exception:
             msg = f"The format string should contain only allowed variables {SCHEMA_VERDICTS_IN_ORDER}. answers_summary_format_string={answers_summary_format_string}"
             raise Exception(msg) from None
@@ -487,7 +486,6 @@ class EvaluationConfigForSet:
         score_format_string = self.draw_score["score_format_string"]
         try:
             score_format_string.format(score=0)
-        # ruff: noqa: BLE001
         except Exception:
             msg = f"The format string should contain only allowed variables ['score']. score_format_string={score_format_string}"
             raise Exception(msg) from None

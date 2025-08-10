@@ -33,6 +33,7 @@ def run_entry_point(input_path, output_dir) -> None:
         "outputMode": "default",
     }
     with freeze_time(FROZEN_TIMESTAMP):
+        # ruff: noqa: PLC0415
         import time
 
         frozen_time = time.time()
@@ -91,7 +92,6 @@ def generate_write_jsons_and_run(
         sample_outputs, exception = "No output", "No Error"
         try:
             sample_outputs = run_sample(mocker, sample_path)
-        # ruff: noqa: BLE001
         except Exception as e:
             exception = e
 

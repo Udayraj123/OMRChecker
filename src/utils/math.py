@@ -81,7 +81,6 @@ class MathUtils:
 
     @staticmethod
     def validate_rect(approx):
-        # ruff: noqa: PLR2004
         return len(approx) == 4 and MathUtils.check_max_cosine(approx.reshape(4, 2))
 
     @staticmethod

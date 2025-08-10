@@ -11,6 +11,7 @@ class EasyOCR(TextOCR):
 
     @staticmethod
     def initialize() -> None:
+        # ruff: noqa: PLC0415
         import easyocr
 
         # this needs to run only once to load the model into memory

@@ -91,7 +91,6 @@ class EvaluationConfig:
                 formatted_string = format_string.format(**formatting_fields)
                 if re.search(match_regex, formatted_string) is not None:
                     return name
-            # ruff: noqa: BLE001
             except Exception:
                 return None
         return None

@@ -32,7 +32,6 @@ write_jsons_and_run = generate_write_jsons_and_run(
 def test_no_input_dir(mocker) -> None:
     try:
         run_sample(mocker, "X")
-    # ruff: noqa: BLE001
     except Exception as e:
         assert str(e) == "Given input directory does not exist: 'X'"
 
@@ -42,7 +41,6 @@ def test_no_template(mocker) -> None:
         os.remove(BASE_SAMPLE_TEMPLATE_PATH)
     try:
         run_sample(mocker, BASE_SAMPLE_PATH)
-    # ruff: noqa: BLE001
     except Exception as e:
         assert (
             str(e)
