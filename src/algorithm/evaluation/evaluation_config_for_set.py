@@ -1,5 +1,6 @@
 import ast
 import re
+from csv import QUOTE_NONNUMERIC
 
 import pandas as pd
 from rich.table import Table
@@ -17,7 +18,7 @@ from src.utils.constants import CLR_BLACK, CLR_WHITE
 from src.utils.image import ImageUtils
 from src.utils.logger import console, logger
 from src.utils.math import MathUtils
-from src.utils.parsing import parse_fields
+from src.utils.parsing import parse_fields, table_to_df
 
 
 class EvaluationConfigForSet:
@@ -48,6 +49,7 @@ class EvaluationConfigForSet:
                 "source_type",
             ],
         )
+        self.evaluations_dir = template.get_evaluations_dir()
 
         (
             self.draw_answers_summary,
@@ -71,6 +73,7 @@ class EvaluationConfigForSet:
             self.parse_draw_question_verdicts()
 
         self.exclude_files = []
+
         self.has_custom_marking = False
         self.has_streak_marking = False
         self.allow_streak = False
@@ -601,7 +604,15 @@ class EvaluationConfigForSet:
     def get_should_explain_scoring(self):
         return self.should_explain_scoring
 
-    def get_should_export_explanation_csv(self):
+    def conditionally_export_explanation_csv(self, file_path):
+        if self.should_export_explanation_csv:
+            explanation_table = self.get_explanation_table()
+            explanation_table = table_to_df(explanation_table)
+            explanation_table.to_csv(
+                self.evaluations_dir.joinpath(file_path.stem + ".csv"),
+                quoting=QUOTE_NONNUMERIC,
+                index=False,
+            )
         return self.should_export_explanation_csv
 
     def get_explanation_table(self):

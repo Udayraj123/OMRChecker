@@ -2,6 +2,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+from cv2.typing import MatLike
 from dotmap import DotMap
 from matplotlib import pyplot as plt
 from shapely import LineString, Point
@@ -69,9 +70,9 @@ class ImageUtils:
         return [ImageUtils.resize_single(image, u_width, u_height) for image in images]
 
     @staticmethod
-    def resize_single(image, u_width=None, u_height=None):
+    def resize_single(image, u_width=None, u_height=None) -> MatLike:
         if image is None:
-            return None
+            return None  # pyright: ignore [reportReturnType]
         h, w = image.shape[:2]
         if u_height is None:
             u_height = int(h * u_width / w)

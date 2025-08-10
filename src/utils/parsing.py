@@ -4,6 +4,7 @@ from fractions import Fraction
 from typing import Any
 
 import numpy as np
+import pandas as pd
 from deepmerge import Merger
 from dotmap import DotMap
 
@@ -136,3 +137,9 @@ def default_dump(obj) -> bool | dict[str, Any] | str:
             else obj
         )
     )
+
+
+def table_to_df(table) -> pd.DataFrame:
+    # ruff: noqa: SLF001
+    data = {col.header: col._cells for col in table.columns}
+    return pd.DataFrame(data)

@@ -995,7 +995,6 @@ dependencies = [
     { name = "pandas" },
     { name = "pyzbar" },
     { name = "rich" },
-    { name = "rich-tools" },
     { name = "scipy" },
     { name = "screeninfo" },
     { name = "shapely" },
@@ -1031,7 +1030,6 @@ requires-dist = [
     { name = "pandas", specifier = "==2.2.3" },
     { name = "pyzbar", specifier = "==0.1.9" },
     { name = "rich", specifier = "==13.8.0" },
-    { name = "rich-tools", specifier = "==0.5.1" },
     { name = "scipy", specifier = "==1.15.1" },
     { name = "screeninfo", specifier = "==0.8.1" },
     { name = "shapely", specifier = "==2.1.1" },
@@ -1578,19 +1576,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/cf/60/5959113cae0ce512cf246a6871c623117330105a0d5f59b4e26138f2c9cc/rich-13.8.0.tar.gz", hash = "sha256:a5ac1f1cd448ade0d59cc3356f7db7a7ccda2c8cbae9c7a90c28ff463d3e91f4", size = 222072, upload-time = "2024-08-26T16:12:27.073Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/d9/c2a126eeae791e90ea099d05cb0515feea3688474b978343f3cdcfe04523/rich-13.8.0-py3-none-any.whl", hash = "sha256:2e85306a063b9492dffc86278197a60cbece75bcb766022f3436f567cae11bdc", size = 241597, upload-time = "2024-08-26T16:12:25.449Z" },
-]
-
-[[package]]
-name = "rich-tools"
-version = "0.5.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pandas" },
-    { name = "rich" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/fc/ed/5350411b9469495876dcce267fd35bbdc63bd502f1fd5fd914248cbb60d8/rich_tools-0.5.1.tar.gz", hash = "sha256:ca30da26b8fe0a5af2e5c0b5fba1c3a0bdf40b52de62fdf99d0662db62e063b5", size = 4875, upload-time = "2024-09-10T01:12:28.94Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8d/9a/dc79827022336b070704250ffff484c8b35d13ad47ffaae6dfb626c23288/rich_tools-0.5.1-py3-none-any.whl", hash = "sha256:f13dbaab74681c07d965902b2432af85568219ed5bce42d670d113836bb87272", size = 5434, upload-time = "2024-09-10T01:12:27.45Z" },
 ]
 
 [[package]]

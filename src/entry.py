@@ -5,7 +5,6 @@ from time import time
 import pandas as pd
 from dotmap import DotMap
 from rich.table import Table
-from rich_tools import table_to_df
 
 from src.algorithm.evaluation.evaluation_config import EvaluationConfig
 from src.algorithm.evaluation.evaluation_meta import evaluate_concatenated_response
@@ -334,17 +333,9 @@ def process_directory_files(
             logger.info(
                 f"(/{files_counter}) Graded with score: {round(score, 2)}\t {default_answers_summary} \t file: '{file_id}'"
             )
-            if evaluation_config_for_response.get_should_export_explanation_csv():
-                explanation_table = (
-                    evaluation_config_for_response.get_explanation_table()
-                )
-                explanation_table = table_to_df(explanation_table)
-                explanation_table.to_csv(
-                    template.get_evaluations_dir().joinpath(file_name + ".csv"),
-                    quoting=QUOTE_NONNUMERIC,
-                    index=False,
-                )
-
+            evaluation_config_for_response.conditionally_export_explanation_csv(
+                file_path
+            )
         else:
             logger.info(f"Read Response: \n{concatenated_omr_response}")
             logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
@@ -494,11 +485,11 @@ def print_stats(start_time, files_counter, tuning_config) -> None:
     time_checking = max(1, round(time() - start_time, 2))
     log = logger.info
     log("")
-    log(f"{'Total file(s) moved':<27}: {STATS.files_moved}")
-    log(f"{'Total file(s) not moved':<27}: {STATS.files_not_moved}")
+    log(f"{'Total file(s) moved': <27}: {STATS.files_moved}")
+    log(f"{'Total file(s) not moved': <27}: {STATS.files_not_moved}")
     log("--------------------------------")
     log(
-        f"{'Total file(s) processed':<27}: {files_counter} ({'Sum Tallied!' if files_counter == (STATS.files_moved + STATS.files_not_moved) else 'Not Tallying!'})"
+        f"{'Total file(s) processed': <27}: {files_counter} ({'Sum Tallied!' if files_counter == (STATS.files_moved + STATS.files_not_moved) else 'Not Tallying!'})"
     )
 
     if tuning_config.outputs.show_image_level <= 0:
@@ -506,10 +497,10 @@ def print_stats(start_time, files_counter, tuning_config) -> None:
             f"\nFinished Checking {files_counter} file(s) in {round(time_checking, 1)} seconds i.e. ~{round(time_checking / 60, 1)} minute(s)."
         )
         log(
-            f"{'OMR Processing Rate':<27}:\t ~ {round(time_checking / files_counter, 2)} seconds/OMR"
+            f"{'OMR Processing Rate': <27}: \t ~ {round(time_checking / files_counter, 2)} seconds/OMR"
         )
         log(
-            f"{'OMR Processing Speed':<27}:\t ~ {round((files_counter * 60) / time_checking, 2)} OMRs/minute"
+            f"{'OMR Processing Speed': <27}: \t ~ {round((files_counter * 60) / time_checking, 2)} OMRs/minute"
         )
     else:
-        log(f"\n{'Total script time':<27}: {time_checking} seconds")
+        log(f"\n{'Total script time': <27}: {time_checking} seconds")

@@ -152,6 +152,9 @@ class InteractionUtils:
         else:
             image_to_show = image
 
+        if not is_window_available(name):
+            cv2.namedWindow(name)
+
         # Show the image in the named window
         cv2.imshow(name, image_to_show)
 
@@ -199,3 +202,14 @@ def close_all_on_wait_key(key="q") -> None:
     cv2.destroyAllWindows()
     # also close open plots!
     plt.close()
+
+
+def is_window_available(name: str) -> bool:
+    """Checks if a window is available."""
+    try:
+        cv2.getWindowProperty(name, cv2.WND_PROP_VISIBLE)
+    except Exception as e:
+        logger.debug(e)
+        return False
+    else:
+        return True
