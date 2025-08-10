@@ -180,6 +180,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
             bubble_means_and_refs,
         )
         sorted_bubble_means = [item.mean_value for item in sorted_bubble_means_and_refs]
+        logger.debug(plot_title, [round(i, 3) for i in sorted_bubble_means])
 
         # Find the FIRST LARGE GAP and set it as threshold:
         ls = (looseness + 1) // 2

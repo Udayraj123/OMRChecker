@@ -205,14 +205,20 @@ class FieldBlock:
 
         # Note: we ignore the margins of the scan boxes when visualizing
         self.bounding_box_dimensions = [
-            max(
-                scan_box.origin[0] + scan_box.dimensions[0]
-                for scan_box in all_scan_boxes
-            )
-            - self.bounding_box_origin[0],
-            max(
-                scan_box.origin[1] + scan_box.dimensions[1]
-                for scan_box in all_scan_boxes
-            )
-            - self.bounding_box_origin[1],
+            round(
+                max(
+                    scan_box.origin[0] + scan_box.dimensions[0]
+                    for scan_box in all_scan_boxes
+                )
+                - self.bounding_box_origin[0],
+                2,
+            ),
+            round(
+                max(
+                    scan_box.origin[1] + scan_box.dimensions[1]
+                    for scan_box in all_scan_boxes
+                )
+                - self.bounding_box_origin[1],
+                2,
+            ),
         ]

@@ -14,9 +14,6 @@ class MeanValueItem(Generic[ItemReferenceT]):
     def __str__(self) -> str:
         return f"{self.item_reference} : {round(self.mean_value, 2)}"
 
-    def __hash__(self) -> int:
-        return super().__hash__()
-
     def validate_and_extract_value(self, other) -> float | int:
         if hasattr(other, "mean_value") and hasattr(other, "item_reference"):
             return other.mean_value
