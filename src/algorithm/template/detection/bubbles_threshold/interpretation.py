@@ -1,5 +1,4 @@
 import math
-import os
 import random
 import re
 
@@ -16,6 +15,7 @@ from src.algorithm.template.detection.bubbles_threshold.interpretation_drawing i
     BubblesFieldInterpretationDrawing,
 )
 from src.algorithm.template.layout.field.base import Field
+from src.utils.env import env
 from src.utils.logger import logger
 
 
@@ -226,7 +226,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
     def plot_for_global_threshold(
         plot_means_and_refs, plot_title, file_level_fallback_threshold, thr2
     ) -> None:
-        if os.environ.get("OMR_CHECKER_CONTAINER"):
+        if env.OMR_CHECKER_CONTAINER:
             return
         _, ax = plt.subplots()
         # TODO: move into individual utils

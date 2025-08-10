@@ -30,6 +30,9 @@ jobs:
         run: |
           set -o pipefail
           uv run pytest --cov-fail-under=70 --junitxml=./.github-pytest/pytest-output.xml | tee .github-pytest/pytest-coverage.txt
+        env:
+          OMR_CHECKER_CONTAINER: true
+          TZ: Asia/Kolkata
 
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@v1

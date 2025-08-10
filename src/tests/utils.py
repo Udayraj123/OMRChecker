@@ -33,6 +33,10 @@ def run_entry_point(input_path, output_dir) -> None:
         "outputMode": "default",
     }
     with freeze_time(FROZEN_TIMESTAMP):
+        import time
+
+        frozen_time = time.time()
+        assert frozen_time == 0, f"Frozen time is not 0: {frozen_time}"
         entry_point_for_args(args)
 
 
