@@ -38,7 +38,8 @@ class SiftMatcher:
         # find the keypoints and descriptors with SIFT
         source_features, des1 = SiftMatcher.sift.detectAndCompute(alignment_image, None)
         destination_features, des2 = SiftMatcher.sift.detectAndCompute(gray_image, None)
-
+        logger.debug(alignment_image.shape.alignment_image)
+        logger.debug(gray_image.shape.gray_image)
         matches = SiftMatcher.flann.knnMatch(des1, des2, k=2)
         # TODO: sort the matches and add maxMatchCount argument
 
