@@ -37,6 +37,7 @@ def apply_template_alignment(gray_image, colored_image, template: Template, conf
     # TODO: wrap this loop body into a function and generalize into passing *any* scanZone in this.
     for field_block in template.field_blocks:
         field_block_name = field_block.name
+        field_block.shifts = [0, 0]
         bounding_box_origin = field_block.bounding_box_origin
         bounding_box_dimensions = field_block.bounding_box_dimensions
         field_block_alignment = field_block.alignment
@@ -61,7 +62,15 @@ def apply_template_alignment(gray_image, colored_image, template: Template, conf
                 bounding_box_origin[1] + margins["bottom"] + bounding_box_dimensions[1]
             ),
         ]
-
+        logger.debug(
+            field_block.name,
+            field_block.to_json(),
+            zone_start,
+            zone_end,
+            bounding_box_origin,
+            bounding_box_dimensions,
+            gray_image.shape,
+        )
         block_gray_image, _block_colored_image, block_gray_alignment_image = (
             (
                 None

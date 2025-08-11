@@ -8,6 +8,9 @@ on:
       - "*.toml"
   pull_request:
     branches: [master]
+    paths:
+      - "**/*.py"
+      - "*.toml"
 
 jobs:
   lint:

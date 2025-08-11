@@ -8,6 +8,9 @@ on:
       - .devcontainer/Dockerfile
   pull_request:
     branches: [master]
+    paths:
+      - Dockerfile
+      - .devcontainer/Dockerfile
 
 jobs:
   lint:

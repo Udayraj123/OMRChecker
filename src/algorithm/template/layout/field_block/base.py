@@ -52,11 +52,11 @@ class FieldBlock:
             key: default_dump(getattr(self, key))
             for key in [
                 "bubble_dimensions",
-                "dimensions",
+                "bounding_box_dimensions",
                 "empty_value",
                 "fields",
                 "name",
-                "origin",
+                "bounding_box_origin",
                 # "shifted_origin",
                 # "plot_bin_name",
             ]
