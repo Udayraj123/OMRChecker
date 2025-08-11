@@ -33,7 +33,7 @@ repos:
         pass_filenames: true
         stages: [pre-commit]
         language: script
-        always_run: true
+        # always_run: true
         fail_fast: true # Wait for user to remove the png files
 
   # # Run resize image before the compress image check
