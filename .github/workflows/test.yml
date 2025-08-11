@@ -26,7 +26,7 @@ jobs:
       - name: Creating .github-pytest and coverage folders
         run: mkdir -p ./.github-pytest/coverage
 
-      - name: Run pytest
+      - name: Run pytest (with TZ=Asia/Kolkata)
         run: |
           set -o pipefail
           uv run pytest --cov-fail-under=70 --junitxml=./.github-pytest/pytest-output.xml | tee .github-pytest/pytest-coverage.txt

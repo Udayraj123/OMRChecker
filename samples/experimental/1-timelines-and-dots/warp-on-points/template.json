@@ -130,7 +130,7 @@
     },
     "Booklet_No": {
       "fieldDetectionType": "BUBBLES_THRESHOLD",
-      "bubbleFieldType": "QTYPE_INT",
+      "bubbleFieldType": "QTYPE_INT_FROM_1",
       "origin": [
         295,
         220

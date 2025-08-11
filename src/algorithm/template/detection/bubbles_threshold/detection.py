@@ -63,7 +63,5 @@ class BubblesFieldDetection(FieldDetection):
         x, y = unit_bubble.get_shifted_position()
         rect = [y, y + box_h, x, x + box_w]
         mean_value = cv2.mean(gray_image[rect[0] : rect[1], rect[2] : rect[3]], None)[0]
-        logger.debug(
-            f"mean_value: {mean_value}, rect: {rect}, gray_image.shape: {gray_image.shape}"
-        )
+        logger.debug(f"mean_value: {mean_value:2f}, rect: {rect}")
         return BubbleMeanValue(mean_value, unit_bubble)

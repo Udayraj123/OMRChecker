@@ -103,7 +103,7 @@ def apply_template_alignment(gray_image, colored_image, template: Template, conf
 
         # Method 3
         # Warp bubble coordinates of the template
-        apply_k_nearest_interpolation_inplace(
+        average_shifts = apply_k_nearest_interpolation_inplace(
             field_block,
             block_gray_image,
             block_gray_alignment_image,
@@ -121,8 +121,7 @@ def apply_template_alignment(gray_image, colored_image, template: Template, conf
             field_block_name,
             bounding_box_origin,
             bounding_box_dimensions,
-            field_block_alignment,
-            field_block.shifts,
+            average_shifts,
         )
 
     return gray_image, colored_image, template

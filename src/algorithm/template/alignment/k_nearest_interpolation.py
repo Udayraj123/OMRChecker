@@ -86,8 +86,9 @@ def apply_k_nearest_interpolation_inplace(
 
     # Method 2: Get affine transform on the bubble coordinates
 
-    # TODO: uncomment this
-    # field_block.shifts = average_shifts
+    # Note: we've assigned shifts to scan boxes already above(shift_by_field_blocks)
+    field_block.shifts = [0, 0]
+    return average_shifts
 
 
 def shift_by_field_blocks(
@@ -131,51 +132,51 @@ def shift_by_field_blocks(
     return average_shifts
 
 
-def shift_by_fields(
-    field_block, block_image_shifts, anchors_with_displacements, k
-) -> None:
-    # modify bubble level shifts
-    for field in field_block.fields:
-        # Take average position of all bubbles
-        field_center_position = np.average(
-            [
-                scan_box.get_shifted_position(block_image_shifts)
-                for scan_box in field.scan_boxes
-            ],
-            axis=0,
-        ).astype(np.int32)
+# def shift_by_fields(
+#     field_block, block_image_shifts, anchors_with_displacements, k
+# ) -> None:
+#     # modify bubble level shifts
+#     for field in field_block.fields:
+#         # Take average position of all bubbles
+#         field_center_position = np.average(
+#             [
+#                 scan_box.get_shifted_position(block_image_shifts)
+#                 for scan_box in field.scan_boxes
+#             ],
+#             axis=0,
+#         ).astype(np.int32)
 
-        nearest_anchors = find_k_nearest_anchors(
-            field_center_position, anchors_with_displacements, k
-        )
+#         nearest_anchors = find_k_nearest_anchors(
+#             field_center_position, anchors_with_displacements, k
+#         )
 
-        # Method 1: Get average displacement
-        average_shifts = np.average(
-            [displacement for _anchor_point, displacement in nearest_anchors],
-            axis=0,
-        ).astype(np.int32)
+#         # Method 1: Get average displacement
+#         average_shifts = np.average(
+#             [displacement for _anchor_point, displacement in nearest_anchors],
+#             axis=0,
+#         ).astype(np.int32)
 
-        # Shift all bubbles
-        for scan_box in field.scan_boxes:
-            scan_box.shifts = average_shifts
+#         # Shift all bubbles
+#         for scan_box in field.scan_boxes:
+#             scan_box.shifts = average_shifts
 
 
-def shift_by_scan_boxes(
-    field_block, block_image_shifts, anchors_with_displacements, k
-) -> None:
-    for field in field_block.fields:
-        for scan_box in field.scan_boxes:
-            scan_box.reset_shifts()
-            relative_bubble_positions = scan_box.get_shifted_position(
-                block_image_shifts
-            )
-            nearest_anchors = find_k_nearest_anchors(
-                relative_bubble_positions, anchors_with_displacements, k
-            )
-            # Method 1: Get average displacement
-            average_shifts = np.average(
-                [displacement for _anchor_point, displacement in nearest_anchors],
-                axis=0,
-            ).astype(np.int32)
+# def shift_by_scan_boxes(
+#     field_block, block_image_shifts, anchors_with_displacements, k
+# ) -> None:
+#     for field in field_block.fields:
+#         for scan_box in field.scan_boxes:
+#             scan_box.reset_shifts()
+#             relative_bubble_positions = scan_box.get_shifted_position(
+#                 block_image_shifts
+#             )
+#             nearest_anchors = find_k_nearest_anchors(
+#                 relative_bubble_positions, anchors_with_displacements, k
+#             )
+#             # Method 1: Get average displacement
+#             average_shifts = np.average(
+#                 [displacement for _anchor_point, displacement in nearest_anchors],
+#                 axis=0,
+#             ).astype(int)
 
-            scan_box.shifts = average_shifts
+#             scan_box.shifts = average_shifts
