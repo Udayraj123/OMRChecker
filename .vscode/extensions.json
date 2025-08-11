@@ -1,0 +1,22 @@
+{
+  "recommendations": [
+    "charliermarsh.ruff",
+    "codezombiech.gitignore",
+    "eamodio.gitlens",
+    "exiasr.hadolint",
+    "kevinrose.vsc-python-indent",
+    "mosapride.zenkaku",
+    "ms-azuretools.vscode-docker",
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-vscode-remote.remote-containers",
+    "njpwerner.autodocstring",
+    "oderwat.indent-rainbow",
+    "pkief.material-icon-theme",
+    "redhat.vscode-yaml",
+    "shardulm94.trailing-spaces",
+    "tamasfe.even-better-toml",
+    "usernamehw.errorlens",
+    "yzhang.markdown-all-in-one"
+  ]
+}

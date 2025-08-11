@@ -1,0 +1,56 @@
+{
+  "templateDimensions": [
+    1200,
+    1500
+  ],
+  "bubbleDimensions": [
+    30,
+    30
+  ],
+  "preProcessors": [
+    {
+      "name": "GaussianBlur",
+      "options": {
+        "kSize": [
+          3,
+          3
+        ],
+        "sigmaX": 0
+      }
+    },
+    {
+      "name": "CropPage",
+      "options": {
+        "morphKernel": [
+          10,
+          10
+        ]
+      }
+    },
+    {
+      "name": "AutoRotate",
+      "options": {
+        "referenceImage": "reference.jpg",
+        "threshold": {
+          "value": 10000,
+          "passthrough": false
+        }
+      }
+    }
+  ],
+  "fieldBlocks": {
+    "MCQBlock1": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "origin": [
+        138,
+        605
+      ],
+      "fieldLabels": [
+        "q1..11"
+      ],
+      "bubblesGap": 79,
+      "labelsGap": 55
+    }
+  }
+}

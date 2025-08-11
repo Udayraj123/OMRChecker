@@ -1,0 +1,190 @@
+{
+  "processingImageShape": [
+    1654,
+    2339
+  ],
+  "preProcessors": [
+    {
+      "name": "CropOnMarkers",
+      "options": {
+        "processingImageShape": [
+          1132,
+          800
+        ],
+        "tuningOptions": {
+          "warpMethod": "DOC_REFINE",
+          "lineKernel": [
+            2,
+            10
+          ],
+          "dotKernel": [
+            3,
+            3
+          ]
+        },
+        "type": "TWO_LINES",
+        "defaultSelector": "OUTER_CORNERS",
+        "leftLine": {
+          "origin": [
+            30,
+            21
+          ],
+          "dimensions": [
+            15,
+            1090
+          ],
+          "margins": {
+            "left": 20,
+            "right": 20,
+            "top": 15,
+            "bottom": 15
+          }
+        },
+        "rightLine": {
+          "origin": [
+            750,
+            21
+          ],
+          "dimensions": [
+            15,
+            1090
+          ],
+          "margins": {
+            "left": 20,
+            "right": 20,
+            "top": 15,
+            "bottom": 15
+          }
+        }
+      }
+    }
+  ],
+  "templateDimensions": [
+    1654,
+    2339
+  ],
+  "bubbleDimensions": [
+    35,
+    35
+  ],
+  "customLabels": {
+    "Registration_No": [
+      "reg1..10"
+    ],
+    "Roll_No": [
+      "roll1..6"
+    ],
+    "Exam_Code": [
+      "code1..3"
+    ]
+  },
+  "fieldBlocks": {
+    "Roll_No": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        107,
+        580
+      ],
+      "fieldLabels": [
+        "roll1..6"
+      ],
+      "emptyValue": "no",
+      "bubblesGap": 52,
+      "labelsGap": 50.2
+    },
+    "Student_ID": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        471,
+        580
+      ],
+      "fieldLabels": [
+        "reg1..10"
+      ],
+      "emptyValue": "no",
+      "bubblesGap": 52,
+      "labelsGap": 50
+    },
+    "Exam_ID": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        1029,
+        580
+      ],
+      "fieldLabels": [
+        "code1..3"
+      ],
+      "emptyValue": "no",
+      "bubblesGap": 52,
+      "labelsGap": 50
+    },
+    "q01block": {
+      "origin": [
+        158,
+        1207
+      ],
+      "bubblesGap": 50.5,
+      "labelsGap": 51.3,
+      "fieldLabels": [
+        "q1..20"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
+    },
+    "q02block": {
+      "origin": [
+        459,
+        1207
+      ],
+      "bubblesGap": 50.5,
+      "labelsGap": 51.3,
+      "fieldLabels": [
+        "q21..40"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
+    },
+    "q03block": {
+      "origin": [
+        760,
+        1207
+      ],
+      "bubblesGap": 50.5,
+      "labelsGap": 51.3,
+      "fieldLabels": [
+        "q41..60"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
+    },
+    "q04block": {
+      "origin": [
+        1060,
+        1207
+      ],
+      "bubblesGap": 50.5,
+      "labelsGap": 51.3,
+      "fieldLabels": [
+        "q61..80"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
+    },
+    "q05block": {
+      "origin": [
+        1363,
+        1207
+      ],
+      "bubblesGap": 50.5,
+      "labelsGap": 51.3,
+      "fieldLabels": [
+        "q81..100"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
+    }
+  }
+}

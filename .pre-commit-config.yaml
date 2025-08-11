@@ -1,59 +1,108 @@
-exclude: "__snapshots__/.*$"
+exclude: "(__snapshots__|__image_snapshots__)/.*$"
 default_install_hook_types: [pre-commit, pre-push]
+# default_stages: [pre-commit]
 repos:
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    # uv version.
+    rev: 0.7.8
+    hooks:
+      - id: uv-lock
+        fail_fast: true
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.8 # Note: this version should match with that of ruff in pyproject.toml to avoid unknown rules
+    hooks:
+      - id: ruff
+        name: Ruff check
+        description: "Run 'ruff check' for extremely fast Python linting"
+        args: [--fix]
+        fail_fast: true
+
+      - id: ruff-format
+        name: Ruff format
+        description: "Run 'ruff format' for extremely fast Python formatting"
+        fail_fast: true
+
+  # Convert the pngs to jpgs inside samples folder
+  - repo: local
+    hooks:
+      - id: convert-images
+        name: Convert png to jpg in samples
+        entry: ./scripts/run_python_hook.sh scripts/hooks/convert_images_hook.py
+        args: ["--trigger-size", "150"]
+        files: ^.*\.(png|PNG)$
+        pass_filenames: true
+        stages: [pre-commit]
+        language: script
+        # always_run: true
+        fail_fast: true # Wait for user to remove the png files
+
+  # # Run resize image before the compress image check
+  - repo: local
+    hooks:
+      - id: resize-images
+        name: Resize images
+        entry: ./scripts/run_python_hook.sh scripts/hooks/resize_images_hook.py
+        args:
+          [
+            "--max-width",
+            "1500",
+            "--max-height",
+            "1500",
+            "--trigger-size",
+            "150",
+          ]
+        files: \.(png|jpg|jpeg|PNG|JPG|JPEG)$
+        pass_filenames: true
+        stages: [pre-commit]
+        language: script
+        always_run: true
+        fail_fast: false
+
+  # Run image compressor before the large files check
+  - repo: https://github.com/boidolr/pre-commit-images
+    rev: v1.9.0
+    hooks:
+      - id: optimize-png
+      - id: optimize-jpg
+        args: ["--quality", "90"]
+        fail_fast: true # Wait for user to commit the files
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v6.0.0
     hooks:
       - id: check-yaml
-        stages: [commit]
-      - id: check-added-large-files
-        args: ['--maxkb=300']
+        stages: [pre-commit]
         fail_fast: false
-        stages: [commit]
+      - id: check-added-large-files
+        args: ["--maxkb=300"]
+        exclude: ^.*\.(lock)$
+        fail_fast: false
+        stages: [pre-commit]
       - id: pretty-format-json
-        args: ['--autofix', '--no-sort-keys']
-      - id: end-of-file-fixer
-        exclude_types: ["csv", "json"]
-        stages: [commit]
-      - id: trailing-whitespace
-        stages: [commit]
-  - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
-        args: ["--profile", "black"]
-        stages: [commit]
-  - repo: https://github.com/psf/black
-    rev: 23.3.0
-    hooks:
-      - id: black
+        args: ["--autofix", "--no-sort-keys"]
+        exclude: ^.*(devcontainer.json)$
         fail_fast: true
-        stages: [commit]
-  - repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
-    hooks:
-      - id: flake8
-        args:
-          - "--ignore=E501,W503,E203,E741,F541" # Line too long, Line break occurred before a binary operator, Whitespace before ':'
-        fail_fast: true
-        stages: [commit]
+
   - repo: local
     hooks:
       - id: pytest-on-commit
         name: Running single sample test
-        entry:  python3 -m pytest -rfpsxEX --disable-warnings --verbose -k sample1
-        language: system
+        entry: ./scripts/run_single_test.sh
+        language: script
         pass_filenames: false
         always_run: true
         fail_fast: true
-        stages: [commit]
+        stages: [pre-commit]
   - repo: local
     hooks:
       - id: pytest-on-push
         name: Running all tests before push...
-        entry: python3 -m pytest -rfpsxEX --disable-warnings --verbose --durations=3
-        language: system
+        entry: ./scripts/run_all_tests_and_coverage.sh
+        language: script
         pass_filenames: false
         always_run: true
         fail_fast: true
-        stages: [push]
+        stages: [pre-push]
+
+ci:
+  autoupdate_schedule: weekly

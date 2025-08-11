@@ -1,0 +1,21 @@
+{
+  "pythonVersion": "3.13",
+  "pythonPlatform": "All",
+  "venv": ".venv",
+  "typeCheckingMode": "basic",
+  "include": [
+    "tools"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv"
+  ],
+  "reportIncompatibleMethodOverride": "none",
+  "reportArgumentType": "warning",
+  "reportCallIssue": "none",
+  "reportOptionalMemberAccess": "warning",
+  "reportAttributeAccessIssue": "warning",
+  "reportAssignmentType": "warning"
+}

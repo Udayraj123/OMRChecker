@@ -1,0 +1,39 @@
+{
+  "source_type": "local",
+  "options": {
+    "questions_in_order": [
+      "Roll_No",
+      "OCR_BOOKLET_CODE"
+    ],
+    "answers_in_order": [
+      "87000757",
+      "M"
+    ]
+  },
+  "outputs_configuration": {
+    "draw_score": {
+      "enabled": true,
+      "position": [
+        540,
+        450
+      ],
+      "size": 0.8
+    },
+    "draw_answers_summary": {
+      "enabled": true,
+      "position": [
+        650,
+        820
+      ],
+      "size": 0.85
+    },
+    "should_explain_scoring": true
+  },
+  "marking_schemes": {
+    "DEFAULT": {
+      "correct": "3",
+      "incorrect": "0",
+      "unmarked": "0"
+    }
+  }
+}

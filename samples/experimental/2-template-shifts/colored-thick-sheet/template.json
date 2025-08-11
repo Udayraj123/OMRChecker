@@ -1,0 +1,153 @@
+{
+  "templateDimensions": [
+    1800,
+    2400
+  ],
+  "bubbleDimensions": [
+    23,
+    20
+  ],
+  "preProcessors": [
+    {
+      "name": "CropPage",
+      "options": {
+        "morphKernel": [
+          10,
+          10
+        ]
+      }
+    }
+  ],
+  "fieldBlocks": {
+    "q01block": {
+      "origin": [
+        504,
+        927
+      ],
+      "bubblesGap": 60.35,
+      "labelsGap": 31.75,
+      "fieldLabels": [
+        "q1..10"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
+    },
+    "q11block": {
+      "origin": [
+        504,
+        1242
+      ],
+      "bubblesGap": 60.35,
+      "labelsGap": 31.75,
+      "fieldLabels": [
+        "q11..20"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
+    },
+    "q21block": {
+      "origin": [
+        500,
+        1562
+      ],
+      "bubblesGap": 61.25,
+      "labelsGap": 32.5,
+      "fieldLabels": [
+        "q21..30"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
+    },
+    "q31block": {
+      "origin": [
+        500,
+        1885
+      ],
+      "bubblesGap": 62.25,
+      "labelsGap": 33.5,
+      "fieldLabels": [
+        "q31..40"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
+    },
+    "q41block": {
+      "origin": [
+        811,
+        927
+      ],
+      "bubblesGap": 60.35,
+      "labelsGap": 31.75,
+      "fieldLabels": [
+        "q41..50"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
+    },
+    "q51block": {
+      "origin": [
+        811,
+        1242
+      ],
+      "bubblesGap": 60.35,
+      "labelsGap": 31.75,
+      "fieldLabels": [
+        "q51..60"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
+    },
+    "q61block": {
+      "origin": [
+        811,
+        1562
+      ],
+      "bubblesGap": 61.25,
+      "labelsGap": 32.5,
+      "fieldLabels": [
+        "q61..70"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
+    },
+    "q71block": {
+      "origin": [
+        811,
+        1885
+      ],
+      "bubblesGap": 62.25,
+      "labelsGap": 33.5,
+      "fieldLabels": [
+        "q71..80"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
+    },
+    "q81block": {
+      "origin": [
+        1120,
+        927
+      ],
+      "bubblesGap": 60.35,
+      "labelsGap": 31.75,
+      "fieldLabels": [
+        "q81..90"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
+    },
+    "q91block": {
+      "origin": [
+        1120,
+        1242
+      ],
+      "bubblesGap": 60.35,
+      "labelsGap": 31.75,
+      "fieldLabels": [
+        "q91..100"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4"
+    }
+  }
+}

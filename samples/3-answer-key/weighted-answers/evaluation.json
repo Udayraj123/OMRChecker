@@ -1,0 +1,56 @@
+{
+  "source_type": "local",
+  "options": {
+    "questions_in_order": [
+      "q1..5"
+    ],
+    "answers_in_order": [
+      [
+        [
+          "A",
+          3
+        ],
+        [
+          "C",
+          -2
+        ]
+      ],
+      "E",
+      [
+        "A",
+        "C"
+      ],
+      [
+        [
+          "B",
+          2
+        ],
+        [
+          "C",
+          "3/2"
+        ]
+      ],
+      "C"
+    ]
+  },
+  "marking_schemes": {
+    "DEFAULT": {
+      "correct": "3",
+      "incorrect": "-1",
+      "unmarked": "0"
+    },
+    "CUSTOM_NEGATIVE_MARKING": {
+      "questions": [
+        "q5"
+      ],
+      "marking": {
+        "correct": "3",
+        "incorrect": "-2",
+        "unmarked": "0"
+      }
+    }
+  },
+  "outputs_configuration": {
+    "should_explain_scoring": true
+  }
+}

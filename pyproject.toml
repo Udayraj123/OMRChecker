@@ -1,18 +1,48 @@
-[tool.black]
-exclude = '''
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.venv
-    | _build
-    | build
-    | dist
-  )/
-  | foo.py           # also separately exclude a file named foo.py in
-                     # the root of the project
-)
-'''
-include = '\.pyi?$'
-line-length = 88
-target-version = ['py37']
+[project]
+name = "OMRChecker"
+version = "1.0.0"
+description = "Evaluate OMR sheets fast and accurately using a scanner 🖨 or your phone 🤳."
+
+authors = [{ name = "udayraj123", email = "udayrajdeshmukh7@gmail.com" }]
+maintainers = [{ name = "udayraj123", email = "udayrajdeshmukh7@gmail.com" }]
+
+readme = "README.md"
+license = { file = "LICENSE" }
+
+requires-python = ">=3.11"
+dependencies = [
+    "deepmerge==2.0",
+    "dotmap==1.3.30",
+    "jsonschema==4.25.0",
+    "matplotlib==3.10.5",
+    "mike>=2.1.3",
+    "numpy==2.3.2",
+    "opencv-contrib-python==4.11.0.86",
+    "opencv-python==4.11.0.86",
+    "pandas==2.3.1",
+    "pyzbar==0.1.9",
+    "rich==13.8.0",
+    "scipy==1.15.1",
+    "screeninfo==0.8.1",
+    "shapely==2.1.1",
+]
+
+# https://docs.astral.sh/uv/concepts/projects/dependencies/#optional-dependencies
+[project.optional-dependencies]
+easyocr = ["easyocr>=1.7.2"]
+
+[dependency-groups]
+dev = [
+    "coverage==7.6.0",
+    "flake8==7.0.0",
+    "freezegun>=1.4.0",
+    "mkdocs-material>=9.5.50",
+    "Pillow==11.1.0",
+    "pre-commit>=4.3.0",
+    "pyright>=1.1.392.post0",
+    "pytest-cov>=6.0.0",
+    "pytest-mock==3.14.0",
+    "pytest>=8.3.4",
+    "ruff>=0.12.8",
+    "syrupy==4.6.1",
+]

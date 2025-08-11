@@ -1,95 +1,187 @@
-import argparse
 import json
 import os
-from csv import QUOTE_NONNUMERIC
-from time import localtime, strftime
+import string
+from collections import defaultdict
+from pathlib import Path, PureWindowsPath
+from typing import Any, ClassVar
 
-import pandas as pd
+from src.utils.image import ImageUtils
+from src.utils.logger import logger
+from src.utils.math import MathUtils
 
-from src.logger import logger
 
-
-def load_json(path, **rest):
+def load_json(path, **rest) -> dict[str, Any]:
     try:
-        with open(path, "r") as f:
+        # TODO: see if non-utf characters need to be handled
+        with Path.open(path) as f:
             loaded = json.load(f, **rest)
     except json.decoder.JSONDecodeError as error:
-        logger.critical(f"Error when loading json file at: '{path}'\n{error}")
-        exit(1)
+        msg = f"Error when loading json file at: '{path}'"
+        logger.critical(msg, error)
+        raise Exception(msg) from None
+
     return loaded
 
 
-class Paths:
-    def __init__(self, output_dir):
+class PathUtils:
+    printable_chars: ClassVar = set(string.printable)
+
+    @staticmethod
+    def remove_non_utf_characters(path_string):
+        return "".join(x for x in path_string if x in PathUtils.printable_chars)
+
+    # TODO: add util to skip duplicate files after removing utf-8 encoding
+
+    @staticmethod
+    def sep_based_posix_path(path):
+        path = os.path.normpath(path)
+        # TODO: check for this second condition
+        if os.path.sep == "\\" or "\\" in path:
+            path = PureWindowsPath(path).as_posix()
+
+        return PathUtils.remove_non_utf_characters(path)
+
+    def __init__(self, output_dir: Path) -> None:
         self.output_dir = output_dir
         self.save_marked_dir = output_dir.joinpath("CheckedOMRs")
+        self.image_metrics_dir = output_dir.joinpath("ImageMetrics")
         self.results_dir = output_dir.joinpath("Results")
         self.manual_dir = output_dir.joinpath("Manual")
-        self.evaluation_dir = output_dir.joinpath("Evaluation")
         self.errors_dir = self.manual_dir.joinpath("ErrorFiles")
         self.multi_marked_dir = self.manual_dir.joinpath("MultiMarkedFiles")
+        self.evaluations_dir = output_dir.joinpath("Evaluations")
+        self.debug_dir = output_dir.joinpath("Debug")
+
+    def create_output_directories(self) -> None:
+        logger.info("Checking Directories...")
+
+        if not self.save_marked_dir.exists():
+            Path.mkdir(self.save_marked_dir, parents=True)
+        # Main output directories
+        for save_output_dir in [
+            self.save_marked_dir.joinpath("colored"),
+            self.save_marked_dir.joinpath("stack"),
+            self.save_marked_dir.joinpath("stack", "colored"),
+            self.save_marked_dir.joinpath("_MULTI_"),
+            self.save_marked_dir.joinpath("_MULTI_", "colored"),
+        ]:
+            if not save_output_dir.exists():
+                Path.mkdir(save_output_dir)
+                logger.info(f"Created : {save_output_dir}")
+
+        # Image buckets
+        for save_output_dir in [
+            self.manual_dir,
+            self.multi_marked_dir,
+            self.errors_dir,
+        ]:
+            if not save_output_dir.exists():
+                logger.info(f"Created : {save_output_dir}")
+                Path.mkdir(save_output_dir, parents=True)
+                Path.mkdir(save_output_dir.joinpath("colored"))
+
+        # Non-image directories
+        for save_output_dir in [
+            self.results_dir,
+            self.image_metrics_dir,
+            self.evaluations_dir,
+        ]:
+            if not save_output_dir.exists():
+                logger.info(f"Created : {save_output_dir}")
+                Path.mkdir(save_output_dir, parents=True)
 
 
-def setup_dirs_for_paths(paths):
-    logger.info("Checking Directories...")
-    for save_output_dir in [paths.save_marked_dir]:
-        if not os.path.exists(save_output_dir):
-            logger.info(f"Created : {save_output_dir}")
-            os.makedirs(save_output_dir)
-            os.mkdir(save_output_dir.joinpath("stack"))
-            os.mkdir(save_output_dir.joinpath("_MULTI_"))
-            os.mkdir(save_output_dir.joinpath("_MULTI_", "stack"))
+class SaveImageOps:
+    def __init__(self, tuning_config) -> None:
+        self.gray_images = defaultdict(list)
+        self.colored_images = defaultdict(list)
+        self.tuning_config = tuning_config
+        self.save_image_level = tuning_config.outputs.save_image_level
 
-    for save_output_dir in [paths.manual_dir, paths.results_dir, paths.evaluation_dir]:
-        if not os.path.exists(save_output_dir):
-            logger.info(f"Created : {save_output_dir}")
-            os.makedirs(save_output_dir)
+    def append_save_image(
+        self, title, keys, gray_image=None, colored_image=None
+    ) -> None:
+        if not isinstance(title, str):
+            msg = f"title={title} is not a string"
+            raise TypeError(msg)
+        if isinstance(keys, int):
+            keys = [keys]
+        gray_image_copy, colored_image_copy = None, None
+        if gray_image is not None:
+            gray_image_copy = gray_image.copy()
+        if colored_image is not None:
+            colored_image_copy = colored_image.copy()
+        for key in keys:
+            if int(key) > self.save_image_level:
+                continue
+            if gray_image_copy is not None:
+                self.gray_images[key].append([title, gray_image_copy])
+            if colored_image_copy is not None:
+                self.colored_images[key].append([title, colored_image_copy])
 
-    for save_output_dir in [paths.multi_marked_dir, paths.errors_dir]:
-        if not os.path.exists(save_output_dir):
-            logger.info(f"Created : {save_output_dir}")
-            os.makedirs(save_output_dir)
+    def save_image_stacks(
+        self, file_path: Path, save_marked_dir: Path, key=None, images_per_row=4
+    ) -> None:
+        key = self.save_image_level if key is None else key
+        if self.save_image_level >= int(key):
+            stem = file_path.stem
 
+            if len(self.gray_images[key]) > 0:
+                logger.info(
+                    f"Gray Stack level: {key}",
+                    [title for title, _ in self.gray_images[key]],
+                )
+                result = self.get_result_hstack(self.gray_images[key], images_per_row)
+                stack_path = f"{save_marked_dir}/stack/{stem}_{key!s}_stack.jpg"
+                logger.info(f"Saved stack image to: {stack_path}")
+                ImageUtils.save_img(stack_path, result)
+            else:
+                logger.info(
+                    f"Note: Nothing to save for gray image. Stack level: {self.save_image_level}"
+                )
 
-def setup_outputs_for_template(paths, template):
-    # TODO: consider moving this into a class instance
-    ns = argparse.Namespace()
-    logger.info("Checking Files...")
+            if len(self.colored_images[key]) > 0:
+                logger.info(
+                    f"Colored Stack level: {key}",
+                    [title for title, _ in self.colored_images[key]],
+                )
+                colored_result = self.get_result_hstack(
+                    self.colored_images[key], images_per_row
+                )
+                colored_stack_path = (
+                    f"{save_marked_dir}/stack/colored/{stem}_{key!s}_stack.jpg"
+                )
+                logger.info(f"Saved colored stack image to: {colored_stack_path}")
 
-    # Include current output paths
-    ns.paths = paths
+                ImageUtils.save_img(
+                    colored_stack_path,
+                    colored_result,
+                )
+            else:
+                logger.info(
+                    f"Note: Nothing to save for colored image. Stack level: {self.save_image_level}"
+                )
 
-    ns.empty_resp = [""] * len(template.output_columns)
-    ns.sheetCols = [
-        "file_id",
-        "input_path",
-        "output_path",
-        "score",
-    ] + template.output_columns
-    ns.OUTPUT_SET = []
-    ns.files_obj = {}
-    TIME_NOW_HRS = strftime("%I%p", localtime())
-    ns.filesMap = {
-        "Results": os.path.join(paths.results_dir, f"Results_{TIME_NOW_HRS}.csv"),
-        "MultiMarked": os.path.join(paths.manual_dir, "MultiMarkedFiles.csv"),
-        "Errors": os.path.join(paths.manual_dir, "ErrorFiles.csv"),
-    }
+    def get_result_hstack(self, titles_and_images, images_per_row):
+        config = self.tuning_config
+        _display_height, display_width = config.outputs.display_image_dimensions
 
-    for file_key, file_name in ns.filesMap.items():
-        if not os.path.exists(file_name):
-            logger.info(f"Created new file: '{file_name}'")
-            # moved handling of files to pandas csv writer
-            ns.files_obj[file_key] = file_name
-            # Create Header Columns
-            pd.DataFrame([ns.sheetCols], dtype=str).to_csv(
-                ns.files_obj[file_key],
-                mode="a",
-                quoting=QUOTE_NONNUMERIC,
-                header=False,
-                index=False,
-            )
-        else:
-            logger.info(f"Present : appending to '{file_name}'")
-            ns.files_obj[file_key] = open(file_name, "a")
+        # TODO: attach title text as header to each stack image!
+        images = ImageUtils.resize_multiple(
+            [image for _title, image in titles_and_images], display_width
+        )
+        grid_images = MathUtils.chunks(images, images_per_row)
+        result = ImageUtils.get_vstack_image_grid(grid_images)
+        return ImageUtils.resize_single(
+            result,
+            min(
+                len(titles_and_images) * display_width // 3,
+                int(display_width * 2.5),
+            ),
+        )
 
-    return ns
+    def reset_all_save_img(self) -> None:
+        # Max save image level is 6
+        for i in range(7):
+            self.gray_images[i + 1] = []
+            self.colored_images[i + 1] = []

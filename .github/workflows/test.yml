@@ -1,0 +1,59 @@
+name: Test
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "src/**/*.py"
+      - "tests/**/*.py"
+  pull_request:
+    branches: [master]
+    paths:
+      - "src/**/*.py"
+      - "tests/**/*.py"
+
+jobs:
+  test-and-coverage:
+    name: "Test and Coverage"
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }} with uv
+        uses: ./.github/actions/setup-python-with-uv
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Creating .github-pytest and coverage folders
+        run: mkdir -p ./.github-pytest/coverage
+
+      - name: Run pytest (with TZ=Asia/Kolkata)
+        run: |
+          set -o pipefail
+          uv run pytest --cov-fail-under=70 --junitxml=./.github-pytest/pytest-output.xml | tee .github-pytest/pytest-coverage.txt
+        env:
+          OMR_CHECKER_CONTAINER: true
+          TZ: Asia/Kolkata
+
+      - name: Pytest coverage comment
+        uses: MishaKav/pytest-coverage-comment@v1
+        with:
+          pytest-coverage-path: ./.github-pytest/pytest-coverage.txt
+          junitxml-path: ./.github-pytest/pytest-output.xml
+
+      - name: Coverage Badge
+        uses: tj-actions/coverage-badge-py@v2
+        with:
+          output: .github-pytest/coverage/coverage.svg
+
+      - name: Publish coverage report to coverage-badge branch
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: coverage-badge
+          folder: .github-pytest/coverage

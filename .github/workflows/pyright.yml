@@ -1,0 +1,26 @@
+name: Pyright
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "**/*.py"
+      - "*.toml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "**/*.py"
+      - "*.toml"
+
+jobs:
+  type-check:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.13"]
+
+    steps:
+      - uses: jakebailey/pyright-action@v2
+        with:
+          python-version: ${{ matrix.python-version }}

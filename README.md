@@ -1,15 +1,16 @@
 # OMR Checker
 
-Read OMR sheets fast and accurately using a scanner 🖨 or your phone 🤳.
+Evaluate OMR sheets fast and accurately using a scanner 🖨 or your phone 🤳.
 
 ## What is OMR?
 
-OMR stands for Optical Mark Recognition, used to detect and interpret human-marked data on documents. OMR refers to the process of reading and evaluating OMR sheets, commonly used in exams, surveys, and other forms.
+OMR stands for Optical Mark Recognition, used to detect and interpret human-marked data on documents. OMR refers to the process of reading and evaluating OMR sheets, commonly used in exams, surveys, and other forms. The OMR sheet scanning is typically done using a scanner, but with OMRChecker it's supported for images from a mobile camera as well.
 
 #### **Quick Links**
 
 - [Installation](#getting-started)
 - [User Guide](https://github.com/Udayraj123/OMRChecker/wiki)
+- [Discord Community](https://discord.gg/qFv2Vqf)
 - [Contributor Guide](https://github.com/Udayraj123/OMRChecker/blob/master/CONTRIBUTING.md)
 - [Project Ideas List](https://github.com/users/Udayraj123/projects/2/views/1)
 
@@ -18,7 +19,6 @@ OMR stands for Optical Mark Recognition, used to detect and interpret human-mark
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/pull/new/master) <!-- [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-brightgreen.svg)](https://github.com/Udayraj123/OMRChecker/wiki/TODOs) -->
 [![GitHub pull-requests closed](https://img.shields.io/github/issues-pr-closed/Udayraj123/OMRChecker.svg)](https://github.com/Udayraj123/OMRChecker/pulls?q=is%3Aclosed)
 [![GitHub issues-closed](https://img.shields.io/github/issues-closed/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/issues?q=is%3Aissue+is%3Aclosed)
-[![Ask me](https://img.shields.io/badge/Discuss-on_Github-purple.svg?style=flat-square)](https://github.com/Udayraj123/OMRChecker/issues/5)
 
 <!-- [![GitHub contributors](https://img.shields.io/github/contributors/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/graphs/contributors/) -->
 
@@ -34,13 +34,14 @@ A full-fledged OMR checking software that can read and evaluate OMR sheets scann
 | Specs <img width=200/> | ![Current_Speed](https://img.shields.io/badge/Speed-200+_OMRs/min-blue.svg?style=flat-square) ![Min Resolution](https://img.shields.io/badge/Min_Resolution-640x480-blue.svg?style=flat-square) <img width=200/> |
 | :--------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 💯 **Accurate**        | Currently nearly 100% accurate on good quality document scans; and about 90% accurate on mobile images.                                                                                                          |
-| 💪🏿 **Robust**          | Supports low resolution, xeroxed sheets. See [**Robustness**](https://github.com/Udayraj123/OMRChecker/wiki/Robustness) for more.                                                                                |
+| 💪🏿 **Robust**          | Supports low resolution, xeroxed sheets as well as colored images. See [**Robustness**](https://github.com/Udayraj123/OMRChecker/wiki/Robustness) for more.                                                      |
 | ⏩ **Fast**            | Current processing speed without any optimization is 200 OMRs/minute.                                                                                                                                            |
 | ✅ **Customizable**    | [Easily apply](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide) to custom OMR layouts, surveys, etc.                                                                                                    |
+| ✅ **Colorful**        | Supports Colored Outputs Since April 2024                                                                                                                                                                        |
 | 📊 **Visually Rich**   | [Get insights](https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals) to configure and debug easily.                                                                                                        |
 | 🎈 **Lightweight**     | Very minimal core code size.                                                                                                                                                                                     |
 | 🏫 **Large Scale**     | Tested on a large scale at [Technothlon](https://en.wikipedia.org/wiki/Technothlon).                                                                                                                             |
-| 👩🏿‍💻 **Dev Friendly**    | [Pylinted](http://pylint.pycqa.org/) and [Black formatted](https://github.com/psf/black) code. Also has a [developer community](https://discord.gg/qFv2Vqf) on discord.                                          |
+| 👩🏿‍💻 **Dev Friendly**    | Standard pyproject setup including uv, ruff, pre-commit, devcontainer, pytest, etc.                                                                                                                              |
 
 Note: For solving interesting challenges, developers can check out [**TODOs**](https://github.com/Udayraj123/OMRChecker/wiki/TODOs).
 
@@ -96,6 +97,7 @@ Get a CSV sheet containing the detected responses and evaluated scores:
 </p>
 
 We now support [colored outputs](https://github.com/Udayraj123/OMRChecker/wiki/%5Bv2%5D-About-Evaluation) as well. Here's a sample output on another image -
+
 <p align="center">
 	<a href="https://github.com/Udayraj123/OMRChecker/wiki/%5Bv2%5D-About-Evaluation">
 		<img alt="colored_output" width="550" src="./docs/assets/colored_output.jpg">
@@ -110,41 +112,22 @@ We now support [colored outputs](https://github.com/Udayraj123/OMRChecker/wiki/%
 
 **Operating system:** OSX or Linux is recommended although Windows is also supported.
 
-### 1. Install global dependencies
+### 1. Install uv
 
-![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.5+](https://img.shields.io/badge/python-3.5+-blue.svg)
+![uv 0.7.8+](https://img.shields.io/badge/uv-0.7.8+-blue.svg)
+![python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)
 
-To check if python3 and pip is already installed:
-
-```bash
-python3 --version
-python3 -m pip --version
-```
-
-<details>
-	<summary><b>Install Python3</b></summary>
-
-To install python3 follow instructions [here](https://www.python.org/downloads/)
-
-To install pip - follow instructions [here](https://pip.pypa.io/en/stable/installation/)
-
-</details>
-<details>
-<summary><b>Install OpenCV</b></summary>
-
-**Any installation method is fine.**
-
-Recommended:
+To check if [uv](https://docs.astral.sh/uv) and its python environment is ready:
 
 ```bash
-python3 -m pip install --user --upgrade pip
-python3 -m pip install --user opencv-python
-python3 -m pip install --user opencv-contrib-python
+uv --version
+uv run python3 --version
 ```
 
-More details on pip install openCV [here](https://www.pyimagesearch.com/2018/09/19/pip-install-opencv/).
-
-</details>
+```
+uv 0.7.8 (0ddcc1905 2025-05-23)
+Python 3.11.11
+```
 
 <details>
 
@@ -172,15 +155,11 @@ git clone https://github.com/Udayraj123/OMRChecker
 cd OMRChecker/
 ```
 
-Install pip requirements
+Install dependencies
 
 ```bash
-python3 -m pip install --user -r requirements.txt
+uv sync
 ```
-
-_**Note:** If you face a distutils error in pip, use `--ignore-installed` flag in above command._
-
-<!-- Wiki should not get cloned -->
 
 ### 3. Run the code
 
@@ -192,43 +171,37 @@ _**Note:** If you face a distutils error in pip, use `--ignore-installed` flag i
    ```
 2. Run OMRChecker:
    ```bash
-   python3 main.py
+   uv run main.py
    ```
+   _Note: first time setup may take a while._
+   This command will make sure the uv virtual environment is activated.
 
-Alternatively you can also use `python3 main.py -i ./samples/sample1`.
-
-Each example in the samples folder demonstrates different ways in which OMRChecker can be used.
-
-### Common Issues
-
-<details>
-<summary>
-	1. [Windows] ERROR: Could not open requirements file<br>
-	</summary>
-Command: <code>python3 -m pip install --user -r requirements.txt</code>
-<br>
-	Link to Solution:  <a href="https://github.com/Udayraj123/OMRChecker/issues/54#issuecomment-1264569006">#54</a>
-</details>
-<details>
-<summary>
-2. [Linux] ERROR: No module named pip<br>
-</summary>
-Command: <code>python3 -m pip install --user --upgrade pip</code>
-<br>
-	Link to Solution: <a href="https://github.com/Udayraj123/OMRChecker/issues/70#issuecomment-1268094136">#70</a>
-</details>
+   Alternatively you can manually run -
+   ```bash
+   source ./.venv/bin/activate
+   python3 main.py -i <path/to/dir>
+   ```
+   Each example in the samples folder demonstrates different ways in which OMRChecker can be used.
 
 ## OMRChecker for custom OMR Sheets
 
 1. First, [create your own template.json](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide).
-2. Configure the tuning parameters.
+2. Configure the tuning parameters. Also use `show_image_level` value to see debug images. Create a `config.json` in the same folder as your input images -
+```json
+{
+   "outputs": {
+      "show_image_level": 4
+   }
+}
+```
+
 3. Run OMRChecker with appropriate arguments (See full usage).
 <!-- 4. Add answer key( TODO: add answer key/marking scheme guide)  -->
 
 ## Full Usage
 
 ```
-python3 main.py [--setLayout] [--inputDir dir1] [--outputDir dir1]
+uv run main.py [--setLayout] [--inputDir dir1] [--outputDir dir1]
 ```
 
 Explanation for the arguments:
@@ -273,7 +246,7 @@ We believe in the power of open source! Currently, OMRChecker is in an intermedi
 
 <details>
 <summary>
-<b>Can I use this code in my (public) work?</b>
+<b>Can I use this code in my work?</b>
 </summary>
 
 OMRChecker can be forked and modified. You are encouraged to play with it and we would love to see your own projects in action!
@@ -287,11 +260,9 @@ It is published under the [MIT license](https://github.com/Udayraj123/OMRChecker
 <b>What are the ways to contribute?</b>
 </summary>
 
-<!-- - Help OMRChecker reach more people by giving a star! The Goal is to reach top position for the [OMR Topic](https://github.com/topics/omr) -->
-
 - Join the developer community on [Discord](https://discord.gg/qFv2Vqf) to fix [issues](https://github.com/Udayraj123/OMRChecker/issues) with OMRChecker.
 
-- If this project saved you large costs on OMR Software licenses, or saved efforts to make one. Consider donating an amount of your choice(donate section).
+- If this project saved you some costs on OMR Software licenses, or saved efforts to make one. Consider donating an amount of your choice(donate section).
 
 <!-- ![☕](https://miro.medium.com/fit/c/256/256/1*br7aoq_JVfxeg73x5tF_Sw.png) -->
 <!-- [![paypal.me](https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Z5BNNK7AVFVH8&source=url) -->
@@ -311,13 +282,6 @@ _**Satya Mallic** for his resourceful blog:_ https://www.learnopencv.com
 _And to other amazing people from all over the globe who've made significant improvements in this project._
 
 _Thank you!_
-
-<!--
-OpencV
-matplotlib
-some SO answers from roughworks
-prof
--->
 
 ## Related Projects
 
@@ -340,6 +304,12 @@ Here's a snapshot of the [Android OMR Helper App (archived)](https://github.com/
 <a href="https://github.com/Udayraj123/OMRChecker/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=Udayraj123/OMRChecker" />
 </a>
+
+<p align="center">
+
+[![GitHub contributors](https://img.shields.io/github/contributors/Udayraj123/OMRChecker.svg)](https://GitHub.com/Udayraj123/OMRChecker/graphs/contributors/)
+
+</p>
 
 ---
 

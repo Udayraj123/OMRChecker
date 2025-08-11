@@ -1,0 +1,53 @@
+name: Ruff
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "**/*.py"
+      - "*.toml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "**/*.py"
+      - "*.toml"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.13"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }} with uv
+        uses: ./.github/actions/setup-python-with-uv
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Lint
+        run: uv run ruff check --output-format=github .
+
+  format:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        # Min-max supported versions
+        python-version: ["3.11", "3.13"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }} with uv
+        uses: ./.github/actions/setup-python-with-uv
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Format
+        run: uv run ruff format . --check --diff

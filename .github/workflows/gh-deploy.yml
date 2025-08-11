@@ -1,0 +1,41 @@
+name: Docs
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "docs/**/*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Git Credentials
+        uses: ./.github/actions/setup-git-config
+        with:
+          name: github-actions[bot]
+          email: 41898282+github-actions[bot]@users.noreply.github.com
+
+      - name: Setup Python 3.13 with uv
+        uses: ./.github/actions/setup-python-with-uv
+        with:
+          python-version: 3.13
+
+      - name: Generate cache id
+        run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
+
+      - name: Save cache
+        uses: actions/cache@v4
+        with:
+          key: mkdocs-material-${{ env.cache_id }}
+          path: .cache
+          restore-keys: mkdocs-material-
+
+      - run: uv run mkdocs gh-deploy --force
