@@ -1,3 +1,4 @@
+import contextlib
 import hashlib
 import json
 import os
@@ -25,8 +26,7 @@ def load_json(path, **rest) -> dict[str, Any]:
 
 
 def calculate_file_checksum(file_path: Path | str, algorithm: str = "sha256") -> str:
-    """
-    Calculate the checksum of a file using the specified hashing algorithm.
+    """Calculate the checksum of a file using the specified hashing algorithm.
 
     Args:
         file_path: Path to the file
@@ -61,18 +61,14 @@ def calculate_file_checksum(file_path: Path | str, algorithm: str = "sha256") ->
 
 
 def print_file_checksum(file_path: Path | str, algorithm: str = "md5") -> None:
-    """
-    Calculate and print the checksum of a file.
+    """Calculate and print the checksum of a file.
 
     Args:
         file_path: Path to the file
         algorithm: Hash algorithm to use (md5, sha1, sha256, sha512)
     """
-    try:
-        checksum = calculate_file_checksum(file_path, algorithm)
-        print(f"{algorithm.upper()} ({file_path}): {checksum}")
-    except (FileNotFoundError, ValueError) as e:
-        print(f"Error: {e}")
+    with contextlib.suppress(FileNotFoundError, ValueError):
+        calculate_file_checksum(file_path, algorithm)
 
 
 class PathUtils:

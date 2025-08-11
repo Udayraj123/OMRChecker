@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-"""
-Command-line script to calculate and print file checksums.
+"""Command-line script to calculate and print file checksums.
 
 Usage:
     python scripts/local/checksum.py <file_path> [--algorithm <algorithm>]
@@ -34,40 +32,36 @@ Examples:
   %(prog)s README.md --algorithm sha512
 
 Supported algorithms: md5, sha1, sha256 (default), sha512
-        """
+        """,
     )
 
-    parser.add_argument(
-        "file_path",
-        help="Path to the file to checksum"
-    )
+    parser.add_argument("file_path", help="Path to the file to checksum")
 
     parser.add_argument(
-        "--algorithm", "-a",
+        "--algorithm",
+        "-a",
         default="sha256",
         choices=["md5", "sha1", "sha256", "sha512"],
-        help="Hash algorithm to use (default: sha256)"
+        help="Hash algorithm to use (default: sha256)",
     )
 
     parser.add_argument(
-        "--quiet", "-q",
+        "--quiet",
+        "-q",
         action="store_true",
-        help="Only output the checksum value (no filename or algorithm label)"
+        help="Only output the checksum value (no filename or algorithm label)",
     )
 
     args = parser.parse_args()
 
     try:
         if args.quiet:
-            checksum = calculate_file_checksum(args.file_path, args.algorithm)
-            print(checksum)
+            calculate_file_checksum(args.file_path, args.algorithm)
         else:
             print_file_checksum(args.file_path, args.algorithm)
-    except (FileNotFoundError, ValueError) as e:
-        print(f"Error: {e}", file=sys.stderr)
+    except (FileNotFoundError, ValueError):
         sys.exit(1)
     except KeyboardInterrupt:
-        print("\nOperation cancelled by user.", file=sys.stderr)
         sys.exit(1)
 
 
