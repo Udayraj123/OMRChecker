@@ -3,6 +3,9 @@ name: Ruff
 on:
   push:
     branches: [master]
+    paths:
+      - "**/*.py"
+      - "*.toml"
   pull_request:
     branches: [master]
 

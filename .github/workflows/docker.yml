@@ -1,8 +1,12 @@
 name: Docker
+# Only run Docker workflow if Docker-related files have changed
 
 on:
   push:
     branches: [master]
+    paths:
+      - Dockerfile
+      - .devcontainer/Dockerfile
   pull_request:
     branches: [master]
 
