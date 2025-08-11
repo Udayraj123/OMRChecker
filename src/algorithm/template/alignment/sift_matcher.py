@@ -1,4 +1,5 @@
 import cv2
+import cv2.img_hash
 import numpy as np
 
 from src.algorithm.template.alignment.piecewise_affine_delaunay import (
@@ -38,12 +39,15 @@ class SiftMatcher:
         # find the keypoints and descriptors with SIFT
         source_features, des1 = SiftMatcher.sift.detectAndCompute(alignment_image, None)
         destination_features, des2 = SiftMatcher.sift.detectAndCompute(gray_image, None)
+
         logger.debug(
             f"SIFT: {field_block_name}: alignment_image.shape", alignment_image.shape
         )
         logger.debug(f"SIFT: {field_block_name}: gray_image.shape", gray_image.shape)
-        logger.debug(f"SIFT: {field_block_name}: alignment_image", alignment_image)
-        logger.debug(f"SIFT: {field_block_name}: gray_image", gray_image)
+        logger.debug(
+            f"SIFT: {field_block_name}: alignment_image", np.histogram(alignment_image)
+        )
+        logger.debug(f"SIFT: {field_block_name}: gray_image", np.histogram(gray_image))
         matches = SiftMatcher.flann.knnMatch(des1, des2, k=2)
         # TODO: sort the matches and add maxMatchCount argument
 

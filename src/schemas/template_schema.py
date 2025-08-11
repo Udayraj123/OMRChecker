@@ -927,7 +927,7 @@ TEMPLATE_SCHEMA = {
                                             },
                                             "then": {
                                                 # TODO: check that "topLeftDot": False, etc here is not passable
-                                                "oneOf": [
+                                                "anyOf": [
                                                     {
                                                         "required": ["scanZones"],
                                                     },
@@ -967,7 +967,7 @@ TEMPLATE_SCHEMA = {
                                                 },
                                             },
                                             "then": {
-                                                "oneOf": [
+                                                "anyOf": [
                                                     {
                                                         "required": ["scanZones"],
                                                     },
@@ -976,7 +976,7 @@ TEMPLATE_SCHEMA = {
                                                             "rightLine",
                                                             "topLeftDot",
                                                             "bottomLeftDot",
-                                                        ]
+                                                        ],
                                                     },
                                                 ],
                                                 "additionalProperties": False,
@@ -1005,7 +1005,7 @@ TEMPLATE_SCHEMA = {
                                                 },
                                             },
                                             "then": {
-                                                "oneOf": [
+                                                "anyOf": [
                                                     {
                                                         "required": ["scanZones"],
                                                     },
@@ -1039,7 +1039,7 @@ TEMPLATE_SCHEMA = {
                                                 },
                                             },
                                             "then": {
-                                                "oneOf": [
+                                                "anyOf": [
                                                     {
                                                         "required": ["scanZones"],
                                                     },

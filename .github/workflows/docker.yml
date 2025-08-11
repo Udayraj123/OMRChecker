@@ -1,5 +1,4 @@
 name: Docker
-# Only run Docker workflow if Docker-related files have changed
 
 on:
   push:

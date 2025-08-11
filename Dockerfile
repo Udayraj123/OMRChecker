@@ -31,3 +31,5 @@ RUN apt-get update \
 
 # Install project dependencies
 RUN uv sync --frozen --no-install-project
+
+# TODO: add an entry point?
