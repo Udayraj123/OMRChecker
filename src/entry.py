@@ -13,7 +13,7 @@ from src.algorithm.template.template import Template
 from src.schemas.constants import DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING
 from src.schemas.defaults import CONFIG_DEFAULTS
 from src.utils import constants
-from src.utils.file import PathUtils, print_file_checksum
+from src.utils.file import PathUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils, Stats
 from src.utils.logger import console, logger
@@ -243,7 +243,6 @@ def process_directory_files(
         files_counter += 1
         file_name = PathUtils.remove_non_utf_characters(file_path.name)
         file_id = str(file_name)
-        print_file_checksum(file_path, "md5")
         gray_image, colored_image = ImageUtils.read_image_util(file_path, tuning_config)
 
         logger.info("")

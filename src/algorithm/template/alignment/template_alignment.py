@@ -65,11 +65,10 @@ def apply_template_alignment(gray_image, colored_image, template: Template, conf
         logger.debug(
             field_block.name,
             field_block.to_json(),
+            gray_image.shape,
+            gray_alignment_image.shape,
             zone_start,
             zone_end,
-            bounding_box_origin,
-            bounding_box_dimensions,
-            gray_image.shape,
         )
         block_gray_image, _block_colored_image, block_gray_alignment_image = (
             (

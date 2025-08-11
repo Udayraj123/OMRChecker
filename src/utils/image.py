@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 from shapely import LineString, Point
 
 from src.processors.constants import EDGE_TYPES_IN_ORDER, EdgeType
+from src.utils.checksum import print_file_checksum
 from src.utils.constants import CLR_WHITE
 from src.utils.logger import logger
 from src.utils.math import MathUtils
@@ -21,6 +22,7 @@ class ImageUtils:
 
     @staticmethod
     def read_image_util(file_path: Path, tuning_config: DotMap):
+        print_file_checksum(file_path, "md5")
         encoded_path = str(file_path)
         if tuning_config.outputs.colored_outputs_enabled:
             colored_image = cv2.imread(encoded_path, cv2.IMREAD_COLOR)
