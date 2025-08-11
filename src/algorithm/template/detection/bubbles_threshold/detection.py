@@ -5,7 +5,6 @@ from src.algorithm.template.detection.base.detection import FieldDetection
 from src.algorithm.template.detection.bubbles_threshold.stats import MeanValueItem
 from src.algorithm.template.layout.field.base import Field
 from src.algorithm.template.layout.field.bubble_field import BubblesScanBox
-from src.utils.logger import logger
 from src.utils.parsing import default_dump
 
 
@@ -63,5 +62,4 @@ class BubblesFieldDetection(FieldDetection):
         x, y = unit_bubble.get_shifted_position()
         rect = [y, y + box_h, x, x + box_w]
         mean_value = cv2.mean(gray_image[rect[0] : rect[1], rect[2] : rect[3]], None)[0]
-        logger.debug(f"mean_value: {mean_value:2f}, rect: {rect}")
         return BubbleMeanValue(mean_value, unit_bubble)

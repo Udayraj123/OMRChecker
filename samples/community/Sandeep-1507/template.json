@@ -8,8 +8,8 @@
     15
   ],
   "processingImageShape": [
-    820,
-    666
+    1000,
+    800
   ],
   "preProcessors": [
     {
@@ -33,14 +33,14 @@
       "fieldDetectionType": "BUBBLES_THRESHOLD",
       "bubbleFieldType": "QTYPE_INT_FROM_1",
       "origin": [
-        112,
-        530
+        120,
+        528
       ],
       "fieldLabels": [
         "b1..7"
       ],
-      "bubblesGap": 28,
-      "labelsGap": 26.5
+      "bubblesGap": 27,
+      "labelsGap": 27.8
     },
     "MCQBlock1a1": {
       "fieldDetectionType": "BUBBLES_THRESHOLD",

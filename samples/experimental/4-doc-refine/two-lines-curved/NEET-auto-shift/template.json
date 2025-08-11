@@ -7,6 +7,10 @@
     15,
     15
   ],
+  "processingImageShape": [
+    1620,
+    1356
+  ],
   "preProcessors": [
     {
       "name": "GaussianBlur",

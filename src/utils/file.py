@@ -125,11 +125,12 @@ class SaveImageOps:
         key = self.save_image_level if key is None else key
         if self.save_image_level >= int(key):
             stem = file_path.stem
-            logger.info(
-                f"Stack level: {key}", [title for title, _ in self.gray_images[key]]
-            )
 
             if len(self.gray_images[key]) > 0:
+                logger.info(
+                    f"Gray Stack level: {key}",
+                    [title for title, _ in self.gray_images[key]],
+                )
                 result = self.get_result_hstack(self.gray_images[key], images_per_row)
                 stack_path = f"{save_marked_dir}/stack/{stem}_{key!s}_stack.jpg"
                 logger.info(f"Saved stack image to: {stack_path}")
@@ -140,6 +141,10 @@ class SaveImageOps:
                 )
 
             if len(self.colored_images[key]) > 0:
+                logger.info(
+                    f"Colored Stack level: {key}",
+                    [title for title, _ in self.colored_images[key]],
+                )
                 colored_result = self.get_result_hstack(
                     self.colored_images[key], images_per_row
                 )

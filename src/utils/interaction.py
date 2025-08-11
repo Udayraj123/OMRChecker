@@ -208,8 +208,8 @@ def is_window_available(name: str) -> bool:
     """Checks if a window is available."""
     try:
         cv2.getWindowProperty(name, cv2.WND_PROP_VISIBLE)
-    except Exception as e:
-        logger.debug(e)
+    except Exception:
+        # logger.debug(e)
         return False
     else:
         return True

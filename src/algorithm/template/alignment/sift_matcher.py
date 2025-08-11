@@ -74,6 +74,9 @@ class SiftMatcher:
                 [destination_features[m.trainIdx].pt for m in good]
             ).reshape(-1, 1, 2)
 
+            logger.debug(f"SIFT: {field_block_name}: source points", src_pts)
+            logger.debug(f"SIFT: {field_block_name}: destination points", dst_pts)
+
             # TODO: understand matches_mask and need of homography for SIFT
             homography_matrix, mask = cv2.findHomography(
                 src_pts, dst_pts, cv2.RANSAC, max_displacement
@@ -85,6 +88,7 @@ class SiftMatcher:
                 -1, 1, 2
             )
             dst = cv2.perspectiveTransform(pts, homography_matrix)
+            logger.debug(f"SIFT: {field_block_name}: homography dst points", dst)
 
             gray_image = cv2.polylines(
                 # ruff: noqa: FBT003
@@ -102,7 +106,7 @@ class SiftMatcher:
             )
             matches_mask = None
 
-        if config.outputs.show_image_level >= 2:
+        if config.outputs.show_image_level >= 6:
             draw_params = {
                 "matchColor": (0, 255, 0),  # draw matches in green color
                 "singlePointColor": None,

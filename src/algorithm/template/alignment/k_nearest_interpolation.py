@@ -68,7 +68,7 @@ def apply_k_nearest_interpolation_inplace(
     # shift_by_fields(field_block, block_image_shifts, anchors_with_displacements, k)
     # shift_by_scan_boxes(field_block, block_image_shifts, anchors_with_displacements, k)
 
-    if config.outputs.show_image_level >= 2:
+    if config.outputs.show_image_level >= 6:
         block_gray_image_after = block_gray_image.copy()
         old_shifts = field_block.shifts.copy()
         field_block.shifts = block_image_shifts  # MathUtils.add_points(block_image_shifts, average_shifts)
@@ -87,7 +87,6 @@ def apply_k_nearest_interpolation_inplace(
     # Method 2: Get affine transform on the bubble coordinates
 
     # Note: we've assigned shifts to scan boxes already above(shift_by_field_blocks)
-    field_block.shifts = [0, 0]
     return average_shifts
 
 
