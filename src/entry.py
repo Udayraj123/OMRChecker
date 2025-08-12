@@ -30,10 +30,33 @@ STATS = Stats()
 
 
 def entry_point(input_dir, args):
-    if not os.path.exists(input_dir):
-        raise Exception(f"Given input directory does not exist: '{input_dir}'")
-    curr_dir = input_dir
-    return process_dir(input_dir, curr_dir, args)
+    # Handle CLI arguments for config files (Issue #201)
+    template_path = Path(args["templateFile"]) if args.get("templateFile") else input_dir / "template.json"
+    config_path = Path(args["configFile"]) if args.get("configFile") else input_dir / "config.json"
+    evaluation_path = Path(args["evaluationFile"]) if args.get("evaluationFile") else input_dir / "evaluation.json"
+
+    # Validate CLI-specified files exist (only validate if explicitly provided via CLI)
+    if args.get("templateFile") and not template_path.exists():
+        logger.error(f"Specified template file does not exist: {template_path}")
+        return  # Exit early if CLI-specified file doesn't exist
+
+    if args.get("configFile") and not config_path.exists():
+        logger.error(f"Specified config file does not exist: {config_path}")
+        return
+
+    if args.get("evaluationFile") and not evaluation_path.exists():
+        logger.error(f"Specified evaluation file does not exist: {evaluation_path}")
+        return
+
+    # Process the directory
+    process_dir(
+        input_dir,
+        input_dir,
+        args,
+        template=None,
+        tuning_config=CONFIG_DEFAULTS,
+        evaluation_config=None,
+    )
 
 
 def print_config_summary(
@@ -80,18 +103,39 @@ def process_dir(
     evaluation_config=None,
 ):
     # Update local tuning_config (in current recursion stack)
-    local_config_path = curr_dir.joinpath(constants.CONFIG_FILENAME)
-    if os.path.exists(local_config_path):
-        tuning_config = open_config_with_defaults(local_config_path)
+    # MODIFIED: Check CLI argument first, then fall back to local config
+    if args.get("configFile"):
+        # Use CLI-specified config file
+        config_path = Path(args["configFile"])
+        if os.path.exists(config_path):
+            tuning_config = open_config_with_defaults(config_path)
+        else:
+            logger.error(f"Specified config file does not exist: {config_path}")
+            raise Exception(f"Config file not found: {config_path}")
+    else:
+        # Original behavior: look for local config
+        local_config_path = curr_dir.joinpath(constants.CONFIG_FILENAME)
+        if os.path.exists(local_config_path):
+            tuning_config = open_config_with_defaults(local_config_path)
 
     # Update local template (in current recursion stack)
-    local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
-    local_template_exists = os.path.exists(local_template_path)
-    if local_template_exists:
-        template = Template(
-            local_template_path,
-            tuning_config,
-        )
+    # MODIFIED: Check CLI argument first, then fall back to local template
+    if args.get("templateFile"):
+        # Use CLI-specified template file
+        template_path = Path(args["templateFile"])
+        if os.path.exists(template_path):
+            template = Template(template_path, tuning_config)
+            local_template_exists = True
+        else:
+            logger.error(f"Specified template file does not exist: {template_path}")
+            raise Exception(f"Template file not found: {template_path}")
+    else:
+        # Original behavior: look for local template
+        local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
+        local_template_exists = os.path.exists(local_template_path)
+        if local_template_exists:
+            template = Template(local_template_path, tuning_config)
+
     # Look for subdirectories for processing
     subdirs = [d for d in curr_dir.iterdir() if d.is_dir()]
 
@@ -108,22 +152,44 @@ def process_dir(
         for pp in template.pre_processors:
             excluded_files.extend(Path(p) for p in pp.exclude_files())
 
-    local_evaluation_path = curr_dir.joinpath(constants.EVALUATION_FILENAME)
-    if not args["setLayout"] and os.path.exists(local_evaluation_path):
-        if not local_template_exists:
-            logger.warning(
-                f"Found an evaluation file without a parent template file: {local_evaluation_path}"
+    # MODIFIED: Check CLI argument for evaluation file
+    if args.get("evaluationFile"):
+        # Use CLI-specified evaluation file
+        evaluation_path = Path(args["evaluationFile"])
+        if not args["setLayout"] and os.path.exists(evaluation_path):
+            if not template:
+                logger.warning(
+                    f"Found an evaluation file without a template: {evaluation_path}"
+                )
+            evaluation_config = EvaluationConfig(
+                curr_dir,
+                evaluation_path,
+                template,
+                tuning_config,
             )
-        evaluation_config = EvaluationConfig(
-            curr_dir,
-            local_evaluation_path,
-            template,
-            tuning_config,
-        )
-
-        excluded_files.extend(
-            Path(exclude_file) for exclude_file in evaluation_config.get_exclude_files()
-        )
+            excluded_files.extend(
+                Path(exclude_file) for exclude_file in evaluation_config.get_exclude_files()
+            )
+        elif not os.path.exists(evaluation_path):
+            logger.error(f"Specified evaluation file does not exist: {evaluation_path}")
+            raise Exception(f"Evaluation file not found: {evaluation_path}")
+    else:
+        # Original behavior: look for local evaluation file
+        local_evaluation_path = curr_dir.joinpath(constants.EVALUATION_FILENAME)
+        if not args["setLayout"] and os.path.exists(local_evaluation_path):
+            if not local_template_exists:
+                logger.warning(
+                    f"Found an evaluation file without a parent template file: {local_evaluation_path}"
+                )
+            evaluation_config = EvaluationConfig(
+                curr_dir,
+                local_evaluation_path,
+                template,
+                tuning_config,
+            )
+            excluded_files.extend(
+                Path(exclude_file) for exclude_file in evaluation_config.get_exclude_files()
+            )
 
     omr_files = [f for f in omr_files if f not in excluded_files]
 
@@ -132,7 +198,7 @@ def process_dir(
             logger.error(
                 f"Found images, but no template in the directory tree \
                 of '{curr_dir}'. \nPlace {constants.TEMPLATE_FILENAME} in the \
-                appropriate directory."
+                appropriate directory or specify --template-file."
             )
             raise Exception(
                 f"No template file found in the directory tree of {curr_dir}"
@@ -146,7 +212,7 @@ def process_dir(
             omr_files,
             template,
             tuning_config,
-            local_config_path,
+            args.get("configFile") or curr_dir.joinpath(constants.CONFIG_FILENAME),
             evaluation_config,
             args,
         )
