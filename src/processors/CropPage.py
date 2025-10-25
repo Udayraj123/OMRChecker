@@ -8,8 +8,18 @@ from src.logger import logger
 from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
-
-MIN_PAGE_AREA = 80000
+from src.constants.image_processing import (
+    MIN_PAGE_AREA_THRESHOLD,
+    MAX_COSINE_THRESHOLD,
+    DEFAULT_GAUSSIAN_BLUR_KERNEL,
+    PAGE_THRESHOLD_PARAMS,
+    CANNY_EDGE_PARAMS,
+    APPROX_POLY_EPSILON_FACTOR,
+    DEFAULT_CONTOUR_COLOR,
+    DEFAULT_CONTOUR_LINE_WIDTH,
+    DEFAULT_CONTOUR_FILL_COLOR,
+    DEFAULT_CONTOUR_FILL_WIDTH
+)
 
 
 def normalize(image):
@@ -25,7 +35,7 @@ def check_max_cosine(approx):
         max_cosine = max(cosine, max_cosine)
         min_cosine = min(cosine, min_cosine)
 
-    if max_cosine >= 0.35:
+    if max_cosine >= MAX_COSINE_THRESHOLD:
         logger.warning("Quadrilateral is not a rectangle.")
         return False
     return True
@@ -54,7 +64,7 @@ class CropPage(ImagePreprocessor):
         )
 
     def apply_filter(self, image, file_path):
-        image = normalize(cv2.GaussianBlur(image, (3, 3), 0))
+        image = normalize(cv2.GaussianBlur(image, DEFAULT_GAUSSIAN_BLUR_KERNEL, 0))
 
         # Resize should be done with another preprocessor is needed
         sheet = self.find_page(image, file_path)
@@ -77,7 +87,8 @@ class CropPage(ImagePreprocessor):
 
         image = normalize(image)
 
-        _ret, image = cv2.threshold(image, 200, 255, cv2.THRESH_TRUNC)
+        _ret, image = cv2.threshold(image, PAGE_THRESHOLD_PARAMS["thresh"], 
+                                PAGE_THRESHOLD_PARAMS["maxval"], cv2.THRESH_TRUNC)
         image = normalize(image)
 
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, self.morph_kernel)
@@ -85,7 +96,7 @@ class CropPage(ImagePreprocessor):
         # Close the small holes, i.e. Complete the edges on canny image
         closed = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
 
-        edge = cv2.Canny(closed, 185, 55)
+        edge = cv2.Canny(closed, CANNY_EDGE_PARAMS["threshold1"], CANNY_EDGE_PARAMS["threshold2"])
 
         if config.outputs.show_image_level >= 5:
             InteractionUtils.show("edge", edge, config=config)
@@ -99,14 +110,14 @@ class CropPage(ImagePreprocessor):
         cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
         sheet = []
         for c in cnts:
-            if cv2.contourArea(c) < MIN_PAGE_AREA:
+            if cv2.contourArea(c) < MIN_PAGE_AREA_THRESHOLD:
                 continue
             peri = cv2.arcLength(c, True)
-            approx = cv2.approxPolyDP(c, epsilon=0.025 * peri, closed=True)
+            approx = cv2.approxPolyDP(c, epsilon=APPROX_POLY_EPSILON_FACTOR * peri, closed=True)
             if validate_rect(approx):
                 sheet = np.reshape(approx, (4, -1))
-                cv2.drawContours(image, [approx], -1, (0, 255, 0), 2)
-                cv2.drawContours(edge, [approx], -1, (255, 255, 255), 10)
+                cv2.drawContours(image, [approx], -1, DEFAULT_CONTOUR_COLOR, DEFAULT_CONTOUR_LINE_WIDTH)
+                cv2.drawContours(edge, [approx], -1, DEFAULT_CONTOUR_FILL_COLOR, DEFAULT_CONTOUR_FILL_WIDTH)
                 break
 
         return sheet

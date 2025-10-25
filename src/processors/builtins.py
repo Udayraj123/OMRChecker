@@ -2,6 +2,10 @@ import cv2
 import numpy as np
 
 from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
+from src.constants.image_processing import (
+    DEFAULT_MEDIAN_BLUR_KERNEL_SIZE,
+    DEFAULT_GAUSSIAN_BLUR_PARAMS
+)
 
 
 class Levels(ImagePreprocessor):
@@ -37,7 +41,7 @@ class MedianBlur(ImagePreprocessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         options = self.options
-        self.kSize = int(options.get("kSize", 5))
+        self.kSize = int(options.get("kSize", DEFAULT_MEDIAN_BLUR_KERNEL_SIZE))
 
     def apply_filter(self, image, _file_path):
         return cv2.medianBlur(image, self.kSize)
@@ -47,8 +51,8 @@ class GaussianBlur(ImagePreprocessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         options = self.options
-        self.kSize = tuple(int(x) for x in options.get("kSize", (3, 3)))
-        self.sigmaX = int(options.get("sigmaX", 0))
+        self.kSize = tuple(int(x) for x in options.get("kSize", DEFAULT_GAUSSIAN_BLUR_PARAMS["kernel_size"]))
+        self.sigmaX = int(options.get("sigmaX", DEFAULT_GAUSSIAN_BLUR_PARAMS["sigma_x"]))
 
     def apply_filter(self, image, _file_path):
         return cv2.GaussianBlur(image, self.kSize, self.sigmaX)

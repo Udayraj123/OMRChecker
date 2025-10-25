@@ -7,6 +7,20 @@ from src.logger import logger
 from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
+from src.constants.image_processing import (
+    QUADRANT_DIVISION,
+    MARKER_RECTANGLE_COLOR,
+    ERODE_RECT_COLOR,
+    NORMAL_RECT_COLOR,
+    EROSION_PARAMS,
+    DEFAULT_WHITE_COLOR,
+    DEFAULT_BLACK_COLOR,
+    DEFAULT_NORMALIZE_PARAMS,
+    DEFAULT_LINE_WIDTH,
+    DEFAULT_MARKER_LINE_WIDTH,
+    DEFAULT_BORDER_REMOVE,
+    DEFAULT_GAUSSIAN_BLUR_PARAMS_MARKER
+)
 
 
 class CropOnMarkers(ImagePreprocessor):
@@ -42,12 +56,15 @@ class CropOnMarkers(ImagePreprocessor):
         image_eroded_sub = ImageUtils.normalize_util(
             image
             if self.apply_erode_subtract
-            else (image - cv2.erode(image, kernel=np.ones((5, 5)), iterations=5))
+            else (image - cv2.erode(
+                image,
+                kernel=np.ones((EROSION_PARAMS["kernel_size"], EROSION_PARAMS["kernel_size"])),
+                iterations=EROSION_PARAMS["iterations"]))
         )
         # Quads on warped image
         quads = {}
         h1, w1 = image_eroded_sub.shape[:2]
-        midh, midw = h1 // 3, w1 // 2
+        midh, midw = h1 // QUADRANT_DIVISION["height_factor"], w1 // QUADRANT_DIVISION["width_factor"]
         origins = [[0, 0], [midw, 0], [0, midh], [midw, midh]]
         quads[0] = image_eroded_sub[0:midh, 0:midw]
         quads[1] = image_eroded_sub[0:midh, midw:w1]
@@ -55,8 +72,8 @@ class CropOnMarkers(ImagePreprocessor):
         quads[3] = image_eroded_sub[midh:h1, midw:w1]
 
         # Draw Quadlines
-        image_eroded_sub[:, midw : midw + 2] = 255
-        image_eroded_sub[midh : midh + 2, :] = 255
+        image_eroded_sub[:, midw : midw + 2] = DEFAULT_WHITE_COLOR
+        image_eroded_sub[midh : midh + 2, :] = DEFAULT_WHITE_COLOR
 
         best_scale, all_max_t = self.getBestMatch(image_eroded_sub)
         if best_scale is None:
@@ -113,14 +130,14 @@ class CropOnMarkers(ImagePreprocessor):
             pt[1] += origins[k][1]
             # print(">>",pt)
             image = cv2.rectangle(
-                image, tuple(pt), (pt[0] + w, pt[1] + _h), (150, 150, 150), 2
+                image, tuple(pt), (pt[0] + w, pt[1] + _h), MARKER_RECTANGLE_COLOR, DEFAULT_LINE_WIDTH
             )
             # display:
             image_eroded_sub = cv2.rectangle(
                 image_eroded_sub,
                 tuple(pt),
                 (pt[0] + w, pt[1] + _h),
-                (50, 50, 50) if self.apply_erode_subtract else (155, 155, 155),
+                ERODE_RECT_COLOR if self.apply_erode_subtract else NORMAL_RECT_COLOR,
                 4,
             )
             centres.append([pt[0] + w / 2, pt[1] + _h / 2])
@@ -145,7 +162,7 @@ class CropOnMarkers(ImagePreprocessor):
             image_eroded_sub = ImageUtils.resize_util_h(
                 image_eroded_sub, image.shape[0]
             )
-            image_eroded_sub[:, -5:] = 0
+            image_eroded_sub[:, -DEFAULT_BORDER_REMOVE:] = DEFAULT_BLACK_COLOR
             h_stack = np.hstack((image_eroded_sub, image))
             InteractionUtils.show(
                 f"Warped: {file_path}",
@@ -177,13 +194,16 @@ class CropOnMarkers(ImagePreprocessor):
                 config.dimensions.processing_width
                 / int(marker_ops["sheetToMarkerWidthRatio"]),
             )
-        marker = cv2.GaussianBlur(marker, (5, 5), 0)
+        marker = cv2.GaussianBlur(marker, DEFAULT_GAUSSIAN_BLUR_PARAMS_MARKER["kernel_size"], 
+                              DEFAULT_GAUSSIAN_BLUR_PARAMS_MARKER["sigma_x"])
         marker = cv2.normalize(
-            marker, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
+            marker, None, alpha=DEFAULT_NORMALIZE_PARAMS["alpha"], 
+            beta=DEFAULT_NORMALIZE_PARAMS["beta"], norm_type=cv2.NORM_MINMAX
         )
 
         if self.apply_erode_subtract:
-            marker -= cv2.erode(marker, kernel=np.ones((5, 5)), iterations=5)
+            marker -= cv2.erode(marker, kernel=np.ones((EROSION_PARAMS["kernel_size"], EROSION_PARAMS["kernel_size"])), 
+                               iterations=EROSION_PARAMS["iterations"])
 
         return marker
 
