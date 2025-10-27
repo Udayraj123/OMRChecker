@@ -27,12 +27,12 @@ MIN_PAGE_AREA_THRESHOLD = 80000
 MAX_COSINE_THRESHOLD = 0.35
 DEFAULT_GAUSSIAN_BLUR_KERNEL = (3, 3)
 PAGE_THRESHOLD_PARAMS = {
-    "thresh": 200,
-    "maxval": 255
+    "threshold_value": 200,
+    "max_pixel_value": 255
 }
 CANNY_EDGE_PARAMS = {
-    "threshold1": 185,
-    "threshold2": 55
+    "canny_threshold_min": 185,
+    "canny_threshold_max": 55
 }
 APPROX_POLY_EPSILON_FACTOR = 0.025
 
@@ -45,7 +45,7 @@ MARKER_RECTANGLE_COLOR = (150, 150, 150)
 ERODE_RECT_COLOR = (50, 50, 50)
 NORMAL_RECT_COLOR = (155, 155, 155)
 EROSION_PARAMS = {
-    "kernel_size": 5,
+    "kernel_size": (5, 5),
     "iterations": 5
 }
 
