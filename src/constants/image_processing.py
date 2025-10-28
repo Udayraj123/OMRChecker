@@ -30,9 +30,11 @@ PAGE_THRESHOLD_PARAMS = {
     "threshold_value": 200,
     "max_pixel_value": 255
 }
-CANNY_EDGE_PARAMS = {
-    "canny_threshold_min": 185,
-    "canny_threshold_max": 55
+CANNY_PARAMS = {
+    # lower_threshold: lower bound for Canny edge detection
+    # upper_threshold: upper bound for Canny edge detection
+    "lower_threshold": 185,
+    "upper_threshold": 55,
 }
 APPROX_POLY_EPSILON_FACTOR = 0.025
 
@@ -59,3 +61,8 @@ DEFAULT_GAUSSIAN_BLUR_PARAMS = {
     "kernel_size": (3, 3),
     "sigma_x": 0
 }
+
+# Summary of recent changes:
+# - Renamed `CANNY_EDGE_PARAMS` -> `CANNY_PARAMS` and keys
+#   `canny_threshold_min`/`canny_threshold_max` ->
+#   `lower_threshold`/`upper_threshold` for clearer semantics.

@@ -1,22 +1,13 @@
 """
 Constants package for OMRChecker.
+
+Note: __all__ was intentionally removed to allow importing all
+constants from the submodule without restricting the exported
+names. Use `from src.constants.image_processing import *` or
+import specific names as needed.
 """
 from .image_processing import *  # noqa
 
-__all__ = [
-    'MIN_PAGE_AREA_THRESHOLD',
-    'MAX_COSINE_THRESHOLD',
-    'DEFAULT_GAUSSIAN_BLUR_KERNEL',
-    'PAGE_THRESHOLD_PARAMS',
-    'CANNY_EDGE_PARAMS',
-    'APPROX_POLY_EPSILON_FACTOR',
-    'QUADRANT_DIVISION',
-    'MARKER_RECTANGLE_COLOR',
-    'ERODE_RECT_COLOR',
-    'NORMAL_RECT_COLOR',
-    'EROSION_PARAMS',
-    'DEFAULT_MAX_FEATURES',
-    'DEFAULT_GOOD_MATCH_PERCENT',
-    'DEFAULT_MEDIAN_BLUR_KERNEL_SIZE',
-    'DEFAULT_GAUSSIAN_BLUR_PARAMS'
-]
+# Summary of recent changes:
+# - Removed restrictive __all__ list to avoid limiting imports
+#   from the constants package.
