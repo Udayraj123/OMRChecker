@@ -2,6 +2,11 @@
 Constants for image processing operations across OMRChecker.
 """
 
+from config.config_loader import load_config
+
+# Load config (with fallback to defaults if key missing)
+config = load_config()
+
 # General Image Processing
 DEFAULT_WHITE_COLOR = 255
 DEFAULT_BLACK_COLOR = 0
@@ -22,20 +27,24 @@ DEFAULT_GAUSSIAN_BLUR_PARAMS_MARKER = {
     "sigma_x": 0
 }
 
-# CropPage constants
-MIN_PAGE_AREA_THRESHOLD = 80000
-MAX_COSINE_THRESHOLD = 0.35
+# CropPage constants (from config or fallback)
+MIN_PAGE_AREA_THRESHOLD = config["preprocessing"].get("min_page_area_threshold", 80000)
+MAX_COSINE_THRESHOLD = config["preprocessing"].get("max_cosine_threshold", 0.35)
+
 DEFAULT_GAUSSIAN_BLUR_KERNEL = (3, 3)
+
 PAGE_THRESHOLD_PARAMS = {
-    "threshold_value": 200,
+    "threshold_value": config["preprocessing"].get("threshold", 200),
     "max_pixel_value": 255
 }
+
 CANNY_PARAMS = {
     # lower_threshold: lower bound for Canny edge detection
     # upper_threshold: upper bound for Canny edge detection
-    "lower_threshold": 185,
-    "upper_threshold": 55,
+    "lower_threshold": config["preprocessing"].get("canny_min", 185),
+    "upper_threshold": config["preprocessing"].get("canny_max", 55),
 }
+
 APPROX_POLY_EPSILON_FACTOR = 0.025
 
 # CropOnMarkers constants
@@ -52,8 +61,8 @@ EROSION_PARAMS = {
 }
 
 # FeatureBasedAlignment constants
-DEFAULT_MAX_FEATURES = 500
-DEFAULT_GOOD_MATCH_PERCENT = 0.15
+DEFAULT_MAX_FEATURES = config["preprocessing"].get("max_features", 500)
+DEFAULT_GOOD_MATCH_PERCENT = config["preprocessing"].get("good_match_percent", 0.15)
 
 # Builtin processor constants
 DEFAULT_MEDIAN_BLUR_KERNEL_SIZE = 5
