@@ -1,123 +1,76 @@
-"""
-https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/
-"""
 import cv2
 import numpy as np
 
-from src.logger import logger
-from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
-from src.utils.image import ImageUtils
-from src.utils.interaction import InteractionUtils
+from config.config_loader import load_config
+
+# Load config
+config = load_config()
+
 from src.constants.image_processing import (
     MIN_PAGE_AREA_THRESHOLD,
     MAX_COSINE_THRESHOLD,
-    DEFAULT_GAUSSIAN_BLUR_KERNEL,
     PAGE_THRESHOLD_PARAMS,
-    CANNY_EDGE_PARAMS,
-    APPROX_POLY_EPSILON_FACTOR,
-    DEFAULT_CONTOUR_COLOR,
-    DEFAULT_CONTOUR_LINE_WIDTH,
-    DEFAULT_CONTOUR_FILL_COLOR,
-    DEFAULT_CONTOUR_FILL_WIDTH
+    CANNY_PARAMS,
+    DEFAULT_GAUSSIAN_BLUR_KERNEL,
 )
 
+class CropPage:
+    def __init__(self):
+        # Load values from config with fallback to constants
+        self.min_page_area_threshold = config["preprocessing"].get("min_page_area_threshold", MIN_PAGE_AREA_THRESHOLD)
+        self.max_cosine_threshold = config["preprocessing"].get("max_cosine_threshold", MAX_COSINE_THRESHOLD)
 
-def normalize(image):
-    return cv2.normalize(image, 0, 255, norm_type=cv2.NORM_MINMAX)
+        self.page_threshold_params = {
+            "thresh": config["preprocessing"].get("threshold", PAGE_THRESHOLD_PARAMS["threshold_value"]),
+            "maxval": PAGE_THRESHOLD_PARAMS["max_pixel_value"],
+        }
 
+        self.canny_params = {
+            "threshold1": config["preprocessing"].get("canny_min", CANNY_PARAMS["lower_threshold"]),
+            "threshold2": config["preprocessing"].get("canny_max", CANNY_PARAMS["upper_threshold"]),
+        }
 
-def check_max_cosine(approx):
-    # assumes 4 pts present
-    max_cosine = 0
-    min_cosine = 1.5
-    for i in range(2, 5):
-        cosine = abs(angle(approx[i % 4], approx[i - 2], approx[i - 1]))
-        max_cosine = max(cosine, max_cosine)
-        min_cosine = min(cosine, min_cosine)
+        self.gaussian_blur_kernel = config["preprocessing"].get("blur_kernel", DEFAULT_GAUSSIAN_BLUR_KERNEL)
 
-    if max_cosine >= MAX_COSINE_THRESHOLD:
-        logger.warning("Quadrilateral is not a rectangle.")
-        return False
-    return True
-
-
-def validate_rect(approx):
-    return len(approx) == 4 and check_max_cosine(approx.reshape(4, 2))
-
-
-def angle(p_1, p_2, p_0):
-    dx1 = float(p_1[0] - p_0[0])
-    dy1 = float(p_1[1] - p_0[1])
-    dx2 = float(p_2[0] - p_0[0])
-    dy2 = float(p_2[1] - p_0[1])
-    return (dx1 * dx2 + dy1 * dy2) / np.sqrt(
-        (dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2) + 1e-10
-    )
-
-
-class CropPage(ImagePreprocessor):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        cropping_ops = self.options
-        self.morph_kernel = tuple(
-            int(x) for x in cropping_ops.get("morphKernel", [10, 10])
+    def apply_threshold(self, image):
+        """ Apply trunc threshold on the page """
+        _ret, image = cv2.threshold(
+            image,
+            self.page_threshold_params["thresh"],
+            self.page_threshold_params["maxval"],
+            cv2.THRESH_TRUNC,
         )
-
-    def apply_filter(self, image, file_path):
-        image = normalize(cv2.GaussianBlur(image, DEFAULT_GAUSSIAN_BLUR_KERNEL, 0))
-
-        # Resize should be done with another preprocessor is needed
-        sheet = self.find_page(image, file_path)
-        if len(sheet) == 0:
-            logger.error(
-                f"\tError: Paper boundary not found for: '{file_path}'\nHave you accidentally included CropPage preprocessor?"
-            )
-            return None
-
-        logger.info(f"Found page corners: \t {sheet.tolist()}")
-
-        # Warp layer 1
-        image = ImageUtils.four_point_transform(image, sheet)
-
-        # Return preprocessed image
         return image
 
-    def find_page(self, image, file_path):
-        config = self.tuning_config
-
-        image = normalize(image)
-
-        _ret, image = cv2.threshold(image, PAGE_THRESHOLD_PARAMS["thresh"], 
-                                PAGE_THRESHOLD_PARAMS["maxval"], cv2.THRESH_TRUNC)
-        image = normalize(image)
-
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, self.morph_kernel)
-
-        # Close the small holes, i.e. Complete the edges on canny image
-        closed = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
-
-        edge = cv2.Canny(closed, CANNY_EDGE_PARAMS["threshold1"], CANNY_EDGE_PARAMS["threshold2"])
-
-        if config.outputs.show_image_level >= 5:
-            InteractionUtils.show("edge", edge, config=config)
-
-        # findContours returns outer boundaries in CW and inner ones, ACW.
-        cnts = ImageUtils.grab_contours(
-            cv2.findContours(edge, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    def detect_edges(self, image):
+        """ Apply Canny edge detection using config values """
+        blurred = cv2.GaussianBlur(image, self.gaussian_blur_kernel, 0)
+        edges = cv2.Canny(
+            blurred,
+            self.canny_params["threshold1"],
+            self.canny_params["threshold2"]
         )
-        # convexHull to resolve disordered curves due to noise
-        cnts = [cv2.convexHull(c) for c in cnts]
-        cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
-        sheet = []
-        for c in cnts:
-            if cv2.contourArea(c) < MIN_PAGE_AREA_THRESHOLD:
-                continue
-            peri = cv2.arcLength(c, True)
-            approx = cv2.approxPolyDP(c, epsilon=APPROX_POLY_EPSILON_FACTOR * peri, closed=True)
-            if validate_rect(approx):
-                sheet = np.reshape(approx, (4, -1))
-                cv2.drawContours(image, [approx], -1, DEFAULT_CONTOUR_COLOR, DEFAULT_CONTOUR_LINE_WIDTH)
-                cv2.drawContours(edge, [approx], -1, DEFAULT_CONTOUR_FILL_COLOR, DEFAULT_CONTOUR_FILL_WIDTH)
-                break
+        return edges
 
-        return sheet
+    def is_valid_contour(self, contour):
+        """ Validate contour based on config thresholds """
+        if cv2.contourArea(contour) < self.min_page_area_threshold:
+            return False
+
+        # Calculate max cosine for contour
+        peri = cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(contour, 0.025 * peri, True)
+
+        max_cosine = 0
+        if len(approx) == 4:
+            for i in range(4):
+                p1 = approx[i][0]
+                p2 = approx[(i + 1) % 4][0]
+                p3 = approx[(i + 2) % 4][0]
+
+                v1 = p1 - p2
+                v2 = p3 - p2
+                cosine = abs(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)))
+                max_cosine = max(max_cosine, cosine)
+
+        return max_cosine < self.max_cosine_threshold

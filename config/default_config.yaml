@@ -1,0 +1,28 @@
+preprocessing:
+  threshold: 240          # Binarization threshold value
+  blur_kernel: 5          # Kernel size for Gaussian blur
+  canny_min: 100          # Canny edge detection lower bound
+  canny_max: 200          # Canny edge detection upper bound
+
+image:
+  width: 720              # Expected image width
+  height: 1280            # Expected image height
+  dpi: 300                # Default DPI for scans
+
+omr:
+  bubble_threshold: 0.7   # Minimum filled percentage to consider as marked
+  max_choices: 4          # Maximum MCQ options (A/B/C/D)
+  sheet_template: "templates/default_template.json"
+
+paths:
+  input_dir: "input/"
+  output_dir: "output/"
+  temp_dir: "temp/"
+  logs_dir: "logs/"
+
+logging:
+  level: "INFO"           # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  save_logs: true
+
+cli:
+  enable_argument_override: true   # Allow CLI arguments to override config
