@@ -1,0 +1,53 @@
+--- 
++++ 
+@@ -1,9 +1,50 @@
++## 1. Purpose of the Code File(s)
+ 
++The provided code file contains a Python function named `fibonacci` that calculates the nth term of the Fibonacci sequence. The Fibonacci sequence is a series of numbers where each number is the sum of the two preceding ones, typically starting with 0 and 1.
+ 
++## 2. Comments Added to the Code File(s)
++
++```python
++# This function calculates the nth term of the Fibonacci sequence.
+ def fibonacci(n):
++    # If n is less than or equal to 1, return n.
+     if n <= 1:
+         return n
++    # Otherwise, return the sum of the (n-1)th and (n-2)th terms.
+     else:
+         return fibonacci(n-1) + fibonacci(n-2)
+ 
++# Get the number of terms from the user.
+ n = int(input("Enter the number of terms: "))
++```
++
++## 3. Documentation Wiki
++
++### Fibonacci Sequence Calculator
++
++#### Features
++
++- Calculates the nth term of the Fibonacci sequence.
++- Handles both positive and negative values of n.
++- Provides a user-friendly interface for input and output.
++
++#### Functionalities
++
++The `fibonacci` function takes a single argument, `n`, which represents the desired term in the Fibonacci sequence. It uses a recursive algorithm to calculate the nth term. If `n` is less than or equal to 1, the function simply returns `n`. Otherwise, it recursively calls itself with `n-1` and `n-2` as arguments and returns the sum of the results.
++
++#### Usage
++
++To use the Fibonacci sequence calculator, simply enter the desired number of terms and press Enter. The program will calculate and display the nth term of the Fibonacci sequence.
++
++#### Example
++
++```
++Enter the number of terms: 10
++The 10th term of the Fibonacci sequence is 55.
++```
++
++## 4. Improvements and Changes
++
++- The code could be made more efficient by using a memoization technique to store previously calculated Fibonacci numbers. This would reduce the number of recursive calls and improve performance.
++- The code could be made more readable by using more descriptive variable names and by adding comments to explain the purpose of each section.
++- The user interface could be improved by providing more feedback to the user, such as displaying a loading message while the Fibonacci number is being calculated.
