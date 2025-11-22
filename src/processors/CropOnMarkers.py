@@ -3,24 +3,23 @@ import os
 import cv2
 import numpy as np
 
+from src.constants.image_processing import (
+    DEFAULT_BLACK_COLOR,
+    DEFAULT_BORDER_REMOVE,
+    DEFAULT_GAUSSIAN_BLUR_PARAMS_MARKER,
+    DEFAULT_LINE_WIDTH,
+    DEFAULT_NORMALIZE_PARAMS,
+    DEFAULT_WHITE_COLOR,
+    ERODE_RECT_COLOR,
+    EROSION_PARAMS,
+    MARKER_RECTANGLE_COLOR,
+    NORMAL_RECT_COLOR,
+    QUADRANT_DIVISION,
+)
 from src.logger import logger
 from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
-from src.constants.image_processing import (
-    QUADRANT_DIVISION,
-    MARKER_RECTANGLE_COLOR,
-    ERODE_RECT_COLOR,
-    NORMAL_RECT_COLOR,
-    EROSION_PARAMS,
-    DEFAULT_WHITE_COLOR,
-    DEFAULT_BLACK_COLOR,
-    DEFAULT_NORMALIZE_PARAMS,
-    DEFAULT_LINE_WIDTH,
-    DEFAULT_MARKER_LINE_WIDTH,
-    DEFAULT_BORDER_REMOVE,
-    DEFAULT_GAUSSIAN_BLUR_PARAMS_MARKER
-)
 
 
 class CropOnMarkers(ImagePreprocessor):
@@ -56,15 +55,22 @@ class CropOnMarkers(ImagePreprocessor):
         image_eroded_sub = ImageUtils.normalize_util(
             image
             if self.apply_erode_subtract
-            else (image - cv2.erode(
-                image,
-                kernel=np.ones((EROSION_PARAMS["kernel_size"], EROSION_PARAMS["kernel_size"])),
-                iterations=EROSION_PARAMS["iterations"]))
+            else (
+                image
+                - cv2.erode(
+                    image,
+                    kernel=np.ones(EROSION_PARAMS["kernel_size"]),
+                    iterations=EROSION_PARAMS["iterations"],
+                )
+            )
         )
         # Quads on warped image
         quads = {}
         h1, w1 = image_eroded_sub.shape[:2]
-        midh, midw = h1 // QUADRANT_DIVISION["height_factor"], w1 // QUADRANT_DIVISION["width_factor"]
+        midh, midw = (
+            h1 // QUADRANT_DIVISION["height_factor"],
+            w1 // QUADRANT_DIVISION["width_factor"],
+        )
         origins = [[0, 0], [midw, 0], [0, midh], [midw, midh]]
         quads[0] = image_eroded_sub[0:midh, 0:midw]
         quads[1] = image_eroded_sub[0:midh, midw:w1]
@@ -130,7 +136,11 @@ class CropOnMarkers(ImagePreprocessor):
             pt[1] += origins[k][1]
             # print(">>",pt)
             image = cv2.rectangle(
-                image, tuple(pt), (pt[0] + w, pt[1] + _h), MARKER_RECTANGLE_COLOR, DEFAULT_LINE_WIDTH
+                image,
+                tuple(pt),
+                (pt[0] + w, pt[1] + _h),
+                MARKER_RECTANGLE_COLOR,
+                DEFAULT_LINE_WIDTH,
             )
             # display:
             image_eroded_sub = cv2.rectangle(
@@ -194,16 +204,25 @@ class CropOnMarkers(ImagePreprocessor):
                 config.dimensions.processing_width
                 / int(marker_ops["sheetToMarkerWidthRatio"]),
             )
-        marker = cv2.GaussianBlur(marker, DEFAULT_GAUSSIAN_BLUR_PARAMS_MARKER["kernel_size"], 
-                              DEFAULT_GAUSSIAN_BLUR_PARAMS_MARKER["sigma_x"])
+        marker = cv2.GaussianBlur(
+            marker,
+            DEFAULT_GAUSSIAN_BLUR_PARAMS_MARKER["kernel_size"],
+            DEFAULT_GAUSSIAN_BLUR_PARAMS_MARKER["sigma_x"],
+        )
         marker = cv2.normalize(
-            marker, None, alpha=DEFAULT_NORMALIZE_PARAMS["alpha"], 
-            beta=DEFAULT_NORMALIZE_PARAMS["beta"], norm_type=cv2.NORM_MINMAX
+            marker,
+            None,
+            alpha=DEFAULT_NORMALIZE_PARAMS["alpha"],
+            beta=DEFAULT_NORMALIZE_PARAMS["beta"],
+            norm_type=cv2.NORM_MINMAX,
         )
 
         if self.apply_erode_subtract:
-            marker -= cv2.erode(marker, kernel=np.ones((EROSION_PARAMS["kernel_size"], EROSION_PARAMS["kernel_size"])), 
-                               iterations=EROSION_PARAMS["iterations"])
+            marker -= cv2.erode(
+                marker,
+                kernel=np.ones(EROSION_PARAMS["kernel_size"]),
+                iterations=EROSION_PARAMS["iterations"],
+            )
 
         return marker
 

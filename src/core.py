@@ -6,7 +6,14 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-import src.constants as constants
+from src.constants.common import (
+    CLR_BLACK,
+    CLR_DARK_GRAY,
+    CLR_GRAY,
+    GLOBAL_PAGE_THRESHOLD_BLACK,
+    GLOBAL_PAGE_THRESHOLD_WHITE,
+    TEXT_SIZE,
+)
 from src.logger import logger
 from src.utils.image import CLAHE_HELPER, ImageUtils
 from src.utils.interaction import InteractionUtils
@@ -166,7 +173,7 @@ class ImageInstanceOps:
                         #     cv2.rectangle(ret,
                         #                   (s[0]+shift-thk,s[1]),
                         #                   (s[0]+shift+thk+d[0],s[1]+d[1]),
-                        #                   constants.CLR_WHITE,
+                        #                   CLR_WHITE,
                         #                   3)
                         #     appendSaveImg(6,ret)
                         # print(shift, left_mean, right_mean)
@@ -312,7 +319,7 @@ class ImageInstanceOps:
                                     int(x + box_w - box_w / 12),
                                     int(y + box_h - box_h / 12),
                                 ),
-                                constants.CLR_DARK_GRAY,
+                                CLR_DARK_GRAY,
                                 3,
                             )
 
@@ -321,9 +328,9 @@ class ImageInstanceOps:
                                 str(field_value),
                                 (x, y),
                                 cv2.FONT_HERSHEY_SIMPLEX,
-                                constants.TEXT_SIZE,
+                                TEXT_SIZE,
                                 (20, 20, 10),
-                                int(1 + 3.5 * constants.TEXT_SIZE),
+                                int(1 + 3.5 * TEXT_SIZE),
                             )
                         else:
                             cv2.rectangle(
@@ -333,7 +340,7 @@ class ImageInstanceOps:
                                     int(x + box_w - box_w / 10),
                                     int(y + box_h - box_h / 10),
                                 ),
-                                constants.CLR_GRAY,
+                                CLR_GRAY,
                                 -1,
                             )
 
@@ -440,7 +447,7 @@ class ImageInstanceOps:
                     final_align,
                     (s[0] + shift, s[1]),
                     (s[0] + shift + d[0], s[1] + d[1]),
-                    constants.CLR_BLACK,
+                    CLR_BLACK,
                     3,
                 )
             else:
@@ -448,7 +455,7 @@ class ImageInstanceOps:
                     final_align,
                     (s[0], s[1]),
                     (s[0] + d[0], s[1] + d[1]),
-                    constants.CLR_BLACK,
+                    CLR_BLACK,
                     3,
                 )
             for field_block_bubbles in field_block.traverse_bubbles:
@@ -458,7 +465,7 @@ class ImageInstanceOps:
                         final_align,
                         (int(x + box_w / 10), int(y + box_h / 10)),
                         (int(x + box_w - box_w / 10), int(y + box_h - box_h / 10)),
-                        constants.CLR_GRAY,
+                        CLR_GRAY,
                         border,
                     )
                     if draw_qvals:
@@ -469,20 +476,20 @@ class ImageInstanceOps:
                             (rect[2] + 2, rect[0] + (box_h * 2) // 3),
                             cv2.FONT_HERSHEY_SIMPLEX,
                             0.6,
-                            constants.CLR_BLACK,
+                            CLR_BLACK,
                             2,
                         )
             if shifted:
                 text_in_px = cv2.getTextSize(
-                    field_block.name, cv2.FONT_HERSHEY_SIMPLEX, constants.TEXT_SIZE, 4
+                    field_block.name, cv2.FONT_HERSHEY_SIMPLEX, TEXT_SIZE, 4
                 )
                 cv2.putText(
                     final_align,
                     field_block.name,
                     (int(s[0] + d[0] - text_in_px[0][0]), int(s[1] - text_in_px[0][1])),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    constants.TEXT_SIZE,
-                    constants.CLR_BLACK,
+                    TEXT_SIZE,
+                    CLR_BLACK,
                     4,
                 )
         return final_align
@@ -531,9 +538,9 @@ class ImageInstanceOps:
         )
 
         global_default_threshold = (
-            constants.GLOBAL_PAGE_THRESHOLD_WHITE
+            GLOBAL_PAGE_THRESHOLD_WHITE
             if PAGE_TYPE_FOR_THRESHOLD == "white"
-            else constants.GLOBAL_PAGE_THRESHOLD_BLACK
+            else GLOBAL_PAGE_THRESHOLD_BLACK
         )
 
         # Sort the Q bubbleValues

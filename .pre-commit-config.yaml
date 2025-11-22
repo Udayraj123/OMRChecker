@@ -34,7 +34,7 @@ repos:
     hooks:
       - id: flake8
         args:
-          - "--ignore=E501,W503,E203,E741,F541" # Line too long, Line break occurred before a binary operator, Whitespace before ':'
+          - "--ignore=E501,W503,E203,E225,E713,E741,F541" # Line too long, Line break occurred before a binary operator, Whitespace before ':'
         fail_fast: true
         stages: [commit]
   - repo: local

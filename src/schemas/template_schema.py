@@ -1,4 +1,4 @@
-from src.constants import FIELD_TYPES
+from src.constants.common import FIELD_TYPES
 from src.schemas.constants import ARRAY_OF_STRINGS, FIELD_STRING_TYPE
 
 positive_number = {"type": "number", "minimum": 0}

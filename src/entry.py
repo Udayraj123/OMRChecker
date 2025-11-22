@@ -15,7 +15,12 @@ import cv2
 import pandas as pd
 from rich.table import Table
 
-from src import constants
+from src.constants.common import (
+    CONFIG_FILENAME,
+    ERROR_CODES,
+    EVALUATION_FILENAME,
+    TEMPLATE_FILENAME,
+)
 from src.defaults import CONFIG_DEFAULTS
 from src.evaluation import EvaluationConfig, evaluate_concatenated_response
 from src.logger import console, logger
@@ -80,12 +85,12 @@ def process_dir(
     evaluation_config=None,
 ):
     # Update local tuning_config (in current recursion stack)
-    local_config_path = curr_dir.joinpath(constants.CONFIG_FILENAME)
+    local_config_path = curr_dir.joinpath(CONFIG_FILENAME)
     if os.path.exists(local_config_path):
         tuning_config = open_config_with_defaults(local_config_path)
 
     # Update local template (in current recursion stack)
-    local_template_path = curr_dir.joinpath(constants.TEMPLATE_FILENAME)
+    local_template_path = curr_dir.joinpath(TEMPLATE_FILENAME)
     local_template_exists = os.path.exists(local_template_path)
     if local_template_exists:
         template = Template(
@@ -108,7 +113,7 @@ def process_dir(
         for pp in template.pre_processors:
             excluded_files.extend(Path(p) for p in pp.exclude_files())
 
-    local_evaluation_path = curr_dir.joinpath(constants.EVALUATION_FILENAME)
+    local_evaluation_path = curr_dir.joinpath(EVALUATION_FILENAME)
     if not args["setLayout"] and os.path.exists(local_evaluation_path):
         if not local_template_exists:
             logger.warning(
@@ -131,7 +136,7 @@ def process_dir(
         if not template:
             logger.error(
                 f"Found images, but no template in the directory tree \
-                of '{curr_dir}'. \nPlace {constants.TEMPLATE_FILENAME} in the \
+                of '{curr_dir}'. \nPlace {TEMPLATE_FILENAME} in the \
                 appropriate directory."
             )
             raise Exception(
@@ -232,9 +237,7 @@ def process_files(
             outputs_namespace.OUTPUT_SET.append(
                 [file_name] + outputs_namespace.empty_resp
             )
-            if check_and_move(
-                constants.ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path
-            ):
+            if check_and_move(ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path):
                 err_line = [
                     file_name,
                     file_path,
@@ -275,7 +278,10 @@ def process_files(
         score = 0
         if evaluation_config is not None:
             score = evaluate_concatenated_response(
-                omr_response, evaluation_config, file_path, outputs_namespace.paths.evaluation_dir
+                omr_response,
+                evaluation_config,
+                file_path,
+                outputs_namespace.paths.evaluation_dir,
             )
             logger.info(
                 f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: '{file_id}'"
@@ -317,9 +323,7 @@ def process_files(
             # multi_marked file
             logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
             new_file_path = outputs_namespace.paths.multi_marked_dir.joinpath(file_name)
-            if check_and_move(
-                constants.ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path
-            ):
+            if check_and_move(ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path):
                 mm_line = [file_name, file_path, new_file_path, "NA"] + resp_array
                 pd.DataFrame(mm_line, dtype=str).T.to_csv(
                     outputs_namespace.files_obj["MultiMarked"],

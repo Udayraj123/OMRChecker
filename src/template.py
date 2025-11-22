@@ -6,7 +6,7 @@
  Github: https://github.com/Udayraj123
 
 """
-from src.constants import FIELD_TYPES
+from src.constants.common import FIELD_TYPES
 from src.core import ImageInstanceOps
 from src.logger import logger
 from src.processors.manager import PROCESSOR_MANAGER

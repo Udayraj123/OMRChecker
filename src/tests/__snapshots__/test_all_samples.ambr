@@ -221,6 +221,51 @@
 # ---
 # name: test_run_sample4
   dict({
+    'Evaluation/IMG_20201116_143512_evaluation.csv': '''
+      "Question","Marked","Answer(s)","Verdict","Delta","Score"
+      "q1","B","B","Correct","3.0","3.0"
+      "q2","D","D","Correct","3.0","6.0"
+      "q3","C","C","Correct","3.0","9.0"
+      "q4","B","B","Correct","3.0","12.0"
+      "q5","D","D","Correct","3.0","15.0"
+      "q6","C","C","Correct","3.0","18.0"
+      "q7","BC","['B', 'C', 'BC']","Correct-Bc","3.0","21.0"
+      "q8","A","A","Correct","3.0","24.0"
+      "q9","C","C","Correct","3.0","27.0"
+      "q10","D","D","Correct","3.0","30.0"
+      "q11","C","C","Correct","3.0","33.0"
+  
+    ''',
+    'Evaluation/IMG_20201116_150717658_evaluation.csv': '''
+      "Question","Marked","Answer(s)","Verdict","Delta","Score"
+      "q1","B","B","Correct","3.0","3.0"
+      "q2","D","D","Correct","3.0","6.0"
+      "q3","C","C","Correct","3.0","9.0"
+      "q4","B","B","Correct","3.0","12.0"
+      "q5","D","D","Correct","3.0","15.0"
+      "q6","C","C","Correct","3.0","18.0"
+      "q7","BC","['B', 'C', 'BC']","Correct-Bc","3.0","21.0"
+      "q8","A","A","Correct","3.0","24.0"
+      "q9","C","C","Correct","3.0","27.0"
+      "q10","D","D","Correct","3.0","30.0"
+      "q11","C","C","Correct","3.0","33.0"
+  
+    ''',
+    'Evaluation/IMG_20201116_150750830_evaluation.csv': '''
+      "Question","Marked","Answer(s)","Verdict","Delta","Score"
+      "q1","A","B","Incorrect","-1.0","-1.0"
+      "q2","","D","Unmarked","0.0","-1.0"
+      "q3","D","C","Incorrect","-1.0","-2.0"
+      "q4","C","B","Incorrect","-1.0","-3.0"
+      "q5","AC","D","Incorrect","-1.0","-4.0"
+      "q6","A","C","Incorrect","-1.0","-5.0"
+      "q7","D","['B', 'C', 'BC']","Incorrect","-1.0","-6.0"
+      "q8","B","A","Incorrect","-1.0","-7.0"
+      "q9","C","C","Correct","3.0","-4.0"
+      "q10","D","D","Correct","3.0","-1.0"
+      "q11","D","C","Incorrect","-1.0","-2.0"
+  
+    ''',
     'Manual/ErrorFiles.csv': '''
       "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11"
   

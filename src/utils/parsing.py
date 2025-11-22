@@ -5,7 +5,7 @@ from fractions import Fraction
 from deepmerge import Merger
 from dotmap import DotMap
 
-from src.constants import FIELD_LABEL_NUMBER_REGEX
+from src.constants.common import FIELD_LABEL_NUMBER_REGEX
 from src.defaults import CONFIG_DEFAULTS, TEMPLATE_DEFAULTS
 from src.schemas.constants import FIELD_STRING_REGEX_GROUPS
 from src.utils.file import load_json
