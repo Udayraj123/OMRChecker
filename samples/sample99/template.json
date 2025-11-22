@@ -1,0 +1,17 @@
+{
+  "bubbleDimensions": [30, 30],
+  "preProcessors": [
+    {
+      "name": "CropPage",
+      "options": {"morphKernel": [10, 10]}
+    }
+  ],
+  "fieldBlocks": {
+    "Roll_Number": {
+      "origin": [100, 100],
+      "bubblesGap": 40,
+      "labelsGap": 50,
+      "fieldLabels": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    }
+  }
+}
