@@ -35,7 +35,6 @@ def run_entry_point(input_path, output_dir) -> None:
     }
 
     with freeze_time(FROZEN_TIMESTAMP, tz_offset=timedelta(hours=0, minutes=0)):
-        # ruff: noqa: PLC0415
         os.environ["TZ"] = "UTC"
         import time
 
