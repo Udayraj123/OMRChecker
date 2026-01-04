@@ -2,10 +2,15 @@
 
 Detects field blocks and their approximate positions using YOLO,
 providing spatial context for bubble detection and alignment refinement.
+
+Optionally uses Spatial Transformer Network (STN) for alignment refinement
+before YOLO detection to improve accuracy on misaligned or distorted images.
 """
 
 from pathlib import Path
 from typing import ClassVar
+
+import numpy as np
 
 from src.processors.base import ProcessingContext, Processor
 from src.utils.geometry import bbox_center, euclidean_distance
@@ -17,6 +22,9 @@ class MLFieldBlockDetector(Processor):
 
     Detects field blocks and their approximate positions,
     providing spatial context for Stage 2 bubble detection.
+
+    Supports optional STN preprocessing for improved robustness to
+    geometric distortions (rotation, translation, scale).
     """
 
     # Class names matching training data
@@ -26,28 +34,69 @@ class MLFieldBlockDetector(Processor):
         2: "field_block_barcode",
     }
 
-    def __init__(self, model_path: str, confidence_threshold: float = 0.7) -> None:
+    def __init__(
+        self,
+        model_path: str,
+        confidence_threshold: float = 0.7,
+        use_stn: bool = False,
+        stn_model_path: str | None = None,
+    ) -> None:
         """Initialize the field block detector.
 
         Args:
             model_path: Path to the trained YOLO model (.pt file).
             confidence_threshold: Minimum confidence for field block detection.
+            use_stn: Whether to use STN for alignment refinement before detection.
+            stn_model_path: Path to trained STN model (.pt file). Required if use_stn=True.
         """
         try:
-            from ultralytics import YOLO  # noqa: PLC0415
+            from ultralytics import YOLO
         except ImportError:
             logger.error(
                 "ultralytics package not found. Install ML dependencies with: uv sync --extra ml"
             )
             self.model = None
+            self.stn = None
             return
 
         self.model = YOLO(model_path) if Path(model_path).exists() else None
         self.confidence_threshold = confidence_threshold
         self.detected_blocks = []  # Stores detections per image
 
+        # Initialize STN if requested
+        self.use_stn = use_stn
+        self.stn = None
+
+        if use_stn:
+            if not stn_model_path:
+                logger.warning(
+                    "use_stn=True but no stn_model_path provided. STN disabled."
+                )
+                self.use_stn = False
+            else:
+                try:
+                    from src.processors.detection.models.stn_utils import (
+                        load_stn_model,
+                    )
+
+                    self.stn = load_stn_model(
+                        stn_model_path,
+                        input_channels=1,
+                        input_size=(1024, 1024),  # Match YOLO input size
+                        device="cpu",
+                    )
+                    logger.info(f"STN module loaded from {stn_model_path}")
+                except Exception as e:
+                    logger.error(f"Failed to load STN model: {e}")
+                    logger.warning("Continuing without STN preprocessing.")
+                    self.use_stn = False
+                    self.stn = None
+
         if self.model:
-            logger.info(f"MLFieldBlockDetector initialized with model: {model_path}")
+            stn_status = "with STN" if self.use_stn and self.stn else "without STN"
+            logger.info(
+                f"MLFieldBlockDetector initialized {stn_status}, model: {model_path}"
+            )
         else:
             logger.warning(
                 f"Field block model not found at {model_path}, detector disabled"
@@ -71,18 +120,22 @@ class MLFieldBlockDetector(Processor):
 
         logger.debug(f"Starting {self.get_name()} processor")
 
-        # Run YOLO inference on aligned image
+        # Apply STN preprocessing if enabled
+        image = context.gray_image
+        if self.use_stn and self.stn:
+            image = self._apply_stn(image)
+            logger.debug("Applied STN transformation for alignment refinement")
+
+        # Run YOLO inference on (possibly STN-transformed) image
         results = self.model.predict(
-            context.gray_image,
+            image,
             conf=self.confidence_threshold,
             verbose=False,
             imgsz=1024,  # Larger for full OMR sheet
         )
 
         # Parse detections
-        detected_blocks = self._parse_block_detections(
-            results, context.gray_image.shape
-        )
+        detected_blocks = self._parse_block_detections(results, image.shape)
 
         logger.info(f"ML detected {len(detected_blocks)} field blocks")
 
@@ -97,6 +150,28 @@ class MLFieldBlockDetector(Processor):
 
         logger.debug(f"Completed {self.get_name()} processor")
         return context
+
+    def _apply_stn(self, image: np.ndarray) -> np.ndarray:
+        """Apply STN transformation to refine image alignment.
+
+        Args:
+            image: Input grayscale image (H, W)
+
+        Returns:
+            STN-transformed image (same shape as input)
+        """
+        if not self.stn:
+            return image
+
+        try:
+            from src.processors.detection.models.stn_utils import (
+                apply_stn_to_image,
+            )
+
+            return apply_stn_to_image(self.stn, image, device="cpu")
+        except Exception as e:
+            logger.warning(f"STN transformation failed: {e}. Using original image.")
+            return image
 
     def _parse_block_detections(self, results, image_shape: tuple) -> list[dict]:
         """Parse YOLO detection results into structured format.

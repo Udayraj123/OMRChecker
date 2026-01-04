@@ -129,9 +129,11 @@ ignore = [
     "D105",    # Missing docstring in magic method
     "D107",    # Missing docstring in `__init__`
     "ERA001",  # Found commented-out code
+    "FBT001",  # Boolean-typed positional argument in function definition
     "FBT002",  # Boolean default positional argument in function definition
     "FIX002",  # Line contains TODO, consider resolving the issue
     "N999",    # Invalid module name
+    "PLC0415", # Lazy imports
     "PLR2004", # Magic value used in comparison, consider replacing with a constant variable
     "PLW1641", # Object does not implement `__hash__` method
     "PTH107",  # `os.remove()` should be replaced by `Path.unlink()`
@@ -160,7 +162,6 @@ ignore = [
     # "E722",    # Do not use bare `except`
     # "EM101",   # Exception must not use a string literal, assign to variable first
     # "EM102",   # Exception must not use an f-string literal, assign to variable first
-    # "FBT001",  # Boolean-typed positional argument in function definition
     # "FBT003",  # Boolean positional value in function call
     # "ICN001",  # `matplotlib.pyplot` should be imported as `plt`
     # "INP001",  # File is part of an implicit namespace package. Add an `__init__.py`.
@@ -206,13 +207,13 @@ unfixable = [
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [lint.per-file-ignores]
-# Ignore all directories named `tests`.
 "src/tests/**/*.py" = [
     "ARG002",
     "F841",
     "FBT003",
     "INP001",
     "N802",
+    "NPY002",  # Legacy numpy random in tests is acceptable
     "PLC0415",
     "PT017",
     "RUF005",
@@ -225,6 +226,21 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 "src/schemas/models/template.py" = ["N815"]
 # Serialization utility needs Any for generic handling
 "src/utils/serialization.py" = ["ANN401", "PLR0911"]
+# STN module uses PyTorch conventions
+"src/processors/detection/models/stn_module.py" = [
+    "N812",
+] # F for functional is standard
+"src/processors/detection/models/stn_utils.py" = [
+    "PLC0415",
+    "TRY300",
+] # Lazy imports, acceptable return in try
+# Training and benchmark scripts have orchestration functions with lazy imports
+"train_stn_yolo.py" = [
+    "PLC0415",
+    "PLW2901",
+    "TRY300",
+] # Lazy imports, loop vars to device, return in try
+"benchmark_stn_yolo.py" = ["PLC0415"] # Lazy imports for optional ML deps
 
 # Import sorting configuration (replaces isort)
 # [lint.isort]
