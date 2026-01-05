@@ -8,6 +8,39 @@ from src.schemas import SCHEMA_JSONS, SCHEMA_VALIDATORS
 from src.utils.logger import console, logger
 
 
+def to_camel_case(text: str) -> str:
+    """Convert a string to camelCase format."""
+    # Handle snake_case
+    if "_" in text:
+        components = text.split("_")
+        return components[0].lower() + "".join(x.title() for x in components[1:])
+    # Handle space-separated or kebab-case
+    if " " in text or "-" in text:
+        components = re.split(r"[\s\-]+", text)
+        return components[0].lower() + "".join(x.title() for x in components[1:])
+    # Already might be camelCase or single word
+    if text and text[0].isupper():
+        return text[0].lower() + text[1:]
+    return text
+
+
+def suggest_camel_case(key: str) -> str | None:
+    """Suggest camelCase version if the key is not in camelCase format."""
+    camel_version = to_camel_case(key)
+    # Check if conversion changed the key (meaning it wasn't in camelCase)
+    if camel_version != key:
+        return camel_version
+    return None
+
+
+def get_camel_case_hint(key: str) -> str:
+    """Get a hint about camelCase if the key appears to be incorrectly formatted."""
+    suggestion = suggest_camel_case(key)
+    if suggestion:
+        return f" Did you mean '{suggestion}'?"
+    return ""
+
+
 def validate_evaluation_json(json_data, evaluation_path) -> None:
     logger.info(f"Loading evaluation.json: {evaluation_path}")
     try:
@@ -25,10 +58,23 @@ def validate_evaluation_json(json_data, evaluation_path) -> None:
             key, validator, msg = parse_validation_error(error)
             if validator == "required":
                 required_property = re.findall(r"'(.*?)'", msg)[0]
+                hint = get_camel_case_hint(required_property)
                 table.add_row(
                     f"{key}.{required_property}",
-                    msg + ". Make sure the spelling of the key is correct",
+                    f"{msg}. Check spelling and use camelCase.{hint}",
                 )
+            elif validator == "additionalProperties":
+                # Extract the invalid property name from the error message
+                invalid_props = re.findall(r"'([^']+)'", msg)
+                if invalid_props:
+                    hints = [
+                        f"'{p}' -> '{suggest_camel_case(p)}'"
+                        for p in invalid_props
+                        if suggest_camel_case(p)
+                    ]
+                    if hints:
+                        msg = f"{msg}. Suggestions: {', '.join(hints)}"
+                table.add_row(key, msg)
             else:
                 if (
                     key in {"outputs_configuration", "marking_schemes"}
@@ -72,9 +118,19 @@ def validate_template_json(json_data, template_path) -> None:
             elif validator == "required":
                 required_property = re.findall(r"'(.*?)'", msg)[0]
                 key = f"{key}.{required_property}"
-                msg = (
-                    f"{msg}. Check for spelling errors and make sure it is in camelCase"
-                )
+                hint = get_camel_case_hint(required_property)
+                msg = f"{msg}. Check spelling and use camelCase.{hint}"
+            elif validator == "additionalProperties":
+                # Extract the invalid property name from the error message
+                invalid_props = re.findall(r"'([^']+)'", msg)
+                if invalid_props:
+                    hints = [
+                        f"'{p}' -> '{suggest_camel_case(p)}'"
+                        for p in invalid_props
+                        if suggest_camel_case(p)
+                    ]
+                    if hints:
+                        msg = f"{msg}. Suggestions: {', '.join(hints)}"
             table.add_row(key, msg)
         console.print(table, justify="center")
         msg = f"Provided Template JSON is Invalid: '{template_path}'"
@@ -98,10 +154,23 @@ def validate_config_json(json_data, config_path) -> None:
 
             if validator == "required":
                 required_property = re.findall(r"'(.*?)'", msg)[0]
+                hint = get_camel_case_hint(required_property)
                 table.add_row(
                     f"{key}.{required_property}",
-                    f"{msg}. Check for spelling errors and make sure it is in camelCase",
+                    f"{msg}. Check spelling and use camelCase.{hint}",
                 )
+            elif validator == "additionalProperties":
+                # Extract the invalid property name from the error message
+                invalid_props = re.findall(r"'([^']+)'", msg)
+                if invalid_props:
+                    hints = [
+                        f"'{p}' -> '{suggest_camel_case(p)}'"
+                        for p in invalid_props
+                        if suggest_camel_case(p)
+                    ]
+                    if hints:
+                        msg = f"{msg}. Suggestions: {', '.join(hints)}"
+                table.add_row(key, msg)
             else:
                 table.add_row(key, msg)
         console.print(table, justify="center")
