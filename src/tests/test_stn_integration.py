@@ -7,12 +7,16 @@ import torch
 from src.processors.detection.models.stn_module import (
     SpatialTransformerNetwork,
     STNWithRegularization,
+    TranslationOnlySTN,
+    TranslationOnlySTNWithRegularization,
     count_parameters,
 )
 from src.processors.detection.models.stn_utils import (
     apply_stn_to_image,
     decompose_affine_matrix,
     is_identity_transform,
+    load_stn_model,
+    save_stn_model,
 )
 
 
@@ -293,6 +297,168 @@ class TestSTNRobustness:
 
             assert not torch.isnan(output).any()
             assert not torch.isinf(output).any()
+
+
+class TestTranslationOnlySTN:
+    """Test translation-only STN functionality."""
+
+    def test_translation_only_stn_initialization(self):
+        """Test translation-only STN initializes correctly."""
+        stn = TranslationOnlySTN(input_channels=1, input_size=(640, 640))
+
+        assert stn.input_channels == 1
+        assert stn.input_size == (640, 640)
+
+        # Check parameter count (should be slightly less than affine)
+        params = count_parameters(stn)
+        assert 30000 < params < 50000, f"Expected ~40K params, got {params}"
+
+        # Should have fewer parameters in final layer (2 vs 6)
+        affine_stn = SpatialTransformerNetwork(input_channels=1, input_size=(640, 640))
+        affine_params = count_parameters(affine_stn)
+        assert params <= affine_params, (
+            "Translation-only should have <= parameters than affine"
+        )
+
+    def test_translation_only_forward_pass(self):
+        """Test translation-only STN forward pass produces correct output."""
+        stn = TranslationOnlySTN(input_channels=1, input_size=(640, 640))
+
+        batch_size = 2
+        test_input = torch.randn(batch_size, 1, 640, 640)
+
+        # Forward pass
+        output = stn(test_input)
+
+        assert output.shape == test_input.shape
+        assert output.dtype == test_input.dtype
+
+    def test_translation_only_preserves_rotation(self):
+        """Test translation-only STN doesn't introduce rotation/scaling."""
+        stn = TranslationOnlySTN(input_channels=1, input_size=(640, 640))
+        stn.eval()
+
+        test_input = torch.randn(1, 1, 640, 640)
+        theta = stn.get_transformation_params(test_input)
+
+        # Check transformation matrix structure
+        # Should be [[1, 0, tx], [0, 1, ty]]
+        assert theta.shape == (1, 2, 3)
+        assert abs(theta[0, 0, 0].item() - 1.0) < 0.01, (
+            "Should preserve horizontal scale"
+        )
+        assert abs(theta[0, 1, 1].item() - 1.0) < 0.01, "Should preserve vertical scale"
+        assert abs(theta[0, 0, 1].item()) < 0.01, "Should have no shear/rotation"
+        assert abs(theta[0, 1, 0].item()) < 0.01, "Should have no shear/rotation"
+
+    def test_translation_only_parameter_count(self):
+        """Test translation-only STN has correct parameter counts."""
+        translation_stn = TranslationOnlySTN(input_channels=1, input_size=(640, 640))
+        affine_stn = SpatialTransformerNetwork(input_channels=1, input_size=(640, 640))
+
+        trans_params = count_parameters(translation_stn)
+        affine_params = count_parameters(affine_stn)
+
+        # Translation-only should have 4 fewer parameters in output layer (2 vs 6)
+        # Plus bias: 2 vs 6, so total difference is (6-2) + (6-2) = 8 parameters
+        # (weight matrix 64x2 vs 64x6 = 256 params difference, plus bias 2 vs 6 = 4 params)
+        expected_diff = (64 * 6 + 6) - (64 * 2 + 2)  # 388 - 130 = 258 parameters
+        actual_diff = affine_params - trans_params
+
+        assert actual_diff == expected_diff, (
+            f"Expected {expected_diff} param difference, got {actual_diff}"
+        )
+
+    def test_translation_only_regularization(self):
+        """Test translation-only STN with regularization."""
+        stn = TranslationOnlySTNWithRegularization(
+            input_channels=1,
+            input_size=(640, 640),
+            regularization_weight=0.1,
+            max_translation=0.2,
+        )
+
+        test_input = torch.randn(2, 1, 640, 640)
+        transformed, reg_loss = stn.forward_with_regularization(test_input)
+
+        assert transformed.shape == test_input.shape
+        assert isinstance(reg_loss, torch.Tensor)
+        assert reg_loss.numel() == 1  # Scalar
+        assert reg_loss.item() >= 0  # Non-negative
+
+        # Get raw translation values
+        translation_vals = stn.get_translation_values(test_input)
+        assert translation_vals.shape == (2, 2)  # (batch, 2) for (tx, ty)
+
+    def test_mixed_stn_loading(self, tmp_path):
+        """Test loading both affine and translation-only STN models."""
+        # Create and save affine STN
+        affine_stn = SpatialTransformerNetwork(input_channels=1, input_size=(640, 640))
+        affine_path = tmp_path / "affine_stn.pt"
+        save_stn_model(affine_stn, affine_path, metadata={"test": "affine"})
+
+        # Create and save translation-only STN
+        trans_stn = TranslationOnlySTN(input_channels=1, input_size=(640, 640))
+        trans_path = tmp_path / "translation_stn.pt"
+        save_stn_model(trans_stn, trans_path, metadata={"test": "translation"})
+
+        # Load both and verify correct types
+        loaded_affine = load_stn_model(
+            affine_path, input_channels=1, input_size=(640, 640)
+        )
+        loaded_trans = load_stn_model(
+            trans_path, input_channels=1, input_size=(640, 640)
+        )
+
+        assert isinstance(loaded_affine, SpatialTransformerNetwork)
+        assert not isinstance(loaded_affine, TranslationOnlySTN)
+
+        assert isinstance(loaded_trans, TranslationOnlySTN)
+
+        # Test both work correctly
+        test_input = torch.randn(1, 1, 640, 640)
+        output_affine = loaded_affine(test_input)
+        output_trans = loaded_trans(test_input)
+
+        assert output_affine.shape == test_input.shape
+        assert output_trans.shape == test_input.shape
+
+
+class TestTranslationOnlySTNUtils:
+    """Test translation-only STN utility functions."""
+
+    def test_decompose_translation_only_matrix(self):
+        """Test decomposing translation-only transformation matrix."""
+        # Create translation-only matrix
+        theta = np.array([[1, 0, 0.15], [0, 1, 0.25]], dtype=np.float32)
+
+        # Decompose as translation-only
+        params = decompose_affine_matrix(theta, transformation_type="translation_only")
+
+        assert "translation_x" in params
+        assert "translation_y" in params
+        assert "rotation" not in params  # Should not include these
+        assert "scale_x" not in params
+        assert "scale_y" not in params
+        assert "shear" not in params
+
+        assert abs(params["translation_x"] - 0.15) < 0.01
+        assert abs(params["translation_y"] - 0.25) < 0.01
+
+    def test_apply_translation_only_stn(self):
+        """Test applying translation-only STN to images."""
+        stn = TranslationOnlySTN(input_channels=1, input_size=(640, 640))
+        stn.eval()
+
+        # Create test image
+        image = np.random.randint(0, 255, (640, 640), dtype=np.uint8)
+
+        # Apply STN
+        transformed = apply_stn_to_image(stn, image, device="cpu")
+
+        assert transformed.shape == image.shape
+        assert transformed.dtype == np.uint8
+        assert 0 <= transformed.min() <= transformed.max() <= 255
 
 
 if __name__ == "__main__":

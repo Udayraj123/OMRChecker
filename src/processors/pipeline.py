@@ -38,11 +38,11 @@ class ProcessingPipeline:
 
         # Lazy import processors to avoid circular dependencies
         # These imports are intentionally not at top-level
-        from src.processors.alignment.processor import (  # noqa: PLC0415
+        from src.processors.alignment.processor import (
             AlignmentProcessor,
         )
-        from src.processors.detection.processor import ReadOMRProcessor  # noqa: PLC0415
-        from src.processors.image.coordinator import (  # noqa: PLC0415
+        from src.processors.detection.processor import ReadOMRProcessor
+        from src.processors.image.coordinator import (
             PreprocessingProcessor,
         )
 
@@ -59,7 +59,7 @@ class ProcessingPipeline:
 
         # Add ML field block detector if enabled (Stage 1)
         if use_field_block_detection and field_block_model_path:
-            from src.processors.detection.ml_field_block_detector import (  # noqa: PLC0415
+            from src.processors.detection.ml_field_block_detector import (
                 MLFieldBlockDetector,
             )
 
@@ -76,7 +76,7 @@ class ProcessingPipeline:
             enable_shift_detection = self.args.get("enable_shift_detection", False)
 
             if shift_config.enabled or enable_shift_detection:
-                from src.processors.detection.shift_detection_processor import (  # noqa: PLC0415
+                from src.processors.detection.shift_detection_processor import (
                     ShiftDetectionProcessor,
                 )
 
@@ -93,7 +93,7 @@ class ProcessingPipeline:
     def _add_training_data_collector(self) -> None:
         """Add training data collector processor."""
         try:
-            from src.processors.training import TrainingDataCollector  # noqa: PLC0415
+            from src.processors.training import TrainingDataCollector
 
             confidence_threshold = self.args.get("confidence_threshold", 0.85)
             training_data_dir = self.args.get(

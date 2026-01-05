@@ -48,7 +48,7 @@ class ReadOMRProcessor(Processor):
             ml_model_path: Path to trained ML model
         """
         try:
-            from src.processors.detection.ml_detector import (  # noqa: PLC0415
+            from src.processors.detection.ml_detector import (
                 HybridDetectionStrategy,
                 MLBubbleDetector,
             )

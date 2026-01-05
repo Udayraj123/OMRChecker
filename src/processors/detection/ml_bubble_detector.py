@@ -33,7 +33,7 @@ class MLBubbleDetector(Processor):
             confidence_threshold: Minimum confidence for bubble detection.
         """
         try:
-            from ultralytics import YOLO  # noqa: PLC0415
+            from ultralytics import YOLO
         except ImportError:
             logger.error(
                 "ultralytics package not found. Install ML dependencies with: uv sync --extra ml"

@@ -184,7 +184,7 @@ def entry_point_for_args(args) -> None:
 
     if mode == "auto-train":
         # Auto-training mode
-        from src.training.trainer import AutoTrainer  # noqa: PLC0415
+        from src.training.trainer import AutoTrainer
 
         trainer = AutoTrainer(
             training_data_dir=args["training_data_dir"], epochs=args["epochs"]
@@ -194,7 +194,7 @@ def entry_point_for_args(args) -> None:
 
     if mode == "auto-train-hierarchical":
         # Hierarchical auto-training mode (field blocks + bubbles)
-        from src.training.trainer import AutoTrainer  # noqa: PLC0415
+        from src.training.trainer import AutoTrainer
 
         trainer = AutoTrainer(epochs=args["epochs"])
 
@@ -219,7 +219,7 @@ def entry_point_for_args(args) -> None:
 
     if mode == "export-yolo":
         # Export to YOLO format mode
-        from src.processors.training.yolo_exporter import (  # noqa: PLC0415
+        from src.processors.training.yolo_exporter import (
             YOLOAnnotationExporter,
         )
 

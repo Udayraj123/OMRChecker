@@ -20,7 +20,6 @@ from src.exceptions import ImageProcessingError
 
 
 def create_identity_meshgrid(
-    # ruff: noqa: FBT001
     resolution: int | tuple,
     with_margin: bool = False,
 ):

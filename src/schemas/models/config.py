@@ -104,7 +104,7 @@ class FileGroupingConfig:
         rule: GroupingRule,
         rule_num: int,
         template,
-        has_evaluation: bool,  # noqa: FBT001
+        has_evaluation: bool,
     ) -> list[str]:
         """Validate a single grouping rule."""
         errors = []
@@ -157,8 +157,8 @@ class FileGroupingConfig:
         pattern: str,
         pattern_name: str,
         template,
-        has_evaluation: bool,  # noqa: FBT001
-        allow_empty: bool = True,  # noqa: FBT001
+        has_evaluation: bool,
+        allow_empty: bool = True,
     ) -> list[str]:
         """Validate a pattern string for field availability."""
         errors = []

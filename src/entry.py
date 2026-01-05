@@ -169,7 +169,7 @@ def process_directory_wise(
                     "Fix the errors in your config.json to enable it."
                 )
             else:
-                from src.processors.organization import (  # noqa: PLC0415
+                from src.processors.organization import (
                     FileOrganizerProcessor,
                 )
 

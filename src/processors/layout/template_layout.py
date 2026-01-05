@@ -103,7 +103,7 @@ class TemplateLayout:
         Note: This method is maintained for backward compatibility with
         TemplateLayout's internal processing, but uses the new unified interface.
         """
-        from src.processors.base import ProcessingContext  # noqa: PLC0415
+        from src.processors.base import ProcessingContext
 
         config = self.tuning_config
 

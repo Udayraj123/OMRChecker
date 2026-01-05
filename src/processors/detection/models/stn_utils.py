@@ -12,6 +12,7 @@ import torch
 
 from src.processors.detection.models.stn_module import (
     SpatialTransformerNetwork,
+    TranslationOnlySTN,
 )
 from src.utils.logger import logger
 
@@ -21,8 +22,11 @@ def load_stn_model(
     input_channels: int = 1,
     input_size: tuple[int, int] = (640, 640),
     device: str = "cpu",
-) -> SpatialTransformerNetwork:
+) -> SpatialTransformerNetwork | TranslationOnlySTN:
     """Load a trained STN model from disk.
+
+    Auto-detects the model type (affine or translation-only) from metadata
+    if available, otherwise falls back to affine STN.
 
     Args:
         model_path: Path to saved model weights (.pt file)
@@ -31,7 +35,7 @@ def load_stn_model(
         device: Device to load model on ('cpu' or 'cuda')
 
     Returns:
-        Loaded STN model in eval mode
+        Loaded STN model in eval mode (either affine or translation-only)
 
     Raises:
         FileNotFoundError: If model file doesn't exist
@@ -44,10 +48,29 @@ def load_stn_model(
         raise FileNotFoundError(msg)
 
     try:
-        # Initialize model architecture
-        model = SpatialTransformerNetwork(
-            input_channels=input_channels, input_size=input_size
-        )
+        # Check for metadata to determine model type
+        metadata_path = model_path.with_suffix(".json")
+        transformation_type = "affine"  # Default to affine
+
+        if metadata_path.exists():
+            import json
+
+            with metadata_path.open() as f:
+                metadata = json.load(f)
+                transformation_type = metadata.get("transformation_type", "affine")
+                logger.info(f"Detected STN type from metadata: {transformation_type}")
+
+        # Initialize model architecture based on type
+        if transformation_type == "translation_only":
+            model = TranslationOnlySTN(
+                input_channels=input_channels, input_size=input_size
+            )
+            logger.info("Loading translation-only STN model")
+        else:
+            model = SpatialTransformerNetwork(
+                input_channels=input_channels, input_size=input_size
+            )
+            logger.info("Loading affine STN model")
 
         # Load trained weights
         state_dict = torch.load(model_path, map_location=device, weights_only=True)
@@ -66,46 +89,58 @@ def load_stn_model(
 
 
 def save_stn_model(
-    model: SpatialTransformerNetwork,
+    model: SpatialTransformerNetwork | TranslationOnlySTN,
     save_path: str | Path,
     metadata: dict | None = None,
 ) -> None:
     """Save STN model weights and metadata to disk.
 
     Args:
-        model: STN model to save
+        model: STN model to save (affine or translation-only)
         save_path: Path to save model (.pt file)
         metadata: Optional metadata dictionary to save alongside model
     """
     save_path = Path(save_path)
     save_path.parent.mkdir(parents=True, exist_ok=True)
 
+    # Auto-detect transformation type if not provided in metadata
+    if metadata is None:
+        metadata = {}
+
+    if "transformation_type" not in metadata:
+        # Determine type from model class
+        if isinstance(model, TranslationOnlySTN):
+            metadata["transformation_type"] = "translation_only"
+        else:
+            metadata["transformation_type"] = "affine"
+
     # Save model weights
     torch.save(model.state_dict(), save_path)
     logger.info(f"Saved STN model to {save_path}")
 
-    # Save metadata if provided
-    if metadata:
-        import json
+    # Save metadata
+    import json
 
-        metadata_path = save_path.with_suffix(".json")
-        with metadata_path.open("w") as f:
-            json.dump(metadata, f, indent=2)
-        logger.info(f"Saved model metadata to {metadata_path}")
+    metadata_path = save_path.with_suffix(".json")
+    with metadata_path.open("w") as f:
+        json.dump(metadata, f, indent=2)
+    logger.info(
+        f"Saved model metadata to {metadata_path} (type: {metadata['transformation_type']})"
+    )
 
 
 def apply_stn_to_image(
-    model: SpatialTransformerNetwork,
+    model: SpatialTransformerNetwork | TranslationOnlySTN,
     image: np.ndarray,
     device: str = "cpu",
 ) -> np.ndarray:
     """Apply STN transformation to a single numpy image.
 
     Handles conversion between numpy/torch formats and applies the
-    learned spatial transformation.
+    learned spatial transformation. Works with both affine and translation-only STN.
 
     Args:
-        model: Trained STN model
+        model: Trained STN model (affine or translation-only)
         image: Input image as numpy array (H, W) or (H, W, C)
         device: Device to run inference on
 
@@ -154,16 +189,17 @@ def apply_stn_to_image(
 
 
 def get_transformation_matrix(
-    model: SpatialTransformerNetwork,
+    model: SpatialTransformerNetwork | TranslationOnlySTN,
     image: np.ndarray,
     device: str = "cpu",
 ) -> np.ndarray:
     """Get the predicted transformation matrix for an image.
 
-    Useful for debugging and visualization.
+    Useful for debugging and visualization. Works with both affine
+    and translation-only STN models.
 
     Args:
-        model: Trained STN model
+        model: Trained STN model (affine or translation-only)
         image: Input image as numpy array
         device: Device to run inference on
 
@@ -271,26 +307,45 @@ def visualize_transformation(
     return vis
 
 
-def decompose_affine_matrix(theta: np.ndarray) -> dict:
+def decompose_affine_matrix(
+    theta: np.ndarray, transformation_type: str = "affine"
+) -> dict:
     """Decompose affine transformation matrix into interpretable parameters.
 
     Extracts rotation, scale, shear, and translation from 2x3 affine matrix.
+    For translation-only matrices, only extracts translation parameters.
 
     Args:
         theta: Affine transformation matrix (2, 3)
+        transformation_type: Type of transformation ("affine" or "translation_only")
 
     Returns:
         Dictionary with decomposed parameters:
-            - rotation: Rotation angle in degrees
-            - scale_x: X-axis scaling factor
-            - scale_y: Y-axis scaling factor
-            - shear: Shear angle in degrees
-            - translation_x: X-axis translation
-            - translation_y: Y-axis translation
+            For affine:
+                - rotation: Rotation angle in degrees
+                - scale_x: X-axis scaling factor
+                - scale_y: Y-axis scaling factor
+                - shear: Shear angle in degrees
+                - translation_x: X-axis translation
+                - translation_y: Y-axis translation
+            For translation_only:
+                - translation_x: X-axis translation
+                - translation_y: Y-axis translation
     """
-    # Extract components
-    a, b, tx = theta[0]
-    c, d, ty = theta[1]
+    # Extract translation components (common to both types)
+    tx = theta[0, 2]
+    ty = theta[1, 2]
+
+    if transformation_type == "translation_only":
+        # For translation-only, just return the translation
+        return {
+            "translation_x": tx,
+            "translation_y": ty,
+        }
+
+    # For affine, perform full decomposition
+    a, b = theta[0, 0], theta[0, 1]
+    c, d = theta[1, 0], theta[1, 1]
 
     # Compute scale
     scale_x = np.sqrt(a**2 + c**2)

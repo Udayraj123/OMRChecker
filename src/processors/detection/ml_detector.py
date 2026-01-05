@@ -42,7 +42,7 @@ class MLBubbleDetector(Processor):
             return
 
         try:
-            from ultralytics import YOLO  # noqa: PLC0415
+            from ultralytics import YOLO
 
             self.model = YOLO(str(self.model_path))
             logger.info(f"Loaded ML bubble detector from: {self.model_path}")

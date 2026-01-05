@@ -66,7 +66,7 @@ class AutoTrainer:
 
         try:
             # Import YOLO (lazy import to avoid dependency if not using ML features)
-            from ultralytics import YOLO  # noqa: PLC0415
+            from ultralytics import YOLO
 
             # Initialize pretrained model (YOLOv8 nano for speed)
             logger.info("Loading pretrained YOLOv8n model...")
@@ -235,7 +235,7 @@ class AutoTrainer:
         logger.info(f"Resuming training from: {checkpoint_path}")
 
         try:
-            from ultralytics import YOLO  # noqa: PLC0415
+            from ultralytics import YOLO
 
             # Load checkpoint
             model = YOLO(str(checkpoint_path))
@@ -277,7 +277,7 @@ class AutoTrainer:
             Tuple of (model_path, metrics_dict)
         """
         try:
-            from ultralytics import YOLO  # noqa: PLC0415
+            from ultralytics import YOLO
         except ImportError as e:
             msg = "ML dependencies not installed. Run: uv sync --extra ml"
             logger.error(
@@ -352,7 +352,7 @@ class AutoTrainer:
             Tuple of (model_path, metrics_dict)
         """
         try:
-            from ultralytics import YOLO  # noqa: PLC0415
+            from ultralytics import YOLO
         except ImportError as e:
             msg = "ML dependencies not installed. Run: uv sync --extra ml"
             logger.error(

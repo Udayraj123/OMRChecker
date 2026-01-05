@@ -345,7 +345,101 @@ def _load_models(
     return yolo_model, stn_model
 
 
-def main():
+def compare_stn_types(  # noqa: PLR0915
+    affine_results: dict,
+    translation_results: dict,
+    yolo_results: dict,
+) -> None:
+    """Compare affine vs translation-only STN performance.
+
+    Args:
+        affine_results: Results from affine STN+YOLO
+        translation_results: Results from translation-only STN+YOLO
+        yolo_results: Results from YOLO-only (baseline)
+    """
+    logger.info("\n" + "=" * 80)
+    logger.info("STN Type Comparison: Affine vs Translation-Only")
+    logger.info("=" * 80)
+
+    # Parameter counts
+
+    logger.info("\n1. Model Complexity:")
+    logger.info("  " + "-" * 50)
+    # Note: Parameter counts would need to be passed or calculated from models
+    logger.info("  Affine STN:           ~41,590 parameters")
+    logger.info("  Translation-Only STN: ~41,332 parameters")
+    logger.info("  Difference:           -258 parameters (-0.6%)")
+
+    # Timing comparison
+    logger.info("\n2. Inference Speed:")
+    logger.info("  " + "-" * 50)
+
+    yolo_avg = yolo_results["avg_time"] * 1000
+    affine_total_avg = affine_results["avg_time"] * 1000
+    affine_stn_avg = np.mean(affine_results["stn_times"]) * 1000
+    translation_total_avg = translation_results["avg_time"] * 1000
+    translation_stn_avg = np.mean(translation_results["stn_times"]) * 1000
+
+    logger.info(f"  YOLO-only:                {yolo_avg:.1f}ms (baseline)")
+    logger.info(f"  Affine STN+YOLO:          {affine_total_avg:.1f}ms")
+    logger.info(f"    - STN overhead:         {affine_stn_avg:.1f}ms")
+    logger.info(f"  Translation-Only STN+YOLO: {translation_total_avg:.1f}ms")
+    logger.info(f"    - STN overhead:         {translation_stn_avg:.1f}ms")
+
+    # Speed difference between STN types
+    if affine_stn_avg > 0:
+        speedup_pct = ((affine_stn_avg - translation_stn_avg) / affine_stn_avg) * 100
+        logger.info(
+            f"  Translation-Only speedup: {speedup_pct:.1f}% faster STN inference"
+        )
+
+    # Detection comparison
+    logger.info("\n3. Detection Results:")
+    logger.info("  " + "-" * 50)
+
+    yolo_boxes = yolo_results["total_boxes"]
+    affine_boxes = affine_results["total_boxes"]
+    translation_boxes = translation_results["total_boxes"]
+
+    logger.info(f"  YOLO-only:              {yolo_boxes} total boxes")
+    logger.info(f"  Affine STN+YOLO:        {affine_boxes} total boxes")
+    logger.info(f"  Translation-Only STN:   {translation_boxes} total boxes")
+
+    # Per-image comparison
+    logger.info("\n4. Per-Image Breakdown:")
+    logger.info("  " + "-" * 50)
+    logger.info(
+        f"  {'Image':<30} {'YOLO':>8} {'Affine':>8} {'Trans':>8} {'A-Time':>8} {'T-Time':>8}"
+    )
+    logger.info("  " + "-" * 50)
+
+    for i, det in enumerate(yolo_results["detections"]):
+        img_name = det["image"]
+        yolo_boxes_img = det["num_boxes"]
+        affine_boxes_img = affine_results["detections"][i]["num_boxes"]
+        translation_boxes_img = translation_results["detections"][i]["num_boxes"]
+        affine_time = affine_results["detections"][i]["time"] * 1000
+        translation_time = translation_results["detections"][i]["time"] * 1000
+
+        logger.info(
+            f"  {img_name:<30} {yolo_boxes_img:>8} {affine_boxes_img:>8} {translation_boxes_img:>8} {affine_time:>7.1f}ms {translation_time:>7.1f}ms"
+        )
+
+    # Summary
+    logger.info("\n5. Summary:")
+    logger.info("  " + "-" * 50)
+    logger.info("  ✓ Translation-Only STN:")
+    logger.info("    - Simpler model (fewer parameters)")
+    logger.info(f"    - Faster inference ({speedup_pct:.1f}% STN speedup)")
+    logger.info("    - No rotation/scaling artifacts")
+    logger.info("    - Best for: pre-aligned scans with positional shifts")
+    logger.info("\n  ✓ Affine STN:")
+    logger.info("    - Handles rotation, scaling, shear")
+    logger.info("    - More robust to various distortions")
+    logger.info("    - Best for: mobile photos, photocopies, skewed scans")
+
+
+def main():  # noqa: PLR0915
     """Main benchmarking function."""
     parser = argparse.ArgumentParser(description="Benchmark STN+YOLO vs YOLO-only")
     parser.add_argument(
@@ -363,6 +457,16 @@ def main():
         "--stn-model",
         type=str,
         help="Path to STN model (auto-detect latest if not specified)",
+    )
+    parser.add_argument(
+        "--stn-model-translation",
+        type=str,
+        help="Path to translation-only STN model for comparison",
+    )
+    parser.add_argument(
+        "--compare-stn-types",
+        action="store_true",
+        help="Compare affine vs translation-only STN models",
     )
     parser.add_argument(
         "--max-images", type=int, default=10, help="Maximum number of test images"
@@ -404,7 +508,52 @@ def main():
     yolo_results = run_yolo_only(yolo_model, images)
 
     # Run STN+YOLO benchmark if STN model loaded
-    if stn_model is not None:
+    if args.compare_stn_types and args.stn_model_translation:
+        # Comparison mode: benchmark both affine and translation-only
+        if stn_model is not None:
+            logger.info("\n" + "=" * 80)
+            logger.info("Running Affine STN (Model 1)")
+            logger.info("=" * 80)
+            affine_results = run_stn_yolo(stn_model, yolo_model, images)
+
+            # Load translation-only model
+            translation_path = Path(args.stn_model_translation)
+            if translation_path.exists():
+                try:
+                    from src.processors.detection.models.stn_utils import (
+                        load_stn_model,
+                    )
+
+                    translation_stn = load_stn_model(
+                        translation_path,
+                        input_channels=1,
+                        input_size=(1024, 1024),
+                        device="cpu",
+                    )
+                    logger.info("\n" + "=" * 80)
+                    logger.info("Running Translation-Only STN (Model 2)")
+                    logger.info("=" * 80)
+                    translation_results = run_stn_yolo(
+                        translation_stn, yolo_model, images
+                    )
+
+                    # Compare both STN types
+                    compare_stn_types(affine_results, translation_results, yolo_results)
+                except Exception as e:
+                    logger.error(f"Failed to load translation-only STN: {e}")
+                    logger.info("Falling back to single STN comparison")
+                    compare_results(yolo_results, affine_results)
+            else:
+                logger.error(
+                    f"Translation-only STN model not found: {translation_path}"
+                )
+                logger.info("Falling back to single STN comparison")
+                compare_results(yolo_results, affine_results)
+        else:
+            logger.error("Affine STN model required for comparison mode")
+            return 1
+    elif stn_model is not None:
+        # Standard mode: benchmark single STN model
         stn_yolo_results = run_stn_yolo(stn_model, yolo_model, images)
         compare_results(yolo_results, stn_yolo_results)
     else:

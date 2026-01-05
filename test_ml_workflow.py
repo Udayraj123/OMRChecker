@@ -5,7 +5,7 @@ This script demonstrates the complete workflow:
 2. Train both Stage 1 and Stage 2 models
 3. Test performance and generate metrics
 """
-# ruff: noqa: S607, FBT001
+# ruff: noqa: S607
 
 import subprocess
 import sys

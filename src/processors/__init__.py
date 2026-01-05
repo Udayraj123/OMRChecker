@@ -18,27 +18,27 @@ def __getattr__(name: str) -> Any:  # noqa: ANN401
     """Lazy-load processors that have circular dependencies."""
     # Import statements are intentionally not at top-level to avoid circular imports
     if name == "ImageTemplatePreprocessor":
-        from src.processors.image import ImageTemplatePreprocessor  # noqa: PLC0415
+        from src.processors.image import ImageTemplatePreprocessor
 
         return ImageTemplatePreprocessor
     if name == "PreprocessingProcessor":
-        from src.processors.image import PreprocessingProcessor  # noqa: PLC0415
+        from src.processors.image import PreprocessingProcessor
 
         return PreprocessingProcessor
     if name == "AlignmentProcessor":
-        from src.processors.alignment import AlignmentProcessor  # noqa: PLC0415
+        from src.processors.alignment import AlignmentProcessor
 
         return AlignmentProcessor
     if name == "ReadOMRProcessor":
-        from src.processors.detection import ReadOMRProcessor  # noqa: PLC0415
+        from src.processors.detection import ReadOMRProcessor
 
         return ReadOMRProcessor
     if name == "EvaluationProcessor":
-        from src.processors.evaluation import EvaluationProcessor  # noqa: PLC0415
+        from src.processors.evaluation import EvaluationProcessor
 
         return EvaluationProcessor
     if name == "FileOrganizerProcessor":
-        from src.processors.organization import FileOrganizerProcessor  # noqa: PLC0415
+        from src.processors.organization import FileOrganizerProcessor
 
         return FileOrganizerProcessor
     msg = f"module {__name__!r} has no attribute {name!r}"
