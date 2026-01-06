@@ -9,7 +9,7 @@ from typing import Literal
 import pandas as pd
 from freezegun import freeze_time
 
-from main import entry_point_for_args
+from src.cli import run_cli
 from src.tests.constants import FROZEN_TIMESTAMP, IMAGE_SNAPSHOTS_PATH
 from src.utils.file import PathUtils
 
@@ -32,6 +32,7 @@ def run_entry_point(input_path, output_dir) -> None:
         "output_dir": output_dir,
         "setLayout": False,
         "outputMode": "default",
+        "mode": "process",
     }
 
     with freeze_time(FROZEN_TIMESTAMP, tz_offset=timedelta(hours=0, minutes=0)):
@@ -43,7 +44,7 @@ def run_entry_point(input_path, output_dir) -> None:
         assert frozen_localtime.tm_hour == 0, (
             f"Frozen localtime is not 0: got {frozen_localtime.tm_hour}"
         )
-        entry_point_for_args(args)
+        run_cli(args)
 
 
 def write_modified(modify_content, boilerplate, sample_json_path) -> None:

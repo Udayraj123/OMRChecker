@@ -3,8 +3,12 @@
 # Note: This import is added to the root __init__.py to adjust for perceived loading time
 from pathlib import Path
 
+from src.core import OMRProcessor, OMRResult, ProcessorConfig
 from src.utils.env import env
 from src.utils.logger import logger
+
+# Export public API for library usage
+__all__ = ["OMRProcessor", "OMRResult", "ProcessorConfig"]
 
 # It takes a few seconds for the imports
 logger.info("Loading OMRChecker modules...")
