@@ -313,6 +313,21 @@ class MLConfig:
 
 
 @dataclass
+class VisualizationConfig:
+    """Configuration for workflow visualization and debugging."""
+
+    enabled: bool = False
+    capture_processors: list[str] = field(default_factory=lambda: ["all"])
+    capture_frequency: str = "on_change"  # Options: "always", "on_change"
+    include_colored: bool = True
+    max_image_width: int = 800
+    embed_images: bool = True
+    export_format: str = "html"  # Options: "html", "json"
+    output_dir: Path = Path("outputs/visualization")
+    auto_open_browser: bool = True
+
+
+@dataclass
 class Config:
     """Main configuration object for OMRChecker.
 
@@ -324,6 +339,7 @@ class Config:
     outputs: OutputsConfig = field(default_factory=OutputsConfig)
     processing: ProcessingConfig = field(default_factory=ProcessingConfig)
     ml: MLConfig = field(default_factory=MLConfig)
+    visualization: VisualizationConfig = field(default_factory=VisualizationConfig)
 
     @classmethod
     def from_dict(cls, data: dict) -> "Config":
@@ -356,6 +372,7 @@ class Config:
             outputs=OutputsConfig(**outputs_data),
             processing=ProcessingConfig(**data.get("processing", {})),
             ml=MLConfig(**data.get("ml", {})),
+            visualization=VisualizationConfig(**data.get("visualization", {})),
         )
 
     def to_dict(self) -> dict:
