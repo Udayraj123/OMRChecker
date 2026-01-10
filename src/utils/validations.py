@@ -1,3 +1,9 @@
+"""
+ OMRChecker
+ Author: Udayraj Deshmukh
+ Github: https://github.com/Udayraj123
+"""
+
 import re
 
 import jsonschema
