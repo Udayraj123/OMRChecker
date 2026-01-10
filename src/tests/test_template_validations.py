@@ -157,3 +157,29 @@ def test_safe_missing_label_columns(mocker):
 
     exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert str(exception) == "No Error"
+
+
+def test_invalid_camel_case_key(mocker):
+    mock_table = mocker.patch("src.utils.validations.Table").return_value
+
+    def modify_template(template):
+        # Rename bubbleDimensions to bubble_dimensions to trigger suggestion
+        template["bubble_dimensions"] = template.pop("bubbleDimensions")
+
+    exception = write_jsons_and_run(mocker, modify_template=modify_template)
+
+    assert (
+        str(exception)
+        == f"Provided Template JSON is Invalid: '{BASE_SAMPLE_TEMPLATE_PATH}'"
+    )
+
+    # Verify the additionalProperties error with suggestion
+    found_suggestion = False
+    for call in mock_table.add_row.call_args_list:
+        # call.args[1] is the error message
+        msg = call.args[1]
+        if "'bubble_dimensions' -> 'bubbleDimensions'" in msg:
+            found_suggestion = True
+            break
+
+    assert found_suggestion, "Did not find camelCase suggestion in validation output"

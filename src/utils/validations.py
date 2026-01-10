@@ -11,7 +11,7 @@ from jsonschema import validate
 from rich.table import Table
 
 from src.schemas import SCHEMA_JSONS, SCHEMA_VALIDATORS
-from src.utils.logger import console, logger
+from src.logger import console, logger
 
 
 def to_camel_case(text: str) -> str:
@@ -30,7 +30,9 @@ def to_camel_case(text: str) -> str:
     return text
 
 
-def suggest_camel_case(key: str) -> str | None:
+from typing import Optional
+
+def suggest_camel_case(key: str) -> Optional[str]:
     """Suggest camelCase version if the key is not in camelCase format."""
     camel_version = to_camel_case(key)
     # Check if conversion changed the key (meaning it wasn't in camelCase)
