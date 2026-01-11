@@ -27,14 +27,19 @@ function automaticBrightnessAndContrast(
   const histSize = [256];
   const ranges = [0, 256];
 
+  const images = new cv.MatVector();
+  images.push_back(image);
+
   cv.calcHist(
-    new cv.MatVector([image]),
+    images,
     [0], // channels
     new cv.Mat(), // mask
     hist,
     histSize,
     ranges
   );
+
+  images.delete();
 
   // Calculate cumulative distribution
   const accumulator: number[] = [];

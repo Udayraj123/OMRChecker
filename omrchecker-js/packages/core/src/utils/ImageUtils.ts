@@ -22,12 +22,12 @@ export class ImageUtils {
    * instead of file paths.
    *
    * @param imageSource - File object, Blob, or data URL string
-   * @param mode - OpenCV imread mode (IMREAD_GRAYSCALE, IMREAD_COLOR, IMREAD_UNCHANGED)
+   * @param mode - Image mode: 0=grayscale, 1=color, -1=unchanged
    * @returns Promise resolving to loaded image as cv.Mat
    */
   static async loadImage(
     imageSource: File | Blob | string,
-    mode: number = cv.IMREAD_GRAYSCALE
+    mode: number = 0 // 0 = grayscale
   ): Promise<cv.Mat> {
     try {
       let imageData: string;
@@ -76,16 +76,16 @@ export class ImageUtils {
 
           // Convert to requested mode
           let result: cv.Mat;
-          if (mode === cv.IMREAD_GRAYSCALE) {
+          if (mode === 0) { // Grayscale
             result = new cv.Mat();
             cv.cvtColor(mat, result, cv.COLOR_RGBA2GRAY);
             mat.delete();
-          } else if (mode === cv.IMREAD_COLOR) {
+          } else if (mode === 1) { // Color
             result = new cv.Mat();
             cv.cvtColor(mat, result, cv.COLOR_RGBA2BGR);
             mat.delete();
-          } else {
-            result = mat; // IMREAD_UNCHANGED
+          } else { // Unchanged
+            result = mat;
           }
 
           resolve(result);
@@ -111,12 +111,12 @@ export class ImageUtils {
     coloredOutputsEnabled: boolean = false
   ): Promise<[cv.Mat, cv.Mat | null]> {
     if (coloredOutputsEnabled) {
-      const coloredImage = await this.loadImage(imageSource, cv.IMREAD_COLOR);
+      const coloredImage = await this.loadImage(imageSource, 1); // Color mode
       const grayImage = new cv.Mat();
       cv.cvtColor(coloredImage, grayImage, cv.COLOR_BGR2GRAY);
       return [grayImage, coloredImage];
     } else {
-      const grayImage = await this.loadImage(imageSource, cv.IMREAD_GRAYSCALE);
+      const grayImage = await this.loadImage(imageSource, 0); // Grayscale mode
       return [grayImage, null];
     }
   }
@@ -271,8 +271,8 @@ export class ImageUtils {
     }
 
     // Check if image has constant values
-    const minMax = cv.minMaxLoc(image);
-    if (minMax.maxVal === minMax.minVal) {
+    const minMaxResult = cv.minMaxLoc(image, new cv.Mat());
+    if (minMaxResult.maxVal === minMaxResult.minVal) {
       return image;
     }
 

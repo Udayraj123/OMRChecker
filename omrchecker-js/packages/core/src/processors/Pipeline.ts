@@ -69,7 +69,6 @@ export interface PipelineConfig {
  */
 export class ProcessingPipeline {
   private template: any; // Template type (avoiding circular dependencies)
-  private tuningConfig: any; // Config type
   private config: PipelineConfig;
   private processors: Processor[] = [];
 
@@ -81,7 +80,6 @@ export class ProcessingPipeline {
    */
   constructor(template: any, config: PipelineConfig = {}) {
     this.template = template;
-    this.tuningConfig = template.tuningConfig;
     this.config = config;
 
     // Initialize default processors
@@ -134,14 +132,14 @@ export class ProcessingPipeline {
   private addTrainingDataCollector(): void {
     try {
       const confidenceThreshold = this.config.confidenceThreshold ?? 0.85;
-      const trainingDataDir = this.config.trainingDataDir ?? 'outputs/training_data';
 
       logger.info(
         `Training data collection enabled (confidence threshold: ${confidenceThreshold})`
       );
 
       // TODO: Add training data collector when ported
-      // this.processors.push(new TrainingDataCollector(...));
+      // Will use this.config.trainingDataDir when implemented
+      // this.processors.push(new TrainingDataCollector(this.config.trainingDataDir ?? 'outputs/training_data'));
     } catch (error) {
       logger.warn(`Failed to add training data collector: ${error}`);
     }

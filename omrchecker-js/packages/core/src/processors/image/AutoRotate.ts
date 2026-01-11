@@ -111,8 +111,8 @@ export class AutoRotate extends Processor {
 
         cv.matchTemplate(rotatedImg, this.resizedReference, result, cv.TM_CCOEFF_NORMED, mask);
 
-        const minMax = cv.minMaxLoc(result);
-        const maxVal = minMax.maxVal;
+        const minMaxResult = cv.minMaxLoc(result, mask);
+        const maxVal = minMaxResult.maxVal;
 
         // Cleanup
         result.delete();
