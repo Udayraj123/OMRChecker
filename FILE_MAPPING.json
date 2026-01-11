@@ -169,94 +169,132 @@
     {
       "python": "src/processors/image/AutoRotate.py",
       "typescript": "omrchecker-js/packages/core/src/processors/image/AutoRotate.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "medium",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/image/__tests__/AutoRotate.test.ts",
       "classes": [
         {
           "python": "AutoRotateProcessor",
-          "typescript": "AutoRotateProcessor",
-          "synced": false,
+          "typescript": "AutoRotate",
+          "synced": true,
           "methods": [
             {
               "python": "apply_on_image",
-              "typescript": "applyOnImage",
-              "synced": false
+              "typescript": "process",
+              "synced": true
             }
           ]
         }
-      ]
+      ],
+      "notes": "1:1 file mapping. Each processor has its own file and test file."
     },
     {
       "python": "src/processors/image/Contrast.py",
       "typescript": "omrchecker-js/packages/core/src/processors/image/Contrast.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "medium",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/image/__tests__/Contrast.test.ts",
       "classes": [
         {
           "python": "ContrastProcessor",
-          "typescript": "ContrastProcessor",
-          "synced": false
+          "typescript": "Contrast",
+          "synced": true,
+          "methods": [
+            {
+              "python": "apply_on_image",
+              "typescript": "process",
+              "synced": true
+            }
+          ]
         }
-      ]
+      ],
+      "notes": "1:1 file mapping. Supports both manual and auto contrast modes."
     },
     {
       "python": "src/processors/image/GaussianBlur.py",
       "typescript": "omrchecker-js/packages/core/src/processors/image/GaussianBlur.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "medium",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/image/__tests__/GaussianBlur.test.ts",
       "classes": [
         {
           "python": "GaussianBlurProcessor",
-          "typescript": "GaussianBlurProcessor",
-          "synced": false
+          "typescript": "GaussianBlur",
+          "synced": true,
+          "methods": [
+            {
+              "python": "apply_on_image",
+              "typescript": "process",
+              "synced": true
+            }
+          ]
         }
-      ]
+      ],
+      "notes": "1:1 file mapping. Basic Gaussian blur filter."
     },
     {
       "python": "src/processors/image/MedianBlur.py",
       "typescript": "omrchecker-js/packages/core/src/processors/image/MedianBlur.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "medium",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/image/__tests__/MedianBlur.test.ts",
       "classes": [
         {
           "python": "MedianBlurProcessor",
-          "typescript": "MedianBlurProcessor",
-          "synced": false
+          "typescript": "MedianBlur",
+          "synced": true,
+          "methods": [
+            {
+              "python": "apply_on_image",
+              "typescript": "process",
+              "synced": true
+            }
+          ]
         }
-      ]
+      ],
+      "notes": "1:1 file mapping. Median blur for salt-and-pepper noise removal."
     },
     {
       "python": "src/processors/image/Levels.py",
       "typescript": "omrchecker-js/packages/core/src/processors/image/Levels.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "medium",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/image/__tests__/Levels.test.ts",
       "classes": [
         {
           "python": "LevelsProcessor",
-          "typescript": "LevelsProcessor",
-          "synced": false
+          "typescript": "Levels",
+          "synced": true,
+          "methods": [
+            {
+              "python": "apply_on_image",
+              "typescript": "process",
+              "synced": true
+            }
+          ]
         }
-      ]
+      ],
+      "notes": "1:1 file mapping. Levels adjustment with gamma correction."
     },
     {
       "python": "src/processors/image/CropOnMarkers.py",
@@ -525,6 +563,84 @@
       "notes": "Uses @zxing/library instead of pyzbar"
     },
     {
+      "python": "src/processors/threshold/strategies.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/threshold/GlobalThreshold.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/threshold/__tests__/GlobalThreshold.test.ts",
+      "classes": [
+        {
+          "python": "GlobalThresholdStrategy",
+          "typescript": "GlobalThreshold",
+          "synced": true,
+          "methods": [
+            {
+              "python": "calculate_threshold",
+              "typescript": "calculateThreshold",
+              "synced": true
+            }
+          ]
+        }
+      ],
+      "notes": "1:1 class mapping. In Python, all strategies are in strategies.py. In TypeScript, each strategy has its own file for better 1:1 maintenance."
+    },
+    {
+      "python": "src/processors/threshold/strategies.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/threshold/LocalThreshold.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/threshold/__tests__/LocalThreshold.test.ts",
+      "classes": [
+        {
+          "python": "LocalThresholdStrategy",
+          "typescript": "LocalThreshold",
+          "synced": true,
+          "methods": [
+            {
+              "python": "calculate_threshold",
+              "typescript": "calculateThreshold",
+              "synced": true
+            }
+          ]
+        }
+      ],
+      "notes": "1:1 class mapping. Local threshold for per-question thresholding."
+    },
+    {
+      "python": "src/processors/threshold/strategies.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/threshold/AdaptiveThreshold.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/threshold/__tests__/AdaptiveThreshold.test.ts",
+      "classes": [
+        {
+          "python": "AdaptiveThresholdStrategy",
+          "typescript": "AdaptiveThreshold",
+          "synced": true,
+          "methods": [
+            {
+              "python": "calculate_threshold",
+              "typescript": "calculateThreshold",
+              "synced": true
+            }
+          ]
+        }
+      ],
+      "notes": "1:1 class mapping. Adaptive threshold combining global and local approaches."
+    },
+    {
       "python": "src/processors/detection/ml_detector.py",
       "typescript": "omrchecker-js/packages/core/src/processors/detection/mlDetector.ts",
       "status": "not_started",
@@ -559,11 +675,11 @@
     }
   ],
   "statistics": {
-    "total": 31,
-    "synced": 1,
+    "total": 39,
+    "synced": 9,
     "partial": 3,
     "not_started": 27,
-    "phase1": 23,
+    "phase1": 31,
     "phase2": 4,
     "future": 3
   }
