@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OMRChecker Demo - Bubble Detection</title>
+  <link rel="stylesheet" href="/src/styles.css">
+</head>
+<body>
+
+  <!-- Load OpenCV.js from CDN -->
+  <script async src="https://docs.opencv.org/4.10.0/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <h1>📝 OMRChecker Demo</h1>
+      <p>TypeScript-powered OMR bubble detection in the browser</p>
+    </header>
+
+    <!-- Status Bar -->
+    <div id="status-bar" class="status-bar">
+      <span id="opencv-status">🔄 Loading OpenCV...</span>
+    </div>
+
+    <!-- Upload Section -->
+    <section class="upload-section">
+      <div class="upload-card">
+        <h2>1️⃣ Upload Template</h2>
+        <label class="file-upload">
+          <input type="file" id="template-upload" accept=".json" />
+          <span>Choose template.json</span>
+        </label>
+        <div id="template-info" class="file-info"></div>
+      </div>
+
+      <div class="upload-card">
+        <h2>2️⃣ Upload OMR Sheet(s)</h2>
+        <label class="file-upload">
+          <input type="file" id="image-upload" accept="image/*" multiple />
+          <span>Choose image file(s)</span>
+        </label>
+        <button id="folder-upload-btn" class="btn-folder">
+          📁 Or Select Folder
+        </button>
+        <div id="image-info" class="file-info"></div>
+      </div>
+    </section>
+
+    <!-- Action Buttons -->
+    <section class="action-section">
+      <button id="detect-btn" class="btn btn-primary" disabled>
+        🔍 Detect Bubbles
+      </button>
+      <button id="export-csv-btn" class="btn btn-secondary" disabled>
+        📊 Export CSV
+      </button>
+      <button id="reset-btn" class="btn btn-secondary">
+        🔄 Reset
+      </button>
+    </section>
+
+    <!-- Preview Section -->
+    <section class="preview-section">
+      <div class="preview-card">
+        <h3>Original Image</h3>
+        <div class="canvas-container">
+          <canvas id="input-canvas"></canvas>
+          <div id="input-placeholder" class="placeholder">
+            <p>📷 Upload an image to preview</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="preview-card">
+        <h3>Detection Result</h3>
+        <div class="canvas-container">
+          <canvas id="output-canvas"></canvas>
+          <div id="output-placeholder" class="placeholder">
+            <p>🎯 Detection results will appear here</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results Section -->
+    <section id="results-section" class="results-section" style="display: none;">
+      <h2>📋 Detection Results</h2>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Questions</div>
+          <div class="stat-value" id="stat-total">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Answered</div>
+          <div class="stat-value stat-success" id="stat-answered">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Unanswered</div>
+          <div class="stat-value stat-warning" id="stat-unanswered">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Multi-Marked</div>
+          <div class="stat-value stat-error" id="stat-multimarked">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg Confidence</div>
+          <div class="stat-value" id="stat-confidence">0%</div>
+        </div>
+      </div>
+
+      <div class="results-table-container">
+        <table id="results-table" class="results-table">
+          <thead>
+            <tr>
+              <th>Question</th>
+              <th>Answer</th>
+              <th>Confidence</th>
+              <th>Threshold</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="results-tbody">
+            <!-- Results will be inserted here -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <p>
+        Built with TypeScript + OpenCV.js |
+        <a href="https://github.com/Udayraj123/OMRChecker" target="_blank">GitHub</a>
+      </p>
+    </footer>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay" style="display: none;">
+    <div class="spinner"></div>
+    <p id="loading-message">Processing...</p>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
+
