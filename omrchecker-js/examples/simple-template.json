@@ -1,0 +1,23 @@
+{
+  "templateDimensions": [1000, 800],
+  "bubbleDimensions": [40, 40],
+  "fieldBlocks": {
+    "MCQ_Block_Q1": {
+      "origin": [100, 100],
+      "fieldLabels": ["q1..5"],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "bubblesGap": 60,
+      "labelsGap": 70
+    },
+    "MCQ_Block_Q6": {
+      "origin": [100, 300],
+      "fieldLabels": ["q6..10"],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_MCQ4",
+      "bubblesGap": 60,
+      "labelsGap": 70
+    }
+  }
+}
+

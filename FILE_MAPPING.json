@@ -715,14 +715,74 @@
       "lastPythonChange": null,
       "lastTypescriptChange": null,
       "notes": "Browser-based visualization"
+    },
+    {
+      "python": "src/schemas/models/template.py",
+      "typescript": "omrchecker-js/packages/core/src/template/types.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/template/__tests__/TemplateLoader.test.ts",
+      "classes": [
+        {
+          "python": "TemplateConfig",
+          "typescript": "TemplateConfig",
+          "synced": true
+        },
+        {
+          "python": "AlignmentConfig",
+          "typescript": "AlignmentConfig",
+          "synced": true
+        },
+        {
+          "python": "BubbleFieldType",
+          "typescript": "BubbleFieldType",
+          "synced": true
+        }
+      ],
+      "notes": "Template schema types. Defines structure of template.json files."
+    },
+    {
+      "python": "src/processors/layout/template_layout.py",
+      "typescript": "omrchecker-js/packages/core/src/template/TemplateLoader.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/template/__tests__/TemplateLoader.test.ts",
+      "classes": [
+        {
+          "python": "TemplateLayout",
+          "typescript": "TemplateLoader",
+          "synced": true,
+          "methods": [
+            {
+              "python": "load_template",
+              "typescript": "loadFromJSON",
+              "synced": true
+            },
+            {
+              "python": "expand_field_labels",
+              "typescript": "expandFieldLabels",
+              "synced": true
+            }
+          ]
+        }
+      ],
+      "notes": "Template loader with field label expansion and bubble location calculation."
     }
   ],
   "statistics": {
-    "total": 39,
-    "synced": 10,
+    "total": 41,
+    "synced": 12,
     "partial": 4,
     "not_started": 25,
-    "phase1": 31,
+    "phase1": 33,
     "phase2": 4,
     "future": 3
   }

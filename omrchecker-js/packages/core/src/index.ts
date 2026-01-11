@@ -37,6 +37,22 @@ export {
   type FieldDetectionResult,
 } from './processors/detection/SimpleBubbleDetector';
 
+// Template
+export {
+  type TemplateConfig,
+  type FieldBlock,
+  type BubbleFieldType,
+  type AlignmentConfig,
+  type PreProcessorConfig,
+  BUILTIN_BUBBLE_FIELD_TYPES,
+  DEFAULT_TEMPLATE_CONFIG,
+} from './template/types';
+export {
+  TemplateLoader,
+  type ParsedTemplate,
+  type ParsedField,
+} from './template/TemplateLoader';
+
 // Utilities
 export { Logger } from './utils/logger';
 export { ImageUtils } from './utils/ImageUtils';
