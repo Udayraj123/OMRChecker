@@ -22,16 +22,13 @@ venv/
 .venv/
 OMRChecker.wiki/
 
+# Node.js dependencies - exclude everywhere
+**/node_modules/
+
 # TypeScript/JavaScript build outputs
-omrchecker-js/**/dist/
-omrchecker-js/**/node_modules/
-omrchecker-js/**/.vite/
-omrchecker-js/**/build/
-change-propagation-tool/dist/
-change-propagation-tool/node_modules/
-change-propagation-tool/.vite/
-code-browser/dist/
-code-browser/node_modules/
+**/dist/
+**/.vite/
+**/build/
 
 # pnpm
 pnpm-lock.yaml
