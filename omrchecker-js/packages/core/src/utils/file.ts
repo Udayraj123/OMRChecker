@@ -46,7 +46,7 @@ export class PathUtils {
   debugDir: string;
 
   private static printableChars = new Set(
-    ' !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\t\n\r\x0b\x0c'.split(
+    ' !\\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\\t\\n\\r\\x0b\\x0c'.split(
       ''
     )
   );

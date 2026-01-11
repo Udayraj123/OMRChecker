@@ -44,6 +44,9 @@ export {
 export { Logger, logger } from './utils/logger';
 export { PathUtils, loadJson } from './utils/file';
 export { threadSafeCsvAppend } from './utils/csv';
+export { ImageUtils } from './utils/image';
+export { DrawingUtils } from './utils/drawing';
+export { MatUtils } from './utils/opencv/matUtils';
 
 // Constants
 export * from './utils/constants';

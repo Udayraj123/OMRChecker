@@ -4,7 +4,7 @@
  * Shared across configSchema and templateSchema to ensure DRY principles
  */
 
-import Ajv from 'ajv';
+import Ajv, { type ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
 
 // Common type definitions used in both schemas
@@ -120,12 +120,12 @@ export function createSchemaValidator(): Ajv {
  * Helper to format AJV errors into consistent ValidationResult
  */
 export function formatValidationErrors(
-  errors: Array<any> | null | undefined
+  errors: ErrorObject[] | null | undefined
 ): ValidationResult['errors'] {
   if (!errors) return [];
 
   return errors.map((err) => ({
-    instancePath: err.instancePath || err.dataPath || '',
+    instancePath: err.instancePath || '',
     message: err.message || 'Validation failed',
     params: err.params || {},
   }));
