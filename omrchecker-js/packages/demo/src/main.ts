@@ -13,8 +13,20 @@ import {
   type FieldDetectionResult,
 } from '@omrchecker/core';
 
-// OpenCV will be loaded from CDN
-declare const cv: {
+// Create global binding for OpenCV before it loads
+declare global {
+  interface Window {
+    cv: typeof cv;
+    Module: any;
+    showDirectoryPicker(): Promise<FileSystemDirectoryHandle>;
+  }
+}
+
+// OpenCV will be loaded from CDN and attach to window.cv
+const cv = window.cv as any || {} as any;
+
+// OpenCV type declarations
+type OpenCVType = {
   Mat: any;
   imread: (element: HTMLImageElement) => any;
   cvtColor: (src: any, dst: any, code: number) => void;
@@ -29,6 +41,32 @@ declare const cv: {
   getBuildInformation?: () => string;
   onRuntimeInitialized?: () => void;
 };
+
+// File System Access API types
+interface FileSystemHandle {
+  kind: 'file' | 'directory';
+  name: string;
+}
+
+interface FileSystemFileHandle extends FileSystemHandle {
+  kind: 'file';
+  getFile(): Promise<File>;
+}
+
+interface FileSystemDirectoryHandle extends FileSystemHandle {
+  kind: 'directory';
+  values(): AsyncIterableIterator<FileSystemFileHandle | FileSystemDirectoryHandle>;
+  getFileHandle(name: string): Promise<FileSystemFileHandle>;
+  getDirectoryHandle(name: string): Promise<FileSystemDirectoryHandle>;
+}
+
+declare global {
+  interface Window {
+    cv: typeof cv;
+    Module: any;
+    showDirectoryPicker(): Promise<FileSystemDirectoryHandle>;
+  }
+}
 
 // Global state
 let templateData: ParsedTemplate | null = null;
@@ -54,26 +92,26 @@ const loadingMessage = document.getElementById('loading-message') as HTMLElement
 function waitForOpenCV(): Promise<void> {
   return new Promise((resolve) => {
     // Check if already loaded
-    if (typeof cv !== 'undefined' && cv.getBuildInformation) {
+    if (window.cv && window.cv.getBuildInformation) {
       resolve();
       return;
     }
 
     // Poll for OpenCV to be ready
     const checkInterval = setInterval(() => {
-      if (typeof cv !== 'undefined' && cv.getBuildInformation) {
+      if (window.cv && window.cv.getBuildInformation) {
         clearInterval(checkInterval);
         resolve();
       }
     }, 100);
 
-    // Also set up the callback if OpenCV supports it
-    if (typeof cv !== 'undefined') {
-      cv.onRuntimeInitialized = () => {
-        clearInterval(checkInterval);
-        resolve();
-      };
-    }
+    // Set up timeout to prevent infinite waiting
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      if (!window.cv || !window.cv.getBuildInformation) {
+        console.error('OpenCV failed to load within timeout');
+      }
+    }, 30000); // 30 second timeout
   });
 }
 
@@ -184,15 +222,10 @@ async function handleFolderUpload(): Promise<void> {
     showLoading('Scanning folder...');
 
     // Request directory access
-    type DirectoryHandle = {
-      name: string;
-      values: () => AsyncIterableIterator<FileHandle | DirectoryHandle>;
-    };
-
-    const dirHandle = await (window as { showDirectoryPicker: () => Promise<DirectoryHandle> }).showDirectoryPicker();
+    const dirHandle = await window.showDirectoryPicker();
 
     // Try to auto-load template.json from the selected folder
-    await tryAutoLoadTemplate(dirHandle as unknown as FileSystemDirectoryHandle);
+    await tryAutoLoadTemplate(dirHandle);
 
     // Recursively collect image files
     imageFiles = await collectImageFilesFromDirectory(dirHandle);
@@ -354,7 +387,7 @@ function loadImage(file: File): Promise<cv.Mat> {
 
     img.onload = () => {
       try {
-        const mat = cv.imread(img);
+        const mat = window.cv.imread(img);
         if (mat.empty()) {
           throw new Error('Failed to load image');
         }
@@ -362,8 +395,8 @@ function loadImage(file: File): Promise<cv.Mat> {
         // Convert to grayscale
         let grayMat: cv.Mat;
         if (mat.channels() === 3 || mat.channels() === 4) {
-          grayMat = new cv.Mat();
-          cv.cvtColor(mat, grayMat, cv.COLOR_RGBA2GRAY);
+          grayMat = new window.cv.Mat();
+          window.cv.cvtColor(mat, grayMat, window.cv.COLOR_RGBA2GRAY);
           mat.delete();
         } else {
           grayMat = mat;
@@ -391,12 +424,12 @@ function loadImage(file: File): Promise<cv.Mat> {
  */
 function displayImage(canvas: HTMLCanvasElement, mat: cv.Mat): void {
   // Convert grayscale to RGBA for display
-  const displayMat = new cv.Mat();
-  cv.cvtColor(mat, displayMat, cv.COLOR_GRAY2RGBA);
+  const displayMat = new window.cv.Mat();
+  window.cv.cvtColor(mat, displayMat, window.cv.COLOR_GRAY2RGBA);
 
   canvas.width = displayMat.cols;
   canvas.height = displayMat.rows;
-  cv.imshow(canvas, displayMat);
+  window.cv.imshow(canvas, displayMat);
 
   displayMat.delete();
 }
@@ -465,8 +498,8 @@ function visualizeResults(
   template: ParsedTemplate
 ): void {
   // Create colored output image
-  const outputMat = new cv.Mat();
-  cv.cvtColor(image, outputMat, cv.COLOR_GRAY2RGBA);
+  const outputMat = new window.cv.Mat();
+  window.cv.cvtColor(image, outputMat, window.cv.COLOR_GRAY2RGBA);
 
   // Draw bubbles
   for (const [fieldId, result] of results.entries()) {
@@ -477,7 +510,7 @@ function visualizeResults(
       const bubble = field.bubbles[i];
       const bubbleResult = result.bubbles[i];
 
-      const center = new cv.Point(
+      const center = new window.cv.Point(
         Math.floor(bubble.x + bubble.width / 2),
         Math.floor(bubble.y + bubble.height / 2)
       );
@@ -486,24 +519,24 @@ function visualizeResults(
       // Color based on detection
       let color: cv.Scalar;
       if (bubbleResult.isMarked) {
-        color = new cv.Scalar(0, 255, 0, 255); // Green for marked
+        color = new window.cv.Scalar(0, 255, 0, 255); // Green for marked
       } else {
-        color = new cv.Scalar(100, 100, 100, 200); // Gray for unmarked
+        color = new window.cv.Scalar(100, 100, 100, 200); // Gray for unmarked
       }
 
       // Draw circle
-      cv.circle(outputMat, center, radius, color, 2);
+      window.cv.circle(outputMat, center, radius, color, 2);
 
       // Draw label
-      const textPos = new cv.Point(
+      const textPos = new window.cv.Point(
         Math.floor(bubble.x + bubble.width / 2 - 5),
         Math.floor(bubble.y + bubble.height / 2 + 5)
       );
-      cv.putText(
+      window.cv.putText(
         outputMat,
         bubble.label,
         textPos,
-        cv.FONT_HERSHEY_SIMPLEX,
+        window.cv.FONT_HERSHEY_SIMPLEX,
         0.4,
         color,
         1
@@ -514,7 +547,7 @@ function visualizeResults(
   // Display on output canvas
   outputCanvas.width = outputMat.cols;
   outputCanvas.height = outputMat.rows;
-  cv.imshow(outputCanvas, outputMat);
+  window.cv.imshow(outputCanvas, outputMat);
 
   hideCanvasPlaceholder('output-placeholder');
   outputMat.delete();
@@ -858,11 +891,11 @@ function showCanvasPlaceholder(placeholderId: string): void {
   }
 }
 
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  // DOM already loaded
-  init();
-}
+// // Initialize when DOM is ready
+// if (document.readyState === 'loading') {
+//   document.addEventListener('DOMContentLoaded', init);
+// } else {
+//   // DOM already loaded
+//   init();
+// }
 
