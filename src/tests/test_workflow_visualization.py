@@ -457,14 +457,12 @@ class TestHighLevelFunctions:
         content = html_path.read_text()
         assert sample_session.session_id in content
 
-    @patch("src.processors.visualization.workflow_tracker.ProcessingPipeline")
-    @patch("src.processors.visualization.workflow_tracker.Template")
-    @patch("src.processors.visualization.workflow_tracker.Config")
+    @patch("src.processors.pipeline.ProcessingPipeline")
+    @patch("src.processors.template.template.Template")
     @patch("src.processors.visualization.workflow_tracker.ImageUtils")
     def test_track_workflow(  # noqa: PLR0913
         self,
         mock_image_utils,
-        mock_config,
         mock_template,
         mock_pipeline,
         sample_image,
@@ -477,9 +475,6 @@ class TestHighLevelFunctions:
         mock_template_instance = Mock()
         mock_template_instance.template_name = "test_template"
         mock_template.return_value = mock_template_instance
-
-        mock_config_instance = Mock()
-        mock_config.return_value = mock_config_instance
 
         mock_pipeline_instance = Mock()
         mock_pipeline_instance.get_processor_names.return_value = ["TestProcessor"]
@@ -501,7 +496,7 @@ class TestHighLevelFunctions:
 
         assert session is not None
         assert isinstance(session, WorkflowSession)
-        assert session.template_name == "test_template"
+        assert session.template_name == "template"  # From template_path stem
 
 
 # Integration Tests

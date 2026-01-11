@@ -106,6 +106,10 @@ def check_correspondence(repo_root: Path) -> tuple[list[dict], bool]:
         priority = mapping.get("priority", "medium")
         phase = mapping.get("phase", "unknown")
 
+        # Skip validation for "future" phase files - they're not part of current port
+        if phase == "future":
+            continue
+
         result = {
             "python": py_file,
             "typescript": ts_file,

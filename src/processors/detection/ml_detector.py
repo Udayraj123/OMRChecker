@@ -8,6 +8,11 @@ from pathlib import Path
 from src.processors.base import ProcessingContext, Processor
 from src.utils.logger import logger
 
+try:
+    from ultralytics import YOLO
+except ImportError:
+    YOLO = None
+
 
 class MLBubbleDetector(Processor):
     """YOLO-based bubble detection for low-confidence cases.
@@ -42,7 +47,8 @@ class MLBubbleDetector(Processor):
             return
 
         try:
-            from ultralytics import YOLO
+            if YOLO is None:
+                raise ImportError
 
             self.model = YOLO(str(self.model_path))
             logger.info(f"Loaded ML bubble detector from: {self.model_path}")
