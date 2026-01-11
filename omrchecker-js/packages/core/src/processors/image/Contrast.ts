@@ -1,96 +1,15 @@
 /**
- * Image filter processors for OMR preprocessing.
+ * Contrast adjustment processor.
  *
- * TypeScript ports of Python image processors:
- * - src/processors/image/GaussianBlur.py
- * - src/processors/image/MedianBlur.py
- * - src/processors/image/Contrast.py
+ * TypeScript port of src/processors/image/Contrast.py
+ * Maintains 1:1 correspondence with Python implementation.
  */
 
 import * as cv from '@techstark/opencv-js';
 import { Processor, ProcessingContext } from '../base';
 import { Logger } from '../../utils/logger';
 
-const logger = new Logger('ImageProcessors');
-
-/**
- * Gaussian Blur filter processor.
- *
- * Applies Gaussian blur to reduce noise and detail.
- * Port of src/processors/image/GaussianBlur.py
- */
-export class GaussianBlur extends Processor {
-  private kSize: [number, number];
-  private sigmaX: number;
-
-  constructor(options: { kSize?: [number, number]; sigmaX?: number } = {}) {
-    super();
-    this.kSize = options.kSize || [3, 3];
-    this.sigmaX = options.sigmaX || 0;
-  }
-
-  getName(): string {
-    return 'GaussianBlur';
-  }
-
-  process(context: ProcessingContext): ProcessingContext {
-    try {
-      const blurred = new cv.Mat();
-      const kSize = new cv.Size(this.kSize[0], this.kSize[1]);
-
-      cv.GaussianBlur(context.grayImage, blurred, kSize, this.sigmaX);
-
-      // Release old image and replace with blurred
-      context.grayImage.delete();
-      context.grayImage = blurred;
-
-      logger.debug(`Applied Gaussian blur (kSize=${this.kSize}, sigmaX=${this.sigmaX})`);
-
-      return context;
-    } catch (error) {
-      logger.error(`Error in GaussianBlur: ${error}`);
-      throw error;
-    }
-  }
-}
-
-/**
- * Median Blur filter processor.
- *
- * Applies median blur to reduce salt-and-pepper noise.
- * Port of src/processors/image/MedianBlur.py
- */
-export class MedianBlur extends Processor {
-  private kSize: number;
-
-  constructor(options: { kSize?: number } = {}) {
-    super();
-    this.kSize = options.kSize || 5;
-  }
-
-  getName(): string {
-    return 'MedianBlur';
-  }
-
-  process(context: ProcessingContext): ProcessingContext {
-    try {
-      const blurred = new cv.Mat();
-
-      cv.medianBlur(context.grayImage, blurred, this.kSize);
-
-      // Release old image and replace with blurred
-      context.grayImage.delete();
-      context.grayImage = blurred;
-
-      logger.debug(`Applied median blur (kSize=${this.kSize})`);
-
-      return context;
-    } catch (error) {
-      logger.error(`Error in MedianBlur: ${error}`);
-      throw error;
-    }
-  }
-}
+const logger = new Logger('Contrast');
 
 /**
  * Automatic brightness and contrast optimization.
@@ -159,7 +78,6 @@ function automaticBrightnessAndContrast(
  * Contrast adjustment processor.
  *
  * Adjusts image contrast using either manual or automatic mode.
- * Port of src/processors/image/Contrast.py
  */
 export class Contrast extends Processor {
   private clipHistPercent: number;

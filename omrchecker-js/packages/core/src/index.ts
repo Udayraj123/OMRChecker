@@ -11,8 +11,23 @@ export { Processor, createProcessingContext } from './processors/base';
 // Pipeline orchestration
 export { ProcessingPipeline, type PipelineConfig } from './processors/Pipeline';
 
-// Image filters
-export { GaussianBlur, MedianBlur, Contrast } from './processors/image/filters';
+// Image processors - Basic filters
+export { GaussianBlur } from './processors/image/GaussianBlur';
+export { MedianBlur } from './processors/image/MedianBlur';
+export { Contrast } from './processors/image/Contrast';
+
+// Image processors - Advanced
+export { AutoRotate, type AutoRotateOptions } from './processors/image/AutoRotate';
+export { Levels } from './processors/image/Levels';
+
+// Threshold strategies
+export {
+  GlobalThreshold,
+  type ThresholdConfig,
+  type ThresholdResult,
+} from './processors/threshold/GlobalThreshold';
+export { LocalThreshold } from './processors/threshold/LocalThreshold';
+export { AdaptiveThreshold } from './processors/threshold/AdaptiveThreshold';
 
 // Utilities
 export { Logger } from './utils/logger';
