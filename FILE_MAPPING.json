@@ -397,20 +397,54 @@
     },
     {
       "python": "src/utils/image.py",
-      "typescript": "omrchecker-js/packages/core/src/utils/image.ts",
-      "status": "not_started",
+      "typescript": "omrchecker-js/packages/core/src/utils/ImageUtils.ts",
+      "status": "synced",
       "phase": 1,
       "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/utils/__tests__/ImageUtils.test.ts",
       "classes": [
         {
           "python": "ImageUtils",
           "typescript": "ImageUtils",
-          "synced": false
+          "synced": true,
+          "methods": [
+            {
+              "python": "load_image",
+              "typescript": "loadImage",
+              "synced": true
+            },
+            {
+              "python": "resize_single",
+              "typescript": "resizeSingle",
+              "synced": true
+            },
+            {
+              "python": "rotate",
+              "typescript": "rotate",
+              "synced": true
+            },
+            {
+              "python": "normalize",
+              "typescript": "normalize",
+              "synced": true
+            },
+            {
+              "python": "auto_canny",
+              "typescript": "autoCanny",
+              "synced": true
+            },
+            {
+              "python": "adjust_gamma",
+              "typescript": "adjustGamma",
+              "synced": true
+            }
+          ]
         }
-      ]
+      ],
+      "notes": "1:1 file mapping. Core image utility class with loading, resizing, transformations, and padding operations. Browser-compatible version uses File API instead of filesystem paths."
     },
     {
       "python": "src/utils/geometry.py",
@@ -676,9 +710,9 @@
   ],
   "statistics": {
     "total": 39,
-    "synced": 9,
+    "synced": 10,
     "partial": 3,
-    "not_started": 27,
+    "not_started": 26,
     "phase1": 31,
     "phase2": 4,
     "future": 3

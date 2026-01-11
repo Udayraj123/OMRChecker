@@ -31,6 +31,7 @@ export { AdaptiveThreshold } from './processors/threshold/AdaptiveThreshold';
 
 // Utilities
 export { Logger } from './utils/logger';
+export { ImageUtils } from './utils/ImageUtils';
 export * from './utils/geometry';
 export * from './utils/math';
 export * from './utils/file';
