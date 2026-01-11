@@ -45,6 +45,15 @@ export { Logger, logger } from './utils/logger';
 export { PathUtils, loadJson } from './utils/file';
 export { threadSafeCsvAppend } from './utils/csv';
 
+// Constants
+export * from './utils/constants';
+export type { ColorTuple, BubbleFieldType } from './utils/constants';
+
+// Schema validation
+export { validateConfig } from './schemas/configSchema';
+export { validateTemplate } from './schemas/templateSchema';
+export type { ValidationResult } from './schemas/common';
+
 // Version
 export const VERSION = '1.0.0';
 
