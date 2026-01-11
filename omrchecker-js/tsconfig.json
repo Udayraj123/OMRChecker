@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* Path aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./packages/core/src/*"],
+      "@core/*": ["./packages/core/src/*"],
+      "@processors/*": ["./packages/core/src/processors/*"],
+      "@utils/*": ["./packages/core/src/utils/*"]
+    }
+  },
+  "include": ["packages/*/src"],
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/demo" },
+    { "path": "./packages/e2e" }
+  ]
+}
+

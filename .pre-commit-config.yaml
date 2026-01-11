@@ -1,4 +1,4 @@
-exclude: "(__snapshots__|__image_snapshots__|node_modules|workflow-viz-app)/.*$"
+exclude: "(__snapshots__|__image_snapshots__|node_modules|workflow-viz-app|omrchecker-js|change-propagation-tool|code-browser)/.*$"
 default_install_hook_types: [pre-commit, pre-push]
 # default_stages: [pre-commit]
 repos:
@@ -82,6 +82,18 @@ repos:
         args: ["--autofix", "--no-sort-keys"]
         exclude: ^.*(devcontainer.json)$
         fail_fast: true
+
+  # Python-TypeScript code correspondence validation
+  - repo: local
+    hooks:
+      - id: validate-code-correspondence
+        name: Validate Python ↔ TypeScript correspondence
+        entry: ./scripts/run_python_hook.sh scripts/hooks/validate_code_correspondence.py
+        files: ^src/.*\.py$
+        language: script
+        pass_filenames: false
+        fail_fast: true
+        stages: [pre-commit]
 
   - repo: local
     hooks:

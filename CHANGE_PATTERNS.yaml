@@ -1,0 +1,512 @@
+# Python to TypeScript Translation Patterns
+# Used by change detection and suggestion generation tools
+
+version: "1.0"
+description: "Common Python to TypeScript pattern translations for OMRChecker"
+
+# Naming Conventions
+naming:
+  - pattern_type: "function_name"
+    python: "snake_case"
+    typescript: "camelCase"
+    examples:
+      - python: "apply_on_image"
+        typescript: "applyOnImage"
+      - python: "get_file_path"
+        typescript: "getFilePath"
+      - python: "process_omr_response"
+        typescript: "processOmrResponse"
+
+  - pattern_type: "class_name"
+    python: "PascalCase"
+    typescript: "PascalCase"
+    examples:
+      - python: "OMRProcessor"
+        typescript: "OMRProcessor"
+      - python: "AutoRotateProcessor"
+        typescript: "AutoRotateProcessor"
+
+  - pattern_type: "constant"
+    python: "UPPER_SNAKE_CASE"
+    typescript: "UPPER_SNAKE_CASE"
+    examples:
+      - python: "DEFAULT_THRESHOLD"
+        typescript: "DEFAULT_THRESHOLD"
+      - python: "MAX_IMAGE_SIZE"
+        typescript: "MAX_IMAGE_SIZE"
+
+  - pattern_type: "private_method"
+    python: "_method_name"
+    typescript: "private methodName"
+    examples:
+      - python: "_apply_filter"
+        typescript: "private applyFilter"
+      - python: "_validate_input"
+        typescript: "private validateInput"
+
+# Type Mappings
+type_mappings:
+  - python_type: "int"
+    typescript_type: "number"
+
+  - python_type: "float"
+    typescript_type: "number"
+
+  - python_type: "str"
+    typescript_type: "string"
+
+  - python_type: "bool"
+    typescript_type: "boolean"
+
+  - python_type: "None"
+    typescript_type: "null | undefined"
+    notes: "Use undefined for optional parameters, null for nullable values"
+
+  - python_type: "list[T]"
+    typescript_type: "T[]"
+    alternative: "Array<T>"
+
+  - python_type: "dict[K, V]"
+    typescript_type: "Record<K, V>"
+    alternative: "Map<K, V>"
+    notes: "Use Record for simple key-value, Map for complex operations"
+
+  - python_type: "tuple[T1, T2]"
+    typescript_type: "[T1, T2]"
+    notes: "TypeScript tuple type"
+
+  - python_type: "set[T]"
+    typescript_type: "Set<T>"
+
+  - python_type: "Any"
+    typescript_type: "any"
+    notes: "Avoid when possible, use unknown for type safety"
+
+  - python_type: "Optional[T]"
+    typescript_type: "T | null | undefined"
+    alternative: "T?"
+    notes: "Use T? for optional parameters"
+
+  - python_type: "Union[T1, T2]"
+    typescript_type: "T1 | T2"
+
+  - python_type: "MatLike"
+    typescript_type: "cv.Mat"
+    notes: "OpenCV matrix type"
+
+  - python_type: "Path"
+    typescript_type: "string"
+    notes: "Browser doesn't have Path, use string URLs"
+
+# Language Constructs
+constructs:
+  # List Comprehensions
+  - name: "List Comprehension"
+    python: "[x for x in items]"
+    typescript: "items.map(x => x)"
+    examples:
+      - python: "[x * 2 for x in numbers]"
+        typescript: "numbers.map(x => x * 2)"
+      - python: "[x for x in items if x > 0]"
+        typescript: "items.filter(x => x > 0)"
+      - python: "[x * 2 for x in items if x > 0]"
+        typescript: "items.filter(x => x > 0).map(x => x * 2)"
+
+  # Dictionary Comprehensions
+  - name: "Dictionary Comprehension"
+    python: "{k: v for k, v in items}"
+    typescript: "Object.fromEntries(items)"
+    examples:
+      - python: "{k: v * 2 for k, v in dict.items()}"
+        typescript: "Object.fromEntries(Object.entries(dict).map(([k, v]) => [k, v * 2]))"
+      - python: "{k: v for k, v in dict.items() if v > 0}"
+        typescript: "Object.fromEntries(Object.entries(dict).filter(([k, v]) => v > 0))"
+
+  # Set Comprehensions
+  - name: "Set Comprehension"
+    python: "{x for x in items}"
+    typescript: "new Set(items)"
+    examples:
+      - python: "{x * 2 for x in numbers}"
+        typescript: "new Set(numbers.map(x => x * 2))"
+
+  # Context Managers
+  - name: "Context Manager (with statement)"
+    python: |
+      with resource as r:
+          r.use()
+    typescript: |
+      const r = resource;
+      try {
+          r.use();
+      } finally {
+          r.cleanup();
+      }
+    notes: "TypeScript doesn't have context managers, use try-finally"
+
+  # Exception Handling
+  - name: "Exception Handling"
+    python: |
+      try:
+          risky_operation()
+      except ValueError as e:
+          handle_error(e)
+      except Exception as e:
+          handle_generic(e)
+      finally:
+          cleanup()
+    typescript: |
+      try {
+          riskyOperation();
+      } catch (error) {
+          if (error instanceof ValueError) {
+              handleError(error);
+          } else {
+              handleGeneric(error);
+          }
+      } finally {
+          cleanup();
+      }
+    notes: "TypeScript catch doesn't have type discrimination, check instanceof"
+
+  # String Formatting
+  - name: "F-strings"
+    python: 'f"Hello {name}, you are {age} years old"'
+    typescript: "`Hello ${name}, you are ${age} years old`"
+    notes: "Use template literals"
+
+  # Default Parameters
+  - name: "Default Parameter with None"
+    python: |
+      def func(param=None):
+          if param is None:
+              param = default_value
+    typescript: |
+      function func(param?: ParamType): void {
+          const p = param ?? defaultValue;
+      }
+    notes: "Use optional parameters and nullish coalescing"
+
+  # Multiple Return Values
+  - name: "Multiple Return Values (tuple)"
+    python: |
+      def get_values():
+          return x, y, z
+
+      a, b, c = get_values()
+    typescript: |
+      function getValues(): [number, number, number] {
+          return [x, y, z];
+      }
+
+      const [a, b, c] = getValues();
+    notes: "Use tuple types and destructuring"
+
+  # Lambda Functions
+  - name: "Lambda Functions"
+    python: "lambda x: x * 2"
+    typescript: "(x) => x * 2"
+    examples:
+      - python: "lambda x, y: x + y"
+        typescript: "(x, y) => x + y"
+      - python: "sorted(items, key=lambda x: x.value)"
+        typescript: "items.sort((a, b) => a.value - b.value)"
+
+  # Range
+  - name: "Range"
+    python: "range(10)"
+    typescript: "Array.from({ length: 10 }, (_, i) => i)"
+    examples:
+      - python: "range(5, 10)"
+        typescript: "Array.from({ length: 5 }, (_, i) => i + 5)"
+      - python: "range(0, 10, 2)"
+        typescript: "Array.from({ length: 5 }, (_, i) => i * 2)"
+
+  # Enumerate
+  - name: "Enumerate"
+    python: "for i, item in enumerate(items):"
+    typescript: "items.forEach((item, i) => {"
+    alternative: "for (const [i, item] of items.entries()) {"
+
+  # Zip
+  - name: "Zip"
+    python: "zip(list1, list2)"
+    typescript: "list1.map((item, i) => [item, list2[i]])"
+    notes: "No built-in zip in TypeScript"
+
+# Class Patterns
+class_patterns:
+  # Class Definition
+  - name: "Class with Constructor"
+    python: |
+      class MyClass:
+          def __init__(self, param: int):
+              self.param = param
+    typescript: |
+      class MyClass {
+          constructor(private param: number) {}
+      }
+    notes: "TypeScript can declare properties in constructor parameters"
+
+  # Property Decorator
+  - name: "Property Decorator"
+    python: |
+      @property
+      def value(self) -> int:
+          return self._value
+
+      @value.setter
+      def value(self, val: int) -> None:
+          self._value = val
+    typescript: |
+      private _value: number;
+
+      get value(): number {
+          return this._value;
+      }
+
+      set value(val: number) {
+          this._value = val;
+      }
+
+  # Static Method
+  - name: "Static Method"
+    python: |
+      @staticmethod
+      def utility():
+          pass
+    typescript: |
+      static utility(): void {
+          // ...
+      }
+
+  # Class Method
+  - name: "Class Method"
+    python: |
+      @classmethod
+      def from_dict(cls, data: dict):
+          return cls(**data)
+    typescript: |
+      static fromDict(data: Record<string, any>): MyClass {
+          return new MyClass(data);
+      }
+
+  # Abstract Base Class
+  - name: "Abstract Base Class"
+    python: |
+      from abc import ABC, abstractmethod
+
+      class Base(ABC):
+          @abstractmethod
+          def process(self) -> None:
+              pass
+    typescript: |
+      abstract class Base {
+          abstract process(): void;
+      }
+
+  # Dataclass
+  - name: "Dataclass"
+    python: |
+      from dataclasses import dataclass
+
+      @dataclass
+      class Point:
+          x: int
+          y: int
+    typescript: |
+      interface Point {
+          x: number;
+          y: number;
+      }
+
+      // Or as class:
+      class Point {
+          constructor(
+              public x: number,
+              public y: number
+          ) {}
+      }
+
+# OpenCV-specific Patterns
+opencv_patterns:
+  - name: "Create Mat"
+    python: "mat = np.zeros((height, width), dtype=np.uint8)"
+    typescript: "const mat = new cv.Mat(height, width, cv.CV_8UC1);"
+    notes: "Must manually delete: mat.delete()"
+
+  - name: "Mat Memory Management"
+    python: |
+      result = cv2.GaussianBlur(image, (5, 5), 0)
+      # Automatic cleanup
+    typescript: |
+      const result = new cv.Mat();
+      try {
+          cv.GaussianBlur(image, result, new cv.Size(5, 5), 0);
+          // Use result
+      } finally {
+          result.delete();  // Manual cleanup required!
+      }
+
+  - name: "Image Loading"
+    python: 'image = cv2.imread("path/to/image.jpg")'
+    typescript: |
+      const img = document.getElementById('imageElement') as HTMLImageElement;
+      const mat = cv.imread(img);
+    notes: "Browser loads from DOM elements, not file paths"
+
+  - name: "Image Saving"
+    python: 'cv2.imwrite("output.jpg", image)'
+    typescript: |
+      const canvas = document.createElement('canvas');
+      cv.imshow(canvas, image);
+      const dataUrl = canvas.toDataURL('image/jpeg');
+      // Download or display dataUrl
+    notes: "Browser saves to canvas then data URL or blob"
+
+  - name: "Finding Contours"
+    python: "contours, hierarchy = cv2.findContours(image, mode, method)"
+    typescript: |
+      const contours = new cv.MatVector();
+      const hierarchy = new cv.Mat();
+      try {
+          cv.findContours(image, contours, hierarchy, mode, method);
+          // Use contours
+      } finally {
+          contours.delete();
+          hierarchy.delete();
+      }
+
+# Async/Promise Patterns
+async_patterns:
+  - name: "Synchronous to Async"
+    python: |
+      def load_image(path):
+          return cv2.imread(path)
+    typescript: |
+      async function loadImage(path: string): Promise<cv.Mat> {
+          const response = await fetch(path);
+          const blob = await response.blob();
+          // Convert blob to image element then Mat
+      }
+    notes: "Browser operations are often async"
+
+  - name: "Worker Processing"
+    python: |
+      from concurrent.futures import ThreadPoolExecutor
+
+      with ThreadPoolExecutor() as executor:
+          results = executor.map(process, items)
+    typescript: |
+      // Main thread:
+      const worker = new Worker('worker.js');
+      worker.postMessage(data);
+
+      // Worker thread (worker.js):
+      self.onmessage = (e) => {
+          const result = process(e.data);
+          self.postMessage(result);
+      };
+    notes: "Use Web Workers for parallel processing"
+
+# Import/Export Patterns
+import_patterns:
+  - name: "Named Import"
+    python: "from module import Class, function"
+    typescript: "import { Class, function } from './module';"
+
+  - name: "Default Import"
+    python: "import module"
+    typescript: "import module from './module';"
+    notes: "Or import * as module from './module';"
+
+  - name: "Named Export"
+    python: |
+      # In module.py
+      class MyClass:
+          pass
+
+      def my_function():
+          pass
+    typescript: |
+      // In module.ts
+      export class MyClass {
+          // ...
+      }
+
+      export function myFunction(): void {
+          // ...
+      }
+
+  - name: "Default Export"
+    python: "# No direct equivalent"
+    typescript: |
+      export default class MyClass {
+          // ...
+      }
+    notes: "Use named exports for better tree-shaking"
+
+# Documentation Patterns
+documentation:
+  - name: "Docstring to JSDoc"
+    python: |
+      def process_image(image: MatLike, threshold: int = 128) -> MatLike:
+          """Process an image with threshold.
+
+          Args:
+              image: Input image to process
+              threshold: Threshold value (default: 128)
+
+          Returns:
+              Processed image
+
+          Raises:
+              ValueError: If image is empty
+          """
+    typescript: |
+      /**
+       * Process an image with threshold.
+       *
+       * @param image - Input image to process
+       * @param threshold - Threshold value (default: 128)
+       * @returns Processed image
+       * @throws {ValueError} If image is empty
+       */
+      function processImage(
+          image: cv.Mat,
+          threshold: number = 128
+      ): cv.Mat {
+          // ...
+      }
+
+# Common Gotchas
+gotchas:
+  - issue: "Integer Division"
+    python: "result = 5 // 2  # Result: 2"
+    typescript: "const result = Math.floor(5 / 2);  // Result: 2"
+    notes: "JavaScript / operator does float division"
+
+  - issue: "Array/List Negative Indexing"
+    python: "last = items[-1]"
+    typescript: "const last = items[items.length - 1];"
+    alternative: "const last = items.at(-1);  // Modern browsers"
+
+  - issue: "Dict get() with default"
+    python: "value = dict.get('key', default)"
+    typescript: "const value = dict['key'] ?? default;"
+    notes: "Use nullish coalescing or optional chaining"
+
+  - issue: "Multiple Assignment"
+    python: "a = b = c = 0"
+    typescript: "let a = 0, b = 0, c = 0;"
+    notes: "JavaScript allows but can cause issues with objects"
+
+  - issue: "is vs =="
+    python: "if value is None:"
+    typescript: "if (value === null || value === undefined) {"
+    notes: "Use === for equality, no identity operator"
+
+  - issue: "Truthiness"
+    python: "if items:  # True if not empty"
+    typescript: "if (items.length > 0) {"
+    notes: "Be explicit with array checks, empty array is truthy in JS"

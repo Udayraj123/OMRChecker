@@ -1,0 +1,33 @@
+{
+  "name": "omrchecker-monorepo",
+  "version": "1.0.0",
+  "description": "OMRChecker TypeScript port - monorepo with core library, demo app, and E2E tests",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @omrchecker/demo dev",
+    "dev:core": "pnpm --filter @omrchecker/core dev",
+    "build": "pnpm -r build",
+    "build:core": "pnpm --filter @omrchecker/core build",
+    "test": "pnpm -r test",
+    "test:e2e": "pnpm --filter @omrchecker/e2e test",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "typecheck": "pnpm -r typecheck",
+    "change-tool": "pnpm --filter change-propagation-tool dev",
+    "clean": "pnpm -r clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint": "^8.56.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

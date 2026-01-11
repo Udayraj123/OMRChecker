@@ -1,0 +1,48 @@
+{
+  "name": "@omrchecker/core",
+  "version": "1.0.0",
+  "description": "OMRChecker core library - TypeScript port for browser",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "tsc && vite build",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@techstark/opencv-js": "4.12.0-release.1",
+    "@zxing/library": "^0.20.0",
+    "ajv": "^8.12.0",
+    "deepmerge": "^4.3.1",
+    "jsts": "^2.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "vite": "^5.0.11",
+    "vitest": "^1.2.0",
+    "vite-plugin-dts": "^3.7.0"
+  },
+  "keywords": [
+    "omr",
+    "optical-mark-recognition",
+    "opencv",
+    "image-processing",
+    "typescript"
+  ],
+  "author": "OMRChecker Team",
+  "license": "GPL-3.0"
+}

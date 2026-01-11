@@ -22,6 +22,21 @@ venv/
 .venv/
 OMRChecker.wiki/
 
+# TypeScript/JavaScript build outputs
+omrchecker-js/**/dist/
+omrchecker-js/**/node_modules/
+omrchecker-js/**/.vite/
+omrchecker-js/**/build/
+change-propagation-tool/dist/
+change-propagation-tool/node_modules/
+change-propagation-tool/.vite/
+code-browser/dist/
+code-browser/node_modules/
+
+# pnpm
+pnpm-lock.yaml
+.pnpm-store/
+
 # pytest
 pytestdebug.log
 .coverage
@@ -33,3 +48,7 @@ pytestdebug.log
 # ML outputs
 runs/**/*
 *.pt
+
+# Sync tool reports
+reports/sync-status-*.html
+.sync-suggestions/

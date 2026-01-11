@@ -1,0 +1,570 @@
+{
+  "version": "2.0",
+  "metadata": {
+    "description": "Mapping between Python and TypeScript files for OMRChecker port",
+    "lastUpdated": "2026-01-11T00:00:00Z",
+    "maintainer": "OMRChecker Team"
+  },
+  "phases": {
+    "1": {
+      "name": "Core Pipeline & Basic Processors",
+      "description": "Essential processing pipeline, core types, basic image processors, alignment, and detection"
+    },
+    "2": {
+      "name": "Advanced Processors & Visualization",
+      "description": "Barcode detection, advanced image processing, visualization tools, training data collection"
+    },
+    "future": {
+      "name": "ML Models & Advanced Features",
+      "description": "ML-based detection, OCR support, YOLO integration, STN models"
+    }
+  },
+  "mappings": [
+    {
+      "python": "src/core/omr_processor.py",
+      "typescript": "omrchecker-js/packages/core/src/core/OMRProcessor.ts",
+      "status": "partial",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "classes": [
+        {
+          "python": "OMRProcessor",
+          "typescript": "OMRProcessor",
+          "synced": false,
+          "methods": [
+            {
+              "python": "__init__",
+              "typescript": "constructor",
+              "synced": false
+            },
+            {
+              "python": "process_directory",
+              "typescript": "processDirectory",
+              "synced": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "python": "src/core/types.py",
+      "typescript": "omrchecker-js/packages/core/src/core/types.ts",
+      "status": "partial",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "types": [
+        "MatLike",
+        "ProcessingResult",
+        "TemplateConfig"
+      ]
+    },
+    {
+      "python": "src/processors/base.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/base.ts",
+      "status": "partial",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "classes": [
+        {
+          "python": "Processor",
+          "typescript": "Processor",
+          "synced": false,
+          "methods": [
+            {
+              "python": "process",
+              "typescript": "process",
+              "synced": false
+            },
+            {
+              "python": "get_name",
+              "typescript": "getName",
+              "synced": false
+            }
+          ]
+        },
+        {
+          "python": "ProcessingContext",
+          "typescript": "ProcessingContext",
+          "synced": false
+        }
+      ]
+    },
+    {
+      "python": "src/processors/pipeline.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/Pipeline.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "classes": [
+        {
+          "python": "ProcessingPipeline",
+          "typescript": "ProcessingPipeline",
+          "synced": false,
+          "methods": [
+            {
+              "python": "process_file",
+              "typescript": "processFile",
+              "synced": false
+            },
+            {
+              "python": "add_processor",
+              "typescript": "addProcessor",
+              "synced": false
+            },
+            {
+              "python": "remove_processor",
+              "typescript": "removeProcessor",
+              "synced": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "python": "src/processors/image/coordinator.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/image/coordinator.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "classes": [
+        {
+          "python": "PreprocessingProcessor",
+          "typescript": "PreprocessingProcessor",
+          "synced": false
+        }
+      ]
+    },
+    {
+      "python": "src/processors/image/base.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/image/base.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "medium",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "classes": [
+        {
+          "python": "ImageProcessor",
+          "typescript": "ImageProcessor",
+          "synced": false
+        }
+      ]
+    },
+    {
+      "python": "src/processors/image/AutoRotate.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/image/AutoRotate.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "medium",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "classes": [
+        {
+          "python": "AutoRotateProcessor",
+          "typescript": "AutoRotateProcessor",
+          "synced": false,
+          "methods": [
+            {
+              "python": "apply_on_image",
+              "typescript": "applyOnImage",
+              "synced": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "python": "src/processors/image/Contrast.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/image/Contrast.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "medium",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "classes": [
+        {
+          "python": "ContrastProcessor",
+          "typescript": "ContrastProcessor",
+          "synced": false
+        }
+      ]
+    },
+    {
+      "python": "src/processors/image/GaussianBlur.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/image/GaussianBlur.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "medium",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "classes": [
+        {
+          "python": "GaussianBlurProcessor",
+          "typescript": "GaussianBlurProcessor",
+          "synced": false
+        }
+      ]
+    },
+    {
+      "python": "src/processors/image/MedianBlur.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/image/MedianBlur.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "medium",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "classes": [
+        {
+          "python": "MedianBlurProcessor",
+          "typescript": "MedianBlurProcessor",
+          "synced": false
+        }
+      ]
+    },
+    {
+      "python": "src/processors/image/Levels.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/image/Levels.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "medium",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "classes": [
+        {
+          "python": "LevelsProcessor",
+          "typescript": "LevelsProcessor",
+          "synced": false
+        }
+      ]
+    },
+    {
+      "python": "src/processors/image/CropOnMarkers.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/image/CropOnMarkers.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "medium",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "classes": [
+        {
+          "python": "CropOnMarkersProcessor",
+          "typescript": "CropOnMarkersProcessor",
+          "synced": false
+        }
+      ]
+    },
+    {
+      "python": "src/processors/image/CropPage.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/image/CropPage.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "low",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "classes": [
+        {
+          "python": "CropPageProcessor",
+          "typescript": "CropPageProcessor",
+          "synced": false
+        }
+      ]
+    },
+    {
+      "python": "src/processors/alignment/processor.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/alignment/AlignmentProcessor.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "classes": [
+        {
+          "python": "AlignmentProcessor",
+          "typescript": "AlignmentProcessor",
+          "synced": false
+        }
+      ]
+    },
+    {
+      "python": "src/processors/alignment/template_alignment.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/alignment/templateAlignment.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "functions": [
+        "apply_template_alignment",
+        "get_global_alignment_transform"
+      ]
+    },
+    {
+      "python": "src/processors/detection/processor.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/detection/DetectionProcessor.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "classes": [
+        {
+          "python": "ReadOMRProcessor",
+          "typescript": "ReadOMRProcessor",
+          "synced": false
+        }
+      ]
+    },
+    {
+      "python": "src/processors/evaluation/processor.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/evaluation/EvaluationProcessor.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "classes": [
+        {
+          "python": "EvaluationProcessor",
+          "typescript": "EvaluationProcessor",
+          "synced": false
+        }
+      ]
+    },
+    {
+      "python": "src/utils/image.py",
+      "typescript": "omrchecker-js/packages/core/src/utils/image.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "classes": [
+        {
+          "python": "ImageUtils",
+          "typescript": "ImageUtils",
+          "synced": false
+        }
+      ]
+    },
+    {
+      "python": "src/utils/geometry.py",
+      "typescript": "omrchecker-js/packages/core/src/utils/geometry.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "functions": [
+        "calculate_angle",
+        "rotate_point",
+        "get_transform_matrix"
+      ]
+    },
+    {
+      "python": "src/utils/math.py",
+      "typescript": "omrchecker-js/packages/core/src/utils/math.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "medium",
+      "lastSyncedCommit": null,
+      "lastPythonChange": "2026-01-11T00:00:00Z",
+      "lastTypescriptChange": "2026-01-11T00:00:00Z",
+      "classes": [
+        {
+          "python": "MathUtils",
+          "typescript": "MathUtils",
+          "synced": true,
+          "methods": [
+            {
+              "python": "distance",
+              "typescript": "distance",
+              "synced": true
+            },
+            {
+              "python": "order_four_points",
+              "typescript": "orderFourPoints",
+              "synced": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "python": "src/utils/logger.py",
+      "typescript": "omrchecker-js/packages/core/src/utils/logger.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "medium",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "functions": [
+        "create_logger",
+        "log_info",
+        "log_error"
+      ]
+    },
+    {
+      "python": "src/utils/drawing.py",
+      "typescript": "omrchecker-js/packages/core/src/utils/drawing.ts",
+      "status": "not_started",
+      "phase": 2,
+      "priority": "low",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "functions": [
+        "draw_box",
+        "draw_circle",
+        "add_text"
+      ]
+    },
+    {
+      "python": "src/utils/csv.py",
+      "typescript": "omrchecker-js/packages/core/src/utils/csv.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "medium",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "functions": [
+        "write_csv",
+        "append_csv_row"
+      ]
+    },
+    {
+      "python": "src/utils/file.py",
+      "typescript": "omrchecker-js/packages/core/src/utils/file.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "medium",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "classes": [
+        {
+          "python": "PathUtils",
+          "typescript": "PathUtils",
+          "synced": false
+        }
+      ],
+      "notes": "Browser file handling uses File API instead of filesystem"
+    },
+    {
+      "python": "src/schemas/config_schema.py",
+      "typescript": "omrchecker-js/packages/core/src/schemas/configSchema.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "notes": "Uses AJV for JSON schema validation instead of jsonschema"
+    },
+    {
+      "python": "src/schemas/template_schema.py",
+      "typescript": "omrchecker-js/packages/core/src/schemas/templateSchema.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "notes": "Uses AJV for JSON schema validation"
+    },
+    {
+      "python": "src/schemas/evaluation_schema.py",
+      "typescript": "omrchecker-js/packages/core/src/schemas/evaluationSchema.ts",
+      "status": "not_started",
+      "phase": 1,
+      "priority": "medium",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "notes": "Uses AJV for JSON schema validation"
+    },
+    {
+      "python": "src/processors/detection/barcode/processor.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/detection/barcode/BarcodeProcessor.ts",
+      "status": "not_started",
+      "phase": 2,
+      "priority": "medium",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "notes": "Uses @zxing/library instead of pyzbar"
+    },
+    {
+      "python": "src/processors/detection/ml_detector.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/detection/mlDetector.ts",
+      "status": "not_started",
+      "phase": "future",
+      "priority": "low",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "notes": "Requires ONNX Runtime Web or TensorFlow.js"
+    },
+    {
+      "python": "src/processors/detection/ocr/processor.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/detection/ocr/OcrProcessor.ts",
+      "status": "not_started",
+      "phase": "future",
+      "priority": "low",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "notes": "Uses Tesseract.js instead of easyocr"
+    },
+    {
+      "python": "src/processors/visualization/workflow_tracker.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/visualization/workflowTracker.ts",
+      "status": "not_started",
+      "phase": 2,
+      "priority": "low",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": null,
+      "notes": "Browser-based visualization"
+    }
+  ],
+  "statistics": {
+    "total": 31,
+    "synced": 1,
+    "partial": 3,
+    "not_started": 27,
+    "phase1": 23,
+    "phase2": 4,
+    "future": 3
+  }
+}

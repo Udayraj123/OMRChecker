@@ -52,3 +52,28 @@ dev = [
     "ruff>=0.12.8",
     "syrupy==4.6.1",
 ]
+
+[tool.ruff]
+# Exclude patterns
+extend-exclude = ["change-propagation-tool", "omrchecker-js"]
+
+# Linting rules
+[tool.ruff.lint]
+ignore = [
+    "D212",    # Multi-line docstring summary should start at the first line
+    "D415",    # First line should end with punctuation
+    "C901",    # Function is too complex
+    "PLR0912", # Too many branches
+    "PERF401", # Use list comprehension (we prefer readability)
+    "PTH123",  # Use Path.open() (open() is fine for our use case)
+    "S607",    # Starting process with partial path (git is safe)
+    "S603",    # subprocess call (we control the input)
+    "S108",    # Insecure temp file (acceptable for internal tooling)
+    "ARG001",  # Unused function argument (needed for interface)
+    "ARG002",  # Unused method argument (needed for interface)
+    "PLW2901", # Loop variable overwritten (intentional)
+    "TRY300",  # Consider moving to else block (readability preference)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = ["E722"]  # Bare except acceptable in scripts
