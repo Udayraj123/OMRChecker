@@ -29,6 +29,14 @@ export {
 export { LocalThreshold } from './processors/threshold/LocalThreshold';
 export { AdaptiveThreshold } from './processors/threshold/AdaptiveThreshold';
 
+// Detection
+export {
+  SimpleBubbleDetector,
+  type BubbleLocation,
+  type BubbleDetectionResult,
+  type FieldDetectionResult,
+} from './processors/detection/SimpleBubbleDetector';
+
 // Utilities
 export { Logger } from './utils/logger';
 export { ImageUtils } from './utils/ImageUtils';

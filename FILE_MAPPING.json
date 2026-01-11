@@ -363,20 +363,29 @@
     },
     {
       "python": "src/processors/detection/processor.py",
-      "typescript": "omrchecker-js/packages/core/src/processors/detection/DetectionProcessor.ts",
-      "status": "not_started",
+      "typescript": "omrchecker-js/packages/core/src/processors/detection/SimpleBubbleDetector.ts",
+      "status": "partial",
       "phase": 1,
       "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/detection/__tests__/SimpleBubbleDetector.test.ts",
       "classes": [
         {
           "python": "ReadOMRProcessor",
-          "typescript": "ReadOMRProcessor",
-          "synced": false
+          "typescript": "SimpleBubbleDetector",
+          "synced": false,
+          "methods": [
+            {
+              "python": "process",
+              "typescript": "detectField",
+              "synced": false
+            }
+          ]
         }
-      ]
+      ],
+      "notes": "Simplified incremental implementation. SimpleBubbleDetector provides core bubble detection logic using threshold strategies. Full ReadOMRProcessor complexity (TemplateFileRunner, multiple passes, ML fallback) to be ported incrementally."
     },
     {
       "python": "src/processors/evaluation/processor.py",
@@ -711,8 +720,8 @@
   "statistics": {
     "total": 39,
     "synced": 10,
-    "partial": 3,
-    "not_started": 26,
+    "partial": 4,
+    "not_started": 25,
     "phase1": 31,
     "phase2": 4,
     "future": 3
