@@ -377,12 +377,12 @@
     {
       "python": "src/utils/geometry.py",
       "typescript": "omrchecker-js/packages/core/src/utils/geometry.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "high",
-      "lastSyncedCommit": null,
+      "lastSyncedCommit": "ab9d2bf0270081b61509002b48d4dd07fa2d7d7e",
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-11T09:00:45.151956+00:00",
       "functions": [
         "calculate_angle",
         "rotate_point",
@@ -421,12 +421,12 @@
     {
       "python": "src/utils/logger.py",
       "typescript": "omrchecker-js/packages/core/src/utils/logger.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "medium",
-      "lastSyncedCommit": null,
+      "lastSyncedCommit": "ab9d2bf0270081b61509002b48d4dd07fa2d7d7e",
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-11T09:08:43.344177+00:00",
       "functions": [
         "create_logger",
         "log_info",
@@ -451,12 +451,12 @@
     {
       "python": "src/utils/csv.py",
       "typescript": "omrchecker-js/packages/core/src/utils/csv.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "medium",
-      "lastSyncedCommit": null,
+      "lastSyncedCommit": "ab9d2bf0270081b61509002b48d4dd07fa2d7d7e",
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-11T09:11:43.051015+00:00",
       "functions": [
         "write_csv",
         "append_csv_row"
@@ -465,12 +465,12 @@
     {
       "python": "src/utils/file.py",
       "typescript": "omrchecker-js/packages/core/src/utils/file.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "medium",
-      "lastSyncedCommit": null,
+      "lastSyncedCommit": "ab9d2bf0270081b61509002b48d4dd07fa2d7d7e",
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-11T09:11:39.102837+00:00",
       "classes": [
         {
           "python": "PathUtils",

@@ -17,7 +17,7 @@
   "scripts": {
     "dev": "vite build --watch",
     "build": "tsc && vite build",
-    "test": "vitest",
+    "test": "vitest --run",
     "test:ui": "vitest --ui",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
@@ -26,15 +26,20 @@
   "dependencies": {
     "@techstark/opencv-js": "4.12.0-release.1",
     "@zxing/library": "^0.20.0",
-    "ajv": "^8.12.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "async-mutex": "^0.5.0",
+    "consola": "^3.4.2",
     "deepmerge": "^4.3.1",
-    "jsts": "^2.11.0"
+    "jsts": "^2.11.0",
+    "papaparse": "^5.5.3"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
+    "@types/papaparse": "^5.5.2",
     "vite": "^5.0.11",
-    "vitest": "^1.2.0",
-    "vite-plugin-dts": "^3.7.0"
+    "vite-plugin-dts": "^3.7.0",
+    "vitest": "^1.2.0"
   },
   "keywords": [
     "omr",

@@ -23,10 +23,29 @@ export {
 export type { ProcessingContext } from './processors/base';
 export { Processor, createProcessingContext } from './processors/base';
 
+// Exceptions
+export {
+  OMRCheckerError,
+  InputError,
+  InputFileNotFoundError,
+  ConfigLoadError,
+  ImageReadError,
+  ImageProcessingError,
+} from './core/exceptions';
+
 // Utilities
 export { MathUtils, EdgeType } from './utils/math';
 export type { Point, Rectangle } from './utils/math';
+export {
+  euclideanDistance,
+  vectorMagnitude,
+  bboxCenter,
+} from './utils/geometry';
+export { Logger, logger } from './utils/logger';
+export { PathUtils, loadJson } from './utils/file';
+export { threadSafeCsvAppend } from './utils/csv';
 
 // Version
 export const VERSION = '1.0.0';
+
 
