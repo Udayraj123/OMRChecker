@@ -609,17 +609,68 @@
     {
       "python": "src/utils/drawing.py",
       "typescript": "omrchecker-js/packages/core/src/utils/drawing.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 2,
       "priority": "low",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
-      "functions": [
-        "draw_box",
-        "draw_circle",
-        "add_text"
-      ]
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/utils/__tests__/drawing.test.ts",
+      "classes": [
+        {
+          "python": "DrawingUtils",
+          "typescript": "DrawingUtils",
+          "synced": true,
+          "methods": [
+            {
+              "python": "draw_box",
+              "typescript": "drawBox",
+              "synced": true
+            },
+            {
+              "python": "draw_line",
+              "typescript": "drawLine",
+              "synced": true
+            },
+            {
+              "python": "draw_text",
+              "typescript": "drawText",
+              "synced": true
+            },
+            {
+              "python": "draw_polygon",
+              "typescript": "drawPolygon",
+              "synced": true
+            },
+            {
+              "python": "draw_contour",
+              "typescript": "drawContour",
+              "synced": true
+            },
+            {
+              "python": "draw_matches",
+              "typescript": "drawMatches",
+              "synced": true
+            },
+            {
+              "python": "draw_arrows",
+              "typescript": "drawArrows",
+              "synced": true
+            },
+            {
+              "python": "draw_symbol",
+              "typescript": "drawSymbol",
+              "synced": true
+            },
+            {
+              "python": "draw_group",
+              "typescript": "drawGroup",
+              "synced": true
+            }
+          ]
+        }
+      ],
+      "notes": "1:1 file mapping. Essential for demo visualization. All major drawing methods ported with OpenCV.js compatibility."
     },
     {
       "python": "src/utils/csv.py",
@@ -873,9 +924,9 @@
   ],
   "statistics": {
     "total": 36,
-    "synced": 24,
+    "synced": 25,
     "partial": 4,
-    "not_started": 8,
+    "not_started": 7,
     "phase1": 31,
     "phase2": 3,
     "future": 2

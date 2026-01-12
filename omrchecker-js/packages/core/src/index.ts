@@ -88,6 +88,20 @@ export { ImageUtils } from './utils/ImageUtils';
 export * from './utils/geometry';
 export * from './utils/math';
 export * from './utils/file';
+export {
+  DrawingUtils,
+  CLR_BLACK,
+  CLR_WHITE,
+  CLR_GRAY,
+  CLR_DARK_GRAY,
+  CLR_GREEN,
+  CLR_RED,
+  CLR_BLUE,
+  CLR_YELLOW,
+  TEXT_SIZE,
+  type BoxStyle,
+  type BoxEdge,
+} from './utils/drawing';
 
 // Schemas
 export * from './schemas/templateSchema';

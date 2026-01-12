@@ -1,427 +1,472 @@
 /**
- * Drawing utilities for OMRChecker
+ * Drawing utilities for OMR visualization.
  *
  * TypeScript port of src/utils/drawing.py
- * Uses DRY patterns with shared position/text calculation helpers
- * All OpenCV conversions use matUtils for consistency
+ * Maintains 1:1 correspondence with Python implementation.
+ *
+ * Provides functions for drawing boxes, text, contours, arrows, and other
+ * visual elements on OpenCV Mat images for OMR result visualization.
  */
 
-import cv from '@techstark/opencv-js';
-import { MatUtils } from './opencv/matUtils';
+import * as cv from '@techstark/opencv-js';
+import { ImageUtils } from './ImageUtils';
+import { MathUtils, type Point } from './math';
 import {
   CLR_BLACK,
+  CLR_WHITE,
   CLR_GRAY,
   CLR_DARK_GRAY,
   CLR_GREEN,
-  TEXT_SIZE,
+  CLR_RED,
+  CLR_BLUE,
+  CLR_YELLOW,
+  CLR_DARK_BLUE,
+  CLR_DARK_GREEN,
+  CLR_DARK_RED,
+  CLR_NEAR_BLACK,
+  CLR_LIGHT_GRAY,
   type ColorTuple,
 } from './constants';
 
+// Re-export color constants for convenience
+export {
+  CLR_BLACK,
+  CLR_WHITE,
+  CLR_GRAY,
+  CLR_DARK_GRAY,
+  CLR_GREEN,
+  CLR_RED,
+  CLR_BLUE,
+  CLR_YELLOW,
+  CLR_DARK_BLUE,
+  CLR_DARK_GREEN,
+  CLR_DARK_RED,
+  CLR_NEAR_BLACK,
+  CLR_LIGHT_GRAY,
+};
+
+// Text constants
+export const TEXT_SIZE = 0.6;
+
 /**
- * Drawing utility class with DRY patterns
- * Shared calculation methods are private and reused by public methods
+ * Box drawing styles
+ */
+export type BoxStyle = 'BOX_HOLLOW' | 'BOX_FILLED';
+
+/**
+ * Box edge positions for group drawing
+ */
+export type BoxEdge = 'TOP' | 'RIGHT' | 'BOTTOM' | 'LEFT';
+
+/**
+ * Drawing utilities class providing static methods for visualization.
  */
 export class DrawingUtils {
-  // ==================== BOX DRAWING (DRY Pattern) ====================
+  /**
+   * Draw matching lines between two images side by side.
+   *
+   * @param image - First image
+   * @param fromPoints - Points in the first image
+   * @param warpedImage - Second image (warped)
+   * @param toPoints - Corresponding points in the second image
+   * @returns Horizontal stack with lines drawn
+   */
+  static drawMatches(
+    image: cv.Mat,
+    fromPoints: number[][]  | [number, number][],
+    warpedImage: cv.Mat,
+    toPoints: number[][] | [number, number][]
+  ): cv.Mat {
+    const horizontalStack = ImageUtils.getPaddedHstack([image, warpedImage]);
+    const w = image.cols;
+
+    const fromTuples = MathUtils.getTuplePoints(fromPoints as any);
+    const toTuples = MathUtils.getTuplePoints(toPoints as any);
+
+    for (let i = 0; i < fromTuples.length; i++) {
+      cv.line(
+        horizontalStack,
+        new cv.Point(fromTuples[i][0], fromTuples[i][1]),
+        new cv.Point(w + toTuples[i][0], toTuples[i][1]),
+        CLR_GREEN,
+        3
+      );
+    }
+
+    return horizontalStack;
+  }
 
   /**
-   * DRY: Calculate box positions (used by drawBox and drawSymbol)
-   * @private
+   * Draw a rectangle using diagonal points.
+   *
+   * @param image - Image to draw on
+   * @param position - Top-left corner
+   * @param positionDiagonal - Bottom-right corner
+   * @param color - Rectangle color
+   * @param border - Border thickness (-1 for filled)
    */
-  private static calculateBoxPositions(
+  static drawBoxDiagonal(
+    image: cv.Mat,
     position: [number, number],
-    dimensions: [number, number],
-    thicknessFactor: number,
-    centered: boolean
-  ): { pos: [number, number]; posDiag: [number, number] } {
+    positionDiagonal: [number, number],
+    color: ColorTuple = CLR_DARK_GRAY,
+    border: number = 3
+  ): void {
+    cv.rectangle(
+      image,
+      new cv.Point(Math.floor(position[0]), Math.floor(position[1])),
+      new cv.Point(Math.floor(positionDiagonal[0]), Math.floor(positionDiagonal[1])),
+      color,
+      border
+    );
+  }
+
+  /**
+   * Draw a contour on the image.
+   *
+   * @param image - Image to draw on
+   * @param contour - Contour points
+   * @param color - Contour color
+   * @param thickness - Line thickness
+   */
+  static drawContour(
+    image: cv.Mat,
+    contour: cv.Mat | number[][],
+    color: ColorTuple = CLR_GREEN,
+    thickness: number = 2
+  ): void {
+    // Convert to MatVector if needed
+    const contours = new cv.MatVector();
+
+    if (Array.isArray(contour)) {
+      const mat = cv.matFromArray(contour.length, 1, cv.CV_32SC2, contour.flat());
+      contours.push_back(mat);
+      cv.drawContours(image, contours, 0, color, thickness);
+      mat.delete();
+    } else {
+      contours.push_back(contour);
+      cv.drawContours(image, contours, 0, color, thickness);
+    }
+
+    contours.delete();
+  }
+
+  /**
+   * Draw a box (rectangle) with various styles.
+   *
+   * @param image - Image to draw on
+   * @param position - Top-left position
+   * @param boxDimensions - Box dimensions [width, height]
+   * @param color - Box color (optional)
+   * @param style - Box style (hollow or filled)
+   * @param thicknessFactor - Inset factor for the box
+   * @param border - Border thickness
+   * @param centered - Whether to center the box
+   * @returns Tuple of [position, positionDiagonal]
+   */
+  static drawBox(
+    image: cv.Mat,
+    position: [number, number],
+    boxDimensions: [number, number],
+    color?: ColorTuple,
+    style: BoxStyle = 'BOX_HOLLOW',
+    thicknessFactor: number = 1 / 12,
+    border: number = 3,
+    centered: boolean = false
+  ): [[number, number], [number, number]] {
     const [x, y] = position;
-    const [boxW, boxH] = dimensions;
+    const [boxW, boxH] = boxDimensions;
 
     let pos: [number, number] = [
       Math.floor(x + boxW * thicknessFactor),
       Math.floor(y + boxH * thicknessFactor),
     ];
+
     let posDiag: [number, number] = [
       Math.floor(x + boxW - boxW * thicknessFactor),
       Math.floor(y + boxH - boxH * thicknessFactor),
     ];
 
     if (centered) {
-      pos = [
+      const centeredPos: [number, number] = [
         Math.floor((3 * pos[0] - posDiag[0]) / 2),
         Math.floor((3 * pos[1] - posDiag[1]) / 2),
       ];
-      posDiag = [
+      const centeredDiag: [number, number] = [
         Math.floor((pos[0] + posDiag[0]) / 2),
         Math.floor((pos[1] + posDiag[1]) / 2),
       ];
+      pos = centeredPos;
+      posDiag = centeredDiag;
     }
 
-    return { pos, posDiag };
-  }
+    let finalColor = color;
+    let finalBorder = border;
 
-  /**
-   * Draw a rectangle using diagonal corners
-   */
-  static drawBoxDiagonal(
-    mat: cv.Mat,
-    position: [number, number],
-    positionDiagonal: [number, number],
-    color: ColorTuple = CLR_DARK_GRAY,
-    border = 3
-  ): void {
-    cv.rectangle(
-      mat,
-      MatUtils.toPoint(position),
-      MatUtils.toPoint(positionDiagonal),
-      MatUtils.toScalar(color),
-      border
-    );
-  }
-
-  /**
-   * Draw a box with styling options
-   */
-  static drawBox(
-    mat: cv.Mat,
-    position: [number, number],
-    dimensions: [number, number],
-    color?: ColorTuple,
-    style: 'BOX_HOLLOW' | 'BOX_FILLED' = 'BOX_HOLLOW',
-    thicknessFactor = 1 / 12,
-    border = 3,
-    centered = false
-  ): { pos: [number, number]; posDiag: [number, number] } {
-    const { pos, posDiag } = this.calculateBoxPositions(
-      position,
-      dimensions,
-      thicknessFactor,
-      centered
-    );
-
-    const finalColor =
-      color || (style === 'BOX_HOLLOW' ? CLR_GRAY : CLR_DARK_GRAY);
-    const finalBorder = style === 'BOX_FILLED' ? -1 : border;
-
-    this.drawBoxDiagonal(mat, pos, posDiag, finalColor, finalBorder);
-
-    return { pos, posDiag };
-  }
-
-  // ==================== TEXT DRAWING (DRY Pattern) ====================
-
-  /**
-   * DRY: Calculate text position (used by 3 text methods)
-   * @private
-   */
-  private static calculateTextPosition(
-    text: string,
-    basePosition: [number, number],
-    textSize: number,
-    thickness: number,
-    fontFace: number,
-    centered: boolean
-  ): [number, number] {
-    const baseline = [0]; // Output parameter for baseline
-    const textDims = cv.getTextSize(text, fontFace, textSize, thickness, baseline);
-    const sizeX = textDims.width;
-    const sizeY = textDims.height;
-
-    if (centered) {
-      return [
-        basePosition[0] - Math.floor(sizeX / 2),
-        basePosition[1] + Math.floor(sizeY / 2),
-      ];
+    if (style === 'BOX_HOLLOW') {
+      if (!finalColor) finalColor = CLR_GRAY;
+    } else if (style === 'BOX_FILLED') {
+      if (!finalColor) finalColor = CLR_DARK_GRAY;
+      finalBorder = -1;
     }
 
-    return basePosition;
+    this.drawBoxDiagonal(image, pos, posDiag, finalColor!, finalBorder);
+    return [pos, posDiag];
   }
 
   /**
-   * Draw text on image
+   * Draw arrows from start points to end points.
+   *
+   * @param image - Image to draw on
+   * @param startPoints - Array of start points
+   * @param endPoints - Array of end points
+   * @param color - Arrow color
+   * @param thickness - Line thickness
+   * @param lineType - OpenCV line type
+   * @param tipLength - Arrow tip length ratio
+   * @returns Modified image
    */
-  static drawText(
-    mat: cv.Mat,
-    text: string,
-    position: [number, number],
-    textSize = TEXT_SIZE,
-    thickness = 2,
-    centered = false,
-    color: ColorTuple = CLR_BLACK,
-    lineType = cv.LINE_AA,
-    fontFace = cv.FONT_HERSHEY_SIMPLEX
-  ): void {
-    const finalPos = this.calculateTextPosition(
-      text,
-      position,
-      textSize,
-      thickness,
-      fontFace,
-      centered
-    );
+  static drawArrows(
+    image: cv.Mat,
+    startPoints: number[][] | [number, number][],
+    endPoints: number[][] | [number, number][],
+    color: ColorTuple = CLR_GREEN,
+    thickness: number = 2,
+    lineType: number = cv.LINE_AA,
+    tipLength: number = 0.1
+  ): cv.Mat {
+    const startTuples = MathUtils.getTuplePoints(startPoints as any);
+    const endTuples = MathUtils.getTuplePoints(endPoints as any);
 
-    cv.putText(
-      mat,
-      text,
-      MatUtils.toPoint(finalPos),
-      fontFace,
-      textSize,
-      MatUtils.toScalar(color),
-      thickness,
-      lineType
-    );
+    for (let i = 0; i < startTuples.length; i++) {
+      cv.arrowedLine(
+        image,
+        new cv.Point(startTuples[i][0], startTuples[i][1]),
+        new cv.Point(endTuples[i][0], endTuples[i][1]),
+        color,
+        thickness,
+        lineType,
+        0,
+        tipLength
+      );
+    }
+
+    return image;
   }
 
   /**
-   * Draw text that stays within image boundaries
+   * Draw text that adjusts position to stay within image bounds.
+   *
+   * @param image - Image to draw on
+   * @param text - Text to draw
+   * @param position - Desired position
+   * @param textSize - Font size
+   * @param thickness - Text thickness
+   * @param centered - Whether to center text
+   * @param color - Text color
+   * @param lineType - OpenCV line type
    */
   static drawTextResponsive(
-    mat: cv.Mat,
+    image: cv.Mat,
     text: string,
     position: [number, number],
-    textSize = TEXT_SIZE,
-    thickness = 2,
+    textSize: number = TEXT_SIZE,
+    thickness: number = 2,
+    centered: boolean = false,
     color: ColorTuple = CLR_BLACK,
-    lineType = cv.LINE_AA,
-    fontFace = cv.FONT_HERSHEY_SIMPLEX
+    lineType: number = cv.LINE_AA
   ): void {
-    const [h, w] = [mat.rows, mat.cols];
-    const baseline = [0];
-    const textDims = cv.getTextSize(text, fontFace, textSize, thickness, baseline);
-    const sizeX = textDims.width;
-    const sizeY = textDims.height;
+    const h = image.rows;
+    const w = image.cols;
 
-    // Adjust position to stay within bounds
-    const adjustedPos: [number, number] = [
+    const textPosition = (sizeX: number, sizeY: number): [number, number] => [
       position[0] - Math.max(0, position[0] + sizeX - w),
       position[1] - Math.max(0, position[1] + sizeY - h),
     ];
 
+    this.drawText(image, text, textPosition, textSize, thickness, centered, color, lineType);
+  }
+
+  /**
+   * Draw text on the image.
+   *
+   * @param image - Image to draw on
+   * @param textValue - Text to draw
+   * @param position - Position or position calculator function
+   * @param textSize - Font size
+   * @param thickness - Text thickness
+   * @param centered - Whether to center text
+   * @param color - Text color
+   * @param lineType - OpenCV line type
+   * @param fontFace - OpenCV font face
+   */
+  static drawText(
+    image: cv.Mat,
+    textValue: string,
+    position: [number, number] | ((sizeX: number, sizeY: number) => [number, number]),
+    textSize: number = TEXT_SIZE,
+    thickness: number = 2,
+    centered: boolean = false,
+    color: ColorTuple = CLR_BLACK,
+    lineType: number = cv.LINE_AA,
+    fontFace: number = cv.FONT_HERSHEY_SIMPLEX
+  ): void {
+    let finalPosition: [number, number];
+
+    if (centered && !(typeof position === 'function')) {
+      const textPosition = position;
+      const textSizeResult = cv.getTextSize(textValue, fontFace, textSize, thickness, 0);
+      const sizeX = textSizeResult.width;
+      const sizeY = textSizeResult.height;
+      finalPosition = [
+        textPosition[0] - Math.floor(sizeX / 2),
+        textPosition[1] + Math.floor(sizeY / 2),
+      ];
+    } else if (typeof position === 'function') {
+      const textSizeResult = cv.getTextSize(textValue, fontFace, textSize, thickness, 0);
+      const sizeX = textSizeResult.width;
+      const sizeY = textSizeResult.height;
+      finalPosition = position(sizeX, sizeY);
+    } else {
+      finalPosition = position;
+    }
+
     cv.putText(
-      mat,
-      text,
-      MatUtils.toPoint(adjustedPos),
+      image,
+      textValue,
+      new cv.Point(Math.floor(finalPosition[0]), Math.floor(finalPosition[1])),
       fontFace,
       textSize,
-      MatUtils.toScalar(color),
+      color,
       thickness,
       lineType
     );
   }
 
-  // ==================== SHAPE DRAWING (DRY Pattern) ====================
-
   /**
-   * DRY: Convert array of points (used by 4 methods)
-   * @private
+   * Draw a symbol centered between two points.
+   *
+   * @param image - Image to draw on
+   * @param symbol - Symbol text to draw
+   * @param position - Top-left position
+   * @param positionDiagonal - Bottom-right position
+   * @param color - Symbol color
    */
-  private static convertPoints(
-    points: Array<[number, number]>
-  ): cv.Point[] {
-    return points.map((p) => MatUtils.toPoint(p));
+  static drawSymbol(
+    image: cv.Mat,
+    symbol: string,
+    position: [number, number],
+    positionDiagonal: [number, number],
+    color: ColorTuple = CLR_BLACK
+  ): void {
+    const centerPosition = (sizeX: number, sizeY: number): [number, number] => [
+      Math.floor((position[0] + positionDiagonal[0] - sizeX) / 2),
+      Math.floor((position[1] + positionDiagonal[1] + sizeY) / 2),
+    ];
+
+    this.drawText(image, symbol, centerPosition, TEXT_SIZE, 2, false, color);
   }
 
   /**
-   * Draw a line between two points
+   * Draw a line between two points.
+   *
+   * @param image - Image to draw on
+   * @param start - Start point
+   * @param end - End point
+   * @param color - Line color
+   * @param thickness - Line thickness
    */
   static drawLine(
-    mat: cv.Mat,
+    image: cv.Mat,
     start: [number, number],
     end: [number, number],
     color: ColorTuple = CLR_BLACK,
-    thickness = 1,
-    lineType = cv.LINE_AA
+    thickness: number = 3
   ): void {
     cv.line(
-      mat,
-      MatUtils.toPoint(start),
-      MatUtils.toPoint(end),
-      MatUtils.toScalar(color),
-      thickness,
-      lineType
-    );
-  }
-
-  /**
-   * Draw a circle
-   */
-  static drawCircle(
-    mat: cv.Mat,
-    center: [number, number],
-    radius: number,
-    color: ColorTuple = CLR_BLACK,
-    thickness = 1,
-    lineType = cv.LINE_AA
-  ): void {
-    cv.circle(
-      mat,
-      MatUtils.toPoint(center),
-      Math.floor(radius),
-      MatUtils.toScalar(color),
-      thickness,
-      lineType
-    );
-  }
-
-  /**
-   * Draw a polygon (closed or open)
-   */
-  static drawPolygon(
-    mat: cv.Mat,
-    points: Array<[number, number]>,
-    color: ColorTuple = CLR_BLACK,
-    thickness = 1,
-    closed = true
-  ): void {
-    const n = points.length;
-
-    for (let i = 0; i < n; i++) {
-      if (!closed && i === n - 1) continue;
-      this.drawLine(mat, points[i], points[(i + 1) % n], color, thickness);
-    }
-  }
-
-  /**
-   * Draw contour on image
-   */
-  static drawContour(
-    mat: cv.Mat,
-    contour: Array<[number, number]>,
-    color: ColorTuple = CLR_GREEN,
-    thickness = 2
-  ): void {
-    // Create contour as MatVector
-    const points = new cv.MatVector();
-    const contourMat = cv.matFromArray(
-      contour.length,
-      1,
-      cv.CV_32SC2,
-      contour.flat()
-    );
-    points.push_back(contourMat);
-
-    cv.drawContours(
-      mat,
-      points,
-      0, // contourIdx
-      MatUtils.toScalar(color),
+      image,
+      new cv.Point(start[0], start[1]),
+      new cv.Point(end[0], end[1]),
+      color,
       thickness
     );
-
-    // Clean up
-    contourMat.delete();
-    points.delete();
   }
 
   /**
-   * Draw arrows between points
+   * Draw a polygon connecting multiple points.
+   *
+   * @param image - Image to draw on
+   * @param points - Array of points
+   * @param color - Line color
+   * @param thickness - Line thickness
+   * @param closed - Whether to close the polygon
    */
-  static drawArrows(
-    mat: cv.Mat,
-    startPoints: Array<[number, number]>,
-    endPoints: Array<[number, number]>,
-    color: ColorTuple = CLR_GREEN,
-    thickness = 2,
-    lineType = cv.LINE_AA,
-    tipLength = 0.1
+  static drawPolygon(
+    image: cv.Mat,
+    points: number[][],
+    color: ColorTuple = CLR_BLACK,
+    thickness: number = 1,
+    closed: boolean = true
   ): void {
-    const starts = this.convertPoints(startPoints);
-    const ends = this.convertPoints(endPoints);
+    const n = points.length;
+    for (let i = 0; i < n; i++) {
+      if (!closed && i === n - 1) continue;
 
-    for (let i = 0; i < Math.min(starts.length, ends.length); i++) {
-      cv.arrowedLine(
-        mat,
-        starts[i],
-        ends[i],
-        MatUtils.toScalar(color),
-        thickness,
-        lineType,
-        0, // shift
-        tipLength
-      );
-    }
-  }
-
-  /**
-   * Draw matches between two images (for alignment visualization)
-   */
-  static drawMatches(
-    image1: cv.Mat,
-    fromPoints: Array<[number, number]>,
-    image2: cv.Mat,
-    toPoints: Array<[number, number]>,
-    matchColor: ColorTuple = CLR_GREEN,
-    thickness = 3
-  ): cv.Mat {
-    // Stack images horizontally
-    const matVector = new cv.MatVector();
-    matVector.push_back(image1);
-    matVector.push_back(image2);
-    const stacked = new cv.Mat();
-    cv.hconcat(matVector, stacked);
-    matVector.delete();
-
-    // Draw lines between matched points
-    const w = image1.cols;
-    const adjustedToPoints = toPoints.map(
-      ([x, y]) => [w + x, y] as [number, number]
-    );
-
-    for (let i = 0; i < Math.min(fromPoints.length, toPoints.length); i++) {
       this.drawLine(
-        stacked,
-        fromPoints[i],
-        adjustedToPoints[i],
-        matchColor,
+        image,
+        [points[i][0], points[i][1]],
+        [points[(i + 1) % n][0], points[(i + 1) % n][1]],
+        color,
         thickness
       );
     }
-
-    return stacked;
   }
-
-  // ==================== SYMBOL DRAWING ====================
 
   /**
-   * Draw a symbol (cross, tick, etc.) in a box
+   * Draw a group indicator on a specific edge of a bubble.
+   *
+   * @param image - Image to draw on
+   * @param start - Start position
+   * @param bubbleDimensions - Bubble dimensions [width, height]
+   * @param boxEdge - Which edge to draw on
+   * @param color - Line color
+   * @param thickness - Line thickness
+   * @param thicknessFactor - Length factor for the indicator
    */
-  static drawSymbol(
-    mat: cv.Mat,
-    symbol: 'CROSS' | 'TICK' | 'DOT',
-    position: [number, number],
-    dimensions: [number, number],
-    color: ColorTuple = CLR_BLACK,
-    thickness = 2
+  static drawGroup(
+    image: cv.Mat,
+    start: [number, number],
+    bubbleDimensions: [number, number],
+    boxEdge: BoxEdge,
+    color: ColorTuple,
+    thickness: number = 3,
+    thicknessFactor: number = 7 / 10
   ): void {
-    const { pos, posDiag } = this.calculateBoxPositions(
-      position,
-      dimensions,
-      1 / 12,
-      false
-    );
+    const [startX, startY] = start;
+    const [boxW, boxH] = bubbleDimensions;
 
-    const centerX = Math.floor((pos[0] + posDiag[0]) / 2);
-    const centerY = Math.floor((pos[1] + posDiag[1]) / 2);
+    let lineStart: [number, number];
+    let lineEnd: [number, number];
 
-    switch (symbol) {
-      case 'CROSS':
-        // Draw X
-        this.drawLine(mat, pos, posDiag, color, thickness);
-        this.drawLine(mat, [posDiag[0], pos[1]], [pos[0], posDiag[1]], color, thickness);
+    switch (boxEdge) {
+      case 'TOP':
+        lineEnd = [startX + Math.floor(boxW * thicknessFactor), startY];
+        lineStart = [startX + Math.floor(boxW * (1 - thicknessFactor)), startY];
         break;
-      case 'TICK':
-        // Draw checkmark
-        const midX = Math.floor((pos[0] + centerX) / 2);
-        const midY = Math.floor((centerY + posDiag[1]) / 2);
-        this.drawLine(mat, [pos[0], centerY], [midX, midY], color, thickness);
-        this.drawLine(mat, [midX, midY], [posDiag[0], pos[1]], color, thickness);
+      case 'RIGHT':
+        lineStart = [startX + boxW, startY + Math.floor(boxH * (1 - thicknessFactor))];
+        lineEnd = [startX + boxW, startY + Math.floor(boxH * thicknessFactor)];
         break;
-      case 'DOT':
-        // Draw filled circle
-        const radius = Math.floor(Math.min(dimensions[0], dimensions[1]) / 6);
-        this.drawCircle(mat, [centerX, centerY], radius, color, -1);
+      case 'BOTTOM':
+        lineStart = [startX + Math.floor(boxW * (1 - thicknessFactor)), startY + boxH];
+        lineEnd = [startX + Math.floor(boxW * thicknessFactor), startY + boxH];
+        break;
+      case 'LEFT':
+        lineStart = [startX, startY + Math.floor(boxH * (1 - thicknessFactor))];
+        lineEnd = [startX, startY + Math.floor(boxH * thicknessFactor)];
         break;
     }
+
+    this.drawLine(image, lineStart, lineEnd, color, thickness);
   }
 }
-
