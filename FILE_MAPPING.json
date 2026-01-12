@@ -67,70 +67,79 @@
     {
       "python": "src/processors/base.py",
       "typescript": "omrchecker-js/packages/core/src/processors/base.ts",
-      "status": "partial",
+      "status": "synced",
       "phase": 1,
       "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/__tests__/Pipeline.test.ts",
       "classes": [
         {
           "python": "Processor",
           "typescript": "Processor",
-          "synced": false,
+          "synced": true,
           "methods": [
             {
               "python": "process",
               "typescript": "process",
-              "synced": false
+              "synced": true
             },
             {
               "python": "get_name",
               "typescript": "getName",
-              "synced": false
+              "synced": true
             }
           ]
         },
         {
           "python": "ProcessingContext",
           "typescript": "ProcessingContext",
-          "synced": false
+          "synced": true
         }
-      ]
+      ],
+      "notes": "1:1 file mapping. Base classes for unified processor architecture. TypeScript uses interface for ProcessingContext with createProcessingContext factory function."
     },
     {
       "python": "src/processors/pipeline.py",
       "typescript": "omrchecker-js/packages/core/src/processors/Pipeline.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/__tests__/Pipeline.test.ts",
       "classes": [
         {
           "python": "ProcessingPipeline",
           "typescript": "ProcessingPipeline",
-          "synced": false,
+          "synced": true,
           "methods": [
             {
               "python": "process_file",
               "typescript": "processFile",
-              "synced": false
+              "synced": true
             },
             {
               "python": "add_processor",
               "typescript": "addProcessor",
-              "synced": false
+              "synced": true
             },
             {
               "python": "remove_processor",
               "typescript": "removeProcessor",
-              "synced": false
+              "synced": true
+            },
+            {
+              "python": "get_processor_names",
+              "typescript": "getProcessorNames",
+              "synced": true
             }
           ]
         }
-      ]
+      ],
+      "notes": "1:1 file mapping. Simplified pipeline orchestrating processors with unified interface. Supports sync and async processors."
     },
     {
       "python": "src/processors/image/coordinator.py",
@@ -152,19 +161,48 @@
     {
       "python": "src/processors/image/base.py",
       "typescript": "omrchecker-js/packages/core/src/processors/image/base.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "medium",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/image/__tests__/base.test.ts",
       "classes": [
         {
-          "python": "ImageProcessor",
-          "typescript": "ImageProcessor",
-          "synced": false
+          "python": "ImageTemplatePreprocessor",
+          "typescript": "ImageTemplatePreprocessor",
+          "synced": true,
+          "methods": [
+            {
+              "python": "apply_filter",
+              "typescript": "applyFilter",
+              "synced": true
+            },
+            {
+              "python": "get_class_name",
+              "typescript": "getClassName",
+              "synced": true
+            },
+            {
+              "python": "get_name",
+              "typescript": "getName",
+              "synced": true
+            },
+            {
+              "python": "process",
+              "typescript": "process",
+              "synced": true
+            },
+            {
+              "python": "exclude_files",
+              "typescript": "excludeFiles",
+              "synced": true
+            }
+          ]
         }
-      ]
+      ],
+      "notes": "1:1 file mapping. Base class for image preprocessing with unified Processor interface. Uses abstract methods for extensibility."
     },
     {
       "python": "src/processors/image/AutoRotate.py",
@@ -564,24 +602,26 @@
     {
       "python": "src/schemas/config_schema.py",
       "typescript": "omrchecker-js/packages/core/src/schemas/configSchema.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
-      "notes": "Uses AJV for JSON schema validation instead of jsonschema"
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/schemas/__tests__/configSchema.test.ts",
+      "notes": "1:1 file mapping. Uses AJV for JSON schema validation (Draft 2020-12) instead of Python's jsonschema. Includes validation helper functions."
     },
     {
       "python": "src/schemas/template_schema.py",
       "typescript": "omrchecker-js/packages/core/src/schemas/templateSchema.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
-      "notes": "Uses AJV for JSON schema validation"
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/schemas/__tests__/templateSchema.test.ts",
+      "notes": "1:1 file mapping. Uses AJV for JSON schema validation (Draft 2020-12). Covers core template structure with preprocessor and field block validation."
     },
     {
       "python": "src/schemas/evaluation_schema.py",
@@ -779,9 +819,9 @@
   ],
   "statistics": {
     "total": 41,
-    "synced": 12,
-    "partial": 4,
-    "not_started": 25,
+    "synced": 17,
+    "partial": 3,
+    "not_started": 21,
     "phase1": 33,
     "phase2": 4,
     "future": 3

@@ -20,6 +20,13 @@ export { Contrast } from './processors/image/Contrast';
 export { AutoRotate, type AutoRotateOptions } from './processors/image/AutoRotate';
 export { Levels } from './processors/image/Levels';
 
+// Image processors - Base class
+export {
+  ImageTemplatePreprocessor,
+  type ImagePreprocessorOptions,
+  type SaveImageOps,
+} from './processors/image/base';
+
 // Threshold strategies
 export {
   GlobalThreshold,
