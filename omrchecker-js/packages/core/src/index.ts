@@ -27,6 +27,17 @@ export {
   type SaveImageOps,
 } from './processors/image/base';
 
+// Image processors - Coordinator
+export { PreprocessingProcessor } from './processors/image/coordinator';
+
+// Alignment processors
+export { AlignmentProcessor } from './processors/alignment/AlignmentProcessor';
+export {
+  applyTemplateAlignment,
+  getGlobalAlignmentTransform,
+  type AlignmentResult,
+} from './processors/alignment/templateAlignment';
+
 // Threshold strategies
 export {
   GlobalThreshold,
@@ -43,6 +54,17 @@ export {
   type BubbleDetectionResult,
   type FieldDetectionResult,
 } from './processors/detection/SimpleBubbleDetector';
+
+// Evaluation
+export {
+  EvaluationProcessor,
+  type EvaluationConfig,
+  type EvaluationConfigForResponse,
+  type QuestionMeta,
+  type EvaluationMetaDict,
+  type MarkingScheme,
+  type AnswerMatcher,
+} from './processors/evaluation/EvaluationProcessor';
 
 // Template
 export {

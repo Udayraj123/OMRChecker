@@ -144,19 +144,33 @@
     {
       "python": "src/processors/image/coordinator.py",
       "typescript": "omrchecker-js/packages/core/src/processors/image/coordinator.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/image/__tests__/coordinator.test.ts",
       "classes": [
         {
           "python": "PreprocessingProcessor",
           "typescript": "PreprocessingProcessor",
-          "synced": false
+          "synced": true,
+          "methods": [
+            {
+              "python": "get_name",
+              "typescript": "getName",
+              "synced": true
+            },
+            {
+              "python": "process",
+              "typescript": "process",
+              "synced": true
+            }
+          ]
         }
-      ]
+      ],
+      "notes": "1:1 file mapping. Coordinator for running image preprocessors in sequence. Browser version omits InteractionUtils.show (can be replaced with event emission or callbacks)."
     },
     {
       "python": "src/processors/image/base.py",
@@ -371,33 +385,59 @@
     {
       "python": "src/processors/alignment/processor.py",
       "typescript": "omrchecker-js/packages/core/src/processors/alignment/AlignmentProcessor.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/alignment/__tests__/AlignmentProcessor.test.ts",
       "classes": [
         {
           "python": "AlignmentProcessor",
           "typescript": "AlignmentProcessor",
-          "synced": false
+          "synced": true,
+          "methods": [
+            {
+              "python": "get_name",
+              "typescript": "getName",
+              "synced": true
+            },
+            {
+              "python": "process",
+              "typescript": "process",
+              "synced": true
+            }
+          ]
         }
-      ]
+      ],
+      "notes": "1:1 file mapping. Simplified browser-compatible version. Full Python implementation includes k-nearest interpolation which can be added incrementally."
     },
     {
       "python": "src/processors/alignment/template_alignment.py",
       "typescript": "omrchecker-js/packages/core/src/processors/alignment/templateAlignment.ts",
-      "status": "not_started",
+      "status": "partial",
       "phase": 1,
       "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/alignment/__tests__/AlignmentProcessor.test.ts",
       "functions": [
-        "apply_template_alignment",
-        "get_global_alignment_transform"
-      ]
+        {
+          "python": "apply_template_alignment",
+          "typescript": "applyTemplateAlignment",
+          "synced": false,
+          "notes": "Basic structure implemented. Missing: k-nearest interpolation, SIFT/ORB matching, phase correlation"
+        },
+        {
+          "python": "get_global_alignment_transform",
+          "typescript": "getGlobalAlignmentTransform",
+          "synced": false,
+          "notes": "Placeholder only. Requires feature detection/matching implementation"
+        }
+      ],
+      "notes": "Partially implemented. Basic structure and field block iteration done. Advanced alignment algorithms (k-nearest interpolation, feature matching) marked as TODOs for incremental implementation."
     },
     {
       "python": "src/processors/detection/processor.py",
@@ -428,19 +468,33 @@
     {
       "python": "src/processors/evaluation/processor.py",
       "typescript": "omrchecker-js/packages/core/src/processors/evaluation/EvaluationProcessor.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/evaluation/__tests__/EvaluationProcessor.test.ts",
       "classes": [
         {
           "python": "EvaluationProcessor",
           "typescript": "EvaluationProcessor",
-          "synced": false
+          "synced": true,
+          "methods": [
+            {
+              "python": "process",
+              "typescript": "process",
+              "synced": true
+            },
+            {
+              "python": "get_name",
+              "typescript": "getName",
+              "synced": true
+            }
+          ]
         }
-      ]
+      ],
+      "notes": "1:1 file mapping. Includes evaluateConcatenatedResponse logic inline. Full functionality requires porting evaluation_config, marking_scheme, and evaluation schema modules."
     },
     {
       "python": "src/utils/image.py",
@@ -818,12 +872,12 @@
     }
   ],
   "statistics": {
-    "total": 41,
-    "synced": 17,
-    "partial": 3,
-    "not_started": 21,
-    "phase1": 33,
-    "phase2": 4,
-    "future": 3
+    "total": 36,
+    "synced": 24,
+    "partial": 4,
+    "not_started": 8,
+    "phase1": 31,
+    "phase2": 3,
+    "future": 2
   }
 }
