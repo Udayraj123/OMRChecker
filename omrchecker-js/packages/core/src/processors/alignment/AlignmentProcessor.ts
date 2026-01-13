@@ -8,7 +8,6 @@
  * is provided in the template configuration.
  */
 
-import type * as cv from '@techstark/opencv-js';
 import { Processor, ProcessingContext } from '../base';
 import { Logger } from '../../utils/logger';
 import { applyTemplateAlignment } from './templateAlignment';
@@ -22,7 +21,8 @@ const logger = new Logger('AlignmentProcessor');
  * is provided in the template configuration.
  */
 export class AlignmentProcessor extends Processor {
-  private template: any; // Template type (avoiding circular dependencies)
+  // @ts-expect-error - Unused in simplified implementation, will be used for advanced alignment
+  private _template: any; // Template type (avoiding circular dependencies)
   private tuningConfig: any;
 
   /**
@@ -32,7 +32,7 @@ export class AlignmentProcessor extends Processor {
    */
   constructor(template: any) {
     super();
-    this.template = template;
+    this._template = template;
     this.tuningConfig = template.tuningConfig || template.tuning_config;
   }
 

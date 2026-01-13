@@ -98,6 +98,24 @@ export const commonSchemaDefinitions = {
     minimum: 0,
     maximum: 1,
   },
+
+  matplotlib_color: {
+    oneOf: [
+      {
+        type: 'string' as const,
+        description: 'This should match with #rgb, #rgba, #rrggbb, and #rrggbbaa syntax',
+        pattern: '^#(?:(?:[\\da-fA-F]{3}){1,2}|(?:[\\da-fA-F]{4}){1,2})$',
+      },
+      {
+        type: 'string' as const,
+        description: 'Named colors supported by matplotlib (simplified set)',
+        enum: [
+          'red', 'green', 'blue', 'yellow', 'cyan', 'magenta', 'black', 'white',
+          'gray', 'orange', 'purple', 'pink', 'brown', 'lime', 'navy', 'teal'
+        ],
+      },
+    ],
+  },
 };
 
 /**
@@ -129,5 +147,24 @@ export function formatValidationErrors(
     message: err.message || 'Validation failed',
     params: err.params || {},
   }));
+}
+
+/**
+ * Load common definitions by keys
+ * Matches Python's load_common_defs function
+ *
+ * @param keys - Array of definition keys to load
+ * @returns Object with the requested definitions
+ */
+export function loadCommonDefs(keys: string[]): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const key of keys) {
+    if (key in commonSchemaDefinitions) {
+      result[key] = commonSchemaDefinitions[key as keyof typeof commonSchemaDefinitions];
+    } else {
+      console.warn(`Common definition not found: ${key}`);
+    }
+  }
+  return result;
 }
 

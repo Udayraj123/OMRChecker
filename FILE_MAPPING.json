@@ -731,13 +731,14 @@
     {
       "python": "src/schemas/evaluation_schema.py",
       "typescript": "omrchecker-js/packages/core/src/schemas/evaluationSchema.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "medium",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
-      "notes": "Uses AJV for JSON schema validation"
+      "lastTypescriptChange": "2026-01-13T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/schemas/__tests__/evaluationSchema.test.ts",
+      "notes": "1:1 file mapping. Uses AJV for JSON schema validation. Covers evaluation configuration with marking schemes, answer sources (CSV, image+CSV, local), and output visualization options. Complex schema with conditional logic for source types and marking strategies."
     },
     {
       "python": "src/processors/detection/barcode/processor.py",
@@ -924,9 +925,9 @@
   ],
   "statistics": {
     "total": 36,
-    "synced": 25,
+    "synced": 26,
     "partial": 4,
-    "not_started": 7,
+    "not_started": 6,
     "phase1": 31,
     "phase2": 3,
     "future": 2

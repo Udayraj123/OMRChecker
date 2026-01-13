@@ -47,7 +47,7 @@ export function applyTemplateAlignment(
   grayImage: cv.Mat,
   coloredImage: cv.Mat,
   template: any,
-  config: any
+  _config: any
 ): AlignmentResult {
   logger.debug('Starting template alignment');
 
@@ -95,17 +95,17 @@ export function applyTemplateAlignment(
 
   let alignedGrayImage: cv.Mat;
   let alignedColoredImage: cv.Mat;
-  let alignedGrayAlignment: cv.Mat;
-  let alignedColoredAlignment: cv.Mat;
+  let _alignedGrayAlignment: cv.Mat;
+  let _alignedColoredAlignment: cv.Mat;
 
   if (Array.isArray(resizedImages)) {
-    [alignedGrayImage, alignedColoredImage, alignedGrayAlignment, alignedColoredAlignment] =
+    [alignedGrayImage, alignedColoredImage, _alignedGrayAlignment, _alignedColoredAlignment] =
       resizedImages as cv.Mat[];
   } else {
     alignedGrayImage = resizedImages as cv.Mat;
     alignedColoredImage = coloredImage;
-    alignedGrayAlignment = grayAlignmentImage;
-    alignedColoredAlignment = coloredAlignmentImage;
+    _alignedGrayAlignment = grayAlignmentImage;
+    _alignedColoredAlignment = coloredAlignmentImage;
   }
 
   // Get field blocks
@@ -186,8 +186,8 @@ export function applyTemplateAlignment(
  * @returns Transform matrix or null if alignment fails
  */
 export function getGlobalAlignmentTransform(
-  sourceImage: cv.Mat,
-  targetImage: cv.Mat
+  _sourceImage: cv.Mat,
+  _targetImage: cv.Mat
 ): cv.Mat | null {
   logger.debug('Global alignment transform - not yet implemented');
   // TODO: Implement using OpenCV.js feature detection and matching
