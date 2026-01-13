@@ -108,6 +108,10 @@ export function applyTemplateAlignment(
     _alignedColoredAlignment = coloredAlignmentImage;
   }
 
+  // Suppress unused variable warnings - these will be used for advanced alignment algorithms
+  void _alignedGrayAlignment;
+  void _alignedColoredAlignment;
+
   // Get field blocks
   const fieldBlocks = template.fieldBlocks || template.field_blocks || [];
 

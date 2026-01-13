@@ -19,6 +19,8 @@ export { Contrast } from './processors/image/Contrast';
 // Image processors - Advanced
 export { AutoRotate, type AutoRotateOptions } from './processors/image/AutoRotate';
 export { Levels } from './processors/image/Levels';
+export { CropPage, type CropPageOptions } from './processors/image/CropPage';
+export { CropOnMarkers, type CropOnMarkersOptions } from './processors/image/CropOnMarkers';
 
 // Image processors - Base class
 export {
@@ -86,8 +88,9 @@ export {
 export { Logger } from './utils/logger';
 export { ImageUtils } from './utils/ImageUtils';
 export * from './utils/geometry';
-export * from './utils/math';
 export * from './utils/file';
+// Export math utils without EdgeType to avoid conflict with processors/constants
+export { MathUtils, type Point } from './utils/math';
 export {
   DrawingUtils,
   CLR_BLACK,
@@ -108,3 +111,6 @@ export * from './schemas/templateSchema';
 export * from './schemas/configSchema';
 export * from './schemas/evaluationSchema';
 export * from './schemas/constants';
+
+// Processor constants
+export * from './processors/constants';

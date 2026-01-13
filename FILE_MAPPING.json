@@ -926,8 +926,8 @@
   "statistics": {
     "total": 36,
     "synced": 26,
-    "partial": 4,
-    "not_started": 6,
+    "partial": 6,
+    "not_started": 4,
     "phase1": 31,
     "phase2": 3,
     "future": 2
