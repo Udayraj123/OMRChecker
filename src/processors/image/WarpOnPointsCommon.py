@@ -1,17 +1,28 @@
-from pathlib import Path
-from typing import Any, ClassVar
+"""
+WarpOnPointsCommon - Refactored Version
 
+This is the refactored base class for processors that warp images based on control points.
+The original 404-line monolithic class has been broken down into:
+
+1. warp_strategies.py - Different warping transformation methods (Strategy pattern)
+2. point_utils.py - Point parsing, validation, and manipulation utilities
+
+This class now focuses on:
+- Orchestration of the warping pipeline
+- Configuration management
+- Debug visualization and image saving
+- Template-specific abstract methods for subclasses
+"""
+
+from pathlib import Path
+from typing import Any, ClassVar, Optional, Tuple
 import cv2
 import numpy as np
-from cv2.typing import MatLike
-from scipy.interpolate import griddata
 
 from src.exceptions import ImageProcessingError, TemplateValidationError
 from src.processors.constants import WarpMethod, WarpMethodFlags
-from src.processors.helpers.rectify import rectify
-from src.processors.image.base import (
-    ImageTemplatePreprocessor,
-)
+from src.processors.image.base import ImageTemplatePreprocessor
+from src.processors.image.warp_strategies import WarpStrategyFactory, WarpStrategy
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
@@ -20,28 +31,51 @@ from src.utils.math import MathUtils
 from src.utils.parsing import OVERRIDE_MERGER
 
 
-# Internal Processor for separation of code
 class WarpOnPointsCommon(ImageTemplatePreprocessor):
+    """
+    Base class for image processors that apply warping transformations.
+
+    This class provides a template method pattern for warping images:
+    1. Prepare image for extraction (subclass-specific)
+    2. Extract control and destination points (subclass-specific)
+    3. Parse and validate points
+    4. Apply warping strategy
+    5. Save debug images and visualizations
+
+    Subclasses must implement:
+    - validate_and_remap_options_schema()
+    - prepare_image_before_extraction()
+    - extract_control_destination_points()
+    """
+
     __is_internal_preprocessor__: ClassVar = True
 
+    # Map configuration flags to OpenCV constants
     warp_method_flags_map: ClassVar = {
         WarpMethodFlags.INTER_LINEAR: cv2.INTER_LINEAR,
         WarpMethodFlags.INTER_CUBIC: cv2.INTER_CUBIC,
         WarpMethodFlags.INTER_NEAREST: cv2.INTER_NEAREST,
     }
 
-    def validate_and_remap_options_schema(self, _options) -> dict:
-        msg = "Subclass must implement validate_and_remap_options_schema"
-        raise NotImplementedError(msg)
-
     def __init__(
         self, options, relative_dir, save_image_ops, default_processing_image_shape
     ) -> None:
-        # TODO: need to fix this (self attributes will be overridden by parent and may cause inconsistency)
+        """
+        Initialize the warp processor.
+
+        Args:
+            options: Processor configuration options
+            relative_dir: Base directory for relative paths
+            save_image_ops: Image saving configuration
+            default_processing_image_shape: Default image dimensions
+        """
+        # Store tuning config before parent initialization
         self.tuning_config = save_image_ops.tuning_config
 
+        # Validate and parse options (subclass-specific)
         parsed_options = self.validate_and_remap_options_schema(options)
-        # Processor tuningOptions defaults
+
+        # Merge tuning options
         parsed_options = OVERRIDE_MERGER.merge(
             {
                 "tuningOptions": options.get("tuningOptions", {}),
@@ -49,16 +83,22 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             parsed_options,
         )
 
+        # Initialize parent
         super().__init__(
             parsed_options,
             relative_dir,
             save_image_ops,
             default_processing_image_shape,
         )
+
+        # Extract configuration
         options = self.options
         tuning_options = self.tuning_options
+
+        # Cropping configuration
         self.enable_cropping = options.get("enableCropping", False)
 
+        # Determine warp method (default depends on cropping)
         self.warp_method = tuning_options.get(
             "warpMethod",
             (
@@ -67,113 +107,402 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
                 else WarpMethod.HOMOGRAPHY
             ),
         )
+
+        # Get interpolation flag
         self.warp_method_flag = self.warp_method_flags_map.get(
             tuning_options.get("warpMethodFlag", "INTER_LINEAR")
         )
 
-    def exclude_files(self) -> list[Path]:
-        return []
+        # Create the appropriate warp strategy
+        self.warp_strategy = self._create_warp_strategy()
+
+        # Debug visualization storage
+        self.debug_image = None
+        self.debug_hstack = []
+        self.debug_vstack = []
+
+    def _create_warp_strategy(self) -> WarpStrategy:
+        """
+        Create the appropriate warp strategy based on configuration.
+
+        Returns:
+            Configured WarpStrategy instance
+        """
+        # Method-specific configurations
+        method_configs = {
+            WarpMethod.PERSPECTIVE_TRANSFORM: {
+                "interpolation_flag": self.warp_method_flag
+            },
+            WarpMethod.HOMOGRAPHY: {
+                "interpolation_flag": self.warp_method_flag,
+                "use_ransac": False,
+            },
+            WarpMethod.REMAP_GRIDDATA: {"interpolation_method": "cubic"},
+            WarpMethod.DOC_REFINE: {},
+        }
+
+        # Get config for this method, default to interpolation_flag only
+        strategy_config = method_configs.get(
+            self.warp_method, {"interpolation_flag": self.warp_method_flag}
+        )
+
+        return WarpStrategyFactory.create(self.warp_method, **strategy_config)
+
+    # =========================================================================
+    # Abstract methods for subclasses
+    # =========================================================================
+
+    def validate_and_remap_options_schema(self, _options) -> dict:
+        """
+        Validate and transform processor-specific options.
+
+        Subclasses must implement this to define their schema.
+        """
+        msg = "Subclass must implement validate_and_remap_options_schema"
+        raise NotImplementedError(msg)
 
     def prepare_image_before_extraction(self, _image):
+        """
+        Prepare the image before extracting control points.
+
+        Subclasses can apply preprocessing (blur, threshold, etc).
+        """
         msg = "Subclass must implement prepare_image_before_extraction"
         raise NotImplementedError(msg)
 
     def extract_control_destination_points(
         self, _image, _colored_image, _file_path
-    ) -> tuple[Any, Any, Any]:
+    ) -> Tuple[Any, Any, Any]:
+        """
+        Extract control and destination points from the image.
+
+        Returns:
+            Tuple of (control_points, destination_points, edge_contours_map)
+
+            - control_points: Points in the source image
+            - destination_points: Corresponding points in the target space
+            - edge_contours_map: Optional edge map for doc-refine method
+        """
         msg = "Subclass must implement extract_control_destination_points"
         raise NotImplementedError(msg)
 
+    def exclude_files(self) -> list[Path]:
+        """Return list of files to exclude from processing"""
+        return []
+
+    # =========================================================================
+    # Main processing pipeline
+    # =========================================================================
+
     def apply_filter(self, image, colored_image, _template, file_path):
+        """
+        Apply the warping transformation to the image.
+
+        This is the main entry point called by the processing pipeline.
+
+        Args:
+            image: Grayscale input image
+            colored_image: Colored version of input
+            _template: Template configuration (unused in base class)
+            file_path: Path to the image file (for logging/debugging)
+
+        Returns:
+            Tuple of (warped_image, warped_colored_image, _template)
+        """
         config = self.tuning_config
+
+        # Initialize debug state
         self.debug_image = image.copy()
         self.debug_hstack = []
         self.debug_vstack = []
 
-        image = self.prepare_image_before_extraction(image)
+        # Step 1: Prepare image (subclass-specific)
+        prepared_image = self.prepare_image_before_extraction(image)
 
+        # Step 2: Extract control/destination points (subclass-specific)
         (
             control_points,
             destination_points,
             edge_contours_map,
-        ) = self.extract_control_destination_points(image, colored_image, file_path)
+        ) = self.extract_control_destination_points(
+            prepared_image, colored_image, file_path
+        )
 
+        # Step 3: Parse and validate points
         (
             parsed_control_points,
             parsed_destination_points,
             warped_dimensions,
-        ) = self.parse_control_destination_points_for_image(
-            image, control_points, destination_points
-        )
+        ) = self._parse_and_prepare_points(image, control_points, destination_points)
 
         logger.debug(
-            f"Cropping Enabled: {self.enable_cropping}\n parsed_control_points={parsed_control_points} \n parsed_destination_points={parsed_destination_points} \n warped_dimensions={warped_dimensions}"
+            f"Cropping Enabled: {self.enable_cropping}\n"
+            f"Control points: {len(parsed_control_points)}\n"
+            f"Warped dimensions: {warped_dimensions}"
         )
 
-        if self.warp_method == WarpMethod.PERSPECTIVE_TRANSFORM:
-            (
-                transform_matrix,
-                warped_dimensions,
-                parsed_destination_points,
-            ) = self.get_perspective_transform_matrix(
-                parsed_control_points,  # parsed_destination_points
-            )
-            warped_image, warped_colored_image = self.warp_perspective(
-                image, colored_image, transform_matrix, warped_dimensions
-            )
+        # Step 4: Apply warping using strategy
+        warped_image, warped_colored_image = self._apply_warp_strategy(
+            image,
+            colored_image,
+            parsed_control_points,
+            parsed_destination_points,
+            warped_dimensions,
+            edge_contours_map,
+        )
 
-        # elif TODO: support for warpAffine as well for non cropped Alignment!!
-        elif self.warp_method == WarpMethod.HOMOGRAPHY:
-            transform_matrix, _matches_mask = self.get_homography_matrix(
-                parsed_control_points, parsed_destination_points
+        # Step 5: Debug visualization and image saving
+        self._save_debug_visualizations(
+            config,
+            file_path,
+            image,
+            warped_image,
+            warped_colored_image,
+            parsed_control_points,
+            parsed_destination_points,
+        )
+
+        return warped_image, warped_colored_image, _template
+
+    # =========================================================================
+    # Point parsing and preparation
+    # =========================================================================
+
+    def _parse_and_prepare_points(
+        self,
+        image: np.ndarray,
+        control_points: Any,
+        destination_points: Any,
+    ) -> Tuple[np.ndarray, np.ndarray, Tuple[int, int]]:
+        """
+        Parse, deduplicate, and prepare control/destination points.
+
+        Args:
+            image: Input image (for dimension reference)
+            control_points: Raw control points from extraction
+            destination_points: Raw destination points from extraction
+
+        Returns:
+            Tuple of (parsed_control_points, parsed_destination_points, warped_dimensions)
+        """
+        # Deduplicate points using dict to preserve order
+        unique_pairs = {
+            tuple(ctrl): dest
+            for ctrl, dest in zip(control_points, destination_points, strict=False)
+        }
+
+        parsed_control_points = np.float32(list(unique_pairs.keys()))
+        parsed_destination_points = np.float32(list(unique_pairs.values()))
+
+        # Calculate warped dimensions
+        h, w = image.shape[:2]
+        warped_dimensions = self._calculate_warped_dimensions(
+            (w, h), parsed_destination_points
+        )
+
+        return parsed_control_points, parsed_destination_points, warped_dimensions
+
+    def _calculate_warped_dimensions(
+        self, default_dims: Tuple[int, int], destination_points: np.ndarray
+    ) -> Tuple[int, int]:
+        """Calculate warped dimensions based on cropping settings."""
+        if not self.enable_cropping:
+            return default_dims
+
+        destination_box, rectangle_dimensions = MathUtils.get_bounding_box_of_points(
+            destination_points
+        )
+
+        # Shift points to origin for cropping (modifies destination_points in-place)
+        from_origin = -1 * destination_box[0]
+        destination_points[:] = MathUtils.shift_points_from_origin(
+            from_origin, destination_points
+        )
+
+        return rectangle_dimensions
+
+    # =========================================================================
+    # Warping strategy application
+    # =========================================================================
+
+    def _apply_warp_strategy(
+        self,
+        image: np.ndarray,
+        colored_image: Optional[np.ndarray],
+        control_points: np.ndarray,
+        destination_points: np.ndarray,
+        warped_dimensions: Tuple[int, int],
+        edge_contours_map: Optional[np.ndarray],
+    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+        """
+        Apply the configured warp strategy.
+
+        Args:
+            image: Grayscale input
+            colored_image: Optional colored input
+            control_points: Validated control points
+            destination_points: Validated destination points
+            warped_dimensions: Output dimensions
+            edge_contours_map: Optional edge map for doc-refine
+
+        Returns:
+            Tuple of (warped_gray, warped_colored)
+        """
+        # Prepare points for perspective transform
+        control_points, destination_points, warped_dimensions = (
+            self._prepare_points_for_strategy(
+                control_points, destination_points, warped_dimensions
             )
-            warped_image, warped_colored_image = self.warp_perspective(
-                image, colored_image, transform_matrix, warped_dimensions
-            )
-        elif self.warp_method == WarpMethod.REMAP_GRIDDATA:
-            warped_image, warped_colored_image = self.remap_with_griddata(
-                image,
-                colored_image,
-                parsed_control_points,
-                parsed_destination_points,
-            )
-        elif self.warp_method == WarpMethod.DOC_REFINE:
-            warped_image, warped_colored_image = self.remap_with_doc_refine_rectify(
-                image, colored_image, edge_contours_map
-            )
-        else:
-            msg = f"Invalid warp method: {self.warp_method}"
+        )
+
+        # Build strategy kwargs
+        strategy_kwargs = self._build_strategy_kwargs(edge_contours_map)
+
+        # Select colored input based on config
+        colored_input = self._get_colored_input(colored_image)
+
+        # Apply the warp
+        return self.warp_strategy.warp_image(
+            image,
+            colored_input,
+            control_points,
+            destination_points,
+            warped_dimensions,
+            **strategy_kwargs,
+        )
+
+    def _prepare_points_for_strategy(
+        self,
+        control_points: np.ndarray,
+        destination_points: np.ndarray,
+        warped_dimensions: Tuple[int, int],
+    ) -> Tuple[np.ndarray, np.ndarray, Tuple[int, int]]:
+        """Prepare points specifically for perspective transform if needed."""
+        if self.warp_method != WarpMethod.PERSPECTIVE_TRANSFORM:
+            return control_points, destination_points, warped_dimensions
+
+        if len(control_points) != 4:
+            from pathlib import Path
+
             raise TemplateValidationError(
-                msg,
-                context={"warp_method": self.warp_method},
+                Path("template"),
+                reason=(
+                    f"Expected 4 control points for perspective transform, "
+                    f"found {len(control_points)}. "
+                    f"Use tuningOptions['warpMethod'] for different methods."
+                ),
             )
 
-        title_prefix = "Warped Image"
+        # Order the 4 points consistently
+        ordered_control, _ = MathUtils.order_four_points(
+            control_points, dtype="float32"
+        )
+
+        # Recalculate destination points from ordered control points
+        new_destination, new_dimensions = (
+            ImageUtils.get_cropped_warped_rectangle_points(ordered_control)
+        )
+
+        return ordered_control, new_destination, new_dimensions
+
+    def _build_strategy_kwargs(self, edge_contours_map: Optional[np.ndarray]) -> dict:
+        """Build kwargs dict for strategy based on warp method."""
+        if self.warp_method != WarpMethod.DOC_REFINE:
+            return {}
+
+        if edge_contours_map is None:
+            msg = "DOC_REFINE method requires edge_contours_map"
+            raise ImageProcessingError(msg)
+
+        return {"edge_contours_map": edge_contours_map}
+
+    def _get_colored_input(
+        self, colored_image: Optional[np.ndarray]
+    ) -> Optional[np.ndarray]:
+        """Return colored image only if colored outputs are enabled."""
+        return (
+            colored_image
+            if self.tuning_config.outputs.colored_outputs_enabled
+            else None
+        )
+
+    # =========================================================================
+    # Debug visualization and image saving
+    # =========================================================================
+
+    def _save_debug_visualizations(
+        self,
+        config,
+        file_path,
+        original_image: np.ndarray,
+        warped_image: np.ndarray,
+        warped_colored_image: Optional[np.ndarray],
+        control_points: np.ndarray,
+        destination_points: np.ndarray,
+    ):
+        """
+        Save debug images and show interactive visualizations.
+
+        Args:
+            config: Tuning configuration
+            file_path: Path for display titles
+            original_image: Original input image
+            warped_image: Warped output
+            warped_colored_image: Optional warped colored output
+            control_points: Control points used
+            destination_points: Destination points used
+        """
+        # Show high-detail visualizations if configured
         if config.outputs.show_image_level >= 4:
-            if self.enable_cropping:
-                title_prefix = "Cropped Image"
-                # Draw the convex hull of all control points
-                DrawingUtils.draw_contour(
-                    self.debug_image, cv2.convexHull(parsed_control_points)
-                )
-            if config.outputs.show_image_level >= 5:
-                InteractionUtils.show("Anchor Points", self.debug_image, pause=False)
-
-            matched_lines = DrawingUtils.draw_matches(
-                image,
-                parsed_control_points,
+            self._show_high_detail_visualizations(
+                config,
+                file_path,
+                original_image,
                 warped_image,
-                parsed_destination_points,
+                control_points,
+                destination_points,
             )
 
-            InteractionUtils.show(
-                f"{title_prefix} with Match Lines: {file_path}",
-                matched_lines,
-                pause=True,
-                # resize_to_height=True,
-                config=config,
-            )
+        # Save images at appropriate levels
+        self._save_debug_images(warped_image, warped_colored_image)
 
+        # Show final preview if configured
+        if config.outputs.show_image_level >= 5:
+            title = f"{'Cropped' if self.enable_cropping else 'Warped'} Image Preview"
+            InteractionUtils.show(f"{title}: {file_path}", warped_image, pause=True)
+
+    def _show_high_detail_visualizations(
+        self,
+        config,
+        file_path,
+        original_image,
+        warped_image,
+        control_points,
+        destination_points,
+    ):
+        """Show detailed debug visualizations."""
+        title_prefix = "Cropped Image" if self.enable_cropping else "Warped Image"
+
+        if self.enable_cropping:
+            DrawingUtils.draw_contour(self.debug_image, cv2.convexHull(control_points))
+
+        if config.outputs.show_image_level >= 5:
+            InteractionUtils.show("Anchor Points", self.debug_image, pause=False)
+
+        # Draw and show match lines
+        matched_lines = DrawingUtils.draw_matches(
+            original_image, control_points, warped_image, destination_points
+        )
+        InteractionUtils.show(
+            f"{title_prefix} with Match Lines: {file_path}",
+            matched_lines,
+            pause=True,
+            config=config,
+        )
+
+    def _save_debug_images(self, warped_image, warped_colored_image):
+        """Save warped and debug images."""
+        # Save warped image
         self.append_save_image(
             f"Warped Image(no resize): {self}",
             range(4, 7),
@@ -181,223 +510,6 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             warped_colored_image,
         )
 
-        if str(self) == "CropPage":
-            self.append_save_image(
-                f"Anchor Points: {self}", range(6, 7), self.debug_image
-            )
-        else:
-            self.append_save_image(
-                f"Anchor Points: {self}", range(3, 7), self.debug_image
-            )
-
-        if config.outputs.show_image_level >= 5:
-            InteractionUtils.show(
-                f"{title_prefix} Preview of Warp: {file_path}",
-                warped_image,
-                pause=True,
-            )
-
-        return warped_image, warped_colored_image, _template
-
-    def get_perspective_transform_matrix(
-        self,
-        parsed_control_points,  # _parsed_destination_points
-    ):
-        if len(parsed_control_points) > 4:
-            logger.critical(f"Too many parsed_control_points={parsed_control_points}")
-            msg = f"Expected 4 control points for perspective transform, found {len(parsed_control_points)}. If you want to use a different method, pass it in tuningOptions['warpMethod']"
-            raise TemplateValidationError(
-                msg,
-                context={
-                    "parsed_control_points_count": len(parsed_control_points),
-                    "expected_count": 4,
-                },
-            )
-        # TODO: order the points from outside in parsing itself
-        parsed_control_points, _ = MathUtils.order_four_points(
-            parsed_control_points, dtype="float32"
-        )
-        # TODO: fix use _parsed_destination_points and make it work?
-        # parsed_destination_points = _parsed_destination_points[ordered_indices]
-        (
-            parsed_destination_points,
-            warped_dimensions,
-        ) = ImageUtils.get_cropped_warped_rectangle_points(parsed_control_points)
-
-        transform_matrix = cv2.getPerspectiveTransform(
-            parsed_control_points, parsed_destination_points
-        )
-        return transform_matrix, warped_dimensions, parsed_destination_points
-
-    def get_homography_matrix(self, parsed_control_points, parsed_destination_points):
-        # Note: the robust methods cv2.RANSAC or cv2.LMEDS are not used as they will
-        # take a subset of the destination points(inliers) which is not desired for our use-case
-
-        # Getting the homography.
-        homography, matches_mask = cv2.findHomography(
-            parsed_control_points,
-            parsed_destination_points,
-            method=0,
-            # method=cv2.RANSAC,
-            # Note: ransacReprojThreshold is literally the the pixel distance in our coordinates
-            # ransacReprojThreshold=3,
-        )
-        # TODO: check if float32 is really needed for the matrix
-        transform_matrix = np.float32(homography)
-        return transform_matrix, matches_mask
-
-    def warp_perspective(
-        self, image, colored_image, transform_matrix, warped_dimensions
-    ):
-        config = self.tuning_config
-
-        # Crop/warp the image
-        warped_image = cv2.warpPerspective(
-            image, transform_matrix, warped_dimensions, flags=self.warp_method_flag
-        )
-
-        warped_colored_image = None
-        if config.outputs.colored_outputs_enabled:
-            warped_colored_image = cv2.warpPerspective(
-                colored_image, transform_matrix, warped_dimensions
-            )
-
-        return warped_image, warped_colored_image
-
-    def parse_control_destination_points_for_image(
-        self, image, control_points, destination_points
-    ):
-        parsed_control_points, parsed_destination_points = [], []
-
-        # de-dupe
-        control_points_set = set()
-        for control_point, destination_point in zip(
-            control_points, destination_points, strict=False
-        ):
-            control_point_tuple = tuple(control_point)
-            if control_point_tuple not in control_points_set:
-                control_points_set.add(control_point_tuple)
-                parsed_control_points.append(control_point)
-                parsed_destination_points.append(destination_point)
-
-        # TODO: add support for isOptionalFeaturePoint(maybe filter the 'None' control points!)
-        # TODO: do an ordering of the points
-
-        h, w = image.shape[:2]
-        warped_dimensions = (w, h)
-        if self.enable_cropping:
-            # TODO: exclude the 'excludeFromCropping' destination points(and corresponding control points, after using for alignments)
-            # TODO: use a small class for each point?
-
-            #   get bounding box on the destination points (with validation?)
-            (
-                destination_box,
-                rectangle_dimensions,
-            ) = MathUtils.get_bounding_box_of_points(parsed_destination_points)
-            # TODO: Give a warning if the destination_points do not form a convex polygon!
-            warped_dimensions = rectangle_dimensions
-
-            # Cropping means the bounding destination points need to become the bounding box!
-            # >> Rest of the points need to scale according to that grid!?
-
-            # TODO: find a way to get the bounding box to control points mapping
-            # parsed_destination_points = destination_box[[1,2,0,3]]
-
-            # Shift the destination points to enable the cropping
-            from_origin = -1 * destination_box[0]
-            parsed_destination_points = MathUtils.shift_points_from_origin(
-                from_origin, parsed_destination_points
-            )
-            # Note: control points remain the same (wrt image shape!)
-
-        # Note: the inner elements may already be floats returned by scan zone detections
-        parsed_control_points = np.float32(parsed_control_points)
-        parsed_destination_points = np.float32(parsed_destination_points)
-
-        return (
-            parsed_control_points,
-            parsed_destination_points,
-            warped_dimensions,
-        )
-
-    def remap_with_griddata(
-        self, image, colored_image, parsed_control_points, parsed_destination_points
-    ):
-        config = self.tuning_config
-
-        if image.shape[:2] != colored_image.shape[:2]:
-            msg = f"Image shape {image.shape[:2]} does not match colored image shape {colored_image.shape[:2]}"
-            raise ImageProcessingError(
-                msg,
-                context={
-                    "image_shape": image.shape[:2],
-                    "colored_image_shape": colored_image.shape[:2],
-                },
-            )
-
-        if self.enable_cropping:
-            # TODO: >> get this more reliably - use minZoneRect instead?
-            _, (w, h) = MathUtils.get_bounding_box_of_points(parsed_destination_points)
-        else:
-            h, w = image.shape[:2]
-
-        # https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.griddata.html
-        # For us: D=2, n=len(parsed_control_points)
-        # meshgrid == all integer coordinates of destination image ( [0, h] x [0, w])
-        grid_y, grid_x = np.mgrid[0 : h - 1 : complex(h), 0 : w - 1 : complex(w)]
-
-        # We make use of griddata's ability to map n-d data points in a continuous function
-        grid_z = griddata(
-            # Input points
-            points=parsed_destination_points,
-            # Expected values
-            values=parsed_control_points,
-            # Points at which to interpolate data (inside convex hull of the points)
-            xi=(grid_x, grid_y),
-            method="cubic",
-        )
-        grid_z = grid_z.astype("float32")
-
-        warped_image = cv2.remap(
-            image, map1=grid_z, map2=None, interpolation=cv2.INTER_CUBIC
-        )
-        warped_colored_image = None
-        if config.outputs.colored_outputs_enabled:
-            warped_colored_image = cv2.remap(
-                colored_image,
-                map1=grid_z,
-                map2=None,
-                interpolation=cv2.INTER_CUBIC,
-            )
-
-        return warped_image, warped_colored_image
-
-    def remap_with_doc_refine_rectify(
-        self, image, colored_image, edge_contours_map
-    ) -> tuple[MatLike, MatLike]:
-        config = self.tuning_config
-
-        # TODO: adapt this contract in the remap framework (use griddata vs scanline interchangeably?)
-        scaled_map = rectify(
-            edge_contours_map=edge_contours_map,
-            # enable_cropping=self.enable_cropping
-        )
-
-        warped_image = cv2.remap(
-            image,
-            map1=scaled_map,
-            map2=None,
-            interpolation=cv2.INTER_NEAREST,  # cv2.INTER_CUBIC
-        )
-        if config.outputs.show_image_level >= 1:
-            InteractionUtils.show("warped_image", warped_image, 0)
-
-        warped_colored_image = None
-        if config.outputs.colored_outputs_enabled:
-            warped_colored_image = cv2.remap(
-                colored_image, map1=scaled_map, map2=None, interpolation=cv2.INTER_CUBIC
-            )
-            if config.outputs.show_image_level >= 1:
-                InteractionUtils.show("warped_colored_image", warped_colored_image, 0)
-
-        return warped_image, warped_colored_image
+        # Save anchor points (different level ranges for CropPage)
+        level_range = range(6, 7) if str(self) == "CropPage" else range(3, 7)
+        self.append_save_image(f"Anchor Points: {self}", level_range, self.debug_image)

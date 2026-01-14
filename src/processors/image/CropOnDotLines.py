@@ -1,15 +1,8 @@
 from typing import ClassVar
 
-import cv2
-import numpy as np
-
-from src.constants import (
-    PIXEL_VALUE_MAX,
-)
 from src.exceptions import ImageProcessingError, TemplateValidationError
 from src.processors.constants import (
     DOT_ZONE_TYPES_IN_ORDER,
-    EDGE_TYPES_IN_ORDER,
     LINE_ZONE_TYPES_IN_ORDER,
     TARGET_EDGE_FOR_LINE,
     EdgeType,
@@ -19,7 +12,11 @@ from src.processors.constants import (
     ZonePreset,
 )
 from src.processors.image.CropOnPatchesCommon import CropOnPatchesCommon
-from src.utils.drawing import DrawingUtils
+from src.processors.image.dot_line_detection import (
+    detect_dot_corners,
+    detect_line_corners_and_edges,
+    create_structuring_element,
+)
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.math import MathUtils
@@ -117,11 +114,11 @@ class CropOnDotLines(CropOnPatchesCommon):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         tuning_options = self.tuning_options
-        self.line_kernel_morph = cv2.getStructuringElement(
-            cv2.MORPH_RECT, tuple(tuning_options.get("lineKernel", [2, 10]))
+        self.line_kernel_morph = create_structuring_element(
+            tuple(tuning_options.get("lineKernel", [2, 10]))
         )
-        self.dot_kernel_morph = cv2.getStructuringElement(
-            cv2.MORPH_RECT, tuple(tuning_options.get("dotKernel", [5, 5]))
+        self.dot_kernel_morph = create_structuring_element(
+            tuple(tuning_options.get("dotKernel", [5, 5]))
         )
 
     def validate_scan_zones(self):
@@ -236,12 +233,22 @@ class CropOnDotLines(CropOnPatchesCommon):
         return control_points, destination_points, selected_contour
 
     def find_line_corners_and_contours(self, image, zone_description):
+        """
+        Detect line corners and edge contours using extracted detection module.
+
+        This is now a thin wrapper around detect_line_corners_and_edges that:
+        1. Validates blur kernel
+        2. Applies optional Gaussian blur
+        3. Calls the extracted detection function
+        4. Handles debug visualization
+        """
         zone_label = zone_description["label"]
         config = self.tuning_config
         tuning_options = self.tuning_options
 
         zone, zone_start, _ = self.compute_scan_zone_util(image, zone_description)
 
+        # Validate and apply blur if configured
         line_blur_kernel = tuning_options.get("lineBlurKernel", None)
         if line_blur_kernel:
             zone_h, zone_w = zone.shape
@@ -257,61 +264,16 @@ class CropOnDotLines(CropOnPatchesCommon):
                         "line_blur_kernel": line_blur_kernel,
                     },
                 )
-            zone = cv2.GaussianBlur(zone, line_blur_kernel, 0)
 
-        # Make boxes darker (less gamma)
-        darker_image = ImageUtils.adjust_gamma(zone, config.thresholding.GAMMA_LOW)
-
-        # Lines are expected to be fairly dark
+        # Use extracted detection module
         line_threshold = tuning_options.get("lineThreshold", 180)
-
-        _, thresholded = cv2.threshold(
-            darker_image, line_threshold, 255, cv2.THRESH_TRUNC
-        )
-        normalised = ImageUtils.normalize(thresholded)
-        # add white padding
-        kernel_height, kernel_width = self.line_kernel_morph.shape[:2]
-        white, pad_range = ImageUtils.pad_image_from_center(
-            normalised, kernel_width * 2, kernel_height * 2, 255
-        )
-
-        # Threshold-Normalize after morph + white padding
-        _, white_thresholded = cv2.threshold(
-            white, line_threshold, 255, cv2.THRESH_TRUNC
-        )
-        white_normalised = ImageUtils.normalize(white_thresholded)
-
-        # Open : erode then dilate
-        line_morphed = cv2.morphologyEx(
-            white_normalised,
-            cv2.MORPH_OPEN,
+        _, edge_contours_map = detect_line_corners_and_edges(
+            zone,
+            zone_start,
             self.line_kernel_morph,
-            iterations=3,
-        )
-
-        # remove white padding
-        line_morphed = line_morphed[
-            pad_range[0] : pad_range[1], pad_range[2] : pad_range[3]
-        ]
-
-        if config.outputs.show_image_level >= 5:
-            self.debug_hstack += [
-                darker_image,
-                normalised,
-                white_thresholded,
-                white_normalised,
-                line_morphed,
-            ]
-        elif config.outputs.show_image_level == 4:
-            InteractionUtils.show(
-                f"morph_opened_{zone_label}", line_morphed, pause=False
-            )
-
-        (
-            _,
-            edge_contours_map,
-        ) = self.find_corners_and_contours_map_using_canny(
-            zone_start, line_morphed, zone_description
+            config.thresholding.GAMMA_LOW,
+            line_threshold=line_threshold,
+            blur_kernel=line_blur_kernel,
         )
 
         if edge_contours_map is None:
@@ -323,16 +285,26 @@ class CropOnDotLines(CropOnPatchesCommon):
                     "dimensions": zone_description["dimensions"],
                 },
             )
+
         return edge_contours_map
 
     def find_dot_corners_from_options(self, image, zone_description, _file_path):
+        """
+        Detect dot corners using extracted detection module.
+
+        This is now a thin wrapper around detect_dot_corners that:
+        1. Validates blur kernel
+        2. Applies optional Gaussian blur
+        3. Calls the extracted detection function
+        4. Handles debug visualization and error messages
+        """
         config = self.tuning_config
         tuning_options = self.tuning_options
         zone_label = zone_description["label"]
 
         zone, zone_start, _ = self.compute_scan_zone_util(image, zone_description)
-        # TODO: simple colored thresholding to clear out noise?
 
+        # Validate and apply blur if configured
         dot_blur_kernel = tuning_options.get("dotBlurKernel", None)
         if dot_blur_kernel:
             zone_h, zone_w = zone.shape
@@ -348,53 +320,17 @@ class CropOnDotLines(CropOnPatchesCommon):
                         "dot_blur_kernel": dot_blur_kernel,
                     },
                 )
-            zone = cv2.GaussianBlur(zone, dot_blur_kernel, 0)
 
-        # add white padding (to avoid dilations sticking to edges)
-        kernel_height, kernel_width = self.dot_kernel_morph.shape[:2]
-        white_padded_zone, pad_range = ImageUtils.pad_image_from_center(
-            zone, kernel_width * 2, kernel_height * 2, 255
-        )
-
-        # Open : erode then dilate
-        morphed_zone = cv2.morphologyEx(
-            white_padded_zone, cv2.MORPH_OPEN, self.dot_kernel_morph, iterations=3
-        )
-
-        # TODO: try pyrDown to 64 values and find the outlier for black threshold?
-        # Dots are expected to be fairly dark
+        # Use extracted detection module
         dot_threshold = tuning_options.get("dotThreshold", 150)
-
-        # Threshold-Normalize after morph + white padding
-        _, white_thresholded = cv2.threshold(
-            morphed_zone, dot_threshold, 255, cv2.THRESH_TRUNC
+        corners = detect_dot_corners(
+            zone,
+            zone_start,
+            self.dot_kernel_morph,
+            dot_threshold=dot_threshold,
+            blur_kernel=dot_blur_kernel,
         )
-        white_normalised = ImageUtils.normalize(white_thresholded)
 
-        # TODO: check if thresholding before morph gives better results (similar to line)
-
-        # remove white padding
-        white_normalised = white_normalised[
-            pad_range[0] : pad_range[1], pad_range[2] : pad_range[3]
-        ]
-
-        # Debug images
-        if config.outputs.show_image_level >= 5:
-            self.debug_hstack += [
-                zone,
-                morphed_zone,
-                white_thresholded,
-                white_normalised,
-            ]
-
-        if config.outputs.show_image_level >= 4:
-            InteractionUtils.show(
-                f"{zone_label}: threshold_normalised", white_normalised, pause=False
-            )
-
-        corners, _ = self.find_corners_and_contours_map_using_canny(
-            zone_start, white_normalised, zone_description
-        )
         if corners is None:
             if config.outputs.show_image_level >= 1:
                 if len(self.debug_hstack) > 0:
@@ -403,9 +339,8 @@ class CropOnDotLines(CropOnPatchesCommon):
                         ImageUtils.get_padded_hstack(self.debug_hstack),
                         pause=0,
                     )
-                hstack = ImageUtils.get_padded_hstack(
-                    [self.debug_image, zone, white_thresholded]
-                )
+                # Show debug information for troubleshooting
+                hstack = ImageUtils.get_padded_hstack([self.debug_image, zone])
                 InteractionUtils.show(
                     f"No patch/dot found for {zone_label}", hstack, pause=1
                 )
@@ -420,108 +355,3 @@ class CropOnDotLines(CropOnPatchesCommon):
             )
 
         return corners
-
-    # TODO: >> create a Scanzone class and move some methods there
-    # TODO: add support for more methods for finding corners (like hough lines, convex hull, etc)
-    def find_corners_and_contours_map_using_canny(
-        self, zone_start, zone, zone_description
-    ):
-        scanner_type, zone_label = (
-            zone_description["scannerType"],
-            zone_description["label"],
-        )
-        config = self.tuning_config
-        canny_edges = cv2.Canny(zone, 185, 55)
-
-        if config.outputs.show_image_level >= 5:
-            self.debug_hstack.append(canny_edges)
-
-        # Should mostly return a single contour in the zone
-        all_contours = ImageUtils.grab_contours(
-            cv2.findContours(
-                canny_edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
-            )  # cv2.CHAIN_APPROX_NONE)
-        )
-        # Note: skipping convexHull here because we want to preserve the curves
-
-        if len(all_contours) == 0:
-            return None, None
-
-        ordered_patch_corners, edge_contours_map = None, None
-        sorted_contours_by_area = sorted(
-            all_contours, key=cv2.contourArea, reverse=True
-        )
-        largest_contour = sorted_contours_by_area[0]
-
-        if config.outputs.show_image_level >= 5:
-            h, w = canny_edges.shape[:2]
-            contour_overlay = PIXEL_VALUE_MAX * np.ones((h, w), np.uint8)
-            DrawingUtils.draw_contour(contour_overlay, largest_contour)
-            self.debug_hstack.append(contour_overlay)
-
-        # Convert to list of 2d points
-        bounding_contour = np.vstack(largest_contour).squeeze()
-
-        # TODO: see if bounding_hull is still needed
-        bounding_hull = cv2.convexHull(bounding_contour)
-
-        if scanner_type == ScannerType.PATCH_DOT:
-            # Bounding rectangle will not be rotated
-            x, y, w, h = cv2.boundingRect(bounding_hull)
-            patch_corners = MathUtils.get_rectangle_points(x, y, w, h)
-            (
-                ordered_patch_corners,
-                edge_contours_map,
-            ) = ImageUtils.split_patch_contour_on_corners(
-                patch_corners, bounding_contour
-            )
-        elif scanner_type == ScannerType.PATCH_LINE:
-            # Rotated rectangle can correct slight rotations better
-            rotated_rect = cv2.minAreaRect(bounding_hull)
-            # TODO: less confidence if angle = rotated_rect[2] is too skew
-            rotated_rect_points = cv2.boxPoints(rotated_rect)
-            patch_corners = np.intp(rotated_rect_points)
-            (
-                ordered_patch_corners,
-                edge_contours_map,
-            ) = ImageUtils.split_patch_contour_on_corners(
-                patch_corners, bounding_contour
-            )
-        else:
-            msg = f"Unsupported scanner type: {scanner_type}"
-            raise TemplateValidationError(
-                msg,
-                context={"scanner_type": scanner_type},
-            )
-
-        # TODO: less confidence if given dimensions differ from matched block size (also give a warning)
-        if config.outputs.show_image_level >= 5:
-            if ordered_patch_corners is not None:
-                corners_contour_overlay = canny_edges.copy()
-                DrawingUtils.draw_contour(
-                    corners_contour_overlay, ordered_patch_corners
-                )
-                self.debug_hstack.append(corners_contour_overlay)
-
-            InteractionUtils.show(
-                f"Debug Largest Patch: {zone_label}",
-                ImageUtils.get_padded_hstack(self.debug_hstack),
-                0,
-                resize_to_height=True,
-                config=config,
-            )
-            self.debug_vstack.append(self.debug_hstack)
-            self.debug_hstack = []
-
-        absolute_corners = MathUtils.shift_points_from_origin(
-            zone_start, ordered_patch_corners
-        )
-
-        shifted_edge_contours_map = {
-            edge_type: MathUtils.shift_points_from_origin(
-                zone_start, edge_contours_map[edge_type]
-            )
-            for edge_type in EDGE_TYPES_IN_ORDER
-        }
-
-        return absolute_corners, shifted_edge_contours_map

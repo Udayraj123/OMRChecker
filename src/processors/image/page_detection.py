@@ -1,18 +1,25 @@
 """
-Page Detection Module - Extracted from CropPage
+Page Detection Module
 
-Handles page boundary detection using edge detection and contour analysis.
-This module is focused solely on finding the page boundary in an image.
+Extracted from CropPage to provide focused, testable page boundary detection.
+
+This module handles:
+- Edge detection using Canny
+- Contour finding and filtering
+- Page boundary identification
+- Corner extraction
 """
 
+from typing import Optional, Tuple
 import cv2
 import numpy as np
-from typing import Optional, Tuple
+from pathlib import Path
 
 from src.constants import (
     APPROX_POLY_EPSILON_FACTOR,
     CANNY_THRESHOLD_HIGH,
     CANNY_THRESHOLD_LOW,
+    CONTOUR_THICKNESS_STANDARD,
     MIN_PAGE_AREA,
     PIXEL_VALUE_MAX,
     THRESH_PAGE_TRUNCATE_HIGH,
@@ -20,206 +27,231 @@ from src.constants import (
     TOP_CONTOURS_COUNT,
 )
 from src.exceptions import ImageProcessingError
-from src.utils.constants import hsv_white_high, hsv_white_low
+from src.utils.constants import CLR_WHITE, hsv_white_high, hsv_white_low
+from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
-from src.utils.math import MathUtils
 from src.utils.logger import logger
+from src.utils.math import MathUtils
 
 
-class PageDetector:
+def prepare_page_image(image: np.ndarray) -> np.ndarray:
     """
-    Detects page boundaries in images using edge detection.
+    Prepare image for page detection.
 
-    This class encapsulates all logic related to finding the rectangular
-    boundary of a page/document in an image.
+    Applies truncation and normalization to enhance page boundaries.
+
+    Args:
+        image: Grayscale input image
+
+    Returns:
+        Preprocessed image ready for edge detection
     """
+    # Truncate high values to reduce noise
+    _, truncated = cv2.threshold(
+        image, THRESH_PAGE_TRUNCATE_HIGH, PIXEL_VALUE_MAX, cv2.THRESH_TRUNC
+    )
 
-    def __init__(
-        self,
-        morph_kernel: Tuple[int, int] = (10, 10),
-        use_colored_canny: bool = False,
-    ):
-        """
-        Initialize the page detector.
-
-        Args:
-            morph_kernel: Kernel size for morphological operations
-            use_colored_canny: Whether to use HSV masking for colored images
-        """
-        self.morph_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, morph_kernel)
-        self.use_colored_canny = use_colored_canny
-
-    def detect_page_boundary(
-        self,
-        image: np.ndarray,
-        colored_image: Optional[np.ndarray] = None,
-        file_path: str = "unknown",
-    ) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Detect the page boundary in an image.
-
-        Args:
-            image: Grayscale image
-            colored_image: Optional colored version for HSV masking
-            file_path: Path for error reporting
-
-        Returns:
-            Tuple of (page_corners, page_contour)
-            - page_corners: 4x2 array of corner points
-            - page_contour: Full contour of the page boundary
-
-        Raises:
-            ImageProcessingError: If no page boundary is found
-        """
-        # Step 1: Preprocess image
-        preprocessed = self._preprocess_image(image)
-
-        # Step 2: Apply Canny edge detection
-        canny_edges = self._apply_canny_detection(preprocessed, image, colored_image)
-
-        # Step 3: Find and validate contours
-        page_corners, page_contour = self._find_page_contour(canny_edges, file_path)
-
-        if page_contour is None:
-            raise ImageProcessingError(
-                "Paper boundary not found",
-                context={"file_path": str(file_path), "image_shape": image.shape[:2]},
-            )
-
-        return page_corners, page_contour
-
-    def _preprocess_image(self, image: np.ndarray) -> np.ndarray:
-        """
-        Preprocess image before edge detection.
-
-        Applies threshold truncation and normalization.
-        """
-        # Truncate high values to reduce bright spots
-        _, thresholded = cv2.threshold(
-            image, THRESH_PAGE_TRUNCATE_HIGH, PIXEL_VALUE_MAX, cv2.THRESH_TRUNC
-        )
-        normalized = ImageUtils.normalize(thresholded)
-
-        # Secondary truncation
-        _, thresholded2 = cv2.threshold(
-            normalized,
-            THRESH_PAGE_TRUNCATE_SECONDARY,
-            PIXEL_VALUE_MAX,
-            cv2.THRESH_TRUNC,
-        )
-        return ImageUtils.normalize(thresholded2)
-
-    def _apply_canny_detection(
-        self,
-        preprocessed: np.ndarray,
-        original: np.ndarray,
-        colored_image: Optional[np.ndarray] = None,
-    ) -> np.ndarray:
-        """
-        Apply Canny edge detection with optional HSV masking.
-        """
-        if self.use_colored_canny and colored_image is not None:
-            return self._apply_colored_canny(preprocessed, colored_image)
-
-        # Standard grayscale Canny
-        # Apply morphological closing to complete edges
-        closed = preprocessed
-        if self.morph_kernel.shape[0] > 1:
-            closed = cv2.morphologyEx(preprocessed, cv2.MORPH_CLOSE, self.morph_kernel)
-
-        return cv2.Canny(closed, CANNY_THRESHOLD_HIGH, CANNY_THRESHOLD_LOW)
-
-    def _apply_colored_canny(
-        self, image: np.ndarray, colored_image: np.ndarray
-    ) -> np.ndarray:
-        """
-        Apply Canny edge detection with HSV white masking.
-
-        This helps isolate the page from colored backgrounds.
-        """
-        hsv = cv2.cvtColor(colored_image, cv2.COLOR_BGR2HSV)
-        # Mask to select only white-ish regions
-        mask = cv2.inRange(hsv, hsv_white_low, hsv_white_high)
-        mask_result = cv2.bitwise_and(image, image, mask=mask)
-
-        return cv2.Canny(mask_result, CANNY_THRESHOLD_HIGH, CANNY_THRESHOLD_LOW)
-
-    def _find_page_contour(
-        self, canny_edges: np.ndarray, file_path: str
-    ) -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]:
-        """
-        Find the page contour from Canny edges.
-
-        Returns the largest rectangular contour that likely represents
-        the page boundary.
-        """
-        # Find all contours
-        all_contours = ImageUtils.grab_contours(
-            cv2.findContours(canny_edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-        )
-
-        if not all_contours:
-            return None, None
-
-        # Apply convex hull to resolve noise
-        all_contours = [cv2.convexHull(contour) for contour in all_contours]
-
-        # Sort by area and take top N
-        all_contours = sorted(all_contours, key=cv2.contourArea, reverse=True)[
-            :TOP_CONTOURS_COUNT
-        ]
-
-        # Find the first valid rectangular contour
-        for contour in all_contours:
-            area = cv2.contourArea(contour)
-
-            # Skip small contours
-            if area < MIN_PAGE_AREA:
-                continue
-
-            # Approximate contour to polygon
-            perimeter = cv2.arcLength(contour, True)
-            approx = cv2.approxPolyDP(
-                contour,
-                epsilon=APPROX_POLY_EPSILON_FACTOR * perimeter,
-                closed=True,
-            )
-
-            # Check if it's a valid rectangle (4 corners)
-            if MathUtils.validate_rect(approx):
-                page_corners = np.reshape(approx, (4, -1))
-                page_contour = np.vstack(contour).squeeze()
-
-                logger.debug(f"Found page boundary for {file_path}")
-                return page_corners, page_contour
-
-        # No valid page found
-        logger.warning(
-            f"No valid page boundary found in {file_path}. "
-            f"Largest contour area: {cv2.contourArea(all_contours[0]) if all_contours else 0}"
-        )
-        return None, None
+    # Normalize to full range
+    return ImageUtils.normalize(truncated)
 
 
-def detect_page_corners(
-    image: np.ndarray,
-    colored_image: Optional[np.ndarray] = None,
-    morph_kernel: Tuple[int, int] = (10, 10),
-    use_colored_canny: bool = False,
-    file_path: str = "unknown",
-) -> Tuple[np.ndarray, np.ndarray]:
+def apply_colored_canny(image: np.ndarray, colored_image: np.ndarray) -> np.ndarray:
     """
-    Convenience function to detect page corners in an image.
+    Apply Canny edge detection on color-masked image.
+
+    Uses HSV color space to isolate white-ish regions (the page).
 
     Args:
         image: Grayscale image
-        colored_image: Optional colored version
-        morph_kernel: Morphological kernel size
-        use_colored_canny: Use HSV masking
-        file_path: Path for error reporting
+        colored_image: Original BGR color image
 
     Returns:
-        Tuple of (page_corners, page_contour)
+        Canny edge map
     """
-    detector = PageDetector(morph_kernel, use_colored_canny)
-    return detector.detect_page_boundary(image, colored_image, file_path)
+    # Convert to HSV for better color-based masking
+    hsv = cv2.cvtColor(colored_image, cv2.COLOR_BGR2HSV)
+
+    # Mask to select only white-ish zones (the page)
+    mask = cv2.inRange(hsv, hsv_white_low, hsv_white_high)
+    mask_result = cv2.bitwise_and(image, image, mask=mask)
+
+    # Apply Canny edge detection
+    canny_edge = cv2.Canny(mask_result, CANNY_THRESHOLD_HIGH, CANNY_THRESHOLD_LOW)
+
+    return canny_edge
+
+
+def apply_grayscale_canny(
+    image: np.ndarray, morph_kernel: Optional[np.ndarray] = None
+) -> np.ndarray:
+    """
+    Apply Canny edge detection on grayscale image.
+
+    Optionally applies morphological closing to complete broken edges.
+
+    Args:
+        image: Preprocessed grayscale image
+        morph_kernel: Optional morphological kernel for closing operation
+
+    Returns:
+        Canny edge map
+    """
+    # Second truncation threshold for cleaner edges
+    _, truncated = cv2.threshold(
+        image, THRESH_PAGE_TRUNCATE_SECONDARY, PIXEL_VALUE_MAX, cv2.THRESH_TRUNC
+    )
+
+    normalized = ImageUtils.normalize(truncated)
+
+    # Close small holes to complete edges
+    if morph_kernel is not None and morph_kernel.shape[0] > 1:
+        closed = cv2.morphologyEx(normalized, cv2.MORPH_CLOSE, morph_kernel)
+    else:
+        closed = normalized
+
+    # Apply Canny edge detection
+    canny_edge = cv2.Canny(closed, CANNY_THRESHOLD_HIGH, CANNY_THRESHOLD_LOW)
+
+    return canny_edge
+
+
+def find_page_contours(canny_edge: np.ndarray) -> list[np.ndarray]:
+    """
+    Find and filter contours that could be the page boundary.
+
+    Args:
+        canny_edge: Canny edge map
+
+    Returns:
+        List of candidate contours, sorted by area (largest first)
+    """
+    # Find all contours
+    all_contours = ImageUtils.grab_contours(
+        cv2.findContours(canny_edge, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    )
+
+    # Apply convex hull to resolve disordered curves from noise
+    all_contours = [cv2.convexHull(contour) for contour in all_contours]
+
+    # Sort by area and take top candidates
+    sorted_contours = sorted(all_contours, key=cv2.contourArea, reverse=True)
+    return sorted_contours[:TOP_CONTOURS_COUNT]
+
+
+def extract_page_rectangle(
+    contours: list[np.ndarray],
+) -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]:
+    """
+    Extract the page rectangle from candidate contours.
+
+    Finds the first contour that:
+    1. Has area >= MIN_PAGE_AREA
+    2. Can be approximated as a 4-sided polygon
+    3. Forms a valid rectangle
+
+    Args:
+        contours: List of candidate contours
+
+    Returns:
+        Tuple of (corners, full_contour) or (None, None) if not found
+        - corners: 4x2 array of corner points
+        - full_contour: Full page contour for edge mapping
+    """
+    for contour in contours:
+        # Skip if too small
+        if cv2.contourArea(contour) < MIN_PAGE_AREA:
+            continue
+
+        # Approximate contour to polygon
+        perimeter = cv2.arcLength(contour, closed=True)
+        epsilon = APPROX_POLY_EPSILON_FACTOR * perimeter
+        approx = cv2.approxPolyDP(contour, epsilon, closed=True)
+
+        # Check if it's a valid rectangle (4 corners)
+        if MathUtils.validate_rect(approx):
+            corners = np.reshape(approx, (4, -1))
+            full_contour = np.vstack(contour).squeeze()
+            return corners, full_contour
+
+    return None, None
+
+
+def find_page_contour_and_corners(
+    image: np.ndarray,
+    colored_image: Optional[np.ndarray] = None,
+    use_colored_canny: bool = False,
+    morph_kernel: Optional[np.ndarray] = None,
+    file_path: Optional[Path] = None,
+    debug_image: Optional[np.ndarray] = None,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Find page boundary and extract corners.
+
+    Main entry point for page detection. Combines all steps:
+    1. Image preparation
+    2. Edge detection (colored or grayscale)
+    3. Contour finding
+    4. Rectangle extraction
+
+    Args:
+        image: Grayscale input image
+        colored_image: Optional color image for colored Canny
+        use_colored_canny: Whether to use color-based edge detection
+        morph_kernel: Optional morphological kernel
+        file_path: Optional file path for error messages
+        debug_image: Optional image to draw debug contours on
+
+    Returns:
+        Tuple of (corners, page_contour)
+        - corners: 4x2 array of page corners
+        - page_contour: Full contour of the page boundary
+
+    Raises:
+        ImageProcessingError: If page boundary cannot be found
+    """
+    # Step 1: Prepare image
+    prepared_image = prepare_page_image(image)
+
+    # Step 2: Edge detection
+    if use_colored_canny and colored_image is not None:
+        canny_edge = apply_colored_canny(prepared_image, colored_image)
+    else:
+        canny_edge = apply_grayscale_canny(prepared_image, morph_kernel)
+
+    # Step 3: Find contours
+    contours = find_page_contours(canny_edge)
+
+    # Step 4: Extract rectangle
+    corners, page_contour = extract_page_rectangle(contours)
+
+    # Step 5: Draw debug visualization if requested
+    if corners is not None and debug_image is not None:
+        approx = np.reshape(corners, (4, 1, 2))
+        DrawingUtils.draw_contour(
+            canny_edge,
+            approx,
+            color=CLR_WHITE,
+            thickness=CONTOUR_THICKNESS_STANDARD,
+        )
+        DrawingUtils.draw_contour(
+            debug_image,
+            approx,
+            color=CLR_WHITE,
+            thickness=CONTOUR_THICKNESS_STANDARD,
+        )
+
+    # Step 6: Error if not found
+    if page_contour is None:
+        file_str = str(file_path) if file_path else "unknown"
+        logger.error(f"Paper boundary not found for: '{file_str}'")
+        logger.warning(
+            "Have you accidentally included CropPage preprocessor?\n"
+            f"If no, increase processing dimensions from config. Current image size: {image.shape[:2]}"
+        )
+        raise ImageProcessingError(
+            "Paper boundary not found",
+            file_path=file_path,
+            reason=f"No valid rectangle found in {len(contours)} candidates",
+        )
+
+    return corners, page_contour

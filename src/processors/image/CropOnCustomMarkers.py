@@ -12,11 +12,14 @@ from src.processors.constants import (
     ZonePreset,
 )
 from src.processors.image.CropOnPatchesCommon import CropOnPatchesCommon
+from src.processors.image.marker_detection import (
+    prepare_marker_template,
+    detect_marker_in_patch,
+)
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
-from src.utils.math import MathUtils
 from src.utils.parsing import OVERRIDE_MERGER
 
 
@@ -199,29 +202,24 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
     def extract_marker_from_reference(
         self, reference_image, reference_zone, custom_options
     ):
-        options = self.options
-        origin, dimensions = reference_zone["origin"], reference_zone["dimensions"]
-        x, y = origin
-        w, h = dimensions
-        marker = reference_image[y : y + h, x : x + w]
+        """
+        Extract and prepare marker template from reference image.
 
+        Delegates to marker_detection.prepare_marker_template for the core logic.
+        """
+        options = self.options
         marker_dimensions = custom_options.get(
             "markerDimensions", options.get("markerDimensions", None)
         )
-        if marker_dimensions is not None:
-            marker = ImageUtils.resize_to_dimensions(marker_dimensions, marker)
-
         blur_kernel = custom_options.get("markerBlurKernel", (5, 5))
-        marker = cv2.GaussianBlur(marker, blur_kernel, 0)
 
-        marker = cv2.normalize(
-            marker, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
+        return prepare_marker_template(
+            reference_image,
+            reference_zone,
+            marker_dimensions=marker_dimensions,
+            blur_kernel=blur_kernel,
+            apply_erode_subtract=self.apply_erode_subtract,
         )
-
-        if self.apply_erode_subtract:
-            marker -= cv2.erode(marker, kernel=np.ones((5, 5)), iterations=5)
-
-        return marker
 
     @staticmethod
     def get_default_scan_zone_for_image(image):
@@ -315,143 +313,98 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             "scannerType": "TEMPLATE_MARKER",
         }
 
-    def find_marker_corners_in_patch(self, zone_description, image, _file_path):
+    def find_marker_corners_in_patch(self, zone_description, image, file_path):
+        """
+        Find marker corners in a patch zone.
+
+        Delegates to marker_detection.detect_marker_in_patch for detection,
+        with optional debug visualization.
+        """
+        config = self.tuning_config
         zone_label = zone_description["label"]
 
         patch_zone, zone_start, _zone_end = self.compute_scan_zone_util(
             image, zone_description
         )
 
-        # Note: now best match is being computed separately inside each patch_zone
-        (marker_position, optimal_marker) = self.get_best_match(zone_label, patch_zone)
-
-        if marker_position is None or optimal_marker is None:
-            return None
-
-        h, w = optimal_marker.shape[:2]
-        x, y = marker_position
-        ordered_patch_corners = MathUtils.get_rectangle_points(x, y, w, h)
-
-        return MathUtils.shift_points_from_origin(zone_start, ordered_patch_corners)
-
-    # Resizing the marker within scaleRange at rate of descent_per_step to
-    # find the best match.
-    def get_best_match(
-        # ruff: noqa: C901
-        self,
-        zone_label,
-        patch_zone,
-    ):
-        config = self.tuning_config
-        descent_per_step = (
-            self.marker_rescale_range[1] - self.marker_rescale_range[0]
-        ) // self.marker_rescale_steps
         marker = self.marker_for_zone_label[zone_label]
-        marker_height, marker_width = marker.shape[:2]
-        marker_position, optimal_match_result, optimal_scale, optimal_marker = (
-            None,
-            None,
-            None,
-            None,
+
+        # Detect marker using the new module
+        corners = detect_marker_in_patch(
+            patch_zone,
+            marker,
+            zone_offset=zone_start,
+            scale_range=self.marker_rescale_range,
+            scale_steps=self.marker_rescale_steps,
+            min_confidence=self.min_matching_threshold,
         )
-        optimal_match_max = 0
 
-        patch_height, patch_width = patch_zone.shape[:2]
-        for r0 in np.arange(
-            self.marker_rescale_range[1],
-            self.marker_rescale_range[0],
-            -1 * descent_per_step,
-        ):
-            scale = float(r0 * 1 / 100)
-            if scale <= 0.0:
-                continue
-
-            rescaled_marker = ImageUtils.resize_single(
-                marker,
-                u_width=int(marker_width * scale),
-                u_height=int(marker_height * scale),
-            )
-
-            # Skip if resized marker is larger than the patch zone.
-            r_marker_height, r_marker_width = rescaled_marker.shape[:2]
-            if r_marker_height > patch_height or r_marker_width > patch_width:
-                continue
-
-            # res is the black image with white dots
-            match_result = cv2.matchTemplate(
-                patch_zone, rescaled_marker, cv2.TM_CCOEFF_NORMED
-            )
-
-            match_max = match_result.max()
-            if optimal_match_max < match_max:
-                # print('Scale: '+str(scale)+', Circle Match: '+str(round(match_max*100,2))+'%')
-                (
-                    optimal_scale,
-                    optimal_marker,
-                    optimal_match_max,
-                    optimal_match_result,
-                ) = (
-                    scale,
-                    rescaled_marker,
-                    match_max,
-                    match_result,
-                )
-
-        if optimal_scale is None:
-            logger.warning(
-                f"No matchings for {zone_label} for given scaleRange:",
-                self.marker_rescale_range,
-            )
+        # Handle visualization for debugging
         if config.outputs.show_image_level >= 1:
+            self._visualize_marker_detection(
+                patch_zone,
+                marker,
+                corners,
+                zone_label,
+                zone_start,
+                file_path,
+            )
+
+        if corners is None:
+            msg = f"Error: No marker found in patch {zone_label}"
+            raise ImageProcessingError(
+                msg,
+                context={"zone_label": zone_label},
+            )
+
+        return corners
+
+    def _visualize_marker_detection(
+        self,
+        patch_zone,
+        marker,
+        corners,
+        zone_label,
+        zone_start,
+        _file_path,
+    ):
+        """
+        Visualize marker detection for debugging.
+
+        Shows the patch, marker template, and match results in debug output.
+        """
+        config = self.tuning_config
+
+        # Add to debug stack for later display
+        self.debug_hstack += [patch_zone / 255]
+
+        if corners is not None:
+            # We found a match - show the marker
             self.debug_hstack += [
-                patch_zone / 255,
+                marker / 255,
+                # Note: We can't get the match_result from detect_marker_in_patch
+                # so we skip showing it in the simplified version
             ]
-            if optimal_marker is not None:
-                # Note: We need images of dtype float for displaying optimal_match_result.
-                self.debug_hstack += [
-                    optimal_marker / 255,
-                    optimal_match_result,
-                ]
-            self.debug_vstack.append(self.debug_hstack)
-            self.debug_hstack = []
 
-        is_not_matching = optimal_match_max < self.min_matching_threshold
-        if is_not_matching:
-            logger.error(
-                f"Error: No marker found in patch {zone_label}, (match_max={optimal_match_max:.2f} < {self.min_matching_threshold:.2f}) for {zone_label}! Recheck tuningOptions or output of previous preProcessor."
-            )
-            logger.debug(
-                f"Sizes: optimal_marker:{None if optimal_marker is None else optimal_marker.shape[:2]}, patch_zone: {patch_zone.shape[:2]}"
-            )
+        self.debug_vstack.append(self.debug_hstack)
+        self.debug_hstack = []
 
-        else:
-            y, x = np.argwhere(optimal_match_result == optimal_match_max)[0]
-            marker_position = [x, y]
-
-            logger.info(
-                f"{zone_label}:\toptimal_match_max={round(optimal_match_max, 2)!s}\t optimal_scale={optimal_scale}\t"
-            )
-
+        # Show detailed view if requested or on error
         if config.outputs.show_image_level >= 4 or (
-            is_not_matching and config.outputs.show_image_level >= 1
+            corners is None and config.outputs.show_image_level >= 1
         ):
+            is_not_matching = corners is None
             hstack = ImageUtils.get_padded_hstack(
                 [
                     self.debug_image / 255,
                     patch_zone / 255,
-                    (rescaled_marker if optimal_marker is None else optimal_marker)  # pyright: ignore [reportOptionalOperand]
-                    / 255,
-                    (
-                        match_result
-                        if optimal_match_result is None
-                        else optimal_match_result
-                    ),
+                    marker / 255,
                 ]
             )
             title = (
-                f"Template Marker Matching(Error): {zone_label} ({optimal_match_max:.2f}/{self.min_matching_threshold:.2f})"
+                f"Template Marker Matching(Error): {zone_label}"
                 if is_not_matching
-                else "Template Marker Matching"
+                else f"Template Marker Matching: {zone_label}"
             )
             pause = config.outputs.show_image_level <= 4 or is_not_matching
             InteractionUtils.show(
@@ -459,14 +412,6 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 hstack,
                 pause=pause,
             )
-        if is_not_matching:
-            msg = f"Error: No marker found in patch {zone_label}"
-            raise ImageProcessingError(
-                msg,
-                context={"zone_label": zone_label},
-            )
-
-        return marker_position, optimal_marker
 
     def exclude_files(self) -> list[Path]:
         return [Path(key) for key in self.loaded_reference_images]

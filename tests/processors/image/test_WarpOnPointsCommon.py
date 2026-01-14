@@ -10,7 +10,7 @@ import pytest
 from unittest.mock import Mock
 
 from src.processors.constants import WarpMethod
-from src.processors.image.WarpOnPointsCommon_refactored import WarpOnPointsCommon
+from src.processors.image.WarpOnPointsCommon import WarpOnPointsCommon
 
 
 class ConcreteWarpProcessor(WarpOnPointsCommon):

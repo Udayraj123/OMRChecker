@@ -2,28 +2,25 @@
  * CropPage - Automatic page detection and cropping preprocessor.
  *
  * TypeScript port of src/processors/image/CropPage.py
- * Simplified browser-compatible version.
  *
  * This preprocessor automatically detects the page boundary using edge detection
  * and crops/warps the image to remove margins and correct perspective distortion.
  *
- * Note: This is a simplified implementation. Full Python version includes:
- * - Advanced Canny edge detection with colored image support
- * - Morphological operations for noise reduction
- * - Convex hull and contour approximation
- * - Multiple warp methods (perspective, homography, doc-refine)
+ * Uses the extracted pageDetection module for clean separation of concerns.
  */
 
 import type * as cv from '@techstark/opencv-js';
 import { ImageTemplatePreprocessor } from './base';
 import { Logger } from '../../utils/logger';
 import { WarpMethod, type WarpMethodValue } from '../constants';
+import { findPageContourAndCorners } from './pageDetection';
 
 const logger = new Logger('CropPage');
 
 export interface CropPageOptions {
   morphKernel?: [number, number];
   useColoredCanny?: boolean;
+  maxPointsPerEdge?: number | null;
   tuningOptions?: {
     warpMethod?: WarpMethodValue;
   };
@@ -36,9 +33,13 @@ export interface CropPageOptions {
  * to produce a properly aligned rectangular output.
  */
 export class CropPage extends ImageTemplatePreprocessor {
-  private morphKernel: [number, number];
+  private morphKernel?: cv.Mat;
   private useColoredCanny: boolean;
+  // Reserved for future warping implementation
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private warpMethod: WarpMethodValue;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private maxPointsPerEdge?: number | null;
 
   constructor(
     options: CropPageOptions,
@@ -50,17 +51,32 @@ export class CropPage extends ImageTemplatePreprocessor {
       ...options,
       morphKernel: options.morphKernel || [10, 10],
       useColoredCanny: options.useColoredCanny || false,
+      maxPointsPerEdge: options.maxPointsPerEdge || null,
+      enableCropping: true,
       processingImageShape: defaultProcessingImageShape,
       tuningOptions: {
         warpMethod: options.tuningOptions?.warpMethod || WarpMethod.PERSPECTIVE_TRANSFORM,
+        normalizeConfig: [],
+        cannyConfig: [],
       },
     };
 
     super(remappedOptions, relativeDir, saveImageOps, defaultProcessingImageShape);
 
-    this.morphKernel = remappedOptions.morphKernel;
     this.useColoredCanny = remappedOptions.useColoredCanny;
     this.warpMethod = remappedOptions.tuningOptions.warpMethod;
+    this.maxPointsPerEdge = remappedOptions.maxPointsPerEdge;
+
+    // Create morphological kernel if specified
+    if (remappedOptions.morphKernel) {
+      const cv = (globalThis as any).cv;
+      if (cv) {
+        this.morphKernel = cv.getStructuringElement(
+          cv.MORPH_RECT,
+          new cv.Size(remappedOptions.morphKernel[0], remappedOptions.morphKernel[1])
+        );
+      }
+    }
   }
 
   getClassName(): string {
@@ -71,24 +87,44 @@ export class CropPage extends ImageTemplatePreprocessor {
     image: cv.Mat,
     coloredImage: cv.Mat,
     template: any,
-    _filePath: string
+    filePath: string
   ): [cv.Mat, cv.Mat, any] {
     logger.debug(`Applying ${this.getName()} filter`);
 
-    // TODO: Implement full page detection algorithm:
-    // 1. Apply threshold truncation
-    // 2. Optional: Use colored Canny with HSV masking
-    // 3. Apply morphological closing to complete edges
-    // 4. Detect edges with Canny
-    // 5. Find contours and identify page boundary
-    // 6. Approximate contour to rectangle
-    // 7. Apply perspective transform or warping
-    //
-    // For now, return images unchanged (placeholder implementation)
-    logger.warn('CropPage is a placeholder - returning image unchanged');
-    logger.info('Full implementation requires: Canny edge detection, contour finding, perspective transform');
+    try {
+      // Use extracted page detection module
+      const [corners, _pageContour] = findPageContourAndCorners(image, {
+        coloredImage: coloredImage,
+        useColoredCanny: this.useColoredCanny,
+        morphKernel: this.morphKernel,
+        filePath: filePath,
+      });
 
-    return [image, coloredImage, template];
+      logger.info(`Found page corners: ${JSON.stringify(corners)}`);
+
+      // TODO: Implement warping logic
+      // For now, return images unchanged
+      // Full implementation needs:
+      // 1. Calculate destination corners
+      // 2. Apply perspective transform or other warp method
+      // 3. Handle edge-based warping for HOMOGRAPHY/REMAP methods
+
+      logger.warn(
+        'CropPage: Warping not yet implemented - returning image unchanged. ' +
+          'Full implementation requires perspective transform and edge-based warping.'
+      );
+
+      return [image, coloredImage, template];
+    } catch (error) {
+      logger.error(`CropPage failed: ${error}`);
+      // Return images unchanged on error
+      return [image, coloredImage, template];
+    }
+  }
+
+  cleanup(): void {
+    if (this.morphKernel) {
+      this.morphKernel.delete();
+    }
   }
 }
-
