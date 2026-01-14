@@ -11,6 +11,7 @@
 import { Processor, ProcessingContext } from '../base';
 import { Logger } from '../../utils/logger';
 import { applyTemplateAlignment } from './templateAlignment';
+import type { ParsedTemplate, TuningConfig } from '../../template/types';
 
 const logger = new Logger('AlignmentProcessor');
 
@@ -21,19 +22,18 @@ const logger = new Logger('AlignmentProcessor');
  * is provided in the template configuration.
  */
 export class AlignmentProcessor extends Processor {
-  // @ts-ignore
-  private _template: any; // Template type (avoiding circular dependencies)
-  private tuningConfig: any;
+  private template: ParsedTemplate;
+  private tuningConfig: TuningConfig;
 
   /**
    * Initialize the alignment processor.
    *
    * @param template - The template containing alignment configuration
    */
-  constructor(template: any) {
+  constructor(template: ParsedTemplate) {
     super();
-    this._template = template;
-    this.tuningConfig = template.tuningConfig || template.tuning_config;
+    this.template = template;
+    this.tuningConfig = template.tuningConfig || template.tuning_config || {};
   }
 
   /**
