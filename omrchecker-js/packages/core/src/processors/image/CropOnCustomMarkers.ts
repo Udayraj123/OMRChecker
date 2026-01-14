@@ -323,7 +323,7 @@ export class CropOnCustomMarkers extends CropOnPatchesCommon {
     referenceZone: ReferenceZone,
     customOptions: Record<string, any>
   ): cv.Mat {
-    const markerDimensions = customOptions.markerDimensions || this.options.markerDimensions;
+    const markerDimensions = customOptions.markerDimensions || (this.options as any).markerDimensions;
     const blurKernel = customOptions.markerBlurKernel || [5, 5];
 
     return prepareMarkerTemplate(
@@ -488,7 +488,7 @@ export class CropOnCustomMarkers extends CropOnPatchesCommon {
       throw new ImageProcessingError(`No marker found in patch ${zoneLabel}`);
     }
 
-    return corners;
+    return corners as PointArray;
   }
 
   /**

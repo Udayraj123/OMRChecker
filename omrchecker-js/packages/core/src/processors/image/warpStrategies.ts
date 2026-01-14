@@ -258,16 +258,17 @@ export class HomographyStrategy extends WarpStrategy {
  * For production use, consider implementing proper interpolation or using a library.
  */
 export class GridDataRemapStrategy extends WarpStrategy {
-  private interpolationMethod: 'linear' | 'nearest' | 'cubic';
+  // interpolationMethod is for future use when full griddata is implemented
+  // private interpolationMethod: 'linear' | 'nearest' | 'cubic';
 
   /**
    * Initialize griddata remap strategy.
    *
-   * @param interpolationMethod - 'linear', 'nearest', or 'cubic'
+   * @param interpolationMethod - 'linear', 'nearest', or 'cubic' (not yet used)
    */
-  constructor(interpolationMethod: 'linear' | 'nearest' | 'cubic' = 'cubic') {
+  constructor(_interpolationMethod: 'linear' | 'nearest' | 'cubic' = 'cubic') {
     super();
-    this.interpolationMethod = interpolationMethod;
+    // this.interpolationMethod = interpolationMethod;
   }
 
   getName(): string {
@@ -321,8 +322,8 @@ export class DocRefineRectifyStrategy extends WarpStrategy {
   }
 
   warpImage(
-    image: cv.Mat,
-    coloredImage: cv.Mat | null,
+    _image: cv.Mat,
+    _coloredImage: cv.Mat | null,
     _controlPoints: number[][],
     _destinationPoints: number[][],
     _warpedDimensions: [number, number],

@@ -34,7 +34,7 @@ const TOP_CONTOURS_COUNT = 4;
 // HSV white color range for colored Canny
 const HSV_WHITE_LOW = new cv.Scalar(0, 0, 130);
 const HSV_WHITE_HIGH = new cv.Scalar(255, 80, 255);
-const CLR_WHITE = new cv.Scalar(255, 255, 255);
+const CLR_WHITE: [number, number, number] = [255, 255, 255];
 
 export class ImageProcessingError extends Error {
   filePath?: string;
@@ -84,8 +84,12 @@ export function applyColoredCanny(image: cv.Mat, coloredImage: cv.Mat): cv.Mat {
 
   // Mask to select only white-ish zones (the page)
   const mask = new cv.Mat();
-  cv.inRange(hsv, HSV_WHITE_LOW, HSV_WHITE_HIGH, mask);
+  const hsvWhiteLow = new cv.Mat(1, 1, cv.CV_8UC3, HSV_WHITE_LOW);
+  const hsvWhiteHigh = new cv.Mat(1, 1, cv.CV_8UC3, HSV_WHITE_HIGH);
+  cv.inRange(hsv, hsvWhiteLow, hsvWhiteHigh, mask);
   hsv.delete();
+  hsvWhiteLow.delete();
+  hsvWhiteHigh.delete();
 
   const maskResult = new cv.Mat();
   const noMask = new cv.Mat();  // Empty mask parameter
@@ -313,14 +317,12 @@ export function findPageContourAndCorners(
     DrawingUtils.drawContour(
       cannyEdge,
       approxPoints,
-      -1,  // contourIdx
       CLR_WHITE,
       CONTOUR_THICKNESS_STANDARD
     );
     DrawingUtils.drawContour(
       debugImage,
       approxPoints,
-      -1,  // contourIdx
       CLR_WHITE,
       CONTOUR_THICKNESS_STANDARD
     );

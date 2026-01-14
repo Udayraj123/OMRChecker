@@ -6,7 +6,7 @@
  */
 
 import * as cv from '@techstark/opencv-js';
-import { Point, Rectangle, MathUtils } from './math';
+import type { Point, Rectangle } from './math';
 import { Logger } from './logger';
 
 const logger = new Logger('ShapeUtils');

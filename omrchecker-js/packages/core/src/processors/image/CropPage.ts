@@ -37,8 +37,9 @@ export interface CropPageOptions {
 export class CropPage extends ImageTemplatePreprocessor {
   private morphKernel?: cv.Mat;
   private useColoredCanny: boolean;
-  private warpMethod: WarpMethodValue;
-  private maxPointsPerEdge?: number | null;
+  // warpMethod and maxPointsPerEdge are for future use
+  // private warpMethod: WarpMethodValue;
+  // private maxPointsPerEdge?: number | null;
 
   constructor(
     options: CropPageOptions,
@@ -63,8 +64,8 @@ export class CropPage extends ImageTemplatePreprocessor {
     super(remappedOptions, relativeDir, saveImageOps, defaultProcessingImageShape);
 
     this.useColoredCanny = remappedOptions.useColoredCanny;
-    this.warpMethod = remappedOptions.tuningOptions.warpMethod;
-    this.maxPointsPerEdge = remappedOptions.maxPointsPerEdge;
+    // this.warpMethod = remappedOptions.tuningOptions.warpMethod;
+    // this.maxPointsPerEdge = remappedOptions.maxPointsPerEdge;
 
     // Create morphological kernel if specified
     if (remappedOptions.morphKernel) {

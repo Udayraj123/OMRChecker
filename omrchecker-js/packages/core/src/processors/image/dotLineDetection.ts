@@ -13,14 +13,12 @@
  */
 
 import * as cv from '@techstark/opencv-js';
-import { Logger } from '../../utils/logger';
 import { ImageUtils } from '../../utils/ImageUtils';
 import { MathUtils, type Point, type Rectangle } from '../../utils/math';
 import { ScannerType, EDGE_TYPES_IN_ORDER } from '../constants';
 
 // Logger is defined for future use
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const logger = new Logger('DotLineDetection');
+// const logger = new Logger('DotLineDetection');
 
 // Default Canny thresholds
 const DEFAULT_CANNY_LOW = 55;
