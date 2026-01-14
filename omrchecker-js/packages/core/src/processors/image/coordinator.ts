@@ -24,7 +24,7 @@ const logger = new Logger('PreprocessingProcessor');
  * 4. Optionally resizes to output dimensions
  */
 export class PreprocessingProcessor extends Processor {
-  // @ts-expect-error - Unused in simplified implementation, preserved for future use
+  // @ts-ignore
   private _template: any; // Template type (avoiding circular dependencies)
   private tuningConfig: any;
 

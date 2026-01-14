@@ -10,8 +10,7 @@
 
 import * as cv from '@techstark/opencv-js';
 import { ImageUtils } from './ImageUtils';
-// @ts-expect-error - Point is used in type annotations throughout this file
-import { MathUtils, type Point } from './math';
+import { MathUtils } from './math';
 import {
   CLR_BLACK,
   CLR_WHITE,

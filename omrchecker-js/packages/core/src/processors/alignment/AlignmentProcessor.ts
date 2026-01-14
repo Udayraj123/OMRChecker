@@ -21,7 +21,7 @@ const logger = new Logger('AlignmentProcessor');
  * is provided in the template configuration.
  */
 export class AlignmentProcessor extends Processor {
-  // @ts-expect-error - Unused in simplified implementation, will be used for advanced alignment
+  // @ts-ignore
   private _template: any; // Template type (avoiding circular dependencies)
   private tuningConfig: any;
 
@@ -54,9 +54,9 @@ export class AlignmentProcessor extends Processor {
   process(context: ProcessingContext): ProcessingContext {
     logger.debug(`Starting ${this.getName()} processor`);
 
-    let grayImage = context.grayImage;
-    let coloredImage = context.coloredImage;
-    let template = context.template;
+    const grayImage = context.grayImage;
+    const coloredImage = context.coloredImage;
+    const template = context.template;
 
     // Only apply alignment if images are valid and alignment is configured
     const alignment = template.alignment;

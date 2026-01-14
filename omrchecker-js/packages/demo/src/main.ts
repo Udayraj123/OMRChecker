@@ -16,14 +16,14 @@ import {
 // Create global binding for OpenCV before it loads
 declare global {
   interface Window {
-    cv: typeof cv;
+    cv: any;
     Module: any;
     showDirectoryPicker(): Promise<FileSystemDirectoryHandle>;
   }
 }
 
 // OpenCV will be loaded from CDN and attach to window.cv
-const cv = window.cv as any || {} as any;
+const cv: any = (window as any).cv || {};
 
 // OpenCV type declarations
 type OpenCVType = {
@@ -60,14 +60,6 @@ interface FileSystemDirectoryHandle extends FileSystemHandle {
   getDirectoryHandle(name: string): Promise<FileSystemDirectoryHandle>;
 }
 
-declare global {
-  interface Window {
-    cv: typeof cv;
-    Module: any;
-    showDirectoryPicker(): Promise<FileSystemDirectoryHandle>;
-  }
-}
-
 // Global state
 let templateData: ParsedTemplate | null = null;
 let imageFiles: File[] = [];
@@ -92,14 +84,14 @@ const loadingMessage = document.getElementById('loading-message') as HTMLElement
 function waitForOpenCV(): Promise<void> {
   return new Promise((resolve) => {
     // Check if already loaded
-    if (window.cv && window.cv.getBuildInformation) {
+    if (window.cv && typeof window.cv.getBuildInformation === 'function') {
       resolve();
       return;
     }
 
     // Poll for OpenCV to be ready
     const checkInterval = setInterval(() => {
-      if (window.cv && window.cv.getBuildInformation) {
+      if (window.cv && typeof window.cv.getBuildInformation === 'function') {
         clearInterval(checkInterval);
         resolve();
       }
@@ -381,7 +373,7 @@ async function displayImageFile(file: File): Promise<void> {
 /**
  * Load image from file
  */
-function loadImage(file: File): Promise<cv.Mat> {
+function loadImage(file: File): Promise<any> {
   return new Promise((resolve, reject) => {
     const img = new Image();
 
@@ -393,7 +385,7 @@ function loadImage(file: File): Promise<cv.Mat> {
         }
 
         // Convert to grayscale
-        let grayMat: cv.Mat;
+        let grayMat: any;
         if (mat.channels() === 3 || mat.channels() === 4) {
           grayMat = new window.cv.Mat();
           window.cv.cvtColor(mat, grayMat, window.cv.COLOR_RGBA2GRAY);
@@ -422,7 +414,7 @@ function loadImage(file: File): Promise<cv.Mat> {
 /**
  * Display image on canvas
  */
-function displayImage(canvas: HTMLCanvasElement, mat: cv.Mat): void {
+function displayImage(canvas: HTMLCanvasElement, mat: any): void {
   // Convert grayscale to RGBA for display
   const displayMat = new window.cv.Mat();
   window.cv.cvtColor(mat, displayMat, window.cv.COLOR_GRAY2RGBA);
@@ -493,7 +485,7 @@ async function handleDetectBatch(): Promise<void> {
  * Visualize detection results on canvas
  */
 function visualizeResults(
-  image: cv.Mat,
+  image: any,
   results: Map<string, FieldDetectionResult>,
   template: ParsedTemplate
 ): void {
@@ -517,7 +509,7 @@ function visualizeResults(
       const radius = Math.floor(Math.min(bubble.width, bubble.height) / 2);
 
       // Color based on detection
-      let color: cv.Scalar;
+      let color: any;
       if (bubbleResult.isMarked) {
         color = new window.cv.Scalar(0, 255, 0, 255); // Green for marked
       } else {
@@ -892,10 +884,10 @@ function showCanvasPlaceholder(placeholderId: string): void {
 }
 
 // // Initialize when DOM is ready
-// if (document.readyState === 'loading') {
-//   document.addEventListener('DOMContentLoaded', init);
-// } else {
-//   // DOM already loaded
-//   init();
-// }
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  // DOM already loaded
+  init();
+}
 
