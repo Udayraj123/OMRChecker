@@ -20,7 +20,7 @@
 
 import cv from '@techstark/opencv-js';
 import { WarpOnPointsCommon } from './WarpOnPointsCommon';
-import { PointArray } from './pointUtils';
+import { PointArray, orderFourPoints } from './pointUtils';
 import {
   selectPointFromRectangle,
   computeScanZone,
@@ -273,8 +273,9 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
 
     // For perspective transform, use ordered 4 corners
     if (this.warpMethod === 'PERSPECTIVE_TRANSFORM' && pageCorners.length === 4) {
-      // TODO: Order points using MathUtils.orderFourPoints
-      return [pageCorners, destinationPageCorners, edgeContoursMap];
+      // Order points consistently (TL, TR, BR, BL)
+      const orderedCorners = orderFourPoints(pageCorners);
+      return [orderedCorners, destinationPageCorners, edgeContoursMap];
     }
 
     return [controlPoints, destinationPoints, edgeContoursMap];

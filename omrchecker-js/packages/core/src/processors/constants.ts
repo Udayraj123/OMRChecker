@@ -85,13 +85,23 @@ export type SelectorTypeValue = (typeof SelectorType)[keyof typeof SelectorType]
 
 // Warp methods
 export const WarpMethod = {
-  HOMOGRAPHY: 'HOMOGRAPHY',
   PERSPECTIVE_TRANSFORM: 'PERSPECTIVE_TRANSFORM',
+  HOMOGRAPHY: 'HOMOGRAPHY',
+  REMAP_GRIDDATA: 'REMAP_GRIDDATA',
   DOC_REFINE: 'DOC_REFINE',
-  REMAP: 'REMAP',
+  WARP_AFFINE: 'WARP_AFFINE',
 } as const;
 
 export type WarpMethodValue = (typeof WarpMethod)[keyof typeof WarpMethod];
+
+// Warp method flags for interpolation
+export const WarpMethodFlags = {
+  INTER_LINEAR: 'INTER_LINEAR',
+  INTER_CUBIC: 'INTER_CUBIC',
+  INTER_NEAREST: 'INTER_NEAREST',
+} as const;
+
+export type WarpMethodFlagsValue = (typeof WarpMethodFlags)[keyof typeof WarpMethodFlags];
 
 // Target edges for lines (used in alignment)
 export const TARGET_EDGE_FOR_LINE: Record<ZonePresetValue, EdgeTypeValue> = {

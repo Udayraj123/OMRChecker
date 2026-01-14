@@ -17,22 +17,10 @@
 import cv from '@techstark/opencv-js';
 import { ImageTemplatePreprocessor } from './base';
 import { WarpStrategyFactory, WarpStrategy } from './warpStrategies';
-import { PointArray } from './pointUtils';
+import { PointArray, orderFourPoints } from './pointUtils';
 import { logger } from '../../utils/logger';
-
-// TODO: Import these from constants file
-enum WarpMethod {
-  PERSPECTIVE_TRANSFORM = 'PERSPECTIVE_TRANSFORM',
-  HOMOGRAPHY = 'HOMOGRAPHY',
-  REMAP_GRIDDATA = 'REMAP_GRIDDATA',
-  DOC_REFINE = 'DOC_REFINE',
-}
-
-enum WarpMethodFlags {
-  INTER_LINEAR = 'INTER_LINEAR',
-  INTER_CUBIC = 'INTER_CUBIC',
-  INTER_NEAREST = 'INTER_NEAREST',
-}
+import { ImageUtils } from '../../utils/ImageUtils';
+import { WarpMethod, WarpMethodFlags, type WarpMethodValue, type WarpMethodFlagsValue } from '../constants';
 
 /**
  * Base class for image processors that apply warping transformations.
@@ -400,12 +388,14 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
       );
     }
 
-    // TODO: Order the 4 points consistently using MathUtils.orderFourPoints
-    // TODO: Recalculate destination points from ordered control points
-    // For now, return as-is (this would need ImageUtils.getCroppedWarpedRectanglePoints)
+    // Order the 4 points consistently (TL, TR, BR, BL)
+    const orderedControl = orderFourPoints(controlPoints);
 
-    logger.warn('Point ordering for perspective transform not fully implemented');
-    return [controlPoints, destinationPoints, warpedDimensions];
+    // Recalculate destination points from ordered control points
+    const [newDestination, newDimensions] =
+      ImageUtils.getCroppedWarpedRectanglePoints(orderedControl);
+
+    return [orderedControl, newDestination, newDimensions];
   }
 
   /**

@@ -10,6 +10,7 @@
 
 import cv from '@techstark/opencv-js';
 import { logger } from '../../utils/logger';
+import { WarpMethod, WarpMethodFlags, type WarpMethodValue, type WarpMethodFlagsValue } from '../constants';
 
 /**
  * Abstract base class for image warping strategies.
@@ -348,13 +349,14 @@ export class DocRefineRectifyStrategy extends WarpStrategy {
  */
 export class WarpStrategyFactory {
   private static strategies: Record<
-    string,
+    WarpMethodValue,
     new (...args: any[]) => WarpStrategy
   > = {
-    PERSPECTIVE_TRANSFORM: PerspectiveTransformStrategy,
-    HOMOGRAPHY: HomographyStrategy,
-    REMAP_GRIDDATA: GridDataRemapStrategy,
-    DOC_REFINE: DocRefineRectifyStrategy,
+    [WarpMethod.PERSPECTIVE_TRANSFORM]: PerspectiveTransformStrategy,
+    [WarpMethod.HOMOGRAPHY]: HomographyStrategy,
+    [WarpMethod.REMAP_GRIDDATA]: GridDataRemapStrategy,
+    [WarpMethod.DOC_REFINE]: DocRefineRectifyStrategy,
+    [WarpMethod.WARP_AFFINE]: PerspectiveTransformStrategy, // Fallback to perspective
   };
 
   /**
@@ -365,7 +367,7 @@ export class WarpStrategyFactory {
    * @returns Configured WarpStrategy instance
    * @throws Error if method_name is unknown
    */
-  static create(methodName: string, config: Record<string, any> = {}): WarpStrategy {
+  static create(methodName: WarpMethodValue, config: Record<string, any> = {}): WarpStrategy {
     const StrategyClass = this.strategies[methodName];
 
     if (!StrategyClass) {
@@ -376,15 +378,15 @@ export class WarpStrategyFactory {
     }
 
     // Pass config as constructor arguments (need to match constructor signatures)
-    if (methodName === 'PERSPECTIVE_TRANSFORM') {
+    if (methodName === WarpMethod.PERSPECTIVE_TRANSFORM || methodName === WarpMethod.WARP_AFFINE) {
       return new StrategyClass(config.interpolationFlag);
-    } else if (methodName === 'HOMOGRAPHY') {
+    } else if (methodName === WarpMethod.HOMOGRAPHY) {
       return new StrategyClass(
         config.interpolationFlag,
         config.useRansac,
         config.ransacThreshold
       );
-    } else if (methodName === 'REMAP_GRIDDATA') {
+    } else if (methodName === WarpMethod.REMAP_GRIDDATA) {
       return new StrategyClass(config.interpolationMethod);
     } else {
       return new StrategyClass();
@@ -394,8 +396,8 @@ export class WarpStrategyFactory {
   /**
    * Return list of available warp method names
    */
-  static getAvailableMethods(): string[] {
-    return Object.keys(this.strategies);
+  static getAvailableMethods(): WarpMethodValue[] {
+    return Object.keys(this.strategies) as WarpMethodValue[];
   }
 }
 

@@ -152,6 +152,34 @@ export class DrawingUtils {
   }
 
   /**
+   * Draw a convex hull around points.
+   *
+   * @param image - Image to draw on
+   * @param points - Points to compute convex hull for
+   * @param color - Hull color
+   * @param thickness - Line thickness
+   */
+  static drawConvexHull(
+    image: cv.Mat,
+    points: cv.Mat | number[][],
+    color: ColorTuple = CLR_BLUE,
+    thickness: number = 2
+  ): void {
+    const hull = new cv.Mat();
+
+    if (Array.isArray(points)) {
+      const pointsMat = cv.matFromArray(points.length, 1, cv.CV_32SC2, points.flat());
+      cv.convexHull(pointsMat, hull, false, true);
+      pointsMat.delete();
+    } else {
+      cv.convexHull(points, hull, false, true);
+    }
+
+    this.drawContour(image, hull, color, thickness);
+    hull.delete();
+  }
+
+  /**
    * Draw a box (rectangle) with various styles.
    *
    * @param image - Image to draw on
