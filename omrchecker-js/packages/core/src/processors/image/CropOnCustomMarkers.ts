@@ -18,6 +18,7 @@ import { CropOnPatchesCommon, type ZoneDescription, type ScanZone } from './Crop
 import { PointArray } from './pointUtils';
 import { logger } from '../../utils/logger';
 import { ImageProcessingError, TemplateValidationError } from '../../exceptions';
+import { ImageUtils } from '../../utils/ImageUtils';
 import {
   WarpMethod,
   ScannerType,
@@ -225,15 +226,69 @@ export class CropOnCustomMarkers extends CropOnPatchesCommon {
       }
 
       // Load reference image (or reuse if already loaded)
-      let referenceImage: cv.Mat;
-      if (this.loadedReferenceImages.has(referenceImagePath)) {
-        referenceImage = this.loadedReferenceImages.get(referenceImagePath)!;
-      } else {
-        // TODO: Load image using ImageUtils.loadImage
-        // For now, skip actual loading in TypeScript
-        logger.warn(`Reference image loading not implemented: ${referenceImagePath}`);
-        continue;
+      // Note: In browser environment, this would need to be done asynchronously
+      // For now, we'll log a message and skip. Real implementation would:
+      // 1. Accept File objects or data URLs
+      // 2. Load asynchronously using ImageUtils.loadImage()
+      // 3. Cache in loadedReferenceImages
+
+      logger.info(
+        `To use marker ${zoneLabel}, provide reference image as File or data URL. ` +
+        `Path-based loading (${referenceImagePath}) is not supported in browser environment.`
+      );
+
+      // If you have a File object or data URL, you can load it like this:
+      // const referenceImage = await ImageUtils.loadImage(fileOrDataURL, 0); // 0 = grayscale
+      // this.loadedReferenceImages.set(referenceImagePath, referenceImage);
+
+      // For now, skip this marker
+      continue;
+
+      // Commented out code below shows what would happen if image was loaded:
+      /*
+      // Get reference zone (defaults to entire image)
+      const referenceZone: ReferenceZone =
+        customOptions.referenceZone || this.getDefaultScanZoneForImage(referenceImage);
+
+      // Extract and prepare marker
+      const extractedMarker = this.extractMarkerFromReference(
+        referenceImage,
+        referenceZone,
+        customOptions
+      );
+
+      this.markerForZoneLabel.set(zoneLabel, extractedMarker);
+      */
+    }
+  }
+
+  /**
+   * Load reference image from File or data URL (browser-compatible).
+   *
+   * This method should be called manually after construction if you want to use
+   * custom markers in a browser environment.
+   *
+   * @param zoneLabel - Label of the zone to load marker for
+   * @param imageSource - File object, Blob, or data URL string
+   * @returns Promise that resolves when marker is loaded
+   */
+  async loadReferenceImageForZone(
+    zoneLabel: string,
+    imageSource: File | Blob | string
+  ): Promise<void> {
+    try {
+      // Find the zone
+      const scanZone = this.scanZones.find((z) => z.zoneDescription.label === zoneLabel);
+      if (!scanZone) {
+        throw new Error(`Zone ${zoneLabel} not found`);
       }
+
+      const customOptions = scanZone.customOptions || {};
+      const referenceImagePath = customOptions.referenceImage || zoneLabel;
+
+      // Load image
+      const referenceImage = await ImageUtils.loadImage(imageSource, 0); // 0 = grayscale
+      this.loadedReferenceImages.set(referenceImagePath, referenceImage);
 
       // Get reference zone (defaults to entire image)
       const referenceZone: ReferenceZone =
@@ -247,6 +302,11 @@ export class CropOnCustomMarkers extends CropOnPatchesCommon {
       );
 
       this.markerForZoneLabel.set(zoneLabel, extractedMarker);
+
+      logger.info(`Loaded marker for zone: ${zoneLabel}`);
+    } catch (error) {
+      logger.error(`Failed to load marker for zone ${zoneLabel}: ${error}`);
+      throw new Error(`Failed to load marker for zone ${zoneLabel}: ${error}`);
     }
   }
 
@@ -448,10 +508,27 @@ export class CropOnCustomMarkers extends CropOnPatchesCommon {
       return image;
     }
 
-    // TODO: Implement ImageUtils.normalize with erode-subtract
-    // For now, return image as-is
-    logger.debug('Erode-subtract preprocessing not fully implemented');
-    return image;
+    // Erode-subtract enhances edges:
+    // normalized_image = normalize(image - erode(image))
+    try {
+      const kernel = cv.Mat.ones(5, 5, cv.CV_8U);
+      const eroded = new cv.Mat();
+      cv.erode(image, eroded, kernel, new cv.Point(-1, -1), 5);
+      kernel.delete();
+
+      const subtracted = new cv.Mat();
+      cv.subtract(image, eroded, subtracted);
+      eroded.delete();
+
+      const normalized = new cv.Mat();
+      cv.normalize(subtracted, normalized, 0, 255, cv.NORM_MINMAX, cv.CV_8U);
+      subtracted.delete();
+
+      return normalized;
+    } catch (error) {
+      logger.error(`Error in erode-subtract preprocessing: ${error}`);
+      return image;
+    }
   }
 
   /**

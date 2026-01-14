@@ -9,11 +9,13 @@
  * Uses the extracted pageDetection module for clean separation of concerns.
  */
 
-import type * as cv from '@techstark/opencv-js';
+import * as cv from '@techstark/opencv-js';
 import { ImageTemplatePreprocessor } from './base';
 import { Logger } from '../../utils/logger';
 import { WarpMethod, type WarpMethodValue } from '../constants';
 import { findPageContourAndCorners } from './pageDetection';
+import { ImageUtils } from '../../utils/ImageUtils';
+import { MathUtils } from '../../utils/math';
 
 const logger = new Logger('CropPage');
 
@@ -35,10 +37,7 @@ export interface CropPageOptions {
 export class CropPage extends ImageTemplatePreprocessor {
   private morphKernel?: cv.Mat;
   private useColoredCanny: boolean;
-  // Reserved for future warping implementation
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private warpMethod: WarpMethodValue;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private maxPointsPerEdge?: number | null;
 
   constructor(
@@ -92,7 +91,7 @@ export class CropPage extends ImageTemplatePreprocessor {
     logger.debug(`Applying ${this.getName()} filter`);
 
     try {
-      // Use extracted page detection module
+      // Step 1: Use extracted page detection module
       const [corners, _pageContour] = findPageContourAndCorners(image, {
         coloredImage: coloredImage,
         useColoredCanny: this.useColoredCanny,
@@ -100,26 +99,95 @@ export class CropPage extends ImageTemplatePreprocessor {
         filePath: filePath,
       });
 
+      if (!corners || corners.length !== 4) {
+        logger.warn(`Invalid page corners detected: ${corners?.length || 0} points`);
+        return [image, coloredImage, template];
+      }
+
       logger.info(`Found page corners: ${JSON.stringify(corners)}`);
 
-      // TODO: Implement warping logic
-      // For now, return images unchanged
-      // Full implementation needs:
-      // 1. Calculate destination corners
-      // 2. Apply perspective transform or other warp method
-      // 3. Handle edge-based warping for HOMOGRAPHY/REMAP methods
+      // Step 2: Order corners consistently (TL, TR, BR, BL)
+      const [orderedCorners] = MathUtils.orderFourPoints(corners);
 
-      logger.warn(
-        'CropPage: Warping not yet implemented - returning image unchanged. ' +
-          'Full implementation requires perspective transform and edge-based warping.'
+      // Step 3: Calculate destination corners and dimensions
+      const [destinationMat, dimensions] =
+        ImageUtils.getCroppedWarpedRectanglePoints(orderedCorners);
+
+      const [width, height] = dimensions;
+      logger.debug(`Warping to dimensions: ${width}x${height}`);
+
+      // Step 4: Create source points matrix
+      const sourcePointsFlat = orderedCorners.flat();
+      const sourceMat = cv.matFromArray(4, 1, cv.CV_32FC2, sourcePointsFlat);
+
+      // Step 5: Apply perspective transform
+      const warpedGray = this.applyWarpTransform(
+        image,
+        sourceMat,
+        destinationMat,
+        width,
+        height
       );
 
-      return [image, coloredImage, template];
+      // Step 6: Apply to colored image if available
+      let warpedColored = coloredImage;
+      if (coloredImage && !coloredImage.empty()) {
+        warpedColored = this.applyWarpTransform(
+          coloredImage,
+          sourceMat,
+          destinationMat,
+          width,
+          height
+        );
+      }
+
+      // Cleanup temporary matrices
+      sourceMat.delete();
+      destinationMat.delete();
+
+      logger.info(`Successfully warped page to ${width}x${height}`);
+      return [warpedGray, warpedColored, template];
     } catch (error) {
       logger.error(`CropPage failed: ${error}`);
       // Return images unchanged on error
       return [image, coloredImage, template];
     }
+  }
+
+  /**
+   * Apply perspective transformation to an image.
+   *
+   * @param image - Source image
+   * @param sourceMat - Source points (4x1 CV_32FC2)
+   * @param destinationMat - Destination points (4x1 CV_32FC2)
+   * @param width - Output width
+   * @param height - Output height
+   * @returns Warped image
+   */
+  private applyWarpTransform(
+    image: cv.Mat,
+    sourceMat: cv.Mat,
+    destinationMat: cv.Mat,
+    width: number,
+    height: number
+  ): cv.Mat {
+    // Compute perspective transformation matrix
+    const transformMatrix = cv.getPerspectiveTransform(sourceMat, destinationMat);
+
+    // Apply warp
+    const warped = new cv.Mat();
+    cv.warpPerspective(
+      image,
+      warped,
+      transformMatrix,
+      new cv.Size(width, height),
+      cv.INTER_LINEAR
+    );
+
+    // Cleanup
+    transformMatrix.delete();
+
+    return warped;
   }
 
   cleanup(): void {

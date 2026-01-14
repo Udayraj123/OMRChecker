@@ -18,6 +18,8 @@ import { CropOnPatchesCommon, type ZoneDescription, type ScanZone } from './Crop
 import { PointArray } from './pointUtils';
 import { logger } from '../../utils/logger';
 import { ImageProcessingError, TemplateValidationError } from '../../exceptions';
+import { ImageUtils } from '../../utils/ImageUtils';
+import { MathUtils } from '../../utils/math';
 import {
   WarpMethod,
   ScannerType,
@@ -383,34 +385,14 @@ export class CropOnDotLines extends CropOnPatchesCommon {
     zoneDescription: ZoneDescription,
     edgeType: EdgeTypeValue
   ): PointArray {
-    // TODO: Use MathUtils.getRectanglePointsFromBox and selectEdgeFromRectangle
     const origin = zoneDescription.origin || [0, 0];
     const dimensions = zoneDescription.dimensions || [0, 0];
 
-    const [x, y] = origin;
-    const [w, h] = dimensions;
+    // Create rectangle using MathUtils
+    const rectangle = MathUtils.getRectanglePointsFromBox(origin, dimensions);
 
-    // Create rectangle corners
-    const rectangle: PointArray = [
-      [x, y], // TL
-      [x + w, y], // TR
-      [x + w, y + h], // BR
-      [x, y + h], // BL
-    ];
-
-    // Select edge based on type
-    switch (edgeType) {
-      case EdgeType.TOP:
-        return [rectangle[0], rectangle[1]];
-      case EdgeType.RIGHT:
-        return [rectangle[1], rectangle[2]];
-      case EdgeType.BOTTOM:
-        return [rectangle[2], rectangle[3]];
-      case EdgeType.LEFT:
-        return [rectangle[3], rectangle[0]];
-      default:
-        return [];
-    }
+    // Select edge from rectangle using MathUtils
+    return MathUtils.selectEdgeFromRectangle(rectangle, edgeType as any);
   }
 
   /**
@@ -421,66 +403,16 @@ export class CropOnDotLines extends CropOnPatchesCommon {
     destinationLine: PointArray,
     maxPoints: number | null
   ): [PointArray, PointArray] {
-    // TODO: Implement ImageUtils.getControlDestinationPointsFromContour
-    // For now, return simplified version using just endpoints
-
-    if (contour.length === 0 || destinationLine.length === 0) {
+    if (contour.length === 0 || destinationLine.length < 2) {
       return [[], []];
     }
 
-    // Simple implementation: use contour points as control, interpolate destination
-    const controlPoints = maxPoints && contour.length > maxPoints
-      ? this.samplePoints(contour, maxPoints)
-      : contour;
-
-    // Interpolate destination points along the line
-    const destinationPoints = this.interpolateAlongLine(
-      destinationLine[0],
-      destinationLine[1],
-      controlPoints.length
+    // Use ImageUtils for proper implementation
+    return ImageUtils.getControlDestinationPointsFromContour(
+      contour,
+      [destinationLine[0], destinationLine[1]],
+      maxPoints
     );
-
-    return [controlPoints, destinationPoints];
-  }
-
-  /**
-   * Sample N evenly-spaced points from array.
-   */
-  private samplePoints(points: PointArray, count: number): PointArray {
-    if (points.length <= count) {
-      return points;
-    }
-
-    const step = (points.length - 1) / (count - 1);
-    const sampled: PointArray = [];
-
-    for (let i = 0; i < count; i++) {
-      const index = Math.round(i * step);
-      sampled.push(points[index]);
-    }
-
-    return sampled;
-  }
-
-  /**
-   * Interpolate N points along a line.
-   */
-  private interpolateAlongLine(
-    start: PointArray[0],
-    end: PointArray[0],
-    count: number
-  ): PointArray {
-    const points: PointArray = [];
-
-    for (let i = 0; i < count; i++) {
-      const t = count > 1 ? i / (count - 1) : 0;
-      points.push([
-        Math.round(start[0] + t * (end[0] - start[0])),
-        Math.round(start[1] + t * (end[1] - start[1])),
-      ]);
-    }
-
-    return points;
   }
 
   /**

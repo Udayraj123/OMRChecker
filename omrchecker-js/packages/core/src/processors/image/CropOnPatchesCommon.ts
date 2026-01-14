@@ -23,6 +23,7 @@ import { WarpOnPointsCommon } from './WarpOnPointsCommon';
 import { PointArray } from './pointUtils';
 import { logger } from '../../utils/logger';
 import { ImageProcessingError, TemplateValidationError } from '../../exceptions';
+import { ShapeUtils } from '../../utils/shapes';
 import {
   ScannerType,
   SelectorType,
@@ -387,15 +388,13 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
     image: cv.Mat,
     zoneDescription: ZoneDescription
   ): [cv.Mat, [number, number], [number, number]] {
-    // TODO: Use ShapeUtils.extractImageFromZoneDescription
-    const origin = zoneDescription.origin || [0, 0];
-    const dimensions = zoneDescription.dimensions || [image.cols, image.rows];
+    const [zone, rectangle] = ShapeUtils.extractImageFromZoneDescription(
+      image,
+      zoneDescription
+    );
 
-    const rect = new cv.Rect(origin[0], origin[1], dimensions[0], dimensions[1]);
-    const zone = image.roi(rect);
-
-    const zoneStart: [number, number] = [origin[0], origin[1]];
-    const zoneEnd: [number, number] = [origin[0] + dimensions[0], origin[1] + dimensions[1]];
+    const zoneStart: [number, number] = rectangle[0];
+    const zoneEnd: [number, number] = rectangle[2];
 
     return [zone, zoneStart, zoneEnd];
   }
@@ -407,27 +406,7 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
     zoneDescription: ZoneDescription,
     includeMargins: boolean
   ): PointArray {
-    const origin = zoneDescription.origin || [0, 0];
-    const dimensions = zoneDescription.dimensions || [0, 0];
-    const margins = zoneDescription.margins || { top: 0, right: 0, bottom: 0, left: 0 };
-
-    let [x, y] = origin;
-    let [w, h] = dimensions;
-
-    if (includeMargins) {
-      x -= margins.left;
-      y -= margins.top;
-      w += margins.left + margins.right;
-      h += margins.top + margins.bottom;
-    }
-
-    // Return corners: TL, TR, BR, BL
-    return [
-      [x, y],
-      [x + w, y],
-      [x + w, y + h],
-      [x, y + h],
-    ];
+    return ShapeUtils.computeScanZoneRectangle(zoneDescription, includeMargins);
   }
 
   /**

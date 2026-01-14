@@ -526,6 +526,95 @@ export class ImageUtils {
   }
 
   /**
+   * Get control and destination points from a contour and destination line.
+   *
+   * Interpolates points along the contour and maps them to points along the destination line.
+   * Used for line-based warping where we have an edge contour and want to align it with a straight edge.
+   *
+   * @param contour - Array of points along the detected edge
+   * @param destinationLine - [start, end] points of the target line
+   * @param maxPoints - Maximum number of points to use (null = use all)
+   * @returns Tuple of [controlPoints, destinationPoints]
+   */
+  static getControlDestinationPointsFromContour(
+    contour: [number, number][],
+    destinationLine: [[number, number], [number, number]],
+    maxPoints: number | null = null
+  ): [[number, number][], [number, number][]] {
+    if (contour.length === 0 || destinationLine.length < 2) {
+      return [[], []];
+    }
+
+    // Sample points from contour if needed
+    let sampledContour = contour;
+    if (maxPoints !== null && contour.length > maxPoints) {
+      sampledContour = this.samplePointsFromArray(contour, maxPoints);
+    }
+
+    // Interpolate destination points along the destination line
+    const numPoints = sampledContour.length;
+    const destinationPoints = this.interpolatePointsAlongLine(
+      destinationLine[0],
+      destinationLine[1],
+      numPoints
+    );
+
+    return [sampledContour, destinationPoints];
+  }
+
+  /**
+   * Sample N evenly-spaced points from an array.
+   *
+   * @param points - Array of points
+   * @param count - Number of points to sample
+   * @returns Sampled points
+   */
+  private static samplePointsFromArray(
+    points: [number, number][],
+    count: number
+  ): [number, number][] {
+    if (points.length <= count) {
+      return points;
+    }
+
+    const step = (points.length - 1) / (count - 1);
+    const sampled: [number, number][] = [];
+
+    for (let i = 0; i < count; i++) {
+      const index = Math.round(i * step);
+      sampled.push(points[index]);
+    }
+
+    return sampled;
+  }
+
+  /**
+   * Interpolate N points evenly along a line.
+   *
+   * @param start - Start point [x, y]
+   * @param end - End point [x, y]
+   * @param count - Number of points to generate
+   * @returns Array of interpolated points
+   */
+  private static interpolatePointsAlongLine(
+    start: [number, number],
+    end: [number, number],
+    count: number
+  ): [number, number][] {
+    const points: [number, number][] = [];
+
+    for (let i = 0; i < count; i++) {
+      const t = count > 1 ? i / (count - 1) : 0;
+      points.push([
+        Math.round(start[0] + t * (end[0] - start[0])),
+        Math.round(start[1] + t * (end[1] - start[1])),
+      ]);
+    }
+
+    return points;
+  }
+
+  /**
    * Clip rectangle zone to image bounds.
    *
    * @param rectangle - Rectangle as [[x1, y1], [x2, y2]]
