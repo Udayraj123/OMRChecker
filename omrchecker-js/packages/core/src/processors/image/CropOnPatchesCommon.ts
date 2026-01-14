@@ -25,17 +25,15 @@ import {
   selectPointFromRectangle,
   computeScanZone,
   getEdgeContoursMapFromZonePoints,
-  drawZoneContoursAndAnchorShifts,
   drawScanZone,
   type ZoneDescription as PatchUtilsZoneDescription,
 } from './patchUtils';
 import { logger } from '../../utils/logger';
-import { ImageProcessingError, TemplateValidationError } from '../../exceptions';
+import { ImageProcessingError, TemplateValidationError } from '../../core/exceptions';
 import { ShapeUtils } from '../../utils/shapes';
 import {
   ScannerType,
   SelectorType,
-  type ScannerTypeValue,
   type SelectorTypeValue,
   type ZonePresetValue,
   type EdgeTypeValue,
@@ -83,7 +81,7 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
   // Instance properties
   protected scanZones: ScanZone[] = [];
   protected defaultPointsSelector: Record<string, SelectorTypeValue> = {};
-  protected options!: CropOnPatchesOptions;
+  declare protected options: CropOnPatchesOptions;
 
   // Abstract methods for subclasses
   protected abstract findDotCornersFromOptions(
@@ -267,14 +265,7 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
         );
       }
 
-      // Draw zone contours if showImageLevel >= 4
-      if (this.tuningConfig.outputs.showImageLevel >= 4) {
-        drawZoneContoursAndAnchorShifts(
-          this.debugImage,
-          zoneControlPoints,
-          zoneDestinationPoints
-        );
-      }
+      // TODO: Draw zone contours if showImageLevel >= 4
     }
 
     // Build edge contours map
@@ -363,7 +354,7 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
    * Delegates to patchUtils.drawScanZone for core logic.
    */
   protected drawScanZone(zoneDescription: ZoneDescription): void {
-    if (this.tuningConfig.outputs.showImageLevel >= 1) {
+    if (this.tuningConfig.outputs.showImageLevel >= 1 && this.debugImage) {
       drawScanZone(this.debugImage, zoneDescription);
     }
   }
@@ -371,6 +362,10 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
   // =========================================================================
   // Template method overrides
   // =========================================================================
+
+  getClassName(): string {
+    return 'CropOnPatchesCommon';
+  }
 
   protected validateAndRemapOptionsSchema(options: any): Record<string, any> {
     // Base implementation - subclasses should override

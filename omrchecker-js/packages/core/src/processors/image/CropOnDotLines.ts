@@ -16,8 +16,7 @@
 import cv from '@techstark/opencv-js';
 import { CropOnPatchesCommon, type ZoneDescription, type ScanZone } from './CropOnPatchesCommon';
 import { PointArray } from './pointUtils';
-import { logger } from '../../utils/logger';
-import { ImageProcessingError, TemplateValidationError } from '../../exceptions';
+import { ImageProcessingError, TemplateValidationError } from '../../core/exceptions';
 import { ImageUtils } from '../../utils/ImageUtils';
 import { MathUtils } from '../../utils/math';
 import {
@@ -29,8 +28,8 @@ import {
   TARGET_EDGE_FOR_LINE,
   type ZonePresetValue,
   type EdgeTypeValue,
+  type SelectorTypeValue,
   DOT_ZONE_TYPES_IN_ORDER,
-  LINE_ZONE_TYPES_IN_ORDER,
 } from '../constants';
 import {
   detectDotCorners,
@@ -106,46 +105,49 @@ export class CropOnDotLines extends CropOnPatchesCommon {
   };
 
   // Point selector presets
-  protected static override readonly defaultPointsSelectorMap = {
+  protected static override readonly defaultPointsSelectorMap: Record<
+    string,
+    Record<string, SelectorTypeValue>
+  > = {
     CENTERS: {
-      [ZonePreset.topLeftDot]: SelectorType.SELECT_CENTER,
-      [ZonePreset.topRightDot]: SelectorType.SELECT_CENTER,
-      [ZonePreset.bottomRightDot]: SelectorType.SELECT_CENTER,
-      [ZonePreset.bottomLeftDot]: SelectorType.SELECT_CENTER,
-      [ZonePreset.leftLine]: SelectorType.LINE_OUTER_EDGE,
-      [ZonePreset.rightLine]: SelectorType.LINE_OUTER_EDGE,
+      [ZonePreset.topLeftDot]: SelectorType.SELECT_CENTER as SelectorTypeValue,
+      [ZonePreset.topRightDot]: SelectorType.SELECT_CENTER as SelectorTypeValue,
+      [ZonePreset.bottomRightDot]: SelectorType.SELECT_CENTER as SelectorTypeValue,
+      [ZonePreset.bottomLeftDot]: SelectorType.SELECT_CENTER as SelectorTypeValue,
+      [ZonePreset.leftLine]: SelectorType.LINE_OUTER_EDGE as SelectorTypeValue,
+      [ZonePreset.rightLine]: SelectorType.LINE_OUTER_EDGE as SelectorTypeValue,
     },
     INNER_WIDTHS: {
-      [ZonePreset.topLeftDot]: SelectorType.SELECT_TOP_RIGHT,
-      [ZonePreset.topRightDot]: SelectorType.SELECT_TOP_LEFT,
-      [ZonePreset.bottomRightDot]: SelectorType.SELECT_BOTTOM_LEFT,
-      [ZonePreset.bottomLeftDot]: SelectorType.SELECT_BOTTOM_RIGHT,
-      [ZonePreset.leftLine]: SelectorType.LINE_INNER_EDGE,
-      [ZonePreset.rightLine]: SelectorType.LINE_INNER_EDGE,
+      [ZonePreset.topLeftDot]: SelectorType.SELECT_TOP_RIGHT as SelectorTypeValue,
+      [ZonePreset.topRightDot]: SelectorType.SELECT_TOP_LEFT as SelectorTypeValue,
+      [ZonePreset.bottomRightDot]: SelectorType.SELECT_BOTTOM_LEFT as SelectorTypeValue,
+      [ZonePreset.bottomLeftDot]: SelectorType.SELECT_BOTTOM_RIGHT as SelectorTypeValue,
+      [ZonePreset.leftLine]: SelectorType.LINE_INNER_EDGE as SelectorTypeValue,
+      [ZonePreset.rightLine]: SelectorType.LINE_INNER_EDGE as SelectorTypeValue,
     },
     INNER_HEIGHTS: {
-      [ZonePreset.topLeftDot]: SelectorType.SELECT_BOTTOM_LEFT,
-      [ZonePreset.topRightDot]: SelectorType.SELECT_BOTTOM_RIGHT,
-      [ZonePreset.bottomRightDot]: SelectorType.SELECT_TOP_RIGHT,
-      [ZonePreset.bottomLeftDot]: SelectorType.SELECT_TOP_LEFT,
-      [ZonePreset.leftLine]: SelectorType.LINE_OUTER_EDGE,
-      [ZonePreset.rightLine]: SelectorType.LINE_OUTER_EDGE,
+      [ZonePreset.topLeftDot]: SelectorType.SELECT_BOTTOM_LEFT as SelectorTypeValue,
+      [ZonePreset.topRightDot]: SelectorType.SELECT_BOTTOM_RIGHT as SelectorTypeValue,
+      [ZonePreset.bottomRightDot]: SelectorType.SELECT_TOP_RIGHT as SelectorTypeValue,
+      [ZonePreset.bottomLeftDot]: SelectorType.SELECT_TOP_LEFT as SelectorTypeValue,
+      [ZonePreset.leftLine]: SelectorType.LINE_OUTER_EDGE as SelectorTypeValue,
+      [ZonePreset.rightLine]: SelectorType.LINE_OUTER_EDGE as SelectorTypeValue,
     },
     INNER_CORNERS: {
-      [ZonePreset.topLeftDot]: SelectorType.SELECT_BOTTOM_RIGHT,
-      [ZonePreset.topRightDot]: SelectorType.SELECT_BOTTOM_LEFT,
-      [ZonePreset.bottomRightDot]: SelectorType.SELECT_TOP_LEFT,
-      [ZonePreset.bottomLeftDot]: SelectorType.SELECT_TOP_RIGHT,
-      [ZonePreset.leftLine]: SelectorType.LINE_INNER_EDGE,
-      [ZonePreset.rightLine]: SelectorType.LINE_INNER_EDGE,
+      [ZonePreset.topLeftDot]: SelectorType.SELECT_BOTTOM_RIGHT as SelectorTypeValue,
+      [ZonePreset.topRightDot]: SelectorType.SELECT_BOTTOM_LEFT as SelectorTypeValue,
+      [ZonePreset.bottomRightDot]: SelectorType.SELECT_TOP_LEFT as SelectorTypeValue,
+      [ZonePreset.bottomLeftDot]: SelectorType.SELECT_TOP_RIGHT as SelectorTypeValue,
+      [ZonePreset.leftLine]: SelectorType.LINE_INNER_EDGE as SelectorTypeValue,
+      [ZonePreset.rightLine]: SelectorType.LINE_INNER_EDGE as SelectorTypeValue,
     },
     OUTER_CORNERS: {
-      [ZonePreset.topLeftDot]: SelectorType.SELECT_TOP_LEFT,
-      [ZonePreset.topRightDot]: SelectorType.SELECT_TOP_RIGHT,
-      [ZonePreset.bottomRightDot]: SelectorType.SELECT_BOTTOM_RIGHT,
-      [ZonePreset.bottomLeftDot]: SelectorType.SELECT_BOTTOM_LEFT,
-      [ZonePreset.leftLine]: SelectorType.LINE_OUTER_EDGE,
-      [ZonePreset.rightLine]: SelectorType.LINE_OUTER_EDGE,
+      [ZonePreset.topLeftDot]: SelectorType.SELECT_TOP_LEFT as SelectorTypeValue,
+      [ZonePreset.topRightDot]: SelectorType.SELECT_TOP_RIGHT as SelectorTypeValue,
+      [ZonePreset.bottomRightDot]: SelectorType.SELECT_BOTTOM_RIGHT as SelectorTypeValue,
+      [ZonePreset.bottomLeftDot]: SelectorType.SELECT_BOTTOM_LEFT as SelectorTypeValue,
+      [ZonePreset.leftLine]: SelectorType.LINE_OUTER_EDGE as SelectorTypeValue,
+      [ZonePreset.rightLine]: SelectorType.LINE_OUTER_EDGE as SelectorTypeValue,
     },
   };
 
@@ -427,6 +429,10 @@ export class CropOnDotLines extends CropOnPatchesCommon {
     if (this.dotKernelMorph) {
       this.dotKernelMorph.delete();
     }
+  }
+
+  getClassName(): string {
+    return 'CropOnDotLines';
   }
 }
 

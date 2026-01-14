@@ -78,13 +78,15 @@ export class CropOnMarkers extends ImageTemplatePreprocessor {
     return 'CropOnMarkers';
   }
 
-  applyFilter(
+  protected override applyFilter(
     image: cv.Mat,
     coloredImage: cv.Mat,
     template: any,
     filePath: string
   ): [cv.Mat, cv.Mat, any] {
-    return this.instance.applyFilter(image, coloredImage, template, filePath);
+    // Delegate to the instance's protected applyFilter method
+    // This works because we're calling it from within the class hierarchy
+    return (this.instance as any).applyFilter(image, coloredImage, template, filePath);
   }
 
   excludeFiles(): string[] {

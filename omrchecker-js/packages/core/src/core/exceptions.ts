@@ -71,3 +71,12 @@ export class ImageReadError extends InputError {
 
 export class ImageProcessingError extends OMRCheckerError {}
 
+export class TemplateValidationError extends OMRCheckerError {
+  templatePath?: string;
+
+  constructor(templatePath: string, message: string, context?: Record<string, unknown>) {
+    super(message, { ...context, templatePath });
+    this.templatePath = templatePath;
+  }
+}
+

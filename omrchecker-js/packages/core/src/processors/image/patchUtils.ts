@@ -18,7 +18,6 @@ import {
   EDGE_TYPES_IN_ORDER,
   TARGET_ENDPOINTS_FOR_EDGES,
   type EdgeTypeValue,
-  type ZonePresetValue,
   type SelectorTypeValue,
   SelectorType,
 } from '../constants';
@@ -173,16 +172,21 @@ export function drawZoneContoursAndAnchorShifts(
   }
 
   // Draw alignment arrows
-  DrawingUtils.drawArrows(debugImage, zoneControlPoints, zoneDestinationPoints, 0.4);
+  const CLR_DARK_GREEN: [number, number, number] = [0, 128, 0];
+  DrawingUtils.drawArrows(debugImage, zoneControlPoints, zoneDestinationPoints, CLR_DARK_GREEN, 2);
 
   // Draw control point boxes
-  const CLR_DARK_GREEN: [number, number, number] = [0, 128, 0];
   for (const controlPoint of zoneControlPoints) {
-    DrawingUtils.drawBox(debugImage, controlPoint, [20, 20], {
-      color: CLR_DARK_GREEN,
-      border: 1,
-      centered: true,
-    });
+    DrawingUtils.drawBox(
+      debugImage,
+      controlPoint,
+      [20, 20],
+      CLR_DARK_GREEN,
+      'BOX_FILLED',
+      1 / 12,
+      1,
+      true
+    );
   }
 }
 
@@ -211,19 +215,14 @@ export function drawScanZone(debugImage: cv.Mat, zoneDescription: ZoneDescriptio
   const CLR_DARK_GREEN: [number, number, number] = [0, 128, 0];
   const CLR_NEAR_BLACK: [number, number, number] = [20, 20, 20];
 
-  DrawingUtils.drawBoxDiagonal(debugImage, zoneStart, zoneEnd, {
-    color: CLR_DARK_GREEN,
-    border: 2,
-  });
+  DrawingUtils.drawBoxDiagonal(debugImage, zoneStart, zoneEnd, CLR_DARK_GREEN, 2);
 
   DrawingUtils.drawBoxDiagonal(
     debugImage,
     zoneStartWithoutMargins,
     zoneEndWithoutMargins,
-    {
-      color: CLR_NEAR_BLACK,
-      border: 1,
-    }
+    CLR_NEAR_BLACK,
+    1
   );
 }
 

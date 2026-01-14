@@ -17,13 +17,15 @@ import cv from '@techstark/opencv-js';
 import { CropOnPatchesCommon, type ZoneDescription, type ScanZone } from './CropOnPatchesCommon';
 import { PointArray } from './pointUtils';
 import { logger } from '../../utils/logger';
-import { ImageProcessingError, TemplateValidationError } from '../../exceptions';
+import { ImageProcessingError, TemplateValidationError } from '../../core/exceptions';
 import { ImageUtils } from '../../utils/ImageUtils';
 import {
   WarpMethod,
   ScannerType,
+  SelectorType,
   ZonePreset,
   type ZonePresetValue,
+  type SelectorTypeValue,
   MARKER_ZONE_TYPES_IN_ORDER,
 } from '../constants';
 import {
@@ -74,36 +76,39 @@ export class CropOnCustomMarkers extends CropOnPatchesCommon {
   };
 
   // Point selector presets
-  protected static override readonly defaultPointsSelectorMap = {
+  protected static override readonly defaultPointsSelectorMap: Record<
+    string,
+    Record<string, SelectorTypeValue>
+  > = {
     CENTERS: {
-      [ZonePreset.topLeftMarker]: 'SELECT_CENTER',
-      [ZonePreset.topRightMarker]: 'SELECT_CENTER',
-      [ZonePreset.bottomRightMarker]: 'SELECT_CENTER',
-      [ZonePreset.bottomLeftMarker]: 'SELECT_CENTER',
+      [ZonePreset.topLeftMarker]: SelectorType.SELECT_CENTER as SelectorTypeValue,
+      [ZonePreset.topRightMarker]: SelectorType.SELECT_CENTER as SelectorTypeValue,
+      [ZonePreset.bottomRightMarker]: SelectorType.SELECT_CENTER as SelectorTypeValue,
+      [ZonePreset.bottomLeftMarker]: SelectorType.SELECT_CENTER as SelectorTypeValue,
     },
     INNER_WIDTHS: {
-      [ZonePreset.topLeftMarker]: 'SELECT_TOP_RIGHT',
-      [ZonePreset.topRightMarker]: 'SELECT_TOP_LEFT',
-      [ZonePreset.bottomRightMarker]: 'SELECT_BOTTOM_LEFT',
-      [ZonePreset.bottomLeftMarker]: 'SELECT_BOTTOM_RIGHT',
+      [ZonePreset.topLeftMarker]: SelectorType.SELECT_TOP_RIGHT as SelectorTypeValue,
+      [ZonePreset.topRightMarker]: SelectorType.SELECT_TOP_LEFT as SelectorTypeValue,
+      [ZonePreset.bottomRightMarker]: SelectorType.SELECT_BOTTOM_LEFT as SelectorTypeValue,
+      [ZonePreset.bottomLeftMarker]: SelectorType.SELECT_BOTTOM_RIGHT as SelectorTypeValue,
     },
     INNER_HEIGHTS: {
-      [ZonePreset.topLeftMarker]: 'SELECT_BOTTOM_LEFT',
-      [ZonePreset.topRightMarker]: 'SELECT_BOTTOM_RIGHT',
-      [ZonePreset.bottomRightMarker]: 'SELECT_TOP_RIGHT',
-      [ZonePreset.bottomLeftMarker]: 'SELECT_TOP_LEFT',
+      [ZonePreset.topLeftMarker]: SelectorType.SELECT_BOTTOM_LEFT as SelectorTypeValue,
+      [ZonePreset.topRightMarker]: SelectorType.SELECT_BOTTOM_RIGHT as SelectorTypeValue,
+      [ZonePreset.bottomRightMarker]: SelectorType.SELECT_TOP_RIGHT as SelectorTypeValue,
+      [ZonePreset.bottomLeftMarker]: SelectorType.SELECT_TOP_LEFT as SelectorTypeValue,
     },
     INNER_CORNERS: {
-      [ZonePreset.topLeftMarker]: 'SELECT_BOTTOM_RIGHT',
-      [ZonePreset.topRightMarker]: 'SELECT_BOTTOM_LEFT',
-      [ZonePreset.bottomRightMarker]: 'SELECT_TOP_LEFT',
-      [ZonePreset.bottomLeftMarker]: 'SELECT_TOP_RIGHT',
+      [ZonePreset.topLeftMarker]: SelectorType.SELECT_BOTTOM_RIGHT as SelectorTypeValue,
+      [ZonePreset.topRightMarker]: SelectorType.SELECT_BOTTOM_LEFT as SelectorTypeValue,
+      [ZonePreset.bottomRightMarker]: SelectorType.SELECT_TOP_LEFT as SelectorTypeValue,
+      [ZonePreset.bottomLeftMarker]: SelectorType.SELECT_TOP_RIGHT as SelectorTypeValue,
     },
     OUTER_CORNERS: {
-      [ZonePreset.topLeftMarker]: 'SELECT_TOP_LEFT',
-      [ZonePreset.topRightMarker]: 'SELECT_TOP_RIGHT',
-      [ZonePreset.bottomRightMarker]: 'SELECT_BOTTOM_RIGHT',
-      [ZonePreset.bottomLeftMarker]: 'SELECT_BOTTOM_LEFT',
+      [ZonePreset.topLeftMarker]: SelectorType.SELECT_TOP_LEFT as SelectorTypeValue,
+      [ZonePreset.topRightMarker]: SelectorType.SELECT_TOP_RIGHT as SelectorTypeValue,
+      [ZonePreset.bottomRightMarker]: SelectorType.SELECT_BOTTOM_RIGHT as SelectorTypeValue,
+      [ZonePreset.bottomLeftMarker]: SelectorType.SELECT_BOTTOM_LEFT as SelectorTypeValue,
     },
   };
 
@@ -548,6 +553,10 @@ export class CropOnCustomMarkers extends CropOnPatchesCommon {
       mat.delete();
     }
     this.markerForZoneLabel.clear();
+  }
+
+  getClassName(): string {
+    return 'CropOnCustomMarkers';
   }
 }
 
