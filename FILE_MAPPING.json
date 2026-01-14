@@ -2,7 +2,7 @@
   "version": "2.0",
   "metadata": {
     "description": "Mapping between Python and TypeScript files for OMRChecker port",
-    "lastUpdated": "2026-01-11T00:00:00Z",
+    "lastUpdated": "2026-01-14T00:00:00Z",
     "maintainer": "OMRChecker Team"
   },
   "phases": {
@@ -351,19 +351,39 @@
     {
       "python": "src/processors/image/CropOnMarkers.py",
       "typescript": "omrchecker-js/packages/core/src/processors/image/CropOnMarkers.ts",
-      "status": "not_started",
+      "status": "synced",
       "phase": 1,
       "priority": "medium",
       "lastSyncedCommit": null,
-      "lastPythonChange": null,
-      "lastTypescriptChange": null,
+      "lastPythonChange": "2026-01-14T00:00:00Z",
+      "lastTypescriptChange": "2026-01-14T00:00:00Z",
       "classes": [
         {
-          "python": "CropOnMarkersProcessor",
-          "typescript": "CropOnMarkersProcessor",
-          "synced": false
+          "python": "CropOnMarkers",
+          "typescript": "CropOnMarkers",
+          "synced": true,
+          "note": "Delegator pattern to CropOnCustomMarkers or CropOnDotLines"
         }
       ]
+    },
+    {
+      "python": "src/processors/image/patch_utils.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/image/patchUtils.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": "2026-01-14T00:00:00Z",
+      "lastTypescriptChange": "2026-01-14T00:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/image/__tests__/patchUtils.test.ts",
+      "functions": [
+        "selectPointFromRectangle",
+        "computeScanZone",
+        "getEdgeContoursMapFromZonePoints",
+        "drawZoneContoursAndAnchorShifts",
+        "drawScanZone"
+      ],
+      "note": "New utility module extracted in Phase 3 refactoring"
     },
     {
       "python": "src/processors/image/CropPage.py",

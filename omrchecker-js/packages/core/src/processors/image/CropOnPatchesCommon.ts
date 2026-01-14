@@ -21,6 +21,14 @@
 import cv from '@techstark/opencv-js';
 import { WarpOnPointsCommon } from './WarpOnPointsCommon';
 import { PointArray } from './pointUtils';
+import {
+  selectPointFromRectangle,
+  computeScanZone,
+  getEdgeContoursMapFromZonePoints,
+  drawZoneContoursAndAnchorShifts,
+  drawScanZone,
+  type ZoneDescription as PatchUtilsZoneDescription,
+} from './patchUtils';
 import { logger } from '../../utils/logger';
 import { ImageProcessingError, TemplateValidationError } from '../../exceptions';
 import { ShapeUtils } from '../../utils/shapes';
@@ -30,25 +38,11 @@ import {
   type ScannerTypeValue,
   type SelectorTypeValue,
   type ZonePresetValue,
-  EDGE_TYPES_IN_ORDER,
   type EdgeTypeValue,
 } from '../constants';
 
 // Type definitions for scan zones
-export interface ZoneDescription {
-  label: string;
-  origin?: [number, number];
-  dimensions?: [number, number];
-  margins?: {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-  };
-  selector?: SelectorTypeValue;
-  scannerType: ScannerTypeValue;
-  maxPoints?: number;
-}
+export type ZoneDescription = PatchUtilsZoneDescription;
 
 export interface ScanZone {
   zonePreset: ZonePresetValue | string;
@@ -228,7 +222,7 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
         image,
         scanZone
       );
-      this.drawScanZoneUtil(scanZone.runtimeZoneDescription);
+      this.drawScanZone(scanZone.runtimeZoneDescription);
     }
 
     // TODO: Show debug image if showImageLevel >= 4
@@ -273,11 +267,18 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
         );
       }
 
-      // TODO: Draw zone contours if showImageLevel >= 4
+      // Draw zone contours if showImageLevel >= 4
+      if (this.tuningConfig.outputs.showImageLevel >= 4) {
+        drawZoneContoursAndAnchorShifts(
+          this.debugImage,
+          zoneControlPoints,
+          zoneDestinationPoints
+        );
+      }
     }
 
     // Build edge contours map
-    const edgeContoursMap = this.getEdgeContoursMapFromZonePoints(zonePresetPoints);
+    const edgeContoursMap = getEdgeContoursMapFromZonePoints(zonePresetPoints);
 
     // For perspective transform, use ordered 4 corners
     if (this.warpMethod === 'PERSPECTIVE_TRANSFORM' && pageCorners.length === 4) {
@@ -299,26 +300,6 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
     return scanZone.zoneDescription;
   }
 
-  /**
-   * Build edge contours map from detected zone points.
-   */
-  protected getEdgeContoursMapFromZonePoints(
-    zonePresetPoints: Record<string, PointArray>
-  ): Record<EdgeTypeValue, PointArray> {
-    const edgeContoursMap: Record<EdgeTypeValue, PointArray> = {
-      TOP: [],
-      RIGHT: [],
-      BOTTOM: [],
-      LEFT: [],
-    };
-
-    // TODO: Implement TARGET_ENDPOINTS_FOR_EDGES mapping
-    // For now, return empty map
-    logger.debug('Edge contours map building not fully implemented');
-
-    return edgeContoursMap;
-  }
-
   // =========================================================================
   // Point extraction utilities
   // =========================================================================
@@ -335,46 +316,20 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
     // Find dot corners (subclass-specific)
     const dotRect = this.findDotCornersFromOptions(image, zoneDescription, filePath);
 
-    // Select point from rectangle
-    const dotPoint = this.selectPointFromRectangle(dotRect, pointsSelector);
+    // Select point from rectangle using extracted utility
+    const dotPoint = selectPointFromRectangle(dotRect, pointsSelector);
     if (!dotPoint) {
       throw new ImageProcessingError(`No dot found for zone ${zoneLabel}`);
     }
 
     // Compute destination rectangle
     const destinationRect = this.computeScanZoneRectangle(zoneDescription, false);
-    const destinationPoint = this.selectPointFromRectangle(destinationRect, pointsSelector);
+    const destinationPoint = selectPointFromRectangle(destinationRect, pointsSelector);
     if (!destinationPoint) {
       throw new ImageProcessingError(`Could not compute destination point for zone ${zoneLabel}`);
     }
 
     return [dotPoint, destinationPoint];
-  }
-
-  protected selectPointFromRectangle(
-    rectangle: PointArray,
-    selector: SelectorTypeValue
-  ): PointArray[0] | null {
-    if (rectangle.length !== 4) {
-      return null;
-    }
-
-    const [tl, tr, br, bl] = rectangle;
-
-    switch (selector) {
-      case SelectorType.SELECT_TOP_LEFT:
-        return tl;
-      case SelectorType.SELECT_TOP_RIGHT:
-        return tr;
-      case SelectorType.SELECT_BOTTOM_RIGHT:
-        return br;
-      case SelectorType.SELECT_BOTTOM_LEFT:
-        return bl;
-      case SelectorType.SELECT_CENTER:
-        return [Math.round((tl[0] + br[0]) / 2), Math.round((tl[1] + br[1]) / 2)];
-      default:
-        return null;
-    }
   }
 
   // =========================================================================
@@ -383,20 +338,14 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
 
   /**
    * Extract image zone from zone description.
+   * Delegates to patchUtils.computeScanZone for core logic.
+   * Kept for backward compatibility with existing code.
    */
   protected computeScanZoneUtil(
     image: cv.Mat,
     zoneDescription: ZoneDescription
   ): [cv.Mat, [number, number], [number, number]] {
-    const [zone, rectangle] = ShapeUtils.extractImageFromZoneDescription(
-      image,
-      zoneDescription
-    );
-
-    const zoneStart: [number, number] = rectangle[0];
-    const zoneEnd: [number, number] = rectangle[2];
-
-    return [zone, zoneStart, zoneEnd];
+    return computeScanZone(image, zoneDescription);
   }
 
   /**
@@ -411,10 +360,12 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
 
   /**
    * Draw scan zone on debug image.
+   * Delegates to patchUtils.drawScanZone for core logic.
    */
-  protected drawScanZoneUtil(zoneDescription: ZoneDescription): void {
-    // TODO: Implement DrawingUtils.drawBoxDiagonal
-    logger.debug(`Drawing scan zone: ${zoneDescription.label}`);
+  protected drawScanZone(zoneDescription: ZoneDescription): void {
+    if (this.tuningConfig.outputs.showImageLevel >= 1) {
+      drawScanZone(this.debugImage, zoneDescription);
+    }
   }
 
   // =========================================================================

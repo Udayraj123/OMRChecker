@@ -111,10 +111,44 @@ export const TARGET_EDGE_FOR_LINE: Record<ZonePresetValue, EdgeTypeValue> = {
 };
 
 // Target endpoints for edges (used in warping)
-export const TARGET_ENDPOINTS_FOR_EDGES: Record<EdgeTypeValue, [number, number][]> = {
-  [EdgeType.TOP]: [[0, 0], [1, 0]],
-  [EdgeType.RIGHT]: [[1, 0], [1, 1]],
-  [EdgeType.BOTTOM]: [[1, 1], [0, 1]],
-  [EdgeType.LEFT]: [[0, 1], [0, 0]],
+// Maps each edge to zone presets and the index of the point to use from that zone
+// "ALL" means use all points from that zone contour
+export const TARGET_ENDPOINTS_FOR_EDGES: Record<EdgeTypeValue, [ZonePresetValue, number | 'ALL'][]> = {
+  [EdgeType.TOP]: [
+    [ZonePreset.topLeftDot, 0],
+    [ZonePreset.topLeftMarker, 0],
+    [ZonePreset.leftLine, -1],
+    [ZonePreset.topLine, 'ALL'],
+    [ZonePreset.rightLine, 0],
+    [ZonePreset.topRightDot, 0],
+    [ZonePreset.topRightMarker, 0],
+  ],
+  [EdgeType.RIGHT]: [
+    [ZonePreset.topRightDot, 0],
+    [ZonePreset.topRightMarker, 0],
+    [ZonePreset.topLine, -1],
+    [ZonePreset.rightLine, 'ALL'],
+    [ZonePreset.bottomLine, 0],
+    [ZonePreset.bottomRightDot, 0],
+    [ZonePreset.bottomRightMarker, 0],
+  ],
+  [EdgeType.LEFT]: [
+    [ZonePreset.bottomLeftDot, 0],
+    [ZonePreset.bottomLeftMarker, 0],
+    [ZonePreset.bottomLine, -1],
+    [ZonePreset.leftLine, 'ALL'],
+    [ZonePreset.topLine, 0],
+    [ZonePreset.topLeftDot, 0],
+    [ZonePreset.topLeftMarker, 0],
+  ],
+  [EdgeType.BOTTOM]: [
+    [ZonePreset.bottomRightDot, 0],
+    [ZonePreset.bottomRightMarker, 0],
+    [ZonePreset.rightLine, -1],
+    [ZonePreset.bottomLine, 'ALL'],
+    [ZonePreset.leftLine, 0],
+    [ZonePreset.bottomLeftDot, 0],
+    [ZonePreset.bottomLeftMarker, 0],
+  ],
 };
 

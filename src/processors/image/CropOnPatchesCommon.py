@@ -2,21 +2,23 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, ClassVar
 
-import cv2
 import numpy as np
 
 from src.exceptions import ImageProcessingError, TemplateValidationError
 from src.processors.constants import (
-    EDGE_TYPES_IN_ORDER,
-    TARGET_ENDPOINTS_FOR_EDGES,
-    EdgeType,
     ScannerType,
     SelectorType,
     WarpMethod,
 )
+from src.processors.image.patch_utils import (
+    compute_scan_zone,
+    draw_scan_zone,
+    draw_zone_contours_and_anchor_shifts,
+    get_edge_contours_map_from_zone_points,
+    select_point_from_rectangle,
+)
 from src.processors.image.WarpOnPointsCommon import WarpOnPointsCommon
-from src.utils.constants import CLR_DARK_GREEN, CLR_NEAR_BLACK, OUTPUT_MODES
-from src.utils.drawing import DrawingUtils
+from src.utils.constants import OUTPUT_MODES
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
@@ -152,7 +154,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             # Inject runtime zone description
             scan_zone["runtimeZoneDescription"] = zone_description
 
-            self.draw_scan_zone_util(zone_description)
+            self.draw_scan_zone(zone_description)
 
         if (
             config.outputs.show_image_level >= 4
@@ -205,8 +207,8 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             destination_points += zone_destination_points
 
             if config.outputs.show_image_level >= 4:
-                self.draw_zone_contours_and_anchor_shifts(
-                    zone_control_points, zone_destination_points
+                draw_zone_contours_and_anchor_shifts(
+                    self.debug_image, zone_control_points, zone_destination_points
                 )
 
         if len(self.debug_hstack) > 0 and config.outputs.show_image_level >= 5:
@@ -217,9 +219,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             )
 
         # Fill edge contours
-        edge_contours_map = self.get_edge_contours_map_from_zone_points(
-            zone_preset_points
-        )
+        edge_contours_map = get_edge_contours_map_from_zone_points(zone_preset_points)
 
         if self.warp_method == WarpMethod.PERSPECTIVE_TRANSFORM:
             ordered_page_corners, ordered_indices = MathUtils.order_four_points(
@@ -236,62 +236,6 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
     def get_runtime_zone_description_with_defaults(self, _image, scan_zone):
         return scan_zone["zoneDescription"]
 
-    def get_edge_contours_map_from_zone_points(self, zone_preset_points):
-        edge_contours_map = {
-            EdgeType.TOP: [],
-            EdgeType.RIGHT: [],
-            EdgeType.BOTTOM: [],
-            EdgeType.LEFT: [],
-        }
-
-        for edge_type in EDGE_TYPES_IN_ORDER:
-            for zone_preset, contour_point_index in TARGET_ENDPOINTS_FOR_EDGES[
-                edge_type
-            ]:
-                if zone_preset in zone_preset_points:
-                    zone_points = zone_preset_points[zone_preset]
-                    if contour_point_index == "ALL":
-                        edge_contours_map[edge_type] += zone_points
-                    else:
-                        edge_contours_map[edge_type].append(
-                            zone_points[contour_point_index]
-                        )
-        return edge_contours_map
-
-    def draw_zone_contours_and_anchor_shifts(
-        self, zone_control_points, zone_destination_points
-    ) -> None:
-        if len(zone_control_points) > 1:
-            two_points = 2
-            if len(zone_control_points) == two_points:
-                # Draw line if it's just two points
-                DrawingUtils.draw_contour(self.debug_image, zone_control_points)
-            else:
-                # Draw convex hull of the found control points
-                DrawingUtils.draw_contour(
-                    self.debug_image,
-                    cv2.convexHull(np.intp(zone_control_points)),
-                )
-
-        # Helper for alignment
-        DrawingUtils.draw_arrows(
-            self.debug_image,
-            zone_control_points,
-            zone_destination_points,
-            tip_length=0.4,
-        )
-        for control_point in zone_control_points:
-            # Show current detections too
-            DrawingUtils.draw_box(
-                self.debug_image,
-                control_point,
-                # TODO: change this based on image shape
-                [20, 20],
-                color=CLR_DARK_GREEN,
-                border=1,
-                centered=True,
-            )
-
     def find_and_select_point_from_dot(self, image, zone_description, file_path):
         zone_label = zone_description["label"]
         points_selector = zone_description.get(
@@ -302,7 +246,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             image, zone_description, file_path
         )
 
-        dot_point = self.select_point_from_rectangle(dot_rect, points_selector)
+        dot_point = select_point_from_rectangle(dot_rect, points_selector)
 
         if dot_point is None:
             msg = f"No dot found for zone {zone_label}"
@@ -316,63 +260,27 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                 zone_description, include_margins=False
             )
         )
-        destination_point = self.select_point_from_rectangle(
+        destination_point = select_point_from_rectangle(
             destination_rect, points_selector
         )
 
         return dot_point, destination_point
 
-    @staticmethod
-    def select_point_from_rectangle(rectangle, points_selector):
-        tl, tr, br, bl = rectangle
-        if points_selector == "SELECT_TOP_LEFT":
-            return tl
-        if points_selector == "SELECT_TOP_RIGHT":
-            return tr
-        if points_selector == "SELECT_BOTTOM_RIGHT":
-            return br
-        if points_selector == "SELECT_BOTTOM_LEFT":
-            return bl
-        if points_selector == "SELECT_CENTER":
-            return [
-                (tl[0] + br[0]) // 2,
-                (tl[1] + br[1]) // 2,
-            ]
-        return None
-
     def compute_scan_zone_util(self, image, zone_description):
-        zone, scan_zone_rectangle = ShapeUtils.extract_image_from_zone_description(
-            image, zone_description
-        )
+        """
+        Extract image zone and compute zone boundaries.
 
-        zone_start = scan_zone_rectangle[0]
-        zone_end = scan_zone_rectangle[2]
-        return zone, np.array(zone_start), np.array(zone_end)
+        Delegates to patch_utils.compute_scan_zone for the core logic.
+        Kept for backward compatibility with existing code.
+        """
+        return compute_scan_zone(image, zone_description)
 
-    def draw_scan_zone_util(self, zone_description) -> None:
-        scan_zone_rectangle = ShapeUtils.compute_scan_zone_rectangle(
-            zone_description, include_margins=True
-        )
-        scan_zone_rectangle_without_margins = ShapeUtils.compute_scan_zone_rectangle(
-            zone_description, include_margins=False
-        )
-        zone_start = scan_zone_rectangle[0]
-        zone_end = scan_zone_rectangle[2]
-        zone_start_without_margins = scan_zone_rectangle_without_margins[0]
-        zone_end_without_margins = scan_zone_rectangle_without_margins[2]
+    def draw_scan_zone(self, zone_description):
+        """
+        Draw scan zone boundaries on debug image.
+
+        Delegates to patch_utils.draw_scan_zone for the core logic.
+        """
         config = self.tuning_config
         if config.outputs.show_image_level >= 1:
-            DrawingUtils.draw_box_diagonal(
-                self.debug_image,
-                zone_start,
-                zone_end,
-                color=CLR_DARK_GREEN,
-                border=2,
-            )
-            DrawingUtils.draw_box_diagonal(
-                self.debug_image,
-                zone_start_without_margins,
-                zone_end_without_margins,
-                color=CLR_NEAR_BLACK,
-                border=1,
-            )
+            draw_scan_zone(self.debug_image, zone_description)
