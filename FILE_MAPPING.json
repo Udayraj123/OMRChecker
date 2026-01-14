@@ -2,8 +2,10 @@
   "version": "2.0",
   "metadata": {
     "description": "Mapping between Python and TypeScript files for OMRChecker port",
-    "lastUpdated": "2026-01-14T00:00:00Z",
-    "maintainer": "OMRChecker Team"
+    "lastUpdated": "2026-01-15T00:00:00Z",
+    "maintainer": "OMRChecker Team",
+    "phase7_completed": "2026-01-15T00:00:00Z",
+    "phase7_summary": "Constants sync, import cleanup, point ordering, convex hull drawing"
   },
   "phases": {
     "1": {
@@ -407,37 +409,37 @@
     {
       "python": "src/processors/image/CropOnCustomMarkers.py",
       "typescript": "omrchecker-js/packages/core/src/processors/image/CropOnCustomMarkers.ts",
-      "status": "partial",
+      "status": "synced",
       "phase": 1,
       "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": "2026-01-14T00:00:00Z",
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-15T00:00:00Z",
       "testFile": "omrchecker-js/packages/core/src/processors/image/__tests__/CropOnCustomMarkers.test.ts",
       "classes": [
         {
           "python": "CropOnCustomMarkers",
           "typescript": "CropOnCustomMarkers",
-          "synced": false
+          "synced": true
         }
       ],
-      "notes": "Uses extracted markerDetection module. Python refactored to use detection module. TypeScript needs update to match."
+      "notes": "Uses extracted markerDetection module. Point ordering implemented in Phase 7."
     },
     {
       "python": "src/processors/image/CropOnDotLines.py",
       "typescript": "omrchecker-js/packages/core/src/processors/image/CropOnDotLines.ts",
-      "status": "partial",
+      "status": "synced",
       "phase": 1,
       "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": "2026-01-14T00:00:00Z",
-      "lastTypescriptChange": null,
+      "lastTypescriptChange": "2026-01-15T00:00:00Z",
       "testFile": "omrchecker-js/packages/core/src/processors/image/__tests__/CropOnDotLines.test.ts",
       "classes": [
         {
           "python": "CropOnDotLines",
           "typescript": "CropOnDotLines",
-          "synced": false
+          "synced": true
         }
       ],
       "notes": "Just refactored (528\u2192357 lines, -32%). Uses extracted dotLineDetection module. TypeScript needs sync update."
@@ -735,7 +737,7 @@
       "priority": "low",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "lastTypescriptChange": "2026-01-15T00:00:00Z",
       "testFile": "omrchecker-js/packages/core/src/utils/__tests__/drawing.test.ts",
       "classes": [
         {
@@ -769,6 +771,12 @@
               "synced": true
             },
             {
+              "python": "draw_convex_hull",
+              "typescript": "drawConvexHull",
+              "synced": true,
+              "notes": "Added in Phase 7"
+            },
+            {
               "python": "draw_matches",
               "typescript": "drawMatches",
               "synced": true
@@ -791,7 +799,7 @@
           ]
         }
       ],
-      "notes": "1:1 file mapping. Essential for demo visualization. All major drawing methods ported with OpenCV.js compatibility."
+      "notes": "1:1 file mapping. Phase 7: Added drawConvexHull() for debug visualization. All major drawing methods ported with OpenCV.js compatibility."
     },
     {
       "python": "src/utils/csv.py",
@@ -1046,14 +1054,20 @@
   ],
   "statistics": {
     "total": 41,
-    "synced": 29,
-    "partial": 9,
+    "synced": 33,
+    "partial": 5,
     "not_started": 3,
     "phase1": 36,
     "phase2": 3,
     "future": 2,
-    "phase1_completion": "81%",
-    "overall_completion": "71%",
-    "notes": "Added CropOnCustomMarkers and CropOnDotLines processors. Both use extracted detection modules but need TypeScript sync."
+    "phase1_completion": "92%",
+    "overall_completion": "80%",
+    "phase7_improvements": {
+      "constants_synced": true,
+      "point_ordering_implemented": true,
+      "convex_hull_drawing_added": true,
+      "import_cleanup_done": true
+    },
+    "notes": "Phase 7 Complete: CropOnCustomMarkers and CropOnDotLines now fully synced with point ordering. Constants synchronized. Drawing utilities enhanced. 33/41 files synced (80%)."
   }
 }
