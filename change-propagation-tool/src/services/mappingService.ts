@@ -14,8 +14,9 @@ class MappingService {
       if (!response.ok) {
         throw new Error('Failed to load FILE_MAPPING.json');
       }
-      this.mappingData = await response.json();
-      return this.mappingData;
+      const data: FileMappingData = await response.json();
+      this.mappingData = data;
+      return data;
     } catch (error) {
       console.error('Error loading mappings:', error);
       // Return empty data structure as fallback

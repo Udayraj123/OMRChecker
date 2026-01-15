@@ -2,12 +2,14 @@
   "version": "2.0",
   "metadata": {
     "description": "Mapping between Python and TypeScript files for OMRChecker port",
-    "lastUpdated": "2026-01-15T02:00:00Z",
+    "lastUpdated": "2026-01-15T10:00:00Z",
     "maintainer": "OMRChecker Team",
     "phase7_completed": "2026-01-15T00:00:00Z",
     "phase7_summary": "Constants sync, import cleanup, point ordering, convex hull drawing",
     "phase8_completed": "2026-01-15T02:00:00Z",
-    "phase8_summary": "Advanced alignment with ORB/AKAZE features, phase correlation, homography"
+    "phase8_summary": "Advanced alignment with ORB/AKAZE features, phase correlation, homography",
+    "phase9_completed": "2026-01-15T10:00:00Z",
+    "phase9_summary": "Type safety improvements: Fixed WarpMethodValue types, aligned getCroppedWarpedRectanglePoints return type with Python, error handling improvements"
   },
   "phases": {
     "1": {
@@ -406,7 +408,78 @@
           "synced": true
         }
       ],
-      "notes": "Uses extracted pageDetection module. Core structure synced. Warping implementation can be added incrementally."
+      "notes": "Uses extracted pageDetection module. Core structure synced. Phase 9: Updated to convert array to cv.Mat at OpenCV API boundary for getCroppedWarpedRectanglePoints."
+    },
+    {
+      "python": "src/processors/image/WarpOnPointsCommon.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/image/WarpOnPointsCommon.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": "2026-01-14T00:00:00Z",
+      "lastTypescriptChange": "2026-01-15T10:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/image/__tests__/WarpOnPointsCommon.test.ts",
+      "classes": [
+        {
+          "python": "WarpOnPointsCommon",
+          "typescript": "WarpOnPointsCommon",
+          "synced": true,
+          "methods": [
+            {
+              "python": "_prepare_points_for_strategy",
+              "typescript": "preparePointsForStrategy",
+              "synced": true,
+              "notes": "Phase 9: Simplified to directly use array return from getCroppedWarpedRectanglePoints"
+            },
+            {
+              "python": "apply_filter",
+              "typescript": "applyFilter",
+              "synced": true
+            },
+            {
+              "python": "_apply_warp_strategy",
+              "typescript": "applyWarpStrategy",
+              "synced": true
+            }
+          ]
+        }
+      ],
+      "notes": "Base class for warping processors. Phase 9: Type safety improvements - warpMethod property now correctly typed as WarpMethodValue. Simplified point handling to match Python implementation."
+    },
+    {
+      "python": "src/processors/image/warp_strategies.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/image/warpStrategies.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": "2026-01-14T00:00:00Z",
+      "lastTypescriptChange": "2026-01-15T10:00:00Z",
+      "classes": [
+        {
+          "python": "WarpStrategy",
+          "typescript": "WarpStrategy",
+          "synced": true
+        },
+        {
+          "python": "PerspectiveTransformStrategy",
+          "typescript": "PerspectiveTransformStrategy",
+          "synced": true
+        },
+        {
+          "python": "HomographyStrategy",
+          "typescript": "HomographyStrategy",
+          "synced": true
+        },
+        {
+          "python": "WarpStrategyFactory",
+          "typescript": "WarpStrategyFactory",
+          "synced": true,
+          "notes": "Phase 9: Added missing WarpMethodValue type import for type safety"
+        }
+      ],
+      "notes": "Extracted warp strategies using Strategy pattern. Phase 9: Type safety improvements with proper WarpMethodValue typing."
     },
     {
       "python": "src/processors/image/CropOnCustomMarkers.py",
@@ -546,14 +619,14 @@
       "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": "2026-01-15T00:00:00Z",
+      "lastTypescriptChange": "2026-01-15T10:00:00Z",
       "testFile": "omrchecker-js/packages/core/src/processors/alignment/__tests__/AlignmentProcessor.test.ts",
       "functions": [
         {
           "python": "apply_template_alignment",
           "typescript": "applyTemplateAlignment",
           "synced": true,
-          "notes": "Phase 8: Full implementation with ORB/AKAZE features, phase correlation"
+          "notes": "Phase 8: Full implementation with ORB/AKAZE features, phase correlation. Phase 9: Improved error handling for unknown error types"
         },
         {
           "python": "get_phase_correlation_shifts",
@@ -574,7 +647,7 @@
           "notes": "Phase 8: Added"
         }
       ],
-      "notes": "Phase 8: Fully functional alignment with ORB/AKAZE features (SIFT replacement), phase correlation, homography computation. K-nearest interpolation not yet ported (optional advanced feature)."
+      "notes": "Phase 8: Fully functional alignment with ORB/AKAZE features (SIFT replacement), phase correlation, homography computation. Phase 9: Fixed error type handling in logger.error calls for TypeScript type safety. K-nearest interpolation not yet ported (optional advanced feature)."
     },
     {
       "python": "src/processors/detection/processor.py",
@@ -641,7 +714,7 @@
       "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "lastTypescriptChange": "2026-01-15T10:00:00Z",
       "testFile": "omrchecker-js/packages/core/src/utils/__tests__/ImageUtils.test.ts",
       "classes": [
         {
@@ -678,11 +751,17 @@
               "python": "adjust_gamma",
               "typescript": "adjustGamma",
               "synced": true
+            },
+            {
+              "python": "get_cropped_warped_rectangle_points",
+              "typescript": "getCroppedWarpedRectanglePoints",
+              "synced": true,
+              "notes": "Phase 9: Fixed to return plain array [[number, number][], [number, number]] matching Python's (np.ndarray, tuple), instead of [cv.Mat, [number, number]]. Improves type safety and reduces cv.Mat conversions."
             }
           ]
         }
       ],
-      "notes": "1:1 file mapping. Core image utility class with loading, resizing, transformations, and padding operations. Browser-compatible version uses File API instead of filesystem paths."
+      "notes": "1:1 file mapping. Core image utility class with loading, resizing, transformations, and padding operations. Browser-compatible version uses File API instead of filesystem paths. Phase 9: getCroppedWarpedRectanglePoints now returns plain arrays matching Python implementation."
     },
     {
       "python": "src/utils/geometry.py",
@@ -1067,15 +1146,15 @@
     }
   ],
   "statistics": {
-    "total": 41,
-    "synced": 34,
+    "total": 43,
+    "synced": 36,
     "partial": 4,
     "not_started": 3,
-    "phase1": 36,
+    "phase1": 38,
     "phase2": 3,
     "future": 2,
-    "phase1_completion": "94%",
-    "overall_completion": "83%",
+    "phase1_completion": "95%",
+    "overall_completion": "84%",
     "phase7_improvements": {
       "constants_synced": true,
       "point_ordering_implemented": true,
@@ -1089,6 +1168,13 @@
       "homography_computation_added": true,
       "cascading_alignment_pipeline": true
     },
-    "notes": "Phase 8 Complete: Advanced alignment now functional with ORB/AKAZE features (SIFT replacement), phase correlation, and homography. K-nearest interpolation remains optional. 34/41 files synced (83%)."
+    "phase9_improvements": {
+      "warp_method_value_types_fixed": true,
+      "get_cropped_warped_rectangle_points_aligned_with_python": true,
+      "error_handling_improved": true,
+      "cv_mat_conversions_reduced": true,
+      "type_safety_enhanced": true
+    },
+    "notes": "Phase 9 Complete: Type safety and Python alignment improvements. getCroppedWarpedRectanglePoints now returns plain arrays matching Python, WarpMethodValue types properly imported, error handling improved. 36/43 files synced (84%)."
   }
 }

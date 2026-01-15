@@ -11,8 +11,16 @@ export interface FileMapping {
   lastSyncedCommit: string | null;
   lastPythonChange: string | null;
   lastTypescriptChange: string | null;
+  testFile?: string;
   classes?: ClassMapping[];
-  functions?: string[];
+  functions?: FunctionMapping[] | string[];
+  notes?: string;
+}
+
+export interface FunctionMapping {
+  python: string;
+  typescript: string;
+  synced: boolean;
   notes?: string;
 }
 
@@ -21,13 +29,16 @@ export interface ClassMapping {
   typescript: string;
   synced: boolean;
   methods?: MethodMapping[];
+  note?: string;
 }
 
 export interface MethodMapping {
   python: string;
   typescript: string;
   synced: boolean;
+  notes?: string;
 }
+
 
 export interface FileMappingData {
   version: string;
