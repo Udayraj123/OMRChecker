@@ -57,6 +57,10 @@
       <button id="reset-btn" class="btn btn-secondary">
         🔄 Reset
       </button>
+      <label style="margin-left: 1rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+        <input type="checkbox" id="show-alignment-markers" />
+        <span style="color: var(--text-primary);">Show alignment markers</span>
+      </label>
     </section>
 
     <!-- Preview Section -->
@@ -106,6 +110,10 @@
         <div class="stat-card">
           <div class="stat-label">Avg Confidence</div>
           <div class="stat-value" id="stat-confidence">0%</div>
+        </div>
+        <div class="stat-card" id="score-card" style="display: none;">
+          <div class="stat-label">Score</div>
+          <div class="stat-value stat-success" id="stat-score">0/0</div>
         </div>
       </div>
 

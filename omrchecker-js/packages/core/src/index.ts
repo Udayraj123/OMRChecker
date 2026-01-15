@@ -55,13 +55,22 @@ export {
 export { LocalThreshold } from './processors/threshold/LocalThreshold';
 export { AdaptiveThreshold } from './processors/threshold/AdaptiveThreshold';
 
-// Detection
+// Detection - Proper Python architecture mapping
 export {
-  SimpleBubbleDetector,
+  // Base classes
+  FieldDetection,
+  TextDetection,
+  // Bubbles threshold detection
+  BubblesFieldDetection,
+  // Detection result models
+  ScanQuality,
+  BubbleMeanValue,
+  BubbleFieldDetectionResult,
+  OCRFieldDetectionResult,
+  BarcodeFieldDetectionResult,
+  FileDetectionResults,
   type BubbleLocation,
-  type BubbleDetectionResult,
-  type FieldDetectionResult,
-} from './processors/detection/SimpleBubbleDetector';
+} from './processors/detection';
 
 // Evaluation
 export {

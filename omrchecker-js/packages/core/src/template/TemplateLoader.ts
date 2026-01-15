@@ -14,7 +14,7 @@ import {
   BUILTIN_BUBBLE_FIELD_TYPES,
   DEFAULT_TEMPLATE_CONFIG,
 } from './types';
-import { type BubbleLocation } from '../processors/detection/SimpleBubbleDetector';
+import { type BubbleLocation } from '../processors/detection';
 import { Logger } from '../utils/logger';
 
 const logger = new Logger('TemplateLoader');

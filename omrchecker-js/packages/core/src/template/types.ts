@@ -5,7 +5,7 @@
  * Defines the structure of template.json files used for OMR sheet configuration.
  */
 
-import type { BubbleLocation } from '../processors/detection/SimpleBubbleDetector';
+import type { BubbleLocation } from '../processors/detection';
 
 /**
  * Bubble field type - defines the layout and values for a group of bubbles.
@@ -270,7 +270,7 @@ export interface ParsedTemplate {
   field_blocks?: FieldBlock[] | Record<string, FieldBlock>; // Python compatibility
   /** Map of field ID to parsed field */
   fields: Map<string, ParsedField>;
-  /** Map of field ID to bubble locations (for SimpleBubbleDetector) */
+  /** Map of field ID to bubble locations (for BubblesFieldDetection) */
   fieldBubbles: Map<string, BubbleLocation[]>;
   /** Tuning configuration */
   tuningConfig?: TuningConfig;

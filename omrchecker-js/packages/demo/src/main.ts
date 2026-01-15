@@ -6,11 +6,13 @@
  */
 
 import {
+  OMRProcessor,
+  type OMRProcessorConfig,
+  type OMRSheetResult,
   TemplateLoader,
-  SimpleBubbleDetector,
   type TemplateConfig,
   type ParsedTemplate,
-  type FieldDetectionResult,
+  type BubbleFieldDetectionResult,
 } from '@omrchecker/core';
 
 // Create global binding for OpenCV before it loads
@@ -61,9 +63,14 @@ interface FileSystemDirectoryHandle extends FileSystemHandle {
 }
 
 // Global state
+let omrProcessor: OMRProcessor | null = null;
 let templateData: ParsedTemplate | null = null;
 let imageFiles: File[] = [];
-let allResults: Array<{ filename: string; results: Map<string, FieldDetectionResult> }> = [];
+let allResults: Array<{
+  filename: string;
+  results: Map<string, BubbleFieldDetectionResult>;
+  sheetResult?: OMRSheetResult;
+}> = [];
 
 // DOM elements
 const templateUpload = document.getElementById('template-upload') as HTMLInputElement;
@@ -152,7 +159,15 @@ async function handleTemplateUpload(event: Event): Promise<void> {
     const text = await file.text();
     const templateJson = JSON.parse(text) as TemplateConfig;
 
+    // Load template using TemplateLoader for display info
     templateData = TemplateLoader.loadFromJSON(templateJson);
+
+    // Initialize OMRProcessor with template
+    const processorConfig: OMRProcessorConfig = {
+      debug: false,
+      saveIntermediateImages: false,
+    };
+    omrProcessor = new OMRProcessor(templateJson, processorConfig);
 
     updateFileInfo('template-info', file.name, `${templateData.fields.size} fields detected`);
     updateStatus(`✅ Template loaded: ${templateData.fields.size} fields`, 'success');
@@ -430,13 +445,12 @@ function displayImage(canvas: HTMLCanvasElement, mat: any): void {
  * Handle batch detection for all loaded images
  */
 async function handleDetectBatch(): Promise<void> {
-  if (!templateData || imageFiles.length === 0) return;
+  if (!omrProcessor || !templateData || imageFiles.length === 0) return;
 
   try {
     showLoading(`Processing 0/${imageFiles.length} images...`);
 
     allResults = [];
-    const detector = new SimpleBubbleDetector();
 
     // Process each image
     for (let i = 0; i < imageFiles.length; i++) {
@@ -448,19 +462,29 @@ async function handleDetectBatch(): Promise<void> {
       // Load image
       const imageData = await loadImage(file);
 
-      // Detect
-      const results = detector.detectMultipleFields(imageData, templateData.fieldBubbles);
+      // Create colored version for visualization
+      const coloredImage = new window.cv.Mat();
+      window.cv.cvtColor(imageData, coloredImage, window.cv.COLOR_GRAY2RGBA);
 
-      // Store results
-      allResults.push({ filename, results });
+      // Process using OMRProcessor
+      const sheetResult = await omrProcessor.processImage(imageData, filename, coloredImage);
+
+      // Convert results to Map for compatibility with existing display functions
+      const results = new Map<string, BubbleFieldDetectionResult>(
+        Object.entries(sheetResult.fieldResults)
+      );
+
+      // Store results with full sheet result for score info
+      allResults.push({ filename, results, sheetResult });
 
       // If it's the current/first image, visualize it
       if (i === 0) {
-        visualizeResults(imageData, results, templateData);
+        visualizeResults(coloredImage, results, templateData);
       }
 
       // Clean up
       imageData.delete();
+      coloredImage.delete();
     }
 
     // Display aggregate results
@@ -483,58 +507,20 @@ async function handleDetectBatch(): Promise<void> {
 
 /**
  * Visualize detection results on canvas
+ * TODO: Update to work with BubbleFieldDetectionResult (bubbleMeans instead of bubbles)
  */
 function visualizeResults(
   image: any,
-  results: Map<string, FieldDetectionResult>,
+  results: Map<string, BubbleFieldDetectionResult>,
   template: ParsedTemplate
 ): void {
   // Create colored output image
   const outputMat = new window.cv.Mat();
   window.cv.cvtColor(image, outputMat, window.cv.COLOR_GRAY2RGBA);
 
-  // Draw bubbles
-  for (const [fieldId, result] of results.entries()) {
-    const field = template.fields.get(fieldId);
-    if (!field) continue;
-
-    for (let i = 0; i < field.bubbles.length; i++) {
-      const bubble = field.bubbles[i];
-      const bubbleResult = result.bubbles[i];
-
-      const center = new window.cv.Point(
-        Math.floor(bubble.x + bubble.width / 2),
-        Math.floor(bubble.y + bubble.height / 2)
-      );
-      const radius = Math.floor(Math.min(bubble.width, bubble.height) / 2);
-
-      // Color based on detection
-      let color: any;
-      if (bubbleResult.isMarked) {
-        color = new window.cv.Scalar(0, 255, 0, 255); // Green for marked
-      } else {
-        color = new window.cv.Scalar(100, 100, 100, 200); // Gray for unmarked
-      }
-
-      // Draw circle
-      window.cv.circle(outputMat, center, radius, color, 2);
-
-      // Draw label
-      const textPos = new window.cv.Point(
-        Math.floor(bubble.x + bubble.width / 2 - 5),
-        Math.floor(bubble.y + bubble.height / 2 + 5)
-      );
-      window.cv.putText(
-        outputMat,
-        bubble.label,
-        textPos,
-        window.cv.FONT_HERSHEY_SIMPLEX,
-        0.4,
-        color,
-        1
-      );
-    }
-  }
+  // TODO: Visualization needs update to work with new architecture
+  // For now, just display the image without bubble annotations
+  console.warn('Bubble visualization temporarily disabled - needs update for new detection architecture');
 
   // Display on output canvas
   outputCanvas.width = outputMat.cols;
@@ -548,10 +534,18 @@ function visualizeResults(
 /**
  * Display detection results
  */
-function displayResults(results: Map<string, FieldDetectionResult>, template: ParsedTemplate): void {
-  // Calculate statistics
-  const detector = new SimpleBubbleDetector();
-  const stats = detector.getDetectionStats(results);
+function displayResults(
+  results: Map<string, BubbleFieldDetectionResult>,
+  template: ParsedTemplate,
+  sheetResult?: OMRSheetResult
+): void {
+  // SheetResult is always required in the new architecture
+  if (!sheetResult) {
+    console.error('sheetResult is required for displayResults');
+    return;
+  }
+
+  const stats = sheetResult.statistics;
 
   // Update stat cards
   document.getElementById('stat-total')!.textContent = stats.totalFields.toString();
@@ -560,6 +554,20 @@ function displayResults(results: Map<string, FieldDetectionResult>, template: Pa
   document.getElementById('stat-multimarked')!.textContent = stats.multiMarkedFields.toString();
   document.getElementById('stat-confidence')!.textContent = `${(stats.avgConfidence * 100).toFixed(1)}%`;
 
+  // Show score if available
+  const scoreCard = document.getElementById('score-card');
+  const scoreValue = document.getElementById('stat-score');
+  if (sheetResult?.score !== undefined && sheetResult?.maxScore !== undefined) {
+    if (scoreCard && scoreValue) {
+      scoreCard.style.display = 'block';
+      scoreValue.textContent = `${sheetResult.score}/${sheetResult.maxScore}`;
+    }
+  } else {
+    if (scoreCard) {
+      scoreCard.style.display = 'none';
+    }
+  }
+
   // Populate table
   const tbody = document.getElementById('results-tbody') as HTMLTableSectionElement;
   tbody.innerHTML = '';
@@ -567,15 +575,18 @@ function displayResults(results: Map<string, FieldDetectionResult>, template: Pa
   const sortedFieldIds = TemplateLoader.getSortedFieldIds(template);
 
   for (const fieldId of sortedFieldIds) {
-    const result = results.get(fieldId);
-    if (!result) continue;
+    // Get data from sheetResult (proper 1:1 Python mapping)
+    const detectedAnswer = sheetResult.responses[fieldId];
+    const isMultiMarked = sheetResult.multiMarkedFields.includes(fieldId);
+    const isEmpty = sheetResult.emptyFields.includes(fieldId);
+    const fieldResult = sheetResult.fieldResults[fieldId];
 
     const row = tbody.insertRow();
 
     // Determine status class
-    if (result.isMultiMarked) {
+    if (isMultiMarked) {
       row.classList.add('multi-marked');
-    } else if (result.detectedAnswer) {
+    } else if (detectedAnswer && !isEmpty) {
       row.classList.add('answered');
     } else {
       row.classList.add('unanswered');
@@ -586,23 +597,22 @@ function displayResults(results: Map<string, FieldDetectionResult>, template: Pa
 
     // Answer
     const field = template.fields.get(fieldId);
-    const answer = result.detectedAnswer || field?.emptyValue || '-';
+    const answer = detectedAnswer || field?.emptyValue || '-';
     row.insertCell(1).textContent = answer;
 
-    // Confidence
-    const markedBubble = result.bubbles.find((b) => b.isMarked);
-    const confidence = markedBubble ? (markedBubble.confidence * 100).toFixed(1) : '0.0';
-    row.insertCell(2).textContent = `${confidence}%`;
+    // Confidence (use scan quality = std deviation)
+    const scanQuality = fieldResult ? fieldResult.stdDeviation : 0;
+    row.insertCell(2).textContent = `${scanQuality.toFixed(1)}`;
 
-    // Threshold
-    row.insertCell(3).textContent = result.threshold.toFixed(1);
+    // Threshold (not available in proper Python mapping)
+    row.insertCell(3).textContent = '-';
 
     // Status
     const statusCell = row.insertCell(4);
     let statusHtml: string;
-    if (result.isMultiMarked) {
+    if (isMultiMarked) {
       statusHtml = '<span class="status-badge warning">⚠️ Multi-marked</span>';
-    } else if (result.detectedAnswer) {
+    } else if (detectedAnswer && !isEmpty) {
       statusHtml = '<span class="status-badge success">✅ Detected</span>';
     } else {
       statusHtml = '<span class="status-badge error">❌ Empty</span>';
@@ -619,35 +629,37 @@ function displayResults(results: Map<string, FieldDetectionResult>, template: Pa
  * Display batch results (aggregate from multiple images)
  */
 function displayBatchResults(
-  batchResults: Array<{ filename: string; results: Map<string, FieldDetectionResult> }>,
+  batchResults: Array<{ filename: string; results: Map<string, BubbleFieldDetectionResult>; sheetResult?: OMRSheetResult }>,
   template: ParsedTemplate
 ): void {
   if (batchResults.length === 0) return;
 
   // If only one image, use regular display
   if (batchResults.length === 1) {
-    displayResults(batchResults[0].results, template);
+    displayResults(batchResults[0].results, template, batchResults[0].sheetResult);
     return;
   }
 
-  // Calculate aggregate statistics
-  const detector = new SimpleBubbleDetector();
+  // Calculate aggregate statistics from sheet results
   let totalAnswered = 0;
   let totalUnanswered = 0;
   let totalMultiMarked = 0;
   let totalConfidence = 0;
   let totalFields = 0;
+  let confidenceCount = 0;
 
-  for (const { results } of batchResults) {
-    const stats = detector.getDetectionStats(results);
-    totalAnswered += stats.answeredFields;
-    totalUnanswered += stats.unansweredFields;
-    totalMultiMarked += stats.multiMarkedFields;
-    totalConfidence += stats.avgConfidence * stats.totalFields;
-    totalFields += stats.totalFields;
+  for (const { sheetResult } of batchResults) {
+    if (sheetResult?.statistics) {
+      totalAnswered += sheetResult.statistics.answeredFields;
+      totalUnanswered += sheetResult.statistics.unansweredFields;
+      totalMultiMarked += sheetResult.statistics.multiMarkedFields;
+      totalConfidence += sheetResult.statistics.avgConfidence * sheetResult.statistics.totalFields;
+      totalFields += sheetResult.statistics.totalFields;
+      confidenceCount += sheetResult.statistics.totalFields;
+    }
   }
 
-  const avgConfidence = totalFields > 0 ? totalConfidence / totalFields : 0;
+  const avgConfidence = confidenceCount > 0 ? totalConfidence / confidenceCount : 0;
 
   // Update stat cards with batch totals
   document.getElementById('stat-total')!.textContent = `${totalFields} (${batchResults.length} images)`;
@@ -656,11 +668,17 @@ function displayBatchResults(
   document.getElementById('stat-multimarked')!.textContent = totalMultiMarked.toString();
   document.getElementById('stat-confidence')!.textContent = `${(avgConfidence * 100).toFixed(1)}%`;
 
+  // Hide score card for batch results (would need aggregation logic)
+  const scoreCard = document.getElementById('score-card');
+  if (scoreCard) {
+    scoreCard.style.display = 'none';
+  }
+
   // Populate table with all results
   const tbody = document.getElementById('results-tbody') as HTMLTableSectionElement;
   tbody.innerHTML = '';
 
-  for (const { filename, results } of batchResults) {
+  for (const { filename, results, sheetResult } of batchResults) {
     // Add filename row
     const filenameRow = tbody.insertRow();
     filenameRow.style.backgroundColor = 'var(--bg-card)';
@@ -669,19 +687,24 @@ function displayBatchResults(
     filenameCell.colSpan = 5;
     filenameCell.textContent = `📄 ${filename}`;
 
+    if (!sheetResult) continue;
+
     // Add result rows for this image
     const sortedFieldIds = TemplateLoader.getSortedFieldIds(template);
 
     for (const fieldId of sortedFieldIds) {
-      const result = results.get(fieldId);
-      if (!result) continue;
+      // Get data from sheetResult (proper 1:1 Python mapping)
+      const detectedAnswer = sheetResult.responses[fieldId];
+      const isMultiMarked = sheetResult.multiMarkedFields.includes(fieldId);
+      const isEmpty = sheetResult.emptyFields.includes(fieldId);
+      const fieldResult = sheetResult.fieldResults[fieldId];
 
       const row = tbody.insertRow();
 
       // Determine status class
-      if (result.isMultiMarked) {
+      if (isMultiMarked) {
         row.classList.add('multi-marked');
-      } else if (result.detectedAnswer) {
+      } else if (detectedAnswer && !isEmpty) {
         row.classList.add('answered');
       } else {
         row.classList.add('unanswered');
@@ -692,23 +715,22 @@ function displayBatchResults(
 
       // Answer
       const field = template.fields.get(fieldId);
-      const answer = result.detectedAnswer || field?.emptyValue || '-';
+      const answer = detectedAnswer || field?.emptyValue || '-';
       row.insertCell(1).textContent = answer;
 
-      // Confidence
-      const markedBubble = result.bubbles.find((b) => b.isMarked);
-      const confidence = markedBubble ? (markedBubble.confidence * 100).toFixed(1) : '0.0';
-      row.insertCell(2).textContent = `${confidence}%`;
+      // Confidence (use scan quality = std deviation)
+      const scanQuality = fieldResult ? fieldResult.stdDeviation : 0;
+      row.insertCell(2).textContent = `${scanQuality.toFixed(1)}`;
 
-      // Threshold
-      row.insertCell(3).textContent = result.threshold.toFixed(1);
+      // Threshold (not available in proper Python mapping)
+      row.insertCell(3).textContent = '-';
 
       // Status
       const statusCell = row.insertCell(4);
       let statusHtml: string;
-      if (result.isMultiMarked) {
+      if (isMultiMarked) {
         statusHtml = '<span class="status-badge warning">⚠️ Multi-marked</span>';
-      } else if (result.detectedAnswer) {
+      } else if (detectedAnswer && !isEmpty) {
         statusHtml = '<span class="status-badge success">✅ Detected</span>';
       } else {
         statusHtml = '<span class="status-badge error">❌ Empty</span>';
@@ -742,7 +764,7 @@ function handleExportCSV(): void {
  * Generate CSV from batch results
  */
 function generateBatchCSV(
-  batchResults: Array<{ filename: string; results: Map<string, FieldDetectionResult> }>,
+  batchResults: Array<{ filename: string; results: Map<string, BubbleFieldDetectionResult>; sheetResult?: OMRSheetResult }>,
   template: ParsedTemplate
 ): string {
   const sortedFieldIds = TemplateLoader.getSortedFieldIds(template);
@@ -751,14 +773,20 @@ function generateBatchCSV(
   const header = 'Filename,' + sortedFieldIds.join(',') + ',Total,Answered,MultiMarked\n';
 
   // Rows (one per image)
-  const rows = batchResults.map(({ filename, results }) => {
-    const detector = new SimpleBubbleDetector();
-    const stats = detector.getDetectionStats(results);
+  const rows = batchResults.map(({ filename, results, sheetResult }) => {
+    const stats = sheetResult?.statistics || {
+      totalFields: results.size,
+      answeredFields: 0, // Would need proper calculation
+      multiMarkedFields: 0, // Would need proper calculation
+    };
 
     const answers = sortedFieldIds.map((fieldId) => {
-      const result = results.get(fieldId);
+      // Get answer from sheetResult if available
+      if (sheetResult) {
+        return sheetResult.responses[fieldId] || '';
+      }
       const field = template.fields.get(fieldId);
-      return result?.detectedAnswer || field?.emptyValue || '';
+      return field?.emptyValue || '';
     });
 
     return `${filename},${answers.join(',')},${stats.totalFields},${stats.answeredFields},${stats.multiMarkedFields}`;
@@ -789,6 +817,7 @@ function handleReset(): void {
   allResults = [];
 
   templateData = null;
+  omrProcessor = null;
 
   // Reset UI
   (templateUpload as HTMLInputElement).value = '';
@@ -816,7 +845,7 @@ function handleReset(): void {
  * Check if ready to detect
  */
 function checkReadyToDetect(): void {
-  detectBtn.disabled = !(templateData && imageFiles.length > 0);
+  detectBtn.disabled = !(omrProcessor && templateData && imageFiles.length > 0);
 }
 
 /**

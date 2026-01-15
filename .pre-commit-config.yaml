@@ -8,6 +8,21 @@ repos:
     hooks:
       - id: uv-lock
         fail_fast: true
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+        stages: [pre-commit]
+        fail_fast: false
+      - id: check-added-large-files
+        args: ["--maxkb=300"]
+        exclude: ^.*\.(lock)$
+        fail_fast: false
+        stages: [pre-commit]
+      - id: pretty-format-json
+        args: ["--autofix", "--no-sort-keys"]
+        exclude: ^.*(devcontainer.json)$
+        fail_fast: false
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.8 # Note: this version should match with that of ruff in pyproject.toml to avoid unknown rules
     hooks:
@@ -15,7 +30,7 @@ repos:
         name: Ruff check
         description: "Run 'ruff check' for extremely fast Python linting"
         args: [--fix]
-        fail_fast: true
+        fail_fast: false
 
       - id: ruff-format
         name: Ruff format
@@ -66,22 +81,6 @@ repos:
       - id: optimize-jpg
         args: ["--quality", "90"]
         fail_fast: true # Wait for user to commit the files
-
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
-    hooks:
-      - id: check-yaml
-        stages: [pre-commit]
-        fail_fast: false
-      - id: check-added-large-files
-        args: ["--maxkb=300"]
-        exclude: ^.*\.(lock)$
-        fail_fast: false
-        stages: [pre-commit]
-      - id: pretty-format-json
-        args: ["--autofix", "--no-sort-keys"]
-        exclude: ^.*(devcontainer.json)$
-        fail_fast: true
 
   # Python-TypeScript code correspondence validation
   - repo: local

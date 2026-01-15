@@ -15,7 +15,11 @@ import * as cv from '@techstark/opencv-js';
 import { ProcessingPipeline } from '../processors/Pipeline';
 import { PreprocessingProcessor } from '../processors/image/coordinator';
 import { AlignmentProcessor } from '../processors/alignment/AlignmentProcessor';
-import { SimpleBubbleDetector, type FieldDetectionResult } from '../processors/detection/SimpleBubbleDetector';
+import {
+  BubblesFieldDetection,
+  BubbleFieldDetectionResult,
+} from '../processors/detection';
+import { GlobalThreshold, type ThresholdConfig } from '../processors/threshold/GlobalThreshold';
 import { EvaluationProcessor } from '../processors/evaluation/EvaluationProcessor';
 import { TemplateLoader, type ParsedTemplate } from '../template/TemplateLoader';
 import { type TemplateConfig } from '../template/types';
@@ -56,12 +60,20 @@ export interface OMRSheetResult {
   score?: number;
   /** Maximum possible score */
   maxScore?: number;
-  /** Detailed field results */
-  fieldResults: Record<string, FieldDetectionResult>;
+  /** Detailed field results using proper Python architecture */
+  fieldResults: Record<string, BubbleFieldDetectionResult>;
   /** Processing time in milliseconds */
   processingTimeMs: number;
   /** Any warnings or errors during processing */
   warnings: string[];
+  /** Detection statistics */
+  statistics: {
+    totalFields: number;
+    answeredFields: number;
+    unansweredFields: number;
+    multiMarkedFields: number;
+    avgConfidence: number;
+  };
 }
 
 /**
@@ -77,7 +89,7 @@ export interface OMRSheetResult {
 export class OMRProcessor {
   private template: ParsedTemplate;
   private pipeline: ProcessingPipeline;
-  private detector: SimpleBubbleDetector;
+  private thresholdStrategy: GlobalThreshold;
   private evaluationProcessor: EvaluationProcessor | null = null;
   private config: OMRProcessorConfig;
 
@@ -105,8 +117,8 @@ export class OMRProcessor {
     this.template = TemplateLoader.loadFromJSON(templateConfig);
     logger.info(`Template loaded: ${this.template.fields.size} fields`);
 
-    // Initialize bubble detector
-    this.detector = new SimpleBubbleDetector(processorConfig.thresholdConfig);
+    // Initialize threshold strategy
+    this.thresholdStrategy = new GlobalThreshold();
 
     // Initialize processing pipeline
     this.pipeline = new ProcessingPipeline(this.template);
@@ -150,7 +162,7 @@ export class OMRProcessor {
 
     const warnings: string[] = [];
     const responses: Record<string, string | null> = {};
-    const fieldResults: Record<string, FieldDetectionResult> = {};
+    const fieldResults: Record<string, BubbleFieldDetectionResult> = {};
     const multiMarkedFields: string[] = [];
     const emptyFields: string[] = [];
 
@@ -163,38 +175,73 @@ export class OMRProcessor {
         coloredImage || image.clone()
       );
 
-      // Step 2: Detect bubbles for each field
+      // Step 2: Detect bubbles for each field using proper Python architecture
       if (this.config.debug) {
         logger.debug(`Detecting bubbles for ${this.template.fields.size} fields`);
       }
 
       for (const [fieldId, field] of this.template.fields) {
         try {
-          // Detect bubbles for this field
-          const result = this.detector.detectField(
-            context.grayImage,
+          // Use BubblesFieldDetection following Python architecture
+          const detection = new BubblesFieldDetection(
+            fieldId,
+            fieldId, // fieldLabel
             field.bubbles,
-            fieldId
+            context.grayImage
           );
 
+          const result = detection.getResult();
           fieldResults[fieldId] = result;
 
+          // Calculate threshold and determine marked bubbles
+          const bubbleMeanValues = result.meanValues;
+          const defaultThresholdConfig: ThresholdConfig = {
+            defaultThreshold: 200,
+            minJump: 30,
+          };
+          const thresholdConfig: ThresholdConfig = {
+            ...defaultThresholdConfig,
+            ...this.config.thresholdConfig,
+          };
+          const thresholdResult = this.thresholdStrategy.calculateThreshold(
+            bubbleMeanValues,
+            thresholdConfig
+          );
+
+          // Find marked bubbles (below threshold)
+          const markedBubbles = result.bubbleMeans.filter(
+            bm => bm.meanValue < thresholdResult.thresholdValue
+          );
+
+          // Determine detected answer
+          let detectedAnswer: string | null = null;
+          let isMultiMarked = false;
+
+          if (markedBubbles.length === 1) {
+            detectedAnswer = markedBubbles[0].unitBubble.label;
+          } else if (markedBubbles.length > 1) {
+            isMultiMarked = true;
+            // Take first marked bubble but flag as multi-marked
+            detectedAnswer = markedBubbles[0].unitBubble.label;
+          }
+
           // Store detected answer
-          if (result.detectedAnswer) {
-            responses[fieldId] = result.detectedAnswer;
+          if (detectedAnswer) {
+            responses[fieldId] = detectedAnswer;
           } else {
             responses[fieldId] = field.emptyValue || null;
             emptyFields.push(fieldId);
           }
 
           // Track multi-marked fields
-          if (result.isMultiMarked) {
+          if (isMultiMarked) {
             multiMarkedFields.push(fieldId);
             warnings.push(`Field ${fieldId} has multiple bubbles marked`);
           }
 
           logger.debug(
-            `Field ${fieldId}: ${result.detectedAnswer || 'EMPTY'} (multi: ${result.isMultiMarked})`
+            `Field ${fieldId}: ${detectedAnswer || 'EMPTY'} (multi: ${isMultiMarked}, ` +
+            `quality: ${result.scanQuality})`
           );
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
@@ -228,6 +275,23 @@ export class OMRProcessor {
         `${Object.keys(responses).length} fields detected`
       );
 
+      // Calculate statistics
+      const answeredFields = Object.values(responses).filter((r) => r !== null).length;
+      const totalFields = Object.keys(fieldResults).length;
+      let totalConfidence = 0;
+      let confidenceCount = 0;
+
+      // Calculate average confidence from scan quality
+      for (const result of Object.values(fieldResults)) {
+        // Use std deviation as a proxy for confidence
+        // Higher std deviation = better scan quality = higher confidence
+        const confidence = Math.min(result.stdDeviation / 100, 1.0);
+        totalConfidence += confidence;
+        confidenceCount++;
+      }
+
+      const avgConfidence = confidenceCount > 0 ? totalConfidence / confidenceCount : 0;
+
       return {
         filePath,
         responses,
@@ -238,6 +302,13 @@ export class OMRProcessor {
         fieldResults,
         processingTimeMs,
         warnings,
+        statistics: {
+          totalFields,
+          answeredFields,
+          unansweredFields: emptyFields.length,
+          multiMarkedFields: multiMarkedFields.length,
+          avgConfidence,
+        },
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -251,6 +322,13 @@ export class OMRProcessor {
         fieldResults: {},
         processingTimeMs: Date.now() - startTime,
         warnings: [`Fatal error: ${errorMessage}`],
+        statistics: {
+          totalFields: 0,
+          answeredFields: 0,
+          unansweredFields: 0,
+          multiMarkedFields: 0,
+          avgConfidence: 0,
+        },
       };
     }
   }
