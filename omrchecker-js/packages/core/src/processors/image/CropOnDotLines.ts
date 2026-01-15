@@ -184,7 +184,10 @@ export class CropOnDotLines extends CropOnPatchesCommon {
     saveImageOps: any,
     defaultProcessingImageShape: [number, number]
   ) {
-    super(options, relativeDir, saveImageOps, defaultProcessingImageShape);
+    // Python can call self.method() before super(), TypeScript cannot
+    // So we call static helper, then pass merged result to super()
+    const merged = CropOnDotLines.validateAndMerge(options);
+    super(merged, relativeDir, saveImageOps, defaultProcessingImageShape);
 
     // Extract tuning options for kernels
     const tuningOptions = this.options.tuningOptions || {};
@@ -195,7 +198,50 @@ export class CropOnDotLines extends CropOnPatchesCommon {
     this.dotKernelMorph = createStructuringElement('rect', dotKernel as [number, number]);
   }
 
-  protected override validateAndRemapOptionsSchema(options: any): Record<string, any> {
+  /**
+   * Validate and merge options (static helper for constructor).
+   * TypeScript doesn't allow calling instance methods before super(),
+   * so we use a static helper that combines validate + merge.
+   */
+  private static validateAndMerge(options: any): Record<string, any> {
+    // Validate
+    const layoutType = options.type;
+    const tuningOptions = options.tuningOptions || {};
+
+    const parsed: any = {
+      defaultSelector: options.defaultSelector || 'CENTERS',
+      pointsLayout: layoutType,
+      enableCropping: options.enableCropping !== false,
+      tuningOptions: {
+        warpMethod: tuningOptions.warpMethod || WarpMethod.PERSPECTIVE_TRANSFORM,
+        ...tuningOptions,
+      },
+    };
+
+    const parsedScanZones: ScanZone[] = [...(options.scanZones || [])];
+    const zonePresets = CropOnDotLines.scanZonePresetsForLayout[layoutType] || [];
+    for (const zonePreset of zonePresets) {
+      if (zonePreset in options) {
+        parsedScanZones.push({
+          zonePreset,
+          zoneDescription: options[zonePreset] as ZoneDescription,
+          customOptions: {},
+        });
+      }
+    }
+    parsed.scanZones = parsedScanZones;
+
+    // Merge tuning options
+    return {
+      ...parsed,
+      tuningOptions: {
+        ...(parsed.tuningOptions || {}),
+        ...(options.tuningOptions || {}),
+      },
+    };
+  }
+
+  protected static override validateAndRemapOptionsSchema(options: any): Record<string, any> {
     const layoutType = options.type;
     const tuningOptions = options.tuningOptions || {};
 
@@ -243,7 +289,7 @@ export class CropOnDotLines extends CropOnPatchesCommon {
     const zoneLabel = zoneDescription.label;
 
     // Extract patch zone
-    const [zone, zoneStart, _zoneEnd] = this.computeScanZoneUtil(image, zoneDescription);
+    const [zone, zoneStart] = this.computeScanZoneUtil(image, zoneDescription);
 
     // Validate blur kernel if provided
     const dotBlurKernel = tuningOptions.dotBlurKernel;
@@ -336,7 +382,7 @@ export class CropOnDotLines extends CropOnPatchesCommon {
     const zoneLabel = zoneDescription.label;
 
     // Extract patch zone
-    const [zone, zoneStart, _zoneEnd] = this.computeScanZoneUtil(image, zoneDescription);
+    const [zone, zoneStart] = this.computeScanZoneUtil(image, zoneDescription);
 
     // Validate blur kernel if provided
     const lineBlurKernel = tuningOptions.lineBlurKernel;

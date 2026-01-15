@@ -10,7 +10,7 @@ import {
   ImagePreprocessorOptions,
   SaveImageOps,
 } from '../base';
-import { ProcessingContext, createProcessingContext } from '../../base';
+import { createProcessingContext } from '../../base';
 import * as cv from '@techstark/opencv-js';
 
 // Mock implementation for testing
@@ -25,7 +25,7 @@ class MockImagePreprocessor extends ImageTemplatePreprocessor {
     image: cv.Mat,
     coloredImage: cv.Mat,
     template: any,
-    filePath: string
+    _filePath: string
   ): [cv.Mat, cv.Mat, any] {
     this.filterCalled = true;
     // Just return the same images for testing
@@ -56,7 +56,7 @@ describe('ImageTemplatePreprocessor', () => {
 
     // Create mock save image ops
     mockSaveImageOps = {
-      appendSaveImage: (name: string, image: cv.Mat) => {
+      appendSaveImage: (_name: string, _image: cv.Mat) => {
         // Mock implementation
       },
       tuningConfig: {

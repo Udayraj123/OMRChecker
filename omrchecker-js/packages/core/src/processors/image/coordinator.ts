@@ -24,8 +24,6 @@ const logger = new Logger('PreprocessingProcessor');
  * 4. Optionally resizes to output dimensions
  */
 export class PreprocessingProcessor extends Processor {
-  // @ts-ignore
-  private _template: any; // Template type (avoiding circular dependencies)
   private tuningConfig: any;
 
   /**
@@ -35,7 +33,8 @@ export class PreprocessingProcessor extends Processor {
    */
   constructor(template: any) {
     super();
-    this._template = template;
+    // Note: Python stores self.template = template but doesn't use it
+    // We skip storing it to avoid unused variable warnings
     this.tuningConfig = template.tuningConfig || template.tuning_config;
   }
 

@@ -32,9 +32,9 @@ class CropPage(WarpOnPointsCommon):
 
         return {
             # Local defaults
-            "morphKernel": options.get("morphKernel", self.defaults["morphKernel"]),
+            "morphKernel": options.get("morphKernel", CropPage.defaults["morphKernel"]),
             "useColoredCanny": options.get(
-                "useColoredCanny", self.defaults["useColoredCanny"]
+                "useColoredCanny", CropPage.defaults["useColoredCanny"]
             ),
             "maxPointsPerEdge": options.get("maxPointsPerEdge", None),
             "enableCropping": True,
@@ -47,8 +47,9 @@ class CropPage(WarpOnPointsCommon):
             },
         }
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, options, *args, **kwargs) -> None:
+        # Parent's __init__ will call validate_and_remap_options_schema via polymorphism
+        super().__init__(options, *args, **kwargs)
         options = self.options
         self.use_colored_canny = options["useColoredCanny"]
 

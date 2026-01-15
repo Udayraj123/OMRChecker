@@ -64,28 +64,23 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         Initialize the warp processor.
 
         Args:
-            options: Processor configuration options
+            options: Processor configuration options (raw, will be validated)
             relative_dir: Base directory for relative paths
             save_image_ops: Image saving configuration
             default_processing_image_shape: Default image dimensions
         """
-        # Store tuning config before parent initialization
+        # Store tuning config before validation (needed by some subclasses)
         self.tuning_config = save_image_ops.tuning_config
 
-        # Validate and parse options (subclass-specific)
+        # Validate and parse options (polymorphic - calls subclass implementation)
         parsed_options = self.validate_and_remap_options_schema(options)
 
         # Merge tuning options
-        parsed_options = OVERRIDE_MERGER.merge(
-            {
-                "tuningOptions": options.get("tuningOptions", {}),
-            },
-            parsed_options,
-        )
+        merged_options = self.merge_tuning_options(parsed_options, options)
 
-        # Initialize parent
+        # Initialize parent with merged options
         super().__init__(
-            parsed_options,
+            merged_options,
             relative_dir,
             save_image_ops,
             default_processing_image_shape,
@@ -156,10 +151,42 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         """
         Validate and transform processor-specific options.
 
-        Subclasses must implement this to define their schema.
+        Subclasses must override this to define their schema.
+
+        This method is called by the parent's __init__ with polymorphic dispatch,
+        so subclasses just need to override it - no need to call it explicitly.
+
+        Args:
+            _options: Raw options to validate and transform
+
+        Returns:
+            Validated and transformed options dict
         """
         msg = "Subclass must implement validate_and_remap_options_schema"
         raise NotImplementedError(msg)
+
+    def merge_tuning_options(
+        self, parsed_options: dict, original_options: dict
+    ) -> dict:
+        """
+        Merge tuning options from original options into parsed options.
+
+        This ensures tuningOptions from the original config aren't lost during validation.
+        Can be overridden by subclasses if custom merge logic is needed.
+
+        Args:
+            parsed_options: Options returned from validate_and_remap_options_schema
+            original_options: Original raw options dict
+
+        Returns:
+            Merged options dict
+        """
+        return OVERRIDE_MERGER.merge(
+            {
+                "tuningOptions": original_options.get("tuningOptions", {}),
+            },
+            parsed_options,
+        )
 
     def prepare_image_before_extraction(self, _image):
         """

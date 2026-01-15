@@ -2,9 +2,9 @@
  * Tests for SectionMarkingScheme
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { SectionMarkingScheme, MarkingSchemeType, DEFAULT_SECTION_KEY } from '../SectionMarkingScheme';
-import { AnswerType, Verdict, SchemaVerdict } from '../AnswerMatcher';
+import { AnswerType, Verdict } from '../AnswerMatcher';
 
 describe('SectionMarkingScheme', () => {
   describe('Basic Configuration', () => {

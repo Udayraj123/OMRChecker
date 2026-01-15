@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import * as cv from '@techstark/opencv-js';
 import { GaussianBlur } from '../GaussianBlur';
-import { ProcessingContext, createProcessingContext } from '../../base';
+import { createProcessingContext } from '../../base';
 
 describe('GaussianBlur', () => {
   let testImage: cv.Mat;

@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import * as cv from '@techstark/opencv-js';
 import { AutoRotate } from '../AutoRotate';
-import { ProcessingContext, createProcessingContext } from '../../base';
+import { createProcessingContext } from '../../base';
 
 describe('AutoRotate', () => {
   let testImage: cv.Mat;

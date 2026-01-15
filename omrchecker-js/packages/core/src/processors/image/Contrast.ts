@@ -51,7 +51,7 @@ function automaticBrightnessAndContrast(
 
   // Locate points to clip
   const maximum = accumulator[accumulator.length - 1];
-  let clipAmount = (clipHistPercent * maximum) / 100.0 / 2.0;
+  const clipAmount = (clipHistPercent * maximum) / 100.0 / 2.0;
 
   // Locate left cut
   let minimumGray = 0;

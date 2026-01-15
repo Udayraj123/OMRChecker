@@ -459,7 +459,7 @@ class TestHighLevelFunctions:
 
     @patch("src.processors.pipeline.ProcessingPipeline")
     @patch("src.processors.template.template.Template")
-    @patch("src.processors.visualization.workflow_tracker.ImageUtils")
+    @patch("src.utils.image.ImageUtils")
     def test_track_workflow(  # noqa: PLR0913
         self,
         mock_image_utils,

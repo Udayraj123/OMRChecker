@@ -45,7 +45,7 @@ export class ImageSaver {
         return false;
       }
 
-      // @ts-ignore - File System Access API
+      // @ts-expect-error - File System Access API not yet in TypeScript DOM types
       this.directoryHandle = await window.showDirectoryPicker({
         mode: 'readwrite',
         startIn: 'downloads',

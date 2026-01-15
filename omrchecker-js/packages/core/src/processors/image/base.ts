@@ -12,6 +12,7 @@ import type * as cv from '@techstark/opencv-js';
 import { Processor, ProcessingContext } from '../base';
 import { ImageUtils } from '../../utils/ImageUtils';
 import { Logger } from '../../utils/logger';
+import type { TuningConfig } from '../../template/types';
 
 const logger = new Logger('ImageTemplatePreprocessor');
 
@@ -52,7 +53,7 @@ export interface SaveImageOps {
   /**
    * Tuning configuration
    */
-  tuningConfig: any;
+  tuningConfig: TuningConfig;
 }
 
 /**

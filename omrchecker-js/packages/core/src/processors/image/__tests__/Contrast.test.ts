@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import * as cv from '@techstark/opencv-js';
 import { Contrast } from '../Contrast';
-import { ProcessingContext, createProcessingContext } from '../../base';
+import { createProcessingContext } from '../../base';
 
 describe('Contrast', () => {
   let testImage: cv.Mat;

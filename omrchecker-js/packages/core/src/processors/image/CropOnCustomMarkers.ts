@@ -126,6 +126,7 @@ export class CropOnCustomMarkers extends CropOnPatchesCommon {
     saveImageOps: any,
     defaultProcessingImageShape: [number, number]
   ) {
+    // Parent's constructor will call validateAndRemapOptionsSchema via polymorphism
     super(options, relativeDir, saveImageOps, defaultProcessingImageShape);
 
     // Extract tuning options
@@ -139,7 +140,7 @@ export class CropOnCustomMarkers extends CropOnPatchesCommon {
     this.initResizedMarkers();
   }
 
-  protected override validateAndRemapOptionsSchema(options: any): Record<string, any> {
+  protected static override validateAndRemapOptionsSchema(options: any): Record<string, any> {
     const referenceImagePath = options.referenceImage;
     const layoutType = options.type;
     const tuningOptions = options.tuningOptions || {};
@@ -461,7 +462,7 @@ export class CropOnCustomMarkers extends CropOnPatchesCommon {
     const zoneLabel = zoneDescription.label;
 
     // Extract patch zone
-    const [patchZone, zoneStart, _zoneEnd] = this.computeScanZoneUtil(image, zoneDescription);
+    const [patchZone, zoneStart] = this.computeScanZoneUtil(image, zoneDescription);
 
     // Get marker template
     const marker = this.markerForZoneLabel.get(zoneLabel);

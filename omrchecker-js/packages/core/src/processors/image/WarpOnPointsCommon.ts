@@ -15,7 +15,7 @@
  */
 
 import cv from '@techstark/opencv-js';
-import { ImageTemplatePreprocessor } from './base';
+import { ImageTemplatePreprocessor, SaveImageOps } from './base';
 import { WarpStrategyFactory, WarpStrategy } from './warpStrategies';
 import { PointArray, orderFourPoints } from './pointUtils';
 import { logger } from '../../utils/logger';
@@ -23,6 +23,7 @@ import { ImageUtils } from '../../utils/ImageUtils';
 import { InteractionUtils } from '../../utils/InteractionUtils';
 import { appendSaveImage } from '../../utils/ImageSaver';
 import { WarpMethod, WarpMethodFlags, type WarpMethodValue } from '../constants';
+import type { TuningConfig } from '../../template/types';
 
 /**
  * Base class for image processors that apply warping transformations.
@@ -49,7 +50,7 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
     [WarpMethodFlags.INTER_NEAREST]: cv.INTER_NEAREST,
   };
 
-  protected tuningConfig: Record<string, any>;
+  protected tuningConfig: TuningConfig;
   protected enableCropping: boolean;
   protected warpMethod: WarpMethodValue;
   protected warpMethodFlag: number;
@@ -59,30 +60,19 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
   protected debugVstack: cv.Mat[][] = [];
 
   constructor(
-    options: Record<string, any>,
+    options: Record<string, unknown>,
     relativeDir: string,
-    saveImageOps: Record<string, any>,
+    saveImageOps: SaveImageOps,
     defaultProcessingImageShape: [number, number]
   ) {
-    // Store tuning config before parent initialization
-    const tuningConfig = (saveImageOps as any).tuningConfig;
+    // TypeScript doesn't allow calling this.method() before super()
+    // So subclasses must validate in their constructors and pass merged options here
 
-    // Validate and parse options (subclass-specific)
-    const parsedOptions = (options as Record<string, any>).validateAndRemapOptionsSchema?.(options) ?? {};
+    // Initialize parent with (already validated and merged) options
+    super(options, relativeDir, saveImageOps, defaultProcessingImageShape);
 
-    // Merge tuning options
-    const mergedOptions = {
-      ...parsedOptions,
-      tuningOptions: {
-        ...(parsedOptions.tuningOptions || {}),
-        ...(options.tuningOptions || {}),
-      },
-    };
-
-    // Initialize parent
-    super(mergedOptions, relativeDir, saveImageOps as any, defaultProcessingImageShape);
-
-    this.tuningConfig = tuningConfig;
+    // Store tuning config after parent initialization
+    this.tuningConfig = saveImageOps.tuningConfig;
 
     // Extract configuration
     const opts = this.options;
@@ -139,9 +129,41 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
   /**
    * Validate and transform processor-specific options.
    *
-   * Subclasses must implement this to define their schema.
+   * Subclasses must override this to define their schema.
+   *
+   * Note: In TypeScript, validation must be done in the subclass constructor
+   * before calling super(). This is different from Python where we can call
+   * self.validate_and_remap_options_schema() before super().__init__().
+   *
+   * @param _options - Raw options to validate and transform
+   * @returns Validated and transformed options
    */
-  protected abstract validateAndRemapOptionsSchema(options: Record<string, any>): Record<string, any>;
+  protected static validateAndRemapOptionsSchema(_options: Record<string, unknown>): Record<string, unknown> {
+    throw new Error('Subclass must implement validateAndRemapOptionsSchema');
+  }
+
+  /**
+   * Merge tuning options from original options into parsed options.
+   *
+   * This ensures tuningOptions from the original config aren't lost during validation.
+   * Can be overridden by subclasses if custom merge logic is needed.
+   *
+   * @param parsedOptions - Options returned from validateAndRemapOptionsSchema
+   * @param originalOptions - Original raw options
+   * @returns Merged options
+   */
+  protected static mergeTuningOptions(
+    parsedOptions: Record<string, unknown>,
+    originalOptions: Record<string, unknown>
+  ): Record<string, unknown> {
+    return {
+      ...parsedOptions,
+      tuningOptions: {
+        ...(parsedOptions.tuningOptions || {}),
+        ...(originalOptions.tuningOptions || {}),
+      },
+    };
+  }
 
   /**
    * Prepare the image before extracting control points.
@@ -162,7 +184,7 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
     image: cv.Mat,
     coloredImage: cv.Mat | null,
     filePath: string
-  ): [PointArray, PointArray, Record<string, any>];
+  ): [PointArray, PointArray, Record<string, unknown>];
 
   /**
    * Return list of files to exclude from processing
@@ -419,7 +441,8 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
    * Return colored image only if colored outputs are enabled.
    */
   private getColoredInput(coloredImage: cv.Mat | null): cv.Mat | null {
-    return this.tuningConfig.outputs.coloredOutputsEnabled ? coloredImage : null;
+    const coloredOutputsEnabled = this.tuningConfig?.outputs?.coloredOutputsEnabled ?? false;
+    return coloredOutputsEnabled ? coloredImage : null;
   }
 
   // =========================================================================
@@ -446,8 +469,10 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
     _controlPoints: PointArray,
     _destinationPoints: PointArray
   ): void {
+    const showImageLevel = config?.outputs?.showImageLevel ?? 0;
+
     // Show high-detail visualizations if configured
-    if (config.outputs.showImageLevel >= 4) {
+    if (showImageLevel >= 4) {
       this.showHighDetailVisualizations(
         config,
         filePath,
@@ -462,7 +487,7 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
     this.saveDebugImages(_warpedImage, warpedColoredImage);
 
     // Show final preview if configured
-    if (config.outputs.showImageLevel >= 5) {
+    if (showImageLevel >= 5) {
       const title = `${this.enableCropping ? 'Cropped' : 'Warped'} Image Preview`;
       InteractionUtils.show(title, warpedColoredImage || _warpedImage);
       logger.info(`${title}: ${filePath}`);

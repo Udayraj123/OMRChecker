@@ -4,9 +4,9 @@
  * Tests the unified pipeline interface for orchestrating processors.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { ProcessingPipeline, PipelineConfig } from '../Pipeline';
-import { Processor, ProcessingContext, createProcessingContext } from '../base';
+import { Processor } from '../base';
 import * as cv from '@techstark/opencv-js';
 
 // Mock processor for testing

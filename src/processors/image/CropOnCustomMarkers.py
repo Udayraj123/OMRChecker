@@ -75,8 +75,9 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         },
     }
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, options, *args, **kwargs) -> None:
+        # Parent's __init__ will call validate_and_remap_options_schema via polymorphism
+        super().__init__(options, *args, **kwargs)
         tuning_options = self.tuning_options
         self.threshold_circles = []
 
@@ -110,7 +111,9 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         default_dimensions = options.get("markerDimensions", None)
         # inject scanZones (Note: override merge with defaults will happen in parent class)
         parsed_scan_zones = []
-        for zone_preset in self.scan_zone_presets_for_layout[layout_type]:
+        for zone_preset in CropOnCustomMarkers.scan_zone_presets_for_layout[
+            layout_type
+        ]:
             local_description = options.get(zone_preset, {})
             # .pop() will delete the customOptions key from the description if it exists
             local_custom_options = local_description.pop("customOptions", {})

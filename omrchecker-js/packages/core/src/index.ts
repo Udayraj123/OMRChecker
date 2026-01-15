@@ -26,7 +26,7 @@ export { Contrast } from './processors/image/Contrast';
 // Image processors - Advanced
 export { AutoRotate, type AutoRotateOptions } from './processors/image/AutoRotate';
 export { Levels } from './processors/image/Levels';
-export { CropPage, type CropPageOptions } from './processors/image/CropPage';
+export { CropPage } from './processors/image/CropPage';
 export { CropOnMarkers, type CropOnMarkersOptions } from './processors/image/CropOnMarkers';
 
 // Image processors - Base class

@@ -2,7 +2,7 @@
   "version": "2.0",
   "metadata": {
     "description": "Mapping between Python and TypeScript files for OMRChecker port",
-    "lastUpdated": "2026-01-15T10:00:00Z",
+    "lastUpdated": "2026-01-15T22:22:40Z",
     "maintainer": "OMRChecker Team",
     "phase7_completed": "2026-01-15T00:00:00Z",
     "phase7_summary": "Constants sync, import cleanup, point ordering, convex hull drawing",
@@ -573,7 +573,7 @@
       "phase": 1,
       "priority": "medium",
       "lastSyncedCommit": null,
-      "lastPythonChange": "2026-01-14T00:00:00Z",
+      "lastPythonChange": "2026-01-15T22:22:40Z",
       "lastTypescriptChange": "2026-01-14T00:00:00Z",
       "testFile": "omrchecker-js/packages/core/src/processors/image/__tests__/dotLineDetection.test.ts",
       "functions": [

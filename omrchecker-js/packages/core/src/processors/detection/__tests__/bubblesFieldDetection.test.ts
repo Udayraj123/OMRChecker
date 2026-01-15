@@ -3,7 +3,7 @@
  * Port of Python's src/tests/test_bubbles_threshold_detection.py
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { BubblesFieldDetection } from '../bubbles_threshold';
 import {
   BubbleFieldDetectionResult,

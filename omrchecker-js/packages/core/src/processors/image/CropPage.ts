@@ -6,27 +6,16 @@
  * This preprocessor automatically detects the page boundary using edge detection
  * and crops/warps the image to remove margins and correct perspective distortion.
  *
- * Uses the extracted pageDetection module for clean separation of concerns.
+ * Extends WarpOnPointsCommon to leverage the parent's warping infrastructure.
  */
 
-import * as cv from '@techstark/opencv-js';
-import { ImageTemplatePreprocessor } from './base';
-import { Logger } from '../../utils/logger';
-import { WarpMethod, type WarpMethodValue } from '../constants';
+import cv from '@techstark/opencv-js';
+import { WarpOnPointsCommon } from './WarpOnPointsCommon';
+import { PointArray } from './pointUtils';
+import { logger } from '../../utils/logger';
+import { WarpMethod } from '../constants';
 import { findPageContourAndCorners } from './pageDetection';
 import { ImageUtils } from '../../utils/ImageUtils';
-import { MathUtils } from '../../utils/math';
-
-const logger = new Logger('CropPage');
-
-export interface CropPageOptions {
-  morphKernel?: [number, number];
-  useColoredCanny?: boolean;
-  maxPointsPerEdge?: number | null;
-  tuningOptions?: {
-    warpMethod?: WarpMethodValue;
-  };
-}
 
 /**
  * Preprocessor for automatic page detection and cropping.
@@ -34,164 +23,151 @@ export interface CropPageOptions {
  * Detects the page boundary in the image and applies perspective correction
  * to produce a properly aligned rectangular output.
  */
-export class CropPage extends ImageTemplatePreprocessor {
+export class CropPage extends WarpOnPointsCommon {
+  protected static override readonly __isInternalPreprocessor = true;
+
   private morphKernel?: cv.Mat;
   private useColoredCanny: boolean;
-  // warpMethod and maxPointsPerEdge are for future use
-  // private warpMethod: WarpMethodValue;
-  // private maxPointsPerEdge?: number | null;
 
   constructor(
-    options: CropPageOptions,
+    options: any,
     relativeDir: string,
     saveImageOps: any,
     defaultProcessingImageShape: [number, number]
   ) {
-    const remappedOptions = {
-      ...options,
-      morphKernel: options.morphKernel || [10, 10],
-      useColoredCanny: options.useColoredCanny || false,
-      maxPointsPerEdge: options.maxPointsPerEdge || null,
-      enableCropping: true,
-      processingImageShape: defaultProcessingImageShape,
-      tuningOptions: {
-        warpMethod: options.tuningOptions?.warpMethod || WarpMethod.PERSPECTIVE_TRANSFORM,
-        normalizeConfig: [],
-        cannyConfig: [],
-      },
-    };
+    // Python can call self.method() before super(), TypeScript cannot
+    // So we call static helper, then pass merged result to super()
+    const merged = CropPage.validateAndMerge(options);
+    super(merged, relativeDir, saveImageOps, defaultProcessingImageShape);
 
-    super(remappedOptions, relativeDir, saveImageOps, defaultProcessingImageShape);
+    // Extract validated options
+    this.useColoredCanny = this.options.useColoredCanny;
 
-    this.useColoredCanny = remappedOptions.useColoredCanny;
-    // this.warpMethod = remappedOptions.tuningOptions.warpMethod;
-    // this.maxPointsPerEdge = remappedOptions.maxPointsPerEdge;
-
-    // Create morphological kernel if specified
-    if (remappedOptions.morphKernel) {
+    // Create morphological kernel
+    const morphKernel = this.options.morphKernel;
+    if (morphKernel) {
       const cv = (globalThis as any).cv;
       if (cv) {
         this.morphKernel = cv.getStructuringElement(
           cv.MORPH_RECT,
-          new cv.Size(remappedOptions.morphKernel[0], remappedOptions.morphKernel[1])
+          new cv.Size(morphKernel[0], morphKernel[1])
         );
       }
     }
+  }
+
+  /**
+   * Validate and merge options (static helper for constructor).
+   * TypeScript doesn't allow calling instance methods before super(),
+   * so we use a static helper that combines validate + merge.
+   */
+  private static validateAndMerge(options: any): Record<string, any> {
+    const tuningOptions = options.tuningOptions || {};
+
+    const parsed: any = {
+      morphKernel: options.morphKernel || [10, 10],
+      useColoredCanny: options.useColoredCanny || false,
+      maxPointsPerEdge: options.maxPointsPerEdge || null,
+      enableCropping: true,
+      tuningOptions: {
+        warpMethod: tuningOptions.warpMethod || WarpMethod.PERSPECTIVE_TRANSFORM,
+        normalizeConfig: [],
+        cannyConfig: [],
+        ...tuningOptions,
+      },
+    };
+
+    // Merge tuning options
+    return {
+      ...parsed,
+      tuningOptions: {
+        ...(parsed.tuningOptions || {}),
+        ...(options.tuningOptions || {}),
+      },
+    };
+  }
+
+  /**
+   * Validate and remap options schema (for polymorphism).
+   */
+  protected static override validateAndRemapOptionsSchema(options: any): Record<string, any> {
+    const tuningOptions = options.tuningOptions || {};
+
+    return {
+      morphKernel: options.morphKernel || [10, 10],
+      useColoredCanny: options.useColoredCanny || false,
+      maxPointsPerEdge: options.maxPointsPerEdge || null,
+      enableCropping: true,
+      tuningOptions: {
+        warpMethod: tuningOptions.warpMethod || WarpMethod.PERSPECTIVE_TRANSFORM,
+        normalizeConfig: [],
+        cannyConfig: [],
+      },
+    };
   }
 
   getClassName(): string {
     return 'CropPage';
   }
 
-  applyFilter(
-    image: cv.Mat,
-    coloredImage: cv.Mat,
-    template: any,
-    filePath: string
-  ): [cv.Mat, cv.Mat, any] {
-    logger.debug(`Applying ${this.getName()} filter`);
-
-    try {
-      // Step 1: Use extracted page detection module
-      const [corners, _pageContour] = findPageContourAndCorners(image, {
-        coloredImage: coloredImage,
-        useColoredCanny: this.useColoredCanny,
-        morphKernel: this.morphKernel,
-        filePath: filePath,
-      });
-
-      if (!corners || corners.length !== 4) {
-        logger.warn(`Invalid page corners detected: ${corners?.length || 0} points`);
-        return [image, coloredImage, template];
-      }
-
-      logger.info(`Found page corners: ${JSON.stringify(corners)}`);
-
-      // Step 2: Order corners consistently (TL, TR, BR, BL)
-      const [orderedCorners] = MathUtils.orderFourPoints(corners);
-
-      // Step 3: Calculate destination corners and dimensions
-      const [destinationPoints, dimensions] =
-        ImageUtils.getCroppedWarpedRectanglePoints(orderedCorners);
-
-      const [width, height] = dimensions;
-      logger.debug(`Warping to dimensions: ${width}x${height}`);
-
-      // Step 4: Create source and destination points matrices for OpenCV
-      const sourcePointsFlat = orderedCorners.flat();
-      const sourceMat = cv.matFromArray(4, 1, cv.CV_32FC2, sourcePointsFlat);
-
-      const destinationPointsFlat = destinationPoints.flat();
-      const destinationMat = cv.matFromArray(4, 1, cv.CV_32FC2, destinationPointsFlat);
-
-      // Step 5: Apply perspective transform
-      const warpedGray = this.applyWarpTransform(
-        image,
-        sourceMat,
-        destinationMat,
-        width,
-        height
-      );
-
-      // Step 6: Apply to colored image if available
-      let warpedColored = coloredImage;
-      if (coloredImage && !coloredImage.empty()) {
-        warpedColored = this.applyWarpTransform(
-          coloredImage,
-          sourceMat,
-          destinationMat,
-          width,
-          height
-        );
-      }
-
-      // Cleanup temporary matrices
-      sourceMat.delete();
-      destinationMat.delete();
-
-      logger.info(`Successfully warped page to ${width}x${height}`);
-      return [warpedGray, warpedColored, template];
-    } catch (error) {
-      logger.error(`CropPage failed: ${error}`);
-      // Return images unchanged on error
-      return [image, coloredImage, template];
-    }
+  /**
+   * Prepare the image before extracting control points.
+   * Normalizes the image for better page detection.
+   */
+  protected prepareImageBeforeExtraction(image: cv.Mat): cv.Mat {
+    // Normalize image before page detection
+    const normalized = ImageUtils.normalizeSingle(image);
+    return normalized || image;
   }
 
   /**
-   * Apply perspective transformation to an image.
+   * Extract control and destination points from the image.
    *
-   * @param image - Source image
-   * @param sourceMat - Source points (4x1 CV_32FC2)
-   * @param destinationMat - Destination points (4x1 CV_32FC2)
-   * @param width - Output width
-   * @param height - Output height
-   * @returns Warped image
+   * Detects the page boundary and returns corner points for warping.
+   *
+   * Note: Currently supports PERSPECTIVE_TRANSFORM (4 corners) only.
+   * Full edge point support for HOMOGRAPHY/REMAP_GRIDDATA is TODO.
    */
-  private applyWarpTransform(
+  protected extractControlDestinationPoints(
     image: cv.Mat,
-    sourceMat: cv.Mat,
-    destinationMat: cv.Mat,
-    width: number,
-    height: number
-  ): cv.Mat {
-    // Compute perspective transformation matrix
-    const transformMatrix = cv.getPerspectiveTransform(sourceMat, destinationMat);
+    coloredImage: cv.Mat,
+    filePath: string
+  ): [PointArray, PointArray, Record<string, any>] {
+    // Check colored Canny configuration
+    if (this.useColoredCanny && !this.tuningConfig.outputs?.coloredOutputsEnabled) {
+      logger.warn(
+        'Cannot process colored image for CropPage. ' +
+        'useColoredCanny is true but coloredOutputsEnabled is false.'
+      );
+    }
 
-    // Apply warp
-    const warped = new cv.Mat();
-    cv.warpPerspective(
-      image,
-      warped,
-      transformMatrix,
-      new cv.Size(width, height),
-      cv.INTER_LINEAR
-    );
+    // Use extracted page detection module
+    const [corners] = findPageContourAndCorners(image, {
+      coloredImage: this.tuningConfig.outputs?.coloredOutputsEnabled ? coloredImage : undefined,
+      useColoredCanny: this.useColoredCanny,
+      morphKernel: this.morphKernel,
+      filePath: filePath,
+      debugImage: this.debugImage || undefined,
+    });
 
-    // Cleanup
-    transformMatrix.delete();
+    if (!corners || corners.length !== 4) {
+      throw new Error(`Invalid page corners detected: ${corners?.length || 0} points`);
+    }
 
-    return warped;
+    logger.debug(`Found page corners: ${JSON.stringify(corners)}`);
+
+    // Calculate destination corners
+    const [destinationCorners] = ImageUtils.getCroppedWarpedRectanglePoints(corners);
+
+    // For now, only support PERSPECTIVE_TRANSFORM (4 corners)
+    // TODO: Add support for HOMOGRAPHY/REMAP_GRIDDATA with edge points
+    // This would require porting:
+    // - ImageUtils.splitPatchContourOnCorners()
+    // - ImageUtils.getControlDestinationPointsFromContour()
+    // - MathUtils.selectEdgeFromRectangle()
+    const edgeContoursMap = {}; // Empty for now
+
+    return [corners, destinationCorners, edgeContoursMap];
   }
 
   cleanup(): void {

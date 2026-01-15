@@ -10,7 +10,6 @@ import {
 } from '../evaluationSchema';
 import {
   DEFAULT_SECTION_KEY,
-  SchemaVerdict,
   MarkingSchemeType,
 } from '../constants';
 

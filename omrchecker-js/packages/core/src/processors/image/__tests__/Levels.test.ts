@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import * as cv from '@techstark/opencv-js';
 import { Levels } from '../Levels';
-import { ProcessingContext, createProcessingContext } from '../../base';
+import { createProcessingContext } from '../../base';
 
 describe('Levels', () => {
   let testImage: cv.Mat;

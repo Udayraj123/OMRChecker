@@ -355,7 +355,8 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
    * Delegates to patchUtils.drawScanZone for core logic.
    */
   protected drawScanZone(zoneDescription: ZoneDescription): void {
-    if (this.tuningConfig.outputs.showImageLevel >= 1 && this.debugImage) {
+    const showImageLevel = this.tuningConfig?.outputs?.showImageLevel ?? 0;
+    if (showImageLevel >= 1 && this.debugImage) {
       drawScanZone(this.debugImage, zoneDescription);
     }
   }
@@ -368,7 +369,7 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
     return 'CropOnPatchesCommon';
   }
 
-  protected validateAndRemapOptionsSchema(options: any): Record<string, any> {
+  protected static override validateAndRemapOptionsSchema(options: any): Record<string, any> {
     // Base implementation - subclasses should override
     return options;
   }

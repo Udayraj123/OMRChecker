@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import * as cv from '@techstark/opencv-js';
 import { MedianBlur } from '../MedianBlur';
-import { ProcessingContext, createProcessingContext } from '../../base';
+import { createProcessingContext } from '../../base';
 
 describe('MedianBlur', () => {
   let testImage: cv.Mat;
@@ -67,10 +67,11 @@ describe('MedianBlur', () => {
     for (let i = 0; i < testImage.rows; i++) {
       for (let j = 0; j < testImage.cols; j++) {
         let value = baseValue;
+        const random = Math.random();
         // Add random salt-and-pepper noise (10% of pixels)
-        if (Math.random() < 0.05) {
+        if (random < 0.05) {
           value = 0; // Pepper
-        } else if (Math.random() < 0.05) {
+        } else if (random < 0.10) {
           value = 255; // Salt
         }
         testImage.ucharPtr(i, j)[0] = value;

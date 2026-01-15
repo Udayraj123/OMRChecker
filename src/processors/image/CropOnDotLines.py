@@ -111,14 +111,15 @@ class CropOnDotLines(CropOnPatchesCommon):
         },
     }
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, options, *args, **kwargs) -> None:
+        # Parent's __init__ will call validate_and_remap_options_schema via polymorphism
+        super().__init__(options, *args, **kwargs)
         tuning_options = self.tuning_options
         self.line_kernel_morph = create_structuring_element(
-            tuple(tuning_options.get("lineKernel", [2, 10]))
+            "rect", tuple(tuning_options.get("lineKernel", [2, 10]))
         )
         self.dot_kernel_morph = create_structuring_element(
-            tuple(tuning_options.get("dotKernel", [5, 5]))
+            "rect", tuple(tuning_options.get("dotKernel", [5, 5]))
         )
 
     def validate_scan_zones(self):
@@ -152,7 +153,9 @@ class CropOnDotLines(CropOnPatchesCommon):
                         # TODO: get customOptions here
                     },
                 }
-                for zone_preset in self.scan_zone_presets_for_layout[layout_type]
+                for zone_preset in CropOnDotLines.scan_zone_presets_for_layout[
+                    layout_type
+                ]
                 if zone_preset in options
             ],
         ]
