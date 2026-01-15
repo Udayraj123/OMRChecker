@@ -19,6 +19,8 @@ import { Logger } from '../utils/logger';
 
 const logger = new Logger('TemplateLoader');
 
+export type { ParsedTemplate, ParsedField };
+
 /**
  * Template loader and parser.
  */

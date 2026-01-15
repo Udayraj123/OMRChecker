@@ -4,6 +4,13 @@
  * Main entry point for the OMRChecker core functionality.
  */
 
+// Core OMR Processor
+export {
+  OMRProcessor,
+  type OMRProcessorConfig,
+  type OMRSheetResult,
+} from './core/OMRProcessor';
+
 // Core types and interfaces
 export type { ProcessingContext } from './processors/base';
 export { Processor, createProcessingContext } from './processors/base';
