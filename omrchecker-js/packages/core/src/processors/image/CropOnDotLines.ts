@@ -357,6 +357,7 @@ export class CropOnDotLines extends CropOnPatchesCommon {
     const lineThreshold = tuningOptions.lineThreshold || 180;
 
     // Detect line using extracted module
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_corners, edgeContoursMap] = detectLineCornersAndEdges(
       zone,
       zoneStart,

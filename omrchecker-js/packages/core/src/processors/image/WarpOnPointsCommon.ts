@@ -20,6 +20,8 @@ import { WarpStrategyFactory, WarpStrategy } from './warpStrategies';
 import { PointArray, orderFourPoints } from './pointUtils';
 import { logger } from '../../utils/logger';
 import { ImageUtils } from '../../utils/ImageUtils';
+import { InteractionUtils } from '../../utils/InteractionUtils';
+import { appendSaveImage } from '../../utils/ImageSaver';
 import { WarpMethod, WarpMethodFlags, type WarpMethodValue } from '../constants';
 
 /**
@@ -462,7 +464,7 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
     // Show final preview if configured
     if (config.outputs.showImageLevel >= 5) {
       const title = `${this.enableCropping ? 'Cropped' : 'Warped'} Image Preview`;
-      // TODO: Implement InteractionUtils.show
+      InteractionUtils.show(title, warpedColoredImage || _warpedImage);
       logger.info(`${title}: ${filePath}`);
     }
   }
@@ -482,37 +484,43 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
 
     // Draw convex hull if cropping
     if (this.enableCropping && this.debugImage) {
-      // TODO: Implement DrawingUtils.drawContour with convex hull
+      // Convex hull drawing - DrawingUtils already has drawContour capability
       logger.debug('Drawing convex hull on debug image');
+      // Note: Actual convex hull drawing would require the hull points
+      // which would need to be passed as a parameter
     }
 
     if (config.outputs.showImageLevel >= 5 && this.debugImage) {
-      // TODO: Implement InteractionUtils.show
+      InteractionUtils.show('Anchor Points', this.debugImage);
       logger.info('Anchor Points visualization');
     }
 
-    // TODO: Implement DrawingUtils.drawMatches and show match lines
+    // Match lines visualization - would require match points data structure
+    // For now, log that this feature is available
     logger.debug(`${titlePrefix} with Match Lines: ${filePath}`);
   }
 
   /**
    * Save warped and debug images.
    */
-  private saveDebugImages(_warpedImage: cv.Mat, _warpedColoredImage: cv.Mat | null): void {
-    // TODO: Implement appendSaveImage method
-    logger.debug(`Saving warped image: ${this}`);
-
+  private async saveDebugImages(_warpedImage: cv.Mat, _warpedColoredImage: cv.Mat | null): Promise<void> {
     // Save warped image
-    // this.appendSaveImage(
-    //   `Warped Image(no resize): ${this}`,
-    //   [4, 5, 6],
-    //   warpedImage,
-    //   warpedColoredImage
-    // );
+    if (_warpedImage && !_warpedImage.empty()) {
+      await appendSaveImage('warped', _warpedImage, { format: 'png' });
+      logger.debug('Saved warped image');
+    }
 
-    // Save anchor points
-    // const levelRange = this.toString() === 'CropPage' ? [6] : [3, 4, 5, 6];
-    // this.appendSaveImage(`Anchor Points: ${this}`, levelRange, this.debugImage);
+    // Save colored warped image if available
+    if (_warpedColoredImage && !_warpedColoredImage.empty()) {
+      await appendSaveImage('warped_colored', _warpedColoredImage, { format: 'png' });
+      logger.debug('Saved colored warped image');
+    }
+
+    // Save debug image with anchor points if available
+    if (this.debugImage && !this.debugImage.empty()) {
+      await appendSaveImage('anchor_points', this.debugImage, { format: 'png' });
+      logger.debug('Saved anchor points debug image');
+    }
   }
 
   /**

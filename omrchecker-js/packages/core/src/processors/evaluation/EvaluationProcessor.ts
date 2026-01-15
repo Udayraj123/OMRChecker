@@ -19,10 +19,10 @@ const logger = new Logger('EvaluationProcessor');
 /**
  * Configuration for evaluation, containing answer keys and marking schemes.
  *
- * TODO: Full implementation requires porting:
- * - src/processors/evaluation/evaluation_config.py
- * - src/processors/evaluation/marking_scheme.py
- * - src/schemas/evaluation_schema.py
+ * Note: Full implementations are available in:
+ * - EvaluationConfig.ts (ported from evaluation_config.py)
+ * - SectionMarkingScheme.ts (ported from section_marking_scheme.py)
+ * - AnswerMatcher.ts (ported from answer_matcher.py)
  */
 export interface EvaluationConfig {
   /**
@@ -125,7 +125,6 @@ export interface EvaluationMetaDict {
 
 /**
  * Default format string for answers summary.
- * TODO: Import from constants module when ported.
  */
 const DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING = 'correct: {correct} incorrect: {incorrect}';
 

@@ -114,8 +114,29 @@ class SectionMarkingScheme:
         self.validate_marking_scheme()
 
     def validate_marking_scheme(self) -> None:
-        # TODO: add validation on maximum streak possible vs length of provided section verdict marking
-        pass
+        """Validate that streak marking arrays have sufficient length for the number of questions."""
+        # Validate streak-based marking schemes
+        if self.marking_type in {
+            MarkingSchemeType.VERDICT_LEVEL_STREAK,
+            MarkingSchemeType.SECTION_LEVEL_STREAK,
+        }:
+            # Check if any marking values are lists (for streak bonuses)
+            streak_markings = []
+            for verdict, marking in self.marking.items():
+                if isinstance(marking, list):
+                    streak_markings.append((verdict, len(marking)))
+
+            # If we have questions and streak markings, validate lengths
+            if self.questions and len(self.questions) > 0 and len(streak_markings) > 0:
+                max_possible_streak = len(self.questions)
+
+                for verdict, length in streak_markings:
+                    if length < max_possible_streak:
+                        logger.warning(
+                            f"Marking scheme '{self.section_key}': Verdict '{verdict}' has {length} streak levels "
+                            f"but section has {max_possible_streak} questions. Consider adding more streak levels "
+                            f"or the last level will be used for all remaining streaks."
+                        )
 
     def __str__(self) -> str:
         return self.section_key

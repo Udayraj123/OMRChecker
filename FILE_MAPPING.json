@@ -830,6 +830,146 @@
       "notes": "1:1 file mapping. Includes evaluateConcatenatedResponse logic inline. Full functionality requires porting evaluation_config, marking_scheme, and evaluation schema modules."
     },
     {
+      "python": "src/processors/evaluation/answer_matcher.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/evaluation/AnswerMatcher.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": "2026-01-15T16:00:00Z",
+      "classes": [
+        {
+          "python": "AnswerMatcher",
+          "typescript": "AnswerMatcher",
+          "synced": true,
+          "methods": [
+            {
+              "python": "get_answer_type",
+              "typescript": "getAnswerType",
+              "synced": true
+            },
+            {
+              "python": "get_verdict_marking",
+              "typescript": "getVerdictMarking",
+              "synced": true
+            },
+            {
+              "python": "get_standard_verdict",
+              "typescript": "getStandardVerdict",
+              "synced": true
+            },
+            {
+              "python": "get_multiple_correct_verdict",
+              "typescript": "getMultipleCorrectVerdict",
+              "synced": true
+            },
+            {
+              "python": "get_multiple_correct_weighted_verdict",
+              "typescript": "getMultipleCorrectWeightedVerdict",
+              "synced": true
+            }
+          ]
+        }
+      ],
+      "notes": "Answer matching logic with support for STANDARD, MULTIPLE_CORRECT, and MULTIPLE_CORRECT_WEIGHTED answer types. Includes fraction parsing and verdict determination."
+    },
+    {
+      "python": "src/processors/evaluation/section_marking_scheme.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/evaluation/SectionMarkingScheme.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": "2026-01-15T16:00:00Z",
+      "classes": [
+        {
+          "python": "SectionMarkingScheme",
+          "typescript": "SectionMarkingScheme",
+          "synced": true,
+          "methods": [
+            {
+              "python": "reset_all_streaks",
+              "typescript": "resetAllStreaks",
+              "synced": true
+            },
+            {
+              "python": "get_delta_and_update_streak",
+              "typescript": "getDeltaAndUpdateStreak",
+              "synced": true
+            },
+            {
+              "python": "get_bonus_type",
+              "typescript": "getBonusType",
+              "synced": true
+            }
+          ]
+        }
+      ],
+      "notes": "Section-level marking scheme with streak bonus support (verdict-level and section-level). Handles DEFAULT and BONUS_ sections."
+    },
+    {
+      "python": "src/processors/evaluation/evaluation_config.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/evaluation/EvaluationConfig.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "medium",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": "2026-01-15T16:00:00Z",
+      "classes": [
+        {
+          "python": "EvaluationConfig",
+          "typescript": "EvaluationConfig",
+          "synced": true,
+          "methods": [
+            {
+              "python": "get_evaluation_config_for_response",
+              "typescript": "getEvaluationConfigForResponse",
+              "synced": true
+            },
+            {
+              "python": "get_matching_set",
+              "typescript": "getMatchingSet",
+              "synced": true
+            }
+          ]
+        }
+      ],
+      "notes": "Conditional sets support with regex-based matching. Allows different answer keys per batch/set."
+    },
+    {
+      "python": "src/processors/evaluation/evaluation_config_for_set.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/evaluation/EvaluationConfigForSet.ts",
+      "status": "partial",
+      "phase": 1,
+      "priority": "medium",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": "2026-01-15T16:00:00Z",
+      "classes": [
+        {
+          "python": "EvaluationConfigForSet",
+          "typescript": "EvaluationConfigForSet",
+          "synced": false,
+          "methods": [
+            {
+              "python": "prepare_and_validate_omr_response",
+              "typescript": "prepareAndValidateOmrResponse",
+              "synced": true
+            },
+            {
+              "python": "match_answer_for_question",
+              "typescript": "matchAnswerForQuestion",
+              "synced": true
+            }
+          ]
+        }
+      ],
+      "notes": "Simplified version. Python has 809 lines with CSV parsing, image-based answer key generation, rich console tables. TypeScript focuses on core functionality (question/answer matching, marking schemes). Advanced features (CSV, images, pandas exports) deferred."
+    },
+    {
       "python": "src/utils/image.py",
       "typescript": "omrchecker-js/packages/core/src/utils/ImageUtils.ts",
       "status": "synced",

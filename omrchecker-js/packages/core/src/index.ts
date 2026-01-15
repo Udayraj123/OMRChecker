@@ -72,16 +72,38 @@ export {
   type BubbleLocation,
 } from './processors/detection';
 
-// Evaluation
+// Evaluation - Core modules
 export {
   EvaluationProcessor,
-  type EvaluationConfig,
-  type EvaluationConfigForResponse,
-  type QuestionMeta,
-  type EvaluationMetaDict,
-  type MarkingScheme,
-  type AnswerMatcher,
+  AnswerMatcher,
+  AnswerType,
+  Verdict,
+  SchemaVerdict,
+  SectionMarkingScheme,
+  MarkingSchemeType,
+  EvaluationConfig,
+  EvaluationConfigForSet,
+  DEFAULT_SECTION_KEY,
+  BONUS_SECTION_PREFIX,
+  DEFAULT_SET_NAME,
+} from './processors/evaluation';
+
+// Evaluation - Types (still from processor for backward compatibility)
+export type {
+  EvaluationConfig as EvaluationConfigForResponse,
+  QuestionMeta,
+  EvaluationMetaDict,
+  MarkingScheme,
 } from './processors/evaluation/EvaluationProcessor';
+
+// Evaluation - New types
+export type {
+  SectionSchemeConfig,
+  EvaluationJSON,
+  ConditionalSet,
+  EvaluationOptions,
+  OutputsConfiguration,
+} from './processors/evaluation';
 
 // Template
 export {
@@ -103,6 +125,7 @@ export { Logger } from './utils/logger';
 export { ImageUtils } from './utils/ImageUtils';
 export * from './utils/geometry';
 export * from './utils/file';
+export { isObject, deepMerge, deepClone } from './utils/object';
 // Export math utils without EdgeType to avoid conflict with processors/constants
 export { MathUtils, type Point } from './utils/math';
 export {
@@ -119,6 +142,17 @@ export {
   type BoxStyle,
   type BoxEdge,
 } from './utils/drawing';
+export { InteractionUtils } from './utils/InteractionUtils';
+export {
+  ImageSaverUtils,
+  saveImage,
+  appendSaveImage,
+  requestDirectoryAccess,
+  downloadAllStoredImages,
+  clearStoredImages,
+  getStoredImages,
+  getStoredImageCount,
+} from './utils/ImageSaver';
 
 // Schemas
 export * from './schemas/templateSchema';
