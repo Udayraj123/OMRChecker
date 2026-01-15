@@ -356,8 +356,11 @@ describe('ImageUtils', () => {
       expect(dimensions[0]).toBeCloseTo(100, 0); // width
       expect(dimensions[1]).toBeCloseTo(200, 0); // height
       expect(warpedPoints).toBeDefined();
-
-      warpedPoints.delete();
+      expect(warpedPoints.length).toBe(4);
+      expect(warpedPoints[0]).toEqual([0, 0]);
+      expect(warpedPoints[1]).toEqual([99, 0]);
+      expect(warpedPoints[2]).toEqual([99, 199]);
+      expect(warpedPoints[3]).toEqual([0, 199]);
     });
 
     it('should handle non-rectangular shapes', () => {
@@ -374,8 +377,8 @@ describe('ImageUtils', () => {
       expect(dimensions[0]).toBeLessThan(120);
       expect(dimensions[1]).toBeGreaterThan(190);
       expect(dimensions[1]).toBeLessThan(210);
-
-      warpedPoints.delete();
+      expect(warpedPoints).toBeDefined();
+      expect(warpedPoints.length).toBe(4);
     });
   });
 });

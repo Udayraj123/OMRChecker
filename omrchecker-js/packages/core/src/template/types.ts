@@ -5,6 +5,8 @@
  * Defines the structure of template.json files used for OMR sheet configuration.
  */
 
+import type { BubbleLocation } from '../processors/detection/SimpleBubbleDetector';
+
 /**
  * Bubble field type - defines the layout and values for a group of bubbles.
  *
@@ -26,6 +28,8 @@ export interface BubbleFieldType {
  * Field block - defines a group of related fields (e.g., questions 1-10).
  */
 export interface FieldBlock {
+  /** Name of the field block */
+  name?: string;
   /** Origin point [x, y] for the block */
   origin: [number, number];
   /** Labels for fields in this block (e.g., ["q1..10"] or ["q1", "q2", "q3"]) */
@@ -42,6 +46,20 @@ export interface FieldBlock {
   bubbleDimensions?: [number, number];
   /** Optional: Empty value for this block */
   emptyValue?: string;
+  /** Optional: Alignment shifts computed during processing [x, y] */
+  shifts?: [number, number];
+  /** Optional: Bounding box origin [x, y] */
+  boundingBoxOrigin?: [number, number];
+  /** Optional: Bounding box dimensions [width, height] */
+  boundingBoxDimensions?: [number, number];
+  /** Optional: Alignment configuration for this field block */
+  alignment?: {
+    margins?: AlignmentMargins;
+    maxDisplacement?: number;
+    max_displacement?: number;
+  };
+  /** Optional: Fields in this block (populated during parsing) */
+  fields?: any[];
 }
 
 /**
@@ -185,4 +203,87 @@ export const DEFAULT_TEMPLATE_CONFIG: Partial<TemplateConfig> = {
     enabled: false,
   },
 };
+
+/**
+ * Tuning configuration for processing algorithms.
+ *
+ * This controls various thresholds and parameters used during
+ * bubble detection, alignment, and other processing steps.
+ */
+export interface TuningConfig {
+  /** Thresholding parameters */
+  thresholding?: {
+    MIN_GAP_TWO_BUBBLES?: number;
+    MIN_JUMP?: number;
+    MIN_JUMP_STD?: number;
+    GLOBAL_THRESHOLD_MARGIN?: number;
+    [key: string]: any;
+  };
+
+  /** Output configuration */
+  outputs?: {
+    coloredOutputsEnabled?: boolean;
+    showImageLevel?: number;
+    saveDetections?: boolean;
+    [key: string]: any;
+  };
+
+  /** Alignment parameters */
+  alignment?: {
+    maxDisplacement?: number;
+    margins?: AlignmentMargins;
+    [key: string]: any;
+  };
+
+  /** Additional tuning parameters */
+  [key: string]: any;
+}
+
+/**
+ * Parsed field with expanded bubble locations.
+ */
+export interface ParsedField {
+  /** Field ID (e.g., "q1", "q2") */
+  fieldId: string;
+  /** Block this field belongs to */
+  blockName: string;
+  /** Bubble locations for this field */
+  bubbles: BubbleLocation[];
+  /** Bubble field type */
+  bubbleFieldType: BubbleFieldType;
+  /** Empty value for this field */
+  emptyValue: string;
+}
+
+/**
+ * Fully parsed template with all bubble locations calculated.
+ */
+export interface ParsedTemplate {
+  /** Original configuration */
+  config: TemplateConfig;
+  /** Template dimensions [width, height] */
+  templateDimensions: [number, number];
+  /** Bubble dimensions [width, height] */
+  bubbleDimensions: [number, number];
+  /** Field blocks (may have runtime data like shifts) */
+  fieldBlocks: FieldBlock[] | Record<string, FieldBlock>;
+  field_blocks?: FieldBlock[] | Record<string, FieldBlock>; // Python compatibility
+  /** Map of field ID to parsed field */
+  fields: Map<string, ParsedField>;
+  /** Map of field ID to bubble locations (for SimpleBubbleDetector) */
+  fieldBubbles: Map<string, BubbleLocation[]>;
+  /** Tuning configuration */
+  tuningConfig?: TuningConfig;
+  tuning_config?: TuningConfig; // Python compatibility
+  /** Alignment configuration */
+  alignment?: {
+    grayAlignmentImage?: any;
+    gray_alignment_image?: any;
+    coloredAlignmentImage?: any;
+    colored_alignment_image?: any;
+    margins?: AlignmentMargins;
+    maxDisplacement?: number;
+    max_displacement?: number;
+  };
+}
 

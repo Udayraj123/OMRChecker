@@ -36,7 +36,6 @@ export { PreprocessingProcessor } from './processors/image/coordinator';
 export { AlignmentProcessor } from './processors/alignment/AlignmentProcessor';
 export {
   applyTemplateAlignment,
-  getGlobalAlignmentTransform,
   type AlignmentResult,
 } from './processors/alignment/templateAlignment';
 
@@ -75,14 +74,13 @@ export {
   type BubbleFieldType,
   type AlignmentConfig,
   type PreProcessorConfig,
+  type ParsedTemplate,
+  type ParsedField,
+  type TuningConfig,
   BUILTIN_BUBBLE_FIELD_TYPES,
   DEFAULT_TEMPLATE_CONFIG,
 } from './template/types';
-export {
-  TemplateLoader,
-  type ParsedTemplate,
-  type ParsedField,
-} from './template/TemplateLoader';
+export { TemplateLoader } from './template/TemplateLoader';
 
 // Utilities
 export { Logger } from './utils/logger';

@@ -9,6 +9,8 @@
 import {
   type TemplateConfig,
   type BubbleFieldType,
+  type ParsedTemplate,
+  type ParsedField,
   BUILTIN_BUBBLE_FIELD_TYPES,
   DEFAULT_TEMPLATE_CONFIG,
 } from './types';
@@ -16,34 +18,6 @@ import { type BubbleLocation } from '../processors/detection/SimpleBubbleDetecto
 import { Logger } from '../utils/logger';
 
 const logger = new Logger('TemplateLoader');
-
-/**
- * Parsed field with expanded bubble locations.
- */
-export interface ParsedField {
-  /** Field ID (e.g., "q1", "q2") */
-  fieldId: string;
-  /** Block this field belongs to */
-  blockName: string;
-  /** Bubble locations for this field */
-  bubbles: BubbleLocation[];
-  /** Bubble field type */
-  bubbleFieldType: BubbleFieldType;
-  /** Empty value for this field */
-  emptyValue: string;
-}
-
-/**
- * Fully parsed template with all bubble locations calculated.
- */
-export interface ParsedTemplate {
-  /** Original configuration */
-  config: TemplateConfig;
-  /** Map of field ID to parsed field */
-  fields: Map<string, ParsedField>;
-  /** Map of field ID to bubble locations (for SimpleBubbleDetector) */
-  fieldBubbles: Map<string, BubbleLocation[]>;
-}
 
 /**
  * Template loader and parser.
@@ -171,6 +145,9 @@ export class TemplateLoader {
 
     return {
       config,
+      templateDimensions: config.templateDimensions,
+      bubbleDimensions: config.bubbleDimensions,
+      fieldBlocks: config.fieldBlocks,
       fields,
       fieldBubbles,
     };

@@ -111,15 +111,18 @@ export class CropPage extends ImageTemplatePreprocessor {
       const [orderedCorners] = MathUtils.orderFourPoints(corners);
 
       // Step 3: Calculate destination corners and dimensions
-      const [destinationMat, dimensions] =
+      const [destinationPoints, dimensions] =
         ImageUtils.getCroppedWarpedRectanglePoints(orderedCorners);
 
       const [width, height] = dimensions;
       logger.debug(`Warping to dimensions: ${width}x${height}`);
 
-      // Step 4: Create source points matrix
+      // Step 4: Create source and destination points matrices for OpenCV
       const sourcePointsFlat = orderedCorners.flat();
       const sourceMat = cv.matFromArray(4, 1, cv.CV_32FC2, sourcePointsFlat);
+
+      const destinationPointsFlat = destinationPoints.flat();
+      const destinationMat = cv.matFromArray(4, 1, cv.CV_32FC2, destinationPointsFlat);
 
       // Step 5: Apply perspective transform
       const warpedGray = this.applyWarpTransform(

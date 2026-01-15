@@ -10,7 +10,7 @@
 
 import cv from '@techstark/opencv-js';
 import { logger } from '../../utils/logger';
-import { WarpMethod, WarpMethodFlags, type WarpMethodValue, type WarpMethodFlagsValue } from '../constants';
+import { WarpMethod, type WarpMethodValue } from '../constants';
 
 /**
  * Abstract base class for image warping strategies.

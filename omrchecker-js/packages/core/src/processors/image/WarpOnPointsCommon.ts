@@ -20,7 +20,7 @@ import { WarpStrategyFactory, WarpStrategy } from './warpStrategies';
 import { PointArray, orderFourPoints } from './pointUtils';
 import { logger } from '../../utils/logger';
 import { ImageUtils } from '../../utils/ImageUtils';
-import { WarpMethod, WarpMethodFlags, type WarpMethodValue, type WarpMethodFlagsValue } from '../constants';
+import { WarpMethod, WarpMethodFlags, type WarpMethodValue } from '../constants';
 
 /**
  * Base class for image processors that apply warping transformations.
@@ -41,7 +41,7 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
   protected static readonly __isInternalPreprocessor = true;
 
   // Map configuration flags to OpenCV constants
-  private static readonly warpMethodFlagsMap: Record<WarpMethodFlags, number> = {
+  private static readonly warpMethodFlagsMap: Record<string, number> = {
     [WarpMethodFlags.INTER_LINEAR]: cv.INTER_LINEAR,
     [WarpMethodFlags.INTER_CUBIC]: cv.INTER_CUBIC,
     [WarpMethodFlags.INTER_NEAREST]: cv.INTER_NEAREST,
@@ -49,7 +49,7 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
 
   protected tuningConfig: Record<string, any>;
   protected enableCropping: boolean;
-  protected warpMethod: WarpMethod;
+  protected warpMethod: WarpMethodValue;
   protected warpMethodFlag: number;
   protected warpStrategy: WarpStrategy;
   protected debugImage: cv.Mat | null = null;
@@ -95,7 +95,7 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
       (this.enableCropping ? WarpMethod.PERSPECTIVE_TRANSFORM : WarpMethod.HOMOGRAPHY);
 
     // Get interpolation flag
-    const flagName = (tuningOptions.warpMethodFlag || 'INTER_LINEAR') as WarpMethodFlags;
+    const flagName = (tuningOptions.warpMethodFlag || 'INTER_LINEAR') as string;
     this.warpMethodFlag =
       WarpOnPointsCommon.warpMethodFlagsMap[flagName] ?? cv.INTER_LINEAR;
 
@@ -108,7 +108,7 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
    */
   private createWarpStrategy(): WarpStrategy {
     // Method-specific configurations
-    const methodConfigs: Record<WarpMethod, Record<string, unknown>> = {
+    const methodConfigs: Record<string, Record<string, unknown>> = {
       [WarpMethod.PERSPECTIVE_TRANSFORM]: {
         interpolationFlag: this.warpMethodFlag,
       },
@@ -392,10 +392,10 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
     const orderedControl = orderFourPoints(controlPoints);
 
     // Recalculate destination points from ordered control points
-    const [newDestination, newDimensions] =
+    const [newDestinationPoints, newDimensions] =
       ImageUtils.getCroppedWarpedRectanglePoints(orderedControl);
 
-    return [orderedControl, newDestination, newDimensions];
+    return [orderedControl, newDestinationPoints, newDimensions];
   }
 
   /**

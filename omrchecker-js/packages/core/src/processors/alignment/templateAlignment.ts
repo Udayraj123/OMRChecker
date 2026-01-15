@@ -240,7 +240,7 @@ export function applyTemplateAlignment(
       blockGrayImage.delete();
       blockGrayAlignment.delete();
     } catch (error) {
-      logger.error(`Alignment failed for field block ${fieldBlockName}:`, error);
+      logger.error(`Alignment failed for field block ${fieldBlockName}:`, error instanceof Error ? error.message : String(error));
       // Keep shifts at [0, 0]
     }
   }
@@ -269,9 +269,15 @@ export function getPhaseCorrelationShifts(
   grayImage: cv.Mat
 ): [number, number] | null {
   try {
+    // Check if phaseCorrelate exists in this OpenCV.js build
+    if (typeof (cv as any).phaseCorrelate !== 'function') {
+      logger.debug('phaseCorrelate not available in this OpenCV.js build');
+      return null;
+    }
+
     // Use OpenCV's phaseCorrelate function
     const hann = new cv.Mat();
-    const shift = cv.phaseCorrelate(alignmentImage, grayImage, hann);
+    const shift = (cv as any).phaseCorrelate(alignmentImage, grayImage, hann) as { x: number; y: number };
 
     hann.delete();
 
@@ -282,7 +288,7 @@ export function getPhaseCorrelationShifts(
 
     return [xShift, yShift];
   } catch (error) {
-    logger.warn('Phase correlation failed:', error);
+    logger.warn('Phase correlation failed:', (error as Error).message);
     return null;
   }
 }
@@ -314,7 +320,7 @@ export function getFeatureMatches(
   goodMatches: cv.DMatchVector;
   displacementPairs: number[][][];
 } | null {
-  let detector: cv.ORB | cv.AKAZE | null = null;
+  let detector: any = null;
   let descriptors1: cv.Mat | null = null;
   let descriptors2: cv.Mat | null = null;
   const keypoints1 = new cv.KeyPointVector();
@@ -323,8 +329,14 @@ export function getFeatureMatches(
   try {
     // Create feature detector
     if (useAKAZE) {
-      detector = new cv.AKAZE();
-      logger.debug('Using AKAZE feature detector');
+      // Check if AKAZE is available
+      if (typeof (cv as any).AKAZE === 'undefined') {
+        logger.warn('AKAZE not available, falling back to ORB');
+        detector = new cv.ORB();
+      } else {
+        detector = new (cv as any).AKAZE();
+        logger.debug('Using AKAZE feature detector');
+      }
     } else {
       detector = new cv.ORB();
       logger.debug('Using ORB feature detector');
@@ -368,8 +380,8 @@ export function getFeatureMatches(
           const kp1 = keypoints1.get(m.queryIdx);
           const kp2 = keypoints2.get(m.trainIdx);
 
-          const sourcePoint = [kp1.pt.x, kp1.pt.y];
-          const destPoint = [kp2.pt.x, kp2.pt.y];
+          const sourcePoint: [number, number] = [kp1.pt.x, kp1.pt.y];
+          const destPoint: [number, number] = [kp2.pt.x, kp2.pt.y];
 
           // Check displacement constraint
           const displacement = MathUtils.distance(sourcePoint, destPoint);
@@ -407,7 +419,7 @@ export function getFeatureMatches(
       displacementPairs,
     };
   } catch (error) {
-    logger.error('Feature matching failed:', error);
+    logger.error('Feature matching failed:', (error as Error).message);
 
     // Cleanup on error
     descriptors1?.delete();
@@ -475,13 +487,13 @@ export function computeHomography(
     if (homography.empty()) {
       logger.warn('Failed to compute homography');
       homography.delete();
-      return null;
+  return null;
     }
 
     logger.debug('Homography computed successfully');
     return homography;
   } catch (error) {
-    logger.error('Homography computation failed:', error);
+    logger.error('Homography computation failed:', (error as Error).message);
     return null;
   }
 }

@@ -662,7 +662,9 @@ export class ImageUtils {
    */
   static getCroppedWarpedRectanglePoints(
     orderedPageCorners: [number, number][]
-  ): [cv.Mat, [number, number]] {
+  ): [[number, number][], [number, number]] {
+    // Note: This utility would just find a good size ratio for the cropped image to look more realistic
+    // but since we're anyway resizing the image, it doesn't make much sense to use these calculations
     const [tl, tr, br, bl] = orderedPageCorners;
 
     const lengthT = MathUtils.distance(tr, tl);
@@ -670,22 +672,25 @@ export class ImageUtils {
     const lengthR = MathUtils.distance(tr, br);
     const lengthL = MathUtils.distance(tl, bl);
 
+    // Compute the width of the new image
     const maxWidth = Math.max(Math.floor(lengthT), Math.floor(lengthB));
+
+    // Compute the height of the new image
     const maxHeight = Math.max(Math.floor(lengthR), Math.floor(lengthL));
 
-    // Create warped points for perspective transform
-    const warpedPoints = cv.matFromArray(4, 1, cv.CV_32FC2, [
-      0,
-      0,
-      maxWidth - 1,
-      0,
-      maxWidth - 1,
-      maxHeight - 1,
-      0,
-      maxHeight - 1,
-    ]);
+    // Now that we have the dimensions of the new image, construct
+    // the set of destination points to obtain a "birds eye view",
+    // (i.e. top-down view) of the image
+    const warpedPoints: [number, number][] = [
+      [0, 0],
+      [maxWidth - 1, 0],
+      [maxWidth - 1, maxHeight - 1],
+      [0, maxHeight - 1],
+    ];
 
-    return [warpedPoints, [maxWidth, maxHeight]];
+    const warpedBoxDimensions: [number, number] = [maxWidth, maxHeight];
+
+    return [warpedPoints, warpedBoxDimensions];
   }
 }
 

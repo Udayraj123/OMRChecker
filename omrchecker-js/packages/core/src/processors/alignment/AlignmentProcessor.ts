@@ -22,7 +22,6 @@ const logger = new Logger('AlignmentProcessor');
  * is provided in the template configuration.
  */
 export class AlignmentProcessor extends Processor {
-  private template: ParsedTemplate;
   private tuningConfig: TuningConfig;
 
   /**
@@ -32,7 +31,6 @@ export class AlignmentProcessor extends Processor {
    */
   constructor(template: ParsedTemplate) {
     super();
-    this.template = template;
     this.tuningConfig = template.tuningConfig || template.tuning_config || {};
   }
 
