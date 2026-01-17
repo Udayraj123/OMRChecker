@@ -37,16 +37,13 @@ class BubbleField(Field):
         # populate the field bubbles
         h = 1 if (self.direction == "vertical") else 0
 
-        field = self
         bubble_point = self.origin.copy()
-        scan_boxes: list[BubblesScanBox] = []
+        self.scan_boxes: list[BubblesScanBox] = []
         for field_index, bubble_value in enumerate(self.bubble_values):
             bubble_origin = bubble_point.copy()
-            scan_box = BubblesScanBox(field_index, field, bubble_origin, bubble_value)
-            scan_boxes.append(scan_box)
+            scan_box = BubblesScanBox(field_index, self, bubble_origin, bubble_value)
+            self.scan_boxes.append(scan_box)
             bubble_point[h] += self.bubbles_gap
-
-        self.scan_boxes = scan_boxes
 
 
 class BubblesScanBox(ScanBox):

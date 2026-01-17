@@ -118,7 +118,11 @@ export {
   BUILTIN_BUBBLE_FIELD_TYPES,
   DEFAULT_TEMPLATE_CONFIG,
 } from './template/types';
-export { TemplateLoader } from './template/TemplateLoader';
+export { TemplateLoader, type TemplateLayout } from './template/TemplateLoader';
+
+// Layout classes
+export * from './processors/layout/field';
+export * from './processors/layout/fieldBlock';
 
 // Utilities
 export { Logger } from './utils/logger';

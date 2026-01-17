@@ -103,6 +103,21 @@ export const WarpMethodFlags = {
 
 export type WarpMethodFlagsValue = (typeof WarpMethodFlags)[keyof typeof WarpMethodFlags];
 
+// Field detection types
+export const FieldDetectionType = {
+  BUBBLES_THRESHOLD: 'BUBBLES_THRESHOLD',
+  BARCODE_QR: 'BARCODE_QR',
+  OCR: 'OCR',
+} as const;
+
+export type FieldDetectionTypeValue = (typeof FieldDetectionType)[keyof typeof FieldDetectionType];
+
+export const FIELD_DETECTION_TYPES_IN_ORDER: FieldDetectionTypeValue[] = [
+  FieldDetectionType.BUBBLES_THRESHOLD,
+  FieldDetectionType.OCR,
+  FieldDetectionType.BARCODE_QR,
+];
+
 // Target edges for lines (used in alignment)
 export const TARGET_EDGE_FOR_LINE: Record<ZonePresetValue, EdgeTypeValue> = {
   [ZonePreset.topLine]: EdgeType.TOP,

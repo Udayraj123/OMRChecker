@@ -16,12 +16,15 @@ import { ProcessingPipeline } from '../processors/Pipeline';
 import { PreprocessingProcessor } from '../processors/image/coordinator';
 import { AlignmentProcessor } from '../processors/alignment/AlignmentProcessor';
 import {
-  BubblesFieldDetection,
+  TemplateFileRunner,
   BubbleFieldDetectionResult,
 } from '../processors/detection';
-import { GlobalThreshold, type ThresholdConfig } from '../processors/threshold/GlobalThreshold';
 import { EvaluationProcessor } from '../processors/evaluation/EvaluationProcessor';
-import { TemplateLoader, type ParsedTemplate } from '../template/TemplateLoader';
+import {
+  TemplateLoader,
+  type ParsedTemplate,
+  type TemplateLayout,
+} from '../template/TemplateLoader';
 import { type TemplateConfig } from '../template/types';
 import { Logger } from '../utils/logger';
 
@@ -88,8 +91,9 @@ export interface OMRSheetResult {
  */
 export class OMRProcessor {
   private template: ParsedTemplate;
+  private templateLayout: TemplateLayout;
+  private templateFileRunner: TemplateFileRunner | null = null;
   private pipeline: ProcessingPipeline;
-  private thresholdStrategy: GlobalThreshold;
   private evaluationProcessor: EvaluationProcessor | null = null;
   private config: OMRProcessorConfig;
 
@@ -117,8 +121,26 @@ export class OMRProcessor {
     this.template = TemplateLoader.loadFromJSON(templateConfig);
     logger.info(`Template loaded: ${this.template.fields.size} fields`);
 
-    // Initialize threshold strategy
-    this.thresholdStrategy = new GlobalThreshold();
+    // Load template layout (for multi-pass architecture)
+    this.templateLayout = TemplateLoader.loadLayoutFromJSON(templateConfig);
+    logger.info(
+      `Template layout loaded: ${this.templateLayout.allFields.length} fields, ` +
+        `${this.templateLayout.allFieldDetectionTypes.length} detection types`
+    );
+
+    // Initialize template file runner with tuning config
+    // Extract tuning config from template config (may be nested in ParsedTemplate)
+    const tuningConfig =
+      (this.template as { tuningConfig?: Record<string, unknown>; tuning_config?: Record<string, unknown> })
+        .tuningConfig ||
+      (this.template as { tuningConfig?: Record<string, unknown>; tuning_config?: Record<string, unknown> })
+        .tuning_config ||
+      ({} as Record<string, unknown>);
+    this.templateFileRunner = new TemplateFileRunner(
+      this.templateLayout,
+      tuningConfig as Record<string, unknown>
+    );
+    logger.debug('Template file runner initialized');
 
     // Initialize processing pipeline
     this.pipeline = new ProcessingPipeline(this.template);
@@ -175,80 +197,68 @@ export class OMRProcessor {
         coloredImage || image.clone()
       );
 
-      // Step 2: Detect bubbles for each field using proper Python architecture
+      // Step 2: Run two-pass detection and interpretation using TemplateFileRunner
       if (this.config.debug) {
-        logger.debug(`Detecting bubbles for ${this.template.fields.size} fields`);
+        logger.debug(
+          `Running multi-pass detection/interpretation for ${this.templateLayout.allFields.length} fields`
+        );
       }
 
-      for (const [fieldId, field] of this.template.fields) {
+      if (!this.templateFileRunner) {
+        throw new Error('Template file runner not initialized');
+      }
+
+      // Run two-pass processing: detection then interpretation
+      const omrResponse = this.templateFileRunner.readOmrAndUpdateMetrics(
+        filePath,
+        context.grayImage,
+        context.coloredImage || context.grayImage
+      );
+
+      // Extract responses and field results from interpretation
+      for (const field of this.templateLayout.allFields) {
         try {
-          // Use BubblesFieldDetection following Python architecture
-          const detection = new BubblesFieldDetection(
-            fieldId,
-            fieldId, // fieldLabel
-            field.bubbles,
-            context.grayImage
-          );
-
-          const result = detection.getResult();
-          fieldResults[fieldId] = result;
-
-          // Calculate threshold and determine marked bubbles
-          const bubbleMeanValues = result.meanValues;
-          const defaultThresholdConfig: ThresholdConfig = {
-            defaultThreshold: 200,
-            minJump: 30,
-          };
-          const thresholdConfig: ThresholdConfig = {
-            ...defaultThresholdConfig,
-            ...this.config.thresholdConfig,
-          };
-          const thresholdResult = this.thresholdStrategy.calculateThreshold(
-            bubbleMeanValues,
-            thresholdConfig
-          );
-
-          // Find marked bubbles (below threshold)
-          const markedBubbles = result.bubbleMeans.filter(
-            bm => bm.meanValue < thresholdResult.thresholdValue
-          );
-
-          // Determine detected answer
-          let detectedAnswer: string | null = null;
-          let isMultiMarked = false;
-
-          if (markedBubbles.length === 1) {
-            detectedAnswer = markedBubbles[0].unitBubble.label;
-          } else if (markedBubbles.length > 1) {
-            isMultiMarked = true;
-            // Take first marked bubble but flag as multi-marked
-            detectedAnswer = markedBubbles[0].unitBubble.label;
-          }
+          const fieldLabel = field.fieldLabel;
+          const detectedAnswer = omrResponse[fieldLabel] || null;
 
           // Store detected answer
-          if (detectedAnswer) {
-            responses[fieldId] = detectedAnswer;
+          if (detectedAnswer && detectedAnswer !== field.emptyValue) {
+            responses[fieldLabel] = detectedAnswer;
           } else {
-            responses[fieldId] = field.emptyValue || null;
-            emptyFields.push(fieldId);
+            responses[fieldLabel] = field.emptyValue || null;
+            emptyFields.push(fieldLabel);
           }
 
-          // Track multi-marked fields
-          if (isMultiMarked) {
-            multiMarkedFields.push(fieldId);
-            warnings.push(`Field ${fieldId} has multiple bubbles marked`);
-          }
+          // Get field interpretation to check for multi-marking
+          const fileAgg = this.templateFileRunner
+            .getFileLevelInterpretationAggregates() as {
+            field_id_to_interpretation?: Record<string, unknown>;
+            confidence_metrics_for_file?: Record<string, unknown>;
+          };
 
-          logger.debug(
-            `Field ${fieldId}: ${detectedAnswer || 'EMPTY'} (multi: ${isMultiMarked}, ` +
-            `quality: ${result.scanQuality})`
-          );
+          if (fileAgg?.field_id_to_interpretation) {
+            const fieldInterpretation = fileAgg.field_id_to_interpretation[field.id] as {
+              isMultiMarked?: boolean;
+              getFieldInterpretationString?: () => string;
+            };
+
+            if (fieldInterpretation?.isMultiMarked) {
+              multiMarkedFields.push(fieldLabel);
+              warnings.push(`Field ${fieldLabel} has multiple bubbles marked`);
+            }
+
+            // Try to get field detection result for fieldResults
+            // Note: Field results are stored in detection aggregates
+            // For now, we'll create a minimal result structure
+            // Full field results can be accessed via getAggregates() method
+            logger.debug(`Field ${fieldLabel}: ${detectedAnswer || 'EMPTY'}`);
+          }
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
-          logger.error(`Error detecting field ${fieldId}: ${errorMessage}`);
-          warnings.push(`Field ${fieldId}: ${errorMessage}`);
-          responses[fieldId] = null;
-          emptyFields.push(fieldId);
+          logger.error(`Error processing field ${field.fieldLabel}: ${errorMessage}`);
+          warnings.push(`Field ${field.fieldLabel}: ${errorMessage}`);
+          responses[field.fieldLabel] = null;
+          emptyFields.push(field.fieldLabel);
         }
       }
 
@@ -362,6 +372,28 @@ export class OMRProcessor {
    */
   getTemplate(): ParsedTemplate {
     return this.template;
+  }
+
+  /**
+   * Get aggregates for advanced use cases.
+   *
+   * Returns directory-level aggregates from the template file runner,
+   * including detection and interpretation aggregates.
+   *
+   * @returns Directory-level aggregates or null if not available
+   */
+  getAggregates(): {
+    detection?: unknown;
+    interpretation?: unknown;
+  } | null {
+    if (!this.templateFileRunner) {
+      return null;
+    }
+
+    return {
+      detection: this.templateFileRunner.getDirectoryLevelDetectionAggregates(),
+      interpretation: this.templateFileRunner.getDirectoryLevelInterpretationAggregates(),
+    };
   }
 
   /**

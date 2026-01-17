@@ -14,7 +14,8 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "@omrchecker/core": ["../core/src"]
+      "@omrchecker/core": ["../core/src"],
+      "@omrchecker/core/*": ["../core/src/*"]
     }
   },
   "include": ["src/**/*", "*.ts"],

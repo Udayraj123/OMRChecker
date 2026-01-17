@@ -42,6 +42,20 @@ export class InputFileNotFoundError extends InputError {
   }
 }
 
+export class TemplateError extends OMRCheckerError {}
+
+export class FieldDefinitionError extends TemplateError {
+  constructor(message: string, context?: Record<string, unknown>) {
+    super(message, context);
+  }
+}
+
+export class ConfigError extends OMRCheckerError {
+  constructor(message: string, context?: Record<string, unknown>) {
+    super(message, context);
+  }
+}
+
 export class ConfigLoadError extends OMRCheckerError {
   path: string;
 

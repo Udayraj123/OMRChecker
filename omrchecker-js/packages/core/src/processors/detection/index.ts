@@ -19,3 +19,6 @@ export {
   FileDetectionResults,
   type BubbleLocation,
 } from './models';
+
+// Template file runner
+export { TemplateFileRunner } from './templateFileRunner';

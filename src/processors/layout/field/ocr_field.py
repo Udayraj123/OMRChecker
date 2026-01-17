@@ -30,10 +30,9 @@ class OCRField(Field):
     def setup_scan_boxes(self, field_block) -> None:
         scan_zone = field_block.scan_zone
         origin = field_block.origin
-        field = self
         # TODO: support for multiple scan zones per field (grid structure)
         field_index = 0
-        scan_box = OCRScanBox(field_index, field, origin, scan_zone)
+        scan_box = OCRScanBox(field_index, self, origin, scan_zone)
         self.scan_boxes: list[OCRScanBox] = [scan_box]
 
     # Make the class serializable

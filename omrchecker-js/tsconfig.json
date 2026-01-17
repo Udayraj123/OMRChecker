@@ -23,8 +23,6 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./packages/core/src/*"],
-      "@core/*": ["./packages/core/src/*"],
-      "@processors/*": ["./packages/core/src/processors/*"],
       "@utils/*": ["./packages/core/src/utils/*"]
     }
   },
@@ -35,5 +33,3 @@
     { "path": "./packages/e2e" }
   ]
 }
-
-
