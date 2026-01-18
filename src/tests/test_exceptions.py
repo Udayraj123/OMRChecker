@@ -71,17 +71,22 @@ class TestBaseException:
         assert "file=test.jpg" in str(exc)
         assert "line=42" in str(exc)
 
-    def test_base_exception_is_catchable(self):
+    @pytest.mark.parametrize(
+        "exception_class,args",
+        [
+            (InputError, ("test",)),
+            (ProcessingError, ("test",)),
+            (ValidationError, ("test",)),
+            (TemplateError, ("test",)),
+            (EvaluationError, ("test",)),
+            (ConfigError, ("test",)),
+            (SecurityError, ("test",)),
+        ],
+    )
+    def test_base_exception_is_catchable(self, exception_class, args):
         """Test that all custom exceptions can be caught as OMRCheckerError."""
-        test_msg = "test"
         with pytest.raises(OMRCheckerError):
-            raise InputError(test_msg)
-
-        with pytest.raises(OMRCheckerError):
-            raise ProcessingError(test_msg)
-
-        with pytest.raises(OMRCheckerError):
-            raise ValidationError(test_msg)
+            raise exception_class(*args)
 
 
 class TestInputOutputExceptions:
@@ -98,23 +103,30 @@ class TestInputOutputExceptions:
         assert str(path) in str(exc)
         assert exc.context["path"] == str(path)
 
-    def test_input_file_not_found_error_without_type(self):
-        """Test InputFileNotFoundError without file type."""
+    @pytest.mark.parametrize(
+        "file_type,expected_in_str",
+        [
+            (None, False),
+            ("template", True),
+            ("config", True),
+            ("evaluation", True),
+        ],
+    )
+    def test_input_file_not_found_error(self, file_type, expected_in_str):
+        """Test InputFileNotFoundError with and without file type."""
         path = Path("/path/to/missing.json")
-        exc = InputFileNotFoundError(path)
+        if file_type:
+            exc = InputFileNotFoundError(path, file_type=file_type)
+            assert exc.file_type == file_type
+            assert file_type in str(exc)
+            assert exc.context["file_type"] == file_type
+        else:
+            exc = InputFileNotFoundError(path)
+            assert not hasattr(exc, "file_type") or exc.file_type is None
 
         assert isinstance(exc, InputError)
         assert exc.path == path
         assert "missing.json" in str(exc)
-
-    def test_input_file_not_found_error_with_type(self):
-        """Test InputFileNotFoundError with file type specification."""
-        path = Path("/path/to/missing.json")
-        exc = InputFileNotFoundError(path, file_type="template")
-
-        assert exc.file_type == "template"
-        assert "template" in str(exc)
-        assert exc.context["file_type"] == "template"
 
     def test_image_read_error_with_reason(self):
         """Test ImageReadError with specific reason."""
@@ -212,25 +224,41 @@ class TestProcessingExceptions:
         assert "sample.jpg" in str(exc)
         assert reason in str(exc)
 
-    def test_image_processing_error_minimal(self):
-        """Test ImageProcessingError with just operation name."""
-        exc = ImageProcessingError("rotation")
-
-        assert exc.operation == "rotation"
-        assert exc.file_path is None
-        assert "rotation" in str(exc)
-
-    def test_image_processing_error_complete(self):
-        """Test ImageProcessingError with all parameters."""
-        operation = "cropping"
-        file_path = Path("/images/test.jpg")
-        reason = "Invalid coordinates"
-        exc = ImageProcessingError(operation, file_path, reason)
+    @pytest.mark.parametrize(
+        "operation,file_path,reason",
+        [
+            ("rotation", None, None),
+            ("cropping", Path("/images/test.jpg"), "Invalid coordinates"),
+            ("resize", Path("/images/photo.jpg"), None),
+            ("normalize", None, "Out of range values"),
+        ],
+    )
+    def test_image_processing_error(self, operation, file_path, reason):
+        """Test ImageProcessingError with various parameter combinations."""
+        if file_path and reason:
+            exc = ImageProcessingError(operation, file_path, reason)
+            assert exc.file_path == file_path
+            assert exc.reason == reason
+            assert all(x in str(exc) for x in [operation, file_path.name, reason])
+        elif file_path:
+            exc = ImageProcessingError(operation, file_path)
+            assert exc.file_path == file_path
+            assert exc.reason is None
+            assert operation in str(exc)
+            assert file_path.name in str(exc)
+        elif reason:
+            exc = ImageProcessingError(operation, None, reason)
+            assert exc.file_path is None
+            assert exc.reason == reason
+            assert operation in str(exc)
+            assert reason in str(exc)
+        else:
+            exc = ImageProcessingError(operation)
+            assert exc.file_path is None
+            assert exc.reason is None
+            assert operation in str(exc)
 
         assert exc.operation == operation
-        assert exc.file_path == file_path
-        assert exc.reason == reason
-        assert all(x in str(exc) for x in [operation, "test.jpg", reason])
 
     def test_alignment_error(self):
         """Test AlignmentError."""
@@ -340,24 +368,28 @@ class TestEvaluationExceptions:
         assert exc.path == path
         assert reason in str(exc)
 
-    def test_answer_key_error_without_question_id(self):
-        """Test AnswerKeyError without specific question."""
-        reason = "Answer key file not found"
-        exc = AnswerKeyError(reason)
+    @pytest.mark.parametrize(
+        "reason,question_id",
+        [
+            ("Answer key file not found", None),
+            ("Multiple correct answers not allowed", "q5"),
+            ("Invalid answer format", "q10"),
+            ("Missing answer for question", None),
+        ],
+    )
+    def test_answer_key_error(self, reason, question_id):
+        """Test AnswerKeyError with and without question identifier."""
+        if question_id:
+            exc = AnswerKeyError(reason, question_id)
+            assert exc.question_id == question_id
+            assert question_id in str(exc)
+        else:
+            exc = AnswerKeyError(reason)
+            assert exc.question_id is None
 
         assert isinstance(exc, EvaluationError)
         assert exc.reason == reason
-        assert exc.question_id is None
         assert reason in str(exc)
-
-    def test_answer_key_error_with_question_id(self):
-        """Test AnswerKeyError with question identifier."""
-        reason = "Multiple correct answers not allowed"
-        question_id = "q5"
-        exc = AnswerKeyError(reason, question_id)
-
-        assert exc.question_id == question_id
-        assert question_id in str(exc)
 
     def test_scoring_error_complete(self):
         """Test ScoringError with all details."""
@@ -376,25 +408,30 @@ class TestEvaluationExceptions:
 class TestSecurityExceptions:
     """Tests for security related exceptions."""
 
-    def test_path_traversal_error_without_base(self):
-        """Test PathTraversalError without base path."""
-        path = Path("../../etc/passwd")
-        exc = PathTraversalError(path)
+    @pytest.mark.parametrize(
+        "path_str,base_path_str",
+        [
+            ("../../etc/passwd", None),
+            ("/allowed/dir/../../../sensitive/data", "/allowed/dir"),
+            ("../config.json", "/project"),
+            ("../../../../root", None),
+        ],
+    )
+    def test_path_traversal_error(self, path_str, base_path_str):
+        """Test PathTraversalError with and without base path."""
+        path = Path(path_str)
+        if base_path_str:
+            base_path = Path(base_path_str)
+            exc = PathTraversalError(path, base_path)
+            assert exc.base_path == base_path
+            assert str(base_path) in str(exc)
+        else:
+            exc = PathTraversalError(path)
+            assert exc.base_path is None
 
         assert isinstance(exc, SecurityError)
         assert exc.path == path
-        assert exc.base_path is None
         assert "traversal" in str(exc).lower()
-
-    def test_path_traversal_error_with_base(self):
-        """Test PathTraversalError with base path."""
-        # Use a safe example path that demonstrates traversal without triggering security linters
-        path = Path("/allowed/dir/../../../sensitive/data")
-        base_path = Path("/allowed/dir")
-        exc = PathTraversalError(path, base_path)
-
-        assert exc.base_path == base_path
-        assert str(base_path) in str(exc)
 
     def test_file_size_limit_error(self):
         """Test FileSizeLimitError with size information."""
@@ -452,28 +489,31 @@ class TestConfigExceptions:
 class TestExceptionHierarchy:
     """Tests for exception hierarchy and catching behavior."""
 
-    def test_catch_by_category(self):
+    @pytest.mark.parametrize(
+        "exception_class,category_class,args,kwargs",
+        [
+            (InputDirectoryNotFoundError, InputError, (Path("/missing"),), {}),
+            (ImageReadError, InputError, (Path("/corrupt.jpg"), "Corrupted"), {}),
+            (
+                MarkerDetectionError,
+                ProcessingError,
+                (Path("/test.jpg"), "No markers"),
+                {},
+            ),
+            (AlignmentError, ProcessingError, (Path("/test.jpg"), "Failed"), {}),
+            (TemplateValidationError, ValidationError, (Path("/template.json"),), {}),
+            (
+                ConfigValidationError,
+                ValidationError,
+                (Path("/config.json"),),
+                {"reason": "Invalid"},
+            ),
+        ],
+    )
+    def test_catch_by_category(self, exception_class, category_class, args, kwargs):
         """Test that exceptions can be caught by their category."""
-        # Input errors
-        with pytest.raises(InputError):
-            raise InputDirectoryNotFoundError(Path("/missing"))
-
-        with pytest.raises(InputError):
-            raise ImageReadError(Path("/corrupt.jpg"))
-
-        # Processing errors
-        with pytest.raises(ProcessingError):
-            raise MarkerDetectionError(Path("/test.jpg"))
-
-        with pytest.raises(ProcessingError):
-            raise AlignmentError(Path("/test.jpg"))
-
-        # Validation errors
-        with pytest.raises(ValidationError):
-            raise TemplateValidationError(Path("/template.json"))
-
-        with pytest.raises(ValidationError):
-            raise ConfigValidationError(Path("/config.json"))
+        with pytest.raises(category_class):
+            raise exception_class(*args, **kwargs)
 
     def test_catch_all_omrchecker_errors(self):
         """Test that all custom exceptions inherit from OMRCheckerError."""
