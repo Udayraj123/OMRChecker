@@ -10,55 +10,8 @@ import numpy as np
 import pytest
 
 from src.exceptions import FieldDefinitionError, OMRCheckerError
+from src.processors.template.template import Template
 from src.processors.layout.template_layout import TemplateLayout
-from src.schemas.defaults import CONFIG_DEFAULTS
-
-
-@pytest.fixture
-def temp_template_path(tmp_path):
-    """Create a temporary template JSON file."""
-    template_path = tmp_path / "template.json"
-    return template_path
-
-
-@pytest.fixture
-def minimal_template_json():
-    """Minimal valid template JSON."""
-    return {
-        "templateDimensions": [1000, 800],
-        "bubbleDimensions": [20, 20],
-        "emptyValue": "",
-        "fieldBlocksOffset": [0, 0],
-        "fieldBlocks": {
-            "block1": {
-                "fieldDetectionType": "BUBBLES_THRESHOLD",
-                "origin": [100, 100],
-                "fieldLabels": ["q1", "q2"],
-                "bubbleFieldType": "QTYPE_MCQ4",
-                "bubblesGap": 30,
-                "labelsGap": 50,
-            }
-        },
-        "preProcessors": [],
-        "alignment": {},
-        "customBubbleFieldTypes": {},
-        "customLabels": {},
-        "outputColumns": {"sortType": "ALPHANUMERIC", "customOrder": []},
-    }
-
-
-@pytest.fixture
-def mock_template():
-    """Create a mock template object."""
-    template = Mock()
-    template.tuning_config = CONFIG_DEFAULTS
-    return template
-
-
-@pytest.fixture
-def mock_tuning_config():
-    """Create a mock tuning config."""
-    return CONFIG_DEFAULTS
 
 
 @pytest.fixture
@@ -327,66 +280,6 @@ class TestParseOutputColumns:
 
         assert layout.output_columns == ["q2", "q1"]
 
-    def test_parse_output_columns_numeric_sort(
-        self,
-        temp_template_path,
-        minimal_template_json,
-        mock_template,
-        mock_tuning_config,
-    ):
-        """Test parse_output_columns with numeric sort."""
-        # Add more fields for numeric sorting test
-        minimal_template_json["fieldBlocks"]["block2"] = {
-            "fieldDetectionType": "BUBBLES_THRESHOLD",
-            "origin": [200, 200],
-            "fieldLabels": ["q10"],
-            "bubbleFieldType": "QTYPE_MCQ4",
-            "bubblesGap": 30,
-            "labelsGap": 50,
-        }
-        # When customOrder is provided, sortType must be CUSTOM
-        minimal_template_json["outputColumns"] = {
-            "sortType": "CUSTOM",
-            "customOrder": ["q10", "q2", "q1"],
-        }
-        with open(temp_template_path, "w") as f:
-            json.dump(minimal_template_json, f)
-
-        layout = TemplateLayout(mock_template, temp_template_path, mock_tuning_config)
-
-        # Should use custom order
-        assert layout.output_columns == ["q10", "q2", "q1"]
-
-    def test_parse_output_columns_alphanumeric_sort(
-        self,
-        temp_template_path,
-        minimal_template_json,
-        mock_template,
-        mock_tuning_config,
-    ):
-        """Test parse_output_columns with alphanumeric sort."""
-        # Add more fields for alphanumeric sorting test
-        minimal_template_json["fieldBlocks"]["block2"] = {
-            "fieldDetectionType": "BUBBLES_THRESHOLD",
-            "origin": [200, 200],
-            "fieldLabels": ["q10"],
-            "bubbleFieldType": "QTYPE_MCQ4",
-            "bubblesGap": 30,
-            "labelsGap": 50,
-        }
-        # When customOrder is provided, sortType must be CUSTOM
-        minimal_template_json["outputColumns"] = {
-            "sortType": "CUSTOM",
-            "customOrder": ["q10", "q2", "q1"],
-        }
-        with open(temp_template_path, "w") as f:
-            json.dump(minimal_template_json, f)
-
-        layout = TemplateLayout(mock_template, temp_template_path, mock_tuning_config)
-
-        # Should use custom order
-        assert layout.output_columns == ["q10", "q2", "q1"]
-
 
 class TestParseCustomBubbleFieldTypes:
     """Test parse_custom_bubble_field_types method."""
@@ -542,31 +435,6 @@ class TestGetConcatenatedOmrResponse:
         )
 
         # get_concatenated_omr_response returns a dict, not a string
-        assert isinstance(concatenated, dict)
-        assert "q1" in concatenated
-        assert "q2" in concatenated
-        assert concatenated["q1"] == "A"
-        assert concatenated["q2"] == "B"
-
-    def test_get_concatenated_omr_response_multi_column(
-        self,
-        temp_template_path,
-        minimal_template_json,
-        mock_template,
-        mock_tuning_config,
-    ):
-        """Test concatenation with multiple columns."""
-        minimal_template_json["outputColumns"] = {
-            "sortType": "CUSTOM",
-            "customOrder": ["q1", "q2"],
-        }
-        with open(temp_template_path, "w") as f:
-            json.dump(minimal_template_json, f)
-
-        layout = TemplateLayout(mock_template, temp_template_path, mock_tuning_config)
-        raw_response = {"q1": "A", "q2": "B"}
-        concatenated = layout.get_concatenated_omr_response(raw_response)
-
         assert isinstance(concatenated, dict)
         assert "q1" in concatenated
         assert "q2" in concatenated
@@ -745,6 +613,334 @@ class TestToString:
     def test_to_string(self, sample_template_layout):
         """Test string representation."""
         str_repr = str(sample_template_layout)
+
+        assert isinstance(str_repr, str)
+        assert len(str_repr) > 0
+
+
+# ============================================================================
+# Template Class Tests (merged from test_template_class.py)
+# ============================================================================
+
+
+# Fixtures are now in conftest.py
+
+
+@pytest.fixture
+def sample_template(
+    temp_template_path, minimal_template_json, mock_tuning_config, minimal_args
+):
+    """Create a Template instance for testing."""
+    with open(temp_template_path, "w") as f:
+        json.dump(minimal_template_json, f)
+    return Template(temp_template_path, mock_tuning_config, minimal_args)
+
+
+class TestTemplateInitialization:
+    """Test Template initialization."""
+
+    def test_template_initialization(
+        self,
+        temp_template_path,
+        minimal_template_json,
+        mock_tuning_config,
+        minimal_args,
+    ):
+        """Test basic template initialization."""
+        with open(temp_template_path, "w") as f:
+            json.dump(minimal_template_json, f)
+        template = Template(temp_template_path, mock_tuning_config, minimal_args)
+
+        assert template.path == temp_template_path
+        assert template.tuning_config == mock_tuning_config
+        assert len(template.all_fields) == 2  # q1 and q2
+
+    def test_template_with_custom_preprocessors(
+        self, tmp_path, mock_tuning_config, minimal_args
+    ):
+        """Test template initialization with custom preprocessors."""
+        template_path = tmp_path / "template.json"
+        template_data = {
+            "templateDimensions": [1000, 800],
+            "bubbleDimensions": [20, 20],
+            "emptyValue": "",
+            "fieldBlocksOffset": [0, 0],
+            "fieldBlocks": {
+                "block1": {
+                    "fieldDetectionType": "BUBBLES_THRESHOLD",
+                    "origin": [100, 100],
+                    "fieldLabels": ["q1"],
+                    "bubbleFieldType": "QTYPE_MCQ4",
+                    "bubblesGap": 30,
+                    "labelsGap": 50,
+                }
+            },
+            "preProcessors": [{"name": "GaussianBlur", "options": {}}],
+            "alignment": {"margins": {"top": 0, "right": 0, "bottom": 0, "left": 0}},
+            "customBubbleFieldTypes": {},
+            "customLabels": {},
+            "outputColumns": {"sortType": "ALPHANUMERIC", "customOrder": []},
+        }
+        with open(template_path, "w") as f:
+            json.dump(template_data, f)
+
+        template = Template(template_path, mock_tuning_config, minimal_args)
+
+        assert len(template.get_pre_processors()) == 1
+        assert template.get_pre_processor_names() == ["GaussianBlur"]
+
+
+class TestTemplateApplyPreprocessors:
+    """Test Template apply_preprocessors method."""
+
+    def test_apply_preprocessors_sequence(self, sample_template, tmp_path):
+        """Test applying preprocessors in sequence."""
+        gray_image = np.zeros((800, 1000), dtype=np.uint8)
+        colored_image = np.zeros((800, 1000, 3), dtype=np.uint8)
+        file_path = tmp_path / "test.jpg"
+
+        processed_gray, processed_colored, updated_template = (
+            sample_template.apply_preprocessors(
+                str(file_path), gray_image, colored_image
+            )
+        )
+
+        assert processed_gray is not None
+        assert processed_colored is not None
+        assert updated_template is not None
+
+    def test_apply_preprocessors_with_alignment(
+        self, tmp_path, mock_tuning_config, minimal_args
+    ):
+        """Test applying preprocessors with alignment."""
+        template_path = tmp_path / "template.json"
+        template_data = {
+            "templateDimensions": [1000, 800],
+            "bubbleDimensions": [20, 20],
+            "emptyValue": "",
+            "fieldBlocksOffset": [0, 0],
+            "fieldBlocks": {
+                "block1": {
+                    "fieldDetectionType": "BUBBLES_THRESHOLD",
+                    "origin": [100, 100],
+                    "fieldLabels": ["q1"],
+                    "bubbleFieldType": "QTYPE_MCQ4",
+                    "bubblesGap": 30,
+                    "labelsGap": 50,
+                }
+            },
+            "preProcessors": [{"name": "GaussianBlur", "options": {}}],
+            "alignment": {"margins": {"top": 0, "right": 0, "bottom": 0, "left": 0}},
+            "customBubbleFieldTypes": {},
+            "customLabels": {},
+            "outputColumns": {"sortType": "ALPHANUMERIC", "customOrder": []},
+        }
+        with open(template_path, "w") as f:
+            json.dump(template_data, f)
+
+        template = Template(template_path, mock_tuning_config, minimal_args)
+
+        gray_image = np.zeros((800, 1000), dtype=np.uint8)
+        colored_image = np.zeros((800, 1000, 3), dtype=np.uint8)
+        file_path = tmp_path / "test.jpg"
+
+        processed_gray, processed_colored, updated_template = (
+            template.apply_preprocessors(str(file_path), gray_image, colored_image)
+        )
+
+        assert processed_gray is not None
+        assert processed_colored is not None
+
+
+class TestTemplateResetAndSetup:
+    """Test Template reset_and_setup_for_directory method."""
+
+    def test_reset_and_setup_for_directory(self, sample_template, tmp_path):
+        """Test resetting and setting up for a directory."""
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+
+        # Should not raise
+        sample_template.reset_and_setup_for_directory(output_dir)
+        assert True
+
+    def test_reset_and_setup_outputs(self, sample_template, tmp_path):
+        """Test resetting and setting up outputs."""
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+
+        sample_template.reset_and_setup_outputs(output_dir)
+        assert True
+
+
+class TestTemplateGetExcludeFiles:
+    """Test Template get_exclude_files method."""
+
+    def test_get_exclude_files_without_preprocessors(self, sample_template):
+        """Test getting exclude files without preprocessors."""
+        excluded = sample_template.get_exclude_files()
+
+        assert isinstance(excluded, list)
+
+    def test_get_exclude_files_with_preprocessors(
+        self, tmp_path, mock_tuning_config, minimal_args
+    ):
+        """Test getting exclude files with preprocessors that exclude files."""
+        template_path = tmp_path / "template.json"
+        template_data = {
+            "templateDimensions": [1000, 800],
+            "bubbleDimensions": [20, 20],
+            "emptyValue": "",
+            "fieldBlocksOffset": [0, 0],
+            "fieldBlocks": {
+                "block1": {
+                    "fieldDetectionType": "BUBBLES_THRESHOLD",
+                    "origin": [100, 100],
+                    "fieldLabels": ["q1"],
+                    "bubbleFieldType": "QTYPE_MCQ4",
+                    "bubblesGap": 30,
+                    "labelsGap": 50,
+                }
+            },
+            "preProcessors": [],
+            "alignment": {"margins": {"top": 0, "right": 0, "bottom": 0, "left": 0}},
+            "customBubbleFieldTypes": {},
+            "customLabels": {},
+            "outputColumns": {"sortType": "ALPHANUMERIC", "customOrder": []},
+        }
+        with open(template_path, "w") as f:
+            json.dump(template_data, f)
+
+        template = Template(template_path, mock_tuning_config, minimal_args)
+
+        # Mock preprocessor with exclude_files method
+        mock_preprocessor = Mock()
+        mock_preprocessor.exclude_files = Mock(return_value=["excluded1.jpg"])
+        template.template_layout.pre_processors = [mock_preprocessor]
+
+        excluded = template.get_exclude_files()
+
+        assert isinstance(excluded, list)
+
+
+class TestTemplateGetPreProcessors:
+    """Test Template get_pre_processors method."""
+
+    def test_get_pre_processors(self, sample_template):
+        """Test getting preprocessors."""
+        preprocessors = sample_template.get_pre_processors()
+
+        assert isinstance(preprocessors, list)
+
+    def test_get_pre_processor_names(self, sample_template):
+        """Test getting preprocessor names."""
+        names = sample_template.get_pre_processor_names()
+
+        assert isinstance(names, list)
+
+
+class TestTemplateGetConcatenatedOmrResponse:
+    """Test Template get_concatenated_omr_response method."""
+
+    def test_get_concatenated_omr_response_single_column_template(
+        self, sample_template
+    ):
+        """Test getting concatenated response for single column (Template class)."""
+        raw_response = {"q1": "A", "q2": "B"}
+        concatenated = sample_template.get_concatenated_omr_response(raw_response)
+
+        assert isinstance(concatenated, dict)
+        assert "q1" in concatenated
+        assert "q2" in concatenated
+
+    def test_get_concatenated_omr_response_custom_labels_template(
+        self, tmp_path, mock_tuning_config, minimal_args
+    ):
+        """Test getting concatenated response with custom labels (Template class)."""
+        template_path = tmp_path / "template.json"
+        template_data = {
+            "templateDimensions": [1000, 800],
+            "bubbleDimensions": [20, 20],
+            "emptyValue": "",
+            "fieldBlocksOffset": [0, 0],
+            "fieldBlocks": {
+                "block1": {
+                    "fieldDetectionType": "BUBBLES_THRESHOLD",
+                    "origin": [100, 100],
+                    "fieldLabels": ["q1", "q2"],
+                    "bubbleFieldType": "QTYPE_MCQ4",
+                    "bubblesGap": 30,
+                    "labelsGap": 50,
+                }
+            },
+            "preProcessors": [],
+            "alignment": {"margins": {"top": 0, "right": 0, "bottom": 0, "left": 0}},
+            "customBubbleFieldTypes": {},
+            "customLabels": {"CUSTOM_1": ["q1", "q2"]},
+            "outputColumns": {"sortType": "ALPHANUMERIC", "customOrder": []},
+        }
+        with open(template_path, "w") as f:
+            json.dump(template_data, f)
+
+        template = Template(template_path, mock_tuning_config, minimal_args)
+        raw_response = {"q1": "A", "q2": "B"}
+        concatenated = template.get_concatenated_omr_response(raw_response)
+
+        assert "CUSTOM_1" in concatenated
+        assert concatenated["CUSTOM_1"] == "AB"  # Concatenated
+
+
+class TestTemplateGetProcessingImageShape:
+    """Test Template get_processing_image_shape method."""
+
+    def test_get_processing_image_shape(self, sample_template):
+        """Test getting processing image shape."""
+        shape = sample_template.get_processing_image_shape()
+
+        assert isinstance(shape, list)
+        assert len(shape) == 2
+
+
+class TestTemplateGetEmptyResponseArray:
+    """Test Template get_empty_response_array method."""
+
+    def test_get_empty_response_array(self, sample_template, tmp_path):
+        """Test getting empty response array."""
+        # Setup output directory first (required for directory_handler initialization)
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        sample_template.reset_and_setup_outputs(output_dir)
+
+        empty_array = sample_template.get_empty_response_array()
+
+        assert isinstance(empty_array, list)
+
+
+class TestTemplateAppendOutputOmrResponse:
+    """Test Template append_output_omr_response method."""
+
+    def test_append_output_omr_response(self, sample_template, tmp_path):
+        """Test appending output OMR response."""
+        # Setup output directory first (required for directory_handler initialization)
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        sample_template.reset_and_setup_outputs(output_dir)
+
+        output_omr_response = {"q1": "A", "q2": "B"}
+        result = sample_template.append_output_omr_response(
+            "test.jpg", output_omr_response
+        )
+
+        assert isinstance(result, list)
+        assert len(result) > 0
+
+
+class TestTemplateToString:
+    """Test Template __str__ method."""
+
+    def test_template_to_string(self, sample_template):
+        """Test Template string representation."""
+        str_repr = str(sample_template)
 
         assert isinstance(str_repr, str)
         assert len(str_repr) > 0

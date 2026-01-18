@@ -19,28 +19,35 @@ from src.processors.evaluation.section_marking_scheme import SectionMarkingSchem
 from src.schemas.constants import DEFAULT_SECTION_KEY
 
 
+# Note: mock_template and mock_tuning_config are in conftest.py
+# Override mock_template for evaluation-specific needs
 @pytest.fixture
 def mock_template():
-    """Create a mock template."""
+    """Create a mock template with evaluation-specific attributes."""
     template = Mock()
     template.global_empty_val = ""
     template.get_evaluations_dir = Mock(return_value=Path("/tmp/evaluations"))
     return template
 
 
+# Override mock_tuning_config for evaluation-specific needs
 @pytest.fixture
 def mock_tuning_config():
-    """Create a mock tuning config."""
+    """Create a mock tuning config with evaluation-specific attributes."""
     config = Mock()
     config.outputs = Mock()
     config.outputs.filter_out_multimarked_files = False
     return config
 
 
+# Note: minimal_evaluation_json is in conftest.py but needs DEFAULT_SECTION_KEY
+# Keep this override for now since it uses DEFAULT_SECTION_KEY
+
+
 @pytest.fixture
 def minimal_evaluation_json():
-    """Minimal valid evaluation JSON."""
-    return {
+    """Minimal valid evaluation JSON with DEFAULT_SECTION_KEY."""
+    base_json = {
         "source_type": "local",
         "options": {
             "questions_in_order": ["q1", "q2", "q3"],
@@ -72,6 +79,7 @@ def minimal_evaluation_json():
             "should_export_explanation_csv": False,
         },
     }
+    return base_json
 
 
 @pytest.fixture
@@ -337,37 +345,41 @@ class TestValidateFormatStrings:
 
     def test_validate_format_strings_valid(self, sample_evaluation_config_for_set):
         """Test validation with valid format strings."""
-        # Should not raise
         sample_evaluation_config_for_set.validate_format_strings()
         assert True
 
-    def test_validate_format_strings_invalid_answers_summary(
-        self, minimal_evaluation_json, mock_template, mock_tuning_config, tmp_path
+    @pytest.mark.parametrize(
+        "config_path,invalid_value",
+        [
+            (
+                [
+                    "outputs_configuration",
+                    "draw_answers_summary",
+                    "answers_summary_format_string",
+                ],
+                "{invalid_variable}",
+            ),
+            (
+                ["outputs_configuration", "draw_score", "score_format_string"],
+                "{invalid_variable}",
+            ),
+        ],
+    )
+    def test_validate_format_strings_invalid(
+        self,
+        minimal_evaluation_json,
+        mock_template,
+        mock_tuning_config,
+        tmp_path,
+        config_path,
+        invalid_value,
     ):
-        """Test validation with invalid answers summary format string."""
-        minimal_evaluation_json["outputs_configuration"]["draw_answers_summary"][
-            "answers_summary_format_string"
-        ] = "{invalid_variable}"
+        """Test validation with invalid format strings."""
+        config = minimal_evaluation_json
+        for key in config_path[:-1]:
+            config = config[key]
+        config[config_path[-1]] = invalid_value
 
-        # Validation happens during __init__, so catch exception there
-        with pytest.raises(ConfigError):
-            EvaluationConfigForSet(
-                "DEFAULT_SET",
-                tmp_path,
-                minimal_evaluation_json,
-                mock_template,
-                mock_tuning_config,
-            )
-
-    def test_validate_format_strings_invalid_score(
-        self, minimal_evaluation_json, mock_template, mock_tuning_config, tmp_path
-    ):
-        """Test validation with invalid score format string."""
-        minimal_evaluation_json["outputs_configuration"]["draw_score"][
-            "score_format_string"
-        ] = "{invalid_variable}"
-
-        # Validation happens during __init__, so catch exception there
         with pytest.raises(ConfigError):
             EvaluationConfigForSet(
                 "DEFAULT_SET",
