@@ -11,13 +11,14 @@ import { OMRCheckerError } from '../core/exceptions';
 import { FieldDetectionType } from '../processors/constants';
 import { FieldBlock } from '../processors/layout/fieldBlock/base';
 import type { Field } from '../processors/layout/field/base';
-import { createProcessingContext } from '../processors/base';
+import { createProcessingContext, Processor } from '../processors/base';
+import { ImageTemplatePreprocessor } from '../processors/image/base';
 import { PROCESSOR_MANAGER } from '../processors/image/processorManager';
 import { BUILTIN_BUBBLE_FIELD_TYPES } from '../utils/constants';
 import { ImageUtils } from '../utils/ImageUtils';
 import { InteractionUtils } from '../utils/InteractionUtils';
 import { Logger } from '../utils/logger';
-import { parseFields, alphanumericalSortKey } from '../utils/parsing';
+import { parseFields, alphanumericalSortKey, defaultDump } from '../utils/parsing';
 import { SaveImageOps } from '../utils/SaveImageOps';
 import type {
   TemplateConfig,
@@ -48,7 +49,7 @@ export class TemplateLayout {
   public outputColumns: string[] = [];
   public nonCustomLabels: Set<string> = new Set();
   public customLabels: Record<string, string[]> = {};
-  public preProcessors: any[] = []; // TODO: Type this properly
+  public preProcessors: (ImageTemplatePreprocessor | Processor)[] = [];
   public processingImageShape: [number, number];
   public outputImageShape?: [number, number];
   public alignment: {
@@ -175,12 +176,12 @@ export class TemplateLayout {
    * @param tuningConfig - Tuning configuration
    * @returns Processed images and updated template layout
    */
-  applyPreprocessors(
+  async applyPreprocessors(
     _filePath: string,
     grayImage: cv.Mat,
     coloredImage: cv.Mat,
     tuningConfig?: any
-  ): [cv.Mat, cv.Mat, TemplateLayout] {
+  ): Promise<[cv.Mat, cv.Mat, TemplateLayout]> {
     const nextTemplateLayout = this.getCopyForShifting();
 
     // Reset shifts in the copied template layout
@@ -216,11 +217,7 @@ export class TemplateLayout {
     let currentTemplateLayout = nextTemplateLayout;
 
     for (const preProcessor of currentTemplateLayout.preProcessors) {
-      const preProcessorName = preProcessor.getName
-        ? preProcessor.getName()
-        : preProcessor.getClassName
-        ? preProcessor.getClassName()
-        : 'Unknown';
+      const preProcessorName = preProcessor.getName();
 
       // Show Before Preview
       if (showPreprocessorsDiff[preProcessorName]) {
@@ -244,7 +241,13 @@ export class TemplateLayout {
         processedColoredImage,
         currentTemplateLayout
       );
-      const updatedContext = preProcessor.process(context);
+      const processResult = preProcessor.process(context);
+
+      // Handle both sync and async processors
+      // For now, we assume sync processing (async would require making this method async)
+      // If a processor returns a Promise, we'll need to await it
+      const updatedContext =
+        processResult instanceof Promise ? await processResult : processResult;
 
       // Extract results from context
       processedGrayImage = updatedContext.grayImage;
@@ -507,7 +510,7 @@ export class TemplateLayout {
           processedGrayAlignmentImage,
           processedColoredAlignmentImage,
           _updatedTemplate,
-        ] = this.applyPreprocessors(
+        ] = await this.applyPreprocessors(
           resolvedPath,
           grayAlignmentImage,
           coloredAlignmentImage || grayAlignmentImage.clone(),
@@ -851,13 +854,19 @@ export class TemplateLayout {
    * Convert template layout to JSON (for serialization).
    *
    * Port of Python's to_json method.
+   * Uses defaultDump to handle serialization of complex objects.
    *
    * @returns JSON representation of template layout
    */
   toJSON(): Record<string, any> {
     return {
-      template_dimensions: this.templateDimensions,
-      field_blocks: this.fieldBlocks.map((block) => block.toJSON()),
+      template_dimensions: defaultDump(this.templateDimensions),
+      field_blocks: defaultDump(this.fieldBlocks),
+      // Note: Following Python's to_json, we only include these keys:
+      // - template_dimensions
+      // - field_blocks
+      // Other properties (bubble_dimensions, global_empty_val, etc.) are not included
+      // as they are considered local props that are overridden
     };
   }
 }

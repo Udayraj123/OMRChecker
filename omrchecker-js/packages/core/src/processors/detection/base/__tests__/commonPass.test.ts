@@ -2,6 +2,29 @@
  * Tests for FilePassAggregates base class.
  */
 
+import { vi } from 'vitest';
+
+// Mock OpenCV to prevent hanging during test execution
+// The test doesn't actually need OpenCV - it only tests aggregate management
+vi.mock('@techstark/opencv-js', () => ({
+  Mat: class MockMat {
+    rows = 0;
+    cols = 0;
+    constructor() {}
+    delete() {}
+    isDeleted() {
+      return false;
+    }
+  },
+  Vec3: class MockVec3 {
+    constructor() {}
+  },
+  CV_8UC1: 0,
+  Scalar: class MockScalar {
+    constructor() {}
+  },
+}));
+
 import { BubbleField } from '../../../layout/field/bubbleField';
 import { FieldBlock } from '../../../layout/fieldBlock/base';
 import { StatsByLabel } from '../../../../utils/stats';

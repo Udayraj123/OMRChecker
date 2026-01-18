@@ -7,6 +7,8 @@ import { AnswerMatcher, AnswerType, SchemaVerdict, Verdict } from './AnswerMatch
 import { SectionMarkingScheme, DEFAULT_SECTION_KEY } from './SectionMarkingScheme';
 import { Logger } from '../../utils/logger';
 import { CLR_BLACK, CLR_WHITE } from '../../utils/constants';
+import { FieldDefinitionError, ConfigError, OMRCheckerError } from '../../core/exceptions';
+import { SCHEMA_VERDICTS_IN_ORDER } from '../../schemas/constants';
 import type {
   DrawQuestionVerdictsConfig,
   DrawAnswerGroupsConfig,
@@ -134,8 +136,14 @@ export class EvaluationConfigForSet {
       }
     }
 
+    // Validate marking schemes
+    this.validateMarkingSchemes();
+
     // Parse answers and create answer matchers
     this.questionToAnswerMatcher = this.parseAnswersAndMapQuestions();
+
+    // Note: validateAnswers requires tuningConfig, which may not be available in constructor
+    // It should be called separately if needed
 
     this.schemaVerdictCounts = {
       [SchemaVerdict.CORRECT]: 0,
@@ -145,6 +153,9 @@ export class EvaluationConfigForSet {
 
     this.shouldExplainScoring = false;
     this.shouldExportExplanationCsv = false;
+
+    // Note: validateFormatStrings requires outputs_configuration, which may not be available in constructor
+    // It should be called separately if needed
 
     this.resetEvaluation();
   }
@@ -241,6 +252,178 @@ export class EvaluationConfigForSet {
    */
   getMarkingSchemeForQuestion(question: string): SectionMarkingScheme {
     return this.questionToScheme[question] || this.defaultMarkingScheme;
+  }
+
+  /**
+   * Validate marking schemes configuration.
+   *
+   * Port of Python's validate_marking_schemes method.
+   * Ensures no overlapping questions between sections and all questions have answer keys.
+   */
+  private validateMarkingSchemes(): void {
+    const sectionQuestions = new Set<string>();
+
+    for (const [sectionKey, sectionScheme] of Object.entries(
+      this.sectionMarkingSchemes
+    )) {
+      if (sectionKey === DEFAULT_SECTION_KEY) {
+        continue;
+      }
+
+      const currentSet = new Set(sectionScheme.questions || []);
+
+      // Check for overlapping questions
+      for (const question of currentSet) {
+        if (sectionQuestions.has(question)) {
+          throw new FieldDefinitionError(
+            `Section '${sectionKey}' has overlapping question(s) with other sections locally`,
+            { section_key: sectionKey }
+          );
+        }
+      }
+
+      // Union with existing questions
+      for (const question of currentSet) {
+        sectionQuestions.add(question);
+      }
+    }
+
+    // Check that all questions in marking schemes have answer keys
+    const allQuestions = new Set(this.questionsInOrder);
+    const missingQuestions = Array.from(sectionQuestions).filter(
+      (q) => !allQuestions.has(q)
+    );
+
+    if (missingQuestions.length > 0) {
+      missingQuestions.sort();
+      logger.error(`Missing answer key for: ${missingQuestions.join(', ')}`);
+      throw new OMRCheckerError(
+        'Some questions are missing in the answer key for the given marking scheme(s)',
+        { missing_questions: missingQuestions }
+      );
+    }
+  }
+
+  /**
+   * Validate answers configuration.
+   *
+   * Port of Python's validate_answers method.
+   * Ensures answer keys don't contain multi-marked answers when filter_out_multimarked_files is enabled.
+   */
+  validateAnswers(tuningConfig?: any): void {
+    if (!tuningConfig?.outputs?.filterOutMultimarkedFiles) {
+      return;
+    }
+
+    let containsMultiMarkedAnswer = false;
+
+    for (let i = 0; i < this.questionsInOrder.length; i++) {
+      const question = this.questionsInOrder[i];
+      const answerItem = this.answersInOrder[i];
+      const answerType = this.questionToAnswerMatcher[question].answerType;
+
+      switch (answerType) {
+        case AnswerType.STANDARD:
+          if (typeof answerItem === 'string' && answerItem.length > 1) {
+            containsMultiMarkedAnswer = true;
+          }
+          break;
+
+        case AnswerType.MULTIPLE_CORRECT:
+          if (Array.isArray(answerItem)) {
+            for (const singleAnswer of answerItem) {
+              if (typeof singleAnswer === 'string' && singleAnswer.length > 1) {
+                containsMultiMarkedAnswer = true;
+                break;
+              }
+            }
+          }
+          break;
+
+        case AnswerType.MULTIPLE_CORRECT_WEIGHTED:
+          if (Array.isArray(answerItem)) {
+            for (const item of answerItem) {
+              if (Array.isArray(item) && item.length >= 1) {
+                const singleAnswer = item[0];
+                if (typeof singleAnswer === 'string' && singleAnswer.length > 1) {
+                  containsMultiMarkedAnswer = true;
+                  break;
+                }
+              }
+            }
+          }
+          break;
+      }
+
+      if (containsMultiMarkedAnswer) {
+        throw new ConfigError(
+          'Provided answer key contains multiple correct answer(s), but config.filter_out_multimarked_files is True. Scoring will get skipped.',
+          { filter_out_multimarked_files: true }
+        );
+      }
+    }
+  }
+
+  /**
+   * Validate format strings for drawing.
+   *
+   * Port of Python's validate_format_strings method.
+   * Ensures format strings are valid and contain only allowed variables.
+   */
+  validateFormatStrings(): void {
+    // Validate answers summary format string
+    if (this.drawAnswersSummary?.answers_summary_format_string) {
+      const answersSummaryFormatString =
+        this.drawAnswersSummary.answers_summary_format_string;
+
+      try {
+        // Try to format with schema verdict counts
+        const formatArgs: Record<string, number> = {};
+        for (const verdict of SCHEMA_VERDICTS_IN_ORDER) {
+          formatArgs[verdict] = this.schemaVerdictCounts[verdict] || 0;
+        }
+        answersSummaryFormatString.replace(
+          /\{(\w+)\}/g,
+          (match, key) => {
+            if (!(key in formatArgs)) {
+              throw new Error(`Unknown variable: ${key}`);
+            }
+            return match;
+          }
+        );
+      } catch (error) {
+        throw new ConfigError(
+          `The format string should contain only allowed variables ${SCHEMA_VERDICTS_IN_ORDER.join(', ')}. answers_summary_format_string=${answersSummaryFormatString}`,
+          {
+            answers_summary_format_string: answersSummaryFormatString,
+            allowed_variables: SCHEMA_VERDICTS_IN_ORDER,
+          }
+        );
+      }
+    }
+
+    // Validate score format string
+    if (this.drawScore?.score_format_string) {
+      const scoreFormatString = this.drawScore.score_format_string;
+
+      try {
+        // Try to format with score=0
+        scoreFormatString.replace(/\{(\w+)\}/g, (match, key) => {
+          if (key !== 'score') {
+            throw new Error(`Unknown variable: ${key}`);
+          }
+          return match;
+        });
+      } catch (error) {
+        throw new ConfigError(
+          `The format string should contain only allowed variables ['score']. score_format_string=${scoreFormatString}`,
+          {
+            score_format_string: scoreFormatString,
+            allowed_variables: ['score'],
+          }
+        );
+      }
+    }
   }
 
   /**

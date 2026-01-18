@@ -347,11 +347,8 @@ class EvaluationConfigForSet:
             )
             error_msg = f"Unequal lengths for questions_in_order and answers_in_order ({len_questions_in_order} != {len_answers_in_order})"
             raise FieldDefinitionError(
+                "questions_in_order",
                 error_msg,
-                context={
-                    "len_questions_in_order": len_questions_in_order,
-                    "len_answers_in_order": len_answers_in_order,
-                },
             )
 
     def set_parsed_marking_schemes(
@@ -432,8 +429,8 @@ class EvaluationConfigForSet:
             if not section_questions.isdisjoint(current_set):
                 error_msg = f"Section '{section_key}' has overlapping question(s) with other sections locally"
                 raise FieldDefinitionError(
+                    section_key,
                     error_msg,
-                    context={"section_key": section_key},
                 )
             section_questions = section_questions.union(current_set)
 

@@ -101,17 +101,16 @@ export class BubbleField extends Field {
     const h = this.direction === 'vertical' ? 1 : 0;
 
     const bubblePoint: [number, number] = [...this.origin];
-    const scanBoxes: BubblesScanBox[] = [];
+    this.scanBoxes = [] as BubblesScanBox[];
 
     for (let fieldIndex = 0; fieldIndex < this.bubbleValues.length; fieldIndex++) {
       const bubbleValue = this.bubbleValues[fieldIndex];
       const bubbleOrigin: [number, number] = [...bubblePoint];
       const scanBox = new BubblesScanBox(fieldIndex, this, bubbleOrigin, bubbleValue);
-      scanBoxes.push(scanBox);
+      this.scanBoxes.push(scanBox);
       bubblePoint[h] += this.bubblesGap;
     }
 
-    this.scanBoxes = scanBoxes;
   }
 
   /**

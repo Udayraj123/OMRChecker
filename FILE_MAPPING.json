@@ -950,7 +950,7 @@
     {
       "python": "src/processors/evaluation/evaluation_config_for_set.py",
       "typescript": "omrchecker-js/packages/core/src/processors/evaluation/EvaluationConfigForSet.ts",
-      "status": "partial",
+      "status": "synced",
       "phase": 1,
       "priority": "high",
       "lastSyncedCommit": null,
@@ -960,7 +960,7 @@
         {
           "python": "EvaluationConfigForSet",
           "typescript": "EvaluationConfigForSet",
-          "synced": false,
+          "synced": true,
           "methods": [
             {
               "python": "prepare_and_validate_omr_response",
@@ -989,11 +989,29 @@
               "typescript": "getFormattedScore",
               "synced": true,
               "notes": "Added for evaluation summary drawing"
+            },
+            {
+              "python": "validate_marking_schemes",
+              "typescript": "validateMarkingSchemes",
+              "synced": true,
+              "notes": "Validates marking schemes don't have overlapping questions"
+            },
+            {
+              "python": "validate_answers",
+              "typescript": "validateAnswers",
+              "synced": true,
+              "notes": "Validates answer keys don't contain multi-marked answers when filter_out_multimarked_files is enabled"
+            },
+            {
+              "python": "validate_format_strings",
+              "typescript": "validateFormatStrings",
+              "synced": true,
+              "notes": "Validates format strings for drawing (answers summary and score)"
             }
           ]
         }
       ],
-      "notes": "Simplified version. Python has 809 lines with CSV parsing, image-based answer key generation, rich console tables. TypeScript focuses on core functionality (question/answer matching, marking schemes, drawing support). Advanced features (CSV, images, pandas exports) deferred. Drawing-related methods (getEvaluationMetaForQuestion, getFormattedAnswersSummary, getFormattedScore) added for template drawing integration."
+      "notes": "Core functionality complete. Python has 809 lines with CSV parsing, image-based answer key generation, rich console tables. TypeScript focuses on core functionality (question/answer matching, marking schemes, drawing support, validation). Advanced features (CSV parsing, image-based answer keys, pandas exports) deferred. All validation methods (validateMarkingSchemes, validateAnswers, validateFormatStrings) ported. Drawing-related methods (getEvaluationMetaForQuestion, getFormattedAnswersSummary, getFormattedScore) added for template drawing integration."
     },
     {
       "python": "src/utils/image.py",
@@ -1200,7 +1218,7 @@
     {
       "python": "src/utils/file.py",
       "typescript": "omrchecker-js/packages/core/src/utils/file.ts",
-      "status": "partial",
+      "status": "synced",
       "phase": 1,
       "priority": "medium",
       "lastSyncedCommit": "ab9d2bf0270081b61509002b48d4dd07fa2d7d7e",
@@ -1210,7 +1228,31 @@
         {
           "python": "PathUtils",
           "typescript": "PathUtils",
-          "synced": false
+          "synced": true,
+          "typescriptFile": "omrchecker-js/packages/core/src/utils/file.ts",
+          "methods": [
+            {
+              "python": "remove_non_utf_characters",
+              "typescript": "removeNonUtfCharacters",
+              "synced": true
+            },
+            {
+              "python": "sep_based_posix_path",
+              "typescript": "sepBasedPosixPath",
+              "synced": true
+            },
+            {
+              "python": "__init__",
+              "typescript": "constructor",
+              "synced": true
+            },
+            {
+              "python": "create_output_directories",
+              "typescript": "createOutputDirectories",
+              "synced": true,
+              "notes": "Async in TypeScript for Node.js file operations"
+            }
+          ]
         },
         {
           "python": "SaveImageOps",

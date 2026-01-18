@@ -530,12 +530,6 @@ class TestFileOrganizerProcessor:
                 cv2.imwrite(str(input_file), img_bgr)
 
             # Create a minimal config with file grouping
-            config_data = {
-                "outputs": {
-                    "save_image_level": 0,  # Don't save intermediate images
-                    "show_image_level": 0,
-                }
-            }
 
             # Load template with colored outputs enabled
             from copy import deepcopy
