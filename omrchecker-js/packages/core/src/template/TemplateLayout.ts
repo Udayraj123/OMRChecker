@@ -11,9 +11,11 @@ import { OMRCheckerError } from '../core/exceptions';
 import { FieldDetectionType } from '../processors/constants';
 import { FieldBlock } from '../processors/layout/fieldBlock/base';
 import type { Field } from '../processors/layout/field/base';
+import { createProcessingContext } from '../processors/base';
 import { PROCESSOR_MANAGER } from '../processors/image/processorManager';
 import { BUILTIN_BUBBLE_FIELD_TYPES } from '../utils/constants';
-import { ImageUtils } from '../utils/image';
+import { ImageUtils } from '../utils/ImageUtils';
+import { InteractionUtils } from '../utils/InteractionUtils';
 import { Logger } from '../utils/logger';
 import { parseFields, alphanumericalSortKey } from '../utils/parsing';
 import { SaveImageOps } from '../utils/SaveImageOps';
@@ -116,9 +118,13 @@ export class TemplateLayout {
       Object.keys(this.customLabels)
     );
 
-    // Setup alignment
+    // Setup alignment (async - image loading happens in background)
+    // Note: In browser environment, alignment image loading is async
+    // Alignment images will be available after the promise resolves
     if (config.alignment) {
-      this.setupAlignment(config.alignment, ''); // TODO: Pass relative_dir
+      this.setupAlignment(config.alignment, '', _tuningConfig).catch((error) => {
+        logger.warn(`Failed to setup alignment: ${error}`);
+      });
     }
   }
 
@@ -181,45 +187,112 @@ export class TemplateLayout {
     nextTemplateLayout.resetAllShifts();
 
     // Resize to conform to common preprocessor input requirements
-    const [resizedGray] = ImageUtils.resizeToShape(
+    const resizedGrayResult = ImageUtils.resizeToShape(
       nextTemplateLayout.processingImageShape,
       grayImage
     );
-    let processedGrayImage = resizedGray;
+    // resizeToShape returns Mat | Mat[] - handle both cases
+    let processedGrayImage = Array.isArray(resizedGrayResult)
+      ? resizedGrayResult[0]
+      : resizedGrayResult;
 
     let processedColoredImage = coloredImage;
     if (tuningConfig?.outputs?.coloredOutputsEnabled) {
-      const [resizedColored] = ImageUtils.resizeToShape(
+      const resizedColoredResult = ImageUtils.resizeToShape(
         nextTemplateLayout.processingImageShape,
         coloredImage
       );
-      processedColoredImage = resizedColored;
+      processedColoredImage = Array.isArray(resizedColoredResult)
+        ? resizedColoredResult[0]
+        : resizedColoredResult;
     }
 
-    // Run preprocessors in sequence
-    // TODO: Implement full preprocessor pipeline
-    // For now, just return resized images
-    logger.debug('Preprocessors would be applied here');
+    // Run preprocessors in sequence using unified processor interface
+    const showPreprocessorsDiff =
+      tuningConfig?.outputs?.showPreprocessorsDiff ||
+      tuningConfig?.outputs?.show_preprocessors_diff ||
+      {};
 
-    const templateLayout = nextTemplateLayout;
+    let currentTemplateLayout = nextTemplateLayout;
 
-    if (templateLayout.outputImageShape) {
-      // Resize to output requirements
-      const [resizedGrayOut] = ImageUtils.resizeToShape(
-        templateLayout.outputImageShape,
-        processedGrayImage
-      );
-      processedGrayImage = resizedGrayOut;
-      if (tuningConfig?.outputs?.coloredOutputsEnabled) {
-        const [resizedColoredOut] = ImageUtils.resizeToShape(
-          templateLayout.outputImageShape,
-          processedColoredImage
+    for (const preProcessor of currentTemplateLayout.preProcessors) {
+      const preProcessorName = preProcessor.getName
+        ? preProcessor.getName()
+        : preProcessor.getClassName
+        ? preProcessor.getClassName()
+        : 'Unknown';
+
+      // Show Before Preview
+      if (showPreprocessorsDiff[preProcessorName]) {
+        InteractionUtils.show(
+          `Before ${preProcessorName}: ${_filePath}`,
+          tuningConfig?.outputs?.coloredOutputsEnabled ||
+            tuningConfig?.outputs?.colored_outputs_enabled
+            ? processedColoredImage
+            : processedGrayImage,
+          {
+            title: `Before ${preProcessorName}`,
+            resizeToFit: true,
+          }
         );
-        processedColoredImage = resizedColoredOut;
+      }
+
+      // Apply filter using unified processor interface
+      const context = createProcessingContext(
+        _filePath,
+        processedGrayImage,
+        processedColoredImage,
+        currentTemplateLayout
+      );
+      const updatedContext = preProcessor.process(context);
+
+      // Extract results from context
+      processedGrayImage = updatedContext.grayImage;
+      processedColoredImage = updatedContext.coloredImage;
+      currentTemplateLayout = updatedContext.template as TemplateLayout;
+
+      // Show After Preview
+      if (showPreprocessorsDiff[preProcessorName]) {
+        InteractionUtils.show(
+          `After ${preProcessorName}: ${_filePath}`,
+          tuningConfig?.outputs?.coloredOutputsEnabled ||
+            tuningConfig?.outputs?.colored_outputs_enabled
+            ? processedColoredImage
+            : processedGrayImage,
+          {
+            title: `After ${preProcessorName}`,
+            resizeToFit: true,
+          }
+        );
       }
     }
 
-    return [processedGrayImage, processedColoredImage, templateLayout];
+    const templateLayout = currentTemplateLayout;
+
+    let finalGrayImage = processedGrayImage;
+    let finalColoredImage = processedColoredImage;
+
+    if (templateLayout.outputImageShape) {
+      // Resize to output requirements
+      const resizedGrayOutResult = ImageUtils.resizeToShape(
+        templateLayout.outputImageShape,
+        processedGrayImage
+      );
+      finalGrayImage = Array.isArray(resizedGrayOutResult)
+        ? resizedGrayOutResult[0]
+        : resizedGrayOutResult;
+      if (tuningConfig?.outputs?.coloredOutputsEnabled) {
+        const resizedColoredOutResult = ImageUtils.resizeToShape(
+          templateLayout.outputImageShape,
+          processedColoredImage
+        );
+        finalColoredImage = Array.isArray(resizedColoredOutResult)
+          ? resizedColoredOutResult[0]
+          : resizedColoredOutResult;
+      }
+    }
+
+    return [finalGrayImage, finalColoredImage, templateLayout];
   }
 
   /**
@@ -380,10 +453,17 @@ export class TemplateLayout {
   /**
    * Setup alignment configuration.
    *
+   * Port of Python's setup_alignment method.
+   *
    * @param alignmentObject - Alignment configuration
    * @param relativeDir - Relative directory for alignment reference image
+   * @param tuningConfig - Tuning configuration (optional, for image loading)
    */
-  setupAlignment(alignmentObject: AlignmentConfig, _relativeDir: string): void {
+  async setupAlignment(
+    alignmentObject: AlignmentConfig,
+    relativeDir: string,
+    tuningConfig?: any
+  ): Promise<void> {
     this.alignment = {
       ...alignmentObject,
       margins: alignmentObject.margins,
@@ -393,12 +473,59 @@ export class TemplateLayout {
     const relativePath = alignmentObject.referenceImage;
 
     if (relativePath) {
-      // TODO: Resolve path properly
-      this.alignment.reference_image_path = relativePath; // Path(relativeDir, relativePath)
+      // Resolve path: combine relativeDir and relativePath
+      // In browser environment, paths are typically URLs or data URLs
+      // For file paths, we combine them with a separator
+      const resolvedPath = relativeDir
+        ? `${relativeDir}/${relativePath}`.replace(/\/+/g, '/')
+        : relativePath;
+      this.alignment.reference_image_path = resolvedPath;
 
-      // TODO: Load and preprocess alignment images
-      // This requires ImageUtils.read_image_util which may need to be ported
-      logger.debug('Alignment image loading would be implemented here');
+      // Load and preprocess alignment images
+      // Note: In browser, this requires the image to be loaded asynchronously
+      try {
+        // For browser: assume relativePath is a URL or data URL
+        // In Node.js: could be a file path
+        const imageSource: File | Blob | string = resolvedPath;
+
+        // Load images using ImageUtils.readImageUtil
+        // Note: readImageUtil is async in TypeScript (browser environment)
+        const coloredOutputsEnabled =
+          tuningConfig?.outputs?.coloredOutputsEnabled ||
+          tuningConfig?.outputs?.colored_outputs_enabled ||
+          false;
+        const [grayAlignmentImage, coloredAlignmentImage] =
+          await ImageUtils.readImageUtil(imageSource, coloredOutputsEnabled);
+
+        // Preprocess alignment images using apply_preprocessors
+        // Create a copy of template layout for preprocessing
+        const nextTemplateLayout = this.getCopyForShifting();
+        nextTemplateLayout.resetAllShifts();
+
+        // Apply preprocessors to alignment images
+        const [
+          processedGrayAlignmentImage,
+          processedColoredAlignmentImage,
+          _updatedTemplate,
+        ] = this.applyPreprocessors(
+          resolvedPath,
+          grayAlignmentImage,
+          coloredAlignmentImage || grayAlignmentImage.clone(),
+          tuningConfig
+        );
+
+        // Store preprocessed alignment images
+        this.alignment.gray_alignment_image = processedGrayAlignmentImage;
+        this.alignment.colored_alignment_image = processedColoredAlignmentImage;
+
+        logger.debug('Alignment images loaded and preprocessed');
+      } catch (error) {
+        logger.warn(
+          `Failed to load alignment image from ${resolvedPath}: ${error}`
+        );
+        // Continue without alignment images - alignment will be skipped
+        this.alignment.reference_image_path = null;
+      }
     }
   }
 

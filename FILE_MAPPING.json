@@ -2,7 +2,7 @@
   "version": "2.0",
   "metadata": {
     "description": "Mapping between Python and TypeScript files for OMRChecker port",
-    "lastUpdated": "2026-01-16T16:00:00Z",
+    "lastUpdated": "2026-01-16T18:00:00Z",
     "phase11_completed": "2026-01-16T15:30:00Z",
     "phase11_summary": "Field interpretation drawing and FieldBlockDrawing: Ported FieldInterpretationDrawing base class and BubblesFieldInterpretationDrawing with full drawing support including verdicts and answer groups. Integrated into TemplateDrawing.drawAllFields(). Implemented FieldBlockDrawing.drawFieldBlock() with bounding rectangle, scan boxes, and label drawing. Added getEvaluationMetaForQuestion(), getFormattedAnswersSummary(), and getFormattedScore() to EvaluationConfigForSet. Updated TemplateDrawing.drawEvaluationSummary() to use new formatting methods. FilePatternResolver marked as synced.",
     "phase0_completed": "2026-01-16T12:00:00Z",
@@ -1478,7 +1478,8 @@
             {
               "python": "apply_preprocessors",
               "typescript": "applyPreprocessors",
-              "synced": true
+              "synced": true,
+              "notes": "Full preprocessor pipeline implemented using unified processor interface."
             },
             {
               "python": "parse_output_columns",
@@ -1488,7 +1489,8 @@
             {
               "python": "setup_pre_processors",
               "typescript": "setupPreProcessors",
-              "synced": true
+              "synced": true,
+              "notes": "Uses PROCESSOR_MANAGER to instantiate processors from configuration."
             },
             {
               "python": "parse_custom_bubble_field_types",
@@ -1503,7 +1505,8 @@
             {
               "python": "setup_alignment",
               "typescript": "setupAlignment",
-              "synced": true
+              "synced": true,
+              "notes": "Async in TypeScript for browser image loading. Loads and preprocesses alignment images."
             },
             {
               "python": "parse_custom_labels",
@@ -1561,7 +1564,31 @@
           ]
         }
       ],
-      "notes": "Template loader (TemplateLoader) and template layout class (TemplateLayout) fully ported. TemplateLoader handles JSON loading and field label expansion. TemplateLayout class provides methods for template manipulation, preprocessing, alignment, validation, and dynamic field block addition. All methods maintain 1:1 mapping with Python implementation."
+      "notes": "Template loader (TemplateLoader) and template layout class (TemplateLayout) fully ported. TemplateLoader handles JSON loading and field label expansion. TemplateLayout class provides methods for template manipulation, preprocessing, alignment, validation, and dynamic field block addition. All methods maintain 1:1 mapping with Python implementation. setupPreProcessors uses PROCESSOR_MANAGER. setupAlignment loads and preprocesses alignment images. applyPreprocessors implements full preprocessor pipeline using unified processor interface."
+    },
+    {
+      "python": "src/processors/manager.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/image/processorManager.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": "2026-01-16T18:00:00Z",
+      "classes": [],
+      "exports": [
+        {
+          "python": "PROCESSOR_MANAGER",
+          "typescript": "PROCESSOR_MANAGER",
+          "synced": true
+        },
+        {
+          "python": "SUPPORTED_PROCESSOR_NAMES",
+          "typescript": "SUPPORTED_PROCESSOR_NAMES",
+          "synced": true
+        }
+      ],
+      "notes": "Processor manager mapping processor names to their classes/factories. Ported with factory function pattern to handle processors that extend both Processor and ImageTemplatePreprocessor. Includes validation to ensure all supported processors are registered. Used by TemplateLayout.setupPreProcessors() to instantiate preprocessors from configuration."
     },
     {
       "python": "N/A (demo/frontend only)",
@@ -2750,17 +2777,6 @@
       "lastPythonChange": null,
       "lastTypescriptChange": null,
       "notes": "HTML export for visualization. Not yet ported."
-    },
-    {
-      "python": "src/processors/manager.py",
-      "typescript": "N/A (not yet ported)",
-      "status": "not_started",
-      "phase": 2,
-      "priority": "low",
-      "lastSyncedCommit": null,
-      "lastPythonChange": null,
-      "lastTypescriptChange": null,
-      "notes": "Processor manager. Not yet ported."
     },
     {
       "python": "src/schemas/defaults/config.py",

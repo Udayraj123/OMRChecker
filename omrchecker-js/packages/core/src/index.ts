@@ -36,6 +36,13 @@ export {
   type SaveImageOps as SaveImageOpsInterface,
 } from './processors/image/base';
 
+// Image processors - Processor Manager
+export {
+  PROCESSOR_MANAGER,
+  SUPPORTED_PROCESSOR_NAMES,
+  validateProcessorManager,
+} from './processors/image/processorManager';
+
 // Image processors - Coordinator
 export { PreprocessingProcessor } from './processors/image/coordinator';
 
