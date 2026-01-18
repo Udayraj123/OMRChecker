@@ -6,7 +6,7 @@
  */
 
 import { Logger } from '../../../utils/logger';
-import { FieldInterpretation } from '../base/interpretation';
+import { FieldInterpretation, type InterpretationDrawing } from '../base/interpretation';
 import type { Field } from '../../layout/field/base';
 import {
   BubbleFieldDetectionResult,
@@ -53,13 +53,6 @@ export class BubbleInterpretation {
 }
 
 /**
- * Drawing instance interface (forward declaration).
- */
-export interface BubblesFieldInterpretationDrawing {
-  // Stub for now
-}
-
-/**
  * Clean, simplified bubble field interpretation using strategies.
  *
  * Threshold calculation delegated to threshold strategy classes.
@@ -82,9 +75,11 @@ export class BubblesFieldInterpretation extends FieldInterpretation {
   /**
    * Get drawing instance for visualization.
    */
-  getDrawingInstance(): BubblesFieldInterpretationDrawing {
-    // Will be implemented when we port interpretation drawing
-    return {} as BubblesFieldInterpretationDrawing;
+  getDrawingInstance(): InterpretationDrawing {
+    // Dynamic import to avoid circular dependency
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { BubblesFieldInterpretationDrawing } = require('./interpretationDrawing');
+    return new BubblesFieldInterpretationDrawing(this);
   }
 
   /**

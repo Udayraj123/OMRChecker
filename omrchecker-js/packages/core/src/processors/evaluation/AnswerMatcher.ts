@@ -85,6 +85,56 @@ export class AnswerMatcher {
   }
 
   /**
+   * Check if answer string is part of some answer for the question.
+   *
+   * @param questionMeta - Question metadata
+   * @param answerString - Answer string to check
+   * @returns True if answer is part of some answer
+   */
+  static isPartOfSomeAnswer(questionMeta: any, answerString: string): boolean {
+    if (questionMeta.bonus_type !== undefined) {
+      return true;
+    }
+    const matchedGroups = AnswerMatcher.getMatchedAnswerGroups(questionMeta, answerString);
+    return matchedGroups.length > 0;
+  }
+
+  /**
+   * Get matched answer groups for a question and answer string.
+   *
+   * @param questionMeta - Question metadata
+   * @param answerString - Answer string to check
+   * @returns Array of matched group indices
+   */
+  static getMatchedAnswerGroups(questionMeta: any, answerString: string): number[] {
+    const matchedGroups: number[] = [];
+    const answerType = questionMeta.answer_type;
+    const answerItem = questionMeta.answer_item;
+
+    if (answerType === AnswerType.STANDARD) {
+      // Note: implicit check on concatenated answer
+      if (String(answerItem).includes(answerString)) {
+        matchedGroups.push(0);
+      }
+    } else if (answerType === AnswerType.MULTIPLE_CORRECT) {
+      for (let answerIndex = 0; answerIndex < answerItem.length; answerIndex++) {
+        const allowedAnswer = answerItem[answerIndex];
+        if (String(allowedAnswer).includes(answerString)) {
+          matchedGroups.push(answerIndex);
+        }
+      }
+    } else if (answerType === AnswerType.MULTIPLE_CORRECT_WEIGHTED) {
+      for (let answerIndex = 0; answerIndex < answerItem.length; answerIndex++) {
+        const [allowedAnswer, score] = answerItem[answerIndex];
+        if (String(allowedAnswer).includes(answerString) && score > 0) {
+          matchedGroups.push(answerIndex);
+        }
+      }
+    }
+    return matchedGroups;
+  }
+
+  /**
    * Check if element is a marking score (string or number)
    */
   private static isMarkingScore(element: any): boolean {

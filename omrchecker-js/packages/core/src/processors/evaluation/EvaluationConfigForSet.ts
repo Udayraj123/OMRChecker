@@ -3,9 +3,15 @@
  * Simplified port of Python's src/processors/evaluation/evaluation_config_for_set.py
  */
 
-import { AnswerMatcher, AnswerType, SchemaVerdict } from './AnswerMatcher';
+import { AnswerMatcher, AnswerType, SchemaVerdict, Verdict } from './AnswerMatcher';
 import { SectionMarkingScheme, DEFAULT_SECTION_KEY } from './SectionMarkingScheme';
 import { Logger } from '../../utils/logger';
+import { CLR_BLACK, CLR_WHITE } from '../../utils/constants';
+import type {
+  DrawQuestionVerdictsConfig,
+  DrawAnswerGroupsConfig,
+  DrawDetectedBubbleTextsConfig,
+} from '../../schemas/models/evaluation';
 
 const logger = new Logger('EvaluationConfigForSet');
 
@@ -53,6 +59,23 @@ export class EvaluationConfigForSet {
   public hasConditionalSets: boolean;
   public shouldExplainScoring: boolean;
   public shouldExportExplanationCsv: boolean;
+  public drawQuestionVerdicts?: DrawQuestionVerdictsConfig;
+  public drawAnswerGroups?: DrawAnswerGroupsConfig;
+  public drawDetectedBubbleTexts?: DrawDetectedBubbleTextsConfig;
+  public drawAnswersSummary?: {
+    enabled?: boolean;
+    answers_summary_format_string?: string;
+    position?: [number, number];
+    size?: number;
+  };
+  public drawScore?: {
+    enabled?: boolean;
+    score_format_string?: string;
+    position?: [number, number];
+    size?: number;
+  };
+  public verdictColors?: Record<string, [number, number, number]>;
+  public verdictSymbolColors?: Record<string, [number, number, number]>;
 
   constructor(
     setName: string,
@@ -301,6 +324,169 @@ export class EvaluationConfigForSet {
    */
   getExcludeFiles(): string[] {
     return [];
+  }
+
+  /**
+   * Get evaluation meta for question (verdict colors, symbols, etc.).
+   *
+   * Port of Python's get_evaluation_meta_for_question method.
+   *
+   * @param questionMeta - Question metadata
+   * @param isFieldMarked - Whether the field is marked
+   * @param imageType - Image type ('GRAYSCALE' or 'COLORED')
+   * @returns Tuple of [symbol, color, symbolColor, thicknessFactor]
+   */
+  getEvaluationMetaForQuestion(
+    questionMeta: any,
+    isFieldMarked: boolean,
+    imageType: 'GRAYSCALE' | 'COLORED'
+  ): [string, string | [number, number, number], string | [number, number, number], number] {
+    const symbolPositive = '+';
+    const symbolNegative = '-';
+    const symbolNeutral = 'o';
+    const symbolBonus = '*';
+    const symbolUnmarked = '';
+    const thicknessFactor = 1 / 12;
+
+    const bonusType = questionMeta.bonus_type;
+    const questionVerdict = questionMeta.question_verdict;
+    const questionSchemaVerdict = questionMeta.question_schema_verdict;
+    const delta = questionMeta.delta || 0;
+
+    const colorCorrect = this.verdictColors?.correct || [0, 255, 0]; // Green
+    const colorIncorrect = this.verdictColors?.incorrect || [0, 0, 255]; // Red
+    const colorNeutral =
+      this.verdictColors?.neutral || this.verdictColors?.incorrect || [0, 0, 255];
+    const colorBonus = this.verdictColors?.bonus || [255, 221, 0]; // Cyan-like
+
+    const symbolColorPositive =
+      this.verdictSymbolColors?.positive || [0, 0, 0]; // Black
+    const symbolColorNegative =
+      this.verdictSymbolColors?.negative || [0, 0, 0]; // Black
+    const symbolColorNeutral =
+      this.verdictSymbolColors?.neutral || [0, 0, 0]; // Black
+    const symbolColorBonus =
+      this.verdictSymbolColors?.bonus || [0, 0, 0]; // Black
+
+    let symbol: string;
+    let color: string | [number, number, number];
+    let symbolColor: string | [number, number, number];
+
+    if (isFieldMarked) {
+      // Always render symbol as per delta (regardless of bonus) for marked bubbles
+      if (delta > 0) {
+        symbol = symbolPositive;
+      } else if (delta < 0) {
+        symbol = symbolNegative;
+      } else {
+        symbol = symbolNeutral;
+      }
+
+      // Update colors for marked bubbles
+      if (imageType === 'GRAYSCALE') {
+        color = CLR_WHITE;
+        symbolColor = CLR_BLACK;
+      } else {
+        // Apply colors as per delta
+        if (delta > 0) {
+          color = colorCorrect;
+          symbolColor = symbolColorPositive;
+        } else if (delta < 0) {
+          color = colorIncorrect;
+          symbolColor = symbolColorNegative;
+        } else {
+          color = colorNeutral;
+          symbolColor = symbolColorNeutral;
+        }
+
+        // Override bonus colors if bubble was marked but verdict was not correct
+        if (
+          bonusType !== undefined &&
+          (questionVerdict === Verdict.UNMARKED ||
+            questionVerdict === Verdict.NO_ANSWER_MATCH)
+        ) {
+          color = colorBonus;
+          symbolColor = symbolColorBonus;
+        }
+      }
+    } else {
+      symbol = symbolUnmarked;
+      // In case of unmarked bubbles, we draw the symbol only if bonus type is BONUS_FOR_ALL
+      if (bonusType === 'BONUS_FOR_ALL') {
+        symbol = symbolPositive;
+      } else if (bonusType === 'BONUS_ON_ATTEMPT') {
+        if (questionSchemaVerdict === Verdict.UNMARKED) {
+          // Case of bonus on attempt with blank question - show neutral symbol on all bubbles(on attempt)
+          symbol = symbolNeutral;
+        } else {
+          // Case of bonus on attempt with one or more marked bubbles - show bonus symbol on remaining bubbles
+          symbol = symbolBonus;
+        }
+      }
+
+      // Apply bonus colors for all bubbles
+      if (bonusType !== undefined) {
+        color = colorBonus;
+        symbolColor = symbolColorBonus;
+      } else {
+        color = '';
+        symbolColor = '';
+      }
+    }
+
+    return [symbol, color, symbolColor, thicknessFactor];
+  }
+
+  /**
+   * Get formatted answers summary for drawing.
+   *
+   * Port of Python's get_formatted_answers_summary method.
+   *
+   * @param answersSummaryFormatString - Optional format string override
+   * @returns Tuple of [formattedText, position, size, thickness]
+   */
+  getFormattedAnswersSummary(
+    answersSummaryFormatString?: string
+  ): [string, [number, number], number, number] {
+    const formatString =
+      answersSummaryFormatString ||
+      this.drawAnswersSummary?.answers_summary_format_string ||
+      'Correct: {correct} Incorrect: {incorrect} Unmarked: {unmarked}';
+
+    const answersFormat = formatString
+      .replace('{correct}', String(this.schemaVerdictCounts[SchemaVerdict.CORRECT]))
+      .replace('{incorrect}', String(this.schemaVerdictCounts[SchemaVerdict.INCORRECT]))
+      .replace('{unmarked}', String(this.schemaVerdictCounts[SchemaVerdict.UNMARKED]));
+
+    const position =
+      this.drawAnswersSummary?.position || ([200, 600] as [number, number]);
+    const size = this.drawAnswersSummary?.size || 1.0;
+    const thickness = Math.floor(size * 2);
+
+    return [answersFormat, position, size, thickness];
+  }
+
+  /**
+   * Get formatted score for drawing.
+   *
+   * Port of Python's get_formatted_score method.
+   *
+   * @param score - Score value
+   * @returns Tuple of [formattedText, position, size, thickness]
+   */
+  getFormattedScore(score: number): [string, [number, number], number, number] {
+    const scoreFormatString =
+      this.drawScore?.score_format_string || 'Score: {score}';
+    const scoreFormat = scoreFormatString.replace(
+      '{score}',
+      String(Math.round(score * 100) / 100)
+    );
+
+    const position = this.drawScore?.position || ([200, 200] as [number, number]);
+    const size = this.drawScore?.size || 1.5;
+    const thickness = Math.floor(size * 2);
+
+    return [scoreFormat, position, size, thickness];
   }
 }
 

@@ -11,13 +11,13 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as cv from '@techstark/opencv-js';
 import { TemplateFileRunner } from '../processors/detection/templateFileRunner';
-import { TemplateLoader, type TemplateLayout } from '../template/TemplateLoader';
+import { TemplateLoader, type TemplateLayoutData } from '../template/TemplateLoader';
 import type { TemplateConfig } from '../template/types';
 import { OMRProcessor } from '../core/OMRProcessor';
 
 describe('Multi-Pass Architecture E2E', () => {
   let templateConfig: TemplateConfig;
-  let templateLayout: TemplateLayout;
+  let templateLayout: TemplateLayoutData;
   let mockGrayImage: cv.Mat;
   let mockColoredImage: cv.Mat;
 

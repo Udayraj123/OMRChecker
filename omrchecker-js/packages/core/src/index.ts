@@ -118,7 +118,19 @@ export {
   BUILTIN_BUBBLE_FIELD_TYPES,
   DEFAULT_TEMPLATE_CONFIG,
 } from './template/types';
-export { TemplateLoader, type TemplateLayout } from './template/TemplateLoader';
+export { TemplateLoader, type TemplateLayoutData } from './template/TemplateLoader';
+export { TemplateLayout } from './template/TemplateLayout';
+export { TemplateDrawing, TemplateDrawingUtils } from './template/TemplateDrawing';
+export { templateConfigFromDict, templateConfigToDict } from './schemas/models/template';
+export { TEMPLATE_DEFAULTS } from './schemas/defaults/template';
+export { CONFIG_DEFAULTS } from './schemas/defaults/config';
+export { EVALUATION_CONFIG_DEFAULTS } from './schemas/defaults/evaluation';
+export { Config, FileGroupingConfig, type ThresholdingConfig, type OutputsConfig, type ProcessingConfig, type MLConfig, type ShiftDetectionConfig, type VisualizationConfig, type GroupingRule } from './schemas/models/config';
+export { EvaluationConfig as EvaluationConfigModel, type DrawScoreConfig, type DrawAnswersSummaryConfig, type DrawQuestionVerdictsConfig, type DrawDetectedBubbleTextsConfig, type DrawAnswerGroupsConfig, type OutputsConfiguration as EvaluationOutputsConfiguration } from './schemas/models/evaluation';
+
+// Utils
+export { FilePatternResolver } from './utils/filePatternResolver';
+export { dataclassToDict } from './utils/serialization';
 
 // Layout classes
 export * from './processors/layout/field';

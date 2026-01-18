@@ -23,7 +23,7 @@ import { EvaluationProcessor } from '../processors/evaluation/EvaluationProcesso
 import {
   TemplateLoader,
   type ParsedTemplate,
-  type TemplateLayout,
+  type TemplateLayoutData,
 } from '../template/TemplateLoader';
 import { type TemplateConfig } from '../template/types';
 import { Logger } from '../utils/logger';
@@ -91,7 +91,7 @@ export interface OMRSheetResult {
  */
 export class OMRProcessor {
   private template: ParsedTemplate;
-  private templateLayout: TemplateLayout;
+  private templateLayout: TemplateLayoutData;
   private templateFileRunner: TemplateFileRunner | null = null;
   private pipeline: ProcessingPipeline;
   private evaluationProcessor: EvaluationProcessor | null = null;

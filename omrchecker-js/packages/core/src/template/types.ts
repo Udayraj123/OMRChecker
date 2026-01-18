@@ -104,8 +104,8 @@ export interface PreProcessorConfig {
 export interface OutputColumnsConfig {
   /** Custom column order */
   customOrder?: string[];
-  /** Sort type: "ALPHANUMERIC" or "NUMERIC" */
-  sortType?: 'ALPHANUMERIC' | 'NUMERIC';
+  /** Sort type: "ALPHANUMERIC", "NUMERIC", or "CUSTOM" */
+  sortType?: 'ALPHANUMERIC' | 'NUMERIC' | 'CUSTOM';
   /** Sort order: "ASC" or "DESC" */
   sortOrder?: 'ASC' | 'DESC';
 }

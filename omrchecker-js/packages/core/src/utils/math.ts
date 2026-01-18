@@ -330,5 +330,52 @@ export class MathUtils {
       yield inputList.slice(i, i + size);
     }
   }
+
+  /**
+   * Convert any color format to BGR tuple.
+   *
+   * Supports hex colors (#RRGGBB), named colors, and RGB tuples.
+   * Returns BGR tuple [B, G, R] for OpenCV compatibility.
+   *
+   * @param anyColor - Color in any format (hex string, named color, or RGB tuple)
+   * @returns BGR tuple [B, G, R]
+   */
+  static toBgr(anyColor: string | [number, number, number]): [number, number, number] {
+    let r: number, g: number, b: number;
+
+    if (Array.isArray(anyColor)) {
+      // Already RGB tuple
+      [r, g, b] = anyColor;
+    } else if (typeof anyColor === 'string') {
+      // Hex color or named color
+      if (anyColor.startsWith('#')) {
+        // Hex color: #RRGGBB
+        const hex = anyColor.slice(1);
+        r = parseInt(hex.slice(0, 2), 16);
+        g = parseInt(hex.slice(2, 4), 16);
+        b = parseInt(hex.slice(4, 6), 16);
+      } else {
+        // Named color - simple mapping for common colors
+        const namedColors: Record<string, [number, number, number]> = {
+          black: [0, 0, 0],
+          white: [255, 255, 255],
+          red: [255, 0, 0],
+          green: [0, 255, 0],
+          blue: [0, 0, 255],
+          yellow: [255, 255, 0],
+          cyan: [0, 255, 255],
+          magenta: [255, 0, 255],
+        };
+        const color = namedColors[anyColor.toLowerCase()] || [0, 0, 0];
+        [r, g, b] = color;
+      }
+    } else {
+      // Default to black
+      [r, g, b] = [0, 0, 0];
+    }
+
+    // Return BGR tuple for OpenCV
+    return [b, g, r];
+  }
 }
 

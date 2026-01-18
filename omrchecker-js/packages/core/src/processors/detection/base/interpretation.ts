@@ -38,7 +38,25 @@ export class BaseInterpretation {
  * Drawing instance interface (forward declaration).
  */
 export interface InterpretationDrawing {
-  // Stub for now, can be extended when needed
+  drawFieldInterpretation(
+    markedImage: any,
+    imageType: 'GRAYSCALE' | 'COLORED',
+    evaluationMeta?: any,
+    evaluationConfigForResponse?: any
+  ): void;
+}
+
+/**
+ * Type guard to check if an object implements InterpretationDrawing.
+ */
+export function isInterpretationDrawing(
+  obj: any
+): obj is InterpretationDrawing {
+  return (
+    obj !== null &&
+    typeof obj === 'object' &&
+    typeof obj.drawFieldInterpretation === 'function'
+  );
 }
 
 /**

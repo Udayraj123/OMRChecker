@@ -6,6 +6,7 @@
  */
 
 import * as cv from '@techstark/opencv-js';
+import { CLR_BLACK } from '../../../utils/constants';
 import { DrawingUtils } from '../../../utils/drawing';
 import type { Field } from './base';
 
@@ -26,7 +27,7 @@ export class FieldDrawing {
     markedImage: cv.Mat,
     shifts: [number, number],
     thicknessFactor: number,
-    border: cv.Vec3
+    border: cv.Vec3 | number
   ): void {
     FieldDrawing.drawScanBoxesUtil(
       this.field,
@@ -45,14 +46,18 @@ export class FieldDrawing {
     markedImage: cv.Mat,
     shifts: [number, number],
     thicknessFactor: number,
-    border: cv.Vec3
+    border: cv.Vec3 | number
   ): void {
     const scanBoxes = field.scanBoxes;
     for (const unitBubble of scanBoxes) {
       const shiftedPosition = unitBubble.getShiftedPosition(shifts);
       const dimensions = unitBubble.dimensions;
-      // Convert border from Vec3 to ColorTuple
-      const color: [number, number, number] = [border[0], border[1], border[2]];
+      // Convert border from Vec3 to ColorTuple, or use default color if number
+      const color: [number, number, number] =
+        typeof border === 'number'
+          ? CLR_BLACK
+          : ([border[0], border[1], border[2]] as [number, number, number]);
+      const borderThickness = typeof border === 'number' ? border : 3;
       DrawingUtils.drawBox(
         markedImage,
         shiftedPosition,
@@ -60,7 +65,7 @@ export class FieldDrawing {
         color,
         'BOX_HOLLOW',
         thicknessFactor,
-        3 // border thickness
+        borderThickness
       );
     }
   }

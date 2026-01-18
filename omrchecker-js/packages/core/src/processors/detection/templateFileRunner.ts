@@ -14,7 +14,7 @@ import { FieldTypeFileLevelRunner } from './base/fileRunner';
 import { BubblesThresholdFileRunner } from './bubbles_threshold/fileRunner';
 import type { Field } from '../layout/field/base';
 import type { TuningConfig } from './base/commonPass';
-import type { TemplateLayout } from '../../template/TemplateLoader';
+import type { TemplateLayoutData } from '../../template/TemplateLoader';
 
 /**
  * Mapping of field detection types to their file runner classes.
@@ -42,7 +42,7 @@ export class TemplateFileRunner extends FileLevelRunner<
   TemplateDetectionPass,
   TemplateInterpretationPass
 > {
-  public template: TemplateLayout;
+  public template: TemplateLayoutData;
   public allFields: Field[] = [];
   public allFieldDetectionTypes: string[] = [];
   protected fieldDetectionTypeFileRunners: Record<
@@ -50,7 +50,7 @@ export class TemplateFileRunner extends FileLevelRunner<
     FieldTypeFileLevelRunner
   > = {};
 
-  constructor(template: TemplateLayout, tuningConfig: TuningConfig) {
+  constructor(template: TemplateLayoutData, tuningConfig: TuningConfig) {
     const detectionPass = new TemplateDetectionPass(tuningConfig);
     const interpretationPass = new TemplateInterpretationPass(tuningConfig);
     super(tuningConfig, detectionPass, interpretationPass);
@@ -65,7 +65,7 @@ export class TemplateFileRunner extends FileLevelRunner<
    *
    * @param template - Template layout
    */
-  initializeFieldFileRunners(template: TemplateLayout): void {
+  initializeFieldFileRunners(template: TemplateLayoutData): void {
     this.allFields = template.allFields;
     this.allFieldDetectionTypes = template.allFieldDetectionTypes;
 
@@ -255,7 +255,7 @@ export class TemplateFileRunner extends FileLevelRunner<
    * @param templateOrPath - Template layout or directory path
    */
   initializeDirectoryLevelAggregates(
-    templateOrPath: TemplateLayout | string
+    templateOrPath: TemplateLayoutData | string
   ): void {
     // For browser environment, we don't have a file path, so use empty string
     const initialDirectoryPath =

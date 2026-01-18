@@ -147,7 +147,7 @@ class FilePatternResolver:
             parent = path.parent
             counter = 1
 
-            while True:
+            while counter < 9999:
                 new_name = f"{stem}_{counter:03d}{suffix}"
                 new_path = parent / new_name
                 if not new_path.exists():
@@ -156,7 +156,7 @@ class FilePatternResolver:
                 counter += 1
 
                 # Safety limit
-                if counter > 9999:
+                if counter == 9999:
                     logger.error(f"Too many collisions for {stem}, giving up")
                     return None
 

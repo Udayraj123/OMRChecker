@@ -26,9 +26,11 @@ const logger = new Logger('TemplateLoader');
 export type { ParsedTemplate, ParsedField };
 
 /**
- * Template layout structure (matches Python TemplateLayout).
+ * Template layout data structure (matches Python TemplateLayout data).
+ * This is the data structure returned by loadLayoutFromJSON.
+ * For the class with methods, see TemplateLayout class.
  */
-export interface TemplateLayout {
+export interface TemplateLayoutData {
   templateDimensions: [number, number];
   bubbleDimensions: [number, number];
   fieldBlocks: FieldBlock[];
@@ -52,7 +54,7 @@ export class TemplateLoader {
    * @param json - Template JSON object
    * @returns Template layout with FieldBlock instances
    */
-  static loadLayoutFromJSON(json: TemplateConfig): TemplateLayout {
+  static loadLayoutFromJSON(json: TemplateConfig): TemplateLayoutData {
     logger.info('Loading template layout from JSON');
 
     // Apply defaults

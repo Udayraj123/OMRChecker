@@ -4,7 +4,7 @@
 
 import * as cv from '@techstark/opencv-js';
 import { TemplateFileRunner } from '../templateFileRunner';
-import { TemplateLoader, type TemplateLayout } from '../../../template/TemplateLoader';
+import { TemplateLoader, type TemplateLayoutData } from '../../../template/TemplateLoader';
 import type { TemplateConfig } from '../../../template/types';
 
 describe('TemplateFileRunner', () => {
