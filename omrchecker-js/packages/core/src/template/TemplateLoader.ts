@@ -11,6 +11,7 @@ import { FieldBlock, type FieldBlockConfig } from '../processors/layout/fieldBlo
 import type { Field } from '../processors/layout/field/base';
 import { BUILTIN_BUBBLE_FIELD_TYPES } from '../utils/constants';
 import { Logger } from '../utils/logger';
+import type { SaveImageOps } from '../utils/SaveImageOps';
 // parseFields is used in FieldBlock, not here
 import {
   type TemplateConfig,
@@ -40,6 +41,7 @@ export interface TemplateLayoutData {
   fieldBlocksOffset: [number, number];
   globalEmptyValue: string;
   bubbleFieldTypesData: Record<string, BubbleFieldType>;
+  saveImageOps?: SaveImageOps; // Optional SaveImageOps for debug image saving
 }
 
 /**

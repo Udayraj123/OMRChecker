@@ -33,7 +33,7 @@ export { CropOnMarkers, type CropOnMarkersOptions } from './processors/image/Cro
 export {
   ImageTemplatePreprocessor,
   type ImagePreprocessorOptions,
-  type SaveImageOps,
+  type SaveImageOps as SaveImageOpsInterface,
 } from './processors/image/base';
 
 // Image processors - Coordinator
@@ -131,6 +131,7 @@ export { EvaluationConfig as EvaluationConfigModel, type DrawScoreConfig, type D
 // Utils
 export { FilePatternResolver } from './utils/filePatternResolver';
 export { dataclassToDict } from './utils/serialization';
+export { SaveImageOps } from './utils/SaveImageOps';
 
 // Layout classes
 export * from './processors/layout/field';

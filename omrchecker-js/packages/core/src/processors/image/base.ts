@@ -12,7 +12,7 @@ import type * as cv from '@techstark/opencv-js';
 import { Processor, ProcessingContext } from '../base';
 import { ImageUtils } from '../../utils/ImageUtils';
 import { Logger } from '../../utils/logger';
-import type { TuningConfig } from '../../template/types';
+import type { SaveImageOps as SaveImageOpsClass } from '../../utils/SaveImageOps';
 
 const logger = new Logger('ImageTemplatePreprocessor');
 
@@ -42,19 +42,12 @@ export interface ImagePreprocessorOptions {
 }
 
 /**
- * Configuration for saving images during processing
+ * Configuration for saving images during processing.
+ *
+ * Uses the SaveImageOps class from utils/SaveImageOps.ts.
+ * This is a type alias to maintain compatibility with the existing interface.
  */
-export interface SaveImageOps {
-  /**
-   * Function to append an image to be saved
-   */
-  appendSaveImage: (name: string, image: cv.Mat) => void;
-
-  /**
-   * Tuning configuration
-   */
-  tuningConfig: TuningConfig;
-}
+export type SaveImageOps = SaveImageOpsClass;
 
 /**
  * Base class for image preprocessing.
@@ -67,7 +60,12 @@ export abstract class ImageTemplatePreprocessor extends Processor {
   protected tuningOptions: Record<string, any>;
   protected relativeDir: string;
   protected description: string = 'UNKNOWN';
-  protected appendSaveImage: (name: string, image: cv.Mat) => void;
+  protected appendSaveImage: (
+    title: string,
+    keys: number | number[],
+    grayImage?: cv.Mat,
+    coloredImage?: cv.Mat
+  ) => void;
   protected tuningConfig: any;
   protected processingImageShape: [number, number] | null;
   protected output: any;

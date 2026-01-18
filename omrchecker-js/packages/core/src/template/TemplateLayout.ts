@@ -11,10 +11,12 @@ import { OMRCheckerError } from '../core/exceptions';
 import { FieldDetectionType } from '../processors/constants';
 import { FieldBlock } from '../processors/layout/fieldBlock/base';
 import type { Field } from '../processors/layout/field/base';
+import { PROCESSOR_MANAGER } from '../processors/image/processorManager';
 import { BUILTIN_BUBBLE_FIELD_TYPES } from '../utils/constants';
 import { ImageUtils } from '../utils/image';
 import { Logger } from '../utils/logger';
 import { parseFields, alphanumericalSortKey } from '../utils/parsing';
+import { SaveImageOps } from '../utils/SaveImageOps';
 import type {
   TemplateConfig,
   BubbleFieldType,
@@ -246,14 +248,62 @@ export class TemplateLayout {
   /**
    * Setup preprocessors from configuration.
    *
+   * Port of Python's setup_pre_processors method.
+   *
    * @param preProcessorsObject - Array of preprocessor configurations
    * @param relativeDir - Relative directory for preprocessor resources
+   * @param saveImageOps - SaveImageOps instance for debug image saving
    */
-  setupPreProcessors(_preProcessorsObject: any[], _relativeDir: string): void {
-    // TODO: Implement preprocessor setup
-    // This requires PROCESSOR_MANAGER which may not be ported yet
+  setupPreProcessors(
+    preProcessorsObject: any[],
+    relativeDir: string,
+    saveImageOps?: SaveImageOps
+  ): void {
+    // Load image preprocessors
     this.preProcessors = [];
-    logger.debug('Preprocessor setup would be implemented here');
+
+    for (const preProcessorConfig of preProcessorsObject) {
+      const processorName = preProcessorConfig.name;
+
+      if (!processorName) {
+        logger.warn('Preprocessor configuration missing name, skipping');
+        continue;
+      }
+
+      // Get processor factory from manager
+      const processorFactory = PROCESSOR_MANAGER[processorName];
+
+      if (!processorFactory) {
+        logger.warn(
+          `Unknown processor name: ${processorName}. Supported processors: ${Object.keys(PROCESSOR_MANAGER).join(', ')}`
+        );
+        continue;
+      }
+
+      // Create saveImageOps if not provided
+      // Use the SaveImageOps class instance or create a new instance
+      let imageOps: SaveImageOps;
+      if (saveImageOps) {
+        imageOps = saveImageOps;
+      } else {
+        // Create a new SaveImageOps instance with minimal config
+        const minimalTuningConfig = { outputs: { save_image_level: 0 } } as any;
+        imageOps = new SaveImageOps(minimalTuningConfig);
+      }
+
+      // Instantiate processor using factory
+      const preProcessorInstance = processorFactory(
+        preProcessorConfig.options || {},
+        relativeDir,
+        imageOps,
+        this.processingImageShape
+      );
+
+      this.preProcessors.push(preProcessorInstance);
+      logger.debug(`Loaded preprocessor: ${processorName}`);
+    }
+
+    logger.info(`Setup ${this.preProcessors.length} preprocessors`);
   }
 
   /**
@@ -514,7 +564,166 @@ export class TemplateLayout {
   }
 
   /**
+   * Parse and add a field block to the template layout.
+   *
+   * Port of Python's parse_and_add_field_block method.
+   *
+   * @param blockName - Name of the field block
+   * @param fieldBlockObject - Field block configuration object
+   * @returns Created FieldBlock instance
+   */
+  parseAndAddFieldBlock(
+    blockName: string,
+    fieldBlockObject: any
+  ): FieldBlock {
+    const filledFieldBlockObject = this.prefillFieldBlock(fieldBlockObject);
+    const blockInstance = new FieldBlock(
+      blockName,
+      filledFieldBlockObject,
+      this.fieldBlocksOffset
+    );
+
+    // TODO: support custom field types like Barcode and OCR
+    this.fieldBlocks.push(blockInstance);
+    this.validateParsedFieldBlock(
+      filledFieldBlockObject.fieldLabels,
+      blockInstance
+    );
+
+    // Update allFields and allFieldDetectionTypes
+    this.allFields.push(...blockInstance.fields);
+    if (!this.allFieldDetectionTypes.includes(blockInstance.fieldDetectionType)) {
+      this.allFieldDetectionTypes.push(blockInstance.fieldDetectionType);
+    }
+
+    return blockInstance;
+  }
+
+  /**
+   * Prefill field block with default values.
+   *
+   * Port of Python's prefill_field_block method.
+   *
+   * @param fieldBlockObject - Field block configuration object
+   * @returns Filled field block configuration
+   */
+  prefillFieldBlock(fieldBlockObject: any): any {
+    const filledFieldBlockObject = { ...fieldBlockObject };
+
+    if (
+      fieldBlockObject.fieldDetectionType ===
+      FieldDetectionType.BUBBLES_THRESHOLD
+    ) {
+      const bubbleFieldType = fieldBlockObject.bubbleFieldType;
+      const fieldTypeData = this.bubbleFieldTypesData[bubbleFieldType];
+      Object.assign(filledFieldBlockObject, {
+        bubbleFieldType: bubbleFieldType,
+        emptyValue: this.globalEmptyValue,
+        bubbleDimensions: this.bubbleDimensions,
+        ...fieldTypeData,
+      });
+    } else if (
+      fieldBlockObject.fieldDetectionType === FieldDetectionType.OCR ||
+      fieldBlockObject.fieldDetectionType === FieldDetectionType.BARCODE_QR
+    ) {
+      Object.assign(filledFieldBlockObject, {
+        emptyValue: this.globalEmptyValue,
+        labelsGap: 0,
+      });
+    }
+
+    return filledFieldBlockObject;
+  }
+
+  /**
+   * Validate parsed field block.
+   *
+   * Port of Python's validate_parsed_field_block method.
+   *
+   * @param fieldLabels - Field labels array
+   * @param blockInstance - FieldBlock instance to validate
+   */
+  validateParsedFieldBlock(
+    fieldLabels: string[],
+    blockInstance: FieldBlock
+  ): void {
+    const parsedFieldLabels = blockInstance.parsedFieldLabels;
+    const blockName = blockInstance.name;
+    const fieldLabelsSet = new Set(parsedFieldLabels);
+
+    // Check for overlap with existing labels
+    const overlap = new Set(
+      Array.from(fieldLabelsSet).filter((label) =>
+        this.allParsedLabels.has(label)
+      )
+    );
+
+    if (overlap.size > 0) {
+      logger.fatal(
+        `An overlap found between field string: ${fieldLabels.join(', ')} in block '${blockName}' and existing labels: ${Array.from(this.allParsedLabels).join(', ')}`
+      );
+      throw new OMRCheckerError(
+        `The field strings for field block ${blockName} overlap with other existing fields: ${Array.from(overlap).join(', ')}`,
+        {
+          block_name: blockName,
+          field_labels: fieldLabels,
+          overlap: Array.from(overlap),
+        }
+      );
+    }
+
+    // Update all parsed labels
+    parsedFieldLabels.forEach((label) => this.allParsedLabels.add(label));
+
+    // Validate bounding box is within template dimensions
+    const [pageWidth, pageHeight] = this.templateDimensions;
+
+    if (!blockInstance.boundingBoxDimensions || !blockInstance.boundingBoxOrigin) {
+      // Bounding box not calculated yet, skip validation
+      return;
+    }
+
+    const [blockWidth, blockHeight] = blockInstance.boundingBoxDimensions;
+    const [blockStartX, blockStartY] = blockInstance.boundingBoxOrigin;
+
+    const blockEndX = blockStartX + blockWidth;
+    const blockEndY = blockStartY + blockHeight;
+
+    if (
+      blockEndX >= pageWidth ||
+      blockEndY >= pageHeight ||
+      blockStartX < 0 ||
+      blockStartY < 0
+    ) {
+      throw new OMRCheckerError(
+        `Overflowing field block '${blockName}' with origin [${blockStartX}, ${blockStartY}] and dimensions [${blockWidth}, ${blockHeight}] in template with dimensions [${pageWidth}, ${pageHeight}]`,
+        {
+          block_name: blockName,
+          bounding_box_origin: blockInstance.boundingBoxOrigin,
+          bounding_box_dimensions: blockInstance.boundingBoxDimensions,
+          template_dimensions: this.templateDimensions,
+        }
+      );
+    }
+  }
+
+  /**
+   * Convert template layout to string representation.
+   *
+   * Port of Python's __str__ method.
+   *
+   * @returns String representation (template path)
+   */
+  toString(): string {
+    // In TypeScript, we don't have a path property on TemplateLayout
+    // Return a descriptive string instead
+    return `TemplateLayout(${this.fieldBlocks.length} blocks, ${this.allFields.length} fields)`;
+  }
+
+  /**
    * Convert template layout to JSON (for serialization).
+   *
+   * Port of Python's to_json method.
    *
    * @returns JSON representation of template layout
    */

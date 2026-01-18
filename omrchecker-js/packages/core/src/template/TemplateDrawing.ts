@@ -164,13 +164,16 @@ export class TemplateDrawingUtils {
       }
     }
 
-    // TODO: template.save_image_ops.append_save_image when SaveImageOps is ported
-    // template.save_image_ops.append_save_image(
-    //   'Marked Template',
-    //   range(1, 7),
-    //   finalMarked,
-    //   coloredFinalMarked
-    // );
+    // Save images if saveImageOps is provided
+    if (template.saveImageOps) {
+      const keys = Array.from({ length: 7 }, (_, i) => i + 1); // range(1, 7)
+      template.saveImageOps.appendSaveImage(
+        'Marked Template',
+        keys,
+        finalMarked,
+        coloredFinalMarked
+      );
+    }
 
     return [finalMarked, coloredFinalMarked];
   }
@@ -234,21 +237,25 @@ export class TemplateDrawingUtils {
         undefined // evaluationConfigForResponse
       );
 
-      // TODO: template.save_image_ops.append_save_image when SaveImageOps is ported
-      // if (imageType === 'GRAYSCALE') {
-      //   template.save_image_ops.append_save_image(
-      //     'Marked Image',
-      //     range(2, 7),
-      //     drawnCopy
-      //   );
-      // } else {
-      //   template.save_image_ops.append_save_image(
-      //     'Marked Image',
-      //     range(2, 7),
-      //     undefined,
-      //     drawnCopy
-      //   );
-      // }
+      // Save images if saveImageOps is provided
+      if (template.saveImageOps) {
+        const keys = Array.from({ length: 6 }, (_, i) => i + 2); // range(2, 7)
+        if (imageType === 'GRAYSCALE') {
+          template.saveImageOps.appendSaveImage(
+            'Marked Image',
+            keys,
+            markedImageCopy,
+            undefined
+          );
+        } else {
+          template.saveImageOps.appendSaveImage(
+            'Marked Image',
+            keys,
+            undefined,
+            markedImageCopy
+          );
+        }
+      }
     }
 
     markedImage = TemplateDrawingUtils.drawAllFields(

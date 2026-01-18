@@ -1200,7 +1200,7 @@
     {
       "python": "src/utils/file.py",
       "typescript": "omrchecker-js/packages/core/src/utils/file.ts",
-      "status": "synced",
+      "status": "partial",
       "phase": 1,
       "priority": "medium",
       "lastSyncedCommit": "ab9d2bf0270081b61509002b48d4dd07fa2d7d7e",
@@ -1211,9 +1211,38 @@
           "python": "PathUtils",
           "typescript": "PathUtils",
           "synced": false
+        },
+        {
+          "python": "SaveImageOps",
+          "typescript": "SaveImageOps",
+          "synced": true,
+          "typescriptFile": "omrchecker-js/packages/core/src/utils/SaveImageOps.ts",
+          "methods": [
+            {
+              "python": "append_save_image",
+              "typescript": "appendSaveImage",
+              "synced": true
+            },
+            {
+              "python": "save_image_stacks",
+              "typescript": "saveImageStacks",
+              "synced": true,
+              "notes": "File saving uses ImageSaver (browser-compatible)"
+            },
+            {
+              "python": "get_result_hstack",
+              "typescript": "getResultHstack",
+              "synced": true
+            },
+            {
+              "python": "reset_all_save_img",
+              "typescript": "resetAllSaveImg",
+              "synced": true
+            }
+          ]
         }
       ],
-      "notes": "Browser file handling uses File API instead of filesystem"
+      "notes": "Browser file handling uses File API instead of filesystem. SaveImageOps fully ported and integrated with TemplateDrawing."
     },
     {
       "python": "src/schemas/config_schema.py",
@@ -1410,7 +1439,7 @@
       "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "lastTypescriptChange": "2026-01-16T17:00:00Z",
       "testFile": "omrchecker-js/packages/core/src/template/__tests__/TemplateLoader.test.ts",
       "classes": [
         {
@@ -1429,9 +1458,110 @@
               "synced": true
             }
           ]
+        },
+        {
+          "python": "TemplateLayout",
+          "typescript": "TemplateLayout",
+          "synced": true,
+          "typescriptFile": "omrchecker-js/packages/core/src/template/TemplateLayout.ts",
+          "methods": [
+            {
+              "python": "get_exclude_files",
+              "typescript": "getExcludeFiles",
+              "synced": true
+            },
+            {
+              "python": "get_copy_for_shifting",
+              "typescript": "getCopyForShifting",
+              "synced": true
+            },
+            {
+              "python": "apply_preprocessors",
+              "typescript": "applyPreprocessors",
+              "synced": true
+            },
+            {
+              "python": "parse_output_columns",
+              "typescript": "parseOutputColumns",
+              "synced": true
+            },
+            {
+              "python": "setup_pre_processors",
+              "typescript": "setupPreProcessors",
+              "synced": true
+            },
+            {
+              "python": "parse_custom_bubble_field_types",
+              "typescript": "parseCustomBubbleFieldTypes",
+              "synced": true
+            },
+            {
+              "python": "validate_field_blocks",
+              "typescript": "validateFieldBlocks",
+              "synced": true
+            },
+            {
+              "python": "setup_alignment",
+              "typescript": "setupAlignment",
+              "synced": true
+            },
+            {
+              "python": "parse_custom_labels",
+              "typescript": "parseCustomLabels",
+              "synced": true
+            },
+            {
+              "python": "get_concatenated_omr_response",
+              "typescript": "getConcatenatedOmrResponse",
+              "synced": true
+            },
+            {
+              "python": "fill_output_columns",
+              "typescript": "fillOutputColumns",
+              "synced": true
+            },
+            {
+              "python": "validate_template_columns",
+              "typescript": "validateTemplateColumns",
+              "synced": true
+            },
+            {
+              "python": "parse_and_add_field_block",
+              "typescript": "parseAndAddFieldBlock",
+              "synced": true,
+              "notes": "Added for dynamic field block addition support"
+            },
+            {
+              "python": "prefill_field_block",
+              "typescript": "prefillFieldBlock",
+              "synced": true,
+              "notes": "Added for dynamic field block addition support"
+            },
+            {
+              "python": "validate_parsed_field_block",
+              "typescript": "validateParsedFieldBlock",
+              "synced": true,
+              "notes": "Added for dynamic field block addition support"
+            },
+            {
+              "python": "reset_all_shifts",
+              "typescript": "resetAllShifts",
+              "synced": true
+            },
+            {
+              "python": "__str__",
+              "typescript": "toString",
+              "synced": true
+            },
+            {
+              "python": "to_json",
+              "typescript": "toJSON",
+              "synced": true
+            }
+          ]
         }
       ],
-      "notes": "Template loader with field label expansion and bubble location calculation."
+      "notes": "Template loader (TemplateLoader) and template layout class (TemplateLayout) fully ported. TemplateLoader handles JSON loading and field label expansion. TemplateLayout class provides methods for template manipulation, preprocessing, alignment, validation, and dynamic field block addition. All methods maintain 1:1 mapping with Python implementation."
     },
     {
       "python": "N/A (demo/frontend only)",
@@ -2520,7 +2650,7 @@
           ]
         }
       ],
-      "notes": "Template drawing classes fully ported. TemplateDrawing and TemplateDrawingUtils now match Python implementation. Integrated with FieldBlockDrawing, FieldInterpretationDrawing, and EvaluationConfigForSet for complete drawing support. Some TODOs remain for SaveImageOps integration (deferred)."
+      "notes": "Template drawing classes fully ported. TemplateDrawing and TemplateDrawingUtils now match Python implementation. Integrated with FieldBlockDrawing, FieldInterpretationDrawing, and EvaluationConfigForSet for complete drawing support. SaveImageOps integration complete - all TODOs resolved."
     },
     {
       "python": "src/processors/organization/processor.py",
