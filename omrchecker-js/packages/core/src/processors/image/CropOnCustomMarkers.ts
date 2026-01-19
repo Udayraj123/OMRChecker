@@ -19,6 +19,7 @@ import { PointArray } from './pointUtils';
 import { logger } from '../../utils/logger';
 import { ImageProcessingError, TemplateValidationError } from '../../core/exceptions';
 import { ImageUtils } from '../../utils/ImageUtils';
+import { computeScanZone } from './patchUtils';
 import {
   WarpMethod,
   ScannerType,
@@ -462,7 +463,7 @@ export class CropOnCustomMarkers extends CropOnPatchesCommon {
     const zoneLabel = zoneDescription.label;
 
     // Extract patch zone
-    const [patchZone, zoneStart] = this.computeScanZoneUtil(image, zoneDescription);
+    const [patchZone, zoneStart] = computeScanZone(image, zoneDescription);
 
     // Get marker template
     const marker = this.markerForZoneLabel.get(zoneLabel);

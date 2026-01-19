@@ -16,6 +16,7 @@ from src.processors.image.marker_detection import (
     prepare_marker_template,
     detect_marker_in_patch,
 )
+
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
@@ -326,9 +327,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         config = self.tuning_config
         zone_label = zone_description["label"]
 
-        patch_zone, zone_start, _zone_end = self.compute_scan_zone_util(
-            image, zone_description
-        )
+        patch_zone, zone_start, _zone_end = (image, zone_description)
 
         marker = self.marker_for_zone_label[zone_label]
 

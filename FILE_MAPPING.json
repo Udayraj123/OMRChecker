@@ -2,7 +2,9 @@
   "version": "2.0",
   "metadata": {
     "description": "Mapping between Python and TypeScript files for OMRChecker port",
-    "lastUpdated": "2026-01-16T18:00:00Z",
+    "lastUpdated": "2026-01-16T20:00:00Z",
+    "test_files_mapping_completed": "2026-01-16T20:00:00Z",
+    "test_files_summary": "Added test file mappings for 5 major test suites: TemplateLayout.test.ts (571 lines), EvaluationConfigForSet.test.ts (779 lines), TemplateValidations.test.ts (396 lines), Exceptions.test.ts (349 lines), and TemplateFileRunner.test.ts (269 lines). Total ~2,364 lines of comprehensive test coverage ported from Python.",
     "phase11_completed": "2026-01-16T15:30:00Z",
     "phase11_summary": "Field interpretation drawing and FieldBlockDrawing: Ported FieldInterpretationDrawing base class and BubblesFieldInterpretationDrawing with full drawing support including verdicts and answer groups. Integrated into TemplateDrawing.drawAllFields(). Implemented FieldBlockDrawing.drawFieldBlock() with bounding rectangle, scan boxes, and label drawing. Added getEvaluationMetaForQuestion(), getFormattedAnswersSummary(), and getFormattedScore() to EvaluationConfigForSet. Updated TemplateDrawing.drawEvaluationSummary() to use new formatting methods. FilePatternResolver marked as synced.",
     "phase0_completed": "2026-01-16T12:00:00Z",
@@ -47,6 +49,7 @@
       "lastSyncedCommit": null,
       "lastPythonChange": null,
       "lastTypescriptChange": "2026-01-15T12:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/core/__tests__/testOMRProcessor.test.ts",
       "classes": [
         {
           "python": "OMRProcessor",
@@ -956,6 +959,7 @@
       "lastSyncedCommit": null,
       "lastPythonChange": null,
       "lastTypescriptChange": "2026-01-16T16:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/evaluation/__tests__/testEvaluationConfigForSet.test.ts",
       "classes": [
         {
           "python": "EvaluationConfigForSet",
@@ -1334,7 +1338,7 @@
       "notes": "Uses @zxing/library instead of pyzbar"
     },
     {
-      "python": "src/processors/threshold/strategies.py",
+      "python": "src/processors/threshold/global_threshold.py",
       "typescript": "omrchecker-js/packages/core/src/processors/threshold/GlobalThreshold.ts",
       "status": "synced",
       "phase": 1,
@@ -1357,10 +1361,10 @@
           ]
         }
       ],
-      "notes": "1:1 class mapping. In Python, all strategies are in strategies.py. In TypeScript, each strategy has its own file for better 1:1 maintenance."
+      "notes": "1:1 class mapping. Python file split from strategies.py to match TypeScript structure. Ratio: 1.53 (Py: 64, TS: 98)."
     },
     {
-      "python": "src/processors/threshold/strategies.py",
+      "python": "src/processors/threshold/local_threshold.py",
       "typescript": "omrchecker-js/packages/core/src/processors/threshold/LocalThreshold.ts",
       "status": "synced",
       "phase": 1,
@@ -1383,10 +1387,10 @@
           ]
         }
       ],
-      "notes": "1:1 class mapping. Local threshold for per-question thresholding."
+      "notes": "1:1 class mapping. Python file split from strategies.py to match TypeScript structure. Ratio: 1.37 (Py: 100, TS: 137). Full implementation with constructor, special cases, and all method variants."
     },
     {
-      "python": "src/processors/threshold/strategies.py",
+      "python": "src/processors/threshold/adaptive_threshold.py",
       "typescript": "omrchecker-js/packages/core/src/processors/threshold/AdaptiveThreshold.ts",
       "status": "synced",
       "phase": 1,
@@ -1409,7 +1413,7 @@
           ]
         }
       ],
-      "notes": "1:1 class mapping. Adaptive threshold combining global and local approaches."
+      "notes": "1:1 class mapping. Python file split from strategies.py to match TypeScript structure. Ratio: 1.32 (Py: 110, TS: 145). Full implementation with constructor, weighted average, and factory function. Overall threshold category ratio: 1.01 (Py: 276, TS: 279)."
     },
     {
       "python": "src/processors/detection/ml_detector.py",
@@ -1482,7 +1486,7 @@
       "lastSyncedCommit": null,
       "lastPythonChange": null,
       "lastTypescriptChange": "2026-01-16T17:00:00Z",
-      "testFile": "omrchecker-js/packages/core/src/template/__tests__/TemplateLoader.test.ts",
+      "testFile": "omrchecker-js/packages/core/src/template/__tests__/TemplateLoader.test.ts, omrchecker-js/packages/core/src/template/__tests__/testTemplateLayout.test.ts",
       "classes": [
         {
           "python": "TemplateLayout",
@@ -1658,13 +1662,14 @@
     {
       "python": "src/exceptions.py",
       "typescript": "omrchecker-js/packages/core/src/core/exceptions.ts",
-      "status": "partial",
+      "status": "synced",
       "phase": 1,
       "priority": "medium",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
-      "notes": "Python has comprehensive exception hierarchy (738 lines). TypeScript has partial port with only essential exceptions. Many Python-specific exceptions (file system, directory traversal) not needed for browser version."
+      "lastTypescriptChange": "2026-01-16T21:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/core/__tests__/testExceptions.test.ts",
+      "notes": "Python has comprehensive exception hierarchy (738 lines). TypeScript has 18 exception classes (197 lines) covering all browser-relevant exceptions: base errors, input/output, template, evaluation, config, security. File system and directory traversal exceptions intentionally omitted for browser version. Marked as synced since all browser-relevant exceptions are implemented. Added: TemplateNotFoundError, TemplateLoadError, EvaluationError, EvaluationConfigNotFoundError, EvaluationConfigLoadError, AnswerKeyError, ScoringError, PathTraversalError."
     },
     {
       "python": "src/processors/image/point_utils.py",
@@ -1774,6 +1779,7 @@
       "lastSyncedCommit": null,
       "lastPythonChange": null,
       "lastTypescriptChange": "2026-01-16T12:00:00Z",
+      "testFile": "omrchecker-js/packages/core/src/processors/detection/__tests__/testTemplateFileRunner.test.ts",
       "classes": [
         {
           "python": "TemplateFileRunner",
@@ -2855,14 +2861,61 @@
     },
     {
       "python": "src/schemas/models/config.py",
-      "typescript": "N/A (not yet ported)",
-      "status": "not_started",
-      "phase": 2,
-      "priority": "low",
+      "typescript": "omrchecker-js/packages/core/src/schemas/models/config.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
       "lastTypescriptChange": null,
-      "notes": "Config model classes. Can be added if needed."
+      "classes": [
+        {
+          "python": "ThresholdingConfig",
+          "typescript": "ThresholdingConfig",
+          "synced": true
+        },
+        {
+          "python": "GroupingRule",
+          "typescript": "GroupingRule",
+          "synced": true
+        },
+        {
+          "python": "FileGroupingConfig",
+          "typescript": "FileGroupingConfig",
+          "synced": true
+        },
+        {
+          "python": "OutputsConfig",
+          "typescript": "OutputsConfig",
+          "synced": true
+        },
+        {
+          "python": "ProcessingConfig",
+          "typescript": "ProcessingConfig",
+          "synced": true
+        },
+        {
+          "python": "ShiftDetectionConfig",
+          "typescript": "ShiftDetectionConfig",
+          "synced": true
+        },
+        {
+          "python": "MLConfig",
+          "typescript": "MLConfig",
+          "synced": true
+        },
+        {
+          "python": "VisualizationConfig",
+          "typescript": "VisualizationConfig",
+          "synced": true
+        },
+        {
+          "python": "Config",
+          "typescript": "Config",
+          "synced": true
+        }
+      ],
+      "notes": "Config model classes. Ported with 1:1 mapping. Ratio: 1.32 (Py: 384, TS: 507)."
     },
     {
       "python": "src/schemas/models/evaluation.py",
@@ -2954,13 +3007,13 @@
     {
       "python": "src/utils/interaction.py",
       "typescript": "omrchecker-js/packages/core/src/utils/InteractionUtils.ts",
-      "status": "partial",
+      "status": "synced",
       "phase": 1,
       "priority": "medium",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
-      "notes": "Interaction utilities partially ported. Browser version omits file system interactions and console display features."
+      "lastTypescriptChange": "2026-01-16T21:00:00Z",
+      "notes": "Interaction utilities fully ported for browser environment. TypeScript version (358 lines) provides browser-compatible image display via debug container, waitKey, and window management. GUI-specific features (SelectROI, ImageMetrics window positioning, cv2.imshow) intentionally omitted as not applicable to browser. All browser-relevant functionality is complete."
     },
     {
       "python": "src/utils/parsing.py",
@@ -3167,6 +3220,72 @@
       "lastPythonChange": null,
       "lastTypescriptChange": null,
       "notes": "TypeScript shape utility functions. Python has similar functionality in utils/shapes.py but structure differs."
+    },
+    {
+      "python": "src/tests/test_template_layout.py",
+      "typescript": "omrchecker-js/packages/core/src/template/__tests__/testTemplateLayout.test.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": "2026-01-16T20:00:00Z",
+      "notes": "Comprehensive TemplateLayout test suite ported. ~30+ test cases covering all 17 methods, initialization, preprocessing, validation, and edge cases. 571 lines of TypeScript tests."
+    },
+    {
+      "python": "src/tests/test_evaluation_config_for_set.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/evaluation/__tests__/testEvaluationConfigForSet.test.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": "2026-01-16T20:00:00Z",
+      "notes": "EvaluationConfigForSet test suite ported. ~30+ test cases covering validation, parsing, answer matching, formatted outputs, and edge cases. 779 lines of TypeScript tests."
+    },
+    {
+      "python": "src/tests/test_template_validations.py",
+      "typescript": "omrchecker-js/packages/core/src/template/__tests__/testTemplateValidations.test.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": "2026-01-16T20:00:00Z",
+      "notes": "Template validation test suite ported. ~25+ test cases covering schema validation, field blocks, custom labels, output columns, and edge cases. 396 lines of TypeScript tests."
+    },
+    {
+      "python": "src/tests/test_exceptions.py",
+      "typescript": "omrchecker-js/packages/core/src/core/__tests__/testExceptions.test.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "medium",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": "2026-01-16T20:00:00Z",
+      "notes": "Exception test suite ported. ~25+ test cases covering exception hierarchy, context handling, parameterized tests, and edge cases. 349 lines of TypeScript tests. TypeScript has fewer exception types than Python, so tests focus on available exceptions."
+    },
+    {
+      "python": "src/tests/test_template_file_runner.py",
+      "typescript": "omrchecker-js/packages/core/src/processors/detection/__tests__/testTemplateFileRunner.test.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": "2026-01-16T20:00:00Z",
+      "notes": "TemplateFileRunner test suite expanded. ~15+ test cases covering multi-pass architecture, aggregate management, and edge cases. 269 lines of TypeScript tests."
+    },
+    {
+      "python": "src/tests/test_entry.py",
+      "typescript": "omrchecker-js/packages/core/src/core/__tests__/testOMRProcessor.test.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
+      "lastSyncedCommit": null,
+      "lastPythonChange": null,
+      "lastTypescriptChange": "2026-01-16T20:00:00Z",
+      "notes": "OMRProcessor test suite ported. ~40+ test cases covering initialization, processImage, processBatch, getAggregates, getTemplate, getFieldIds, exportToCSV, getStatistics, error handling, configuration options, template variations, and edge cases. 661 lines of TypeScript tests. TypeScript equivalent of Python's test_entry.py, but focused on OMRProcessor instead of entry point functions (which don't exist in browser-based TypeScript)."
     }
   ],
   "statistics": {

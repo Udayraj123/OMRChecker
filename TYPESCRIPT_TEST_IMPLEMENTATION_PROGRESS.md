@@ -4,9 +4,9 @@
 
 ### ✅ Completed
 
-#### 1. TemplateLayout.test.ts
+#### 1. testTemplateLayout.test.ts
 **Status:** ✅ **COMPLETED** (500+ lines)
-**Location:** `omrchecker-js/packages/core/src/template/__tests__/TemplateLayout.test.ts`
+**Location:** `omrchecker-js/packages/core/src/template/__tests__/testTemplateLayout.test.ts`
 
 **Coverage:**
 - ✅ Initialization (minimal, custom processing shape, preprocessors, alignment)
@@ -32,9 +32,9 @@
 **Typecheck:** ✅ Passing
 **Lint:** ✅ No errors
 
-#### 2. EvaluationConfigForSet.test.ts
+#### 2. testEvaluationConfigForSet.test.ts
 **Status:** ✅ **COMPLETED** (779 lines)
-**Location:** `omrchecker-js/packages/core/src/processors/evaluation/__tests__/EvaluationConfigForSet.test.ts`
+**Location:** `omrchecker-js/packages/core/src/processors/evaluation/__tests__/testEvaluationConfigForSet.test.ts`
 **Priority:** High
 **Python Source:** `src/tests/test_evaluation_config_for_set.py` (651 lines, ~30+ test cases)
 
@@ -57,9 +57,9 @@
 **Typecheck:** ✅ Passing
 **Lint:** ✅ No errors
 
-#### 3. TemplateValidations.test.ts
+#### 3. testTemplateValidations.test.ts
 **Status:** ✅ **COMPLETED** (396 lines)
-**Location:** `omrchecker-js/packages/core/src/template/__tests__/TemplateValidations.test.ts`
+**Location:** `omrchecker-js/packages/core/src/template/__tests__/testTemplateValidations.test.ts`
 **Priority:** High
 **Python Source:** `src/tests/test_template_validations.py` (187 lines, 14 test cases)
 
@@ -78,9 +78,9 @@
 
 ### 📋 Pending (Priority Order)
 
-#### 4. Exceptions.test.ts
+#### 4. testExceptions.test.ts
 **Status:** ✅ **COMPLETED** (349 lines)
-**Location:** `omrchecker-js/packages/core/src/core/__tests__/exceptions.test.ts`
+**Location:** `omrchecker-js/packages/core/src/core/__tests__/testExceptions.test.ts`
 **Priority:** Medium
 **Python Source:** `src/tests/test_exceptions.py` (587 lines, parameterized tests)
 
@@ -106,9 +106,9 @@
 - Exception category catching
 - Base exception catchability
 
-#### 5. TemplateFileRunner.test.ts (Expansion)
+#### 5. testTemplateFileRunner.test.ts (Expansion)
 **Status:** ✅ **EXPANDED** (269 lines, expanded from ~100 lines)
-**Location:** `omrchecker-js/packages/core/src/processors/detection/__tests__/templateFileRunner.test.ts`
+**Location:** `omrchecker-js/packages/core/src/processors/detection/__tests__/testTemplateFileRunner.test.ts`
 **Priority:** Medium
 **Python Source:** `src/tests/test_template_file_runner.py` (451 lines, ~20+ test cases)
 
@@ -131,7 +131,33 @@
 - Field type runner initialization
 - Directory level aggregates
 
-#### 6. AllSamples.test.ts
+#### 6. testOMRProcessor.test.ts
+**Status:** ✅ **COMPLETED** (661 lines)
+**Location:** `omrchecker-js/packages/core/src/core/__tests__/testOMRProcessor.test.ts`
+**Priority:** High
+**Python Source:** `src/tests/test_entry.py` (287 lines, ~10 test cases)
+
+**Coverage:**
+- ✅ Initialization (minimal, custom config, alignment, preprocessors, answer key)
+- ✅ processImage (single image, without colored image, responses, multi-marked fields, empty fields, field results, statistics, warnings, different sizes, zero-sized, multiple images)
+- ✅ getAggregates (after processing, before processing, accumulation)
+- ✅ processBatch (multiple images, empty batch, without colored images)
+- ✅ getTemplate (parsed template)
+- ✅ getFieldIds (array of field IDs, matching template)
+- ✅ exportToCSV (results export, empty results, score column, warnings column)
+- ✅ getStatistics (statistics calculation, empty results, average processing time, multi-marked sheets count)
+- ✅ Error handling (invalid template, processing errors, warnings)
+- ✅ Configuration options (debug mode, saveIntermediateImages, outputDirectory, thresholdConfig)
+- ✅ Template variations (multiple field blocks, custom bubble field types, custom labels, output columns)
+- ✅ Edge cases (no field blocks, empty field blocks, very large images, different aspect ratios)
+
+**Test Count:** ~40+ test cases
+**Typecheck:** ✅ Passing
+**Lint:** ✅ No errors
+
+**Note:** TypeScript equivalent of Python's test_entry.py, but focused on OMRProcessor instead of entry point functions (which don't exist in browser-based TypeScript).
+
+#### 7. AllSamples.test.ts
 **Status:** 📋 **PENDING**
 **Priority:** Medium (may need browser environment)
 **Python Source:** `src/tests/test_all_samples.py` (163 lines, 19 test cases with sample markers)
@@ -157,12 +183,13 @@
 
 ### Next Steps
 
-1. ✅ **TemplateLayout.test.ts** - COMPLETED
-2. ⏳ **EvaluationConfigForSet.test.ts** - NEXT (High Priority)
-3. 📋 **TemplateValidations.test.ts** - After EvaluationConfigForSet
-4. 📋 **Exceptions.test.ts** - After TemplateValidations
-5. 📋 **TemplateFileRunner.test.ts** - Expand existing tests
-6. 📋 **AllSamples.test.ts** - Integration tests (if feasible)
+1. ✅ **testTemplateLayout.test.ts** - COMPLETED
+2. ⏳ **testEvaluationConfigForSet.test.ts** - NEXT (High Priority)
+3. 📋 **testTemplateValidations.test.ts** - After EvaluationConfigForSet
+4. 📋 **testExceptions.test.ts** - After TemplateValidations
+5. 📋 **testTemplateFileRunner.test.ts** - Expand existing tests
+6. 📋 **testOMRProcessor.test.ts** - COMPLETED
+7. 📋 **AllSamples.test.ts** - Integration tests (if feasible)
 
 ## Test Coverage Comparison
 
@@ -171,8 +198,9 @@
 | test_template_layout.py | 946 | 500+ | ✅ Complete |
 | test_evaluation_config_for_set.py | 651 | 779 | ✅ Complete |
 | test_template_validations.py | 187 | 396 | ✅ Complete |
-| test_exceptions.py | ~200 | 0 | 📋 Pending |
-| test_template_file_runner.py | 451 | ~100 (partial) | 📋 Needs expansion |
+| test_exceptions.py | 587 | 349 | ✅ Complete |
+| test_template_file_runner.py | 451 | 269 | ✅ Expanded |
+| test_entry.py | 287 | 661 | ✅ Complete (OMRProcessor.test.ts) |
 
 ## Notes
 

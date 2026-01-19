@@ -73,13 +73,9 @@ class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
         if self.repository and hasattr(field_detection, "result"):
             self.repository.save_bubble_field(field.id, field_detection.result)
 
-        # Legacy dict approach (BACKWARD COMPATIBILITY)
-        field_bubble_means = field_detection.field_bubble_means
-        std_deviation = (
-            field_detection.result.std_deviation
-            if hasattr(field_detection, "result")
-            else 0.0
-        )
+        # Use result for aggregates
+        field_bubble_means = field_detection.result.bubble_means
+        std_deviation = field_detection.result.std_deviation
 
         self.insert_field_level_aggregates(
             {
@@ -99,7 +95,7 @@ class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
             field, field_detection, field_level_aggregates
         )
 
-        # Legacy dict approach (BACKWARD COMPATIBILITY)
+        # Use result from field detection
         field_bubble_means = field_level_aggregates["field_bubble_means"]
         field_bubble_means_std = field_level_aggregates["field_bubble_means_std"]
 

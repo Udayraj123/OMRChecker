@@ -219,8 +219,8 @@ class TestBubblesFieldDetection:
         assert sorted_means[0].mean_value < sorted_means[1].mean_value
         assert sorted_means[1].mean_value < sorted_means[2].mean_value
 
-    def test_backward_compatibility(self):
-        """Test backward compatibility with field_bubble_means."""
+    def test_result_property(self):
+        """Test that result property contains bubble_means."""
         scan_boxes = [MockBubblesScanBox(5, 10), MockBubblesScanBox(25, 10)]
         field = MockField("q1", scan_boxes)
 
@@ -228,10 +228,11 @@ class TestBubblesFieldDetection:
 
         detection = BubblesFieldDetection(field, gray_image, None)
 
-        # Old attribute should still exist
-        assert hasattr(detection, "field_bubble_means")
-        assert len(detection.field_bubble_means) == 2
-        assert isinstance(detection.field_bubble_means[0], BubbleMeanValue)
+        # Use result property instead of field_bubble_means
+        assert hasattr(detection, "result")
+        assert detection.result is not None
+        assert len(detection.result.bubble_means) == 2
+        assert isinstance(detection.result.bubble_means[0], BubbleMeanValue)
 
     def test_min_max_mean_values(self):
         """Test min and max mean value properties."""

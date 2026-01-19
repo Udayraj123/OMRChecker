@@ -95,10 +95,13 @@ export class BubblesThresholdDetectionPass extends FieldTypeDetectionPass {
   ): void {
     super.updateFieldLevelAggregatesOnProcessedFieldDetection(field, fieldDetection);
 
-    // Extract field bubble means and std deviation
-    const fieldBubbleMeans = fieldDetection.fieldBubbleMeans.map((bm) => bm.meanValue);
-    const stdDeviation =
-      fieldDetection.result?.stdDeviation ?? 0.0;
+    // Use result for aggregates
+    if (!fieldDetection.result) {
+      throw new Error('Field detection result not available');
+    }
+
+    const fieldBubbleMeans = fieldDetection.result.bubbleMeans.map((bm) => bm.meanValue);
+    const stdDeviation = fieldDetection.result.stdDeviation;
 
     this.insertFieldLevelAggregates({
       field_bubble_means: fieldBubbleMeans,

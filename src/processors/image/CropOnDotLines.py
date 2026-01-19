@@ -20,6 +20,7 @@ from src.processors.image.dot_line_detection import (
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.math import MathUtils
+from src.processors.image.patch_utils import compute_scan_zone
 
 # from src.utils.logger import logger
 
@@ -249,7 +250,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         config = self.tuning_config
         tuning_options = self.tuning_options
 
-        zone, zone_start, _ = self.compute_scan_zone_util(image, zone_description)
+        zone, zone_start, _ = compute_scan_zone(image, zone_description)
 
         # Validate and apply blur if configured
         line_blur_kernel = tuning_options.get("lineBlurKernel", None)
@@ -305,7 +306,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         tuning_options = self.tuning_options
         zone_label = zone_description["label"]
 
-        zone, zone_start, _ = self.compute_scan_zone_util(image, zone_description)
+        zone, zone_start, _ = compute_scan_zone(image, zone_description)
 
         # Validate and apply blur if configured
         dot_blur_kernel = tuning_options.get("dotBlurKernel", None)

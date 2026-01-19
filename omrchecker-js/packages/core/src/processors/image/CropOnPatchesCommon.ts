@@ -329,18 +329,6 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
   // =========================================================================
 
   /**
-   * Extract image zone from zone description.
-   * Delegates to patchUtils.computeScanZone for core logic.
-   * Kept for backward compatibility with existing code.
-   */
-  protected computeScanZoneUtil(
-    image: cv.Mat,
-    zoneDescription: ZoneDescription
-  ): [cv.Mat, [number, number], [number, number]] {
-    return computeScanZone(image, zoneDescription);
-  }
-
-  /**
    * Compute scan zone rectangle (4 corners).
    */
   protected computeScanZoneRectangle(

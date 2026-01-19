@@ -12,7 +12,7 @@ import type { Field } from '../../layout/field/base';
 import { NumberAggregate } from '../../../utils/stats';
 import { BubblesFieldInterpretation } from './interpretation';
 import { GlobalThreshold, type ThresholdConfig } from '../../threshold/GlobalThreshold';
-import type { TuningConfig, FieldLevelAggregates } from '../base/commonPass';
+import type { TuningConfig, FieldLevelAggregates, FileLevelAggregates } from '../base/commonPass';
 import type { BubbleMeanValue } from '../models/detectionResults';
 
 const logger = new Logger('BubblesThresholdInterpretationPass');
@@ -235,7 +235,7 @@ export class BubblesThresholdInterpretationPass extends FieldTypeInterpretationP
    *
    * @returns File-level aggregates
    */
-  getFileLevelInterpretationAggregates(): unknown {
+  getFileLevelInterpretationAggregates(): FileLevelAggregates | undefined {
     return this.getFileLevelAggregates();
   }
 }

@@ -19,6 +19,7 @@ import { PointArray } from './pointUtils';
 import { ImageProcessingError, TemplateValidationError } from '../../core/exceptions';
 import { ImageUtils } from '../../utils/ImageUtils';
 import { MathUtils } from '../../utils/math';
+import { computeScanZone } from './patchUtils';
 import {
   WarpMethod,
   ScannerType,
@@ -289,7 +290,7 @@ export class CropOnDotLines extends CropOnPatchesCommon {
     const zoneLabel = zoneDescription.label;
 
     // Extract patch zone
-    const [zone, zoneStart] = this.computeScanZoneUtil(image, zoneDescription);
+    const [zone, zoneStart] = computeScanZone(image, zoneDescription);
 
     // Validate blur kernel if provided
     const dotBlurKernel = tuningOptions.dotBlurKernel;
@@ -382,7 +383,7 @@ export class CropOnDotLines extends CropOnPatchesCommon {
     const zoneLabel = zoneDescription.label;
 
     // Extract patch zone
-    const [zone, zoneStart] = this.computeScanZoneUtil(image, zoneDescription);
+    const [zone, zoneStart] = computeScanZone(image, zoneDescription);
 
     // Validate blur kernel if provided
     const lineBlurKernel = tuningOptions.lineBlurKernel;

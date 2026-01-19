@@ -21,7 +21,6 @@ import {
  */
 export class BubblesFieldDetection extends FieldDetection {
   public result: BubbleFieldDetectionResult | null = null;
-  public fieldBubbleMeans: BubbleMeanValue[] = []; // Backward compatibility
 
   constructor(
     private fieldId: string,
@@ -57,9 +56,6 @@ export class BubblesFieldDetection extends FieldDetection {
       this.fieldLabel,
       bubbleMeans
     );
-
-    // Keep backward compatibility
-    this.fieldBubbleMeans = bubbleMeans;
   }
 
   /**

@@ -1,9 +1,3 @@
-"""Simplified bubble field interpretation using strategies.
-
-Replaces the monolithic 586-line BubblesFieldInterpretation class with
-a clean, focused ~100 line implementation using strategy pattern.
-"""
-
 from src.processors.detection.base.interpretation import FieldInterpretation
 from src.processors.detection.bubbles_threshold.interpretation_drawing import (
     BubblesFieldInterpretationDrawing,
@@ -12,11 +6,8 @@ from src.processors.detection.models.detection_results import (
     BubbleFieldDetectionResult,
 )
 from src.processors.layout.field.base import Field
-from src.processors.threshold.strategies import (
-    LocalThresholdStrategy,
-    ThresholdConfig,
-    ThresholdResult,
-)
+from src.processors.threshold.local_threshold import LocalThresholdStrategy
+from src.processors.threshold.threshold_result import ThresholdConfig, ThresholdResult
 from src.utils.logger import logger
 
 
@@ -42,12 +33,6 @@ class BubbleInterpretation:
 
 
 class BubblesFieldInterpretation(FieldInterpretation):
-    """Clean, simplified bubble field interpretation using strategies.
-
-    Replaces 586-line monolithic class with focused implementation.
-    Threshold calculation delegated to strategy classes.
-    """
-
     def __init__(self, *args, **kwargs) -> None:
         self.bubble_interpretations: list[BubbleInterpretation] = []
         self.is_multi_marked = False

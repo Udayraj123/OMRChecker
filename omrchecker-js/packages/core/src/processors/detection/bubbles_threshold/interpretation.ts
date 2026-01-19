@@ -12,7 +12,7 @@ import {
   BubbleFieldDetectionResult,
   BubbleMeanValue,
 } from '../models/detectionResults';
-import { GlobalThreshold, type ThresholdConfig, type ThresholdResult } from '../../threshold/GlobalThreshold';
+import { type ThresholdConfig, type ThresholdResult } from '../../threshold/GlobalThreshold';
 import { LocalThreshold } from '../../threshold/LocalThreshold';
 
 const logger = new Logger('BubblesFieldInterpretation');
@@ -231,25 +231,11 @@ export class BubblesFieldInterpretation extends FieldInterpretation {
       (fileLevelAggs.file_level_fallback_threshold as number) || config.defaultThreshold;
 
     // Use local strategy with global fallback
-    const localThreshold = new LocalThreshold();
+    const localThreshold = new LocalThreshold(globalFallback);
     const meanValues = detectionResult.meanValues;
 
-    // Calculate local threshold
-    const localResult = localThreshold.calculateThreshold(meanValues, {
-      ...config,
-      defaultThreshold: globalFallback,
-    });
-
-    // If local threshold confidence is low, use global fallback
-    if (localResult.confidence < 0.5) {
-      const globalThreshold = new GlobalThreshold();
-      return globalThreshold.calculateThreshold(meanValues, {
-        ...config,
-        defaultThreshold: globalFallback,
-      });
-    }
-
-    return localResult;
+    // Calculate threshold
+    return localThreshold.calculateThreshold(meanValues, config);
   }
 
   /**

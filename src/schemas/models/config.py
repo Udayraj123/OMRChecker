@@ -382,15 +382,3 @@ class Config:
             Dictionary representation of the config
         """
         return dataclass_to_dict(self)
-
-    def get(self, key: str, default=None):
-        """Get value by key (backwards compatibility).
-
-        Args:
-            key: The key to retrieve
-            default: Default value if key not found
-
-        Returns:
-            The value if found, otherwise default
-        """
-        return getattr(self, key, default)

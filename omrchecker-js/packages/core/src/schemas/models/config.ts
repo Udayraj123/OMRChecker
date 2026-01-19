@@ -493,15 +493,5 @@ export class Config {
     };
   }
 
-  /**
-   * Get value by key (backwards compatibility).
-   *
-   * @param key - The key to retrieve
-   * @param defaultValue - Default value if key not found
-   * @returns The value if found, otherwise default
-   */
-  get(key: string, defaultValue?: any): any {
-    return (this as any)[key] ?? defaultValue;
-  }
 }
 

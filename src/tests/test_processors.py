@@ -13,7 +13,6 @@ from src.processors import (
     Processor,
     ReadOMRProcessor,
 )
-from src.processors.template.template import Template
 
 
 @pytest.fixture
@@ -221,13 +220,3 @@ class TestProcessingPipeline:
         pipeline.remove_processor("CustomProcessor")
         processor_names = pipeline.get_processor_names()
         assert "CustomProcessor" not in processor_names
-
-
-class TestBackwardCompatibility:
-    """Tests to ensure backward compatibility."""
-
-    def test_template_has_both_pipelines(self):
-        """Test that template has both old and new pipelines."""
-        # This test would need a real template path to work properly
-        # For now, just verify the imports work
-        assert Template is not None

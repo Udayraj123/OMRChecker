@@ -15,6 +15,12 @@ const logger = new Logger('GlobalThreshold');
 export interface ThresholdConfig {
   defaultThreshold: number;
   minJump: number;
+  jumpDelta?: number;
+  minGapTwoBubbles?: number;
+  minJumpSurplusForGlobalFallback?: number;
+  confidentJumpSurplusForDisparity?: number;
+  globalThresholdMargin?: number;
+  outlierDeviationThreshold?: number;
 }
 
 /**

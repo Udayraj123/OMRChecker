@@ -94,3 +94,104 @@ export class TemplateValidationError extends OMRCheckerError {
   }
 }
 
+export class TemplateNotFoundError extends TemplateError {
+  searchPath: string;
+
+  constructor(searchPath: string) {
+    super(`No template.json found in directory tree of '${searchPath}'`, { searchPath });
+    this.searchPath = searchPath;
+  }
+}
+
+export class TemplateLoadError extends TemplateError {
+  path: string;
+  reason: string;
+
+  constructor(path: string, reason: string) {
+    super(`Failed to load template '${path}': ${reason}`, { path, reason });
+    this.path = path;
+    this.reason = reason;
+  }
+}
+
+// ============================================================================
+// Evaluation Exceptions
+// ============================================================================
+
+export class EvaluationError extends OMRCheckerError {}
+
+export class EvaluationConfigNotFoundError extends EvaluationError {
+  searchPath: string;
+
+  constructor(searchPath: string) {
+    super(`No evaluation.json found at '${searchPath}'`, { searchPath });
+    this.searchPath = searchPath;
+  }
+}
+
+export class EvaluationConfigLoadError extends EvaluationError {
+  path: string;
+  reason: string;
+
+  constructor(path: string, reason: string) {
+    super(`Failed to load evaluation config '${path}': ${reason}`, { path, reason });
+    this.path = path;
+    this.reason = reason;
+  }
+}
+
+export class AnswerKeyError extends EvaluationError {
+  reason: string;
+  questionId?: string;
+
+  constructor(reason: string, questionId?: string) {
+    let msg = `Answer key error: ${reason}`;
+    if (questionId) {
+      msg += ` (question: ${questionId})`;
+    }
+    super(msg, { reason, questionId });
+    this.reason = reason;
+    this.questionId = questionId;
+  }
+}
+
+export class ScoringError extends EvaluationError {
+  reason: string;
+  filePath?: string;
+  questionId?: string;
+
+  constructor(reason: string, filePath?: string, questionId?: string) {
+    let msg = `Scoring failed: ${reason}`;
+    if (filePath) {
+      msg += ` for '${filePath}'`;
+    }
+    if (questionId) {
+      msg += ` at question '${questionId}'`;
+    }
+    super(msg, { reason, filePath, questionId });
+    this.reason = reason;
+    this.filePath = filePath;
+    this.questionId = questionId;
+  }
+}
+
+// ============================================================================
+// Security Exceptions
+// ============================================================================
+
+export class SecurityError extends OMRCheckerError {}
+
+export class PathTraversalError extends SecurityError {
+  path: string;
+  basePath?: string;
+
+  constructor(path: string, basePath?: string) {
+    const msg = basePath
+      ? `Path traversal detected: '${path}' (base: '${basePath}')`
+      : `Path traversal detected: '${path}'`;
+    super(msg, { path, basePath });
+    this.path = path;
+    this.basePath = basePath;
+  }
+}
+

@@ -31,7 +31,7 @@ def _validate_config_with_defaults(config_dict, config_path) -> dict:
     # Use the actual parsing function that merges with defaults
     args = {"debug": False, "outputMode": "default"}
     # The validation happens inside open_config_with_defaults, so we just need to call it
-    return open_config_with_defaults(config_path, args)
+    return asdict(open_config_with_defaults(config_path, args))
 
 
 def test_show_image_level_with_max_parallel_workers_validation(tmp_path) -> None:

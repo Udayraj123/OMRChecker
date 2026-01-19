@@ -43,9 +43,6 @@ class BubblesFieldDetection(FieldDetection):
             bubble_means=bubble_means,
         )
 
-        # Keep backward compatibility for now
-        self.field_bubble_means = bubble_means
-
     @staticmethod
     def read_bubble_mean_value(
         unit_bubble: BubblesScanBox, gray_image

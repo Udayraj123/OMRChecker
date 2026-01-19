@@ -11,7 +11,6 @@ from src.processors.constants import (
     WarpMethod,
 )
 from src.processors.image.patch_utils import (
-    compute_scan_zone,
     draw_scan_zone,
     draw_zone_contours_and_anchor_shifts,
     get_edge_contours_map_from_zone_points,
@@ -265,15 +264,6 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         )
 
         return dot_point, destination_point
-
-    def compute_scan_zone_util(self, image, zone_description):
-        """
-        Extract image zone and compute zone boundaries.
-
-        Delegates to patch_utils.compute_scan_zone for the core logic.
-        Kept for backward compatibility with existing code.
-        """
-        return compute_scan_zone(image, zone_description)
 
     def draw_scan_zone(self, zone_description):
         """
