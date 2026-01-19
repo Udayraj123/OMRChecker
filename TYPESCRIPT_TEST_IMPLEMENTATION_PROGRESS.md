@@ -79,9 +79,27 @@
 ### 📋 Pending (Priority Order)
 
 #### 4. Exceptions.test.ts
-**Status:** 📋 **PENDING**
+**Status:** ✅ **COMPLETED** (349 lines)
+**Location:** `omrchecker-js/packages/core/src/core/__tests__/exceptions.test.ts`
 **Priority:** Medium
-**Python Source:** `src/tests/test_exceptions.py` (parameterized tests)
+**Python Source:** `src/tests/test_exceptions.py` (587 lines, parameterized tests)
+
+**Coverage:**
+- ✅ Base exception (OMRCheckerError) - message only, with context
+- ✅ Input exceptions (InputFileNotFoundError with/without file type, ImageReadError with/without reason)
+- ✅ Template exceptions (FieldDefinitionError, TemplateValidationError)
+- ✅ Config exceptions (ConfigError, ConfigLoadError)
+- ✅ Processing exceptions (ImageProcessingError)
+- ✅ Exception hierarchy (catching by category, all as OMRCheckerError)
+- ✅ Exception messages (relevant information, optional fields, context in string)
+- ✅ Exception properties (name, instanceof relationships)
+- ✅ Edge cases (empty context, undefined context, null values, complex values)
+
+**Test Count:** ~25+ test cases
+**Typecheck:** ✅ Passing
+**Lint:** ✅ No errors
+
+**Note:** TypeScript has fewer exception types than Python, so tests focus on available exceptions.
 
 **Planned Coverage:**
 - Parameterized exception tests (InputFileNotFoundError, ImageProcessingError, AnswerKeyError, PathTraversalError)
@@ -89,10 +107,23 @@
 - Base exception catchability
 
 #### 5. TemplateFileRunner.test.ts (Expansion)
-**Status:** 📋 **PENDING** - Needs expansion
+**Status:** ✅ **EXPANDED** (269 lines, expanded from ~100 lines)
+**Location:** `omrchecker-js/packages/core/src/processors/detection/__tests__/templateFileRunner.test.ts`
 **Priority:** Medium
-**Current:** Basic tests exist
 **Python Source:** `src/tests/test_template_file_runner.py` (451 lines, ~20+ test cases)
+
+**Additional Coverage Added:**
+- ✅ Initialization (with template, field runners, directory aggregates)
+- ✅ readOmrAndUpdateMetrics (two-pass, multiple files)
+- ✅ runFileLevelDetection (all fields, aggregate updates)
+- ✅ runFileLevelInterpretation (after detection, aggregate updates)
+- ✅ Aggregate management (across files, finish processing, export metrics)
+- ✅ getFieldDetectionTypeFileRunner (valid/invalid types)
+- ✅ Edge cases (no fields, zero-sized images, different sizes, multiple calls)
+
+**Test Count:** ~15+ test cases (expanded from ~5)
+**Typecheck:** ✅ Passing
+**Lint:** ✅ No errors
 
 **Planned Additional Coverage:**
 - Edge case tests (no fields, empty aggregates)
