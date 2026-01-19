@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+import pytest
+
 from src.tests.test_samples.sample1.boilerplate import TEMPLATE_BOILERPLATE
 from src.tests.utils import (
     generate_write_jsons_and_run,
@@ -8,6 +10,11 @@ from src.tests.utils import (
     setup_mocker_patches,
 )
 from src.utils.logger import logger
+
+# All tests in this file use the same shared sample directory (sample1)
+# and write to the same files (template.json, config.json, evaluation.json).
+# Mark entire file as serial to prevent race conditions in parallel execution.
+pytestmark = pytest.mark.serial
 
 FROZEN_TIMESTAMP = "1970-01-01 00:00:00+00:00"
 CURRENT_DIR = Path("src/tests")

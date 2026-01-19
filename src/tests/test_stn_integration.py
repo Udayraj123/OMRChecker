@@ -2,7 +2,10 @@
 
 import numpy as np
 import pytest
-import torch
+# ruff: noqa: E402
+
+# Skip all tests if torch is not available (ML dependencies not installed)
+torch = pytest.importorskip("torch")
 
 from src.processors.detection.models.stn_module import (
     SpatialTransformerNetwork,

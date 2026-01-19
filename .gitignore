@@ -37,6 +37,7 @@ pnpm-lock.yaml
 # pytest
 pytestdebug.log
 .coverage
+coverage.json
 .pytest_cache
 
 # ruff

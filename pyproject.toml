@@ -47,6 +47,7 @@ dev = [
     "pyright>=1.1.392.post0",
     "pytest-cov>=6.0.0",
     "pytest-mock==3.14.0",
+    "pytest-xdist>=3.6.0",
     "pytest>=8.3.4",
     "qrcode>=8.0",
     "ruff>=0.12.8",

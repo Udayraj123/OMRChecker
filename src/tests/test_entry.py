@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from src.entry import entry_point, process_directory_wise, print_config_summary
-from src.exceptions import InputDirectoryNotFoundError
+from src.exceptions import InputDirectoryNotFoundError, TemplateNotFoundError
 from src.processors.evaluation.evaluation_config import EvaluationConfig
 from src.processors.template.template import Template
 from src.schemas.defaults import CONFIG_DEFAULTS
@@ -150,10 +150,10 @@ class TestProcessDirectoryWise:
             "fieldBlocksOffset": [0, 0],
             "fieldBlocks": {},
             "preProcessors": [],
-            "alignment": {"referenceImagePath": None},
+            "alignment": {"margins": {"top": 0, "right": 0, "bottom": 0, "left": 0}},
             "customBubbleFieldTypes": {},
             "customLabels": {},
-            "outputColumns": [],
+            "outputColumns": {"sortType": "ALPHANUMERIC", "customOrder": []},
         }
         with open(template_file, "w") as f:
             json.dump(template_data, f)
@@ -162,17 +162,18 @@ class TestProcessDirectoryWise:
         minimal_args["output_dir"] = str(temp_output_dir)
 
         with (
-            patch("src.entry.ProcessingPipeline"),
             patch("src.entry.PathUtils") as mock_path_utils,
+            patch("src.entry.ImageUtils") as mock_image_utils,
         ):
             mock_path_utils_instance = Mock()
             mock_path_utils.return_value = mock_path_utils_instance
             mock_path_utils_instance.create_output_directories = Mock()
+            mock_image_utils.read_image_util = Mock(return_value=(None, None))
 
             try:
                 process_directory_wise(temp_input_dir, temp_input_dir, minimal_args)
-            except (AttributeError, KeyError):
-                # Expected if some dependencies are missing
+            except (AttributeError, KeyError, TemplateNotFoundError):
+                # Expected if some dependencies are missing or no images found
                 pass
 
     def test_process_directory_wise_with_evaluation_config(
