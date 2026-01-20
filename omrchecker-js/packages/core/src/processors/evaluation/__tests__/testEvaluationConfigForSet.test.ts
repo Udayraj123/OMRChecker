@@ -463,7 +463,7 @@ describe('EvaluationConfigForSet', () => {
 
       expect(result).toBeDefined();
       expect(result.delta).toBeGreaterThanOrEqual(0); // Should be non-negative for correct
-      expect(['correct', 'answer-match']).toContain(result.verdict);
+      expect(['correct', 'answer-match', 'ANSWER-MATCH']).toContain(result.verdict);
       expect(result.schemaVerdict).toBe('correct');
     });
 

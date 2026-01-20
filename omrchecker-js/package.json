@@ -1,11 +1,10 @@
 {
   "name": "omrchecker-monorepo",
   "version": "1.0.0",
-  "description": "OMRChecker TypeScript port - monorepo with core library, demo app, and E2E tests",
+  "description": "OMRChecker TypeScript port - monorepo with core library",
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter @omrchecker/demo dev",
-    "dev:core": "pnpm --filter @omrchecker/core dev",
+    "dev": "pnpm --filter @omrchecker/core dev",
     "build": "pnpm -r build",
     "build:core": "pnpm --filter @omrchecker/core build",
     "test": "pnpm -r test",

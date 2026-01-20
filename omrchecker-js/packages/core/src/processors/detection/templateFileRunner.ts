@@ -226,18 +226,11 @@ export class TemplateFileRunner extends FileLevelRunner<
       );
     }
 
-    // Get file-level detection aggregates from template-level detection pass
-    // (contains bubble_fields, ocr_fields, barcode_fields populated from repository)
-    const fileLevelDetectionAggregates =
-      this.detectionPass.getFileLevelAggregates();
-
     // Run field-level interpretation with template-level aggregates
     // initializeFieldLevelAggregates is called automatically inside runFieldLevelInterpretation
+    // The method internally gets file-level detection aggregates from its own detection pass
     const fieldInterpretation =
-      fieldDetectionTypeFileRunner.interpretationPass.runFieldLevelInterpretation(
-        field,
-        fileLevelDetectionAggregates
-      );
+      fieldDetectionTypeFileRunner.runFieldLevelInterpretation(field);
 
     const fieldTypeRunnerFieldLevelAggregates =
       fieldDetectionTypeFileRunner.getFieldLevelInterpretationAggregates();

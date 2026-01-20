@@ -6,7 +6,6 @@
  */
 
 import * as cv from '@techstark/opencv-js';
-import { FieldDetectionType } from '../../constants';
 import { FieldTypeDetectionPass } from '../base/detectionPass';
 import type { Field } from '../../layout/field/base';
 import { NumberAggregate } from '../../../utils/stats';
@@ -130,7 +129,7 @@ export class BubblesThresholdDetectionPass extends FieldTypeDetectionPass {
    * @param fieldLevelAggregates - Field-level aggregates
    */
   updateFileLevelAggregatesOnProcessedFieldDetection(
-    field: Field,
+    _field: Field,
     _fieldDetection: BubblesFieldDetection,
     fieldLevelAggregates: {
       field?: Field;

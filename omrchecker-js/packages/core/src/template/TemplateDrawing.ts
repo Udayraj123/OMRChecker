@@ -140,7 +140,7 @@ export class TemplateDrawingUtils {
     );
 
     let coloredFinalMarked = coloredImage;
-    if (config.outputs?.coloredOutputsEnabled) {
+    if (config.outputs?.colored_outputs_enabled) {
       coloredFinalMarked = TemplateDrawingUtils.drawTemplateLayoutUtil(
         coloredFinalMarked,
         'COLORED',
@@ -150,13 +150,13 @@ export class TemplateDrawingUtils {
       );
     }
 
-    if (config.outputs?.showImageLevel >= 1) {
+    if (config.outputs?.show_image_level >= 1) {
       // TODO: Implement pause and resize_to_height when InteractionUtils.show supports them
       InteractionUtils.show('Final Marked Template', finalMarked, {
         title: 'Final Marked Template',
         resizeToFit: true,
       });
-      if (config.outputs?.coloredOutputsEnabled) {
+      if (config.outputs?.colored_outputs_enabled) {
         InteractionUtils.show('Final Marked Template (Colored)', coloredFinalMarked, {
           title: 'Final Marked Template (Colored)',
           resizeToFit: true,

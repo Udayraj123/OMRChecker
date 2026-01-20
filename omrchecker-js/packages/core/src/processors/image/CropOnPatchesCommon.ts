@@ -23,7 +23,6 @@ import { WarpOnPointsCommon } from './WarpOnPointsCommon';
 import { PointArray, orderFourPoints } from './pointUtils';
 import {
   selectPointFromRectangle,
-  computeScanZone,
   getEdgeContoursMapFromZonePoints,
   drawScanZone,
   type ZoneDescription as PatchUtilsZoneDescription,
@@ -343,7 +342,7 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
    * Delegates to patchUtils.drawScanZone for core logic.
    */
   protected drawScanZone(zoneDescription: ZoneDescription): void {
-    const showImageLevel = this.tuningConfig?.outputs?.showImageLevel ?? 0;
+    const showImageLevel = this.tuningConfig?.outputs?.show_image_level ?? 0;
     if (showImageLevel >= 1 && this.debugImage) {
       drawScanZone(this.debugImage, zoneDescription);
     }

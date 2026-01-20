@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { coverageConfigDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
@@ -10,7 +10,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       include: ['src/**/*.ts'],
-      exclude: ['src/**/__tests__/**', 'src/**/*.test.ts'],
+      exclude: ['src/**/__tests__/**', 'src/**/*.test.ts', ...coverageConfigDefaults.exclude],
     },
   },
 });

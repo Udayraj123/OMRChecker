@@ -441,7 +441,7 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
    * Return colored image only if colored outputs are enabled.
    */
   private getColoredInput(coloredImage: cv.Mat | null): cv.Mat | null {
-    const coloredOutputsEnabled = this.tuningConfig?.outputs?.coloredOutputsEnabled ?? false;
+    const coloredOutputsEnabled = this.tuningConfig?.outputs?.colored_outputs_enabled ?? false;
     return coloredOutputsEnabled ? coloredImage : null;
   }
 
@@ -469,7 +469,7 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
     _controlPoints: PointArray,
     _destinationPoints: PointArray
   ): void {
-    const showImageLevel = config?.outputs?.showImageLevel ?? 0;
+    const showImageLevel = config?.outputs?.show_image_level ?? 0;
 
     // Show high-detail visualizations if configured
     if (showImageLevel >= 4) {
@@ -515,7 +515,7 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
       // which would need to be passed as a parameter
     }
 
-    if (config.outputs.showImageLevel >= 5 && this.debugImage) {
+    if (config.outputs.show_image_level >= 5 && this.debugImage) {
       InteractionUtils.show('Anchor Points', this.debugImage);
       logger.info('Anchor Points visualization');
     }

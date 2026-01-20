@@ -77,15 +77,12 @@ export class PreprocessingProcessor extends Processor {
     if (processingImageShape) {
       grayImage = ImageUtils.resizeToShape(processingImageShape, grayImage) as cv.Mat;
 
-      if (this.tuningConfig.outputs?.colored_outputs_enabled ||
-          this.tuningConfig.outputs?.coloredOutputsEnabled) {
+      if (this.tuningConfig.outputs?.colored_outputs_enabled) {
         coloredImage = ImageUtils.resizeToShape(processingImageShape, coloredImage) as cv.Mat;
       }
     }
 
-    const showPreprocessorsDiff = this.tuningConfig.outputs?.show_preprocessors_diff ||
-                                   this.tuningConfig.outputs?.showPreprocessorsDiff ||
-                                   {};
+    const showPreprocessorsDiff = this.tuningConfig.outputs?.show_preprocessors_diff || {};
 
     // Update context for preprocessors
     context.grayImage = grayImage;
@@ -126,8 +123,7 @@ export class PreprocessingProcessor extends Processor {
     if (outputImageShape) {
       context.grayImage = ImageUtils.resizeToShape(outputImageShape, context.grayImage) as cv.Mat;
 
-      if (this.tuningConfig.outputs?.colored_outputs_enabled ||
-          this.tuningConfig.outputs?.coloredOutputsEnabled) {
+      if (this.tuningConfig.outputs?.colored_outputs_enabled) {
         context.coloredImage = ImageUtils.resizeToShape(
           outputImageShape,
           context.coloredImage

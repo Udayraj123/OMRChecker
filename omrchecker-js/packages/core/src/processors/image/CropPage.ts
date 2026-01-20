@@ -134,16 +134,16 @@ export class CropPage extends WarpOnPointsCommon {
     filePath: string
   ): [PointArray, PointArray, Record<string, any>] {
     // Check colored Canny configuration
-    if (this.useColoredCanny && !this.tuningConfig.outputs?.coloredOutputsEnabled) {
+    if (this.useColoredCanny && !this.tuningConfig.outputs?.colored_outputs_enabled) {
       logger.warn(
         'Cannot process colored image for CropPage. ' +
-        'useColoredCanny is true but coloredOutputsEnabled is false.'
+        'useColoredCanny is true but colored_outputs_enabled is false.'
       );
     }
 
     // Use extracted page detection module
     const [corners] = findPageContourAndCorners(image, {
-      coloredImage: this.tuningConfig.outputs?.coloredOutputsEnabled ? coloredImage : undefined,
+      coloredImage: this.tuningConfig.outputs?.colored_outputs_enabled ? coloredImage : undefined,
       useColoredCanny: this.useColoredCanny,
       morphKernel: this.morphKernel,
       filePath: filePath,

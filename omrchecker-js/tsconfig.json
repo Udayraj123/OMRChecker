@@ -28,8 +28,6 @@
   },
   "include": ["packages/*/src"],
   "references": [
-    { "path": "./packages/core" },
-    { "path": "./packages/demo" },
-    { "path": "./packages/e2e" }
+    { "path": "./packages/core" }
   ]
 }

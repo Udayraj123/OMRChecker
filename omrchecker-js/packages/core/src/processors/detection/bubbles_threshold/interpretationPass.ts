@@ -6,7 +6,6 @@
  */
 
 import { Logger } from '../../../utils/logger';
-import { FieldDetectionType } from '../../constants';
 import { FieldTypeInterpretationPass } from '../base/interpretationPass';
 import type { Field } from '../../layout/field/base';
 import { NumberAggregate } from '../../../utils/stats';

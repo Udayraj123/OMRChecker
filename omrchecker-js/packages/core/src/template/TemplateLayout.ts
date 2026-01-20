@@ -198,7 +198,7 @@ export class TemplateLayout {
       : resizedGrayResult;
 
     let processedColoredImage = coloredImage;
-    if (tuningConfig?.outputs?.coloredOutputsEnabled) {
+    if (tuningConfig?.outputs?.colored_outputs_enabled) {
       const resizedColoredResult = ImageUtils.resizeToShape(
         nextTemplateLayout.processingImageShape,
         coloredImage
@@ -210,9 +210,7 @@ export class TemplateLayout {
 
     // Run preprocessors in sequence using unified processor interface
     const showPreprocessorsDiff =
-      tuningConfig?.outputs?.showPreprocessorsDiff ||
-      tuningConfig?.outputs?.show_preprocessors_diff ||
-      {};
+      tuningConfig?.outputs?.show_preprocessors_diff || {};
 
     let currentTemplateLayout = nextTemplateLayout;
 
@@ -223,8 +221,7 @@ export class TemplateLayout {
       if (showPreprocessorsDiff[preProcessorName]) {
         InteractionUtils.show(
           `Before ${preProcessorName}: ${_filePath}`,
-          tuningConfig?.outputs?.coloredOutputsEnabled ||
-            tuningConfig?.outputs?.colored_outputs_enabled
+          tuningConfig?.outputs?.colored_outputs_enabled
             ? processedColoredImage
             : processedGrayImage,
           {
@@ -258,8 +255,7 @@ export class TemplateLayout {
       if (showPreprocessorsDiff[preProcessorName]) {
         InteractionUtils.show(
           `After ${preProcessorName}: ${_filePath}`,
-          tuningConfig?.outputs?.coloredOutputsEnabled ||
-            tuningConfig?.outputs?.colored_outputs_enabled
+          tuningConfig?.outputs?.colored_outputs_enabled
             ? processedColoredImage
             : processedGrayImage,
           {
@@ -284,7 +280,7 @@ export class TemplateLayout {
       finalGrayImage = Array.isArray(resizedGrayOutResult)
         ? resizedGrayOutResult[0]
         : resizedGrayOutResult;
-      if (tuningConfig?.outputs?.coloredOutputsEnabled) {
+      if (tuningConfig?.outputs?.colored_outputs_enabled) {
         const resizedColoredOutResult = ImageUtils.resizeToShape(
           templateLayout.outputImageShape,
           processedColoredImage
@@ -494,9 +490,7 @@ export class TemplateLayout {
         // Load images using ImageUtils.readImageUtil
         // Note: readImageUtil is async in TypeScript (browser environment)
         const coloredOutputsEnabled =
-          tuningConfig?.outputs?.coloredOutputsEnabled ||
-          tuningConfig?.outputs?.colored_outputs_enabled ||
-          false;
+          tuningConfig?.outputs?.colored_outputs_enabled || false;
         const [grayAlignmentImage, coloredAlignmentImage] =
           await ImageUtils.readImageUtil(imageSource, coloredOutputsEnabled);
 

@@ -311,7 +311,8 @@ export class EvaluationConfigForSet {
    * Ensures answer keys don't contain multi-marked answers when filter_out_multimarked_files is enabled.
    */
   validateAnswers(tuningConfig?: any): void {
-    if (!tuningConfig?.outputs?.filterOutMultimarkedFiles) {
+    const filterOutMultimarked = tuningConfig?.outputs?.filter_out_multimarked_files;
+    if (!filterOutMultimarked) {
       return;
     }
 

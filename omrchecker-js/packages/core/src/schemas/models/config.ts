@@ -271,7 +271,6 @@ export interface OutputsConfig {
   };
   save_detections?: boolean;
   colored_outputs_enabled?: boolean;
-  coloredOutputsEnabled?: boolean; // Alias for compatibility
   save_image_metrics?: boolean;
   show_confidence_metrics?: boolean;
   filter_out_multimarked_files?: boolean;

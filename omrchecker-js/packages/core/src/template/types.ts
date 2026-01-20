@@ -222,9 +222,9 @@ export interface TuningConfig {
 
   /** Output configuration */
   outputs?: {
-    coloredOutputsEnabled?: boolean;
-    showImageLevel?: number;
-    saveDetections?: boolean;
+    colored_outputs_enabled?: boolean;
+    show_image_level?: number;
+    save_detections?: boolean;
     [key: string]: any;
   };
 

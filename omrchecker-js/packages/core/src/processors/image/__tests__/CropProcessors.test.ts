@@ -26,8 +26,8 @@ describe('CropPage', () => {
       appendSaveImage: vi.fn(),
       tuningConfig: {
         outputs: {
-          coloredOutputsEnabled: false,
-          showPreprocessorsDiff: {},
+          colored_outputs_enabled: false,
+          show_preprocessors_diff: {},
         },
       },
     };
@@ -95,8 +95,8 @@ describe('CropOnMarkers', () => {
       appendSaveImage: vi.fn(),
       tuningConfig: {
         outputs: {
-          coloredOutputsEnabled: false,
-          showPreprocessorsDiff: {},
+          colored_outputs_enabled: false,
+          show_preprocessors_diff: {},
         },
       },
     };

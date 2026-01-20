@@ -153,9 +153,8 @@ export class CropOnDotLines extends CropOnPatchesCommon {
   };
 
   // Edge selector mapping for lines
-  private static readonly edgeSelectorMap: Record<
-    ZonePresetValue,
-    Record<SelectorTypeValue, EdgeTypeValue>
+  private static readonly edgeSelectorMap: Partial<
+    Record<ZonePresetValue, Partial<Record<SelectorTypeValue, EdgeTypeValue>>>
   > = {
     [ZonePreset.topLine]: {
       [SelectorType.LINE_INNER_EDGE]: EdgeType.BOTTOM,
@@ -348,7 +347,18 @@ export class CropOnDotLines extends CropOnPatchesCommon {
 
     // Select the appropriate edge
     const constructor = this.constructor as typeof CropOnDotLines;
-    const selectedEdgeType = constructor.edgeSelectorMap[zonePreset as ZonePresetValue][pointsSelector];
+    const edgeSelectorForPreset = constructor.edgeSelectorMap[zonePreset as ZonePresetValue];
+    if (!edgeSelectorForPreset) {
+      throw new ImageProcessingError(
+        `No edge selector mapping found for zone preset: ${zonePreset}`
+      );
+    }
+    const selectedEdgeType = edgeSelectorForPreset[pointsSelector];
+    if (!selectedEdgeType) {
+      throw new ImageProcessingError(
+        `No edge type found for selector ${pointsSelector} in zone preset ${zonePreset}`
+      );
+    }
     const targetEdgeType = TARGET_EDGE_FOR_LINE[zonePreset];
 
     let selectedContour = lineEdgeContoursMap[selectedEdgeType] || [];

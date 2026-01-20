@@ -66,7 +66,7 @@ describe('ProcessingPipeline', () => {
     // Create mock template
     mockTemplate = {
       tuningConfig: {
-        outputs: { showImageLevel: 0 },
+        outputs: { show_image_level: 0 },
       },
     };
 

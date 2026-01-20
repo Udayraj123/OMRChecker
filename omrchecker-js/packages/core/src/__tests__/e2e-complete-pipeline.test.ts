@@ -318,7 +318,7 @@ describe('E2E: Complete OMR Processing Pipeline with New Processors', () => {
       // Create a simple template for CropPage
       const mockTemplate = {
         tuningConfig: {
-          outputs: { showImageLevel: 0, coloredOutputsEnabled: false },
+          outputs: { show_image_level: 0, colored_outputs_enabled: false },
         },
       };
 
@@ -357,7 +357,7 @@ describe('E2E: Complete OMR Processing Pipeline with New Processors', () => {
 
       const mockTemplate = {
         tuningConfig: {
-          outputs: { showImageLevel: 0, coloredOutputsEnabled: false },
+          outputs: { show_image_level: 0, colored_outputs_enabled: false },
         },
       };
 

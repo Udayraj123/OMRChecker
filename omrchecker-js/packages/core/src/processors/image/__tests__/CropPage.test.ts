@@ -13,7 +13,7 @@ describe('CropPage', () => {
     it('should create with default options', () => {
       const saveImageOps = {
         tuningConfig: {
-          outputs: { coloredOutputsEnabled: false },
+          outputs: { colored_outputs_enabled: false },
         },
       };
 
@@ -25,7 +25,7 @@ describe('CropPage', () => {
     it('should apply default morphKernel', () => {
       const saveImageOps = {
         tuningConfig: {
-          outputs: { coloredOutputsEnabled: false },
+          outputs: { colored_outputs_enabled: false },
         },
       };
 
@@ -38,7 +38,7 @@ describe('CropPage', () => {
     it('should apply custom morphKernel', () => {
       const saveImageOps = {
         tuningConfig: {
-          outputs: { coloredOutputsEnabled: false },
+          outputs: { colored_outputs_enabled: false },
         },
       };
 
@@ -55,7 +55,7 @@ describe('CropPage', () => {
     it('should set enableCropping to true', () => {
       const saveImageOps = {
         tuningConfig: {
-          outputs: { coloredOutputsEnabled: false },
+          outputs: { colored_outputs_enabled: false },
         },
       };
 
@@ -67,7 +67,7 @@ describe('CropPage', () => {
     it('should default warpMethod to PERSPECTIVE_TRANSFORM', () => {
       const saveImageOps = {
         tuningConfig: {
-          outputs: { coloredOutputsEnabled: false },
+          outputs: { colored_outputs_enabled: false },
         },
       };
 
@@ -81,7 +81,7 @@ describe('CropPage', () => {
     it('should default useColoredCanny to false', () => {
       const saveImageOps = {
         tuningConfig: {
-          outputs: { coloredOutputsEnabled: false },
+          outputs: { colored_outputs_enabled: false },
         },
       };
 
@@ -93,7 +93,7 @@ describe('CropPage', () => {
     it('should set useColoredCanny when provided', () => {
       const saveImageOps = {
         tuningConfig: {
-          outputs: { coloredOutputsEnabled: true },
+          outputs: { colored_outputs_enabled: true },
         },
       };
 
@@ -110,7 +110,7 @@ describe('CropPage', () => {
     it('should default maxPointsPerEdge to null', () => {
       const saveImageOps = {
         tuningConfig: {
-          outputs: { coloredOutputsEnabled: false },
+          outputs: { colored_outputs_enabled: false },
         },
       };
 
@@ -122,7 +122,7 @@ describe('CropPage', () => {
     it('should set maxPointsPerEdge when provided', () => {
       const saveImageOps = {
         tuningConfig: {
-          outputs: { coloredOutputsEnabled: false },
+          outputs: { colored_outputs_enabled: false },
         },
       };
 
@@ -141,7 +141,7 @@ describe('CropPage', () => {
     it('should validate and merge options correctly', () => {
       const saveImageOps = {
         tuningConfig: {
-          outputs: { coloredOutputsEnabled: false },
+          outputs: { colored_outputs_enabled: false },
         },
       };
 
@@ -167,7 +167,7 @@ describe('CropPage', () => {
     it('should preserve tuning options during merge', () => {
       const saveImageOps = {
         tuningConfig: {
-          outputs: { coloredOutputsEnabled: false },
+          outputs: { colored_outputs_enabled: false },
         },
       };
 
@@ -195,7 +195,7 @@ describe('CropPage', () => {
     it('should extend WarpOnPointsCommon', () => {
       const saveImageOps = {
         tuningConfig: {
-          outputs: { coloredOutputsEnabled: false },
+          outputs: { colored_outputs_enabled: false },
         },
       };
 
@@ -211,7 +211,7 @@ describe('CropPage', () => {
     it('should cleanup morphKernel if it exists', () => {
       const saveImageOps = {
         tuningConfig: {
-          outputs: { coloredOutputsEnabled: false },
+          outputs: { colored_outputs_enabled: false },
         },
       };
 
@@ -237,7 +237,7 @@ describe('CropPage', () => {
     it('should handle cleanup when morphKernel is undefined', () => {
       const saveImageOps = {
         tuningConfig: {
-          outputs: { coloredOutputsEnabled: false },
+          outputs: { colored_outputs_enabled: false },
         },
       };
 

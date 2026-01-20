@@ -50,7 +50,7 @@ describe('PreprocessingProcessor', () => {
       tuningConfig: {
         outputs: {
           colored_outputs_enabled: true,
-          showPreprocessorsDiff: {},
+          show_preprocessors_diff: {},
         },
       },
       templateLayout: {
