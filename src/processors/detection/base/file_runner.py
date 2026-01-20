@@ -108,20 +108,13 @@ class FieldTypeFileLevelRunner(
         super().__init__(tuning_config, detection_pass, interpretation_pass)
 
     def run_field_level_detection(self, field, gray_image, colored_image):
-        self.detection_pass.initialize_field_level_aggregates(field)
-
-        field_detection = self.detection_pass.get_field_detection(
+        # initialize_field_level_aggregates is now called automatically by run_field_level_detection
+        return self.detection_pass.run_field_level_detection(
             field, gray_image, colored_image
         )
 
-        self.detection_pass.update_aggregates_on_processed_field_detection(
-            field, field_detection
-        )
-
-        return field_detection
-
     def run_field_level_interpretation(self, field: Field):
-        self.interpretation_pass.initialize_field_level_aggregates(field)
+        # initialize_field_level_aggregates is now called automatically by run_field_level_interpretation
         file_level_detection_aggregates = (
             self.detection_pass.get_file_level_aggregates()
         )

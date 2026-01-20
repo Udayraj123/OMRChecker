@@ -4,6 +4,7 @@ from typing import ClassVar
 import cv2
 import numpy as np
 
+from src.processors.image.patch_utils import compute_scan_zone
 from src.exceptions import ImageProcessingError, ImageReadError, TemplateValidationError
 from src.processors.constants import (
     MARKER_ZONE_TYPES_IN_ORDER,
@@ -327,7 +328,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         config = self.tuning_config
         zone_label = zone_description["label"]
 
-        patch_zone, zone_start, _zone_end = (image, zone_description)
+        patch_zone, zone_start, _zone_end = compute_scan_zone(image, zone_description)
 
         marker = self.marker_for_zone_label[zone_label]
 

@@ -26,6 +26,15 @@ class FieldTypeDetectionPass(FilePassAggregates):
         # Not implemented
         raise NotImplementedError
 
+    def run_field_level_detection(
+        self, field: Field, gray_image, colored_image
+    ) -> FieldDetection:
+        """Run field-level detection with automatic initialization of aggregates."""
+        self.initialize_field_level_aggregates(field)
+        field_detection = self.get_field_detection(field, gray_image, colored_image)
+        self.update_aggregates_on_processed_field_detection(field, field_detection)
+        return field_detection
+
     def update_aggregates_on_processed_field_detection(
         self, field: Field, field_detection: FieldDetection
     ) -> None:
@@ -136,6 +145,17 @@ class TemplateDetectionPass(FilePassAggregates):
         ][field_detection_type]
         # Update the processed field count for that runner
         field_detection_type_wise_aggregates["fields_count"].push("processed")
+
+    def run_field_level_detection(
+        self, field: Field, field_detection: FieldDetection
+    ) -> None:
+        """Run field-level detection with automatic initialization of aggregates.
+
+        Note: This method expects the field_detection to already be computed
+        by the field type runner. It initializes aggregates and updates them.
+        """
+        self.initialize_field_level_aggregates(field)
+        self.update_aggregates_on_processed_field_detection(field, field_detection)
 
     # TODO: check if passing runners is really needed or not here -
     def update_aggregates_on_processed_file(

@@ -44,6 +44,9 @@ class FieldTypeInterpretationPass(FilePassAggregates):
         )
 
     def run_field_level_interpretation(self, field, file_level_detection_aggregates):
+        # Initialize field-level aggregates automatically
+        self.initialize_field_level_aggregates(field)
+
         file_level_interpretation_aggregates = self.get_file_level_aggregates()
         field_interpretation = self.get_field_interpretation(
             field,
@@ -149,6 +152,9 @@ class TemplateInterpretationPass(FilePassAggregates):
         field_type_runner_field_level_aggregates,
         current_omr_response,
     ):
+        # Initialize field-level aggregates automatically
+        self.initialize_field_level_aggregates(field)
+
         # update_aggregates_on_processed_field_interpretation
         # TODO: see if detection also needs this arg (field_type_runner_field_level_aggregates)
         self.update_field_level_aggregates_on_processed_field_interpretation(

@@ -55,6 +55,25 @@ export abstract class FieldTypeDetectionPass extends FilePassAggregates {
   ): FieldDetection;
 
   /**
+   * Run field-level detection with automatic initialization of aggregates.
+   *
+   * @param field - Field to detect
+   * @param grayImage - Grayscale image
+   * @param coloredImage - Colored image (optional)
+   * @returns FieldDetection result
+   */
+  runFieldLevelDetection(
+    field: Field,
+    grayImage: cv.Mat,
+    coloredImage?: cv.Mat
+  ): FieldDetection {
+    this.initializeFieldLevelAggregates(field);
+    const fieldDetection = this.getFieldDetection(field, grayImage, coloredImage);
+    this.updateAggregatesOnProcessedFieldDetection(field, fieldDetection);
+    return fieldDetection;
+  }
+
+  /**
    * Update all aggregates when a field detection has been processed.
    *
    * @param field - Field that was processed
@@ -273,6 +292,20 @@ export class TemplateDetectionPass extends FilePassAggregates {
 
     // Update the processed field count for that runner
     fieldDetectionTypeWiseAggregates.fields_count.push('processed');
+  }
+
+  /**
+   * Run field-level detection with automatic initialization of aggregates.
+   *
+   * Note: This method expects the field_detection to already be computed
+   * by the field type runner. It initializes aggregates and updates them.
+   *
+   * @param field - Field that was processed
+   * @param fieldDetection - Detection result (already computed)
+   */
+  runFieldLevelDetection(field: Field, fieldDetection: FieldDetection): void {
+    this.initializeFieldLevelAggregates(field);
+    this.updateAggregatesOnProcessedFieldDetection(field, fieldDetection);
   }
 
   /**

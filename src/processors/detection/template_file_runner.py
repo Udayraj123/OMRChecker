@@ -93,8 +93,6 @@ class TemplateFileRunner(
     def run_field_level_detection(
         self, field: Field, gray_image, colored_image
     ) -> None:
-        self.detection_pass.initialize_field_level_aggregates(field)
-
         field_detection_type_file_runner = self.field_detection_type_file_runners[
             field.field_detection_type
         ]
@@ -103,9 +101,8 @@ class TemplateFileRunner(
             field, gray_image, colored_image
         )
 
-        self.detection_pass.update_aggregates_on_processed_field_detection(
-            field, field_detection
-        )
+        # initialize_field_level_aggregates is now called automatically by run_field_level_detection
+        self.detection_pass.run_field_level_detection(field, field_detection)
 
     # Overrides
     def initialize_directory_level_aggregates(self, template) -> None:
@@ -178,8 +175,6 @@ class TemplateFileRunner(
         return current_omr_response
 
     def run_field_level_interpretation(self, field, current_omr_response) -> None:
-        self.interpretation_pass.initialize_field_level_aggregates(field)
-
         field_detection_type_file_runner = self.field_detection_type_file_runners[
             field.field_detection_type
         ]
@@ -191,6 +186,7 @@ class TemplateFileRunner(
         )
 
         # Run field-level interpretation with template-level aggregates
+        # initialize_field_level_aggregates is called automatically inside run_field_level_interpretation
         field_interpretation = field_detection_type_file_runner.interpretation_pass.run_field_level_interpretation(
             field, file_level_detection_aggregates
         )
@@ -198,6 +194,7 @@ class TemplateFileRunner(
         field_type_runner_field_level_aggregates = (
             field_detection_type_file_runner.get_field_level_interpretation_aggregates()
         )
+        # initialize_field_level_aggregates is called automatically inside run_field_level_interpretation
         self.interpretation_pass.run_field_level_interpretation(
             field,
             field_interpretation,

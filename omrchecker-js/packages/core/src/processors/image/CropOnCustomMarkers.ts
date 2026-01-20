@@ -463,7 +463,7 @@ export class CropOnCustomMarkers extends CropOnPatchesCommon {
     const zoneLabel = zoneDescription.label;
 
     // Extract patch zone
-    const [patchZone, zoneStart] = computeScanZone(image, zoneDescription);
+    const [patchZone, zoneStart, _zoneEnd] = computeScanZone(image, zoneDescription);
 
     // Get marker template
     const marker = this.markerForZoneLabel.get(zoneLabel);

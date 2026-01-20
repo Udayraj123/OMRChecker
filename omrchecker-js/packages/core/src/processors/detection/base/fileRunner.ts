@@ -185,20 +185,12 @@ export class FieldTypeFileLevelRunner extends FileLevelRunner<
     grayImage: cv.Mat,
     coloredImage?: cv.Mat
   ): FieldDetection {
-    this.detectionPass.initializeFieldLevelAggregates(field);
-
-    const fieldDetection = this.detectionPass.getFieldDetection(
+    // initializeFieldLevelAggregates is now called automatically by runFieldLevelDetection
+    return this.detectionPass.runFieldLevelDetection(
       field,
       grayImage,
       coloredImage
     );
-
-    this.detectionPass.updateAggregatesOnProcessedFieldDetection(
-      field,
-      fieldDetection
-    );
-
-    return fieldDetection;
   }
 
   /**
@@ -208,7 +200,7 @@ export class FieldTypeFileLevelRunner extends FileLevelRunner<
    * @returns FieldInterpretation result
    */
   runFieldLevelInterpretation(field: Field): FieldInterpretation {
-    this.interpretationPass.initializeFieldLevelAggregates(field);
+    // initializeFieldLevelAggregates is now called automatically by runFieldLevelInterpretation
     const fileLevelDetectionAggregates =
       this.detectionPass.getFileLevelAggregates();
     return this.interpretationPass.runFieldLevelInterpretation(

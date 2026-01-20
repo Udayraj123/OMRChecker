@@ -82,12 +82,22 @@ export abstract class FieldTypeInterpretationPass extends FilePassAggregates {
     field: Field,
     fileLevelDetectionAggregates: unknown
   ): FieldInterpretation {
+    // Initialize field-level aggregates automatically
+    this.initializeFieldLevelAggregates(field);
     const fileLevelInterpretationAggregates = this.getFileLevelAggregates();
-    return this.getFieldInterpretation(
+    const fieldInterpretation = this.getFieldInterpretation(
       field,
       fileLevelDetectionAggregates,
       fileLevelInterpretationAggregates
     );
+
+    // update_aggregates_on_processed_field_interpretation
+    this.updateAggregatesOnProcessedFieldInterpretation(
+      field,
+      fieldInterpretation
+    );
+
+    return fieldInterpretation;
   }
 
   /**
@@ -252,6 +262,8 @@ export class TemplateInterpretationPass extends FilePassAggregates {
     _fieldTypeRunnerFieldLevelAggregates: unknown,
     currentOmrResponse?: Record<string, unknown>
   ): void {
+    // Initialize field-level aggregates automatically
+    this.initializeFieldLevelAggregates(field);
     // Update aggregates with interpretation result
     this.updateAggregatesOnProcessedFieldInterpretation(field, fieldInterpretation);
 

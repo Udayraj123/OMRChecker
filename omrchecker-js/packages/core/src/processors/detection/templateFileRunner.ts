@@ -158,8 +158,6 @@ export class TemplateFileRunner extends FileLevelRunner<
     grayImage: cv.Mat,
     coloredImage?: cv.Mat
   ): void {
-    this.detectionPass.initializeFieldLevelAggregates(field);
-
     const fieldDetectionTypeFileRunner =
       this.fieldDetectionTypeFileRunners[field.fieldDetectionType];
 
@@ -175,10 +173,8 @@ export class TemplateFileRunner extends FileLevelRunner<
       coloredImage
     );
 
-    this.detectionPass.updateAggregatesOnProcessedFieldDetection(
-      field,
-      fieldDetection
-    );
+    // initializeFieldLevelAggregates is now called automatically by runFieldLevelDetection
+    this.detectionPass.runFieldLevelDetection(field, fieldDetection);
   }
 
   /**
@@ -221,8 +217,6 @@ export class TemplateFileRunner extends FileLevelRunner<
     field: Field,
     currentOmrResponse: Record<string, string>
   ): void {
-    this.interpretationPass.initializeFieldLevelAggregates(field);
-
     const fieldDetectionTypeFileRunner =
       this.fieldDetectionTypeFileRunners[field.fieldDetectionType];
 
@@ -232,12 +226,22 @@ export class TemplateFileRunner extends FileLevelRunner<
       );
     }
 
+    // Get file-level detection aggregates from template-level detection pass
+    // (contains bubble_fields, ocr_fields, barcode_fields populated from repository)
+    const fileLevelDetectionAggregates =
+      this.detectionPass.getFileLevelAggregates();
+
+    // Run field-level interpretation with template-level aggregates
+    // initializeFieldLevelAggregates is called automatically inside runFieldLevelInterpretation
     const fieldInterpretation =
-      fieldDetectionTypeFileRunner.runFieldLevelInterpretation(field);
+      fieldDetectionTypeFileRunner.interpretationPass.runFieldLevelInterpretation(
+        field,
+        fileLevelDetectionAggregates
+      );
 
     const fieldTypeRunnerFieldLevelAggregates =
       fieldDetectionTypeFileRunner.getFieldLevelInterpretationAggregates();
-
+    // initializeFieldLevelAggregates is called automatically inside runFieldLevelInterpretation
     this.interpretationPass.runFieldLevelInterpretation(
       field,
       fieldInterpretation,
