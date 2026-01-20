@@ -85,6 +85,7 @@ describe('EvaluationConfig', () => {
               },
               evaluation: {
                 options: {
+                  questions_in_order: ['q1', 'q2'],
                   answers_in_order: ['B', 'A'], // Different answers
                 },
               },
@@ -129,6 +130,82 @@ describe('EvaluationConfig', () => {
         );
       }).toThrow(/Repeated set name/);
     });
+
+    it('should reject conditional set with answers_in_order but no questions_in_order', () => {
+      expect(() => {
+        new EvaluationConfig(
+          '/test/dir',
+          'evaluation.json',
+          {
+            options: {
+              questions_in_order: ['q1', 'q2'],
+              answers_in_order: ['A', 'B'],
+            },
+            marking_schemes: {
+              [DEFAULT_SECTION_KEY]: {
+                correct: 1,
+                incorrect: 0,
+                unmarked: 0,
+              },
+            },
+            conditional_sets: [
+              {
+                name: 'Set A',
+                matcher: {
+                  formatString: '{set_type}',
+                  matchRegex: '^A$',
+                },
+                evaluation: {
+                  options: {
+                    answers_in_order: ['B', 'C'], // Missing questions_in_order
+                  },
+                },
+              },
+            ],
+          },
+          mockTemplate,
+          {}
+        );
+      }).toThrow(/provides 'answers_in_order' but missing 'questions_in_order'/);
+    });
+
+    it('should reject conditional set with questions_in_order but no answers_in_order', () => {
+      expect(() => {
+        new EvaluationConfig(
+          '/test/dir',
+          'evaluation.json',
+          {
+            options: {
+              questions_in_order: ['q1', 'q2'],
+              answers_in_order: ['A', 'B'],
+            },
+            marking_schemes: {
+              [DEFAULT_SECTION_KEY]: {
+                correct: 1,
+                incorrect: 0,
+                unmarked: 0,
+              },
+            },
+            conditional_sets: [
+              {
+                name: 'Set A',
+                matcher: {
+                  formatString: '{set_type}',
+                  matchRegex: '^A$',
+                },
+                evaluation: {
+                  options: {
+                    questions_in_order: ['q1', 'q2'], // Missing answers_in_order
+                  },
+                },
+              },
+            ],
+          },
+          mockTemplate,
+          {}
+        );
+      }).toThrow(/provides 'questions_in_order' but missing 'answers_in_order'/);
+    });
   });
 
   describe('Set Matching', () => {
@@ -159,6 +236,7 @@ describe('EvaluationConfig', () => {
               },
               evaluation: {
                 options: {
+                  questions_in_order: ['q1', 'q2'],
                   answers_in_order: ['B', 'C'],
                 },
               },
@@ -171,6 +249,7 @@ describe('EvaluationConfig', () => {
               },
               evaluation: {
                 options: {
+                  questions_in_order: ['q1', 'q2'],
                   answers_in_order: ['C', 'D'],
                 },
               },
@@ -286,6 +365,7 @@ describe('EvaluationConfig', () => {
               },
               evaluation: {
                 options: {
+                  questions_in_order: ['q1', 'q2'],
                   answers_in_order: ['B', 'C'],
                 },
               },

@@ -42,6 +42,24 @@ class EvaluationConfig:
             )
 
             logger.debug("evaluation_json_for_set", set_name, evaluation_json_for_set)
+
+            # Validate that if answers_in_order is provided, questions_in_order must also be provided
+            evaluation_options = evaluation_json_for_set.get("options", {})
+            has_answers = "answers_in_order" in evaluation_options
+            has_questions = "questions_in_order" in evaluation_options
+            if has_answers and not has_questions:
+                raise ConfigError(
+                    f"Conditional set '{set_name}' provides 'answers_in_order' but missing 'questions_in_order'. "
+                    "Both must be provided together.",
+                    context={"set_name": set_name, "evaluation_path": str(self.path)},
+                )
+            if has_questions and not has_answers:
+                raise ConfigError(
+                    f"Conditional set '{set_name}' provides 'questions_in_order' but missing 'answers_in_order'. "
+                    "Both must be provided together.",
+                    context={"set_name": set_name, "evaluation_path": str(self.path)},
+                )
+
             # Merge two jsons, override the arrays(if any) instead of appending
             merged_evaluation_json = OVERRIDE_MERGER.merge(
                 partial_default_evaluation_json, evaluation_json_for_set

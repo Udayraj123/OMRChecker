@@ -112,6 +112,24 @@ export class EvaluationConfig {
 
       logger.debug(`Processing conditional set: ${setName}`);
 
+      // Validate that if answers_in_order is provided, questions_in_order must also be provided
+      const evaluationOptions = evaluationJsonForSet.options || {};
+      const hasAnswers = 'answers_in_order' in evaluationOptions;
+      const hasQuestions = 'questions_in_order' in evaluationOptions;
+
+      if (hasAnswers && !hasQuestions) {
+        throw new Error(
+          `Conditional set '${setName}' provides 'answers_in_order' but missing 'questions_in_order'. ` +
+          'Both must be provided together.'
+        );
+      }
+      if (hasQuestions && !hasAnswers) {
+        throw new Error(
+          `Conditional set '${setName}' provides 'questions_in_order' but missing 'answers_in_order'. ` +
+          'Both must be provided together.'
+        );
+      }
+
       // Merge configurations
       const mergedEvaluationJson = deepMerge(
         partialDefaultEvaluationJson,
