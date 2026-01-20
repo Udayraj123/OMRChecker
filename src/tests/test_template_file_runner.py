@@ -25,8 +25,12 @@ def mock_template():
 
 
 @pytest.fixture
-def sample_template_with_fields(mock_template):
+def sample_template_with_fields(mock_template, tmp_path):
     """Create a template with sample fields."""
+    # Set up template path (required for initialize_directory_level_aggregates)
+    mock_template.path = tmp_path / "template.json"
+    mock_template.path.parent.mkdir(parents=True, exist_ok=True)
+
     # Create mock field blocks
     field_block1 = Mock(spec=FieldBlock)
     field_block1.name = "block1"
@@ -77,14 +81,9 @@ class TestTemplateFileRunnerInitialization:
         assert "BUBBLES_THRESHOLD" in runner.field_detection_type_file_runners
         assert len(runner.field_detection_type_file_runners) == 1
 
-    def test_initialize_directory_level_aggregates(
-        self, sample_template_with_fields, tmp_path
-    ):
+    def test_initialize_directory_level_aggregates(self, sample_template_with_fields):
         """Test initialization of directory level aggregates."""
-        # Set up template path
-        sample_template_with_fields.path = tmp_path / "template.json"
-        sample_template_with_fields.path.parent.mkdir(parents=True, exist_ok=True)
-
+        # Template path is already set up in fixture
         runner = TemplateFileRunner(sample_template_with_fields)
 
         # Check that aggregates are initialized for both passes
@@ -106,10 +105,7 @@ class TestReadOmrAndUpdateMetrics:
         self, sample_template_with_fields, sample_images, tmp_path
     ):
         """Test two-pass processing (detection then interpretation)."""
-        # Set up template path
-        sample_template_with_fields.path = tmp_path / "template.json"
-        sample_template_with_fields.path.parent.mkdir(parents=True, exist_ok=True)
-
+        # Template path is already set up in fixture
         runner = TemplateFileRunner(sample_template_with_fields)
 
         gray_image, colored_image = sample_images
@@ -156,10 +152,7 @@ class TestRunFileLevelDetection:
         self, sample_template_with_fields, sample_images, tmp_path
     ):
         """Test detection pass for all fields."""
-        # Set up template path
-        sample_template_with_fields.path = tmp_path / "template.json"
-        sample_template_with_fields.path.parent.mkdir(parents=True, exist_ok=True)
-
+        # Template path is already set up in fixture
         runner = TemplateFileRunner(sample_template_with_fields)
 
         gray_image, colored_image = sample_images
@@ -181,10 +174,7 @@ class TestRunFileLevelDetection:
         self, sample_template_with_fields, sample_images, tmp_path
     ):
         """Test updating detection aggregates after processing file."""
-        # Set up template path
-        sample_template_with_fields.path = tmp_path / "template.json"
-        sample_template_with_fields.path.parent.mkdir(parents=True, exist_ok=True)
-
+        # Template path is already set up in fixture
         runner = TemplateFileRunner(sample_template_with_fields)
 
         gray_image, colored_image = sample_images
@@ -209,10 +199,7 @@ class TestRunFieldLevelDetection:
         self, sample_template_with_fields, sample_images, tmp_path
     ):
         """Test field-level detection for bubble fields."""
-        # Set up template path
-        sample_template_with_fields.path = tmp_path / "template.json"
-        sample_template_with_fields.path.parent.mkdir(parents=True, exist_ok=True)
-
+        # Template path is already set up in fixture
         runner = TemplateFileRunner(sample_template_with_fields)
 
         gray_image, colored_image = sample_images
@@ -239,10 +226,7 @@ class TestRunFileLevelInterpretation:
         self, sample_template_with_fields, sample_images, tmp_path
     ):
         """Test interpretation pass for all fields."""
-        # Set up template path
-        sample_template_with_fields.path = tmp_path / "template.json"
-        sample_template_with_fields.path.parent.mkdir(parents=True, exist_ok=True)
-
+        # Template path is already set up in fixture
         runner = TemplateFileRunner(sample_template_with_fields)
 
         gray_image, colored_image = sample_images
@@ -292,10 +276,7 @@ class TestRunFieldLevelInterpretation:
         self, sample_template_with_fields, sample_images, tmp_path
     ):
         """Test field-level interpretation."""
-        # Set up template path
-        sample_template_with_fields.path = tmp_path / "template.json"
-        sample_template_with_fields.path.parent.mkdir(parents=True, exist_ok=True)
-
+        # Template path is already set up in fixture
         runner = TemplateFileRunner(sample_template_with_fields)
 
         gray_image, colored_image = sample_images
@@ -347,10 +328,7 @@ class TestAggregateManagement:
         self, sample_template_with_fields, sample_images, tmp_path
     ):
         """Test aggregate collection across multiple files."""
-        # Set up template path
-        sample_template_with_fields.path = tmp_path / "template.json"
-        sample_template_with_fields.path.parent.mkdir(parents=True, exist_ok=True)
-
+        # Template path is already set up in fixture
         runner = TemplateFileRunner(sample_template_with_fields)
 
         gray_image, colored_image = sample_images
@@ -394,10 +372,7 @@ class TestAggregateManagement:
 
     def test_finish_processing_directory(self, sample_template_with_fields, tmp_path):
         """Test finishing directory processing."""
-        # Set up template path
-        sample_template_with_fields.path = tmp_path / "template.json"
-        sample_template_with_fields.path.parent.mkdir(parents=True, exist_ok=True)
-
+        # Template path is already set up in fixture
         runner = TemplateFileRunner(sample_template_with_fields)
 
         # Should not raise
@@ -408,10 +383,7 @@ class TestAggregateManagement:
         self, sample_template_with_fields, sample_images, tmp_path
     ):
         """Test getting export metrics for a file."""
-        # Set up template path
-        sample_template_with_fields.path = tmp_path / "template.json"
-        sample_template_with_fields.path.parent.mkdir(parents=True, exist_ok=True)
-
+        # Template path is already set up in fixture
         runner = TemplateFileRunner(sample_template_with_fields)
 
         gray_image, colored_image = sample_images

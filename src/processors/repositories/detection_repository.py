@@ -32,7 +32,9 @@ class DetectionRepository:
         Args:
             file_path: Path to the file being processed
         """
-        self._current_file_results = FileDetectionResults(file_path=file_path)
+        # Normalize file_path to string for consistent storage
+        file_path_str = str(file_path)
+        self._current_file_results = FileDetectionResults(file_path=file_path_str)
 
     def finalize_file(self) -> None:
         """Finalize current file and store results."""
@@ -67,10 +69,25 @@ class DetectionRepository:
         Raises:
             KeyError: If file has not been processed
         """
-        if file_path not in self._file_results:
-            msg = f"No results found for file: {file_path}"
-            raise KeyError(msg)
-        return self._file_results[file_path]
+        # Normalize file_path to string for consistent lookup
+        file_path_str = str(file_path)
+
+        # Try exact match first
+        if file_path_str in self._file_results:
+            return self._file_results[file_path_str]
+
+        # Try to find by matching stored paths (handle Path vs str differences)
+        for stored_path, results in self._file_results.items():
+            if str(stored_path) == file_path_str or stored_path == file_path_str:
+                return results
+
+        # If still not found, raise error with helpful message
+        available_paths = list(self._file_results.keys())
+        msg = (
+            f"No results found for file: {file_path_str}. "
+            f"Available files: {available_paths}"
+        )
+        raise KeyError(msg)
 
     # Field-level operations
     def save_bubble_field(

@@ -7,13 +7,15 @@
  */
 
 import * as cv from '@techstark/opencv-js';
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TemplateFileRunner } from '../templateFileRunner';
 import { TemplateLoader } from '../../../template/TemplateLoader';
 import type { TemplateConfig } from '../../../template/types';
 
 /**
  * Create minimal template config for testing.
+ * Template path is handled internally by TemplateLoader in TypeScript,
+ * so we don't need to set it explicitly like in Python.
  */
 function createMinimalTemplateConfig(): TemplateConfig {
   return {
@@ -37,6 +39,15 @@ function createMinimalTemplateConfig(): TemplateConfig {
   };
 }
 
+/**
+ * Create sample images for testing.
+ */
+function createSampleImages(): { grayImage: cv.Mat; coloredImage: cv.Mat } {
+  const grayImage = new cv.Mat(800, 1000, cv.CV_8UC1);
+  const coloredImage = new cv.Mat(800, 1000, cv.CV_8UC3);
+  return { grayImage, coloredImage };
+}
+
 describe('TemplateFileRunner', () => {
   let templateConfig: TemplateConfig;
   let templateLayout: ReturnType<typeof TemplateLoader.loadLayoutFromJSON>;
@@ -45,14 +56,16 @@ describe('TemplateFileRunner', () => {
   let mockColoredImage: cv.Mat;
 
   beforeEach(() => {
+    // Template config is set up once in fixture (createMinimalTemplateConfig)
     templateConfig = createMinimalTemplateConfig();
     templateLayout = TemplateLoader.loadLayoutFromJSON(templateConfig);
     const tuningConfig = {};
     runner = new TemplateFileRunner(templateLayout, tuningConfig);
 
     // Create mock images
-    mockGrayImage = new cv.Mat(900, 650, cv.CV_8UC1);
-    mockColoredImage = new cv.Mat(900, 650, cv.CV_8UC3);
+    const images = createSampleImages();
+    mockGrayImage = images.grayImage;
+    mockColoredImage = images.coloredImage;
   });
 
   afterEach(() => {
@@ -74,11 +87,14 @@ describe('TemplateFileRunner', () => {
     });
 
     it('should initialize directory level aggregates', () => {
+      // Template layout is already set up in beforeEach fixture
       const detectionAggregates = runner.getDirectoryLevelDetectionAggregates();
       const interpretationAggregates = runner.getDirectoryLevelInterpretationAggregates();
 
       expect(detectionAggregates).toBeDefined();
       expect(interpretationAggregates).toBeDefined();
+      expect(detectionAggregates.initialDirectoryPath).toBeDefined();
+      expect(interpretationAggregates.initialDirectoryPath).toBeDefined();
     });
   });
 
@@ -140,6 +156,7 @@ describe('TemplateFileRunner', () => {
 
   describe('runFileLevelInterpretation', () => {
     it('should run interpretation after detection', () => {
+      // Template layout is already set up in beforeEach fixture
       const filePath = 'test.jpg';
 
       // Run detection first
@@ -223,8 +240,10 @@ describe('TemplateFileRunner', () => {
 
   describe('Edge Cases', () => {
     it('should handle no fields in template', () => {
+      // Template layout is already set up in beforeEach fixture
       // This should be caught during template loading, but test the runner with minimal fields
       expect(runner.allFields.length).toBeGreaterThan(0);
+      expect(runner.allFields.length).toBe(2); // q1 and q2 from block1
     });
 
     it('should handle zero-sized images', () => {

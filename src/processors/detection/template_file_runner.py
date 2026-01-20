@@ -68,7 +68,7 @@ class TemplateFileRunner(
             field_detection_type
         ]
         # Pass repository to all field type runners (all now support repository)
-        return FieldTypeProcessorClass(tuning_config, repository=self.repository)
+        return FieldTypeProcessorClass(tuning_config, self.repository)
 
     def read_omr_and_update_metrics(self, file_path, gray_image, colored_image):
         # First pass to compute aggregates like global threshold
@@ -155,10 +155,11 @@ class TemplateFileRunner(
                 file_path
             )
 
-        # Finalize repository for current file
+        # Finalize repository for current file (must be done before populating aggregates)
         self.repository.finalize_file()
 
         # Note: we update file level after field levels are updated
+        # This populates bubble_fields, ocr_fields, barcode_fields from repository
         self.detection_pass.update_aggregates_on_processed_file(
             file_path, self.field_detection_type_file_runners
         )
@@ -183,8 +184,15 @@ class TemplateFileRunner(
             field.field_detection_type
         ]
 
-        field_interpretation = (
-            field_detection_type_file_runner.run_field_level_interpretation(field)
+        # Get file-level detection aggregates from template-level detection pass
+        # (contains bubble_fields, ocr_fields, barcode_fields populated from repository)
+        file_level_detection_aggregates = (
+            self.detection_pass.get_file_level_aggregates()
+        )
+
+        # Run field-level interpretation with template-level aggregates
+        field_interpretation = field_detection_type_file_runner.interpretation_pass.run_field_level_interpretation(
+            field, file_level_detection_aggregates
         )
 
         field_type_runner_field_level_aggregates = (

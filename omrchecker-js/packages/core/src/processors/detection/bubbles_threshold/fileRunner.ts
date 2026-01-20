@@ -10,6 +10,7 @@ import { FieldTypeFileLevelRunner } from '../base/fileRunner';
 import { BubblesThresholdDetectionPass } from './detectionPass';
 import { BubblesThresholdInterpretationPass } from './interpretationPass';
 import type { TuningConfig } from '../base/commonPass';
+import { DetectionRepository } from '../../repositories/DetectionRepository';
 
 /**
  * File runner for bubbles threshold detection and interpretation.
@@ -18,16 +19,23 @@ import type { TuningConfig } from '../base/commonPass';
  * and coordinates them for processing bubble fields.
  */
 export class BubblesThresholdFileRunner extends FieldTypeFileLevelRunner {
-  constructor(tuningConfig: TuningConfig) {
-    const detectionPass = new BubblesThresholdDetectionPass(tuningConfig);
-    const interpretationPass = new BubblesThresholdInterpretationPass(tuningConfig);
+  public repository: DetectionRepository;
 
-    super(
+  constructor(tuningConfig: TuningConfig, repository: DetectionRepository) {
+    const fieldDetectionType = FieldDetectionType.BUBBLES_THRESHOLD;
+    const detectionPass = new BubblesThresholdDetectionPass(
       tuningConfig,
-      FieldDetectionType.BUBBLES_THRESHOLD,
-      detectionPass,
-      interpretationPass
+      fieldDetectionType,
+      repository
     );
+    const interpretationPass = new BubblesThresholdInterpretationPass(
+      tuningConfig,
+      fieldDetectionType,
+      repository
+    );
+
+    super(tuningConfig, fieldDetectionType, detectionPass, interpretationPass);
+    this.repository = repository;
   }
 }
 

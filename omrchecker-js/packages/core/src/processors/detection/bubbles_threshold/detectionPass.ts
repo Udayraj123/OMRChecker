@@ -12,6 +12,7 @@ import type { Field } from '../../layout/field/base';
 import { NumberAggregate } from '../../../utils/stats';
 import { BubblesFieldDetection } from './detection';
 import type { TuningConfig } from '../base/commonPass';
+import { DetectionRepository } from '../../repositories/DetectionRepository';
 
 /**
  * Detection pass for bubble fields.
@@ -20,8 +21,15 @@ import type { TuningConfig } from '../base/commonPass';
  * Uses BubblesFieldDetection for actual detection.
  */
 export class BubblesThresholdDetectionPass extends FieldTypeDetectionPass {
-  constructor(tuningConfig: TuningConfig) {
-    super(tuningConfig, FieldDetectionType.BUBBLES_THRESHOLD);
+  private repository: DetectionRepository;
+
+  constructor(
+    tuningConfig: TuningConfig,
+    fieldDetectionType: string,
+    repository: DetectionRepository
+  ) {
+    super(tuningConfig, fieldDetectionType);
+    this.repository = repository;
   }
 
   /**
@@ -67,6 +75,7 @@ export class BubblesThresholdDetectionPass extends FieldTypeDetectionPass {
     this.insertDirectoryLevelAggregates({
       file_wise_thresholds: new NumberAggregate(),
     });
+    // Note: Repository is initialized by TemplateFileRunner before calling this method
   }
 
   /**
@@ -81,6 +90,7 @@ export class BubblesThresholdDetectionPass extends FieldTypeDetectionPass {
       all_field_bubble_means: [] as number[],
       all_field_bubble_means_std: [] as number[],
     });
+    // Note: Repository is initialized by TemplateFileRunner before calling this method
   }
 
   /**
@@ -99,6 +109,9 @@ export class BubblesThresholdDetectionPass extends FieldTypeDetectionPass {
     if (!fieldDetection.result) {
       throw new Error('Field detection result not available');
     }
+
+    // Save to repository
+    this.repository.saveBubbleField(field.id, fieldDetection.result);
 
     const fieldBubbleMeans = fieldDetection.result.bubbleMeans.map((bm) => bm.meanValue);
     const stdDeviation = fieldDetection.result.stdDeviation;
@@ -126,12 +139,8 @@ export class BubblesThresholdDetectionPass extends FieldTypeDetectionPass {
       [key: string]: unknown;
     }
   ): void {
-    super.updateFileLevelAggregatesOnProcessedFieldDetection(
-      field,
-      _fieldDetection,
-      fieldLevelAggregates as any // Type assertion needed due to base class signature
-    );
-
+    // When using repository, skip base class update_file_level_aggregates_on_processed_field
+    // which populates field_label_wise_aggregates. Just update fields_count.
     const fileAgg = this.getFileLevelAggregates();
     if (!fileAgg) {
       throw new Error('File level aggregates not initialized');

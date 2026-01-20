@@ -3,6 +3,7 @@ from abc import abstractmethod
 from src.processors.detection.base.common_pass import FilePassAggregates
 from src.processors.detection.base.detection import FieldDetection
 from src.processors.layout.field.base import Field
+from src.utils.logger import Logger
 from src.utils.stats import StatsByLabel
 
 
@@ -155,23 +156,44 @@ class TemplateDetectionPass(FilePassAggregates):
         # Populate typed field results from repository
         # Get repository from any field type runner (they all share the same repository)
         any_runner = next(iter(field_detection_type_file_runners.values()), None)
-        if any_runner and hasattr(any_runner, "repository"):
-            file_results = any_runner.repository.get_file_results(file_path)
+        if any_runner and hasattr(any_runner, "repository") and any_runner.repository:
+            try:
+                file_results = any_runner.repository.get_file_results(file_path)
 
-            # Map all field types by field_label for interpretation access
-            bubble_fields_by_label = {
-                result.field_label: result
-                for result in file_results.bubble_fields.values()
-            }
-            ocr_fields_by_label = {
-                result.field_label: result
-                for result in file_results.ocr_fields.values()
-            }
-            barcode_fields_by_label = {
-                result.field_label: result
-                for result in file_results.barcode_fields.values()
-            }
+                # Map all field types by field_label for interpretation access
+                bubble_fields_by_label = {
+                    result.field_label: result
+                    for result in file_results.bubble_fields.values()
+                }
+                ocr_fields_by_label = {
+                    result.field_label: result
+                    for result in file_results.ocr_fields.values()
+                }
+                barcode_fields_by_label = {
+                    result.field_label: result
+                    for result in file_results.barcode_fields.values()
+                }
 
-            self.file_level_aggregates["bubble_fields"] = bubble_fields_by_label
-            self.file_level_aggregates["ocr_fields"] = ocr_fields_by_label
-            self.file_level_aggregates["barcode_fields"] = barcode_fields_by_label
+                self.file_level_aggregates["bubble_fields"] = bubble_fields_by_label
+                self.file_level_aggregates["ocr_fields"] = ocr_fields_by_label
+                self.file_level_aggregates["barcode_fields"] = barcode_fields_by_label
+            except KeyError as e:
+                # File not yet finalized in repository - this should not happen
+                # but if it does, log and re-raise to surface the issue
+                logger = Logger(__name__)
+                logger.error(
+                    f"File {file_path} not found in repository after finalize_file(). "
+                    f"This indicates a bug in the repository lifecycle management. Error: {e}"
+                )
+                # Re-raise to surface the issue during development
+                raise
+            except Exception as e:
+                # Other unexpected errors
+                logger = Logger(__name__)
+                logger.error(
+                    f"Unexpected error populating field results from repository for {file_path}: {e}"
+                )
+                # Initialize empty dicts to prevent KeyError in interpretation
+                self.file_level_aggregates.setdefault("bubble_fields", {})
+                self.file_level_aggregates.setdefault("ocr_fields", {})
+                self.file_level_aggregates.setdefault("barcode_fields", {})

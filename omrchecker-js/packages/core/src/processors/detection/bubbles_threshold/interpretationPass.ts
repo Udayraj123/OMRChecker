@@ -14,6 +14,7 @@ import { BubblesFieldInterpretation } from './interpretation';
 import { GlobalThreshold, type ThresholdConfig } from '../../threshold/GlobalThreshold';
 import type { TuningConfig, FieldLevelAggregates, FileLevelAggregates } from '../base/commonPass';
 import type { BubbleMeanValue } from '../models/detectionResults';
+import { DetectionRepository } from '../../repositories/DetectionRepository';
 
 const logger = new Logger('BubblesThresholdInterpretationPass');
 
@@ -24,8 +25,15 @@ const logger = new Logger('BubblesThresholdInterpretationPass');
  * Uses BubblesFieldInterpretation for actual interpretation.
  */
 export class BubblesThresholdInterpretationPass extends FieldTypeInterpretationPass {
-  constructor(tuningConfig: TuningConfig) {
-    super(tuningConfig, FieldDetectionType.BUBBLES_THRESHOLD);
+  private repository: DetectionRepository;
+
+  constructor(
+    tuningConfig: TuningConfig,
+    fieldDetectionType: string,
+    repository: DetectionRepository
+  ) {
+    super(tuningConfig, fieldDetectionType);
+    this.repository = repository;
   }
 
   /**
@@ -53,45 +61,22 @@ export class BubblesThresholdInterpretationPass extends FieldTypeInterpretationP
    * Initialize file-level aggregates for interpretation.
    *
    * @param filePath - Path to the file being processed
-   * @param fieldDetectionTypeWiseDetectionAggregates - Detection aggregates by field detection type
-   * @param fieldLabelWiseDetectionAggregates - Detection aggregates by field label
    */
-  initializeFileLevelAggregates(
-    filePath: string,
-    fieldDetectionTypeWiseDetectionAggregates: unknown,
-    fieldLabelWiseDetectionAggregates: unknown
-  ): void {
-    super.initializeFileLevelAggregates(
-      filePath,
-      fieldDetectionTypeWiseDetectionAggregates,
-      fieldLabelWiseDetectionAggregates
-    );
+  initializeFileLevelAggregates(filePath: string): void {
+    super.initializeFileLevelAggregates(filePath);
 
-    // Get own file-level detection aggregates
-    const typeWiseAggs = fieldDetectionTypeWiseDetectionAggregates as Record<
-      string,
-      {
-        all_field_bubble_means_std: number[];
-        all_field_bubble_means: BubbleMeanValue[];
-      }
-    >;
+    // Get bubble means from repository
+    const allBubbleMeans = this.repository.getAllBubbleMeansForCurrentFile();
 
-    const ownFileLevelDetectionAggregates =
-      typeWiseAggs[this.fieldDetectionType];
-
-    if (!ownFileLevelDetectionAggregates) {
-      throw new Error(
-        `Detection aggregates not found for ${this.fieldDetectionType}`
-      );
+    // Calculate std deviations from repository results
+    const allOutlierDeviations: number[] = [];
+    for (const fieldResult of this.repository.getAllBubbleFieldsForCurrentFile().values()) {
+      allOutlierDeviations.push(fieldResult.stdDeviation);
     }
 
-    const allOutlierDeviations =
-      ownFileLevelDetectionAggregates.all_field_bubble_means_std;
+    const fieldWiseMeansAndRefs = allBubbleMeans;
     const outlierDeviationThresholdForFile =
       this.getOutlierDeviationThreshold(allOutlierDeviations);
-
-    const fieldWiseMeansAndRefs =
-      ownFileLevelDetectionAggregates.all_field_bubble_means;
     const { fileLevelFallbackThreshold, globalMaxJump } =
       this.getFallbackThreshold(fieldWiseMeansAndRefs);
 

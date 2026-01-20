@@ -62,14 +62,8 @@ export abstract class FieldTypeInterpretationPass extends FilePassAggregates {
    * Initialize file-level aggregates for interpretation.
    *
    * @param filePath - Path to the file being processed
-   * @param _fieldDetectionTypeWiseDetectionAggregates - Detection aggregates by field detection type
-   * @param _fieldLabelWiseDetectionAggregates - Detection aggregates by field label
    */
-  initializeFileLevelAggregates(
-    filePath: string,
-    _fieldDetectionTypeWiseDetectionAggregates: unknown,
-    _fieldLabelWiseDetectionAggregates: unknown
-  ): void {
+  initializeFileLevelAggregates(filePath: string): void {
     super.initializeFileLevelAggregates(filePath);
     this.insertFileLevelAggregates({
       confidence_metrics_for_file: {},
@@ -206,14 +200,10 @@ export class TemplateInterpretationPass extends FilePassAggregates {
    *
    * @param filePath - Path to the file being processed
    * @param allFieldDetectionTypes - All field detection types in the template
-   * @param _fieldDetectionTypeWiseDetectionAggregates - Detection aggregates by type (not used in base)
-   * @param _fieldLabelWiseDetectionAggregates - Detection aggregates by label (not used in base)
    */
   initializeFileLevelAggregates(
     filePath: string,
-    allFieldDetectionTypes: string[],
-    _fieldDetectionTypeWiseDetectionAggregates?: unknown,
-    _fieldLabelWiseDetectionAggregates?: unknown
+    allFieldDetectionTypes: string[]
   ): void {
     super.initializeFileLevelAggregates(filePath);
     this.insertFileLevelAggregates({

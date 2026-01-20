@@ -15,13 +15,14 @@ import { BubblesThresholdFileRunner } from './bubbles_threshold/fileRunner';
 import type { Field } from '../layout/field/base';
 import type { TuningConfig } from './base/commonPass';
 import type { TemplateLayoutData } from '../../template/TemplateLoader';
+import { DetectionRepository } from '../repositories/DetectionRepository';
 
 /**
  * Mapping of field detection types to their file runner classes.
  */
 const fieldDetectionTypeToRunner: Record<
   string,
-  new (tuningConfig: TuningConfig) => FieldTypeFileLevelRunner
+  new (tuningConfig: TuningConfig, repository: DetectionRepository) => FieldTypeFileLevelRunner
 > = {
   [FieldDetectionType.BUBBLES_THRESHOLD]: BubblesThresholdFileRunner,
   // TODO: Add OCR and Barcode runners when implemented
@@ -49,6 +50,7 @@ export class TemplateFileRunner extends FileLevelRunner<
     string,
     FieldTypeFileLevelRunner
   > = {};
+  private repository: DetectionRepository;
 
   constructor(template: TemplateLayoutData, tuningConfig: TuningConfig) {
     const detectionPass = new TemplateDetectionPass(tuningConfig);
@@ -56,6 +58,7 @@ export class TemplateFileRunner extends FileLevelRunner<
     super(tuningConfig, detectionPass, interpretationPass);
 
     this.template = template;
+    this.repository = new DetectionRepository();
     this.initializeFieldFileRunners(template);
     this.initializeDirectoryLevelAggregates(template);
   }
@@ -92,7 +95,7 @@ export class TemplateFileRunner extends FileLevelRunner<
         `No file runner found for field detection type: ${fieldDetectionType}`
       );
     }
-    return new FieldTypeProcessorClass(this.tuningConfig);
+    return new FieldTypeProcessorClass(this.tuningConfig, this.repository);
   }
 
   /**
@@ -261,6 +264,7 @@ export class TemplateFileRunner extends FileLevelRunner<
     const initialDirectoryPath =
       typeof templateOrPath === 'string' ? templateOrPath : '';
 
+    this.repository.initializeDirectory(initialDirectoryPath);
     this.detectionPass.initializeDirectoryLevelAggregates(
       initialDirectoryPath,
       this.allFieldDetectionTypes
@@ -318,6 +322,14 @@ export class TemplateFileRunner extends FileLevelRunner<
       );
     }
 
+    // Finalize file in repository
+    const anyRunner = Object.values(this.fieldDetectionTypeFileRunners)[0] as {
+      repository?: DetectionRepository;
+    };
+    if (anyRunner?.repository) {
+      anyRunner.repository.finalizeFile();
+    }
+
     // Note: we update file level after field levels are updated
     this.detectionPass.updateAggregatesOnProcessedFile(
       filePath,
@@ -329,43 +341,15 @@ export class TemplateFileRunner extends FileLevelRunner<
    * Initialize file-level interpretation aggregates.
    *
    * Overrides parent to handle template-specific initialization.
-   * Interpretation loop needs access to the file level detection aggregates.
+   * Interpretation passes now use repository directly, no need to pass aggregates.
    *
    * @param filePath - Path to the file being processed
    */
   initializeFileLevelInterpretationAggregates(filePath: string): void {
-    // Get file-level detection aggregates
-    const dirAgg = this.detectionPass.getDirectoryLevelAggregates();
-    if (!dirAgg) {
-      throw new Error('Directory level aggregates not initialized');
-    }
-
-    const fileWiseAggregates = (dirAgg.file_wise_aggregates as unknown) as Record<
-      string,
-      {
-        field_detection_type_wise_aggregates: unknown;
-        field_label_wise_aggregates: unknown;
-      }
-    >;
-
-    const allFileLevelDetectionAggregates = fileWiseAggregates[filePath];
-
-    if (!allFileLevelDetectionAggregates) {
-      throw new Error(
-        `File level detection aggregates not found for: ${filePath}`
-      );
-    }
-
-    const fieldDetectionTypeWiseDetectionAggregates =
-      allFileLevelDetectionAggregates.field_detection_type_wise_aggregates;
-    const fieldLabelWiseDetectionAggregates =
-      allFileLevelDetectionAggregates.field_label_wise_aggregates;
-
+    // Interpretation passes now use repository directly, no need to pass aggregates
     this.interpretationPass.initializeFileLevelAggregates(
       filePath,
-      this.allFieldDetectionTypes,
-      fieldDetectionTypeWiseDetectionAggregates,
-      fieldLabelWiseDetectionAggregates
+      this.allFieldDetectionTypes
     );
 
     // Setup field type wise metrics
@@ -373,9 +357,7 @@ export class TemplateFileRunner extends FileLevelRunner<
       this.fieldDetectionTypeFileRunners
     )) {
       fieldDetectionTypeFileRunner.initializeFileLevelInterpretationAggregates(
-        filePath,
-        fieldDetectionTypeWiseDetectionAggregates,
-        fieldLabelWiseDetectionAggregates
+        filePath
       );
     }
   }

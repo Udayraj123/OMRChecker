@@ -111,19 +111,9 @@ export class FileLevelRunner<
    * Initialize file-level interpretation aggregates.
    *
    * @param filePath - Path to the file being processed
-   * @param fieldDetectionTypeWiseDetectionAggregates - Detection aggregates by field detection type
-   * @param fieldLabelWiseDetectionAggregates - Detection aggregates by field label
    */
-  initializeFileLevelInterpretationAggregates(
-    filePath: string,
-    fieldDetectionTypeWiseDetectionAggregates: unknown,
-    fieldLabelWiseDetectionAggregates: unknown
-  ): void {
-    this.interpretationPass.initializeFileLevelAggregates(
-      filePath,
-      fieldDetectionTypeWiseDetectionAggregates,
-      fieldLabelWiseDetectionAggregates
-    );
+  initializeFileLevelInterpretationAggregates(filePath: string): void {
+    this.interpretationPass.initializeFileLevelAggregates(filePath);
   }
 
   /**

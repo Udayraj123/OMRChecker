@@ -14,6 +14,12 @@ import {
   type TuningConfig,
 } from './commonPass';
 import type { FieldDetection } from './detection';
+import { DetectionRepository } from '../../repositories/DetectionRepository';
+import {
+  BubbleFieldDetectionResult,
+  OCRFieldDetectionResult,
+  BarcodeFieldDetectionResult,
+} from '../models';
 
 /**
  * Abstract base class for field type detection passes.
@@ -305,8 +311,38 @@ export class TemplateDetectionPass extends FilePassAggregates {
         fieldDetectionTypeFileRunner.getFileLevelDetectionAggregates();
     }
 
-    // TODO: uncomment if needed for directory level graphs
-    // this.directoryLevelAggregates["field_label_wise_aggregates"][filePath] = this.field_label_wise_aggregates
+    // Populate typed field results from repository
+    // Get repository from any field type runner (they all share the same repository)
+    const anyRunner = Object.values(fieldDetectionTypeFileRunners)[0] as {
+      repository?: DetectionRepository;
+    };
+    if (anyRunner?.repository) {
+      try {
+        const fileResults = anyRunner.repository.getFileResults(filePath);
+
+        // Map all field types by field_label for interpretation access
+        const bubbleFieldsByLabel: Record<string, BubbleFieldDetectionResult> = {};
+        for (const result of fileResults.bubbleFields.values()) {
+          bubbleFieldsByLabel[result.fieldLabel] = result;
+        }
+
+        const ocrFieldsByLabel: Record<string, OCRFieldDetectionResult> = {};
+        for (const result of fileResults.ocrFields.values()) {
+          ocrFieldsByLabel[result.fieldLabel] = result;
+        }
+
+        const barcodeFieldsByLabel: Record<string, BarcodeFieldDetectionResult> = {};
+        for (const result of fileResults.barcodeFields.values()) {
+          barcodeFieldsByLabel[result.fieldLabel] = result;
+        }
+
+        fileAgg.bubble_fields = bubbleFieldsByLabel;
+        fileAgg.ocr_fields = ocrFieldsByLabel;
+        fileAgg.barcode_fields = barcodeFieldsByLabel;
+      } catch (error) {
+        // File not yet finalized in repository, skip
+      }
+    }
   }
 }
 

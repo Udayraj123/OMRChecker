@@ -12,6 +12,7 @@ from src.processors.layout.field.base import Field
 from src.processors.repositories.detection_repository import (
     DetectionRepository,
 )
+from src.utils.logger import Logger
 from src.utils.stats import NumberAggregate
 
 
@@ -40,8 +41,7 @@ class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
             }
         )
 
-        # Initialize repository
-        self.repository.initialize_directory(initial_directory_path)
+        # Note: Repository is initialized by TemplateFileRunner before calling this method
 
     def initialize_file_level_aggregates(self, file_path) -> None:
         """Initialize file-level aggregates."""
@@ -54,8 +54,7 @@ class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
             }
         )
 
-        # Initialize file in repository
-        self.repository.initialize_file(file_path)
+        # Note: Repository is initialized by TemplateFileRunner before calling this method
 
     def update_field_level_aggregates_on_processed_field_detection(
         self, field: Field, field_detection: BubblesFieldDetection
@@ -66,6 +65,13 @@ class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
         )
 
         # Save to repository
+        if field_detection.result is None:
+            logger = Logger(__name__)
+            logger.error(
+                f"field_detection.result is None for field {field.id}. "
+                f"Detection may have failed or result was not created."
+            )
+            raise ValueError(f"field_detection.result is None for field {field.id}")
         self.repository.save_bubble_field(field.id, field_detection.result)
 
         # Use result for aggregates
