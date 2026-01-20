@@ -89,9 +89,7 @@ export class PreprocessingProcessor extends Processor {
     context.coloredImage = coloredImage;
 
     // Get preprocessors list
-    const preProcessors = templateLayout.preProcessors ||
-                         templateLayout.pre_processors ||
-                         [];
+    const preProcessors = templateLayout.preProcessors || [];
 
     // Run preprocessors in sequence using their process() method
     for (const preProcessor of preProcessors) {
