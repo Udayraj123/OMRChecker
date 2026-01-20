@@ -5,11 +5,13 @@ from src.processors.detection.base.interpretation_pass import (
     FieldTypeInterpretationPass,
 )
 from src.processors.layout.field.base import Field
+from src.processors.repositories.detection_repository import DetectionRepository
 
 
 class BarcodeInterpretationPass(FieldTypeInterpretationPass):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, repository: DetectionRepository, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.repository = repository
 
     # Note: This is used by parent to generate the interpretation: detected string etc
     def get_field_interpretation(
@@ -29,14 +31,8 @@ class BarcodeInterpretationPass(FieldTypeInterpretationPass):
     def initialize_file_level_aggregates(
         self,
         file_path,
-        field_detection_type_wise_detection_aggregates,
-        field_label_wise_detection_aggregates,
     ) -> None:
-        super().initialize_file_level_aggregates(
-            file_path,
-            field_detection_type_wise_detection_aggregates,
-            field_label_wise_detection_aggregates,
-        )
+        super().initialize_file_level_aggregates(file_path)
         self.insert_file_level_aggregates(
             {
                 # TODO: check if any insert needed

@@ -73,14 +73,8 @@ class FileLevelRunner(Generic[DetectionPassT, InterpretationPassT]):
     def initialize_file_level_interpretation_aggregates(
         self,
         file_path,
-        field_detection_type_wise_detection_aggregates,
-        field_label_wise_detection_aggregates,
     ):
-        return self.interpretation_pass.initialize_file_level_aggregates(
-            file_path,
-            field_detection_type_wise_detection_aggregates,
-            field_label_wise_detection_aggregates,
-        )
+        return self.interpretation_pass.initialize_file_level_aggregates(file_path)
 
     def get_file_level_interpretation_aggregates(self):
         return self.interpretation_pass.get_file_level_aggregates()

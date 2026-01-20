@@ -34,8 +34,6 @@ class FieldTypeInterpretationPass(FilePassAggregates):
     def initialize_file_level_aggregates(
         self,
         file_path,
-        _field_detection_type_wise_detection_aggregates,
-        _field_label_wise_detection_aggregates,
     ) -> None:
         super().initialize_file_level_aggregates(file_path)
         self.insert_file_level_aggregates(
@@ -111,8 +109,6 @@ class TemplateInterpretationPass(FilePassAggregates):
         self,
         file_path,
         all_field_detection_types,
-        _field_detection_type_wise_detection_aggregates,
-        _field_label_wise_detection_aggregates,
     ) -> None:
         super().initialize_file_level_aggregates(file_path)
         self.insert_file_level_aggregates(

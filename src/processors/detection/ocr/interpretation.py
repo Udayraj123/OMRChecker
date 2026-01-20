@@ -56,14 +56,21 @@ class OCRFieldInterpretation(FieldInterpretation):
     ) -> None:
         field_label = field.field_label
 
-        field_level_detection_aggregates = file_level_detection_aggregates[
-            "field_label_wise_aggregates"
-        ][field_label]
+        # Use new typed models pipeline via ocr_fields
+        if "ocr_fields" not in file_level_detection_aggregates:
+            msg = f"ocr_fields not found in file_level_detection_aggregates for field {field_label}"
+            raise KeyError(msg)
+
+        ocr_fields = file_level_detection_aggregates["ocr_fields"]
+        if field_label not in ocr_fields:
+            msg = f"Field {field_label} not found in ocr_fields"
+            raise KeyError(msg)
+        ocr_result = ocr_fields[field_label]
+        detections = ocr_result.detections
 
         # map detections to interpretations
         self.interpretations = [
-            OCRInterpretation(detection)
-            for detection in field_level_detection_aggregates["detections"]
+            OCRInterpretation(detection) for detection in detections
         ]
 
         if len(self.interpretations) == 0:

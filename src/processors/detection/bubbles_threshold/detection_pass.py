@@ -18,13 +18,11 @@ from src.utils.stats import NumberAggregate
 class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
     """Detection pass for bubble fields using repository pattern.
 
-    Stores results in DetectionRepository instead of nested dictionaries.
-    Much simpler!
+    Stores results in DetectionRepository with typed models.
     """
 
-    def __init__(self, *args, repository: DetectionRepository = None, **kwargs) -> None:
+    def __init__(self, *args, repository: DetectionRepository, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        # Use provided repository or keep legacy dict approach
         self.repository = repository
 
     def get_field_detection(
@@ -42,9 +40,8 @@ class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
             }
         )
 
-        # Initialize repository if available
-        if self.repository:
-            self.repository.initialize_directory(initial_directory_path)
+        # Initialize repository
+        self.repository.initialize_directory(initial_directory_path)
 
     def initialize_file_level_aggregates(self, file_path) -> None:
         """Initialize file-level aggregates."""
@@ -57,9 +54,8 @@ class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
             }
         )
 
-        # Initialize file in repository if available
-        if self.repository:
-            self.repository.initialize_file(file_path)
+        # Initialize file in repository
+        self.repository.initialize_file(file_path)
 
     def update_field_level_aggregates_on_processed_field_detection(
         self, field: Field, field_detection: BubblesFieldDetection
@@ -69,9 +65,8 @@ class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
             field, field_detection
         )
 
-        # Save to repository if available (NEW WAY - much cleaner!)
-        if self.repository and hasattr(field_detection, "result"):
-            self.repository.save_bubble_field(field.id, field_detection.result)
+        # Save to repository
+        self.repository.save_bubble_field(field.id, field_detection.result)
 
         # Use result for aggregates
         field_bubble_means = field_detection.result.bubble_means
@@ -91,9 +86,9 @@ class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
         field_level_aggregates,
     ) -> None:
         """Update file-level aggregates after field detection."""
-        super().update_file_level_aggregates_on_processed_field_detection(
-            field, field_detection, field_level_aggregates
-        )
+        # Skip base class update_file_level_aggregates_on_processed_field
+        # which would populate field_label_wise_aggregates. Just update fields_count.
+        self.file_level_aggregates["fields_count"].push("processed")
 
         # Use result from field detection
         field_bubble_means = field_level_aggregates["field_bubble_means"]

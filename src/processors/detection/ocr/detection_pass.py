@@ -1,11 +1,13 @@
 from src.processors.detection.base.detection_pass import FieldTypeDetectionPass
 from src.processors.detection.ocr.detection import OCRFieldDetection
 from src.processors.layout.field.base import Field
+from src.processors.repositories.detection_repository import DetectionRepository
 
 
 class OCRDetectionPass(FieldTypeDetectionPass):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, repository: DetectionRepository, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.repository = repository
 
     # Note: This is used by parent to generate the detection
     def get_field_detection(
@@ -35,6 +37,10 @@ class OCRDetectionPass(FieldTypeDetectionPass):
         super().update_field_level_aggregates_on_processed_field_detection(
             field, field_detection
         )
+
+        # Save to repository
+        self.repository.save_ocr_field(field.id, field_detection.result)
+
         self.insert_field_level_aggregates({"detections": field_detection.detections})
 
     def update_file_level_aggregates_on_processed_field_detection(
@@ -43,7 +49,6 @@ class OCRDetectionPass(FieldTypeDetectionPass):
         field_detection: OCRFieldDetection,
         field_level_aggregates,
     ) -> None:
-        super().update_file_level_aggregates_on_processed_field_detection(
-            field, field_detection, field_level_aggregates
-        )
-        # TODO: check if any insert needed
+        # Skip populating field_label_wise_aggregates (using repository)
+        # Just update fields_count for statistics
+        self.file_level_aggregates["fields_count"].push("processed")

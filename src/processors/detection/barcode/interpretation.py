@@ -56,14 +56,21 @@ class BarcodeFieldInterpretation(FieldInterpretation):
     ) -> None:
         field_label = field.field_label
 
-        field_level_detection_aggregates = file_level_detection_aggregates[
-            "field_label_wise_aggregates"
-        ][field_label]
+        # Use new typed models pipeline via barcode_fields
+        if "barcode_fields" not in file_level_detection_aggregates:
+            msg = f"barcode_fields not found in file_level_detection_aggregates for field {field_label}"
+            raise KeyError(msg)
+
+        barcode_fields = file_level_detection_aggregates["barcode_fields"]
+        if field_label not in barcode_fields:
+            msg = f"Field {field_label} not found in barcode_fields"
+            raise KeyError(msg)
+        barcode_result = barcode_fields[field_label]
+        detections = barcode_result.detections
 
         # map detections to interpretations
         self.interpretations: list[BarcodeInterpretation] = [
-            BarcodeInterpretation(detection)
-            for detection in field_level_detection_aggregates["detections"]
+            BarcodeInterpretation(detection) for detection in detections
         ]
 
         if len(self.interpretations) == 0:

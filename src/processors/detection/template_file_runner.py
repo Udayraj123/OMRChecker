@@ -15,6 +15,7 @@ from src.processors.detection.bubbles_threshold.file_runner import (
 )
 from src.processors.detection.ocr.file_runner import OCRFileRunner
 from src.processors.layout.field.base import Field
+from src.processors.repositories.detection_repository import DetectionRepository
 
 
 class TemplateFileRunner(
@@ -41,6 +42,8 @@ class TemplateFileRunner(
         detection_pass = TemplateDetectionPass(tuning_config)
         interpretation_pass = TemplateInterpretationPass(tuning_config)
         super().__init__(tuning_config, detection_pass, interpretation_pass)
+        # Create repository for new typed models pipeline
+        self.repository = DetectionRepository()
         self.initialize_field_file_runners(template)
         self.initialize_directory_level_aggregates(template)
 
@@ -64,7 +67,8 @@ class TemplateFileRunner(
         FieldTypeProcessorClass = self.field_detection_type_to_runner[
             field_detection_type
         ]
-        return FieldTypeProcessorClass(tuning_config)
+        # Pass repository to all field type runners (all now support repository)
+        return FieldTypeProcessorClass(tuning_config, repository=self.repository)
 
     def read_omr_and_update_metrics(self, file_path, gray_image, colored_image):
         # First pass to compute aggregates like global threshold
@@ -109,6 +113,9 @@ class TemplateFileRunner(
 
         # super().initialize_directory_level_aggregates(initial_directory_path)
 
+        # Initialize repository for new directory
+        self.repository.initialize_directory(str(initial_directory_path))
+
         self.detection_pass.initialize_directory_level_aggregates(
             initial_directory_path, self.all_field_detection_types
         )
@@ -125,6 +132,9 @@ class TemplateFileRunner(
 
     def initialize_file_level_detection_aggregates(self, file_path) -> None:
         # super().initialize_file_level_detection_aggregates(file_path)
+        # Initialize repository for new file
+        self.repository.initialize_file(file_path)
+
         self.detection_pass.initialize_file_level_aggregates(
             file_path, self.all_field_detection_types
         )
@@ -144,6 +154,9 @@ class TemplateFileRunner(
             field_detection_type_file_runner.update_detection_aggregates_on_processed_file(
                 file_path
             )
+
+        # Finalize repository for current file
+        self.repository.finalize_file()
 
         # Note: we update file level after field levels are updated
         self.detection_pass.update_aggregates_on_processed_file(
@@ -190,25 +203,10 @@ class TemplateFileRunner(
 
     # This overrides parent definition -
     def initialize_file_level_interpretation_aggregates(self, file_path) -> None:
-        # Note: Interpretation loop needs access to the file level detection aggregates
-        all_file_level_detection_aggregates = (
-            self.detection_pass.directory_level_aggregates["file_wise_aggregates"][
-                file_path
-            ]
-        )
-
-        field_detection_type_wise_detection_aggregates = (
-            all_file_level_detection_aggregates["field_detection_type_wise_aggregates"]
-        )
-        field_label_wise_detection_aggregates = all_file_level_detection_aggregates[
-            "field_label_wise_aggregates"
-        ]
-
+        # Interpretation passes now use repository directly, no need to pass aggregates
         self.interpretation_pass.initialize_file_level_aggregates(
             file_path,
             self.all_field_detection_types,
-            field_detection_type_wise_detection_aggregates,
-            field_label_wise_detection_aggregates,
         )
 
         # Setup field type wise metrics
@@ -217,8 +215,6 @@ class TemplateFileRunner(
         ) in self.field_detection_type_file_runners.values():
             field_detection_type_file_runner.initialize_file_level_interpretation_aggregates(
                 file_path,
-                field_detection_type_wise_detection_aggregates,
-                field_label_wise_detection_aggregates,
             )
 
     def update_interpretation_aggregates_on_processed_file(self, file_path) -> None:

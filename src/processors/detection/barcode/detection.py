@@ -5,6 +5,9 @@ from src.processors.detection.base.detection import (
     FieldDetection,
     TextDetection,
 )
+from src.processors.detection.models.detection_results import (
+    BarcodeFieldDetectionResult,
+)
 from src.processors.layout.field.barcode_field import BarcodeField
 from src.processors.layout.field.base import Field
 from src.utils.math import MathUtils
@@ -76,5 +79,12 @@ class BarcodeFieldDetection(FieldDetection):
                     scan_zone_rectangle, text_detection
                 )
             ]
+
+        # Create strongly-typed result
+        self.result = BarcodeFieldDetectionResult(
+            field_id=field.id,
+            field_label=field.field_label,
+            detections=self.detections,
+        )
 
         return self.detections

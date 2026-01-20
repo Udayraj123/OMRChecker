@@ -77,7 +77,7 @@ class BubblesFieldInterpretation(FieldInterpretation):
 
         Args:
             field: Field to interpret
-            file_level_detection_aggregates: Detection results (legacy dict format)
+            file_level_detection_aggregates: Detection results (typed models via bubble_fields)
             file_level_interpretation_aggregates: Interpretation aggregates
         """
         # Step 1: Extract detection result
@@ -112,25 +112,21 @@ class BubblesFieldInterpretation(FieldInterpretation):
     ) -> BubbleFieldDetectionResult:
         """Extract detection result from aggregates.
 
-        Can work with both new typed models and legacy dict format.
+        Uses new typed models pipeline via bubble_fields.
         """
         field_label = field.field_label
 
-        # Try to get from new typed format first
-        if "bubble_fields" in file_level_detection_aggregates:
-            return file_level_detection_aggregates["bubble_fields"][field_label]
+        # Get from new typed format
+        if "bubble_fields" not in file_level_detection_aggregates:
+            msg = f"bubble_fields not found in file_level_detection_aggregates for field {field_label}"
+            raise KeyError(msg)
 
-        # Fallback to legacy dict format
-        field_level_detection_aggregates = file_level_detection_aggregates[
-            "field_label_wise_aggregates"
-        ][field_label]
+        bubble_fields = file_level_detection_aggregates["bubble_fields"]
+        if field_label not in bubble_fields:
+            msg = f"Field {field_label} not found in bubble_fields"
+            raise KeyError(msg)
 
-        # Create typed result from legacy format
-        return BubbleFieldDetectionResult(
-            field_id=field.id,
-            field_label=field_label,
-            bubble_means=field_level_detection_aggregates["field_bubble_means"],
-        )
+        return bubble_fields[field_label]
 
     def _create_threshold_config(
         self, file_level_interpretation_aggregates

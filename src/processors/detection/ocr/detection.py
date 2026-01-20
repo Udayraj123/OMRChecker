@@ -4,6 +4,7 @@ from src.processors.detection.base.detection import (
     FieldDetection,
     TextDetection,
 )
+from src.processors.detection.models.detection_results import OCRFieldDetectionResult
 from src.processors.detection.ocr.lib.easyocr import EasyOCR
 from src.processors.layout.field.base import Field
 from src.processors.layout.field.ocr_field import OCRField
@@ -77,5 +78,14 @@ class OCRFieldDetection(FieldDetection):
                     scan_zone_rectangle, text_detection
                 )
             ]
+
+        # Create strongly-typed result
+        confidence = self.detections[0].confident_score if self.detections else 0.0
+        self.result = OCRFieldDetectionResult(
+            field_id=field.id,
+            field_label=field.field_label,
+            detections=self.detections,
+            confidence=confidence,
+        )
 
         return self.detections

@@ -5,6 +5,7 @@ from src.processors.detection.bubbles_threshold.interpretation import (
     BubblesFieldInterpretation,
 )
 from src.processors.layout.field.base import Field
+from src.processors.repositories.detection_repository import DetectionRepository
 from src.processors.threshold.global_threshold import GlobalThresholdStrategy
 from src.processors.threshold.threshold_result import ThresholdConfig
 from src.utils.logger import logger
@@ -12,8 +13,9 @@ from src.utils.stats import NumberAggregate
 
 
 class BubblesThresholdInterpretationPass(FieldTypeInterpretationPass):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, repository: DetectionRepository, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.repository = repository
 
     # Note: This is used by parent to generate the interpretation: detected string etc
     def get_field_interpretation(
@@ -24,8 +26,6 @@ class BubblesThresholdInterpretationPass(FieldTypeInterpretationPass):
     ) -> BubblesFieldInterpretation:
         tuning_config = self.tuning_config
         return BubblesFieldInterpretation(
-            # TODO: [think] on what should be the place for file level thresholds - interpretation vs detection (or middle)
-            # ... As file_level_aggregates["field_label_wise_aggregates"] is not filled yet!
             tuning_config,
             field,
             file_level_detection_aggregates,
@@ -35,28 +35,24 @@ class BubblesThresholdInterpretationPass(FieldTypeInterpretationPass):
     def initialize_file_level_aggregates(
         self,
         file_path,
-        field_detection_type_wise_detection_aggregates,
-        field_label_wise_detection_aggregates,
     ) -> None:
-        super().initialize_file_level_aggregates(
-            file_path,
-            field_detection_type_wise_detection_aggregates,
-            field_label_wise_detection_aggregates,
-        )
-        # Note: we also have access to other detectors aggregates if for any conditionally interpretation in future.
-        own_file_level_detection_aggregates = (
-            field_detection_type_wise_detection_aggregates[self.field_detection_type]
-        )
-        all_outlier_deviations = own_file_level_detection_aggregates[
-            "all_field_bubble_means_std"
-        ]
+        super().initialize_file_level_aggregates(file_path)
+        # Get bubble means from repository
+        all_bubble_means = self.repository.get_all_bubble_means_for_current_file()
+
+        # Calculate std deviations from repository results
+        all_outlier_deviations = []
+        for (
+            field_result
+        ) in self.repository.get_all_bubble_fields_for_current_file().values():
+            all_outlier_deviations.append(field_result.std_deviation)
+
+        field_wise_means_and_refs = all_bubble_means
+
         outlier_deviation_threshold_for_file = self.get_outlier_deviation_threshold(
             all_outlier_deviations
         )
 
-        field_wise_means_and_refs = own_file_level_detection_aggregates[
-            "all_field_bubble_means"
-        ]
         file_level_fallback_threshold, global_max_jump = self.get_fallback_threshold(
             field_wise_means_and_refs
         )

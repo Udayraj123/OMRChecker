@@ -30,7 +30,7 @@ class FilePassAggregates:
         self.file_level_aggregates = {
             "file_path": file_path,
             "fields_count": StatsByLabel("processed"),
-            "field_label_wise_aggregates": {},
+            # field_label_wise_aggregates removed - all field types now use repository
         }
 
     def get_file_level_aggregates(self):
@@ -71,12 +71,7 @@ class FilePassAggregates:
     def update_file_level_aggregates_on_processed_field(
         self, field: Field, field_level_aggregates
     ) -> None:
-        field_label = field.field_label
-        # TODO: convert into field_id_wise_aggregates
-        self.file_level_aggregates["field_label_wise_aggregates"][field_label] = (
-            field_level_aggregates
-        )
-
+        # Just update fields_count for statistics
         self.file_level_aggregates["fields_count"].push("processed")
 
     def update_directory_level_aggregates_on_processed_field(
