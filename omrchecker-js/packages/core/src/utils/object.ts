@@ -57,7 +57,7 @@ export function deepClone<T>(obj: T): T {
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => deepClone(item)) as any;
+    return obj.map(item => deepClone(item)) as T;
   }
 
   const cloned: any = {};

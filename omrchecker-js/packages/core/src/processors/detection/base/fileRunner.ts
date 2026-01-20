@@ -6,7 +6,7 @@
  */
 
 import * as cv from '@techstark/opencv-js';
-import { FilePassAggregates } from './commonPass';
+import { FilePassAggregates, type DirectoryLevelAggregates, type FileLevelAggregates, type FieldLevelAggregates } from './commonPass';
 import { FieldTypeDetectionPass } from './detectionPass';
 import { FieldTypeInterpretationPass } from './interpretationPass';
 import type { Field } from '../../layout/field/base';
@@ -54,7 +54,7 @@ export class FileLevelRunner<
    *
    * @returns Field-level detection aggregates
    */
-  getFieldLevelDetectionAggregates(): unknown {
+  getFieldLevelDetectionAggregates(): FieldLevelAggregates | undefined {
     return this.detectionPass.getFieldLevelAggregates();
   }
 
@@ -73,7 +73,7 @@ export class FileLevelRunner<
    *
    * @returns File-level detection aggregates
    */
-  getFileLevelDetectionAggregates(): unknown {
+  getFileLevelDetectionAggregates(): FileLevelAggregates | undefined {
     return this.detectionPass.getFileLevelAggregates();
   }
 
@@ -92,7 +92,7 @@ export class FileLevelRunner<
    *
    * @returns Directory-level detection aggregates
    */
-  getDirectoryLevelDetectionAggregates(): unknown {
+  getDirectoryLevelDetectionAggregates(): DirectoryLevelAggregates | undefined {
     return this.detectionPass.getDirectoryLevelAggregates();
   }
 
@@ -102,7 +102,7 @@ export class FileLevelRunner<
    *
    * @returns Field-level interpretation aggregates
    */
-  getFieldLevelInterpretationAggregates(): unknown {
+  getFieldLevelInterpretationAggregates(): FieldLevelAggregates | undefined {
     return this.interpretationPass.getFieldLevelAggregates();
   }
 
@@ -121,7 +121,7 @@ export class FileLevelRunner<
    *
    * @returns File-level interpretation aggregates
    */
-  getFileLevelInterpretationAggregates(): unknown {
+  getFileLevelInterpretationAggregates(): FileLevelAggregates | undefined {
     return this.interpretationPass.getFileLevelAggregates();
   }
 
@@ -140,7 +140,7 @@ export class FileLevelRunner<
    *
    * @returns Directory-level interpretation aggregates
    */
-  getDirectoryLevelInterpretationAggregates(): unknown {
+  getDirectoryLevelInterpretationAggregates(): DirectoryLevelAggregates | undefined {
     return this.interpretationPass.getDirectoryLevelAggregates();
   }
 }

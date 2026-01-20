@@ -1450,18 +1450,21 @@
     },
     {
       "python": "src/schemas/models/template.py",
-      "typescript": "omrchecker-js/packages/core/src/template/types.ts",
+      "typescript": "omrchecker-js/packages/core/src/schemas/models/template.ts",
       "status": "synced",
       "phase": 1,
       "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": "2026-01-12T00:00:00Z",
+      "lastTypescriptChange": "2026-01-20T00:00:00Z",
       "testFile": "omrchecker-js/packages/core/src/template/__tests__/TemplateLoader.test.ts",
+      "additionalFiles": [
+        "omrchecker-js/packages/core/src/template/types.ts"
+      ],
       "classes": [
         {
-          "python": "TemplateConfig",
-          "typescript": "TemplateConfig",
+          "python": "AlignmentMarginsConfig",
+          "typescript": "AlignmentMargins",
           "synced": true
         },
         {
@@ -1470,12 +1473,34 @@
           "synced": true
         },
         {
-          "python": "BubbleFieldType",
-          "typescript": "BubbleFieldType",
+          "python": "OutputColumnsConfig",
+          "typescript": "OutputColumnsConfig",
+          "synced": true
+        },
+        {
+          "python": "SortFilesConfig",
+          "typescript": "SortFilesConfig",
+          "synced": true
+        },
+        {
+          "python": "TemplateConfig",
+          "typescript": "TemplateConfig",
           "synced": true
         }
       ],
-      "notes": "Template schema types. Defines structure of template.json files."
+      "methods": [
+        {
+          "python": "TemplateConfig.from_dict()",
+          "typescript": "templateConfigFromDict()",
+          "synced": true
+        },
+        {
+          "python": "TemplateConfig.to_dict()",
+          "typescript": "templateConfigToDict()",
+          "synced": true
+        }
+      ],
+      "notes": "Template schema types. Port split across template.ts (helper functions) and types.ts (type definitions). File naming consistent: template.py \u2192 template.ts. All classes and methods ported."
     },
     {
       "python": "src/processors/layout/template_layout.py",
@@ -2919,14 +2944,51 @@
     },
     {
       "python": "src/schemas/models/evaluation.py",
-      "typescript": "N/A (not yet ported)",
-      "status": "not_started",
-      "phase": 2,
-      "priority": "low",
+      "typescript": "omrchecker-js/packages/core/src/schemas/models/evaluation.ts",
+      "status": "synced",
+      "phase": 1,
+      "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": null,
-      "notes": "Evaluation model classes. Can be added if needed."
+      "lastTypescriptChange": "2026-01-20T00:00:00Z",
+      "classes": [
+        {
+          "python": "DrawScoreConfig",
+          "typescript": "DrawScoreConfig",
+          "synced": true
+        },
+        {
+          "python": "DrawAnswersSummaryConfig",
+          "typescript": "DrawAnswersSummaryConfig",
+          "synced": true
+        },
+        {
+          "python": "DrawAnswerGroupsConfig",
+          "typescript": "DrawAnswerGroupsConfig",
+          "synced": true
+        },
+        {
+          "python": "DrawQuestionVerdictsConfig",
+          "typescript": "DrawQuestionVerdictsConfig",
+          "synced": true
+        },
+        {
+          "python": "DrawDetectedBubbleTextsConfig",
+          "typescript": "DrawDetectedBubbleTextsConfig",
+          "synced": true
+        },
+        {
+          "python": "OutputsConfiguration",
+          "typescript": "OutputsConfiguration",
+          "synced": true
+        },
+        {
+          "python": "EvaluationConfig",
+          "typescript": "EvaluationConfig",
+          "synced": true
+        }
+      ],
+      "notes": "Evaluation model classes. All classes and methods (fromDict, toDict) ported. File naming consistent: evaluation.py \u2192 evaluation.ts"
     },
     {
       "python": "src/utils/checksum.py",

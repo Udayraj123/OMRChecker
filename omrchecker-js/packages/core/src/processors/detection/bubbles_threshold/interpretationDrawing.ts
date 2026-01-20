@@ -131,8 +131,8 @@ export class BubblesFieldInterpretationDrawing
     evaluationConfigForResponse?: EvaluationConfigForSet
   ): void {
     for (const bubbleInterpretation of bubbleInterpretations) {
-      const bubble = bubbleInterpretation.itemReference as any;
-      const bubbleDimensions = bubble.dimensions as [number, number];
+      const bubble = bubbleInterpretation.itemReference;
+      const bubbleDimensions = bubble.dimensions;
       const shiftedPosition = tuple(
         bubble.getShiftedPosition()
       ) as [number, number];
@@ -195,8 +195,8 @@ export class BubblesFieldInterpretationDrawing
   ): void {
     const bonusType = questionMeta.bonus_type;
 
-    const bubble = bubbleInterpretation.itemReference as any;
-    const bubbleDimensions = bubble.dimensions as [number, number];
+    const bubble = bubbleInterpretation.itemReference;
+    const bubbleDimensions = bubble.dimensions;
     const shiftedPosition = tuple(
       bubble.getShiftedPosition()
     ) as [number, number];
@@ -305,8 +305,8 @@ export class BubblesFieldInterpretationDrawing
     }
 
     for (const bubbleInterpretation of bubbleInterpretations) {
-      const bubble = bubbleInterpretation.itemReference as any;
-      const bubbleDimensions = bubble.dimensions as [number, number];
+      const bubble = bubbleInterpretation.itemReference;
+      const bubbleDimensions = bubble.dimensions;
       const shiftedPosition = tuple(
         bubble.getShiftedPosition()
       ) as [number, number];

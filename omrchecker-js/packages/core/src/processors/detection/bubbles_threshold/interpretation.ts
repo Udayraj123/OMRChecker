@@ -14,6 +14,7 @@ import {
 } from '../models/detectionResults';
 import { type ThresholdConfig, type ThresholdResult } from '../../threshold/GlobalThreshold';
 import { LocalThreshold } from '../../threshold/LocalThreshold';
+import type { BubblesScanBox } from '../../layout/field/bubbleField';
 
 const logger = new Logger('BubblesFieldInterpretation');
 
@@ -26,7 +27,7 @@ export class BubbleInterpretation {
   public meanValue: number;
   public isAttempted: boolean;
   public bubbleValue: string;
-  public itemReference: unknown; // BubblesScanBox
+  public itemReference: BubblesScanBox;
 
   constructor(bubbleMean: BubbleMeanValue, threshold: number) {
     this.bubbleMean = bubbleMean;
@@ -35,11 +36,13 @@ export class BubbleInterpretation {
     this.isAttempted = bubbleMean.meanValue < threshold;
 
     // Extract bubble value from unit_bubble if available
-    const unitBubble = bubbleMean.unitBubble as { bubbleValue?: string };
+    // Note: unitBubble in BubbleMeanValue is BubbleLocation (interface), but in practice
+    // it's a BubblesScanBox instance. We need to handle this properly.
+    const unitBubble = bubbleMean.unitBubble as unknown as BubblesScanBox;
     this.bubbleValue = unitBubble?.bubbleValue || '';
 
     // item_reference is used by the drawing code
-    this.itemReference = bubbleMean.unitBubble;
+    this.itemReference = unitBubble;
   }
 
   /**

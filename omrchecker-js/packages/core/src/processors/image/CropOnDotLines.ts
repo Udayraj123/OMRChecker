@@ -18,7 +18,7 @@ import { CropOnPatchesCommon, type ZoneDescription, type ScanZone } from './Crop
 import { PointArray } from './pointUtils';
 import { ImageProcessingError, TemplateValidationError } from '../../core/exceptions';
 import { ImageUtils } from '../../utils/ImageUtils';
-import { MathUtils } from '../../utils/math';
+import { MathUtils, EdgeType as MathEdgeType } from '../../utils/math';
 import { computeScanZone } from './patchUtils';
 import {
   WarpMethod,
@@ -155,7 +155,7 @@ export class CropOnDotLines extends CropOnPatchesCommon {
   // Edge selector mapping for lines
   private static readonly edgeSelectorMap: Record<
     ZonePresetValue,
-    Record<string, EdgeTypeValue>
+    Record<SelectorTypeValue, EdgeTypeValue>
   > = {
     [ZonePreset.topLine]: {
       [SelectorType.LINE_INNER_EDGE]: EdgeType.BOTTOM,
@@ -173,7 +173,7 @@ export class CropOnDotLines extends CropOnPatchesCommon {
       [SelectorType.LINE_INNER_EDGE]: EdgeType.LEFT,
       [SelectorType.LINE_OUTER_EDGE]: EdgeType.RIGHT,
     },
-  } as any;
+  };
 
   // Instance properties
   private lineKernelMorph: cv.Mat;
@@ -442,7 +442,11 @@ export class CropOnDotLines extends CropOnPatchesCommon {
     const rectangle = MathUtils.getRectanglePointsFromBox(origin, dimensions);
 
     // Select edge from rectangle using MathUtils
-    return MathUtils.selectEdgeFromRectangle(rectangle, edgeType as any);
+    // EdgeTypeValue from constants.ts is compatible with EdgeType enum from math.ts
+    // Both use the same string values ('TOP', 'RIGHT', 'BOTTOM', 'LEFT')
+    // Convert EdgeTypeValue to MathEdgeType enum
+    const mathEdgeType = edgeType as unknown as MathEdgeType;
+    return MathUtils.selectEdgeFromRectangle(rectangle, mathEdgeType);
   }
 
   /**

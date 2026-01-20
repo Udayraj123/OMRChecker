@@ -11,6 +11,11 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TemplateFileRunner } from '../templateFileRunner';
 import { TemplateLoader } from '../../../template/TemplateLoader';
 import type { TemplateConfig } from '../../../template/types';
+import {
+  BubbleFieldDetectionResult,
+  BubbleMeanValue,
+} from '../models/detectionResults';
+import type { Field } from '../../layout/field/base';
 
 /**
  * Create minimal template config for testing.
@@ -21,6 +26,7 @@ function createMinimalTemplateConfig(): TemplateConfig {
   return {
     templateDimensions: [900, 650],
     bubbleDimensions: [20, 20],
+    emptyValue: '', // Explicitly set emptyValue to match Python tests
     fieldBlocks: {
       block1: {
         fieldDetectionType: 'BUBBLES_THRESHOLD',
@@ -46,6 +52,34 @@ function createSampleImages(): { grayImage: cv.Mat; coloredImage: cv.Mat } {
   const grayImage = new cv.Mat(800, 1000, cv.CV_8UC1);
   const coloredImage = new cv.Mat(800, 1000, cv.CV_8UC3);
   return { grayImage, coloredImage };
+}
+
+/**
+ * Create mock bubble_fields dictionary for detection aggregates.
+ * Port of Python's create_mock_bubble_fields helper function.
+ *
+ * @param fields - Array of Field objects
+ * @returns Dictionary mapping field_label to BubbleFieldDetectionResult
+ */
+function createMockBubbleFields(fields: Field[]): Record<string, BubbleFieldDetectionResult> {
+  const bubbleFields: Record<string, BubbleFieldDetectionResult> = {};
+
+  for (const field of fields) {
+    // Create minimal bubble means for testing
+    // unitBubble can be null for tests (TypeScript allows null for optional BubbleLocation)
+    const bubbleMeans = [
+      new BubbleMeanValue(50.0, null as any, [0, 0]),
+      new BubbleMeanValue(200.0, null as any, [0, 0]),
+    ];
+    const bubbleResult = new BubbleFieldDetectionResult(
+      field.id,
+      field.fieldLabel,
+      bubbleMeans
+    );
+    bubbleFields[field.fieldLabel] = bubbleResult;
+  }
+
+  return bubbleFields;
 }
 
 describe('TemplateFileRunner', () => {
@@ -141,6 +175,17 @@ describe('TemplateFileRunner', () => {
       expect(detectionAggregates.fileWiseAggregates[filePath]).toBeDefined();
     });
 
+    it('should update detection aggregates on processed file', () => {
+      const filePath = 'test.jpg';
+      runner.initializeFileLevelDetectionAggregates(filePath);
+
+      runner.runFileLevelDetection(filePath, mockGrayImage, mockColoredImage);
+
+      // Check that aggregates were updated
+      const aggregates = runner.getDirectoryLevelDetectionAggregates();
+      expect(aggregates.fileWiseAggregates[filePath]).toBeDefined();
+    });
+
     it('should handle empty fields', () => {
       // Create template with no fields
       const emptyConfig: TemplateConfig = {
@@ -151,6 +196,19 @@ describe('TemplateFileRunner', () => {
       expect(() => {
         TemplateLoader.loadLayoutFromJSON(emptyConfig);
       }).toThrow(); // Empty field blocks should throw during load
+    });
+  });
+
+  describe('runFieldLevelDetection', () => {
+    it('should run field-level detection for bubble fields', () => {
+      const filePath = 'test.jpg';
+      const field = runner.allFields[0];
+
+      runner.initializeFileLevelDetectionAggregates(filePath);
+
+      expect(() => {
+        runner.runFieldLevelDetection(field, mockGrayImage, mockColoredImage);
+      }).not.toThrow();
     });
   });
 
@@ -176,6 +234,41 @@ describe('TemplateFileRunner', () => {
       // Check that interpretation aggregates were updated
       const interpretationAggregates = runner.getDirectoryLevelInterpretationAggregates();
       expect(interpretationAggregates).toBeDefined();
+    });
+  });
+
+  describe('runFieldLevelInterpretation', () => {
+    it('should run field-level interpretation', () => {
+      const filePath = 'test.jpg';
+      const field = runner.allFields[0];
+
+      // Run detection first to populate aggregates
+      runner.initializeFileLevelDetectionAggregates(filePath);
+      runner.runFileLevelDetection(filePath, mockGrayImage, mockColoredImage);
+
+      // Initialize interpretation aggregates
+      runner.initializeFileLevelInterpretationAggregates(filePath);
+
+      const currentOmrResponse: Record<string, string> = {};
+
+      // Mock detection pass to return bubble_fields
+      const bubbleFields = createMockBubbleFields(runner.allFields);
+      const detectionPass = (runner as any).detectionPass;
+      const originalGetFileLevelAggregates = detectionPass.getFileLevelAggregates.bind(detectionPass);
+      detectionPass.getFileLevelAggregates = () => ({
+        bubble_fields: bubbleFields,
+        ocr_fields: {},
+        barcode_fields: {},
+      });
+
+      try {
+        runner.runFieldLevelInterpretation(field, currentOmrResponse);
+
+        expect(field.fieldLabel in currentOmrResponse).toBe(true);
+      } finally {
+        // Restore original method
+        detectionPass.getFileLevelAggregates = originalGetFileLevelAggregates;
+      }
     });
   });
 
