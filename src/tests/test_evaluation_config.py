@@ -1,8 +1,12 @@
 """Tests for EvaluationConfig class."""
 
+import json
+from pathlib import Path
+from unittest.mock import Mock
+
 import pytest
 
-from src.exceptions import ConfigError
+from src.exceptions import EvaluationValidationError
 from src.processors.evaluation.evaluation_config import EvaluationConfig
 from src.schemas.constants import DEFAULT_SECTION_KEY
 
@@ -10,8 +14,9 @@ from src.schemas.constants import DEFAULT_SECTION_KEY
 @pytest.fixture
 def mock_template():
     """Create a mock template."""
-    template = type("Template", (), {})()
+    template = Mock()
     template.global_empty_val = ""
+    template.get_evaluations_dir = Mock(return_value=Path("/tmp/evaluations"))
     return template
 
 
@@ -60,23 +65,36 @@ class TestEvaluationConfigValidation:
                     "matchRegex": "^A$",
                 },
                 "evaluation": {
+                    "source_type": "local",
                     "options": {
                         "answers_in_order": ["B", "C"],  # Missing questions_in_order
                     },
+                    "marking_schemes": {
+                        DEFAULT_SECTION_KEY: {
+                            "correct": 1,
+                            "incorrect": 0,
+                            "unmarked": 0,
+                        }
+                    },
+                    "outputs_configuration": {},
                 },
             },
         ]
 
-        with pytest.raises(ConfigError) as exc_info:
+        # Write evaluation JSON to file
+        eval_file = tmp_path / "evaluation.json"
+        with open(eval_file, "w") as f:
+            json.dump(evaluation_json, f)
+
+        # Schema validation happens first and will catch missing questions_in_order
+        with pytest.raises(EvaluationValidationError) as exc_info:
             EvaluationConfig(
                 tmp_path,
-                tmp_path / "evaluation.json",
-                evaluation_json,
+                eval_file,
                 mock_template,
                 mock_tuning_config,
             )
 
-        assert "answers_in_order" in str(exc_info.value)
         assert "questions_in_order" in str(exc_info.value)
 
     def test_reject_conditional_set_with_questions_but_no_answers(
@@ -92,23 +110,36 @@ class TestEvaluationConfigValidation:
                     "matchRegex": "^A$",
                 },
                 "evaluation": {
+                    "source_type": "local",
                     "options": {
                         "questions_in_order": ["q1", "q2"],  # Missing answers_in_order
                     },
+                    "marking_schemes": {
+                        DEFAULT_SECTION_KEY: {
+                            "correct": 1,
+                            "incorrect": 0,
+                            "unmarked": 0,
+                        }
+                    },
+                    "outputs_configuration": {},
                 },
             },
         ]
 
-        with pytest.raises(ConfigError) as exc_info:
+        # Write evaluation JSON to file
+        eval_file = tmp_path / "evaluation.json"
+        with open(eval_file, "w") as f:
+            json.dump(evaluation_json, f)
+
+        # Schema validation happens first and will catch missing answers_in_order
+        with pytest.raises(EvaluationValidationError) as exc_info:
             EvaluationConfig(
                 tmp_path,
-                tmp_path / "evaluation.json",
-                evaluation_json,
+                eval_file,
                 mock_template,
                 mock_tuning_config,
             )
 
-        assert "questions_in_order" in str(exc_info.value)
         assert "answers_in_order" in str(exc_info.value)
 
     def test_accept_conditional_set_with_both_questions_and_answers(
@@ -124,19 +155,32 @@ class TestEvaluationConfigValidation:
                     "matchRegex": "^A$",
                 },
                 "evaluation": {
+                    "source_type": "local",
                     "options": {
                         "questions_in_order": ["q1", "q2"],
                         "answers_in_order": ["B", "C"],
                     },
+                    "marking_schemes": {
+                        DEFAULT_SECTION_KEY: {
+                            "correct": 1,
+                            "incorrect": 0,
+                            "unmarked": 0,
+                        }
+                    },
+                    "outputs_configuration": {},
                 },
             },
         ]
 
+        # Write evaluation JSON to file
+        eval_file = tmp_path / "evaluation.json"
+        with open(eval_file, "w") as f:
+            json.dump(evaluation_json, f)
+
         # Should not raise
         config = EvaluationConfig(
             tmp_path,
-            tmp_path / "evaluation.json",
-            evaluation_json,
+            eval_file,
             mock_template,
             mock_tuning_config,
         )

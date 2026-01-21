@@ -3,6 +3,7 @@
 Tests multi-pass detection and interpretation architecture.
 """
 
+from contextlib import ExitStack, contextmanager
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -11,17 +12,7 @@ import pytest
 from src.processors.detection.template_file_runner import TemplateFileRunner
 from src.processors.layout.field.bubble_field import BubbleField
 from src.processors.layout.field_block.base import FieldBlock
-from src.schemas.defaults import CONFIG_DEFAULTS
-
-
-@pytest.fixture
-def mock_template():
-    """Create a mock template for testing."""
-    template = Mock()
-    template.tuning_config = CONFIG_DEFAULTS
-    template.all_fields = []
-    template.all_field_detection_types = []
-    return template
+from src.utils.stats import StatsByLabel
 
 
 @pytest.fixture
@@ -89,6 +80,167 @@ def create_mock_bubble_fields(fields):
     return bubble_fields
 
 
+def create_mock_file_results(fields, file_path):
+    """Create mock FileDetectionResults for repository."""
+    from src.processors.detection.models.detection_results import (
+        FileDetectionResults,
+    )
+
+    file_results = FileDetectionResults(file_path=file_path)
+    bubble_fields = create_mock_bubble_fields(fields)
+
+    # Add bubble fields to repository format (keyed by field_id)
+    for field in fields:
+        bubble_result = bubble_fields[field.field_label]
+        file_results.bubble_fields[field.id] = bubble_result
+
+    return file_results
+
+
+@contextmanager
+def mock_field_runner_methods(
+    runner,
+    field_type="BUBBLES_THRESHOLD",
+    include_detection=True,
+    include_interpretation=True,
+    include_aggregates=True,
+    include_repository=True,
+):
+    """Context manager to mock common field runner methods.
+
+    Yields a MockConfig object with all mocks for easy configuration.
+
+    Args:
+        runner: TemplateFileRunner instance
+        field_type: Field detection type to mock (default: "BUBBLES_THRESHOLD")
+        include_detection: Whether to mock detection methods
+        include_interpretation: Whether to mock interpretation methods
+        include_aggregates: Whether to mock aggregate getters
+        include_repository: Whether to mock repository methods
+
+    Yields:
+        MockConfig object with attributes for each mocked method
+    """
+    field_runner = runner.field_detection_type_file_runners[field_type]
+
+    patches = {}
+    with ExitStack() as stack:
+        if include_detection:
+            patches["detection"] = stack.enter_context(
+                patch.object(field_runner, "run_field_level_detection")
+            )
+
+        if include_interpretation:
+            patches["interpretation"] = stack.enter_context(
+                patch.object(field_runner, "run_field_level_interpretation")
+            )
+            patches["interpretation_pass"] = stack.enter_context(
+                patch.object(
+                    field_runner.interpretation_pass, "run_field_level_interpretation"
+                )
+            )
+
+        if include_aggregates:
+            patches["get_interpretation_aggregates"] = stack.enter_context(
+                patch.object(field_runner, "get_field_level_interpretation_aggregates")
+            )
+            patches["get_detection_aggregates"] = stack.enter_context(
+                patch.object(runner.detection_pass, "get_file_level_aggregates")
+            )
+
+        if include_repository:
+            patches["get_file_results"] = stack.enter_context(
+                patch.object(field_runner.repository, "get_file_results")
+            )
+
+        # Create a simple namespace object for easy access
+        class MockConfig:
+            pass
+
+        config = MockConfig()
+        for key, mock in patches.items():
+            setattr(config, key, mock)
+
+        yield config
+
+
+@contextmanager
+def mock_detection_only(runner, field_type="BUBBLES_THRESHOLD"):
+    """Context manager for tests that only need detection mocks."""
+    with mock_field_runner_methods(
+        runner,
+        field_type,
+        include_detection=True,
+        include_interpretation=False,
+        include_aggregates=False,
+        include_repository=False,
+    ) as mocks:
+        yield mocks
+
+
+@contextmanager
+def mock_interpretation_only(runner, field_type="BUBBLES_THRESHOLD"):
+    """Context manager for tests that only need interpretation mocks."""
+    with mock_field_runner_methods(
+        runner,
+        field_type,
+        include_detection=False,
+        include_interpretation=True,
+        include_aggregates=True,
+        include_repository=False,
+    ) as mocks:
+        yield mocks
+
+
+def setup_default_mock_responses(
+    config, fields, file_path, interpretation_value="A", is_multi_marked=False
+):
+    """Configure mocks with default return values.
+
+    Args:
+        config: MockConfig object from mock_field_runner_methods
+        fields: List of field objects
+        file_path: File path string
+        interpretation_value: Value to return for interpretation (default: "A")
+        is_multi_marked: Whether field is multi-marked (default: False)
+    """
+    if hasattr(config, "detection"):
+        config.detection.return_value = Mock()
+
+    if hasattr(config, "interpretation"):
+        mock_interpretation_result = Mock()
+        mock_interpretation_result.get_field_interpretation_string = Mock(
+            return_value=interpretation_value
+        )
+        config.interpretation.return_value = mock_interpretation_result
+
+    if hasattr(config, "interpretation_pass"):
+        mock_interpretation_result = Mock()
+        mock_interpretation_result.get_field_interpretation_string = Mock(
+            return_value=interpretation_value
+        )
+        config.interpretation_pass.return_value = mock_interpretation_result
+
+    if hasattr(config, "get_interpretation_aggregates"):
+        config.get_interpretation_aggregates.return_value = {
+            "field": fields[0] if fields else None,
+            "is_multi_marked": is_multi_marked,
+        }
+
+    if hasattr(config, "get_detection_aggregates"):
+        bubble_fields = create_mock_bubble_fields(fields)
+        config.get_detection_aggregates.return_value = {
+            "bubble_fields": bubble_fields,
+            "ocr_fields": {},
+            "barcode_fields": {},
+            "fields_count": StatsByLabel("processed"),
+        }
+
+    if hasattr(config, "get_file_results"):
+        mock_file_results = create_mock_file_results(fields, file_path)
+        config.get_file_results.return_value = mock_file_results
+
+
 class TestTemplateFileRunnerInitialization:
     """Test TemplateFileRunner initialization."""
 
@@ -137,44 +289,12 @@ class TestReadOmrAndUpdateMetrics:
         gray_image, colored_image = sample_images
         file_path = str(tmp_path / "test.jpg")
 
-        # Mock the field runners to return responses
-        with (
-            patch.object(
-                runner.field_detection_type_file_runners["BUBBLES_THRESHOLD"],
-                "run_field_level_detection",
-            ) as mock_detection,
-            patch.object(
-                runner.field_detection_type_file_runners["BUBBLES_THRESHOLD"],
-                "run_field_level_interpretation",
-            ) as mock_interpretation,
-            patch.object(
-                runner.field_detection_type_file_runners["BUBBLES_THRESHOLD"],
-                "get_field_level_interpretation_aggregates",
-            ) as mock_get_aggregates,
-            patch.object(
-                runner.detection_pass,
-                "get_file_level_aggregates",
-            ) as mock_get_detection_aggregates,
-        ):
-            mock_detection.return_value = Mock()
-            mock_interpretation_result = Mock()
-            mock_interpretation_result.get_field_interpretation_string = Mock(
-                return_value="A"
+        with mock_field_runner_methods(runner) as mocks:
+            setup_default_mock_responses(
+                mocks,
+                sample_template_with_fields.all_fields,
+                file_path,
             )
-            mock_interpretation.return_value = mock_interpretation_result
-            mock_get_aggregates.return_value = {
-                "field": sample_template_with_fields.all_fields[0],
-                "is_multi_marked": False,
-            }
-            # Mock bubble_fields in detection aggregates
-            bubble_fields = create_mock_bubble_fields(
-                sample_template_with_fields.all_fields
-            )
-            mock_get_detection_aggregates.return_value = {
-                "bubble_fields": bubble_fields,
-                "ocr_fields": {},
-                "barcode_fields": {},
-            }
 
             response = runner.read_omr_and_update_metrics(
                 file_path, gray_image, colored_image
@@ -197,17 +317,13 @@ class TestRunFileLevelDetection:
         gray_image, colored_image = sample_images
         file_path = str(tmp_path / "test.jpg")
 
-        # Mock field detection
-        with patch.object(
-            runner.field_detection_type_file_runners["BUBBLES_THRESHOLD"],
-            "run_field_level_detection",
-        ) as mock_detection:
-            mock_detection.return_value = Mock()
+        with mock_detection_only(runner) as mocks:
+            mocks.detection.return_value = Mock()
 
             runner.run_file_level_detection(file_path, gray_image, colored_image)
 
             # Should have called detection for each field
-            assert mock_detection.call_count == 2  # Two fields
+            assert mocks.detection.call_count == 2  # Two fields
 
     def test_update_detection_aggregates_on_processed_file(
         self, sample_template_with_fields, sample_images, tmp_path
@@ -219,11 +335,8 @@ class TestRunFileLevelDetection:
         gray_image, colored_image = sample_images
         file_path = str(tmp_path / "test.jpg")
 
-        with patch.object(
-            runner.field_detection_type_file_runners["BUBBLES_THRESHOLD"],
-            "run_field_level_detection",
-        ) as mock_detection:
-            mock_detection.return_value = Mock()
+        with mock_detection_only(runner) as mocks:
+            mocks.detection.return_value = Mock()
             runner.run_file_level_detection(file_path, gray_image, colored_image)
 
         # Check that aggregates were updated
@@ -247,15 +360,12 @@ class TestRunFieldLevelDetection:
 
         runner.initialize_file_level_detection_aggregates(file_path)
 
-        with patch.object(
-            runner.field_detection_type_file_runners["BUBBLES_THRESHOLD"],
-            "run_field_level_detection",
-        ) as mock_detection:
-            mock_detection.return_value = Mock()
+        with mock_detection_only(runner) as mocks:
+            mocks.detection.return_value = Mock()
 
             runner.run_field_level_detection(field, gray_image, colored_image)
 
-            mock_detection.assert_called_once()
+            mocks.detection.assert_called_once()
 
 
 class TestRunFileLevelInterpretation:
@@ -272,48 +382,17 @@ class TestRunFileLevelInterpretation:
         file_path = str(tmp_path / "test.jpg")
 
         # Mock detection results first
-        with patch.object(
-            runner.field_detection_type_file_runners["BUBBLES_THRESHOLD"],
-            "run_field_level_detection",
-        ) as mock_detection:
-            mock_detection.return_value = Mock()
+        with mock_detection_only(runner) as detection_mocks:
+            detection_mocks.detection.return_value = Mock()
             runner.run_file_level_detection(file_path, gray_image, colored_image)
 
         # Mock interpretation
-        with (
-            patch.object(
-                runner.field_detection_type_file_runners[
-                    "BUBBLES_THRESHOLD"
-                ].interpretation_pass,
-                "run_field_level_interpretation",
-            ) as mock_interpretation,
-            patch.object(
-                runner.field_detection_type_file_runners["BUBBLES_THRESHOLD"],
-                "get_field_level_interpretation_aggregates",
-            ) as mock_get_aggregates,
-            patch.object(
-                runner.detection_pass,
-                "get_file_level_aggregates",
-            ) as mock_get_detection_aggregates,
-        ):
-            mock_interpretation_result = Mock()
-            mock_interpretation_result.get_field_interpretation_string = Mock(
-                return_value="A"
+        with mock_interpretation_only(runner) as interpretation_mocks:
+            setup_default_mock_responses(
+                interpretation_mocks,
+                sample_template_with_fields.all_fields,
+                file_path,
             )
-            mock_interpretation.return_value = mock_interpretation_result
-            mock_get_aggregates.return_value = {
-                "field": sample_template_with_fields.all_fields[0],
-                "is_multi_marked": False,
-            }
-            # Mock bubble_fields in detection aggregates
-            bubble_fields = create_mock_bubble_fields(
-                sample_template_with_fields.all_fields
-            )
-            mock_get_detection_aggregates.return_value = {
-                "bubble_fields": bubble_fields,
-                "ocr_fields": {},
-                "barcode_fields": {},
-            }
 
             response = runner.run_file_level_interpretation(
                 file_path, gray_image, colored_image
@@ -321,7 +400,9 @@ class TestRunFileLevelInterpretation:
 
             assert response is not None
             assert isinstance(response, dict)
-            assert mock_interpretation.call_count == 2  # Two fields
+            assert (
+                interpretation_mocks.interpretation_pass.call_count == 2
+            )  # Two fields
 
 
 class TestRunFieldLevelInterpretation:
@@ -339,11 +420,8 @@ class TestRunFieldLevelInterpretation:
         field = sample_template_with_fields.all_fields[0]
 
         # Run detection first to populate aggregates
-        with patch.object(
-            runner.field_detection_type_file_runners["BUBBLES_THRESHOLD"],
-            "run_field_level_detection",
-        ) as mock_detection:
-            mock_detection.return_value = Mock()
+        with mock_detection_only(runner) as detection_mocks:
+            detection_mocks.detection.return_value = Mock()
             runner.run_file_level_detection(file_path, gray_image, colored_image)
 
         # Initialize interpretation aggregates (only needs file_path, gets aggregates internally)
@@ -351,45 +429,17 @@ class TestRunFieldLevelInterpretation:
 
         current_omr_response = {}
 
-        with (
-            patch.object(
-                runner.field_detection_type_file_runners[
-                    "BUBBLES_THRESHOLD"
-                ].interpretation_pass,
-                "run_field_level_interpretation",
-            ) as mock_interpretation,
-            patch.object(
-                runner.field_detection_type_file_runners["BUBBLES_THRESHOLD"],
-                "get_field_level_interpretation_aggregates",
-            ) as mock_get_aggregates,
-            patch.object(
-                runner.detection_pass,
-                "get_file_level_aggregates",
-            ) as mock_get_detection_aggregates,
-        ):
-            mock_interpretation_result = Mock()
-            mock_interpretation_result.get_field_interpretation_string = Mock(
-                return_value="A"
+        with mock_interpretation_only(runner) as interpretation_mocks:
+            setup_default_mock_responses(
+                interpretation_mocks,
+                sample_template_with_fields.all_fields,
+                file_path,
             )
-            mock_interpretation.return_value = mock_interpretation_result
-            mock_get_aggregates.return_value = {
-                "field": field,
-                "is_multi_marked": False,
-            }
-            # Mock bubble_fields in detection aggregates
-            bubble_fields = create_mock_bubble_fields(
-                sample_template_with_fields.all_fields
-            )
-            mock_get_detection_aggregates.return_value = {
-                "bubble_fields": bubble_fields,
-                "ocr_fields": {},
-                "barcode_fields": {},
-            }
 
             runner.run_field_level_interpretation(field, current_omr_response)
 
             assert field.field_label in current_omr_response
-            mock_interpretation.assert_called_once()
+            interpretation_mocks.interpretation_pass.assert_called_once()
 
 
 class TestAggregateManagement:
@@ -408,42 +458,12 @@ class TestAggregateManagement:
         for i in range(3):
             file_path = str(tmp_path / f"test_{i}.jpg")
 
-            with (
-                patch.object(
-                    runner.field_detection_type_file_runners["BUBBLES_THRESHOLD"],
-                    "run_field_level_detection",
-                ) as mock_detection,
-                patch.object(
-                    runner.field_detection_type_file_runners["BUBBLES_THRESHOLD"],
-                    "run_field_level_interpretation",
-                ) as mock_interpretation,
-                patch.object(
-                    runner.field_detection_type_file_runners["BUBBLES_THRESHOLD"],
-                    "get_field_level_interpretation_aggregates",
-                ) as mock_get_aggregates,
-                patch.object(
-                    runner.detection_pass,
-                    "get_file_level_aggregates",
-                ) as mock_get_detection_aggregates,
-            ):
-                mock_detection.return_value = Mock()
-                mock_interpretation.return_value = Mock()
-                mock_interpretation.return_value.get_field_interpretation_string = Mock(
-                    return_value="A"
+            with mock_field_runner_methods(runner) as mocks:
+                setup_default_mock_responses(
+                    mocks,
+                    sample_template_with_fields.all_fields,
+                    file_path,
                 )
-                mock_get_aggregates.return_value = {
-                    "field": sample_template_with_fields.all_fields[0],
-                    "is_multi_marked": False,
-                }
-                # Mock bubble_fields in detection aggregates
-                bubble_fields = create_mock_bubble_fields(
-                    sample_template_with_fields.all_fields
-                )
-                mock_get_detection_aggregates.return_value = {
-                    "bubble_fields": bubble_fields,
-                    "ocr_fields": {},
-                    "barcode_fields": {},
-                }
 
                 runner.run_file_level_detection(file_path, gray_image, colored_image)
                 runner.run_file_level_interpretation(
@@ -473,42 +493,12 @@ class TestAggregateManagement:
         gray_image, colored_image = sample_images
         file_path = str(tmp_path / "test.jpg")
 
-        with (
-            patch.object(
-                runner.field_detection_type_file_runners["BUBBLES_THRESHOLD"],
-                "run_field_level_detection",
-            ) as mock_detection,
-            patch.object(
-                runner.field_detection_type_file_runners["BUBBLES_THRESHOLD"],
-                "run_field_level_interpretation",
-            ) as mock_interpretation,
-            patch.object(
-                runner.field_detection_type_file_runners["BUBBLES_THRESHOLD"],
-                "get_field_level_interpretation_aggregates",
-            ) as mock_get_aggregates,
-            patch.object(
-                runner.detection_pass,
-                "get_file_level_aggregates",
-            ) as mock_get_detection_aggregates,
-        ):
-            mock_detection.return_value = Mock()
-            mock_interpretation.return_value = Mock()
-            mock_interpretation.return_value.get_field_interpretation_string = Mock(
-                return_value="A"
+        with mock_field_runner_methods(runner) as mocks:
+            setup_default_mock_responses(
+                mocks,
+                sample_template_with_fields.all_fields,
+                file_path,
             )
-            mock_get_aggregates.return_value = {
-                "field": sample_template_with_fields.all_fields[0],
-                "is_multi_marked": False,
-            }
-            # Mock bubble_fields in detection aggregates
-            bubble_fields = create_mock_bubble_fields(
-                sample_template_with_fields.all_fields
-            )
-            mock_get_detection_aggregates.return_value = {
-                "bubble_fields": bubble_fields,
-                "ocr_fields": {},
-                "barcode_fields": {},
-            }
 
             runner.run_file_level_detection(file_path, gray_image, colored_image)
             runner.run_file_level_interpretation(file_path, gray_image, colored_image)

@@ -31,7 +31,9 @@ export class DetectionRepository {
    * @param filePath - Path to the file being processed
    */
   initializeFile(filePath: string): void {
-    this.currentFileResults = new FileDetectionResults(filePath);
+    // Normalize file_path to string for consistent storage
+    const filePathStr = String(filePath);
+    this.currentFileResults = new FileDetectionResults(filePathStr);
   }
 
   /**
@@ -64,12 +66,21 @@ export class DetectionRepository {
    *
    * @param filePath - Path to the file
    * @returns FileDetectionResults for the file
-   * @throws KeyError if file has not been processed
+   * @throws Error if file has not been processed
    */
   getFileResults(filePath: string): FileDetectionResults {
-    const result = this.fileResults.get(filePath);
+    // Normalize file_path to string for consistent lookup
+    const filePathStr = String(filePath);
+
+    // Paths are normalized to string in initializeFile(), so exact match is sufficient
+    const result = this.fileResults.get(filePathStr);
     if (!result) {
-      throw new Error(`No results found for file: ${filePath}`);
+      // If not found, raise error with helpful message
+      const availablePaths = Array.from(this.fileResults.keys());
+      throw new Error(
+        `No results found for file: ${filePathStr}. ` +
+        `Available files: ${availablePaths.join(', ')}`
+      );
     }
     return result;
   }

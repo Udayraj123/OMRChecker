@@ -16,3 +16,5 @@ SCHEMA_VALIDATORS = {
     "evaluation": Draft202012Validator(EVALUATION_SCHEMA),
     "template": Draft202012Validator(TEMPLATE_SCHEMA),
 }
+
+__all__ = ["SCHEMA_JSONS", "SCHEMA_VALIDATORS"]

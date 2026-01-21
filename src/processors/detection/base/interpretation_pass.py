@@ -84,11 +84,12 @@ class FieldTypeInterpretationPass(FilePassAggregates):
         field_interpretation: FieldInterpretation,
         field_level_aggregates,
     ) -> None:
-        self.file_level_aggregates["confidence_metrics_for_file"][field.field_label] = (
+        file_level_aggregates = self.get_file_level_aggregates()
+        file_level_aggregates["confidence_metrics_for_file"][field.field_label] = (
             field_interpretation.get_field_level_confidence_metrics()
         )
 
-        self.file_level_aggregates["field_id_to_interpretation"][field.id] = (
+        file_level_aggregates["field_id_to_interpretation"][field.id] = (
             field_interpretation
         )
 
@@ -179,7 +180,8 @@ class TemplateInterpretationPass(FilePassAggregates):
         _field_interpretation: FieldInterpretation,
         field_type_runner_field_level_aggregates,
     ) -> None:
-        read_response_flags = self.file_level_aggregates["read_response_flags"]
+        file_level_aggregates = self.get_file_level_aggregates()
+        read_response_flags = file_level_aggregates["read_response_flags"]
 
         if field_type_runner_field_level_aggregates["is_multi_marked"]:
             read_response_flags["is_multi_marked"] = True
@@ -206,11 +208,12 @@ class TemplateInterpretationPass(FilePassAggregates):
             field, template_field_level_aggregates
         )
 
-        self.file_level_aggregates["field_id_to_interpretation"][field.id] = (
+        file_level_aggregates = self.get_file_level_aggregates()
+        file_level_aggregates["field_id_to_interpretation"][field.id] = (
             field_interpretation
         )
 
-        self.file_level_aggregates["confidence_metrics_for_file"][field.field_label] = (
+        file_level_aggregates["confidence_metrics_for_file"][field.field_label] = (
             field_interpretation.get_field_level_confidence_metrics()
         )
 
@@ -222,7 +225,8 @@ class TemplateInterpretationPass(FilePassAggregates):
         )
         field_detection_type = field.field_detection_type
 
-        field_detection_type_wise_aggregates = self.directory_level_aggregates[
+        directory_level_aggregates = self.get_directory_level_aggregates()
+        field_detection_type_wise_aggregates = directory_level_aggregates[
             "field_detection_type_wise_aggregates"
         ][field_detection_type]
         # Update the processed field count for that runner
@@ -234,7 +238,8 @@ class TemplateInterpretationPass(FilePassAggregates):
     ) -> None:
         super().update_aggregates_on_processed_file(file_path)
 
-        field_detection_type_wise_aggregates = self.file_level_aggregates[
+        file_level_aggregates = self.get_file_level_aggregates()
+        field_detection_type_wise_aggregates = file_level_aggregates[
             "field_detection_type_wise_aggregates"
         ]
         for (
@@ -245,8 +250,12 @@ class TemplateInterpretationPass(FilePassAggregates):
             ] = field_detection_type_file_runner.get_file_level_interpretation_aggregates()
 
         # Update read_response_flags
-        read_response_flags = self.file_level_aggregates["read_response_flags"]
+        file_level_aggregates = self.get_file_level_aggregates()
+        read_response_flags = file_level_aggregates["read_response_flags"]
 
         if read_response_flags["is_multi_marked"]:
-            # print("self.directory_level_aggregates", self.directory_level_aggregates)
-            self.directory_level_aggregates["files_by_label_count"].push("multi_marked")
+            # Thread-safe update to directory-level aggregates
+            with self._directory_lock:
+                self._directory_level_aggregates["files_by_label_count"].push(
+                    "multi_marked"
+                )

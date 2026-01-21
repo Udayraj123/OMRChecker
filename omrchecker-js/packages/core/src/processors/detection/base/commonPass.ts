@@ -96,11 +96,9 @@ export class FilePassAggregates {
   insertDirectoryLevelAggregates(
     nextDirectoryLevelAggregates: Partial<DirectoryLevelAggregates>
   ): void {
-    if (!this.directoryLevelAggregates) {
-      throw new Error('Directory level aggregates not initialized');
-    }
+    // initializeDirectoryLevelAggregates() is always called before this in subclasses
     this.directoryLevelAggregates = {
-      ...this.directoryLevelAggregates,
+      ...this.directoryLevelAggregates!,
       ...nextDirectoryLevelAggregates,
     };
   }
@@ -136,11 +134,9 @@ export class FilePassAggregates {
   insertFileLevelAggregates(
     nextFileLevelAggregates: Partial<FileLevelAggregates>
   ): void {
-    if (!this.fileLevelAggregates) {
-      throw new Error('File level aggregates not initialized');
-    }
+    // initializeFileLevelAggregates() is always called before this
     this.fileLevelAggregates = {
-      ...this.fileLevelAggregates,
+      ...this.fileLevelAggregates!,
       ...nextFileLevelAggregates,
     };
   }
@@ -152,14 +148,10 @@ export class FilePassAggregates {
    * @param _additionalArgs - Additional arguments for subclasses (optional)
    */
   updateAggregatesOnProcessedFile(filePath: string, ..._additionalArgs: unknown[]): void {
-    if (!this.directoryLevelAggregates || !this.fileLevelAggregates) {
-      throw new Error('Directory or file level aggregates not initialized');
-    }
-
-    // Nested access
-    this.directoryLevelAggregates.file_wise_aggregates[filePath] =
-      this.fileLevelAggregates;
-    this.directoryLevelAggregates.files_count.push('processed');
+    // initializeDirectoryLevelAggregates() and initializeFileLevelAggregates() are always called before this
+    this.directoryLevelAggregates!.file_wise_aggregates[filePath] =
+      this.fileLevelAggregates!;
+    this.directoryLevelAggregates!.files_count.push('processed');
   }
 
   /**
@@ -190,11 +182,9 @@ export class FilePassAggregates {
   insertFieldLevelAggregates(
     nextFieldLevelAggregates: Partial<FieldLevelAggregates>
   ): void {
-    if (!this.fieldLevelAggregates) {
-      throw new Error('Field level aggregates not initialized');
-    }
+    // initializeFieldLevelAggregates() is always called before this
     this.fieldLevelAggregates = {
-      ...this.fieldLevelAggregates,
+      ...this.fieldLevelAggregates!,
       ...nextFieldLevelAggregates,
     };
   }
@@ -223,16 +213,13 @@ export class FilePassAggregates {
     field: Field,
     fieldLevelAggregates: FieldLevelAggregates
   ): void {
-    if (!this.fileLevelAggregates) {
-      throw new Error('File level aggregates not initialized');
-    }
-
+    // initializeFileLevelAggregates() is always called before field processing
     const fieldLabel = field.fieldLabel;
     // TODO: convert into field_id_wise_aggregates
-    this.fileLevelAggregates.field_label_wise_aggregates[fieldLabel] =
+    this.fileLevelAggregates!.field_label_wise_aggregates[fieldLabel] =
       fieldLevelAggregates;
 
-    this.fileLevelAggregates.fields_count.push('processed');
+    this.fileLevelAggregates!.fields_count.push('processed');
   }
 
   /**

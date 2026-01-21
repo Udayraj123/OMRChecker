@@ -156,9 +156,18 @@ describe('EvaluationConfig', () => {
                   matchRegex: '^A$',
                 },
                 evaluation: {
+                  source_type: 'local',
                   options: {
                     answers_in_order: ['B', 'C'], // Missing questions_in_order
                   },
+                  marking_schemes: {
+                    [DEFAULT_SECTION_KEY]: {
+                      correct: 1,
+                      incorrect: 0,
+                      unmarked: 0,
+                    },
+                  },
+                  outputs_configuration: {},
                 },
               },
             ],
@@ -194,9 +203,18 @@ describe('EvaluationConfig', () => {
                   matchRegex: '^A$',
                 },
                 evaluation: {
+                  source_type: 'local',
                   options: {
                     questions_in_order: ['q1', 'q2'], // Missing answers_in_order
                   },
+                  marking_schemes: {
+                    [DEFAULT_SECTION_KEY]: {
+                      correct: 1,
+                      incorrect: 0,
+                      unmarked: 0,
+                    },
+                  },
+                  outputs_configuration: {},
                 },
               },
             ],
@@ -205,6 +223,56 @@ describe('EvaluationConfig', () => {
           {}
         );
       }).toThrow(/provides 'questions_in_order' but missing 'answers_in_order'/);
+    });
+
+    it('should accept conditional set with both questions_in_order and answers_in_order', () => {
+      const config = new EvaluationConfig(
+        '/test/dir',
+        'evaluation.json',
+        {
+          options: {
+            questions_in_order: ['q1', 'q2'],
+            answers_in_order: ['A', 'B'],
+          },
+          marking_schemes: {
+            [DEFAULT_SECTION_KEY]: {
+              correct: 1,
+              incorrect: 0,
+              unmarked: 0,
+            },
+          },
+          conditional_sets: [
+            {
+              name: 'Set A',
+              matcher: {
+                formatString: '{set_type}',
+                matchRegex: '^A$',
+              },
+              evaluation: {
+                source_type: 'local',
+                options: {
+                  questions_in_order: ['q1', 'q2'],
+                  answers_in_order: ['B', 'C'],
+                },
+                marking_schemes: {
+                  [DEFAULT_SECTION_KEY]: {
+                    correct: 1,
+                    incorrect: 0,
+                    unmarked: 0,
+                  },
+                },
+                outputs_configuration: {},
+              },
+            },
+          ],
+        },
+        mockTemplate,
+        {}
+      );
+
+      expect(config).toBeDefined();
+      expect(config.setMapping['Set A']).toBeDefined();
+      expect(config.setMapping['Set A'].setName).toBe('Set A');
     });
   });
 

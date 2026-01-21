@@ -140,7 +140,8 @@ class TemplateDetectionPass(FilePassAggregates):
         )
         field_detection_type = field.field_detection_type
 
-        field_detection_type_wise_aggregates = self.directory_level_aggregates[
+        directory_level_aggregates = self.get_directory_level_aggregates()
+        field_detection_type_wise_aggregates = directory_level_aggregates[
             "field_detection_type_wise_aggregates"
         ][field_detection_type]
         # Update the processed field count for that runner
@@ -163,7 +164,8 @@ class TemplateDetectionPass(FilePassAggregates):
     ) -> None:
         super().update_aggregates_on_processed_file(file_path)
 
-        field_detection_type_wise_aggregates = self.file_level_aggregates[
+        file_level_aggregates = self.get_file_level_aggregates()
+        field_detection_type_wise_aggregates = file_level_aggregates[
             "field_detection_type_wise_aggregates"
         ]
         for (
@@ -194,9 +196,10 @@ class TemplateDetectionPass(FilePassAggregates):
                     for result in file_results.barcode_fields.values()
                 }
 
-                self.file_level_aggregates["bubble_fields"] = bubble_fields_by_label
-                self.file_level_aggregates["ocr_fields"] = ocr_fields_by_label
-                self.file_level_aggregates["barcode_fields"] = barcode_fields_by_label
+                file_level_aggregates = self.get_file_level_aggregates()
+                file_level_aggregates["bubble_fields"] = bubble_fields_by_label
+                file_level_aggregates["ocr_fields"] = ocr_fields_by_label
+                file_level_aggregates["barcode_fields"] = barcode_fields_by_label
             except KeyError as e:
                 # File not yet finalized in repository - this should not happen
                 # but if it does, log and re-raise to surface the issue

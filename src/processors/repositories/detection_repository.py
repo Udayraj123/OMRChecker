@@ -3,6 +3,9 @@
 Replaces nested dictionary-based aggregate management with clean repository pattern.
 """
 
+import threading
+from threading import local
+
 from src.processors.detection.models.detection_results import (
     BarcodeFieldDetectionResult,
     BubbleFieldDetectionResult,
@@ -17,12 +20,21 @@ class DetectionRepository:
 
     Replaces the complex nested dictionary structure in FilePassAggregates
     with a clean, queryable interface.
+
+    Thread-safe: Uses thread-local storage for current file results to support
+    parallel processing of multiple files.
     """
 
     def __init__(self) -> None:
         """Initialize empty repository."""
-        self._current_file_results: FileDetectionResults | None = None
+        # Per-file state: file_path -> FileDetectionResults (for current processing)
+        self._current_file_results: dict[str, FileDetectionResults] = {}
+        self._current_file_results_lock = threading.Lock()
+        # Thread-local storage for current file_path (just a string, minimal overhead)
+        self._thread_local = local()
+        # Shared dictionary for finalized file results (protected by lock)
         self._file_results: dict[str, FileDetectionResults] = {}
+        self._file_results_lock = threading.Lock()
         self._directory_path: str | None = None
 
     # File-level operations
@@ -34,14 +46,32 @@ class DetectionRepository:
         """
         # Normalize file_path to string for consistent storage
         file_path_str = str(file_path)
-        self._current_file_results = FileDetectionResults(file_path=file_path_str)
+        # Store current file_path in thread-local (just a string)
+        self._thread_local.current_file_path = file_path_str
+
+        # Create and store file results in per-file state dict
+        with self._current_file_results_lock:
+            self._current_file_results[file_path_str] = FileDetectionResults(
+                file_path=file_path_str
+            )
 
     def finalize_file(self) -> None:
-        """Finalize current file and store results."""
-        if self._current_file_results is not None:
-            self._file_results[self._current_file_results.file_path] = (
-                self._current_file_results
-            )
+        """Finalize current file and store results.
+
+        Note: Does not clear current_file_results, as interpretation pass
+        may still need to access current file results. The state will be
+        overwritten when the next file is initialized.
+        """
+        file_path_str = getattr(self._thread_local, "current_file_path", None)
+        if file_path_str is None:
+            return
+
+        with self._current_file_results_lock:
+            current = self._current_file_results.get(file_path_str)
+            if current is not None:
+                # Thread-safe write to shared dictionary
+                with self._file_results_lock:
+                    self._file_results[file_path_str] = current
 
     def get_current_file_results(self) -> FileDetectionResults:
         """Get results for current file being processed.
@@ -52,10 +82,14 @@ class DetectionRepository:
         Raises:
             RuntimeError: If no file is currently being processed
         """
-        if self._current_file_results is None:
+        file_path_str = getattr(self._thread_local, "current_file_path", None)
+        if file_path_str is None:
             msg = "No file currently being processed"
             raise RuntimeError(msg)
-        return self._current_file_results
+
+        with self._current_file_results_lock:
+            # initialize_file() always creates this entry, so it's guaranteed to exist
+            return self._current_file_results[file_path_str]
 
     def get_file_results(self, file_path: str) -> FileDetectionResults:
         """Get results for a specific file.
@@ -72,22 +106,19 @@ class DetectionRepository:
         # Normalize file_path to string for consistent lookup
         file_path_str = str(file_path)
 
-        # Try exact match first
-        if file_path_str in self._file_results:
-            return self._file_results[file_path_str]
+        # Thread-safe read from shared dictionary
+        # Paths are normalized to string in initialize_file(), so exact match is sufficient
+        with self._file_results_lock:
+            if file_path_str in self._file_results:
+                return self._file_results[file_path_str]
 
-        # Try to find by matching stored paths (handle Path vs str differences)
-        for stored_path, results in self._file_results.items():
-            if str(stored_path) == file_path_str or stored_path == file_path_str:
-                return results
-
-        # If still not found, raise error with helpful message
-        available_paths = list(self._file_results.keys())
-        msg = (
-            f"No results found for file: {file_path_str}. "
-            f"Available files: {available_paths}"
-        )
-        raise KeyError(msg)
+            # If not found, raise error with helpful message
+            available_paths = list(self._file_results.keys())
+            msg = (
+                f"No results found for file: {file_path_str}. "
+                f"Available files: {available_paths}"
+            )
+            raise KeyError(msg)
 
     # Field-level operations
     def save_bubble_field(
@@ -223,8 +254,12 @@ class DetectionRepository:
             directory_path: Path to the directory being processed
         """
         self._directory_path = directory_path
-        self._file_results.clear()
-        self._current_file_results = None
+        with self._file_results_lock:
+            self._file_results.clear()
+        with self._current_file_results_lock:
+            self._current_file_results.clear()
+        # Clear thread-local storage (setting to None is safe even if attribute doesn't exist)
+        self._thread_local.current_file_path = None
 
     def get_all_file_results(self) -> dict[str, FileDetectionResults]:
         """Get results for all processed files in directory.
@@ -232,12 +267,17 @@ class DetectionRepository:
         Returns:
             Dictionary mapping file_path to FileDetectionResults
         """
-        return self._file_results.copy()
+        with self._file_results_lock:
+            return self._file_results.copy()
 
     def clear(self) -> None:
         """Clear all stored results."""
-        self._current_file_results = None
-        self._file_results.clear()
+        # Clear thread-local storage (setting to None is safe even if attribute doesn't exist)
+        self._thread_local.current_file_path = None
+        with self._current_file_results_lock:
+            self._current_file_results.clear()
+        with self._file_results_lock:
+            self._file_results.clear()
         self._directory_path = None
 
     # Statistics
@@ -252,9 +292,15 @@ class DetectionRepository:
 
     def __repr__(self) -> str:
         """Readable representation."""
+        file_path_str = getattr(self._thread_local, "current_file_path", None)
+        with self._file_results_lock:
+            file_count = len(self._file_results)
+        with self._current_file_results_lock:
+            current_count = len(self._current_file_results)
         return (
             f"DetectionRepository("
             f"directory={self._directory_path}, "
-            f"files={len(self._file_results)}, "
-            f"current_file={self._current_file_results.file_path if self._current_file_results else None})"
+            f"finalized_files={file_count}, "
+            f"current_files={current_count}, "
+            f"current_file_path={file_path_str})"
         )

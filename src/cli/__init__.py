@@ -4,6 +4,8 @@ from pathlib import Path
 
 from src.entry import entry_point
 
+__all__ = ["run_cli"]
+
 
 def run_cli(args: dict) -> None:
     """Run the CLI with the provided arguments.

@@ -94,13 +94,14 @@ class BubblesThresholdDetectionPass(FieldTypeDetectionPass):
         """Update file-level aggregates after field detection."""
         # Skip base class update_file_level_aggregates_on_processed_field
         # which would populate field_label_wise_aggregates. Just update fields_count.
-        self.file_level_aggregates["fields_count"].push("processed")
+        file_level_aggregates = self.get_file_level_aggregates()
+        file_level_aggregates["fields_count"].push("processed")
 
         # Use result from field detection
         field_bubble_means = field_level_aggregates["field_bubble_means"]
         field_bubble_means_std = field_level_aggregates["field_bubble_means_std"]
 
-        self.file_level_aggregates["all_field_bubble_means"].extend(field_bubble_means)
-        self.file_level_aggregates["all_field_bubble_means_std"].append(
+        file_level_aggregates["all_field_bubble_means"].extend(field_bubble_means)
+        file_level_aggregates["all_field_bubble_means_std"].append(
             field_bubble_means_std
         )

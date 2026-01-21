@@ -156,7 +156,8 @@ class BubblesThresholdInterpretationPass(FieldTypeInterpretationPass):
         super().update_file_level_aggregates_on_processed_field_interpretation(
             field, field_interpretation, field_level_aggregates
         )
-        self.file_level_aggregates["all_fields_local_thresholds"].push(
+        file_level_aggregates = self.get_file_level_aggregates()
+        file_level_aggregates["all_fields_local_thresholds"].push(
             field_interpretation.local_threshold_for_field, field
         )
 

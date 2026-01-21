@@ -51,4 +51,5 @@ class BarcodeDetectionPass(FieldTypeDetectionPass):
     ) -> None:
         # Skip populating field_label_wise_aggregates (using repository)
         # Just update fields_count for statistics
-        self.file_level_aggregates["fields_count"].push("processed")
+        file_level_aggregates = self.get_file_level_aggregates()
+        file_level_aggregates["fields_count"].push("processed")

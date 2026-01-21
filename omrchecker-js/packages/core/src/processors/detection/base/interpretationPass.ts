@@ -115,10 +115,8 @@ export abstract class FieldTypeInterpretationPass extends FilePassAggregates {
       fieldInterpretation
     );
 
-    const fieldLevelAggregates = this.getFieldLevelAggregates();
-    if (!fieldLevelAggregates) {
-      throw new Error('Field level aggregates not initialized');
-    }
+    // initializeFieldLevelAggregates() is always called before this (line 86)
+    const fieldLevelAggregates = this.getFieldLevelAggregates()!;
 
     this.updateFileLevelAggregatesOnProcessedFieldInterpretation(
       field,
@@ -161,10 +159,8 @@ export abstract class FieldTypeInterpretationPass extends FilePassAggregates {
     fieldInterpretation: FieldInterpretation,
     fieldLevelAggregates: FieldLevelAggregates
   ): void {
-    const fileAgg = this.getFileLevelAggregates();
-    if (!fileAgg) {
-      throw new Error('File level aggregates not initialized');
-    }
+    // initializeFileLevelAggregates() is always called before field processing
+    const fileAgg = this.getFileLevelAggregates()!;
 
     const confidenceMetricsForFile = fileAgg.confidence_metrics_for_file as Record<
       string,
@@ -286,57 +282,50 @@ export class TemplateInterpretationPass extends FilePassAggregates {
   ): void {
     this.updateFieldLevelAggregatesOnProcessedField(field);
 
-    const fieldLevelAggregates = this.getFieldLevelAggregates();
-    if (!fieldLevelAggregates) {
-      throw new Error('Field level aggregates not initialized');
-    }
+    // initializeFieldLevelAggregates() is always called before this (line 266)
+    const fieldLevelAggregates = this.getFieldLevelAggregates()!;
 
     // Store interpretation in file-level aggregates
-    const fileAggForInterpretation = this.getFileLevelAggregates();
-    if (fileAggForInterpretation) {
-      const confidenceMetricsForFile = fileAggForInterpretation.confidence_metrics_for_file as Record<
-        string,
-        unknown
-      >;
-      const fieldIdToInterpretation = fileAggForInterpretation.field_id_to_interpretation as Record<
-        string,
-        unknown
-      >;
+    // initializeFileLevelAggregates() is always called before field processing
+    const fileAggForInterpretation = this.getFileLevelAggregates()!;
+    const confidenceMetricsForFile = fileAggForInterpretation.confidence_metrics_for_file as Record<
+      string,
+      unknown
+    >;
+    const fieldIdToInterpretation = fileAggForInterpretation.field_id_to_interpretation as Record<
+      string,
+      unknown
+    >;
 
-      confidenceMetricsForFile[field.fieldLabel] =
-        fieldInterpretation.getFieldLevelConfidenceMetrics();
-      fieldIdToInterpretation[field.id] = fieldInterpretation;
-    }
+    confidenceMetricsForFile[field.fieldLabel] =
+      fieldInterpretation.getFieldLevelConfidenceMetrics();
+    fieldIdToInterpretation[field.id] = fieldInterpretation;
 
     this.updateFileLevelAggregatesOnProcessedField(field, fieldLevelAggregates);
     this.updateDirectoryLevelAggregatesOnProcessedField(field, fieldLevelAggregates);
 
     // Update field detection type counts
-    const dirAgg = this.getDirectoryLevelAggregates();
-    const fileAggForTypeCounts = this.getFileLevelAggregates();
+    // Both are always initialized before field processing
+    const dirAgg = this.getDirectoryLevelAggregates()!;
+    const fileAggForTypeCounts = this.getFileLevelAggregates()!;
 
-    if (dirAgg && fileAggForTypeCounts) {
-      const fieldDetectionType = field.fieldDetectionType;
-      const dirTypeAggregates = (
-        dirAgg.field_detection_type_wise_aggregates as Record<
-          string,
-          { fields_count: StatsByLabel }
-        >
-      )[fieldDetectionType];
-      const fileTypeAggregates = (
-        fileAggForTypeCounts.field_detection_type_wise_aggregates as Record<
-          string,
-          { fields_count: StatsByLabel }
-        >
-      )[fieldDetectionType];
+    const fieldDetectionType = field.fieldDetectionType;
+    const dirTypeAggregates = (
+      dirAgg.field_detection_type_wise_aggregates as Record<
+        string,
+        { fields_count: StatsByLabel }
+      >
+    )[fieldDetectionType];
+    const fileTypeAggregates = (
+      fileAggForTypeCounts.field_detection_type_wise_aggregates as Record<
+        string,
+        { fields_count: StatsByLabel }
+      >
+    )[fieldDetectionType];
 
-      if (dirTypeAggregates) {
-        dirTypeAggregates.fields_count.push('processed');
-      }
-      if (fileTypeAggregates) {
-        fileTypeAggregates.fields_count.push('processed');
-      }
-    }
+    // These are always initialized in initializeDirectoryLevelAggregates/initializeFileLevelAggregates
+    dirTypeAggregates.fields_count.push('processed');
+    fileTypeAggregates.fields_count.push('processed');
   }
 
   /**
@@ -355,10 +344,8 @@ export class TemplateInterpretationPass extends FilePassAggregates {
       return;
     }
 
-    const fileAgg = this.getFileLevelAggregates();
-    if (!fileAgg) {
-      throw new Error('File level aggregates not initialized');
-    }
+    // initializeFileLevelAggregates() is always called before this
+    const fileAgg = this.getFileLevelAggregates()!;
 
     const fieldDetectionTypeWiseAggregates = fileAgg.field_detection_type_wise_aggregates as Record<
       string,

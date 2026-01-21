@@ -2765,14 +2765,14 @@
     },
     {
       "python": "src/processors/repositories/detection_repository.py",
-      "typescript": "N/A (not yet ported)",
-      "status": "not_started",
+      "typescript": "omrchecker-js/packages/core/src/processors/repositories/DetectionRepository.ts",
+      "status": "synced",
       "phase": 2,
       "priority": "low",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
       "lastTypescriptChange": null,
-      "notes": "Detection repository pattern. Not yet ported."
+      "notes": "Detection repository pattern. Ported with thread-safety simplifications (TypeScript is single-threaded). Path normalization and error messages aligned."
     },
     {
       "python": "src/processors/template/directory_handler.py",
@@ -3462,7 +3462,7 @@
         "processor": "not_started"
       },
       "repositories": {
-        "detection_repository": "not_started"
+        "detection_repository": "synced"
       },
       "training": {
         "data_collectors": "phase2",
