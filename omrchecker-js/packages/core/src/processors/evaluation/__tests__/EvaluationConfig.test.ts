@@ -14,6 +14,7 @@ describe('EvaluationConfig', () => {
 
   describe('Basic Configuration', () => {
     it('should create default evaluation config', () => {
+      console.log('should create default evaluation config'); // temp
       const config = new EvaluationConfig(
         '/test/dir',
         'evaluation.json',

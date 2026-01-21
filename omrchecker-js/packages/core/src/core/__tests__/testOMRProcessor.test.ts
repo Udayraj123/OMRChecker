@@ -5,15 +5,21 @@
  * TypeScript equivalent of Python's test_entry.py, focused on OMRProcessor.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import * as cv from '@techstark/opencv-js';
+import { describe, it, expect, beforeEach, afterEach, beforeAll } from 'vitest';
 import { OMRProcessor, type OMRProcessorConfig } from '../OMRProcessor';
 import type { TemplateConfig } from '../../template/types';
+console.log("start");
+import { setupOpenCv } from '@/__tests__/setup';
+let cv: any;
+beforeAll(()=>{
+  setupOpenCv();
+  cv = global.cv;
+})
 
 describe('OMRProcessor', () => {
   let templateConfig: TemplateConfig;
-  let mockGrayImage: cv.Mat;
-  let mockColoredImage: cv.Mat;
+  let mockGrayImage: any;
+  let mockColoredImage: any;
 
   function createMinimalTemplateConfig(): TemplateConfig {
     return {
@@ -21,6 +27,7 @@ describe('OMRProcessor', () => {
       bubbleDimensions: [20, 20],
       fieldBlocks: {
         block1: {
+          fieldDetectionType: 'BUBBLES_THRESHOLD',
           name: 'block1',
           origin: [100, 100],
           fieldLabels: ['q1', 'q2'],
@@ -345,6 +352,7 @@ describe('OMRProcessor', () => {
         ...templateConfig,
         fieldBlocks: {
           block1: {
+            fieldDetectionType: 'BUBBLES_THRESHOLD',
             name: 'block1',
             origin: [100, 100],
             fieldLabels: ['q1', 'q2'],
@@ -353,6 +361,7 @@ describe('OMRProcessor', () => {
             labelsGap: 50,
           },
           block2: {
+            fieldDetectionType: 'BUBBLES_THRESHOLD',
             name: 'block2',
             origin: [100, 300],
             fieldLabels: ['q3', 'q4'],
@@ -373,8 +382,8 @@ describe('OMRProcessor', () => {
         ...templateConfig,
         customBubbleFieldTypes: {
           customType: {
-            direction: 'HORIZONTAL',
-            bubblesCount: 5,
+            direction: 'horizontal',
+            bubbleValues: ['A', 'B', 'C', 'D', 'E'],
           },
         },
       };
@@ -388,8 +397,8 @@ describe('OMRProcessor', () => {
       const customLabelsConfig: TemplateConfig = {
         ...templateConfig,
         customLabels: {
-          q1: 'Question 1',
-          q2: 'Question 2',
+          q1: ['Question 1'],
+          q2: ['Question 2'],
         },
       };
 
@@ -474,7 +483,7 @@ describe('OMRProcessor', () => {
       const image2 = new cv.Mat(900, 650, cv.CV_8UC1, new cv.Scalar(200));
       const image3 = new cv.Mat(900, 650, cv.CV_8UC1, new cv.Scalar(200));
 
-      const batch: Array<[cv.Mat, string, cv.Mat?]> = [
+      const batch: Array<[any, string, any?]> = [
         [image1, 'batch1.jpg', mockColoredImage],
         [image2, 'batch2.jpg', mockColoredImage],
         [image3, 'batch3.jpg', mockColoredImage],
@@ -507,7 +516,7 @@ describe('OMRProcessor', () => {
       const image1 = new cv.Mat(900, 650, cv.CV_8UC1, new cv.Scalar(200));
       const image2 = new cv.Mat(900, 650, cv.CV_8UC1, new cv.Scalar(200));
 
-      const batch: Array<[cv.Mat, string]> = [
+      const batch: Array<[any, string]> = [
         [image1, 'batch1.jpg'],
         [image2, 'batch2.jpg'],
       ];
