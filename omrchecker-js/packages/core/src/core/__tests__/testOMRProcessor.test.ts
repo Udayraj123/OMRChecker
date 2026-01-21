@@ -5,11 +5,10 @@
  * TypeScript equivalent of Python's test_entry.py, focused on OMRProcessor.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as cv from '@techstark/opencv-js';
 import { OMRProcessor, type OMRProcessorConfig } from '../OMRProcessor';
 import type { TemplateConfig } from '../../template/types';
-import { TemplateLoader } from '../../template/TemplateLoader';
 
 describe('OMRProcessor', () => {
   let templateConfig: TemplateConfig;
