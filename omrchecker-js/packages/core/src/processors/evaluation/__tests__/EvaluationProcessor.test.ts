@@ -12,7 +12,7 @@ import {
   MarkingScheme,
 } from '../EvaluationProcessor';
 import { createProcessingContext } from '../../base';
-import * as cv from '@techstark/opencv-js';
+const cv = global.cv;
 
 // Mock evaluation config for testing
 class MockEvaluationConfigForResponse implements EvaluationConfigForResponse {

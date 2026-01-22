@@ -13,7 +13,7 @@
  * - Multiple selectors (centers, inner/outer corners, etc.)
  */
 
-import cv from '@techstark/opencv-js';
+import cv from '../../utils/opencv';
 import { CropOnPatchesCommon, type ZoneDescription, type ScanZone } from './CropOnPatchesCommon';
 import { PointArray } from './pointUtils';
 import { logger } from '../../utils/logger';

@@ -14,7 +14,7 @@
  * - Template-specific abstract methods for subclasses
  */
 
-import cv from '@techstark/opencv-js';
+import cv from '../../utils/opencv';
 import { ImageTemplatePreprocessor, SaveImageOps } from './base';
 import { WarpStrategyFactory, WarpStrategy } from './warpStrategies';
 import { PointArray, orderFourPoints } from './pointUtils';

@@ -10,7 +10,7 @@ import {
   BubbleMeanValue,
   type BubbleLocation,
 } from '../models';
-import * as cv from '@techstark/opencv-js';
+const cv = global.cv;
 
 describe('BubblesFieldDetection', () => {
   let mockGrayImage: cv.Mat;

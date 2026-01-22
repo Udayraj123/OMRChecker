@@ -5,7 +5,7 @@
  * Refactored to use BubbleFieldDetectionResult instead of nested dictionaries.
  */
 
-import * as cv from '@techstark/opencv-js';
+import cv from '../../../utils/opencv';
 import { FieldDetection } from '../base';
 import {
   BubbleFieldDetectionResult,

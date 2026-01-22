@@ -6,7 +6,7 @@
  * Ported from Python test_template_file_runner.py
  */
 
-import * as cv from '@techstark/opencv-js';
+const cv = global.cv;
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TemplateFileRunner } from '../templateFileRunner';
 import { TemplateLoader } from '../../../template/TemplateLoader';

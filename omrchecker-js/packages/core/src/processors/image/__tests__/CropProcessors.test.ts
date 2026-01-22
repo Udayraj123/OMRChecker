@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import * as cv from '@techstark/opencv-js';
+const cv = global.cv;
 import { CropPage } from '../CropPage';
 import { CropOnMarkers } from '../CropOnMarkers';
 import { WarpMethod } from '../../constants';

@@ -5,7 +5,7 @@
  * Handles visualization of field blocks.
  */
 
-import * as cv from '@techstark/opencv-js';
+import cv from '../../../utils/opencv';
 import { CLR_BLACK } from '../../../utils/constants';
 import { DrawingUtils } from '../../../utils/drawing';
 import { FieldBlock } from './base';

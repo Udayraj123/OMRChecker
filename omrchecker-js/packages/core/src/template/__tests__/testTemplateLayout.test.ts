@@ -5,7 +5,7 @@
  * Ported from Python test_template_layout.py
  */
 
-import * as cv from '@techstark/opencv-js';
+const cv = global.cv;
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TemplateLayout } from '../TemplateLayout';
 import { TemplateLoader } from '../TemplateLoader';

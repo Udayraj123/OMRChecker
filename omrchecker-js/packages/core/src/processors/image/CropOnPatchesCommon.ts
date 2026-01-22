@@ -18,7 +18,7 @@
  * - Integration with WarpOnPointsCommon
  */
 
-import cv from '@techstark/opencv-js';
+import cv from '../../utils/opencv';
 import { WarpOnPointsCommon } from './WarpOnPointsCommon';
 import { PointArray, orderFourPoints } from './pointUtils';
 import {

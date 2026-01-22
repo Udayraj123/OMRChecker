@@ -10,7 +10,7 @@
  * - Scan zone validation
  */
 
-import cv from '@techstark/opencv-js';
+import cv from '../../utils/opencv';
 import { PointArray } from './pointUtils';
 import { ShapeUtils } from '../../utils/shapes';
 import { DrawingUtils } from '../../utils/drawing';

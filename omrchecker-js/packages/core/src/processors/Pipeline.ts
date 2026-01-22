@@ -11,7 +11,7 @@
  * 3. ReadOMR (detection & interpretation)
  */
 
-import type * as cv from '@techstark/opencv-js';
+import cv from '../utils/opencv';
 import { Processor, ProcessingContext, createProcessingContext } from './base';
 import { Logger } from '../utils/logger';
 

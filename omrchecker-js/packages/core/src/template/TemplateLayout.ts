@@ -6,7 +6,7 @@
  * alignment setup, and other template operations.
  */
 
-import * as cv from '@techstark/opencv-js';
+import cv from '../utils/opencv';
 import { OMRCheckerError } from '../core/exceptions';
 import { FieldDetectionType } from '../processors/constants';
 import { FieldBlock } from '../processors/layout/fieldBlock/base';

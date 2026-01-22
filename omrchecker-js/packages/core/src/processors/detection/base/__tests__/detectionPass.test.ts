@@ -2,7 +2,7 @@
  * Tests for detection pass base classes.
  */
 
-import * as cv from '@techstark/opencv-js';
+const cv = global.cv;
 import { FieldDetectionType } from '../../../constants';
 import { BubbleField } from '../../../layout/field/bubbleField';
 import { FieldBlock } from '../../../layout/fieldBlock/base';

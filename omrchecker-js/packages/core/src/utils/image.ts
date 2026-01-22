@@ -6,7 +6,7 @@
  * All OpenCV conversions use matUtils for consistency
  */
 
-import cv from '@techstark/opencv-js';
+import cv from './opencv';
 import { MatUtils } from './opencv/matUtils';
 import { CLR_WHITE, type ColorTuple } from './constants';
 

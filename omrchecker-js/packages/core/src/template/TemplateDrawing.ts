@@ -5,7 +5,7 @@
  * Maintains 1:1 correspondence with Python implementation.
  */
 
-import * as cv from '@techstark/opencv-js';
+import cv from '../utils/opencv';
 import { MARKED_TEMPLATE_TRANSPARENCY } from '../utils/constants';
 import { DrawingUtils } from '../utils/drawing';
 import { ImageUtils } from '../utils/image';

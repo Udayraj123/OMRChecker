@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { DrawingUtils, CLR_GREEN, CLR_RED, TEXT_SIZE } from '../drawing';
-import * as cv from '@techstark/opencv-js';
+const cv = global.cv;
 
 describe('DrawingUtils', () => {
   let testImage: cv.Mat;

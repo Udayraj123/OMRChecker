@@ -12,7 +12,7 @@
  * - Corner extraction
  */
 
-import * as cv from '@techstark/opencv-js';
+import cv from '../../utils/opencv';
 import { Logger } from '../../utils/logger';
 import { ImageUtils } from '../../utils/ImageUtils';
 import { MathUtils, type Point, type Rectangle } from '../../utils/math';

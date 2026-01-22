@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
-import * as cv from '@techstark/opencv-js';
+const cv = global.cv;
 import {
   ProcessingPipeline,
   PreprocessingProcessor,

@@ -13,7 +13,7 @@
  * - Marker corner extraction
  */
 
-import * as cv from '@techstark/opencv-js';
+import cv from '../../utils/opencv';
 import { Logger } from '../../utils/logger';
 import { MathUtils } from '../../utils/math';
 

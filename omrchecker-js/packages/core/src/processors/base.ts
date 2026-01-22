@@ -5,7 +5,7 @@
  * Maintains 1:1 correspondence with Python implementation.
  */
 
-import type * as cv from '@techstark/opencv-js';
+import cv from '../utils/opencv';
 
 /**
  * Context object that flows through all processors.

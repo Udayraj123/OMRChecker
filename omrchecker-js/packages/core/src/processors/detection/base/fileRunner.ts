@@ -5,7 +5,7 @@
  * Coordinates detection and interpretation passes at file level.
  */
 
-import * as cv from '@techstark/opencv-js';
+import cv from '../../../utils/opencv';
 import { FilePassAggregates, type DirectoryLevelAggregates, type FileLevelAggregates, type FieldLevelAggregates } from './commonPass';
 import { FieldTypeDetectionPass } from './detectionPass';
 import { FieldTypeInterpretationPass } from './interpretationPass';

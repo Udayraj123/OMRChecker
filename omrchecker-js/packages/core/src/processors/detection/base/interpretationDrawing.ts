@@ -5,7 +5,7 @@
  * Maintains 1:1 correspondence with Python implementation.
  */
 
-import * as cv from '@techstark/opencv-js';
+import cv from '../../../utils/opencv';
 import type { FieldInterpretation } from './interpretation';
 
 /**

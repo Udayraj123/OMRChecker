@@ -5,7 +5,7 @@
  * Coordinates detection and interpretation at template level.
  */
 
-import * as cv from '@techstark/opencv-js';
+import cv from '../../utils/opencv';
 import { FieldDetectionType } from '../constants';
 import { FileLevelRunner } from './base/fileRunner';
 import { TemplateDetectionPass } from './base/detectionPass';

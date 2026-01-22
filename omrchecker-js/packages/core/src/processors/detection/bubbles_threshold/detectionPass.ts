@@ -5,7 +5,7 @@
  * Extends FieldTypeDetectionPass for bubble field detection.
  */
 
-import * as cv from '@techstark/opencv-js';
+import cv from '../../../utils/opencv';
 import { FieldTypeDetectionPass } from '../base/detectionPass';
 import type { Field } from '../../layout/field/base';
 import { NumberAggregate } from '../../../utils/stats';

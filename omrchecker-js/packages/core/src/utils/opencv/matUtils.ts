@@ -5,7 +5,7 @@
  * Used by image.ts and drawing.ts
  */
 
-import cv from '@techstark/opencv-js';
+import cv from './index';
 import type { ColorTuple } from '../constants';
 
 /**

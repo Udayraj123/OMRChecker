@@ -3,7 +3,7 @@
  * Browser-compatible version of Python's InteractionUtils
  */
 
-import * as cv from '@techstark/opencv-js';
+import cv from './opencv';
 import { Logger } from './logger';
 
 const logger = new Logger('InteractionUtils');

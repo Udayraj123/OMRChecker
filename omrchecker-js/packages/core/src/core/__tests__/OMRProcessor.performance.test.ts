@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import * as cv from '@techstark/opencv-js';
+const cv = global.cv;
 import { OMRProcessor } from '../OMRProcessor';
 import type { TemplateConfig } from '../../template/types';
 

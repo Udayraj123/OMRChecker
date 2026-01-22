@@ -8,7 +8,7 @@
  * visual elements on OpenCV Mat images for OMR result visualization.
  */
 
-import * as cv from '@techstark/opencv-js';
+import cv from './opencv';
 import { ImageUtils } from './ImageUtils';
 import { MathUtils } from './math';
 import {

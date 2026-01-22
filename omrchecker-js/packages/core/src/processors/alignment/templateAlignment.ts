@@ -10,7 +10,7 @@
  * 3. K-Nearest Interpolation - Per-bubble coordinate adjustment
  */
 
-import cv from '@techstark/opencv-js';
+import cv from '../../utils/opencv';
 import { ImageUtils } from '../../utils/ImageUtils';
 import { MathUtils } from '../../utils/math';
 import { Logger } from '../../utils/logger';

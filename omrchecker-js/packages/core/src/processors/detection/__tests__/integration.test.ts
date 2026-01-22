@@ -7,7 +7,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { BubblesFieldDetection } from '../bubbles_threshold';
 import { GlobalThreshold } from '../../threshold/GlobalThreshold';
 import type { BubbleLocation } from '../models';
-import * as cv from '@techstark/opencv-js';
+const cv = global.cv;
 
 describe('Detection + Threshold Integration', () => {
   let testBubbles: BubbleLocation[];

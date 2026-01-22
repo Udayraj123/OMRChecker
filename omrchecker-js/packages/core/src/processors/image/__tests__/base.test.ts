@@ -11,7 +11,7 @@ import {
   SaveImageOps,
 } from '../base';
 import { createProcessingContext } from '../../base';
-import * as cv from '@techstark/opencv-js';
+const cv = global.cv;
 
 // Mock implementation for testing
 class MockImagePreprocessor extends ImageTemplatePreprocessor {

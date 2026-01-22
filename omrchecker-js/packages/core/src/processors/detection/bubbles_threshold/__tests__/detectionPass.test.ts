@@ -2,7 +2,7 @@
  * Tests for BubblesThresholdDetectionPass.
  */
 
-import * as cv from '@techstark/opencv-js';
+const cv = global.cv;
 import { BubbleField } from '../../../layout/field/bubbleField';
 import { FieldBlock } from '../../../layout/fieldBlock/base';
 import { BubblesThresholdDetectionPass } from '../detectionPass';

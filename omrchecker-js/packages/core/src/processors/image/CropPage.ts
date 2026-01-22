@@ -9,7 +9,7 @@
  * Extends WarpOnPointsCommon to leverage the parent's warping infrastructure.
  */
 
-import cv from '@techstark/opencv-js';
+import cv from '../../utils/opencv';
 import { WarpOnPointsCommon } from './WarpOnPointsCommon';
 import { PointArray } from './pointUtils';
 import { logger } from '../../utils/logger';

@@ -13,7 +13,7 @@
  * - TWO_LINES, TWO_LINES_HORIZONTAL: Edge line detection
  */
 
-import type * as cv from '@techstark/opencv-js';
+import cv from '../../utils/opencv';
 import { ImageTemplatePreprocessor } from './base';
 import { CropOnCustomMarkers } from './CropOnCustomMarkers';
 import { CropOnDotLines } from './CropOnDotLines';

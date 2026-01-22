@@ -5,7 +5,7 @@
  * Handles visualization of fields and scan boxes.
  */
 
-import * as cv from '@techstark/opencv-js';
+import cv from '../../../utils/opencv';
 import { CLR_BLACK } from '../../../utils/constants';
 import { DrawingUtils } from '../../../utils/drawing';
 import type { Field } from './base';

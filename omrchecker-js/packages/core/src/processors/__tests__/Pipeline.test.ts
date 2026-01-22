@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ProcessingPipeline, PipelineConfig } from '../Pipeline';
 import { Processor } from '../base';
-import * as cv from '@techstark/opencv-js';
+const cv = global.cv;
 
 // Mock processor for testing
 class MockProcessor extends Processor {

@@ -5,7 +5,7 @@
  * Defines abstract base classes for field type detection passes and template-level detection passes.
  */
 
-import * as cv from '@techstark/opencv-js';
+import cv from '../../../utils/opencv';
 import type { Field } from '../../layout/field/base';
 import { StatsByLabel } from '../../../utils/stats';
 import {

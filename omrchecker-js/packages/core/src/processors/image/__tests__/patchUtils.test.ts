@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import cv from '@techstark/opencv-js';
+const cv = global.cv;
 import {
   selectPointFromRectangle,
   computeScanZone,

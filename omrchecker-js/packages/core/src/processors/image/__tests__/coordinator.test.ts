@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { PreprocessingProcessor } from '../coordinator';
 import { Processor, ProcessingContext, createProcessingContext } from '../../base';
-import * as cv from '@techstark/opencv-js';
+const cv = global.cv;
 
 // Mock preprocessor for testing
 class MockPreprocessor extends Processor {

@@ -12,7 +12,7 @@
  * - Contour extraction and processing
  */
 
-import * as cv from '@techstark/opencv-js';
+import cv from '../../utils/opencv';
 import { ImageUtils } from '../../utils/ImageUtils';
 import { MathUtils, type Point, type Rectangle } from '../../utils/math';
 import { ScannerType, EDGE_TYPES_IN_ORDER } from '../constants';

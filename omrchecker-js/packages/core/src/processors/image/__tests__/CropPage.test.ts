@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import cv from '@techstark/opencv-js';
+const cv = global.cv;
 import { CropPage } from '../CropPage';
 import { WarpMethod } from '../../constants';
 

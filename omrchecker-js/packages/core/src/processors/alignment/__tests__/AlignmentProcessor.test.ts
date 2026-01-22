@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { AlignmentProcessor } from '../AlignmentProcessor';
 import { createProcessingContext } from '../../base';
-import * as cv from '@techstark/opencv-js';
+const cv = global.cv;
 
 describe('AlignmentProcessor', () => {
   let mockTemplate: any;

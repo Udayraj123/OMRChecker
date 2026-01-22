@@ -8,7 +8,7 @@ export default defineConfig({
     include: ['src/**/__tests__/**/*.test.ts'],
     disableConsoleIntercept: true,
     silent: false,
-    testTimeout: 30000, // 30 seconds per test
+    testTimeout: 10000, // 30 seconds per test
     hookTimeout: 10000, // 10 seconds for setup/teardown hooks
     teardownTimeout: 5000, // 5 seconds for teardown
     // pool: 'forks', // https://vitest.dev/guide/common-errors.html#segfaults-and-native-code-errors

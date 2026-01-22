@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import cv from '@techstark/opencv-js';
+const cv = global.cv;
 import { ImageUtils } from '../image';
 import { CLR_BLACK } from '../constants';
 

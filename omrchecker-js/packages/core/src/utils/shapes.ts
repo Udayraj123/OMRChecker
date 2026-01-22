@@ -5,7 +5,7 @@
  * Provides functions for working with scan zones, margins, and image extraction.
  */
 
-import * as cv from '@techstark/opencv-js';
+import cv from './opencv';
 import type { Point, Rectangle } from './math';
 import { Logger } from './logger';
 

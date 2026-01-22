@@ -8,7 +8,7 @@
  * based on control and destination points.
  */
 
-import cv from '@techstark/opencv-js';
+import cv from '../../utils/opencv';
 import { logger } from '../../utils/logger';
 import { WarpMethod, type WarpMethodValue } from '../constants';
 

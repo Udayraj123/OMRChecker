@@ -11,7 +11,7 @@
  * - Edge cases and validation
  */
 
-import * as cv from '@techstark/opencv-js';
+const cv = global.cv;
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import {
   prepareMarkerTemplate,
