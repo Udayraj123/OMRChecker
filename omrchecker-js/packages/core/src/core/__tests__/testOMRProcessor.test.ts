@@ -38,6 +38,7 @@ describe('OMRProcessor', () => {
   beforeEach(() => {
     templateConfig = createMinimalTemplateConfig();
     mockGrayImage = new cv.Mat(900, 650, cv.CV_8UC1, new cv.Scalar(200));
+    console.log({mockGrayImage, templateConfig});
     mockColoredImage = new cv.Mat(900, 650, cv.CV_8UC3, new cv.Scalar(200, 200, 200));
   });
 
