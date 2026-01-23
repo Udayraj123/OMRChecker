@@ -24,7 +24,6 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@techstark/opencv-js": "4.12.0-release.1",
     "@zxing/library": "^0.20.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",

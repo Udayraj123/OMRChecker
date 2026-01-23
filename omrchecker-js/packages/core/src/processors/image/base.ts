@@ -8,7 +8,6 @@
  * unified Processor interface with process(context) method.
  */
 
-import cv from '../../utils/opencv';
 import { Processor, ProcessingContext } from '../base';
 import { ImageUtils } from '../../utils/ImageUtils';
 import { Logger } from '../../utils/logger';

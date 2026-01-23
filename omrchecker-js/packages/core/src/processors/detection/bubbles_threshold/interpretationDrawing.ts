@@ -5,7 +5,6 @@
  * Maintains 1:1 correspondence with Python implementation.
  */
 
-import cv from '../../../utils/opencv';
 import { AnswerMatcher, AnswerType } from '../../evaluation/AnswerMatcher';
 import type { EvaluationConfigForSet } from '../../evaluation/EvaluationConfigForSet';
 import {

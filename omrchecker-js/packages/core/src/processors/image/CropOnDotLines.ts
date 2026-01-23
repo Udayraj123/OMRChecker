@@ -13,7 +13,6 @@
  * - Flexible point selectors (centers, inner/outer edges, etc.)
  */
 
-import cv from '../../utils/opencv';
 import { CropOnPatchesCommon, type ZoneDescription, type ScanZone } from './CropOnPatchesCommon';
 import { PointArray } from './pointUtils';
 import { ImageProcessingError, TemplateValidationError } from '../../core/exceptions';

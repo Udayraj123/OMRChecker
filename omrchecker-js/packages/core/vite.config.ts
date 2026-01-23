@@ -12,11 +12,9 @@ export default defineConfig({
     },
     rollupOptions: {
       // Externalize dependencies that shouldn't be bundled
-      external: ['@techstark/opencv-js'],
+      external: [],
       output: {
-        globals: {
-          '@techstark/opencv-js': 'cv',
-        },
+        globals: {},
       },
     },
     sourcemap: true,
@@ -30,7 +28,7 @@ export default defineConfig({
   ],
   test: {
     globals: true,
-    
+
     environment: 'node',
   },
 });

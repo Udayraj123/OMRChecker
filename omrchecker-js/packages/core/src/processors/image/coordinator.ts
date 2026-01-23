@@ -7,7 +7,6 @@
  * This processor runs all image preprocessing steps in sequence.
  */
 
-import cv from '../../utils/opencv';
 import { Processor, ProcessingContext } from '../base';
 import { ImageUtils } from '../../utils/ImageUtils';
 import { Logger } from '../../utils/logger';

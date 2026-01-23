@@ -5,7 +5,6 @@
  * Maintains 1:1 correspondence with Python implementation.
  */
 
-import cv from './opencv';
 import { Logger } from './logger';
 import { ImageUtils } from './ImageUtils';
 import { MathUtils } from './math';

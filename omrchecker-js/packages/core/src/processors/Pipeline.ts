@@ -11,7 +11,6 @@
  * 3. ReadOMR (detection & interpretation)
  */
 
-import cv from '../utils/opencv';
 import { Processor, ProcessingContext, createProcessingContext } from './base';
 import { Logger } from '../utils/logger';
 

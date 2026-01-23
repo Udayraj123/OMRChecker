@@ -11,7 +11,6 @@
  * Port of Python's entry point logic and template processing.
  */
 
-import cv from '../utils/opencv';
 import { ProcessingPipeline } from '../processors/Pipeline';
 import { PreprocessingProcessor } from '../processors/image/coordinator';
 import { AlignmentProcessor } from '../processors/alignment/AlignmentProcessor';

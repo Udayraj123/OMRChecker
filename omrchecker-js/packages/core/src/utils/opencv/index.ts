@@ -2,42 +2,56 @@
  * Centralized OpenCV initialization and access module.
  *
  * This module provides a proper async initialization pattern for OpenCV.js
- * following the TechStark/opencv-js recommended approach.
+ * supporting both browser (global cv) and Node.js (local file) environments.
  *
- * @see https://github.com/TechStark/opencv-js/
+ * Browser: Expects opencv.js to be loaded via script tag before use
+ * Node.js: Loads from local lib/opencv.js file (for tests)
  */
 
-import cvModule from '@techstark/opencv-js';
+import path from 'path';
 
-// global instance
-let cvInstance: any = null;
+// Global instance
+let cvInstance: typeof cv | null = null;
 
 /**
  * Initialize OpenCV asynchronously.
  *
- * This handles both Promise and callback-based initialization patterns
- * since OpenCV.js is a WebAssembly module that needs proper initialization.
+ * This handles both browser and Node.js environments:
+ * - Browser: Uses global cv object loaded via script tag
+ * - Node.js: Loads from local lib/opencv.js file
  *
  * @returns Promise resolving to the initialized OpenCV instance
  */
-export async function initOpenCV(): Promise<any> {
+export async function initOpenCV(): Promise<typeof cv> {
   if (cvInstance) return cvInstance;
 
-  if (cvModule instanceof Promise) {
-    // Promise API
-    cvInstance = await cvModule;
-  } else if ((cvModule as any).Mat) {
-    // Already initialized
-    cvInstance = cvModule as any;
+  if (typeof window === 'undefined') {
+    // Node.js environment (tests) - load from local file
+    const opencvPath = path.resolve(__dirname, '../../../lib/opencv.js');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const cvModule = require(opencvPath);
+
+    if (cvModule instanceof Promise) {
+      cvInstance = await cvModule;
+    } else if (cvModule.onRuntimeInitialized) {
+      await new Promise<void>((resolve) => {
+        cvModule.onRuntimeInitialized = resolve;
+      });
+      cvInstance = cvModule;
+    } else {
+      cvInstance = cvModule;
+    }
   } else {
-    // Callback API
-    await new Promise<void>((resolve) => {
-      (cvModule as { onRuntimeInitialized: () => void }).onRuntimeInitialized =
-        resolve;
-    });
-    cvInstance = cvModule as any;
+    // Browser environment - use global cv loaded via script tag
+    if (!(window as any).cv) {
+      throw new Error(
+        'OpenCV.js not loaded. Add <script src="opencv.js"> before using this library.'
+      );
+    }
+    cvInstance = (window as any).cv;
   }
-  return cvInstance;
+
+  return cvInstance!;
 }
 
 /**
@@ -46,7 +60,7 @@ export async function initOpenCV(): Promise<any> {
  * @throws Error if OpenCV has not been initialized yet
  * @returns The initialized OpenCV instance
  */
-export function getCV(): any {
+export function getCV(): typeof cv {
   if (!cvInstance) {
     throw new Error('OpenCV not initialized. Call initOpenCV() first.');
   }
@@ -63,5 +77,4 @@ export function isOpenCVInitialized(): boolean {
 }
 
 // Default export for simpler import syntax
-export default cvInstance;
-
+export default getCV();

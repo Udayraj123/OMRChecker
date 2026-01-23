@@ -3,5 +3,5 @@
 import { initOpenCV } from '../utils/opencv';
 
 console.log('setupOpenCv');
-global.cv = await initOpenCV();
+(globalThis as any).cv = await initOpenCV();
 console.log('cv initialized');
