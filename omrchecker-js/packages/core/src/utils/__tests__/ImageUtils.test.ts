@@ -5,15 +5,14 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
+import { initOpenCV } from '../opencv';
 const cv = global.cv;
 import { ImageUtils } from '../ImageUtils';
 
 describe('ImageUtils', () => {
   beforeAll(async () => {
-    // Wait for OpenCV to be ready
-    if (cv.getBuildInformation) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
+    // Ensure OpenCV is initialized (setup.ts initializes it, but initOpenCV ensures cvInstance is set)
+    await initOpenCV();
   });
 
   describe('resizeSingle', () => {
