@@ -4,10 +4,8 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { initOpenCV } from '../utils/opencv';
 
 console.log('[OpenCV Setup] Module imports completed');
-console.log('[OpenCV Setup] initOpenCV imported:', typeof initOpenCV);
 
 // Setup OpenCV.js for tests using jsdom (browser-like environment)
 
@@ -97,7 +95,9 @@ try {
     console.log('[OpenCV Setup] opencv.js loaded as script element');
   } catch (fallbackError) {
     console.error('[OpenCV Setup] Fallback script execution also failed:', fallbackError);
-    throw new Error(`Failed to execute opencv.js: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Failed to execute opencv.js: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }
 
@@ -115,14 +115,16 @@ let initialized = false;
 
 // Use a simpler approach: just poll for cv object
 // Also listen for onRuntimeInitialized callback, but don't block on it
-initPromise.then(() => {
-  console.log('[OpenCV Setup] onRuntimeInitialized callback called');
-  if (!initialized) {
-    initialized = true;
-  }
-}).catch((err) => {
-  console.warn('[OpenCV Setup] initPromise rejected (this is OK if polling succeeds):', err);
-});
+initPromise
+  .then(() => {
+    console.log('[OpenCV Setup] onRuntimeInitialized callback called');
+    if (!initialized) {
+      initialized = true;
+    }
+  })
+  .catch((err) => {
+    console.warn('[OpenCV Setup] initPromise rejected (this is OK if polling succeeds):', err);
+  });
 
 // Poll for cv object with timeout using recursive promise-based approach
 // This avoids potential issues with setInterval and resolve()
@@ -143,7 +145,9 @@ const pollForCV = async (): Promise<void> => {
     // Log progress every 100 attempts (5 seconds)
     if (attempt > 0 && attempt % 100 === 0) {
       const elapsed = Date.now() - startTime;
-      console.log(`[OpenCV Setup] Still waiting for cv object... (attempt ${attempt}/${maxAttempts}, ${elapsed}ms elapsed)`);
+      console.log(
+        `[OpenCV Setup] Still waiting for cv object... (attempt ${attempt}/${maxAttempts}, ${elapsed}ms elapsed)`
+      );
     }
 
     // Check timeout
@@ -152,7 +156,7 @@ const pollForCV = async (): Promise<void> => {
     }
 
     // Wait 50ms before next check
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
   }
 
   throw new Error('OpenCV.js initialization timeout - cv object not found after max attempts');
@@ -176,7 +180,6 @@ if (!window.cv || typeof window.cv.Scalar !== 'function') {
 console.log('[OpenCV Setup] cv object verified, making available on globalThis and global');
 
 // Make cv available on both globalThis and global for tests
-// This ensures initOpenCV() can find it
 (globalThis as any).cv = window.cv;
 (global as any).cv = window.cv;
 console.log('[OpenCV Setup] cv set on both globalThis and global');

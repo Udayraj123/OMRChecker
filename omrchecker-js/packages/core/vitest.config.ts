@@ -6,7 +6,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['src/__tests__/setup.ts'],
     include: ['src/**/__tests__/**/*.test.ts'],
-    disableConsoleIntercept: true,
+    // disableConsoleIntercept: true,
     silent: false,
     testTimeout: 10000, // 30 seconds per test
     hookTimeout: 40000, // 40 seconds for setup/teardown hooks (OpenCV initialization can take time)

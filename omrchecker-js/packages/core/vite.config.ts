@@ -26,10 +26,5 @@ export default defineConfig({
       exclude: ['**/*.test.ts'],
     }),
   ],
-  test: {
-    globals: true,
-
-    environment: 'node',
-  },
 });
 
