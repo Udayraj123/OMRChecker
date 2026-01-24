@@ -2,10 +2,9 @@
  * Comprehensive tests for OMRProcessor class.
  *
  * Tests initialization, processImage, getAggregates, error handling, and edge cases.
- * TypeScript equivalent of Python's test_entry.py, focused on OMRProcessor.
+ * TypeScript equivalent of Python's test_entry.py and test_processors.py, focused on OMRProcessor.
  */
 
-console.log("start");
 const cv = global.cv;
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -38,7 +37,6 @@ describe('OMRProcessor', () => {
   beforeEach(() => {
     templateConfig = createMinimalTemplateConfig();
     mockGrayImage = new cv.Mat(900, 650, cv.CV_8UC1, new cv.Scalar(200));
-    console.log({mockGrayImage, templateConfig});
     mockColoredImage = new cv.Mat(900, 650, cv.CV_8UC3, new cv.Scalar(200, 200, 200));
   });
 

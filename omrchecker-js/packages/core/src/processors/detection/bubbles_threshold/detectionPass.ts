@@ -43,23 +43,7 @@ export class BubblesThresholdDetectionPass extends FieldTypeDetectionPass {
     grayImage: cv.Mat,
     coloredImage?: cv.Mat
   ): BubblesFieldDetection {
-    // Extract bubble locations from field
-    const bubbles = field.scanBoxes.map((scanBox) => ({
-      x: scanBox.x,
-      y: scanBox.y,
-      width: scanBox.dimensions[0],
-      height: scanBox.dimensions[1],
-      label: (scanBox as { bubbleValue?: string }).bubbleValue || '',
-    }));
-
-    // Create detection instance
-    return new BubblesFieldDetection(
-      field.id,
-      field.fieldLabel,
-      bubbles,
-      grayImage,
-      coloredImage
-    );
+    return new BubblesFieldDetection(field, grayImage, coloredImage);
   }
 
   /**

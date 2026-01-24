@@ -10,8 +10,9 @@ import { FieldDetection } from '../base';
 import {
   BubbleFieldDetectionResult,
   BubbleMeanValue,
-  type BubbleLocation,
 } from '../models';
+import type { Field } from '../../layout/field/base';
+import { BubblesScanBox } from '../../layout/field/bubbleField';
 
 /**
  * Detects bubble values and returns strongly-typed result.
@@ -23,27 +24,25 @@ export class BubblesFieldDetection extends FieldDetection {
   public result: BubbleFieldDetectionResult | null = null;
 
   constructor(
-    private fieldId: string,
-    private fieldLabel: string,
-    private bubbles: BubbleLocation[],
+    field: Field,
     grayImage: cv.Mat,
     coloredImage?: cv.Mat
   ) {
-    // Call parent constructor which will trigger runDetection
-    super({ id: fieldId, field_label: fieldLabel, bubbles }, grayImage, coloredImage);
+    super(field, grayImage, coloredImage);
   }
 
   /**
    * Run detection and create typed result.
    * Implements abstract method from FieldDetection.
    */
-  protected runDetection(_field: any, grayImage: any, _coloredImage: any): void {
+  protected runDetection(field: Field, grayImage: cv.Mat, _coloredImage: cv.Mat): void {
     const bubbleMeans: BubbleMeanValue[] = [];
 
-    for (const bubble of this.bubbles) {
+    // field.scanBoxes are BubblesScanBox instances
+    for (const unitBubble of field.scanBoxes) {
       // TODO: cross/check mark detection support (#167)
       const bubbleMeanValue = BubblesFieldDetection.readBubbleMeanValue(
-        bubble,
+        unitBubble as BubblesScanBox,
         grayImage
       );
       bubbleMeans.push(bubbleMeanValue);
@@ -52,8 +51,8 @@ export class BubblesFieldDetection extends FieldDetection {
     // Create strongly-typed result
     // Properties like stdDeviation and scanQuality are auto-calculated
     this.result = new BubbleFieldDetectionResult(
-      this.fieldId,
-      this.fieldLabel,
+      field.id,
+      field.fieldLabel,
       bubbleMeans
     );
   }
@@ -61,28 +60,41 @@ export class BubblesFieldDetection extends FieldDetection {
   /**
    * Read mean intensity value for a single bubble.
    *
-   * @param bubble - Bubble location and dimensions
+   * @param unitBubble - Bubble scan box (BubblesScanBox instance)
    * @param grayImage - Grayscale image
    * @returns BubbleMeanValue with mean intensity
    */
   static readBubbleMeanValue(
-    bubble: BubbleLocation,
+    unitBubble: BubblesScanBox,
     grayImage: cv.Mat
   ): BubbleMeanValue {
-    const { x, y, width, height } = bubble;
+    const [boxW, boxH] = unitBubble.bubbleDimensions;
+
+    const [x, y] = unitBubble.getShiftedPosition();
 
     // Extract the bubble region
-    const rect = new cv.Rect(x, y, width, height);
+    const rect = new cv.Rect(x, y, boxW, boxH);
     const roi = grayImage.roi(rect);
 
-    // Calculate mean value
     const mean = cv.mean(roi);
     const meanValue = mean[0];
 
     // Clean up
     roi.delete();
 
-    return new BubbleMeanValue(meanValue, bubble, [x, y]);
+    // Note: unitBubble is BubblesScanBox, but BubbleMeanValue expects BubbleLocation interface
+    // We'll pass the BubblesScanBox and it will be compatible
+    return new BubbleMeanValue(
+      meanValue,
+      {
+        x,
+        y,
+        width: boxW,
+        height: boxH,
+        label: unitBubble.bubbleValue,
+      },
+      [x, y]
+    );
   }
 
   /**

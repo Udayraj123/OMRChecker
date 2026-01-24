@@ -15,6 +15,7 @@ import { logger } from '../../utils/logger';
 import { WarpMethod } from '../constants';
 import { findPageContourAndCorners } from './pageDetection';
 import { ImageUtils } from '../../utils/ImageUtils';
+import cv from '../../utils/opencv';
 
 /**
  * Preprocessor for automatic page detection and cropping.
@@ -45,13 +46,10 @@ export class CropPage extends WarpOnPointsCommon {
     // Create morphological kernel
     const morphKernel = this.options.morphKernel;
     if (morphKernel) {
-      const cv = (globalThis as any).cv;
-      if (cv) {
-        this.morphKernel = cv.getStructuringElement(
-          cv.MORPH_RECT,
-          new cv.Size(morphKernel[0], morphKernel[1])
-        );
-      }
+      this.morphKernel = cv.getStructuringElement(
+        cv.MORPH_RECT,
+        new cv.Size(morphKernel[0], morphKernel[1])
+      );
     }
   }
 

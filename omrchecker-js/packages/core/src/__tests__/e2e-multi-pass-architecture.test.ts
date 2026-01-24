@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-const cv = global.cv;
+const cv = globalThis.cv;
 import { TemplateFileRunner } from '../processors/detection/templateFileRunner';
 import { TemplateLoader, type TemplateLayoutData } from '../template/TemplateLoader';
 import type { TemplateConfig } from '../template/types';
@@ -29,6 +29,7 @@ describe('Multi-Pass Architecture E2E', () => {
       fieldBlocks: {
         block1: {
           name: 'block1',
+          fieldDetectionType: 'BUBBLES_THRESHOLD',
           origin: [100, 100],
           fieldLabels: ['q1', 'q2'],
           bubbleFieldType: 'QTYPE_MCQ4',
