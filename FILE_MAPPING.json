@@ -2075,7 +2075,7 @@
       "priority": "high",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
-      "lastTypescriptChange": "2026-01-16T12:00:00Z",
+      "lastTypescriptChange": "2026-01-25T03:00:00Z",
       "classes": [
         {
           "python": "BubbleInterpretation",
@@ -2088,7 +2088,7 @@
           "synced": true
         }
       ],
-      "notes": "Bubbles threshold interpretation classes ported. BubbleInterpretation and BubblesFieldInterpretation now match Python architecture exactly."
+      "notes": "Bubbles threshold interpretation classes ported. BubbleInterpretation and BubblesFieldInterpretation now match Python architecture exactly. Updated to use regular import (instead of dynamic require) to match Python implementation."
     },
     {
       "python": "src/processors/detection/bubbles_threshold/interpretation_drawing.py",

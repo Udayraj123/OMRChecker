@@ -5,16 +5,16 @@
  */
 
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
-const cv = global.cv;
 import { Levels } from '../Levels';
 import { createProcessingContext } from '../../base';
 
 describe('Levels', () => {
-  let testImage: cv.Mat;
+  let testImage: any;
+  const cv = global.cv;
 
   beforeAll(async () => {
     // Wait for OpenCV to be ready
-    if (cv.getBuildInformation) {
+    if (cv && cv.getBuildInformation) {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
   });

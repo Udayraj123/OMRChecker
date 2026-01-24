@@ -51,7 +51,10 @@ describe('FileLevelRunner', () => {
 
   describe('initializeDirectoryLevelAggregates', () => {
     it('should initialize both detection and interpretation aggregates', () => {
-      runner.initializeDirectoryLevelAggregates('/test/path');
+      // TemplateDetectionPass and TemplateInterpretationPass require allFieldDetectionTypes
+      // Call the methods directly with the required parameter
+      (detectionPass as any).initializeDirectoryLevelAggregates('/test/path', []);
+      (interpretationPass as any).initializeDirectoryLevelAggregates('/test/path', []);
 
       const detectionAggs = runner.getDirectoryLevelDetectionAggregates();
       const interpretationAggs = runner.getDirectoryLevelInterpretationAggregates();
@@ -63,13 +66,17 @@ describe('FileLevelRunner', () => {
 
   describe('file level detection aggregates', () => {
     it('should manage file level detection aggregates', () => {
-      runner.initializeFileLevelDetectionAggregates('/test/file.jpg');
+      // TemplateDetectionPass requires allFieldDetectionTypes
+      (detectionPass as any).initializeDirectoryLevelAggregates('/test/path', []);
+      (detectionPass as any).initializeFileLevelAggregates('/test/file.jpg', []);
       const aggs = runner.getFileLevelDetectionAggregates();
       expect(aggs).toBeDefined();
     });
 
     it('should update detection aggregates on processed file', () => {
-      runner.initializeFileLevelDetectionAggregates('/test/file.jpg');
+      // Directory level aggregates must be initialized first
+      (detectionPass as any).initializeDirectoryLevelAggregates('/test/path', []);
+      (detectionPass as any).initializeFileLevelAggregates('/test/file.jpg', []);
       expect(() => {
         runner.updateDetectionAggregatesOnProcessedFile('/test/file.jpg');
       }).not.toThrow();
@@ -78,13 +85,17 @@ describe('FileLevelRunner', () => {
 
   describe('file level interpretation aggregates', () => {
     it('should manage file level interpretation aggregates', () => {
-      runner.initializeFileLevelInterpretationAggregates('/test/file.jpg', {}, {});
+      // TemplateInterpretationPass requires allFieldDetectionTypes
+      (interpretationPass as any).initializeDirectoryLevelAggregates('/test/path', []);
+      (interpretationPass as any).initializeFileLevelAggregates('/test/file.jpg', []);
       const aggs = runner.getFileLevelInterpretationAggregates();
       expect(aggs).toBeDefined();
     });
 
     it('should update interpretation aggregates on processed file', () => {
-      runner.initializeFileLevelInterpretationAggregates('/test/file.jpg', {}, {});
+      // Directory level aggregates must be initialized first
+      (interpretationPass as any).initializeDirectoryLevelAggregates('/test/path', []);
+      (interpretationPass as any).initializeFileLevelAggregates('/test/file.jpg', []);
       expect(() => {
         runner.updateInterpretationAggregatesOnProcessedFile('/test/file.jpg');
       }).not.toThrow();

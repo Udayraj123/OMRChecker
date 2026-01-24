@@ -9,17 +9,18 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-const cv = globalThis.cv;
 import { TemplateFileRunner } from '../processors/detection/templateFileRunner';
 import { TemplateLoader, type TemplateLayoutData } from '../template/TemplateLoader';
 import type { TemplateConfig } from '../template/types';
 import { OMRProcessor } from '../core/OMRProcessor';
 
+const cv = global.cv;
+
 describe('Multi-Pass Architecture E2E', () => {
   let templateConfig: TemplateConfig;
   let templateLayout: TemplateLayoutData;
-  let mockGrayImage: cv.Mat;
-  let mockColoredImage: cv.Mat;
+  let mockGrayImage: any;
+  let mockColoredImage: any;
 
   beforeEach(() => {
     // Create a minimal template config

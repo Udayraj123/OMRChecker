@@ -8,14 +8,15 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-const cv = global.cv;
 import { OMRProcessor } from '../OMRProcessor';
 import type { TemplateConfig } from '../../template/types';
+import { FieldDetectionType } from '../../processors/constants';
 
 describe('OMRProcessor Performance', () => {
   let templateConfig: TemplateConfig;
-  let mockGrayImage: cv.Mat;
-  let mockColoredImage: cv.Mat;
+  let mockGrayImage: any;
+  let mockColoredImage: any;
+  const cv = global.cv;
 
   beforeEach(() => {
     // Create a template config with multiple fields
@@ -24,6 +25,7 @@ describe('OMRProcessor Performance', () => {
       bubbleDimensions: [20, 20],
       fieldBlocks: {
         block1: {
+          fieldDetectionType: FieldDetectionType.BUBBLES_THRESHOLD,
           name: 'block1',
           origin: [100, 100],
           fieldLabels: ['q1', 'q2', 'q3', 'q4', 'q5'],
@@ -149,6 +151,7 @@ describe('OMRProcessor Performance', () => {
         bubbleDimensions: [20, 20],
         fieldBlocks: {
           block1: {
+            fieldDetectionType: FieldDetectionType.BUBBLES_THRESHOLD,
             name: 'block1',
             origin: [100, 100],
             fieldLabels: Array.from({ length: 20 }, (_, i) => `q${i + 1}`),

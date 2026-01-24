@@ -15,6 +15,7 @@ import {
 import { type ThresholdConfig, type ThresholdResult } from '../../threshold/GlobalThreshold';
 import { LocalThreshold } from '../../threshold/LocalThreshold';
 import type { BubblesScanBox } from '../../layout/field/bubbleField';
+import { BubblesFieldInterpretationDrawing } from './interpretationDrawing';
 
 const logger = new Logger('BubblesFieldInterpretation');
 
@@ -79,9 +80,6 @@ export class BubblesFieldInterpretation extends FieldInterpretation {
    * Get drawing instance for visualization.
    */
   getDrawingInstance(): InterpretationDrawing {
-    // Dynamic import to avoid circular dependency
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { BubblesFieldInterpretationDrawing } = require('./interpretationDrawing');
     return new BubblesFieldInterpretationDrawing(this);
   }
 
