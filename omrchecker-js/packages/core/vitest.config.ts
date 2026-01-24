@@ -9,7 +9,7 @@ export default defineConfig({
     disableConsoleIntercept: true,
     silent: false,
     testTimeout: 10000, // 30 seconds per test
-    hookTimeout: 10000, // 10 seconds for setup/teardown hooks
+    hookTimeout: 40000, // 40 seconds for setup/teardown hooks (OpenCV initialization can take time)
     teardownTimeout: 5000, // 5 seconds for teardown
     // pool: 'forks', // https://vitest.dev/guide/common-errors.html#segfaults-and-native-code-errors
     coverage: {

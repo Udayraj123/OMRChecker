@@ -4,16 +4,10 @@
  * TypeScript port of tests for src/utils/image.py
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
-import { initOpenCV } from '../opencv';
-const cv = global.cv;
+import { describe, it, expect } from 'vitest';
 import { ImageUtils } from '../ImageUtils';
 
 describe('ImageUtils', () => {
-  beforeAll(async () => {
-    // Ensure OpenCV is initialized (setup.ts initializes it, but initOpenCV ensures cvInstance is set)
-    await initOpenCV();
-  });
 
   describe('resizeSingle', () => {
     it('should resize image to specified dimensions', () => {
