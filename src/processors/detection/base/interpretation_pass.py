@@ -10,8 +10,10 @@ class FieldTypeInterpretationPass(FilePassAggregates):
     """Implements interpretation pass for field types, managing the interpretation-related aggregates."""
 
     def __init__(self, tuning_config, field_detection_type) -> None:
-        self.field_detection_type = field_detection_type
+        # Call super().__init__() first (proper initialization order)
         super().__init__(tuning_config)
+        # Set subclass-specific properties after super().__init__()
+        self.field_detection_type = field_detection_type
 
     @abstractmethod
     def get_field_interpretation(

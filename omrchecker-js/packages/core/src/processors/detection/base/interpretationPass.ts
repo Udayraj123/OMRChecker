@@ -214,6 +214,13 @@ export class TemplateInterpretationPass extends FilePassAggregates {
     super.initializeFileLevelAggregates(filePath);
     this.insertFileLevelAggregates({
       confidence_metrics_for_file: {},
+      field_id_to_interpretation: {},
+      files_by_label_count: new StatsByLabel('processed', 'multi_marked'),
+      read_response_flags: {
+        is_multi_marked: false,
+        multi_marked_fields: [],
+        is_identifier_multi_marked: false,
+      },
       field_detection_type_wise_aggregates: Object.fromEntries(
         allFieldDetectionTypes.map((key) => [
           key,
@@ -235,6 +242,7 @@ export class TemplateInterpretationPass extends FilePassAggregates {
   ): void {
     super.initializeDirectoryLevelAggregates(initialDirectoryPath);
     this.insertDirectoryLevelAggregates({
+      files_by_label_count: new StatsByLabel('processed', 'multi_marked'),
       field_detection_type_wise_aggregates: Object.fromEntries(
         allFieldDetectionTypes.map((key) => [
           key,
@@ -249,83 +257,131 @@ export class TemplateInterpretationPass extends FilePassAggregates {
    *
    * @param field - Field to interpret
    * @param fieldInterpretation - Interpretation result
-   * @param _fieldTypeRunnerFieldLevelAggregates - Field-level aggregates from field type runner (not used)
-   * @param currentOmrResponse - Current OMR response (optional)
+   * @param fieldTypeRunnerFieldLevelAggregates - Field-level aggregates from field type runner
+   * @param currentOmrResponse - Current OMR response
    */
   runFieldLevelInterpretation(
     field: Field,
     fieldInterpretation: FieldInterpretation,
-    _fieldTypeRunnerFieldLevelAggregates: unknown,
-    currentOmrResponse?: Record<string, unknown>
+    fieldTypeRunnerFieldLevelAggregates: Record<string, unknown>,
+    currentOmrResponse: Record<string, unknown>
   ): void {
     // Initialize field-level aggregates automatically
     this.initializeFieldLevelAggregates(field);
-    // Update aggregates with interpretation result
-    this.updateAggregatesOnProcessedFieldInterpretation(field, fieldInterpretation);
 
-    // Update OMR response if provided
-    if (currentOmrResponse) {
-      const interpretationString = fieldInterpretation.getFieldInterpretationString();
-      currentOmrResponse[field.fieldLabel] = interpretationString;
-    }
+    // update_aggregates_on_processed_field_interpretation
+    // TODO: see if detection also needs this arg (field_type_runner_field_level_aggregates)
+    this.updateFieldLevelAggregatesOnProcessedFieldInterpretation(
+      currentOmrResponse,
+      field,
+      fieldInterpretation,
+      fieldTypeRunnerFieldLevelAggregates
+    );
+    const templateFieldLevelAggregates = this.getFieldLevelAggregates()!;
+
+    this.updateFileLevelAggregatesOnProcessedFieldInterpretation(
+      field,
+      fieldInterpretation,
+      templateFieldLevelAggregates
+    );
+    this.updateDirectoryLevelAggregatesOnProcessedFieldInterpretation(
+      field,
+      fieldInterpretation,
+      templateFieldLevelAggregates
+    );
   }
 
   /**
-   * Update all aggregates when a field interpretation has been processed.
+   * Update field-level aggregates when a field interpretation has been processed.
+   *
+   * @param _currentOmrResponse - Current OMR response (not used in base implementation)
+   * @param field - Field that was processed
+   * @param _fieldInterpretation - Interpretation result (not used in base implementation)
+   * @param fieldTypeRunnerFieldLevelAggregates - Field-level aggregates from field type runner
+   */
+  updateFieldLevelAggregatesOnProcessedFieldInterpretation(
+    _currentOmrResponse: Record<string, unknown>,
+    field: Field,
+    _fieldInterpretation: FieldInterpretation,
+    fieldTypeRunnerFieldLevelAggregates: Record<string, unknown>
+  ): void {
+    const fileLevelAggregates = this.getFileLevelAggregates()!;
+    const readResponseFlags = fileLevelAggregates.read_response_flags as {
+      is_multi_marked: boolean;
+      multi_marked_fields: Field[];
+      is_identifier_multi_marked: boolean;
+    };
+
+    if (fieldTypeRunnerFieldLevelAggregates.is_multi_marked) {
+      readResponseFlags.is_multi_marked = true;
+      readResponseFlags.multi_marked_fields.push(field);
+      // TODO: define identifier_labels
+      // if field.is_part_of_identifier():
+      // if field_label in self.template.identifier_labels:
+      //     readResponseFlags.is_identifier_multi_marked = true;
+    }
+
+    // TODO: is there a better way for this?
+    this.insertFieldLevelAggregates({
+      from_field_type_runner: fieldTypeRunnerFieldLevelAggregates,
+    });
+    this.updateFieldLevelAggregatesOnProcessedField(field);
+    // TODO: support for more validations here?
+  }
+
+  /**
+   * Update file-level aggregates when a field interpretation has been processed.
    *
    * @param field - Field that was processed
    * @param fieldInterpretation - Interpretation result
+   * @param templateFieldLevelAggregates - Template field-level aggregates
    */
-  updateAggregatesOnProcessedFieldInterpretation(
+  updateFileLevelAggregatesOnProcessedFieldInterpretation(
     field: Field,
-    fieldInterpretation: FieldInterpretation
+    fieldInterpretation: FieldInterpretation,
+    templateFieldLevelAggregates: FieldLevelAggregates
   ): void {
-    this.updateFieldLevelAggregatesOnProcessedField(field);
+    this.updateFileLevelAggregatesOnProcessedField(field, templateFieldLevelAggregates);
 
-    // initializeFieldLevelAggregates() is always called before this (line 266)
-    const fieldLevelAggregates = this.getFieldLevelAggregates()!;
-
-    // Store interpretation in file-level aggregates
-    // initializeFileLevelAggregates() is always called before field processing
-    const fileAggForInterpretation = this.getFileLevelAggregates()!;
-    const confidenceMetricsForFile = fileAggForInterpretation.confidence_metrics_for_file as Record<
+    const fileLevelAggregates = this.getFileLevelAggregates()!;
+    const fieldIdToInterpretation = fileLevelAggregates.field_id_to_interpretation as Record<
       string,
       unknown
     >;
-    const fieldIdToInterpretation = fileAggForInterpretation.field_id_to_interpretation as Record<
+    const confidenceMetricsForFile = fileLevelAggregates.confidence_metrics_for_file as Record<
       string,
       unknown
     >;
 
+    fieldIdToInterpretation[field.id] = fieldInterpretation;
     confidenceMetricsForFile[field.fieldLabel] =
       fieldInterpretation.getFieldLevelConfidenceMetrics();
-    fieldIdToInterpretation[field.id] = fieldInterpretation;
+  }
 
-    this.updateFileLevelAggregatesOnProcessedField(field, fieldLevelAggregates);
-    this.updateDirectoryLevelAggregatesOnProcessedField(field, fieldLevelAggregates);
-
-    // Update field detection type counts
-    // Both are always initialized before field processing
-    const dirAgg = this.getDirectoryLevelAggregates()!;
-    const fileAggForTypeCounts = this.getFileLevelAggregates()!;
-
+  /**
+   * Update directory-level aggregates when a field interpretation has been processed.
+   *
+   * @param field - Field that was processed
+   * @param _fieldInterpretation - Interpretation result (not used)
+   * @param _templateFieldLevelAggregates - Template field-level aggregates (not used)
+   */
+  updateDirectoryLevelAggregatesOnProcessedFieldInterpretation(
+    field: Field,
+    _fieldInterpretation: FieldInterpretation,
+    _templateFieldLevelAggregates: FieldLevelAggregates
+  ): void {
+    this.updateDirectoryLevelAggregatesOnProcessedField(field, _templateFieldLevelAggregates);
     const fieldDetectionType = field.fieldDetectionType;
-    const dirTypeAggregates = (
-      dirAgg.field_detection_type_wise_aggregates as Record<
-        string,
-        { fields_count: StatsByLabel }
-      >
-    )[fieldDetectionType];
-    const fileTypeAggregates = (
-      fileAggForTypeCounts.field_detection_type_wise_aggregates as Record<
-        string,
-        { fields_count: StatsByLabel }
-      >
-    )[fieldDetectionType];
 
-    // These are always initialized in initializeDirectoryLevelAggregates/initializeFileLevelAggregates
-    dirTypeAggregates.fields_count.push('processed');
-    fileTypeAggregates.fields_count.push('processed');
+    const directoryLevelAggregates = this.getDirectoryLevelAggregates()!;
+    const fieldDetectionTypeWiseAggregates = (
+      directoryLevelAggregates.field_detection_type_wise_aggregates as Record<
+        string,
+        { fields_count: StatsByLabel }
+      >
+    )[fieldDetectionType];
+    // Update the processed field count for that runner
+    fieldDetectionTypeWiseAggregates.fields_count.push('processed');
   }
 
   /**
@@ -344,10 +400,8 @@ export class TemplateInterpretationPass extends FilePassAggregates {
       return;
     }
 
-    // initializeFileLevelAggregates() is always called before this
-    const fileAgg = this.getFileLevelAggregates()!;
-
-    const fieldDetectionTypeWiseAggregates = fileAgg.field_detection_type_wise_aggregates as Record<
+    const fileLevelAggregates = this.getFileLevelAggregates()!;
+    const fieldDetectionTypeWiseAggregates = fileLevelAggregates.field_detection_type_wise_aggregates as Record<
       string,
       unknown
     >;
@@ -359,6 +413,20 @@ export class TemplateInterpretationPass extends FilePassAggregates {
       }).fieldDetectionType;
       fieldDetectionTypeWiseAggregates[fieldDetectionType] =
         fieldDetectionTypeFileRunner.getFileLevelInterpretationAggregates();
+    }
+
+    // Update read_response_flags
+    const readResponseFlags = fileLevelAggregates.read_response_flags as {
+      is_multi_marked: boolean;
+      multi_marked_fields: Field[];
+      is_identifier_multi_marked: boolean;
+    };
+
+    if (readResponseFlags.is_multi_marked) {
+      // Thread-safe update to directory-level aggregates
+      const directoryLevelAggregates = this.getDirectoryLevelAggregates()!;
+      const filesByLabelCount = directoryLevelAggregates.files_by_label_count as StatsByLabel;
+      filesByLabelCount.push('multi_marked');
     }
   }
 }

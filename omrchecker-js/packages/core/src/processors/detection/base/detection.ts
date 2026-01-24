@@ -1,5 +1,5 @@
 /**
- * Base classes for field detection - matches Python src/processors/detection/base/detection.py
+ * Base classes for field detection
  *
  * Port of Python's FieldDetection and TextDetection base classes.
  */

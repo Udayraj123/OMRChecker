@@ -19,6 +19,7 @@ import {
   OCRFieldDetectionResult,
   BarcodeFieldDetectionResult,
 } from '../models';
+import { Logger } from '../../../utils/logger';
 
 /**
  * Abstract base class for field type detection passes.
@@ -34,7 +35,9 @@ export abstract class FieldTypeDetectionPass extends FilePassAggregates {
   public fieldDetectionType: string;
 
   constructor(tuningConfig: TuningConfig, fieldDetectionType: string) {
+    // Call super() first (proper initialization order)
     super(tuningConfig);
+    // Set subclass-specific properties after super()
     this.fieldDetectionType = fieldDetectionType;
   }
 
@@ -84,10 +87,7 @@ export abstract class FieldTypeDetectionPass extends FilePassAggregates {
   ): void {
     this.updateFieldLevelAggregatesOnProcessedFieldDetection(field, fieldDetection);
 
-    const fieldLevelAggregates = this.getFieldLevelAggregates();
-    if (!fieldLevelAggregates) {
-      throw new Error('Field level aggregates not initialized');
-    }
+    const fieldLevelAggregates = this.getFieldLevelAggregates()!;
 
     this.updateFileLevelAggregatesOnProcessedFieldDetection(
       field,
@@ -210,10 +210,8 @@ export class TemplateDetectionPass extends FilePassAggregates {
   ): void {
     this.updateFieldLevelAggregatesOnProcessedFieldDetection(field, fieldDetection);
 
-    const fieldLevelAggregates = this.getFieldLevelAggregates();
-    if (!fieldLevelAggregates) {
-      throw new Error('Field level aggregates not initialized');
-    }
+    // TODO: can we move this getter to parent class?
+    const fieldLevelAggregates = this.getFieldLevelAggregates()!;
 
     this.updateFileLevelAggregatesOnProcessedFieldDetection(
       field,
@@ -269,26 +267,15 @@ export class TemplateDetectionPass extends FilePassAggregates {
     fieldLevelAggregates: FieldLevelAggregates
   ): void {
     this.updateDirectoryLevelAggregatesOnProcessedField(field, fieldLevelAggregates);
-
-    const dirAgg = this.getDirectoryLevelAggregates();
-    if (!dirAgg) {
-      throw new Error('Directory level aggregates not initialized');
-    }
-
     const fieldDetectionType = field.fieldDetectionType;
+
+    const directoryLevelAggregates = this.getDirectoryLevelAggregates()!;
     const fieldDetectionTypeWiseAggregates = (
-      dirAgg.field_detection_type_wise_aggregates as Record<
+      directoryLevelAggregates.field_detection_type_wise_aggregates as Record<
         string,
         { fields_count: StatsByLabel }
       >
     )[fieldDetectionType];
-
-    if (!fieldDetectionTypeWiseAggregates) {
-      throw new Error(
-        `Field detection type ${fieldDetectionType} not found in directory aggregates`
-      );
-    }
-
     // Update the processed field count for that runner
     fieldDetectionTypeWiseAggregates.fields_count.push('processed');
   }
@@ -324,12 +311,8 @@ export class TemplateDetectionPass extends FilePassAggregates {
       return;
     }
 
-    const fileAgg = this.getFileLevelAggregates();
-    if (!fileAgg) {
-      throw new Error('File level aggregates not initialized');
-    }
-
-    const fieldDetectionTypeWiseAggregates = fileAgg.field_detection_type_wise_aggregates as Record<
+    const fileLevelAggregates = this.getFileLevelAggregates()!;
+    const fieldDetectionTypeWiseAggregates = fileLevelAggregates.field_detection_type_wise_aggregates as Record<
       string,
       unknown
     >;
@@ -368,11 +351,40 @@ export class TemplateDetectionPass extends FilePassAggregates {
           barcodeFieldsByLabel[result.fieldLabel] = result;
         }
 
-        fileAgg.bubble_fields = bubbleFieldsByLabel;
-        fileAgg.ocr_fields = ocrFieldsByLabel;
-        fileAgg.barcode_fields = barcodeFieldsByLabel;
+        const fileLevelAggregates = this.getFileLevelAggregates()!;
+        fileLevelAggregates.bubble_fields = bubbleFieldsByLabel;
+        fileLevelAggregates.ocr_fields = ocrFieldsByLabel;
+        fileLevelAggregates.barcode_fields = barcodeFieldsByLabel;
       } catch (error) {
-        // File not yet finalized in repository, skip
+        // Check if it's a KeyError-equivalent (file not found in repository)
+        if (error instanceof Error && error.message.includes('No results found for file')) {
+          // File not yet finalized in repository - this should not happen
+          // but if it does, log and re-raise to surface the issue
+          const logger = new Logger('TemplateDetectionPass');
+          logger.error(
+            `File ${filePath} not found in repository after finalize_file(). ` +
+              `This indicates a bug in the repository lifecycle management. Error: ${error.message}`
+          );
+          // Re-raise to surface the issue during development
+          throw error;
+        } else {
+          // Other unexpected errors
+          const logger = new Logger('TemplateDetectionPass');
+          logger.error(
+            `Unexpected error populating field results from repository for ${filePath}: ${error}`
+          );
+          // Initialize empty dicts to prevent KeyError in interpretation
+          const fileLevelAggregates = this.getFileLevelAggregates()!;
+          if (!fileLevelAggregates.bubble_fields) {
+            fileLevelAggregates.bubble_fields = {};
+          }
+          if (!fileLevelAggregates.ocr_fields) {
+            fileLevelAggregates.ocr_fields = {};
+          }
+          if (!fileLevelAggregates.barcode_fields) {
+            fileLevelAggregates.barcode_fields = {};
+          }
+        }
       }
     }
   }

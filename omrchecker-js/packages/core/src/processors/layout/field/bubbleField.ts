@@ -74,7 +74,7 @@ export class BubbleField extends Field {
     fieldLabel: string,
     origin: [number, number]
   ) {
-    // Must call super first
+    // This ensures parent class is fully initialized before accessing self properties
     super(direction, emptyValue, fieldBlock, fieldDetectionType, fieldLabel, origin);
 
     if (
@@ -86,6 +86,7 @@ export class BubbleField extends Field {
       throw new Error('FieldBlock missing bubble properties');
     }
 
+    // Set subclass-specific properties after super()
     this.bubbleDimensions = fieldBlock.bubbleDimensions;
     this.bubbleValues = fieldBlock.bubbleValues;
     this.bubblesGap = fieldBlock.bubblesGap;
@@ -95,22 +96,45 @@ export class BubbleField extends Field {
   /**
    * Setup scan boxes for this bubble field.
    * Creates a BubblesScanBox for each bubble value.
+   *
+   * Uses fieldBlock parameters instead of self properties to allow proper initialization order.
+   * This method is called from the base constructor before subclass properties are set.
    */
-  setupScanBoxes(_fieldBlock: FieldBlock): void {
-    // Determine direction index (0 for vertical, 1 for horizontal)
+  setupScanBoxes(fieldBlock: FieldBlock): void {
+    // Use fieldBlock parameters instead of self properties
+    // This allows setupScanBoxes to work even if called before subclass properties are set
+    const bubbleValues = fieldBlock.bubbleValues;
+    const bubbleDimensions = fieldBlock.bubbleDimensions;
+    const bubblesGap = fieldBlock.bubblesGap;
+    const bubbleFieldType = fieldBlock.bubbleFieldType;
+
+    if (!bubbleValues) {
+      throw new Error('bubbleValues is required and must not be empty');
+    }
+
+    // populate the field bubbles
     const h = this.direction === 'vertical' ? 1 : 0;
 
     const bubblePoint: [number, number] = [...this.origin];
     this.scanBoxes = [] as BubblesScanBox[];
 
-    for (let fieldIndex = 0; fieldIndex < this.bubbleValues.length; fieldIndex++) {
-      const bubbleValue = this.bubbleValues[fieldIndex];
+    // Temporarily set properties so BubblesScanBox constructor can access them.
+    // setupScanBoxes() is called from base Field constructor (before BubbleField sets these).
+    // BubblesScanBox constructor accesses field.bubbleDimensions and field.bubbleFieldType.
+    // These will be set again (to the same values) after super() returns in BubbleField constructor.
+    // Using non-null assertions since constructor validates these.
+    this.bubbleDimensions = bubbleDimensions!;
+    this.bubbleFieldType = bubbleFieldType!;
+
+    for (let fieldIndex = 0; fieldIndex < bubbleValues.length; fieldIndex++) {
+      const bubbleValue = bubbleValues[fieldIndex];
       const bubbleOrigin: [number, number] = [...bubblePoint];
       const scanBox = new BubblesScanBox(fieldIndex, this, bubbleOrigin, bubbleValue);
       this.scanBoxes.push(scanBox);
-      bubblePoint[h] += this.bubblesGap;
+      bubblePoint[h] += bubblesGap!;
     }
 
+    // Note: We don't restore original values because they'll be overwritten in the constructor anyway.
   }
 
   /**

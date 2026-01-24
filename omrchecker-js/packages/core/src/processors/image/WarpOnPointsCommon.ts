@@ -24,6 +24,8 @@ import { InteractionUtils } from '../../utils/InteractionUtils';
 import { appendSaveImage } from '../../utils/ImageSaver';
 import { WarpMethod, WarpMethodFlags, type WarpMethodValue } from '../constants';
 import type { TuningConfig } from '../../template/types';
+import { deepMerge } from '../../utils/object';
+import { MathUtils } from '../../utils/math';
 
 /**
  * Base class for image processors that apply warping transformations.
@@ -156,13 +158,12 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
     parsedOptions: Record<string, unknown>,
     originalOptions: Record<string, unknown>
   ): Record<string, unknown> {
-    return {
-      ...parsedOptions,
-      tuningOptions: {
-        ...(parsedOptions.tuningOptions || {}),
-        ...(originalOptions.tuningOptions || {}),
+    return deepMerge(
+      {
+        tuningOptions: originalOptions.tuningOptions || {},
       },
-    };
+      parsedOptions
+    );
   }
 
   /**
@@ -288,8 +289,11 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
     // Deduplicate points using Map to preserve order
     const uniquePairs = new Map<string, [number, number]>();
     for (let i = 0; i < controlPoints.length; i++) {
-      const ctrlKey = `${controlPoints[i][0]},${controlPoints[i][1]}`;
-      uniquePairs.set(ctrlKey, destinationPoints[i]);
+      const ctrl = controlPoints[i];
+      const ctrlKey = `${ctrl[0]},${ctrl[1]}`;
+      if (!uniquePairs.has(ctrlKey)) {
+        uniquePairs.set(ctrlKey, destinationPoints[i]);
+      }
     }
 
     const parsedControlPoints: PointArray = [];
@@ -322,24 +326,18 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
       return defaultDims;
     }
 
-    // Find bounding box of destination points
-    const xs = destinationPoints.map((p) => p[0]);
-    const ys = destinationPoints.map((p) => p[1]);
-    const minX = Math.min(...xs);
-    const minY = Math.min(...ys);
-    const maxX = Math.max(...xs);
-    const maxY = Math.max(...ys);
+    const [destinationBox, rectangleDimensions] = MathUtils.getBoundingBoxOfPoints(
+      destinationPoints
+    );
 
-    const width = Math.ceil(maxX - minX);
-    const height = Math.ceil(maxY - minY);
-
-    // Shift points to origin for cropping (modifies destination_points in-place)
+    // Shift points to origin for cropping (modifies in-place)
+    const shiftedPoints = MathUtils.shiftPointsToOrigin(destinationBox[0], destinationPoints);
     for (let i = 0; i < destinationPoints.length; i++) {
-      destinationPoints[i][0] -= minX;
-      destinationPoints[i][1] -= minY;
+      destinationPoints[i][0] = shiftedPoints[i][0];
+      destinationPoints[i][1] = shiftedPoints[i][1];
     }
 
-    return [width, height];
+    return rectangleDimensions;
   }
 
   // =========================================================================

@@ -53,7 +53,6 @@ export class BubblesThresholdDetectionPass extends FieldTypeDetectionPass {
     }));
 
     // Create detection instance
-    // Note: BubblesFieldDetection constructor signature matches Python
     return new BubblesFieldDetection(
       field.id,
       field.fieldLabel,

@@ -69,16 +69,13 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             save_image_ops: Image saving configuration
             default_processing_image_shape: Default image dimensions
         """
-        # Store tuning config before validation (needed by some subclasses)
-        self.tuning_config = save_image_ops.tuning_config
-
         # Validate and parse options (polymorphic - calls subclass implementation)
         parsed_options = self.validate_and_remap_options_schema(options)
 
         # Merge tuning options
         merged_options = self.merge_tuning_options(parsed_options, options)
 
-        # Initialize parent with merged options
+        # Initialize parent with merged options (parent will set self.tuning_config)
         super().__init__(
             merged_options,
             relative_dir,

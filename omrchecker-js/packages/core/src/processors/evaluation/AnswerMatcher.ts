@@ -244,7 +244,7 @@ export class AnswerMatcher {
   private setLocalMarkingDefaults(sectionMarkingScheme: SectionMarkingScheme): void {
     this.emptyValue = sectionMarkingScheme.emptyValue;
 
-    // Deep copy section marking locally (matches Python's deepcopy)
+    // Deep copy section marking locally
     this.marking = deepClone(sectionMarkingScheme.marking);
 
     if (this.answerType === AnswerType.STANDARD) {

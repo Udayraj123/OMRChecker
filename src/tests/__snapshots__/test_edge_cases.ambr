@@ -1,7 +1,0 @@
-# serializer version: 1
-# name: test_config_low_dimensions_error_case
-  'No Error'
-# ---
-# name: test_config_low_dimensions_safe_case
-  None
-# ---

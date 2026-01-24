@@ -200,7 +200,6 @@ export class DetectionRepository {
 
   /**
    * Get all bubble field results for current file as a Record (dictionary-like object).
-   * This matches Python's dict interface more closely.
    *
    * @returns Record mapping field_id to BubbleFieldDetectionResult
    */

@@ -237,7 +237,7 @@ export class TemplateFileRunner extends FileLevelRunner<
     this.interpretationPass.runFieldLevelInterpretation(
       field,
       fieldInterpretation,
-      fieldTypeRunnerFieldLevelAggregates,
+      fieldTypeRunnerFieldLevelAggregates!,
       currentOmrResponse
     );
 

@@ -323,18 +323,27 @@ export class OMRProcessor {
       const errorMessage = error instanceof Error ? error.message : String(error);
       logger.error(`Fatal error processing ${filePath}: ${errorMessage}`);
 
+      // Even on fatal error, populate responses for all fields (set to null)
+      // This ensures consistent structure regardless of processing success/failure
+      const errorResponses: Record<string, string | null> = {};
+      const errorEmptyFields: string[] = [];
+      for (const field of this.templateLayout.allFields) {
+        errorResponses[field.fieldLabel] = null;
+        errorEmptyFields.push(field.fieldLabel);
+      }
+
       return {
         filePath,
-        responses: {},
+        responses: errorResponses,
         multiMarkedFields: [],
-        emptyFields: [],
+        emptyFields: errorEmptyFields,
         fieldResults: {},
         processingTimeMs: Date.now() - startTime,
         warnings: [`Fatal error: ${errorMessage}`],
         statistics: {
-          totalFields: 0,
+          totalFields: this.templateLayout.allFields.length,
           answeredFields: 0,
-          unansweredFields: 0,
+          unansweredFields: errorEmptyFields.length,
           multiMarkedFields: 0,
           avgConfidence: 0,
         },
