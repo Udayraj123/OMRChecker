@@ -7,16 +7,23 @@ import { BubbleField } from '../../../layout/field/bubbleField';
 import { FieldBlock } from '../../../layout/fieldBlock/base';
 import { BubblesThresholdDetectionPass } from '../detectionPass';
 import { BubblesFieldDetection } from '../detection';
+import { DetectionRepository } from '../../../repositories/DetectionRepository';
 
 describe('BubblesThresholdDetectionPass', () => {
   let tuningConfig: Record<string, unknown>;
   let pass: BubblesThresholdDetectionPass;
   let mockField: BubbleField;
   let mockGrayImage: cv.Mat;
+  let repository: DetectionRepository;
 
   beforeEach(() => {
     tuningConfig = {};
-    pass = new BubblesThresholdDetectionPass(tuningConfig);
+    repository = new DetectionRepository();
+    pass = new BubblesThresholdDetectionPass(
+      tuningConfig,
+      'BUBBLES_THRESHOLD',
+      repository
+    );
 
     // Create a mock field block
     const mockFieldBlock = {

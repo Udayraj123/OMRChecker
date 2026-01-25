@@ -6,15 +6,18 @@
  */
 
 // Export types for reuse in other modules
-export type ColorTuple = [number, number, number];
+// Note: OpenCV.js expects BGRA format (4 elements) for Scalar values
+export type ColorTuple = [number, number, number, number];
 export type BubbleFieldType = {
   readonly bubbleValues: readonly string[];
   readonly direction: 'horizontal' | 'vertical';
 };
 
 // DRY: Color constant factory to avoid repetition
-function createColor(r: number, g: number, b: number): ColorTuple {
-  return [r, g, b] as const;
+// OpenCV uses BGR format, so we keep the same order as Python
+// and add alpha channel (255 = fully opaque)
+function createColor(b: number, g: number, r: number, a: number = 255): ColorTuple {
+  return [b, g, r, a] as const;
 }
 
 // Filenames
@@ -43,16 +46,16 @@ export const ERROR_CODES = {
   NO_MARKER_ERR: 2,
 } as const;
 
-// Color constants using factory
+// Color constants using factory (BGR format + Alpha, matching Python's BGR tuples)
 export const CLR_BLACK = createColor(0, 0, 0);
 export const CLR_WHITE = createColor(255, 255, 255);
 export const CLR_GRAY = createColor(130, 130, 130);
 export const CLR_DARK_GRAY = createColor(100, 100, 100);
 export const CLR_LIGHT_GRAY = createColor(200, 200, 200);
 export const CLR_GREEN = createColor(100, 200, 100);
-export const CLR_RED = createColor(20, 20, 255); // BGR format in OpenCV
-export const CLR_BLUE = createColor(255, 20, 20); // BGR format in OpenCV
-export const CLR_YELLOW = createColor(20, 255, 255); // BGR format in OpenCV
+export const CLR_RED = createColor(20, 20, 255);
+export const CLR_BLUE = createColor(255, 20, 20);
+export const CLR_YELLOW = createColor(20, 255, 255);
 export const CLR_DARK_GREEN = createColor(20, 255, 20);
 export const CLR_DARK_RED = createColor(20, 20, 255);
 export const CLR_DARK_BLUE = createColor(255, 20, 20);

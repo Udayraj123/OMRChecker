@@ -60,10 +60,12 @@ export function deepClone<T>(obj: T): T {
     return obj.map(item => deepClone(item)) as T;
   }
 
-  const cloned: any = {};
+  // Preserve class prototype by creating instance of same constructor
+  const cloned: any = Object.create(Object.getPrototypeOf(obj));
+  
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      cloned[key] = deepClone(obj[key]);
+      cloned[key] = deepClone((obj as any)[key]);
     }
   }
 

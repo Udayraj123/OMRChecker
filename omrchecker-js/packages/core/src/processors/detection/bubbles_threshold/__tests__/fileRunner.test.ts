@@ -6,16 +6,19 @@ const cv = global.cv;
 import { BubbleField } from '../../../layout/field/bubbleField';
 import { FieldBlock } from '../../../layout/fieldBlock/base';
 import { BubblesThresholdFileRunner } from '../fileRunner';
+import { DetectionRepository } from '../../../repositories/DetectionRepository';
 
 describe('BubblesThresholdFileRunner', () => {
   let tuningConfig: Record<string, unknown>;
   let runner: BubblesThresholdFileRunner;
   let mockField: BubbleField;
   let mockGrayImage: cv.Mat;
+  let repository: DetectionRepository;
 
   beforeEach(() => {
     tuningConfig = {};
-    runner = new BubblesThresholdFileRunner(tuningConfig);
+    repository = new DetectionRepository();
+    runner = new BubblesThresholdFileRunner(tuningConfig, repository);
 
     // Create a mock field block
     const mockFieldBlock = {

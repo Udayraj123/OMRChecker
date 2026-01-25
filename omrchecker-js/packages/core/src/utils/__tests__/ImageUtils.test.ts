@@ -133,10 +133,17 @@ describe('ImageUtils', () => {
       expect(result[0]).toBeDefined();
       expect(result[1]).toBeDefined();
 
+      // Delete input images
       image1.delete();
       image2.delete();
-      result[0].delete();
-      result[1].delete();
+      
+      // Only delete result images if they're different from inputs
+      if (result[0] !== image1 && !result[0].isDeleted()) {
+        result[0].delete();
+      }
+      if (result[1] !== image2 && !result[1].isDeleted()) {
+        result[1].delete();
+      }
     });
   });
 
@@ -170,9 +177,10 @@ describe('ImageUtils', () => {
       expect(adjusted.rows).toBe(10);
       expect(adjusted.cols).toBe(10);
 
-      // With gamma=2.0, 128 should become darker (value ~64)
+      // With gamma=2.0 (invGamma=0.5), 128 should become lighter (value ~180)
+      // This is gamma CORRECTION (inverse of display gamma)
       const centerValue = adjusted.ucharPtr(5, 5)[0];
-      expect(centerValue).toBeLessThan(128);
+      expect(centerValue).toBeGreaterThan(128);
 
       image.delete();
       adjusted.delete();
@@ -182,9 +190,9 @@ describe('ImageUtils', () => {
       const image = new cv.Mat(10, 10, cv.CV_8UC1, new cv.Scalar(128));
       const adjusted = ImageUtils.adjustGamma(image, 0.5);
 
-      // With gamma=0.5, 128 should become lighter (value ~181)
+      // With gamma=0.5 (invGamma=2.0), 128 should become darker (value ~64)
       const centerValue = adjusted.ucharPtr(5, 5)[0];
-      expect(centerValue).toBeGreaterThan(128);
+      expect(centerValue).toBeLessThan(128);
 
       image.delete();
       adjusted.delete();

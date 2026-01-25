@@ -338,6 +338,9 @@ export class ImageUtils {
    */
   static adjustGamma(image: cv.Mat, gamma: number = 1.0): cv.Mat {
     // Build lookup table for gamma correction
+    // Uses inverse gamma (1/gamma) for correction formula
+    // gamma > 1: lighter midtones (correction for dark display)
+    // gamma < 1: darker midtones (correction for bright display)
     const invGamma = 1.0 / gamma;
     const table = new Uint8Array(256);
     for (let i = 0; i < 256; i++) {

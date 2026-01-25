@@ -174,10 +174,17 @@ describe('TemplateLayout', () => {
       expect(processedColored).toBeDefined();
       expect(updatedLayout).toBeDefined();
 
+      // Delete input images
       grayImage.delete();
       coloredImage.delete();
-      processedGray.delete();
-      processedColored.delete();
+      
+      // Only delete processed images if they're different from inputs
+      if (processedGray !== grayImage && !processedGray.isDeleted()) {
+        processedGray.delete();
+      }
+      if (processedColored !== coloredImage && !processedColored.isDeleted()) {
+        processedColored.delete();
+      }
     });
 
     it('should apply GaussianBlur preprocessor', async () => {
@@ -196,10 +203,17 @@ describe('TemplateLayout', () => {
       expect(processedColored).toBeDefined();
       expect(updatedLayout).toBeDefined();
 
+      // Delete input images
       grayImage.delete();
       coloredImage.delete();
-      processedGray.delete();
-      processedColored.delete();
+      
+      // Only delete processed images if they're different from inputs
+      if (processedGray !== grayImage && !processedGray.isDeleted()) {
+        processedGray.delete();
+      }
+      if (processedColored !== coloredImage && !processedColored.isDeleted()) {
+        processedColored.delete();
+      }
     });
   });
 

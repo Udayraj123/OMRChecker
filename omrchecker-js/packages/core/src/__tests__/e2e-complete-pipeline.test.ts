@@ -513,7 +513,7 @@ describe('E2E: Complete OMR Processing Pipeline with New Processors', () => {
   describe('DrawingUtils - Visualization', () => {
     it('should draw bubble boxes for detection visualization', () => {
       const visualizationImage = trackMat(new cv.Mat(400, 600, cv.CV_8UC3));
-      visualizationImage.setTo([255, 255, 255, 255]); // White background
+      visualizationImage.setTo([255, 255, 255]); // White background (BGR)
 
       const bubblePosition: [number, number] = [50, 50];
       const bubbleDimensions: [number, number] = [30, 30];
@@ -534,7 +534,7 @@ describe('E2E: Complete OMR Processing Pipeline with New Processors', () => {
 
     it('should draw marked bubbles with filled style', () => {
       const visualizationImage = trackMat(new cv.Mat(400, 600, cv.CV_8UC3));
-      visualizationImage.setTo([255, 255, 255, 255]);
+      visualizationImage.setTo([255, 255, 255]);
 
       const markedPosition: [number, number] = [100, 50];
       const bubbleDimensions: [number, number] = [30, 30];
@@ -552,7 +552,7 @@ describe('E2E: Complete OMR Processing Pipeline with New Processors', () => {
 
     it('should draw text labels', () => {
       const visualizationImage = trackMat(new cv.Mat(400, 600, cv.CV_8UC3));
-      visualizationImage.setTo([255, 255, 255, 255]);
+      visualizationImage.setTo([255, 255, 255]);
 
       DrawingUtils.drawText(
         visualizationImage,
@@ -569,7 +569,7 @@ describe('E2E: Complete OMR Processing Pipeline with New Processors', () => {
 
     it('should draw correct/incorrect indicators', () => {
       const visualizationImage = trackMat(new cv.Mat(400, 600, cv.CV_8UC3));
-      visualizationImage.setTo([255, 255, 255, 255]);
+      visualizationImage.setTo([255, 255, 255]);
 
       // Draw checkmark for correct answer
       DrawingUtils.drawSymbol(
@@ -594,7 +594,7 @@ describe('E2E: Complete OMR Processing Pipeline with New Processors', () => {
 
     it('should draw polygons and lines', () => {
       const visualizationImage = trackMat(new cv.Mat(400, 600, cv.CV_8UC3));
-      visualizationImage.setTo([255, 255, 255, 255]);
+      visualizationImage.setTo([255, 255, 255]);
 
       // Draw field boundary
       const fieldBoundary = [

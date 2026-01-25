@@ -4,9 +4,10 @@
  * Tests the unified pipeline interface for orchestrating processors.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ProcessingPipeline, PipelineConfig } from '../Pipeline';
 import { Processor } from '../base';
+import type { ProcessingContext } from '../base';
 const cv = global.cv;
 
 // Mock processor for testing
@@ -61,8 +62,11 @@ describe('ProcessingPipeline', () => {
   let mockTemplate: any;
   let mockGrayImage: cv.Mat;
   let mockColoredImage: cv.Mat;
+  let testMats: cv.Mat[] = [];
 
   beforeEach(() => {
+    testMats = [];
+    
     // Create mock template
     mockTemplate = {
       tuningConfig: {
@@ -71,8 +75,29 @@ describe('ProcessingPipeline', () => {
     };
 
     // Create mock images (empty Mats for testing)
+    // Ensure OpenCV is loaded before creating Mats
+    if (!cv || !cv.Mat) {
+      throw new Error('OpenCV not loaded in test environment');
+    }
+    
     mockGrayImage = new cv.Mat();
     mockColoredImage = new cv.Mat();
+    
+    testMats.push(mockGrayImage, mockColoredImage);
+  });
+
+  afterEach(() => {
+    // Clean up all Mats
+    testMats.forEach((mat) => {
+      if (mat && !mat.isDeleted()) {
+        try {
+          mat.delete();
+        } catch (e) {
+          // Mat already deleted, ignore
+        }
+      }
+    });
+    testMats = [];
   });
 
   describe('constructor', () => {

@@ -8,7 +8,9 @@
  * visual elements on OpenCV Mat images for OMR result visualization.
  */
 
-import cv from './opencv';
+// Access global cv object (loaded by OpenCV.js)
+const cv = global.cv;
+
 import { ImageUtils } from './ImageUtils';
 import { MathUtils } from './math';
 import {
@@ -63,6 +65,35 @@ export type BoxEdge = 'TOP' | 'RIGHT' | 'BOTTOM' | 'LEFT';
  */
 export class DrawingUtils {
   /**
+   * Adjust color array to match image channels.
+   * OpenCV.js requires exact channel matching:
+   * - CV_8UC1: [gray]
+   * - CV_8UC3: [b, g, r]
+   * - CV_8UC4: [b, g, r, a]
+   *
+   * @param image - Image to draw on
+   * @param color - Color tuple (BGRA format)
+   * @returns Color array matching image channels
+   */
+  private static adjustColorForImage(image: cv.Mat, color: ColorTuple): number[] {
+    const channels = image.channels();
+    
+    if (channels === 1) {
+      // Grayscale: use average of BGR
+      return [(color[0] + color[1] + color[2]) / 3];
+    } else if (channels === 3) {
+      // BGR: use first 3 elements
+      return [color[0], color[1], color[2]];
+    } else if (channels === 4) {
+      // BGRA: use all 4 elements
+      return color;
+    }
+    
+    // Fallback: return as-is
+    return color;
+  }
+
+  /**
    * Draw matching lines between two images side by side.
    *
    * @param image - First image
@@ -88,7 +119,7 @@ export class DrawingUtils {
         horizontalStack,
         new cv.Point(fromTuples[i][0], fromTuples[i][1]),
         new cv.Point(w + toTuples[i][0], toTuples[i][1]),
-        CLR_GREEN,
+        this.adjustColorForImage(horizontalStack, CLR_GREEN),
         3
       );
     }
@@ -116,7 +147,7 @@ export class DrawingUtils {
       image,
       new cv.Point(Math.floor(position[0]), Math.floor(position[1])),
       new cv.Point(Math.floor(positionDiagonal[0]), Math.floor(positionDiagonal[1])),
-      color,
+      this.adjustColorForImage(image, color),
       border
     );
   }
@@ -141,11 +172,11 @@ export class DrawingUtils {
     if (Array.isArray(contour)) {
       const mat = cv.matFromArray(contour.length, 1, cv.CV_32SC2, contour.flat());
       contours.push_back(mat);
-      cv.drawContours(image, contours, 0, color, thickness);
+      cv.drawContours(image, contours, 0, this.adjustColorForImage(image, color), thickness);
       mat.delete();
     } else {
       contours.push_back(contour);
-      cv.drawContours(image, contours, 0, color, thickness);
+      cv.drawContours(image, contours, 0, this.adjustColorForImage(image, color), thickness);
     }
 
     contours.delete();
@@ -271,7 +302,7 @@ export class DrawingUtils {
         image,
         new cv.Point(startTuples[i][0], startTuples[i][1]),
         new cv.Point(endTuples[i][0], endTuples[i][1]),
-        color,
+        this.adjustColorForImage(image, color),
         thickness,
         lineType,
         0,
@@ -365,7 +396,7 @@ export class DrawingUtils {
       new cv.Point(Math.floor(finalPosition[0]), Math.floor(finalPosition[1])),
       fontFace,
       textSize,
-      color,
+      this.adjustColorForImage(image, color),
       thickness,
       lineType
     );
@@ -415,7 +446,7 @@ export class DrawingUtils {
       image,
       new cv.Point(start[0], start[1]),
       new cv.Point(end[0], end[1]),
-      color,
+      this.adjustColorForImage(image, color),
       thickness
     );
   }

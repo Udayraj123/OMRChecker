@@ -243,8 +243,11 @@ export class ImageUtils {
       return images[0].clone();
     }
 
-    // Pad to same height
-    const paddedImages = this.padImagesToMax(images);
+    // Pad to same height only (not width, as per Python implementation)
+    const maxHeight = Math.max(...images.map((img) => img.rows));
+    const paddedImages = images.map((img) => 
+      this.padImageToHeight(img, maxHeight, CLR_WHITE)
+    );
 
     // Create MatVector for hconcat
     const matVector = new cv.MatVector();
@@ -256,7 +259,12 @@ export class ImageUtils {
 
     // Clean up
     matVector.delete();
-    paddedImages.forEach((img) => img.delete());
+    paddedImages.forEach((img, idx) => {
+      // Only delete if it's a new padded image, not the original
+      if (img !== images[idx]) {
+        img.delete();
+      }
+    });
 
     return dst;
   }
