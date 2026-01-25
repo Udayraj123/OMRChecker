@@ -73,6 +73,11 @@ class TestBubblesThresholdInterpretationPass:
         config.thresholding.GLOBAL_PAGE_THRESHOLD_STD = 10.0
         config.thresholding.GLOBAL_PAGE_THRESHOLD = 180
         config.thresholding.MIN_JUMP = 10
+        config.thresholding.JUMP_DELTA = 20.0
+        config.thresholding.MIN_GAP_TWO_BUBBLES = 20.0
+        config.thresholding.MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK = 10.0
+        config.thresholding.CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY = 15.0
+        config.thresholding.GLOBAL_THRESHOLD_MARGIN = 10.0
         return config
 
     def test_constructor_initializes_repository(self):
@@ -192,11 +197,23 @@ class TestBubblesThresholdInterpretationPass:
             config, repository=repository, field_detection_type="BUBBLES_THRESHOLD"
         )
 
-        field = MockField("q1", "")
+        # Initialize file-level aggregates first
+        repository.initialize_file("/test/file.jpg")
         bubble1 = MockBubblesScanBox(0, 0, "A")
         bubble2 = MockBubblesScanBox(10, 0, "B")
         bubble_mean1 = BubbleMeanValue(50.0, bubble1, (0, 0))
         bubble_mean2 = BubbleMeanValue(200.0, bubble2, (10, 0))
+        repository.save_bubble_field(
+            "q1",
+            BubbleFieldDetectionResult("q1", "q1", [bubble_mean1, bubble_mean2]),
+        )
+        pass_instance.initialize_file_level_aggregates("/test/file.jpg")
+
+        field = MockField("q1", "")
+
+        # Initialize field-level aggregates
+        pass_instance.initialize_field_level_aggregates(field)
+
         detection_result = BubbleFieldDetectionResult(
             "q1", "q1", [bubble_mean1, bubble_mean2]
         )
