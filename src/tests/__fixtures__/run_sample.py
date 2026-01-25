@@ -3,7 +3,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from src.tests.utils import (
+from src.tests.common_utils import (
     extract_all_csv_outputs,
     run_entry_point,
     setup_mocker_patches,

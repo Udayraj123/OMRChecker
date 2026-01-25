@@ -40,7 +40,7 @@ export class BubbleInterpretation {
     // Note: unitBubble in BubbleMeanValue is BubbleLocation (interface), but in practice
     // it's a BubblesScanBox instance. We need to handle this properly.
     const unitBubble = bubbleMean.unitBubble as unknown as BubblesScanBox;
-    this.bubbleValue = unitBubble?.bubbleValue || '';
+    this.bubbleValue = unitBubble?.bubbleValue || ''; // Ensure empty string if undefined/null
 
     // item_reference is used by the drawing code
     this.itemReference = unitBubble;
@@ -62,9 +62,12 @@ export class BubbleInterpretation {
  * Threshold calculation delegated to threshold strategy classes.
  */
 export class BubblesFieldInterpretation extends FieldInterpretation {
+  // Initialize with defaults. Parent constructor will call runInterpretation() which will
+  // set proper values, but TypeScript properties declared without initializers are undefined
+  // during parent constructor execution.
   public bubbleInterpretations: BubbleInterpretation[] = [];
-  public isMultiMarked = false;
-  public localThresholdForField = 0.0;
+  public isMultiMarked: boolean = false;
+  public localThresholdForField: number = 0.0;
   public thresholdResult: ThresholdResult | null = null;
 
   constructor(
@@ -73,7 +76,15 @@ export class BubblesFieldInterpretation extends FieldInterpretation {
     fileLevelDetectionAggregates: unknown,
     fileLevelInterpretationAggregates: unknown
   ) {
+    // Parent constructor calls runInterpretation(), but our property initializers
+    // haven't run yet (they run AFTER super returns in TypeScript).
+    // So runInterpretation sees undefined properties and initializes them.
+    // Then when super() returns, our property initializers run and overwrite them.
+    // Solution: Don't use property initializers, or re-run initialization after super().
     super(tuningConfig, field, fileLevelDetectionAggregates, fileLevelInterpretationAggregates);
+    
+    // Re-run interpretation after super() to ensure values are set after property initializers
+    this.runInterpretation(field, fileLevelDetectionAggregates, fileLevelInterpretationAggregates);
   }
 
   /**
@@ -122,23 +133,51 @@ export class BubblesFieldInterpretation extends FieldInterpretation {
     fileLevelDetectionAggregates: unknown,
     fileLevelInterpretationAggregates: unknown
   ): void {
+    // Initialize properties first to ensure they're never undefined
+    this.bubbleInterpretations = [];
+    this.isMultiMarked = false;
+    this.localThresholdForField = 0.0;
+    this.thresholdResult = null;
+
     // Step 1: Extract detection result
     const detectionResult = this.extractDetectionResult(
       field,
       fileLevelDetectionAggregates
     );
 
+    if (!detectionResult) {
+      const aggregates = fileLevelDetectionAggregates as Record<string, unknown>;
+      const bubbleFields = aggregates.bubble_fields as Record<string, unknown> | undefined;
+      const availableFields = bubbleFields ? Object.keys(bubbleFields) : [];
+      
+      throw new Error(
+        `No detection result for field '${field.fieldLabel}'. Available: [${availableFields.join(', ')}]`
+      );
+    }
+    if (!detectionResult.bubbleMeans || detectionResult.bubbleMeans.length === 0) {
+      throw new Error(
+        `No bubble means in detection result for field '${field.fieldLabel}'`
+      );
+    }
+
     // Step 2: Calculate thresholds using strategies
     const thresholdConfig = this.createThresholdConfig(
       fileLevelInterpretationAggregates
     );
-    this.thresholdResult = this.calculateThreshold(
+
+    const result = this.calculateThreshold(
       detectionResult,
       fileLevelInterpretationAggregates,
       thresholdConfig
     );
 
-    this.localThresholdForField = this.thresholdResult.thresholdValue;
+    if (!result) {
+      logger.error('calculateThreshold returned null/undefined');
+      return;
+    }
+
+    this.thresholdResult = result;
+    this.localThresholdForField = result.thresholdValue;
 
     // Step 3: Interpret bubbles
     this.interpretBubbles(detectionResult);
@@ -164,7 +203,7 @@ export class BubblesFieldInterpretation extends FieldInterpretation {
   private extractDetectionResult(
     field: Field,
     fileLevelDetectionAggregates: unknown
-  ): BubbleFieldDetectionResult {
+  ): BubbleFieldDetectionResult | null {
     const fieldLabel = field.fieldLabel;
     const aggregates = fileLevelDetectionAggregates as Record<string, unknown>;
 
@@ -174,6 +213,8 @@ export class BubblesFieldInterpretation extends FieldInterpretation {
       if (bubbleFields[fieldLabel]) {
         return bubbleFields[fieldLabel];
       }
+      logger.warn(`Field ${fieldLabel} not found in bubble_fields`);
+      return null;
     }
 
     // Fallback to legacy dict format
@@ -181,6 +222,13 @@ export class BubblesFieldInterpretation extends FieldInterpretation {
       string,
       { field_bubble_means: BubbleMeanValue[] }
     >;
+
+    if (!fieldLabelWiseAggregates || !fieldLabelWiseAggregates[fieldLabel]) {
+      logger.warn(
+        `bubble_fields not found in file_level_detection_aggregates for field ${fieldLabel}`
+      );
+      return null;
+    }
 
     const fieldLevelDetectionAggregates = fieldLabelWiseAggregates[fieldLabel];
 
@@ -198,7 +246,7 @@ export class BubblesFieldInterpretation extends FieldInterpretation {
   private createThresholdConfig(
     _fileLevelInterpretationAggregates: unknown
   ): ThresholdConfig {
-    const config = this.tuningConfig.thresholding as {
+    const thresholding = this.tuningConfig.thresholding as {
       MIN_JUMP?: number;
       JUMP_DELTA?: number;
       MIN_GAP_TWO_BUBBLES?: number;
@@ -206,11 +254,13 @@ export class BubblesFieldInterpretation extends FieldInterpretation {
       CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY?: number;
       GLOBAL_THRESHOLD_MARGIN?: number;
       GLOBAL_PAGE_THRESHOLD?: number;
-    };
+    } | undefined;
 
     return {
-      defaultThreshold: config.GLOBAL_PAGE_THRESHOLD || 180,
-      minJump: config.MIN_JUMP || 10,
+      defaultThreshold: thresholding?.GLOBAL_PAGE_THRESHOLD || 180,
+      minJump: thresholding?.MIN_JUMP || 10,
+      minGapTwoBubbles: thresholding?.MIN_GAP_TWO_BUBBLES || 20,
+      minJumpSurplusForGlobalFallback: thresholding?.MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK || 10,
       // Note: TypeScript ThresholdConfig is simpler than Python's
       // Additional config options can be added if needed
     };
@@ -245,6 +295,11 @@ export class BubblesFieldInterpretation extends FieldInterpretation {
    * Creates interpretation for each bubble.
    */
   private interpretBubbles(detectionResult: BubbleFieldDetectionResult): void {
+    if (!detectionResult || !detectionResult.bubbleMeans) {
+      logger.warn('No bubble means in detection result');
+      this.bubbleInterpretations = [];
+      return;
+    }
     this.bubbleInterpretations = detectionResult.bubbleMeans.map(
       (bubbleMean) =>
         new BubbleInterpretation(bubbleMean, this.localThresholdForField)

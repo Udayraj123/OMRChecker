@@ -88,7 +88,7 @@ try {
     const script = window.document.createElement('script');
     script.textContent = patchedCode;
     // Add error handler to script
-    script.onerror = (err) => {
+    script.onerror = (err: any) => {
       console.error('[OpenCV Setup] Error loading opencv.js as script element:', err);
     };
     window.document.head.appendChild(script);

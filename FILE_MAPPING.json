@@ -3284,7 +3284,7 @@
       "notes": "TypeScript shape utility functions. Python has similar functionality in utils/shapes.py but structure differs."
     },
     {
-      "python": "src/tests/test_template_layout.py",
+      "python": "src/tests/processors/template/__tests__/test_template_layout.py",
       "typescript": "omrchecker-js/packages/core/src/template/__tests__/testTemplateLayout.test.ts",
       "status": "synced",
       "phase": 1,
@@ -3295,7 +3295,7 @@
       "notes": "Comprehensive TemplateLayout test suite ported. ~30+ test cases covering all 17 methods, initialization, preprocessing, validation, and edge cases. 571 lines of TypeScript tests."
     },
     {
-      "python": "src/tests/test_evaluation_config_for_set.py",
+      "python": "src/tests/processors/evaluation/__tests__/test_evaluation_config_for_set.py",
       "typescript": "omrchecker-js/packages/core/src/processors/evaluation/__tests__/testEvaluationConfigForSet.test.ts",
       "status": "synced",
       "phase": 1,
@@ -3306,7 +3306,7 @@
       "notes": "EvaluationConfigForSet test suite ported. ~30+ test cases covering validation, parsing, answer matching, formatted outputs, and edge cases. 779 lines of TypeScript tests."
     },
     {
-      "python": "src/tests/test_template_validations.py",
+      "python": "src/tests/processors/template/__tests__/test_template_validations.py",
       "typescript": "omrchecker-js/packages/core/src/template/__tests__/testTemplateValidations.test.ts",
       "status": "synced",
       "phase": 1,
@@ -3317,7 +3317,7 @@
       "notes": "Template validation test suite ported. ~25+ test cases covering schema validation, field blocks, custom labels, output columns, and edge cases. 396 lines of TypeScript tests."
     },
     {
-      "python": "src/tests/test_exceptions.py",
+      "python": "src/tests/__tests__/test_exceptions.py",
       "typescript": "omrchecker-js/packages/core/src/core/__tests__/testExceptions.test.ts",
       "status": "synced",
       "phase": 1,
@@ -3328,7 +3328,7 @@
       "notes": "Exception test suite ported. ~25+ test cases covering exception hierarchy, context handling, parameterized tests, and edge cases. 349 lines of TypeScript tests. TypeScript has fewer exception types than Python, so tests focus on available exceptions."
     },
     {
-      "python": "src/tests/test_template_file_runner.py",
+      "python": "src/tests/processors/detection/__tests__/test_template_file_runner.py",
       "typescript": "omrchecker-js/packages/core/src/processors/detection/__tests__/testTemplateFileRunner.test.ts",
       "status": "synced",
       "phase": 1,
@@ -3339,7 +3339,7 @@
       "notes": "TemplateFileRunner test suite expanded. ~15+ test cases covering multi-pass architecture, aggregate management, and edge cases. 269 lines of TypeScript tests."
     },
     {
-      "python": "src/tests/test_entry.py",
+      "python": "src/tests/__tests__/test_entry.py",
       "typescript": "omrchecker-js/packages/core/src/core/__tests__/testOMRProcessor.test.ts",
       "status": "synced",
       "phase": 1,

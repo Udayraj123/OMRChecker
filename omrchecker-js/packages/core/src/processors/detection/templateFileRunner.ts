@@ -287,6 +287,8 @@ export class TemplateFileRunner extends FileLevelRunner<
    * @param filePath - Path to the file being processed
    */
   initializeFileLevelDetectionAggregates(filePath: string): void {
+    this.repository.initializeFile(filePath);
+
     this.detectionPass.initializeFileLevelAggregates(
       filePath,
       this.allFieldDetectionTypes

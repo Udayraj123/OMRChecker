@@ -5,12 +5,10 @@ on:
     branches: [master]
     paths:
       - "src/**/*.py"
-      - "tests/**/*.py"
   pull_request:
     branches: [master]
     paths:
       - "src/**/*.py"
-      - "tests/**/*.py"
 
 jobs:
   test-and-coverage:

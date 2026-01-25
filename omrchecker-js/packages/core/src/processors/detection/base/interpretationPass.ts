@@ -400,11 +400,23 @@ export class TemplateInterpretationPass extends FilePassAggregates {
       return;
     }
 
-    const fileLevelAggregates = this.getFileLevelAggregates()!;
-    const fieldDetectionTypeWiseAggregates = fileLevelAggregates.field_detection_type_wise_aggregates as Record<
+    const fileLevelAggregates = this.getFileLevelAggregates();
+    if (!fileLevelAggregates) {
+      return;
+    }
+    
+    let fieldDetectionTypeWiseAggregates = fileLevelAggregates.field_detection_type_wise_aggregates as Record<
       string,
       unknown
-    >;
+    > | undefined;
+
+    // Ensure field_detection_type_wise_aggregates exists
+    if (!fieldDetectionTypeWiseAggregates) {
+      fieldDetectionTypeWiseAggregates = {};
+      this.insertFileLevelAggregates({
+        field_detection_type_wise_aggregates: fieldDetectionTypeWiseAggregates,
+      });
+    }
 
     for (const fieldDetectionTypeFileRunner of Object.values(fieldDetectionTypeFileRunners)) {
       const fieldDetectionType = (fieldDetectionTypeFileRunner as {

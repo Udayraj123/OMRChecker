@@ -33,7 +33,7 @@ export function getCV(): typeof cv {
   const globalCv = (global as any).cv;
   if (globalCv && typeof globalCv.Scalar === 'function') {
     // Cache it for future use
-    cvInstance = globalCv;
+    cvInstance = globalCv as typeof cv;
     return cvInstance;
   }
 
@@ -41,7 +41,7 @@ export function getCV(): typeof cv {
   if (typeof window !== 'undefined' && (window as any).cv) {
     const windowCv = (window as any).cv;
     if (typeof windowCv.Scalar === 'function') {
-      cvInstance = windowCv;
+      cvInstance = windowCv as typeof cv;
       return cvInstance;
     }
   }

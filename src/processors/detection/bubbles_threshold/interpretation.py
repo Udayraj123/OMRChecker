@@ -23,7 +23,7 @@ class BubbleInterpretation:
             bubble_mean.unit_bubble.bubble_value
             if hasattr(bubble_mean.unit_bubble, "bubble_value")
             else ""
-        )
+        ) or ""  # Ensure empty string if value is None
         # item_reference is used by the drawing code
         self.item_reference = bubble_mean.unit_bubble
 
@@ -34,10 +34,7 @@ class BubbleInterpretation:
 
 class BubblesFieldInterpretation(FieldInterpretation):
     def __init__(self, *args, **kwargs) -> None:
-        self.bubble_interpretations: list[BubbleInterpretation] = []
-        self.is_multi_marked = False
-        self.local_threshold_for_field = 0.0
-        self.threshold_result: ThresholdResult | None = None
+        # Note: Properties are initialized in run_interpretation() which is called by super().__init__()
         super().__init__(*args, **kwargs)
 
     def get_drawing_instance(self):
@@ -80,10 +77,25 @@ class BubblesFieldInterpretation(FieldInterpretation):
             file_level_detection_aggregates: Detection results (typed models via bubble_fields)
             file_level_interpretation_aggregates: Interpretation aggregates
         """
+        self.bubble_interpretations: list[BubbleInterpretation] = []
+        self.is_multi_marked = False
+        self.local_threshold_for_field = 0.0
+        self.threshold_result: ThresholdResult | None = None
+
         # Step 1: Extract detection result
         detection_result = self._extract_detection_result(
             field, file_level_detection_aggregates
         )
+
+        # Fail fast if detection result is missing
+        if detection_result is None:
+            available_fields = list(
+                file_level_detection_aggregates.get("bubble_fields", {}).keys()
+            )
+            raise ValueError(
+                f"No detection result for field '{field.field_label}'. "
+                f"Available: {available_fields}"
+            )
 
         # Step 2: Calculate thresholds using strategies
         threshold_config = self._create_threshold_config(
@@ -109,22 +121,25 @@ class BubblesFieldInterpretation(FieldInterpretation):
 
     def _extract_detection_result(
         self, field: Field, file_level_detection_aggregates
-    ) -> BubbleFieldDetectionResult:
+    ) -> BubbleFieldDetectionResult | None:
         """Extract detection result from aggregates.
 
         Uses new typed models pipeline via bubble_fields.
+        Returns None if data is missing (graceful degradation for tests).
         """
         field_label = field.field_label
 
         # Get from new typed format
         if "bubble_fields" not in file_level_detection_aggregates:
-            msg = f"bubble_fields not found in file_level_detection_aggregates for field {field_label}"
-            raise KeyError(msg)
+            logger.warning(
+                f"bubble_fields not found in file_level_detection_aggregates for field {field_label}"
+            )
+            return None
 
         bubble_fields = file_level_detection_aggregates["bubble_fields"]
         if field_label not in bubble_fields:
-            msg = f"Field {field_label} not found in bubble_fields"
-            raise KeyError(msg)
+            logger.warning(f"Field {field_label} not found in bubble_fields")
+            return None
 
         return bubble_fields[field_label]
 
