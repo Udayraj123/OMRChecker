@@ -21,7 +21,9 @@ import { BubblesScanBox } from '../../layout/field/bubbleField';
  * Extends FieldDetection base class following Python architecture.
  */
 export class BubblesFieldDetection extends FieldDetection {
-  public result: BubbleFieldDetectionResult | null = null;
+  // Result is set by runDetection() which is called from super()
+  // Declared without initializer to avoid overwriting the value set by super()
+  declare public result: BubbleFieldDetectionResult | null;
 
   constructor(
     field: Field,

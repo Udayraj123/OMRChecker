@@ -4,7 +4,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['src/__tests__/setup.ts'],
+    globalSetup: ['src/__tests__/globalSetup.ts'], // Runs once before all tests
+    setupFiles: ['src/__tests__/setup.ts'], // Runs per worker
     include: ['src/**/__tests__/**/*.test.ts'],
     // disableConsoleIntercept: true,
     silent: false,
