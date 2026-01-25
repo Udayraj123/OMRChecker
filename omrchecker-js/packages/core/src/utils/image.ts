@@ -294,7 +294,12 @@ export class ImageUtils {
 
     // Clean up
     matVector.delete();
-    paddedImages.forEach((img) => img.delete());
+    paddedImages.forEach((img, idx) => {
+      // Only delete if it's a new padded image, not the original
+      if (img !== images[idx]) {
+        img.delete();
+      }
+    });
 
     return dst;
   }
