@@ -133,10 +133,6 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
    *
    * Subclasses must override this to define their schema.
    *
-   * Note: In TypeScript, validation must be done in the subclass constructor
-   * before calling super(). This is different from Python where we can call
-   * self.validate_and_remap_options_schema() before super().__init__().
-   *
    * @param _options - Raw options to validate and transform
    * @returns Validated and transformed options
    */

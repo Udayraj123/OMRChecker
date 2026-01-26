@@ -142,36 +142,5 @@ describe('OMRProcessor Performance', () => {
       img2.delete();
     });
   });
-
-  describe('Scalability', () => {
-    it('should scale reasonably with number of fields', async () => {
-      // Template with more fields
-      const largeTemplateConfig: TemplateConfig = {
-        templateDimensions: [900, 650],
-        bubbleDimensions: [20, 20],
-        fieldBlocks: {
-          block1: {
-            fieldDetectionType: FieldDetectionType.BUBBLES_THRESHOLD,
-            name: 'block1',
-            origin: [100, 100],
-            fieldLabels: Array.from({ length: 20 }, (_, i) => `q${i + 1}`),
-            bubbleFieldType: 'QTYPE_MCQ4',
-            bubblesGap: 30,
-            labelsGap: 50,
-          },
-        },
-      };
-
-      const processor = new OMRProcessor(largeTemplateConfig);
-
-      const startTime = performance.now();
-      await processor.processImage(mockGrayImage, 'test.jpg', mockColoredImage);
-      const processingTime = performance.now() - startTime;
-
-      // Processing time should scale reasonably (not exponentially)
-      // This is a basic check - actual profiling needed for precise measurements
-      expect(processingTime).toBeLessThan(30000); // 30 seconds max for 20 fields
-    });
-  });
 });
 

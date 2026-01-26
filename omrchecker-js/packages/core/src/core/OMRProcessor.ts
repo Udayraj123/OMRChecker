@@ -130,9 +130,7 @@ export class OMRProcessor {
     // Initialize template file runner with tuning config
     // Extract tuning config from template config (may be nested in ParsedTemplate)
     const tuningConfig =
-      (this.template as { tuningConfig?: Record<string, unknown>; tuning_config?: Record<string, unknown> })
-        .tuningConfig ||
-      (this.template as { tuningConfig?: Record<string, unknown>; tuning_config?: Record<string, unknown> })
+      (this.template as { tuning_config?: Record<string, unknown> })
         .tuning_config ||
       ({} as Record<string, unknown>);
     this.templateFileRunner = new TemplateFileRunner(
@@ -193,7 +191,7 @@ export class OMRProcessor {
       const context = await this.pipeline.processFile(
         filePath,
         image,
-        coloredImage || image.clone()
+        coloredImage || image.clone() // todo: check if this clone is needed <--
       );
 
       // Step 2: Run two-pass detection and interpretation using TemplateFileRunner

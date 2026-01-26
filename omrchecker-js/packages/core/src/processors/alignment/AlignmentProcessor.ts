@@ -31,7 +31,7 @@ export class AlignmentProcessor extends Processor {
    */
   constructor(template: ParsedTemplate) {
     super();
-    this.tuningConfig = template.tuningConfig || template.tuning_config || {};
+    this.tuningConfig = template.tuning_config || {};
   }
 
   /**
@@ -58,8 +58,7 @@ export class AlignmentProcessor extends Processor {
 
     // Only apply alignment if images are valid and alignment is configured
     const alignment = template.alignment;
-    const hasAlignmentImage = alignment?.grayAlignmentImage ||
-                              alignment?.gray_alignment_image;
+    const hasAlignmentImage = alignment?.gray_alignment_image;
 
     if (grayImage && hasAlignmentImage) {
       const result = applyTemplateAlignment(

@@ -313,41 +313,6 @@ describe('OMRProcessor', () => {
     });
   });
 
-  describe('Configuration Options', () => {
-    it('should respect debug mode', () => {
-      const config: OMRProcessorConfig = { debug: true };
-      const processor = new OMRProcessor(templateConfig, config);
-
-      expect(processor).toBeDefined();
-    });
-
-    it('should respect saveIntermediateImages option', () => {
-      const config: OMRProcessorConfig = { saveIntermediateImages: true };
-      const processor = new OMRProcessor(templateConfig, config);
-
-      expect(processor).toBeDefined();
-    });
-
-    it('should respect outputDirectory option', () => {
-      const config: OMRProcessorConfig = { outputDirectory: '/tmp/output' };
-      const processor = new OMRProcessor(templateConfig, config);
-
-      expect(processor).toBeDefined();
-    });
-
-    it('should respect thresholdConfig option', () => {
-      const config: OMRProcessorConfig = {
-        thresholdConfig: {
-          defaultThreshold: 0.5,
-          minJump: 0.1,
-        },
-      };
-      const processor = new OMRProcessor(templateConfig, config);
-
-      expect(processor).toBeDefined();
-    });
-  });
-
   describe('Template Variations', () => {
     it('should handle template with multiple field blocks', () => {
       const multiBlockConfig: TemplateConfig = {

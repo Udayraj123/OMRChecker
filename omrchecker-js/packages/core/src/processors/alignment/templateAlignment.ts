@@ -60,21 +60,17 @@ export function applyTemplateAlignment(
 
   // Get alignment configuration
   const alignment = template.alignment;
-  const templateMargins = alignment?.margins || alignment?.margins || {
+  const templateMargins = alignment?.margins || {
     left: 0,
     right: 0,
     top: 0,
     bottom: 0,
   };
-  const templateMaxDisplacement = alignment?.maxDisplacement ||
-                                  alignment?.max_displacement ||
-                                  0;
+  const templateMaxDisplacement = alignment?.max_displacement || 0;
 
   // Get pre-processed alignment images
-  const grayAlignmentImage = alignment?.grayAlignmentImage ||
-                            alignment?.gray_alignment_image;
-  const coloredAlignmentImage = alignment?.coloredAlignmentImage ||
-                               alignment?.colored_alignment_image;
+  const grayAlignmentImage = alignment?.gray_alignment_image;
+  const coloredAlignmentImage = alignment?.colored_alignment_image;
 
   if (!grayAlignmentImage) {
     logger.debug('No alignment image found, returning original images');
@@ -82,8 +78,7 @@ export function applyTemplateAlignment(
   }
 
   // Get template dimensions
-  const templateDimensions = template.templateDimensions ||
-                            template.template_dimensions;
+  const templateDimensions = template.template_dimensions;
 
   if (!templateDimensions) {
     logger.warn('No template dimensions found, skipping resize');
@@ -120,7 +115,7 @@ export function applyTemplateAlignment(
   void _alignedColoredAlignment;
 
   // Get field blocks
-  const fieldBlocks = template.fieldBlocks || template.field_blocks || [];
+  const fieldBlocks = template.field_blocks || [];
 
   // Iterate through field blocks and compute alignment
   for (const fieldBlock of fieldBlocks) {
@@ -129,17 +124,13 @@ export function applyTemplateAlignment(
     // Initialize shifts to zero
     fieldBlock.shifts = [0, 0];
 
-    const boundingBoxOrigin = fieldBlock.boundingBoxOrigin ||
-                             fieldBlock.bounding_box_origin;
-    const boundingBoxDimensions = fieldBlock.boundingBoxDimensions ||
-                                 fieldBlock.bounding_box_dimensions;
+    const boundingBoxOrigin = fieldBlock.bounding_box_origin;
+    const boundingBoxDimensions = fieldBlock.bounding_box_dimensions;
     const fieldBlockAlignment = fieldBlock.alignment || {};
 
     // Get margins and max displacement for this field block
     const margins = fieldBlockAlignment.margins || templateMargins;
-    const maxDisplacement = fieldBlockAlignment.maxDisplacement ||
-                           fieldBlockAlignment.max_displacement ||
-                           templateMaxDisplacement;
+    const maxDisplacement = fieldBlockAlignment.max_displacement || templateMaxDisplacement;
 
     if (maxDisplacement === 0) {
       // Skip alignment computation for this field block if allowed displacement is zero

@@ -45,18 +45,18 @@ describe('PreprocessingProcessor', () => {
     mockGrayImage = new cv.Mat();
     mockColoredImage = new cv.Mat();
 
-    // Create mock template with minimal structure
+    // Create mock template with minimal structure using snake_case
     mockTemplate = {
-      tuningConfig: {
+      tuning_config: {
         outputs: {
           colored_outputs_enabled: true,
           show_preprocessors_diff: {},
         },
       },
-      templateLayout: {
-        processingImageShape: [800, 1200],
-        outputImageShape: null,
-        preProcessors: [],
+      template_layout: {
+        processing_image_shape: [800, 1200],
+        output_image_shape: null,
+        pre_processors: [],
       },
     };
   });
@@ -98,7 +98,7 @@ describe('PreprocessingProcessor', () => {
     it('should process context through all preprocessors', () => {
       const mockPreprocessor1 = new MockPreprocessor('Processor1');
       const mockPreprocessor2 = new MockPreprocessor('Processor2');
-      mockTemplate.templateLayout.preProcessors = [mockPreprocessor1, mockPreprocessor2];
+      mockTemplate.template_layout.pre_processors = [mockPreprocessor1, mockPreprocessor2];
 
       const processor = new PreprocessingProcessor(mockTemplate);
       const context = createProcessingContext(
@@ -115,7 +115,7 @@ describe('PreprocessingProcessor', () => {
     });
 
     it('should handle empty preprocessors list', () => {
-      mockTemplate.templateLayout.preProcessors = [];
+      mockTemplate.template_layout.pre_processors = [];
 
       const processor = new PreprocessingProcessor(mockTemplate);
       const context = createProcessingContext(
@@ -187,7 +187,7 @@ describe('PreprocessingProcessor', () => {
         }
       }
 
-      mockTemplate.templateLayout.preProcessors = [
+      mockTemplate.template_layout.pre_processors = [
         new OrderTrackingPreprocessor('First', executionOrder),
         new OrderTrackingPreprocessor('Second', executionOrder),
         new OrderTrackingPreprocessor('Third', executionOrder),
@@ -222,7 +222,7 @@ describe('PreprocessingProcessor', () => {
         }
       }
 
-      mockTemplate.templateLayout.preProcessors = [
+      mockTemplate.template_layout.pre_processors = [
         new ContextModifyingPreprocessor('Proc1'),
         new ContextModifyingPreprocessor('Proc2'),
       ];
@@ -243,8 +243,8 @@ describe('PreprocessingProcessor', () => {
   });
 
   describe('integration with template configuration', () => {
-    it('should handle camelCase template properties', () => {
-      mockTemplate.templateLayout.preProcessors = [new MockPreprocessor('Test')];
+    it('should handle snake_case template properties', () => {
+      mockTemplate.template_layout.pre_processors = [new MockPreprocessor('Test')];
 
       const processor = new PreprocessingProcessor(mockTemplate);
       const context = createProcessingContext(

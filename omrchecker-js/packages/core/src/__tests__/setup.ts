@@ -5,19 +5,15 @@ import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
-console.log('[OpenCV Setup] Module imports completed');
 
 // Setup OpenCV.js for tests using jsdom (browser-like environment)
 
-console.log('[OpenCV Setup] Starting OpenCV initialization...');
 
 // Load opencv.js file
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const opencvPath = resolve(__dirname, '../../lib/opencv.js');
-console.log('[OpenCV Setup] Loading opencv.js from:', opencvPath);
 const opencvCode = readFileSync(opencvPath, 'utf-8');
-console.log('[OpenCV Setup] Loaded opencv.js, size:', opencvCode.length, 'bytes');
 
 // Set up Module with onRuntimeInitialized callback BEFORE loading opencv.js
 let initResolve: () => void;
@@ -77,10 +73,8 @@ window.require = (() => {
 })();
 
 // Execute directly in window context using eval
-console.log('[OpenCV Setup] Executing opencv.js code...');
 try {
   window.eval(patchedCode);
-  console.log('[OpenCV Setup] opencv.js code executed successfully');
 } catch (error) {
   console.error('[OpenCV Setup] Error executing opencv.js with eval:', error);
   // Fallback: try as script element
@@ -92,7 +86,6 @@ try {
       console.error('[OpenCV Setup] Error loading opencv.js as script element:', err);
     };
     window.document.head.appendChild(script);
-    console.log('[OpenCV Setup] opencv.js loaded as script element');
   } catch (fallbackError) {
     console.error('[OpenCV Setup] Fallback script execution also failed:', fallbackError);
     throw new Error(
@@ -110,14 +103,12 @@ if (originalRequire !== undefined) {
 }
 
 // Wait for initialization with timeout
-console.log('[OpenCV Setup] Waiting for OpenCV initialization...');
 let initialized = false;
 
 // Use a simpler approach: just poll for cv object
 // Also listen for onRuntimeInitialized callback, but don't block on it
 initPromise
   .then(() => {
-    console.log('[OpenCV Setup] onRuntimeInitialized callback called');
     if (!initialized) {
       initialized = true;
     }
@@ -164,28 +155,17 @@ const pollForCV = async (): Promise<void> => {
 
 await pollForCV();
 
-console.log('[OpenCV Setup] Polling completed, initialized flag:', initialized);
 
 if (!initialized) {
   throw new Error('OpenCV initialization did not complete');
 }
 
-console.log('[OpenCV Setup] Initialization promise resolved');
 
 // Ensure cv is available
 if (!window.cv || typeof window.cv.Scalar !== 'function') {
   throw new Error('OpenCV.js failed to initialize - cv object not properly initialized');
 }
 
-console.log('[OpenCV Setup] cv object verified, making available on globalThis and global');
-
 // Make cv available on both globalThis and global for tests
 (globalThis as any).cv = window.cv;
 (global as any).cv = window.cv;
-console.log('[OpenCV Setup] cv set on both globalThis and global');
-console.log('[OpenCV Setup] Verifying global.cv:', {
-  exists: !!(global as any).cv,
-  hasScalar: !!(global as any).cv && typeof (global as any).cv.Scalar === 'function',
-});
-
-console.log('[OpenCV Setup] Setup complete!');

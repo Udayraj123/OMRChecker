@@ -10,6 +10,7 @@
 import { Processor, ProcessingContext } from '../base';
 import { ImageUtils } from '../../utils/ImageUtils';
 import { Logger } from '../../utils/logger';
+import { InteractionUtils } from '../../utils/InteractionUtils';
 
 const logger = new Logger('PreprocessingProcessor');
 
@@ -34,7 +35,7 @@ export class PreprocessingProcessor extends Processor {
     super();
     // Note: Python stores self.template = template but doesn't use it
     // We skip storing it to avoid unused variable warnings
-    this.tuningConfig = template.tuningConfig || template.tuning_config;
+    this.tuningConfig = template.tuning_config || {};
   }
 
   /**
@@ -66,8 +67,7 @@ export class PreprocessingProcessor extends Processor {
     }
 
     // Get processing image shape
-    const processingImageShape = templateLayout.processingImageShape ||
-                                 templateLayout.processing_image_shape;
+    const processingImageShape = templateLayout.processing_image_shape;
 
     let grayImage = context.grayImage;
     let coloredImage = context.coloredImage;
@@ -88,28 +88,53 @@ export class PreprocessingProcessor extends Processor {
     context.coloredImage = coloredImage;
 
     // Get preprocessors list
-    const preProcessors = templateLayout.preProcessors || [];
+    const preProcessors = templateLayout.pre_processors || [];
 
     // Run preprocessors in sequence using their process() method
     for (const preProcessor of preProcessors) {
-      const preProcessorName = preProcessor.getName ? preProcessor.getName() :
-                               preProcessor.get_name ? preProcessor.get_name() :
-                               'Unknown';
+      const preProcessorName = preProcessor.getName();
 
-      // Show Before Preview (browser version - could emit event or callback)
+      // Show Before Preview - display actual images in debug container
       if (showPreprocessorsDiff[preProcessorName]) {
         logger.debug(`Before ${preProcessorName}: ${context.filePath}`);
-        // Note: In browser, InteractionUtils.show would be replaced with
-        // canvas rendering or event emission. This is a placeholder.
-        // Users can implement their own visualization by listening to events.
+        
+        InteractionUtils.show(
+          `Before ${preProcessorName}`,
+          context.grayImage,
+          { title: `${context.filePath} - Before ${preProcessorName}` }
+        );
+        
+        // Also show colored if enabled
+        if (this.tuningConfig.outputs?.colored_outputs_enabled && context.coloredImage) {
+          InteractionUtils.show(
+            `Before ${preProcessorName} (Color)`,
+            context.coloredImage,
+            { title: `${context.filePath} - Before ${preProcessorName} (Color)` }
+          );
+        }
       }
 
       // Process using unified interface - preprocessors now implement process(context)
       context = preProcessor.process(context);
 
-      // Show After Preview
+      // Show After Preview - display actual images in debug container
       if (showPreprocessorsDiff[preProcessorName]) {
         logger.debug(`After ${preProcessorName}: ${context.filePath}`);
+        
+        InteractionUtils.show(
+          `After ${preProcessorName}`,
+          context.grayImage,
+          { title: `${context.filePath} - After ${preProcessorName}` }
+        );
+        
+        // Also show colored if enabled
+        if (this.tuningConfig.outputs?.colored_outputs_enabled && context.coloredImage) {
+          InteractionUtils.show(
+            `After ${preProcessorName} (Color)`,
+            context.coloredImage,
+            { title: `${context.filePath} - After ${preProcessorName} (Color)` }
+          );
+        }
       }
     }
 

@@ -151,7 +151,6 @@ export class TemplateDrawingUtils {
     }
 
     if (config.outputs?.show_image_level >= 1) {
-      // TODO: Implement pause and resize_to_height when InteractionUtils.show supports them
       InteractionUtils.show('Final Marked Template', finalMarked, {
         title: 'Final Marked Template',
         resizeToFit: true,

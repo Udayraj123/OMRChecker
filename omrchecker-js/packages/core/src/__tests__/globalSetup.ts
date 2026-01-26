@@ -24,7 +24,7 @@ export default async function globalSetup() {
   // Store the path in an environment variable for workers to use
   process.env.OPENCV_JS_PATH = opencvPath;
 
-  console.log('[Global Setup] ✓ Complete - workers can now load OpenCV');
+  console.log('[Global Setup] ✓ Complete - workers now start loading OpenCV');
 
   // Return a teardown function (optional)
   return () => {
