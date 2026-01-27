@@ -6,7 +6,7 @@ from src.processors.image.base import (
 
 
 # Automatic brightness and contrast optimization with optional histogram clipping
-def automatic_brightness_and_contrast(image, clip_hist_percent=1):
+def automatic_brightness_and_contrast(image, clip_percentage=1):
     gray = image
 
     # Calculate grayscale histogram
@@ -21,17 +21,17 @@ def automatic_brightness_and_contrast(image, clip_hist_percent=1):
 
     # Locate points to clip
     maximum = accumulator[-1]
-    clip_hist_percent *= maximum / 100.0
-    clip_hist_percent /= 2.0
+    clip_percentage *= maximum / 100.0
+    clip_percentage /= 2.0
 
     # Locate left cut
     minimum_gray = 0
-    while accumulator[minimum_gray] < clip_hist_percent:
+    while accumulator[minimum_gray] < clip_percentage:
         minimum_gray += 1
 
     # Locate right cut
     maximum_gray = hist_size - 1
-    while accumulator[maximum_gray] >= (maximum - clip_hist_percent):
+    while accumulator[maximum_gray] >= (maximum - clip_percentage):
         maximum_gray -= 1
 
     # Calculate alpha and beta values
@@ -51,14 +51,14 @@ class Contrast(ImageTemplatePreprocessor):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         tuning_options = self.tuning_options
-        self.clip_hist_percent = tuning_options.get("clipPercentage", 1)
+        self.clip_percentage = tuning_options.get("clip_percentage", 1)
         self.alpha = tuning_options.get("alpha", 1.75)
         self.beta = tuning_options.get("beta", 0)
         self.mode = tuning_options.get("mode", "manual")
 
     def apply_filter(self, image, _colored_image, _template, _file_path):
         if self.mode == "auto":
-            image, *_ = automatic_brightness_and_contrast(image, self.clip_hist_percent)
+            image, *_ = automatic_brightness_and_contrast(image, self.clip_percentage)
         else:
             image = cv2.convertScaleAbs(image, alpha=self.alpha, beta=self.beta)
 

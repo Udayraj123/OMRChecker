@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 
-from src.utils.json_conversion import convert_dict_keys_to_snake
+from src.utils.json_conversion import convert_dict_keys_to_snake, camel_to_snake
 from src.utils.serialization import dataclass_to_dict
 
 
@@ -188,6 +188,7 @@ class EvaluationConfig:
         """Create EvaluationConfig from dictionary (typically from JSON).
 
         Converts camelCase keys from JSON to snake_case for Python dataclass fields.
+        Preserves user-defined names in options values and marking_schemes keys.
 
         Args:
             data: Dictionary containing evaluation configuration data (with camelCase keys)
@@ -195,12 +196,32 @@ class EvaluationConfig:
         Returns:
             EvaluationConfig instance with nested dataclasses
         """
-        # Convert all keys from camelCase to snake_case
+        # Preserve user-defined structures before conversion
+        options_raw = data.get("options", {})
+        marking_schemes_raw = data.get("markingSchemes", {})
+
+        # Convert top-level and nested keys from camelCase to snake_case
         data = convert_dict_keys_to_snake(data)
 
+        # For options: convert keys (like questionsInOrder -> questions_in_order)
+        # but preserve the VALUES (user-defined field names like "Roll_No")
+        options_converted = {}
+        for key, value in options_raw.items():
+            snake_key = camel_to_snake(key)
+            options_converted[snake_key] = value  # Preserve value as-is
+
+        # For marking_schemes: preserve scheme names (keys like "DEFAULT")
+        # but convert keys within each scheme (like "correct", "incorrect")
+        marking_schemes_converted = {}
+        for scheme_name, scheme_data in marking_schemes_raw.items():
+            # Preserve scheme name, convert keys within scheme
+            marking_schemes_converted[scheme_name] = convert_dict_keys_to_snake(
+                scheme_data
+            )
+
         return cls(
-            options=data.get("options", {}),
-            marking_schemes=data.get("marking_schemes", {}),
+            options=options_converted,
+            marking_schemes=marking_schemes_converted,
             conditional_sets=data.get("conditional_sets", []),
             outputs_configuration=OutputsConfiguration.from_dict(
                 data.get("outputs_configuration", {})

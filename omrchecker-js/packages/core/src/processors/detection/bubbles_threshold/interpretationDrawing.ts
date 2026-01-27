@@ -13,6 +13,7 @@ import {
   CLR_NEAR_BLACK,
   CLR_WHITE,
   TEXT_SIZE,
+  type ColorTuple,
 } from '../../../utils/constants';
 import { DrawingUtils } from '../../../utils/drawing';
 import { FieldInterpretationDrawing } from '../base/interpretationDrawing';
@@ -317,10 +318,10 @@ export class BubblesFieldInterpretationDrawing
       for (const answerIndex of matchedGroups) {
         const boxEdge = boxEdges[answerIndex % 4] as 'TOP' | 'RIGHT' | 'BOTTOM' | 'LEFT';
         const colorValue = colorSequence[answerIndex % 4];
-        const color =
+        const color: ColorTuple =
           typeof colorValue === 'string'
-            ? ([0, 0, 0] as [number, number, number])
-            : (colorValue as [number, number, number]);
+            ? CLR_BLACK
+            : (colorValue as ColorTuple);
         DrawingUtils.drawGroup(
           markedImage,
           shiftedPosition,

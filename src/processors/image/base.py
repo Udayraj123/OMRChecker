@@ -21,7 +21,7 @@ class ImageTemplatePreprocessor(Processor):
     ) -> None:
         # Initialize processor-specific attributes
         self.options = options
-        self.tuning_options = options.get("tuningOptions", {})
+        self.tuning_options = options.get("tuning_options", {})
         self.relative_dir = Path(relative_dir)
         self.description = "UNKNOWN"
 
@@ -32,7 +32,7 @@ class ImageTemplatePreprocessor(Processor):
         # Note: we're taking this at preProcessor level because it represents
         # the need of a preProcessor's coordinate system(e.g. zone selectors)
         self.processing_image_shape = options.get(
-            "processingImageShape", default_processing_image_shape
+            "processing_image_shape", default_processing_image_shape
         )
         self.output = options.get("output")
 

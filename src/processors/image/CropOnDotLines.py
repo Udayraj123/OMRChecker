@@ -134,9 +134,9 @@ class CropOnDotLines(CropOnPatchesCommon):
             "default_selector": options.get("default_selector", "CENTERS"),
             "points_layout": layout_type,
             "enable_cropping": options.get("enable_cropping", True),  # temp
-            "tuningOptions": {
+            "tuning_options": {
                 "warp_method": tuning_options.get(
-                    "warpMethod", WarpMethod.PERSPECTIVE_TRANSFORM
+                    "warp_method", WarpMethod.PERSPECTIVE_TRANSFORM
                 )
             },
         }

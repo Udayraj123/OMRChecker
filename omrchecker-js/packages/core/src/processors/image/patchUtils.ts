@@ -21,6 +21,7 @@ import {
   type SelectorTypeValue,
   SelectorType,
 } from '../constants';
+import { createColor, type ColorTuple } from '../../utils/constants';
 
 // Type for zone description
 export interface ZoneDescription {
@@ -172,7 +173,7 @@ export function drawZoneContoursAndAnchorShifts(
   }
 
   // Draw alignment arrows
-  const CLR_DARK_GREEN: [number, number, number] = [0, 128, 0];
+  const CLR_DARK_GREEN: ColorTuple = createColor(0, 128, 0);
   DrawingUtils.drawArrows(debugImage, zoneControlPoints, zoneDestinationPoints, CLR_DARK_GREEN, 2);
 
   // Draw control point boxes
@@ -212,8 +213,8 @@ export function drawScanZone(debugImage: cv.Mat, zoneDescription: ZoneDescriptio
   const zoneStartWithoutMargins = scanZoneRectangleWithoutMargins[0];
   const zoneEndWithoutMargins = scanZoneRectangleWithoutMargins[2];
 
-  const CLR_DARK_GREEN: [number, number, number] = [0, 128, 0];
-  const CLR_NEAR_BLACK: [number, number, number] = [20, 20, 20];
+  const CLR_DARK_GREEN: ColorTuple = createColor(0, 128, 0);
+  const CLR_NEAR_BLACK: ColorTuple = createColor(20, 20, 20);
 
   DrawingUtils.drawBoxDiagonal(debugImage, zoneStart, zoneEnd, CLR_DARK_GREEN, 2);
 

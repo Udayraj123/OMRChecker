@@ -92,7 +92,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
 
         # Determine warp method (default depends on cropping)
         self.warp_method = tuning_options.get(
-            "warpMethod",
+            "warp_method",
             (
                 WarpMethod.PERSPECTIVE_TRANSFORM
                 if self.enable_cropping
@@ -413,7 +413,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
                 reason=(
                     f"Expected 4 control points for perspective transform, "
                     f"found {len(control_points)}. "
-                    f"Use tuningOptions['warp_method'] for different methods."
+                    f"Use tuningOptions['warpMethod'] for different methods."
                 ),
             )
 

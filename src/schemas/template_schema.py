@@ -198,10 +198,10 @@ crop_on_markers_tuning_options_available_keys = {
     "dotBlurKernel": True,
     "lineBlurKernel": True,
     "lineKernel": True,
-    "apply_erode_subtract": True,
-    "marker_rescale_range": True,
-    "marker_rescale_steps": True,
-    "min_matching_threshold": True,
+    "applyErodeSubtract": True,
+    "markerRescaleRange": True,
+    "markerRescaleSteps": True,
+    "minMatchingThreshold": True,
 }
 crop_on_markers_options_available_keys = {
     **pre_processor_options_available_keys,

@@ -209,7 +209,7 @@ class TemplateLayout:
             self.pre_processors.append(pre_processor_instance)
 
     def parse_custom_bubble_field_types(self, custom_bubble_field_types) -> None:
-        if custom_bubble_field_types is None:
+        if not custom_bubble_field_types:
             self.bubble_field_types_data = BUILTIN_BUBBLE_FIELD_TYPES
         else:
             self.bubble_field_types_data = {
@@ -253,11 +253,19 @@ class TemplateLayout:
 
     # TODO: move out to template_alignment.py
     def setup_alignment(self, alignment_object, relative_dir) -> None:
+        from dataclasses import asdict
+        from src.schemas.models.template import AlignmentConfig
+
         tuning_config = self.tuning_config
-        self.alignment = alignment_object
-        self.alignment["margins"] = alignment_object["margins"]
+        # Convert AlignmentConfig dataclass to dict for mutability
+        if isinstance(alignment_object, AlignmentConfig):
+            self.alignment = asdict(alignment_object)
+        else:
+            self.alignment = alignment_object
+
+        self.alignment["margins"] = self.alignment["margins"]
         self.alignment["reference_image_path"] = None
-        relative_path = self.alignment.get("referenceImage", None)
+        relative_path = self.alignment.get("reference_image", None)
 
         # TODO: add more setup steps here
 
@@ -365,9 +373,9 @@ class TemplateLayout:
         self, non_custom_columns, all_custom_columns, output_columns
     ):
         all_template_columns = non_custom_columns + all_custom_columns
-        sort_type = output_columns.get("sortType")
+        sort_type = output_columns.sort_type
 
-        sort_order = output_columns.get("sortOrder", "ASC")
+        sort_order = output_columns.sort_order
         reverse = sort_order == "DESC"
 
         if sort_type == "ALPHANUMERIC":

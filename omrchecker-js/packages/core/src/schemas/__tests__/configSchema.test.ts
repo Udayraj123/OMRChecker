@@ -23,7 +23,7 @@ describe('ConfigSchema', () => {
   it('should reject invalid threshold values out of range', () => {
     const config = {
       thresholding: {
-        MIN_GAP_TWO_BUBBLES: 150, // Max is 100
+        min_gap_two_bubbles: 150, // Max is 100
       },
     };
 
@@ -35,9 +35,9 @@ describe('ConfigSchema', () => {
   it('should accept valid thresholding config', () => {
     const config = {
       thresholding: {
-        MIN_GAP_TWO_BUBBLES: 50,
-        MIN_JUMP: 25,
-        GLOBAL_PAGE_THRESHOLD: 200,
+        min_gap_two_bubbles: 50,
+        min_jump: 25,
+        global_page_threshold: 200,
       },
     };
 
@@ -140,8 +140,8 @@ describe('ConfigSchema', () => {
   it('should handle complex nested config', () => {
     const config = {
       thresholding: {
-        MIN_GAP_TWO_BUBBLES: 30,
-        GLOBAL_PAGE_THRESHOLD: 180,
+        min_gap_two_bubbles: 30,
+        global_page_threshold: 180,
       },
       outputs: {
         output_mode: 'moderation',

@@ -45,8 +45,8 @@ class ConcreteWarpProcessor(WarpOnPointsCommon):
     def validate_and_remap_options_schema(self, options):
         """Simple passthrough validation"""
         return {
-            "enableCropping": options.get("enableCropping", False),
-            "tuningOptions": options.get("tuningOptions", {}),
+            "enable_cropping": options.get("enable_cropping", False),
+            "tuning_options": options.get("tuning_options", {}),
         }
 
     def prepare_image_before_extraction(self, image):

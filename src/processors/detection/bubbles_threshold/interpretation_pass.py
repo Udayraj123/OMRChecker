@@ -89,42 +89,47 @@ class BubblesThresholdInterpretationPass(FieldTypeInterpretationPass):
     def get_outlier_deviation_threshold(
         self,
         all_outlier_deviations,
-    ):
-        config = self.tuning_config
-        # ruff: noqa: N806
-        MIN_JUMP_STD = config.thresholding.min_jump_std
-        GLOBAL_PAGE_THRESHOLD_STD = config.thresholding.global_page_threshold_std
+    ) -> float:
+        """Calculate outlier deviation threshold using threshold strategy.
 
-        # Use GlobalThresholdStrategy instead of static method
-        strategy = GlobalThresholdStrategy()
+        Args:
+            all_outlier_deviations: List of standard deviations from all fields
+
+        Returns:
+            Calculated threshold value
+        """
+        config = self.tuning_config.thresholding
         threshold_config = ThresholdConfig(
-            min_jump=MIN_JUMP_STD,
-            default_threshold=GLOBAL_PAGE_THRESHOLD_STD,
+            min_jump=config.min_jump_std,
+            default_threshold=config.global_page_threshold_std,
         )
 
-        # all_outlier_deviations is already a list of floats (std deviations)
+        strategy = GlobalThresholdStrategy()
         result = strategy.calculate_threshold(all_outlier_deviations, threshold_config)
         return result.threshold_value
 
     def get_fallback_threshold(
         self,
         field_wise_means_and_refs,
-    ):
-        config = self.tuning_config
-        # ruff: noqa: N806
-        GLOBAL_PAGE_THRESHOLD = config.thresholding.global_page_threshold
-        MIN_JUMP = config.thresholding.min_jump
+    ) -> tuple[float, float]:
+        """Calculate fallback threshold using threshold strategy.
 
-        # Use GlobalThresholdStrategy instead of static method
-        strategy = GlobalThresholdStrategy()
+        Args:
+            field_wise_means_and_refs: List of BubbleMeanValue objects from all fields
+
+        Returns:
+            Tuple of (fallback_threshold, global_max_jump)
+        """
+        config = self.tuning_config.thresholding
         threshold_config = ThresholdConfig(
-            min_jump=MIN_JUMP,
-            default_threshold=GLOBAL_PAGE_THRESHOLD,
+            min_jump=config.min_jump,
+            default_threshold=config.global_page_threshold,
         )
 
         # field_wise_means_and_refs is a list of BubbleMeanValue objects
         bubble_values = [item.mean_value for item in field_wise_means_and_refs]
 
+        strategy = GlobalThresholdStrategy()
         result = strategy.calculate_threshold(bubble_values, threshold_config)
 
         # Approximate global_max_jump from result

@@ -52,13 +52,13 @@ function createMockField(fieldLabel: string = 'q1', emptyValue: string = ''): Bu
 function createMockTuningConfig(showConfidenceMetrics: boolean = false): Record<string, unknown> {
   return {
     thresholding: {
-      MIN_JUMP: 10,
-      JUMP_DELTA: 5,
-      MIN_GAP_TWO_BUBBLES: 20,
-      MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK: 15,
-      CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY: 10,
-      GLOBAL_THRESHOLD_MARGIN: 5,
-      GLOBAL_PAGE_THRESHOLD: 180,
+      min_jump: 10,
+      jump_delta: 5,
+      min_gap_two_bubbles: 20,
+      min_jump_surplus_for_global_fallback: 15,
+      confident_jump_surplus_for_disparity: 10,
+      global_threshold_margin: 5,
+      global_page_threshold: 180,
     },
     outputs: {
       show_confidence_metrics: showConfidenceMetrics,

@@ -57,8 +57,8 @@ describe('BubblesThresholdInterpretationPass', () => {
       // Set up proper tuning config with thresholding
       tuningConfig = {
         thresholding: {
-          GLOBAL_PAGE_THRESHOLD: 180,
-          MIN_JUMP: 10,
+          global_page_threshold: 180,
+          min_jump: 10,
         },
       };
       pass = new BubblesThresholdInterpretationPass(
@@ -97,10 +97,10 @@ describe('BubblesThresholdInterpretationPass', () => {
       // Set up proper tuning config with thresholding
       tuningConfig = {
         thresholding: {
-          MIN_JUMP_STD: 5.0,
-          GLOBAL_PAGE_THRESHOLD_STD: 10.0,
-          GLOBAL_PAGE_THRESHOLD: 180,
-          MIN_JUMP: 10,
+          min_jump_std: 5.0,
+          global_page_threshold_std: 10.0,
+          global_page_threshold: 180,
+          min_jump: 10,
         },
       };
       pass = new BubblesThresholdInterpretationPass(
@@ -138,8 +138,8 @@ describe('BubblesThresholdInterpretationPass', () => {
       // Set up proper tuning config with thresholding
       tuningConfig = {
         thresholding: {
-          MIN_JUMP_STD: 5.0,
-          GLOBAL_PAGE_THRESHOLD_STD: 10.0,
+          min_jump_std: 5.0,
+          global_page_threshold_std: 10.0,
         },
       };
       pass = new BubblesThresholdInterpretationPass(
@@ -160,8 +160,8 @@ describe('BubblesThresholdInterpretationPass', () => {
       // Set up proper tuning config with thresholding
       tuningConfig = {
         thresholding: {
-          GLOBAL_PAGE_THRESHOLD: 180,
-          MIN_JUMP: 10,
+          global_page_threshold: 180,
+          min_jump: 10,
         },
       };
       pass = new BubblesThresholdInterpretationPass(

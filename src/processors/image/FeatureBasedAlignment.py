@@ -30,10 +30,10 @@ class FeatureBasedAlignment(ImageTemplatePreprocessor):
         ref_img = ImageUtils.load_image(self.ref_path, cv2.IMREAD_GRAYSCALE)
         self.ref_img = ImageUtils.resize_to_shape(self.processing_image_shape, ref_img)
         # get options with defaults
-        self.max_features = int(options.get("maxFeatures", 500))
-        self.good_match_percent = options.get("goodMatchPercent", 0.10)
+        self.max_features = int(options.get("max_features", 500))
+        self.good_match_percent = options.get("good_match_percent", 0.10)
 
-        matcher_type = options.get("matcherType", "BRUTEFORCE_HAMMING")
+        matcher_type = options.get("matcher_type", "BRUTEFORCE_HAMMING")
         if matcher_type == "NORM_HAMMING":
             self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
         elif matcher_type == "BRUTEFORCE_HAMMING":

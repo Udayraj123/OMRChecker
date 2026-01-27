@@ -3,6 +3,18 @@
 ## Overview
 This document describes the 1:1 correspondence between Python and TypeScript processor files after refactoring.
 
+## Core Utilities
+
+| Python File | TypeScript File | Test File |
+|------------|----------------|-----------|
+| `src/utils/json_conversion.py` | `packages/core/src/utils/jsonConversion.ts` | `packages/core/src/utils/__tests__/jsonConversion.test.ts` |
+
+### JSON Conversion Utilities
+These utilities provide:
+- `camelCase` ↔ `snake_case` conversion for JSON keys
+- Validation to detect clashing keys (both camelCase and snake_case versions of same key)
+- Recursive dictionary key transformation
+
 ## Image Processors
 
 ### Basic Filters

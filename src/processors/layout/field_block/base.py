@@ -76,10 +76,10 @@ class FieldBlock:
             field_block_object.get,
             [
                 "direction",
-                "emptyValue",
-                "fieldDetectionType",
-                "fieldLabels",
-                "labelsGap",
+                "empty_value",
+                "field_detection_type",
+                "field_labels",
+                "labels_gap",
                 "origin",
             ],
         )
@@ -124,10 +124,10 @@ class FieldBlock:
             field_block_object.get,
             [
                 "alignment",
-                "bubbleDimensions",
-                "bubbleValues",
-                "bubblesGap",
-                "bubbleFieldType",
+                "bubble_dimensions",
+                "bubble_values",
+                "bubbles_gap",
+                "bubble_field_type",
             ],
         )
         # Setup custom props
@@ -147,7 +147,7 @@ class FieldBlock:
         (scan_zone,) = map(
             field_block_object.get,
             [
-                "scanZone",
+                "scan_zone",
             ],
         )
         # Setup custom props
@@ -158,7 +158,7 @@ class FieldBlock:
         (scan_zone,) = map(
             field_block_object.get,
             [
-                "scanZone",
+                "scan_zone",
             ],
         )
         self.scan_zone = scan_zone

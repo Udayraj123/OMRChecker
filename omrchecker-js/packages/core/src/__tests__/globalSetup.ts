@@ -1,5 +1,4 @@
 // Global setup runs ONCE before all test workers start
-import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';

@@ -103,7 +103,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             "enable_cropping": True,
             "tuning_options": {
                 "warp_method": tuning_options.get(
-                    "warpMethod", WarpMethod.PERSPECTIVE_TRANSFORM
+                    "warp_method", WarpMethod.PERSPECTIVE_TRANSFORM
                 )
             },
         }
@@ -355,10 +355,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
 
         if corners is None:
             msg = f"Error: No marker found in patch {zone_label}"
-            raise ImageProcessingError(
-                msg,
-                context={"zone_label": zone_label},
-            )
+            raise ImageProcessingError(msg)
 
         return corners
 

@@ -14,6 +14,10 @@ import { GlobalThreshold, type ThresholdConfig } from '../../threshold/GlobalThr
 import type { TuningConfig, FieldLevelAggregates, FileLevelAggregates } from '../base/commonPass';
 import type { BubbleMeanValue } from '../models/detectionResults';
 import { DetectionRepository } from '../../repositories/DetectionRepository';
+import type {
+  OutlierDeviationThresholdConfig,
+  FallbackThresholdConfig,
+} from '../../../schemas/models/config';
 
 const logger = new Logger('BubblesThresholdInterpretationPass');
 
@@ -103,13 +107,10 @@ export class BubblesThresholdInterpretationPass extends FieldTypeInterpretationP
    * @returns Outlier deviation threshold
    */
   getOutlierDeviationThreshold(allOutlierDeviations: number[]): number {
-    const config = this.tuningConfig.thresholding as {
-      MIN_JUMP_STD?: number;
-      GLOBAL_PAGE_THRESHOLD_STD?: number;
-    };
+    const config = this.tuningConfig.thresholding as OutlierDeviationThresholdConfig;
 
-    const minJumpStd = config.MIN_JUMP_STD || 5.0;
-    const globalPageThresholdStd = config.GLOBAL_PAGE_THRESHOLD_STD || 10.0;
+    const minJumpStd = config.min_jump_std || 5.0;
+    const globalPageThresholdStd = config.global_page_threshold_std || 10.0;
 
     // Use GlobalThresholdStrategy
     const strategy = new GlobalThreshold();
@@ -133,13 +134,10 @@ export class BubblesThresholdInterpretationPass extends FieldTypeInterpretationP
     fileLevelFallbackThreshold: number;
     globalMaxJump: number;
   } {
-    const config = this.tuningConfig.thresholding as {
-      GLOBAL_PAGE_THRESHOLD?: number;
-      MIN_JUMP?: number;
-    };
+    const config = this.tuningConfig.thresholding as FallbackThresholdConfig;
 
-    const globalPageThreshold = config.GLOBAL_PAGE_THRESHOLD || 180;
-    const minJump = config.MIN_JUMP || 10;
+    const globalPageThreshold = config.global_page_threshold || 180;
+    const minJump = config.min_jump || 10;
 
     // Use GlobalThresholdStrategy
     const strategy = new GlobalThreshold();

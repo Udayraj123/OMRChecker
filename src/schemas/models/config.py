@@ -4,7 +4,7 @@ import re
 import string
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, TypedDict
 
 from src.utils.json_conversion import convert_dict_keys_to_snake
 from src.utils.logger import logger
@@ -36,6 +36,44 @@ class ThresholdingConfig:
     def to_dict(self) -> dict:
         """Convert ThresholdingConfig to dictionary."""
         return dataclass_to_dict(self)
+
+
+# TypedDict subsets for specific use cases (corresponds to TypeScript interfaces)
+
+
+class InterpretationThresholdConfig(TypedDict, total=False):
+    """Subset of ThresholdingConfig for interpretation threshold calculation.
+
+    Used in BubblesThresholdInterpretation.
+    """
+
+    min_jump: int
+    jump_delta: int
+    min_gap_two_bubbles: int
+    min_jump_surplus_for_global_fallback: int
+    confident_jump_surplus_for_disparity: int
+    global_threshold_margin: int
+    global_page_threshold: int
+
+
+class OutlierDeviationThresholdConfig(TypedDict, total=False):
+    """Subset of ThresholdingConfig for outlier deviation threshold calculation.
+
+    Used in BubblesThresholdInterpretationPass.
+    """
+
+    min_jump_std: int
+    global_page_threshold_std: int
+
+
+class FallbackThresholdConfig(TypedDict, total=False):
+    """Subset of ThresholdingConfig for fallback threshold calculation.
+
+    Used in BubblesThresholdInterpretationPass.
+    """
+
+    global_page_threshold: int
+    min_jump: int
 
 
 @dataclass

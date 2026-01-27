@@ -21,6 +21,12 @@ from src.utils.validations import (
     validate_evaluation_json,
     validate_template_json,
 )
+from src.utils.json_conversion import (
+    convert_dict_keys_to_snake,
+    convert_dict_keys_to_camel,
+    validate_no_key_clash,
+)
+
 
 OVERRIDE_MERGER = Merger(
     # pass in a list of tuples,with the
@@ -45,6 +51,9 @@ def open_config_with_defaults(config_path: Path, args: dict[str, Any]) -> Config
 
     Returns:
         Config dataclass instance with merged configuration
+
+    Raises:
+        ValueError: If the config JSON has clashing keys (both camelCase and snake_case)
     """
     output_mode = args["outputMode"]
     debug_mode = args["debug"]
@@ -52,6 +61,12 @@ def open_config_with_defaults(config_path: Path, args: dict[str, Any]) -> Config
 
     # Validate user config BEFORE merging with defaults
     validate_config_json(user_tuning_config, config_path)
+
+    # Validate no key clashes before conversion
+    try:
+        validate_no_key_clash(user_tuning_config)
+    except ValueError as e:
+        raise ValueError(f"Invalid config JSON at {config_path}: {e}") from e
 
     defaults_from_args = {
         "outputs": {
@@ -91,22 +106,30 @@ def open_template_with_defaults(template_path: Path) -> "TemplateConfig":
 
     Returns:
         TemplateConfig dataclass instance with merged configuration
-    """
-    from src.utils.json_conversion import convert_dict_keys_to_snake
 
+    Raises:
+        ValueError: If the template JSON has clashing keys (both camelCase and snake_case)
+    """
     user_template = load_json(template_path)
 
     # Validate user template BEFORE merging with defaults
     validate_template_json(user_template, template_path)
 
-    # Convert camelCase keys to snake_case for internal Python use
-    user_template = convert_dict_keys_to_snake(user_template)
+    # Validate no key clashes before conversion
+    try:
+        validate_no_key_clash(user_template)
+    except ValueError as e:
+        raise ValueError(f"Invalid template JSON at {template_path}: {e}") from e
 
+    # Note: Keep user_template in camelCase for merging
     # Convert TEMPLATE_DEFAULTS to dict for merging
     defaults_dict = TEMPLATE_DEFAULTS.to_dict()
-    merged_template = OVERRIDE_MERGER.merge(deepcopy(defaults_dict), user_template)
+    # Convert defaults dict back to camelCase for proper merging with user JSON
+    defaults_camel = convert_dict_keys_to_camel(defaults_dict)
 
-    # Convert merged dict to TemplateConfig dataclass
+    merged_template = OVERRIDE_MERGER.merge(deepcopy(defaults_camel), user_template)
+
+    # Convert merged dict to TemplateConfig dataclass (from_dict handles conversion)
     return TemplateConfig.from_dict(merged_template)
 
 
@@ -122,13 +145,21 @@ def open_evaluation_with_defaults(evaluation_path: Path) -> dict[str, Any]:
     Note:
         Returns dict for backward compatibility with existing code that expects
         dict-like access. Uses EvaluationConfig dataclass internally for validation.
+
+    Raises:
+        ValueError: If the evaluation JSON has clashing keys (both camelCase and snake_case)
     """
-    from src.utils.json_conversion import convert_dict_keys_to_snake
 
     user_evaluation_config = load_json(evaluation_path)
 
     # Validate user evaluation BEFORE merging with defaults
     validate_evaluation_json(user_evaluation_config, evaluation_path)
+
+    # Validate no key clashes before conversion
+    try:
+        validate_no_key_clash(user_evaluation_config)
+    except ValueError as e:
+        raise ValueError(f"Invalid evaluation JSON at {evaluation_path}: {e}") from e
 
     # Convert camelCase keys to snake_case for merging with defaults
     user_evaluation_config = convert_dict_keys_to_snake(user_evaluation_config)

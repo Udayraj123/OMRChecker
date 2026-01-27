@@ -17,6 +17,7 @@ import { Logger } from '../../utils/logger';
 import { ImageUtils } from '../../utils/ImageUtils';
 import { MathUtils, type Point, type Rectangle } from '../../utils/math';
 import { DrawingUtils } from '../../utils/drawing';
+import { CLR_WHITE } from '../../utils/constants';
 
 const logger = new Logger('PageDetection');
 
@@ -34,7 +35,6 @@ const TOP_CONTOURS_COUNT = 4;
 // HSV white color range for colored Canny
 const HSV_WHITE_LOW = new cv.Scalar(0, 0, 130);
 const HSV_WHITE_HIGH = new cv.Scalar(255, 80, 255);
-const CLR_WHITE: [number, number, number] = [255, 255, 255];
 
 export class ImageProcessingError extends Error {
   filePath?: string;

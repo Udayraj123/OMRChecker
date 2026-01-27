@@ -48,7 +48,7 @@ def apply_template_alignment(gray_image, colored_image, template: "Template", co
 
         margins = field_block_alignment.get("margins", template_margins)
         max_displacement = field_block_alignment.get(
-            "maxDisplacement", template_max_displacement
+            "max_displacement", template_max_displacement
         )
 
         if max_displacement == 0:

@@ -213,10 +213,10 @@ export const DEFAULT_TEMPLATE_CONFIG: Partial<TemplateConfig> = {
 export interface TuningConfig {
   /** Thresholding parameters */
   thresholding?: {
-    MIN_GAP_TWO_BUBBLES?: number;
-    MIN_JUMP?: number;
-    MIN_JUMP_STD?: number;
-    GLOBAL_THRESHOLD_MARGIN?: number;
+    min_gap_two_bubbles?: number;
+    min_jump?: number;
+    min_jump_std?: number;
+    global_threshold_margin?: number;
     [key: string]: any;
   };
 

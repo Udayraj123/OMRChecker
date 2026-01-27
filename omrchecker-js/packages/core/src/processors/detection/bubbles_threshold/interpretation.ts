@@ -16,6 +16,7 @@ import { type ThresholdConfig, type ThresholdResult } from '../../threshold/Glob
 import { LocalThreshold } from '../../threshold/LocalThreshold';
 import type { BubblesScanBox } from '../../layout/field/bubbleField';
 import { BubblesFieldInterpretationDrawing } from './interpretationDrawing';
+import type { InterpretationThresholdConfig } from '../../../schemas/models/config';
 
 const logger = new Logger('BubblesFieldInterpretation');
 
@@ -246,21 +247,13 @@ export class BubblesFieldInterpretation extends FieldInterpretation {
   private createThresholdConfig(
     _fileLevelInterpretationAggregates: unknown
   ): ThresholdConfig {
-    const thresholding = this.tuningConfig.thresholding as {
-      MIN_JUMP?: number;
-      JUMP_DELTA?: number;
-      MIN_GAP_TWO_BUBBLES?: number;
-      MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK?: number;
-      CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY?: number;
-      GLOBAL_THRESHOLD_MARGIN?: number;
-      GLOBAL_PAGE_THRESHOLD?: number;
-    } | undefined;
+    const thresholding = this.tuningConfig.thresholding as InterpretationThresholdConfig;
 
     return {
-      defaultThreshold: thresholding?.GLOBAL_PAGE_THRESHOLD || 180,
-      minJump: thresholding?.MIN_JUMP || 10,
-      minGapTwoBubbles: thresholding?.MIN_GAP_TWO_BUBBLES || 20,
-      minJumpSurplusForGlobalFallback: thresholding?.MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK || 10,
+      defaultThreshold: thresholding?.global_page_threshold || 180,
+      minJump: thresholding?.min_jump || 10,
+      minGapTwoBubbles: thresholding?.min_gap_two_bubbles || 20,
+      minJumpSurplusForGlobalFallback: thresholding?.min_jump_surplus_for_global_fallback || 10,
       // Note: TypeScript ThresholdConfig is simpler than Python's
       // Additional config options can be added if needed
     };

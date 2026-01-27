@@ -112,6 +112,7 @@ class TemplateConfig:
         """Create TemplateConfig from dictionary (typically from JSON).
 
         Converts camelCase keys from JSON to snake_case for Python dataclass fields.
+        Preserves user-defined names in customBubbleFieldTypes and fieldBlocks.
 
         Args:
             data: Dictionary containing template configuration data (with camelCase keys)
@@ -119,7 +120,25 @@ class TemplateConfig:
         Returns:
             TemplateConfig instance with nested dataclasses
         """
-        # Convert all keys from camelCase to snake_case
+        # Preserve and convert customBubbleFieldTypes
+        # Keep type names (keys), but convert keys within each type definition
+        custom_bubble_field_types_raw = data.get("customBubbleFieldTypes", {})
+        custom_bubble_field_types_converted = {}
+        for type_name, type_data in custom_bubble_field_types_raw.items():
+            # Preserve type name, convert keys within type definition
+            custom_bubble_field_types_converted[type_name] = convert_dict_keys_to_snake(
+                type_data
+            )
+
+        # Preserve and convert fieldBlocks
+        # Keep block names (keys), but convert keys within each block
+        field_blocks_raw = data.get("fieldBlocks", {})
+        field_blocks_converted = {}
+        for block_name, block_data in field_blocks_raw.items():
+            # Preserve block name, convert keys within block
+            field_blocks_converted[block_name] = convert_dict_keys_to_snake(block_data)
+
+        # Convert all other top-level keys from camelCase to snake_case
         data = convert_dict_keys_to_snake(data)
 
         return cls(
@@ -128,9 +147,11 @@ class TemplateConfig:
             alignment=AlignmentConfig.from_dict(data.get("alignment", {})),
             conditional_sets=data.get("conditional_sets", []),
             custom_labels=data.get("custom_labels", {}),
-            custom_bubble_field_types=data.get("custom_bubble_field_types", {}),
+            # Use converted custom bubble field types (type names preserved, keys converted)
+            custom_bubble_field_types=custom_bubble_field_types_converted,
             empty_value=data.get("empty_value", ""),
-            field_blocks=data.get("field_blocks", {}),
+            # Use converted field blocks (block names preserved, keys converted)
+            field_blocks=field_blocks_converted,
             field_blocks_offset=data.get("field_blocks_offset", [0, 0]),
             output_columns=OutputColumnsConfig.from_dict(
                 data.get("output_columns", {})

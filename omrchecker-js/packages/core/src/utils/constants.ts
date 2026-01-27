@@ -16,7 +16,7 @@ export type BubbleFieldType = {
 // DRY: Color constant factory to avoid repetition
 // OpenCV uses BGR format, so we keep the same order as Python
 // and add alpha channel (255 = fully opaque)
-function createColor(b: number, g: number, r: number, a: number = 255): ColorTuple {
+export function createColor(b: number, g: number, r: number, a: number = 255): ColorTuple {
   return [b, g, r, a] as const;
 }
 

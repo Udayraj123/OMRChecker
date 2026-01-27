@@ -75,22 +75,22 @@ export class DrawingUtils {
    * @param color - Color tuple (BGRA format)
    * @returns Color array matching image channels
    */
-  private static adjustColorForImage(image: cv.Mat, color: ColorTuple): number[] {
+  private static adjustColorForImage(image: cv.Mat, color: ColorTuple): cv.Scalar {
     const channels = image.channels();
-    
+
     if (channels === 1) {
       // Grayscale: use average of BGR
-      return [(color[0] + color[1] + color[2]) / 3];
+      return new cv.Scalar((color[0] + color[1] + color[2]) / 3);
     } else if (channels === 3) {
       // BGR: use first 3 elements
-      return [color[0], color[1], color[2]];
+      return new cv.Scalar(color[0], color[1], color[2]);
     } else if (channels === 4) {
       // BGRA: use all 4 elements
-      return color;
+      return new cv.Scalar(color[0], color[1], color[2], color[3]);
     }
-    
+
     // Fallback: return as-is
-    return color;
+    return new cv.Scalar(color[0], color[1], color[2], color[3]);
   }
 
   /**

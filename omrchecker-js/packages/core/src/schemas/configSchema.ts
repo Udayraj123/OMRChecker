@@ -65,49 +65,49 @@ const CONFIG_SCHEMA = {
           type: 'object',
           additionalProperties: false,
           properties: {
-            MIN_GAP_TWO_BUBBLES: integerRange(
+            min_gap_two_bubbles: integerRange(
               10,
               100,
               'Minimum difference between all mean values of the bubbles'
             ),
-            MIN_JUMP: integerRange(
+            min_jump: integerRange(
               10,
               100,
               'Minimum difference between consecutive elements'
             ),
-            MIN_JUMP_STD: integerRange(1, 50, 'The MIN_JUMP for the standard deviation plot'),
-            MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK: integerRange(
+            min_jump_std: integerRange(1, 50, 'The min_jump for the standard deviation plot'),
+            min_jump_surplus_for_global_fallback: integerRange(
               0,
               20,
               'Added to jump value for fallback threshold'
             ),
-            GLOBAL_THRESHOLD_MARGIN: integerRange(
+            global_threshold_margin: integerRange(
               0,
               20,
               'Determines if global threshold is too close to lower bubbles'
             ),
-            JUMP_DELTA: integerRange(10, 100, 'Deprecated, used only in plots'),
-            JUMP_DELTA_STD: integerRange(
+            jump_delta: integerRange(10, 100, 'Deprecated, used only in plots'),
+            jump_delta_std: integerRange(
               1,
               50,
               'Minimum delta for jump in std plot'
             ),
-            CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY: integerRange(
+            confident_jump_surplus_for_disparity: integerRange(
               0,
               100,
               'Distinguish safe vs underconfident detections'
             ),
-            GLOBAL_PAGE_THRESHOLD: integerRange(
+            global_page_threshold: integerRange(
               0,
               255,
               'Starting value before applying local outlier threshold'
             ),
-            GLOBAL_PAGE_THRESHOLD_STD: integerRange(
+            global_page_threshold_std: integerRange(
               0,
               60,
               'Starting value for standard deviation threshold'
             ),
-            GAMMA_LOW: numberRange(
+            gamma_low: numberRange(
               0,
               1,
               'Used for creating darker image for enhanced line detection'

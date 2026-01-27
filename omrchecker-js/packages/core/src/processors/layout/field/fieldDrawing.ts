@@ -5,7 +5,7 @@
  * Handles visualization of fields and scan boxes.
  */
 
-import { CLR_BLACK } from '../../../utils/constants';
+import { CLR_BLACK, ColorTuple } from '../../../utils/constants';
 import { DrawingUtils } from '../../../utils/drawing';
 import type { Field } from './base';
 
@@ -51,11 +51,11 @@ export class FieldDrawing {
     for (const unitBubble of scanBoxes) {
       const shiftedPosition = unitBubble.getShiftedPosition(shifts);
       const dimensions = unitBubble.dimensions;
-      // Convert border from Vec3 to ColorTuple, or use default color if number
-      const color: [number, number, number] =
+      // Convert border from Vec3 to ColorTuple (add alpha channel), or use default color if number
+      const color: ColorTuple =
         typeof border === 'number'
           ? CLR_BLACK
-          : ([border[0], border[1], border[2]] as [number, number, number]);
+          : ([border[0], border[1], border[2], 255] as ColorTuple);
       const borderThickness = typeof border === 'number' ? border : 3;
       DrawingUtils.drawBox(
         markedImage,

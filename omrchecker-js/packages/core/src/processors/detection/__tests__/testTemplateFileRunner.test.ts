@@ -354,10 +354,10 @@ describe('TemplateFileRunner', () => {
     // Provide proper tuning config with thresholding settings (required for interpretation pass)
     const tuningConfig = {
       thresholding: {
-        MIN_JUMP_STD: 5.0,
-        GLOBAL_PAGE_THRESHOLD_STD: 10.0,
-        GLOBAL_PAGE_THRESHOLD: 180,
-        MIN_JUMP: 10,
+        min_jump_std: 5.0,
+        global_page_threshold_std: 10.0,
+        global_page_threshold: 180,
+        min_jump: 10,
       },
     };
     runner = new TemplateFileRunner(templateLayout, tuningConfig);

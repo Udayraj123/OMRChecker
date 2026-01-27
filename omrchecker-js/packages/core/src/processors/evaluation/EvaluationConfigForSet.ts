@@ -6,7 +6,7 @@
 import { AnswerMatcher, AnswerType, SchemaVerdict, Verdict } from './AnswerMatcher';
 import { SectionMarkingScheme, DEFAULT_SECTION_KEY } from './SectionMarkingScheme';
 import { Logger } from '../../utils/logger';
-import { CLR_BLACK, CLR_WHITE } from '../../utils/constants';
+import { CLR_BLACK, CLR_WHITE, createColor, type ColorTuple } from '../../utils/constants';
 import { FieldDefinitionError, ConfigError, OMRCheckerError } from '../../core/exceptions';
 import { SCHEMA_VERDICTS_IN_ORDER } from '../../schemas/constants';
 import type {
@@ -76,8 +76,8 @@ export class EvaluationConfigForSet {
     position?: [number, number];
     size?: number;
   };
-  public verdictColors?: Record<string, [number, number, number]>;
-  public verdictSymbolColors?: Record<string, [number, number, number]>;
+  public verdictColors?: Record<string, ColorTuple>;
+  public verdictSymbolColors?: Record<string, ColorTuple>;
 
   constructor(
     setName: string,
@@ -524,7 +524,7 @@ export class EvaluationConfigForSet {
     questionMeta: any,
     isFieldMarked: boolean,
     imageType: 'GRAYSCALE' | 'COLORED'
-  ): [string, string | [number, number, number], string | [number, number, number], number] {
+  ): [string, ColorTuple | string, ColorTuple | string, number] {
     const symbolPositive = '+';
     const symbolNegative = '-';
     const symbolNeutral = 'o';
@@ -537,24 +537,25 @@ export class EvaluationConfigForSet {
     const questionSchemaVerdict = questionMeta.question_schema_verdict;
     const delta = questionMeta.delta || 0;
 
-    const colorCorrect = this.verdictColors?.correct || [0, 255, 0]; // Green
-    const colorIncorrect = this.verdictColors?.incorrect || [0, 0, 255]; // Red
+    // Use createColor helper to ensure RGBA format
+    const colorCorrect = this.verdictColors?.correct || createColor(0, 255, 0); // Green
+    const colorIncorrect = this.verdictColors?.incorrect || createColor(0, 0, 255); // Red
     const colorNeutral =
-      this.verdictColors?.neutral || this.verdictColors?.incorrect || [0, 0, 255];
-    const colorBonus = this.verdictColors?.bonus || [255, 221, 0]; // Cyan-like
+      this.verdictColors?.neutral || this.verdictColors?.incorrect || createColor(0, 0, 255);
+    const colorBonus = this.verdictColors?.bonus || createColor(255, 221, 0); // Cyan-like
 
     const symbolColorPositive =
-      this.verdictSymbolColors?.positive || [0, 0, 0]; // Black
+      this.verdictSymbolColors?.positive || CLR_BLACK;
     const symbolColorNegative =
-      this.verdictSymbolColors?.negative || [0, 0, 0]; // Black
+      this.verdictSymbolColors?.negative || CLR_BLACK;
     const symbolColorNeutral =
-      this.verdictSymbolColors?.neutral || [0, 0, 0]; // Black
+      this.verdictSymbolColors?.neutral || CLR_BLACK;
     const symbolColorBonus =
-      this.verdictSymbolColors?.bonus || [0, 0, 0]; // Black
+      this.verdictSymbolColors?.bonus || CLR_BLACK;
 
     let symbol: string;
-    let color: string | [number, number, number];
-    let symbolColor: string | [number, number, number];
+    let color: ColorTuple | string;
+    let symbolColor: ColorTuple | string;
 
     if (isFieldMarked) {
       // Always render symbol as per delta (regardless of bonus) for marked bubbles

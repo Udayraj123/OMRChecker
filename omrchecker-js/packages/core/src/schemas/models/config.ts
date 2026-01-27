@@ -13,18 +13,51 @@ const logger = new Logger('ConfigModels');
  * Configuration for bubble thresholding algorithm.
  */
 export interface ThresholdingConfig {
-  GAMMA_LOW: number;
-  MIN_GAP_TWO_BUBBLES: number;
-  MIN_JUMP: number;
-  CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY: number;
-  MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK: number;
-  GLOBAL_THRESHOLD_MARGIN: number;
-  JUMP_DELTA: number;
-  GLOBAL_PAGE_THRESHOLD: number;
-  GLOBAL_PAGE_THRESHOLD_STD: number;
-  MIN_JUMP_STD: number;
-  JUMP_DELTA_STD: number;
+  gamma_low: number;
+  min_gap_two_bubbles: number;
+  min_jump: number;
+  confident_jump_surplus_for_disparity: number;
+  min_jump_surplus_for_global_fallback: number;
+  global_threshold_margin: number;
+  jump_delta: number;
+  global_page_threshold: number;
+  global_page_threshold_std: number;
+  min_jump_std: number;
+  jump_delta_std: number;
 }
+
+/**
+ * Subset of ThresholdingConfig for interpretation threshold calculation.
+ * Used in BubblesThresholdInterpretation.
+ */
+export interface InterpretationThresholdConfig {
+  min_jump?: number;
+  jump_delta?: number;
+  min_gap_two_bubbles?: number;
+  min_jump_surplus_for_global_fallback?: number;
+  confident_jump_surplus_for_disparity?: number;
+  global_threshold_margin?: number;
+  global_page_threshold?: number;
+}
+
+/**
+ * Subset of ThresholdingConfig for outlier deviation threshold calculation.
+ * Used in BubblesThresholdInterpretationPass.
+ */
+export interface OutlierDeviationThresholdConfig {
+  min_jump_std?: number;
+  global_page_threshold_std?: number;
+}
+
+/**
+ * Subset of ThresholdingConfig for fallback threshold calculation.
+ * Used in BubblesThresholdInterpretationPass.
+ */
+export interface FallbackThresholdConfig {
+  global_page_threshold?: number;
+  min_jump?: number;
+}
+
 
 /**
  * A single file grouping rule with dynamic path pattern.
@@ -376,17 +409,17 @@ export class Config {
   ) {
     this.path = path;
     this.thresholding = {
-      GAMMA_LOW: 0.7,
-      MIN_GAP_TWO_BUBBLES: 30,
-      MIN_JUMP: 25,
-      CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY: 25,
-      MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK: 5,
-      GLOBAL_THRESHOLD_MARGIN: 10,
-      JUMP_DELTA: 30,
-      GLOBAL_PAGE_THRESHOLD: 200,
-      GLOBAL_PAGE_THRESHOLD_STD: 10,
-      MIN_JUMP_STD: 15,
-      JUMP_DELTA_STD: 5,
+      gamma_low: 0.7,
+      min_gap_two_bubbles: 30,
+      min_jump: 25,
+      confident_jump_surplus_for_disparity: 25,
+      min_jump_surplus_for_global_fallback: 5,
+      global_threshold_margin: 10,
+      jump_delta: 30,
+      global_page_threshold: 200,
+      global_page_threshold_std: 10,
+      min_jump_std: 15,
+      jump_delta_std: 5,
       ...thresholding,
     };
     this.outputs = {
