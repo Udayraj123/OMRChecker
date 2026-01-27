@@ -1,10 +1,10 @@
 {
-  "source_type": "local",
+  "sourceType": "local",
   "options": {
-    "questions_in_order": [
+    "questionsInOrder": [
       "q1..22"
     ],
-    "answers_in_order": [
+    "answersInOrder": [
       "C",
       "C",
       "B",
@@ -32,7 +32,7 @@
       "A"
     ]
   },
-  "marking_schemes": {
+  "markingSchemes": {
     "DEFAULT": {
       "correct": "1",
       "incorrect": "0",
@@ -89,8 +89,8 @@
       }
     }
   },
-  "outputs_configuration": {
-    "should_explain_scoring": true,
-    "should_export_explanation_csv": true
+  "outputsConfiguration": {
+    "shouldExplainScoring": true,
+    "shouldExportExplanationCsv": true
   }
 }

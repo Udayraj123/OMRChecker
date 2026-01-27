@@ -1,16 +1,16 @@
 {
-  "source_type": "csv",
+  "sourceType": "csv",
   "options": {
-    "answer_key_csv_path": "answer_key.csv"
+    "answerKeyCsvPath": "answer_key.csv"
   },
-  "marking_schemes": {
+  "markingSchemes": {
     "DEFAULT": {
       "correct": "4",
       "incorrect": "-1",
       "unmarked": "0"
     }
   },
-  "outputs_configuration": {
-    "should_explain_scoring": true
+  "outputsConfiguration": {
+    "shouldExplainScoring": true
   }
 }

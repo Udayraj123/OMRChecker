@@ -69,15 +69,15 @@ class TestBubblesThresholdInterpretationPass:
         """Create a mock tuning config."""
         config = Mock()
         config.thresholding = Mock()
-        config.thresholding.MIN_JUMP_STD = 5.0
-        config.thresholding.GLOBAL_PAGE_THRESHOLD_STD = 10.0
-        config.thresholding.GLOBAL_PAGE_THRESHOLD = 180
-        config.thresholding.MIN_JUMP = 10
-        config.thresholding.JUMP_DELTA = 20.0
-        config.thresholding.MIN_GAP_TWO_BUBBLES = 20.0
-        config.thresholding.MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK = 10.0
-        config.thresholding.CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY = 15.0
-        config.thresholding.GLOBAL_THRESHOLD_MARGIN = 10.0
+        config.thresholding.min_jump_std = 5.0
+        config.thresholding.global_page_threshold_std = 10.0
+        config.thresholding.global_page_threshold = 180
+        config.thresholding.min_jump = 10
+        config.thresholding.jump_delta = 20.0
+        config.thresholding.min_gap_two_bubbles = 20.0
+        config.thresholding.min_jump_surplus_for_global_fallback = 10.0
+        config.thresholding.confident_jump_surplus_for_disparity = 15.0
+        config.thresholding.global_threshold_margin = 10.0
         return config
 
     def test_constructor_initializes_repository(self):

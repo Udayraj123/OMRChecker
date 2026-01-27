@@ -1,7 +1,7 @@
 {
   "outputs": {
-    "show_image_level": 0,
-    "save_image_level": 0,
-    "colored_outputs_enabled": true
+    "showImageLevel": 0,
+    "saveImageLevel": 0,
+    "coloredOutputsEnabled": true
   }
 }

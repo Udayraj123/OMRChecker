@@ -149,16 +149,16 @@ class BubblesFieldInterpretation(FieldInterpretation):
         """Create threshold configuration from tuning config and file-level aggregates."""
         config = self.tuning_config
         return ThresholdConfig(
-            min_jump=config.thresholding.MIN_JUMP,
-            jump_delta=config.thresholding.JUMP_DELTA,
-            min_gap_two_bubbles=config.thresholding.MIN_GAP_TWO_BUBBLES,
-            min_jump_surplus_for_global_fallback=config.thresholding.MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK,
-            confident_jump_surplus_for_disparity=config.thresholding.CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY,
-            global_threshold_margin=config.thresholding.GLOBAL_THRESHOLD_MARGIN,
+            min_jump=config.thresholding.min_jump,
+            jump_delta=config.thresholding.jump_delta,
+            min_gap_two_bubbles=config.thresholding.min_gap_two_bubbles,
+            min_jump_surplus_for_global_fallback=config.thresholding.min_jump_surplus_for_global_fallback,
+            confident_jump_surplus_for_disparity=config.thresholding.confident_jump_surplus_for_disparity,
+            global_threshold_margin=config.thresholding.global_threshold_margin,
             outlier_deviation_threshold=file_level_interpretation_aggregates.get(
                 "outlier_deviation_threshold_for_file", 5.0
             ),
-            default_threshold=config.thresholding.GLOBAL_PAGE_THRESHOLD,
+            default_threshold=config.thresholding.global_page_threshold,
         )
 
     def _calculate_threshold(

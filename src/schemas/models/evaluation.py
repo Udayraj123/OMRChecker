@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 
+from src.utils.json_conversion import convert_dict_keys_to_snake
 from src.utils.serialization import dataclass_to_dict
 
 
@@ -13,6 +14,16 @@ class DrawScoreConfig:
     position: list[int] = field(default_factory=lambda: [200, 200])
     score_format_string: str = "Score: {score}"
     size: float = 1.5
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "DrawScoreConfig":
+        """Create DrawScoreConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert DrawScoreConfig to dictionary."""
+        return dataclass_to_dict(self)
 
 
 @dataclass
@@ -26,6 +37,16 @@ class DrawAnswersSummaryConfig:
     )
     size: float = 1.0
 
+    @classmethod
+    def from_dict(cls, data: dict) -> "DrawAnswersSummaryConfig":
+        """Create DrawAnswersSummaryConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert DrawAnswersSummaryConfig to dictionary."""
+        return dataclass_to_dict(self)
+
 
 @dataclass
 class DrawAnswerGroupsConfig:
@@ -35,6 +56,16 @@ class DrawAnswerGroupsConfig:
     color_sequence: list[str] = field(
         default_factory=lambda: ["#8DFBC4", "#F7FB8D", "#8D9EFB", "#EA666F"]
     )
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "DrawAnswerGroupsConfig":
+        """Create DrawAnswerGroupsConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert DrawAnswerGroupsConfig to dictionary."""
+        return dataclass_to_dict(self)
 
 
 @dataclass
@@ -62,12 +93,36 @@ class DrawQuestionVerdictsConfig:
         default_factory=DrawAnswerGroupsConfig
     )
 
+    @classmethod
+    def from_dict(cls, data: dict) -> "DrawQuestionVerdictsConfig":
+        """Create DrawQuestionVerdictsConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        if "draw_answer_groups" in data:
+            data["draw_answer_groups"] = DrawAnswerGroupsConfig.from_dict(
+                data["draw_answer_groups"]
+            )
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert DrawQuestionVerdictsConfig to dictionary."""
+        return dataclass_to_dict(self)
+
 
 @dataclass
 class DrawDetectedBubbleTextsConfig:
     """Configuration for drawing detected bubble texts."""
 
     enabled: bool = True
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "DrawDetectedBubbleTextsConfig":
+        """Create DrawDetectedBubbleTextsConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert DrawDetectedBubbleTextsConfig to dictionary."""
+        return dataclass_to_dict(self)
 
 
 @dataclass
@@ -86,6 +141,31 @@ class OutputsConfiguration:
     draw_detected_bubble_texts: DrawDetectedBubbleTextsConfig = field(
         default_factory=DrawDetectedBubbleTextsConfig
     )
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "OutputsConfiguration":
+        """Create OutputsConfiguration from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        return cls(
+            should_explain_scoring=data.get("should_explain_scoring", False),
+            should_export_explanation_csv=data.get(
+                "should_export_explanation_csv", False
+            ),
+            draw_score=DrawScoreConfig.from_dict(data.get("draw_score", {})),
+            draw_answers_summary=DrawAnswersSummaryConfig.from_dict(
+                data.get("draw_answers_summary", {})
+            ),
+            draw_question_verdicts=DrawQuestionVerdictsConfig.from_dict(
+                data.get("draw_question_verdicts", {})
+            ),
+            draw_detected_bubble_texts=DrawDetectedBubbleTextsConfig.from_dict(
+                data.get("draw_detected_bubble_texts", {})
+            ),
+        )
+
+    def to_dict(self) -> dict:
+        """Convert OutputsConfiguration to dictionary."""
+        return dataclass_to_dict(self)
 
 
 @dataclass
@@ -107,67 +187,24 @@ class EvaluationConfig:
     def from_dict(cls, data: dict) -> "EvaluationConfig":
         """Create EvaluationConfig from dictionary (typically from JSON).
 
+        Converts camelCase keys from JSON to snake_case for Python dataclass fields.
+
         Args:
-            data: Dictionary containing evaluation configuration data
+            data: Dictionary containing evaluation configuration data (with camelCase keys)
 
         Returns:
             EvaluationConfig instance with nested dataclasses
         """
-        # Parse outputs_configuration if present
-        outputs_config_data = data.get("outputs_configuration", {})
-        outputs_config = OutputsConfiguration(
-            should_explain_scoring=outputs_config_data.get(
-                "should_explain_scoring", False
-            ),
-            should_export_explanation_csv=outputs_config_data.get(
-                "should_export_explanation_csv", False
-            ),
-            draw_score=DrawScoreConfig(**outputs_config_data.get("draw_score", {})),
-            draw_answers_summary=DrawAnswersSummaryConfig(
-                **outputs_config_data.get("draw_answers_summary", {})
-            ),
-            draw_question_verdicts=DrawQuestionVerdictsConfig(
-                enabled=outputs_config_data.get("draw_question_verdicts", {}).get(
-                    "enabled", True
-                ),
-                verdict_colors=outputs_config_data.get(
-                    "draw_question_verdicts", {}
-                ).get(
-                    "verdict_colors",
-                    {
-                        "correct": "#00FF00",
-                        "neutral": None,
-                        "incorrect": "#FF0000",
-                        "bonus": "#00DDDD",
-                    },
-                ),
-                verdict_symbol_colors=outputs_config_data.get(
-                    "draw_question_verdicts", {}
-                ).get(
-                    "verdict_symbol_colors",
-                    {
-                        "positive": "#000000",
-                        "neutral": "#000000",
-                        "negative": "#000000",
-                        "bonus": "#000000",
-                    },
-                ),
-                draw_answer_groups=DrawAnswerGroupsConfig(
-                    **outputs_config_data.get("draw_question_verdicts", {}).get(
-                        "draw_answer_groups", {}
-                    )
-                ),
-            ),
-            draw_detected_bubble_texts=DrawDetectedBubbleTextsConfig(
-                **outputs_config_data.get("draw_detected_bubble_texts", {})
-            ),
-        )
+        # Convert all keys from camelCase to snake_case
+        data = convert_dict_keys_to_snake(data)
 
         return cls(
             options=data.get("options", {}),
             marking_schemes=data.get("marking_schemes", {}),
             conditional_sets=data.get("conditional_sets", []),
-            outputs_configuration=outputs_config,
+            outputs_configuration=OutputsConfiguration.from_dict(
+                data.get("outputs_configuration", {})
+            ),
         )
 
     def to_dict(self) -> dict:

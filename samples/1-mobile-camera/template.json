@@ -53,7 +53,7 @@
         "type": "FOUR_MARKERS",
         "referenceImage": "omr_marker.jpg",
         "tuningOptions": {
-          "marker_rescale_range": [
+          "markerRescaleRange": [
             80,
             120
           ]

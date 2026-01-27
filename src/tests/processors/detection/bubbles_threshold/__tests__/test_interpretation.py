@@ -153,13 +153,13 @@ class TestBubblesFieldInterpretation:
         """Create a mock tuning config."""
         config = Mock()
         config.thresholding = Mock()
-        config.thresholding.MIN_JUMP = 10
-        config.thresholding.JUMP_DELTA = 5
-        config.thresholding.MIN_GAP_TWO_BUBBLES = 20
-        config.thresholding.MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK = 15
-        config.thresholding.CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY = 10
-        config.thresholding.GLOBAL_THRESHOLD_MARGIN = 5
-        config.thresholding.GLOBAL_PAGE_THRESHOLD = 180
+        config.thresholding.min_jump = 10
+        config.thresholding.jump_delta = 5
+        config.thresholding.min_gap_two_bubbles = 20
+        config.thresholding.min_jump_surplus_for_global_fallback = 15
+        config.thresholding.confident_jump_surplus_for_disparity = 10
+        config.thresholding.global_threshold_margin = 5
+        config.thresholding.global_page_threshold = 180
         config.outputs = Mock()
         config.outputs.show_confidence_metrics = show_confidence_metrics
         return config

@@ -275,7 +275,7 @@ class CropOnDotLines(CropOnPatchesCommon):
             zone,
             zone_start,
             self.line_kernel_morph,
-            config.thresholding.GAMMA_LOW,
+            config.thresholding.gamma_low,
             line_threshold=line_threshold,
             blur_kernel=line_blur_kernel,
         )

@@ -1,11 +1,11 @@
 {
   "outputs": {
-    "display_image_dimensions": [
+    "displayImageDimensions": [
       1000,
       1300
     ],
-    "save_detections": true,
-    "save_image_level": 0,
-    "show_image_level": 0
+    "saveDetections": true,
+    "saveImageLevel": 0,
+    "showImageLevel": 0
   }
 }

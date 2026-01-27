@@ -1,10 +1,10 @@
 {
-  "source_type": "local",
+  "sourceType": "local",
   "options": {
-    "questions_in_order": [
+    "questionsInOrder": [
       "q1..11"
     ],
-    "answers_in_order": [
+    "answersInOrder": [
       "B",
       [
         [
@@ -40,9 +40,9 @@
       "C"
     ]
   },
-  "outputs_configuration": {
-    "should_explain_scoring": true,
-    "draw_score": {
+  "outputsConfiguration": {
+    "shouldExplainScoring": true,
+    "drawScore": {
       "enabled": true,
       "position": [
         600,
@@ -50,7 +50,7 @@
       ],
       "size": 1.5
     },
-    "draw_answers_summary": {
+    "drawAnswersSummary": {
       "enabled": true,
       "position": [
         300,
@@ -58,29 +58,29 @@
       ],
       "size": 1.0
     },
-    "draw_question_verdicts": {
+    "drawQuestionVerdicts": {
       "enabled": true,
-      "verdict_colors": {
+      "verdictColors": {
         "correct": "lightgreen",
         "neutral": "#000000",
         "incorrect": "#ff0000",
         "bonus": "#00DDDD"
       },
-      "verdict_symbol_colors": {
+      "verdictSymbolColors": {
         "positive": "#000000",
         "neutral": "#000000",
         "negative": "#000000",
         "bonus": "#000000"
       },
-      "draw_answer_groups": {
+      "drawAnswerGroups": {
         "enabled": true
       }
     },
-    "draw_detected_bubble_texts": {
+    "drawDetectedBubbleTexts": {
       "enabled": false
     }
   },
-  "marking_schemes": {
+  "markingSchemes": {
     "DEFAULT": {
       "correct": "3",
       "incorrect": "-1",

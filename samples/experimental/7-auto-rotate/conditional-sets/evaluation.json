@@ -1,10 +1,10 @@
 {
-  "source_type": "local",
+  "sourceType": "local",
   "options": {
-    "questions_in_order": [
+    "questionsInOrder": [
       "q1..20"
     ],
-    "answers_in_order": [
+    "answersInOrder": [
       "B",
       "D",
       "C",
@@ -27,8 +27,8 @@
       "81"
     ]
   },
-  "outputs_configuration": {
-    "draw_score": {
+  "outputsConfiguration": {
+    "drawScore": {
       "enabled": true,
       "position": [
         650,
@@ -36,7 +36,7 @@
       ],
       "size": 1.5
     },
-    "draw_answers_summary": {
+    "drawAnswersSummary": {
       "enabled": true,
       "position": [
         650,
@@ -44,9 +44,9 @@
       ],
       "size": 0.85
     },
-    "should_explain_scoring": true
+    "shouldExplainScoring": true
   },
-  "marking_schemes": {
+  "markingSchemes": {
     "DEFAULT": {
       "correct": "3",
       "incorrect": "0",
@@ -79,7 +79,7 @@
       "questions": []
     }
   },
-  "conditional_sets": [
+  "conditionalSets": [
     {
       "name": "Set A",
       "matcher": {
@@ -87,12 +87,12 @@
         "matchRegex": "A"
       },
       "evaluation": {
-        "source_type": "local",
+        "sourceType": "local",
         "options": {
-          "answers_in_order": [],
-          "questions_in_order": []
+          "answersInOrder": [],
+          "questionsInOrder": []
         },
-        "marking_schemes": {
+        "markingSchemes": {
           "DEFAULT": {
             "correct": "4",
             "incorrect": "0",

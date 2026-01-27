@@ -68,7 +68,7 @@ custom_section_marking_object_conditions = [
     {
         "if": {
             "properties": {
-                "marking_type": {"const": MarkingSchemeType.SECTION_LEVEL_STREAK}
+                "markingType": {"const": MarkingSchemeType.SECTION_LEVEL_STREAK}
             }
         },
         "then": {
@@ -80,7 +80,7 @@ custom_section_marking_object_conditions = [
     {
         "if": {
             "properties": {
-                "marking_type": {"const": MarkingSchemeType.VERDICT_LEVEL_STREAK}
+                "markingType": {"const": MarkingSchemeType.VERDICT_LEVEL_STREAK}
             }
         },
         "then": {
@@ -98,25 +98,25 @@ custom_section_marking_object_conditions = [
 
 image_and_csv_options = {
     "description": "The options needed if source type is image and csv",
-    "required": ["answer_key_csv_path"],
+    "required": ["answerKeyCsvPath"],
     "dependentRequired": {
-        "answer_key_image_path": [
-            "answer_key_csv_path",
-            "questions_in_order",
+        "answerKeyImagePath": [
+            "answerKeyCsvPath",
+            "questionsInOrder",
         ]
     },
     "type": "object",
     "additionalProperties": False,
     "properties": {
-        "answer_key_csv_path": {
+        "answerKeyCsvPath": {
             "description": "The path to the answer key csv relative to the evaluation.json file",
             "type": "string",
         },
-        "answer_key_image_path": {
+        "answerKeyImagePath": {
             "description": "The path to the answer key image relative to the evaluation.json file",
             "type": "string",
         },
-        "questions_in_order": {
+        "questionsInOrder": {
             "$ref": "#/$def/array_of_strings",
             "description": "An array of fields to treat as questions when the answer key image is provided",
         },
@@ -126,14 +126,14 @@ image_and_csv_options = {
 local_questions_and_answers_options = {
     "description": "This method allows setting questions and their answers within the evaluation file itself",
     "additionalProperties": False,
-    "required": ["answers_in_order", "questions_in_order"],
+    "required": ["answersInOrder", "questionsInOrder"],
     "type": "object",
     "properties": {
-        "questions_in_order": {
+        "questionsInOrder": {
             "$ref": "#/$def/array_of_strings",
             "description": "An array of fields to treat as questions specified in an order to apply evaluation",
         },
-        "answers_in_order": {
+        "answersInOrder": {
             "oneOf": [
                 {
                     "description": "An array of answers in the same order as provided array of questions",
@@ -176,9 +176,9 @@ local_questions_and_answers_options = {
 }
 
 common_evaluation_schema_properties = {
-    "source_type": {"type": "string", "enum": ["csv", "image_and_csv", "local"]},
+    "sourceType": {"type": "string", "enum": ["csv", "image_and_csv", "local"]},
     "options": {"type": "object"},
-    "marking_schemes": {
+    "markingSchemes": {
         "type": "object",
         "required": [DEFAULT_SECTION_KEY],
         "patternProperties": {
@@ -191,7 +191,7 @@ common_evaluation_schema_properties = {
                 "required": ["marking", "questions"],
                 "type": "object",
                 "properties": {
-                    "marking_type": {
+                    "markingType": {
                         "type": "string",
                         "enum": [*MARKING_SCHEME_TYPES_IN_ORDER],
                     },
@@ -210,21 +210,21 @@ common_evaluation_schema_properties = {
             },
         },
     },
-    "outputs_configuration": {
+    "outputsConfiguration": {
         "description": "The configuration for outputs produced from the evaluation",
         "type": "object",
         "required": [],
         "additionalProperties": False,
         "properties": {
-            "should_explain_scoring": {
+            "shouldExplainScoring": {
                 "description": "Whether to print the table explaining question-wise verdicts",
                 "type": "boolean",
             },
-            "should_export_explanation_csv": {
+            "shouldExportExplanationCsv": {
                 "description": "Whether to export the explanation of evaluation results as a CSV file",
                 "type": "boolean",
             },
-            "draw_score": {
+            "drawScore": {
                 "description": "The configuration for drawing the final score",
                 "type": "object",
                 "required": [
@@ -240,7 +240,7 @@ common_evaluation_schema_properties = {
                         "description": "The position of the score box",
                         "$ref": "#/$def/two_positive_integers",
                     },
-                    "score_format_string": {
+                    "scoreFormatString": {
                         "description": "The format string to compose the score string. Supported variables - {score}",
                         "type": "string",
                     },
@@ -253,12 +253,12 @@ common_evaluation_schema_properties = {
                     {
                         "if": {"properties": {"enabled": {"const": True}}},
                         "then": {
-                            "required": ["position", "score_format_string"],
+                            "required": ["position"],
                         },
                     }
                 ],
             },
-            "draw_answers_summary": {
+            "drawAnswersSummary": {
                 "description": "The configuration for drawing the answers summary",
                 "type": "object",
                 "required": [
@@ -274,7 +274,7 @@ common_evaluation_schema_properties = {
                         "description": "The position of the answers summary box",
                         "$ref": "#/$def/two_positive_integers",
                     },
-                    "answers_summary_format_string": {
+                    "answersSummaryFormatString": {
                         "description": "The format string to compose the answer summary. Supported variables - {correct}, {incorrect}, {unmarked} ",
                         "type": "string",
                     },
@@ -289,19 +289,18 @@ common_evaluation_schema_properties = {
                         "then": {
                             "required": [
                                 "position",
-                                "answers_summary_format_string",
                             ],
                         },
                     }
                 ],
             },
-            "draw_question_verdicts": {
+            "drawQuestionVerdicts": {
                 "type": "object",
                 "additionalProperties": False,
                 "required": ["enabled"],
                 "properties": {
                     "enabled": {"type": "boolean"},
-                    "verdict_colors": {
+                    "verdictColors": {
                         "description": "The mapping from delta sign notions to the corresponding colors",
                         "type": "object",
                         "additionalProperties": False,
@@ -329,7 +328,7 @@ common_evaluation_schema_properties = {
                             },
                         },
                     },
-                    "verdict_symbol_colors": {
+                    "verdictSymbolColors": {
                         "description": "The mapping from verdict symbols(based on delta sign) to the corresponding colors",
                         "type": "object",
                         "additionalProperties": False,
@@ -353,13 +352,13 @@ common_evaluation_schema_properties = {
                             },
                         },
                     },
-                    "draw_answer_groups": {
+                    "drawAnswerGroups": {
                         "type": "object",
                         "additionalProperties": False,
                         "required": [],
                         "properties": {
                             "enabled": {"type": "boolean"},
-                            "color_sequence": {
+                            "colorSequence": {
                                 "type": "array",
                                 "items": {
                                     "$ref": "#/$def/matplotlib_color",
@@ -372,7 +371,7 @@ common_evaluation_schema_properties = {
                             {
                                 "if": {"properties": {"enabled": {"const": True}}},
                                 "then": {
-                                    "required": ["color_sequence"],
+                                    "required": [],
                                 },
                             }
                         ],
@@ -383,15 +382,15 @@ common_evaluation_schema_properties = {
                         "if": {"properties": {"enabled": {"const": True}}},
                         "then": {
                             "required": [
-                                "verdict_colors",
-                                "verdict_symbol_colors",
-                                "draw_answer_groups",
+                                "verdictColors",
+                                "verdictSymbolColors",
+                                "drawAnswerGroups",
                             ],
                         },
                     }
                 ],
             },
-            "draw_detected_bubble_texts": {
+            "drawDetectedBubbleTexts": {
                 "type": "object",
                 "additionalProperties": False,
                 "required": ["enabled"],
@@ -403,15 +402,15 @@ common_evaluation_schema_properties = {
 
 common_evaluation_schema_conditions = [
     {
-        "if": {"properties": {"source_type": {"const": "csv"}}},
+        "if": {"properties": {"sourceType": {"const": "csv"}}},
         "then": {"properties": {"options": {"$ref": "#/$def/image_and_csv_options"}}},
     },
     {
-        "if": {"properties": {"source_type": {"const": "image_and_csv"}}},
+        "if": {"properties": {"sourceType": {"const": "image_and_csv"}}},
         "then": {"properties": {"options": {"$ref": "#/$def/image_and_csv_options"}}},
     },
     {
-        "if": {"properties": {"source_type": {"const": "local"}}},
+        "if": {"properties": {"sourceType": {"const": "local"}}},
         "then": {
             "properties": {
                 "options": {"$ref": "#/$def/local_questions_and_answers_options"}
@@ -443,13 +442,13 @@ EVALUATION_SCHEMA = {
     "title": "Evaluation Schema",
     "description": "The OMRChecker evaluation schema",
     "type": "object",
-    "required": ["source_type", "options", "marking_schemes"],
+    "required": ["sourceType", "options", "markingSchemes"],
     "additionalProperties": False,
     "properties": {
         "additionalProperties": False,
         # TODO: check if common_evaluation_schema_properties can be picked and overridden using a $ref
         **common_evaluation_schema_properties,
-        "conditional_sets": {
+        "conditionalSets": {
             "description": "An array of answer sets with their conditions. These will override the default values in case of any conflict",
             "type": "array",
             "items": {
@@ -480,7 +479,7 @@ EVALUATION_SCHEMA = {
                         # Note: even outputs_configuration is going to be different as per the set, allowing custom colors for different sets!
                         "description": "The custom evaluation schema to apply if given matcher is satisfied",
                         "type": "object",
-                        "required": ["source_type", "options", "marking_schemes"],
+                        "required": ["sourceType", "options", "markingSchemes"],
                         "additionalProperties": False,
                         "properties": {
                             **common_evaluation_schema_properties,

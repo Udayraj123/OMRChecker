@@ -273,19 +273,19 @@ crop_on_four_markers_tuning_options_def = {
     "properties": {
         **crop_on_markers_tuning_options_available_keys,
         **warp_on_points_tuning_options,
-        "apply_erode_subtract": {
+        "applyErodeSubtract": {
             "description": "A boolean to enable erosion for (sometimes) better marker detection",
             "type": "boolean",
         },
-        "marker_rescale_range": {
+        "markerRescaleRange": {
             "$ref": "#/$def/two_positive_numbers",
             "description": "The range of rescaling in percentage",
         },
-        "marker_rescale_steps": {
+        "markerRescaleSteps": {
             "$ref": "#/$def/positive_integer",
             "description": "The number of rescaling steps",
         },
-        "min_matching_threshold": {
+        "minMatchingThreshold": {
             "description": "The threshold for template matching",
             "type": "number",
         },
@@ -496,7 +496,6 @@ TEMPLATE_SCHEMA = {
     "required": [
         "bubbleDimensions",
         "templateDimensions",
-        "processingImageShape",
         "preProcessors",
         "fieldBlocks",
     ],

@@ -34,7 +34,7 @@ def validate_evaluation_json(json_data: dict, evaluation_path: Path) -> None:
                 required_property = re.findall(r"'(.*?)'", msg)[0]
                 table.add_row(
                     f"{key}.{required_property}",
-                    msg + ". Make sure the spelling of the key is correct",
+                    f"{msg}. Check for spelling errors and make sure it is in camelCase",
                 )
                 error_messages.append(f"{key}.{required_property}: {msg}")
             else:
@@ -119,16 +119,16 @@ def validate_config_json(json_data: dict, config_path: Path) -> None:
                 validator == "const"
                 and len(error.path) >= 2
                 and error.path[-2] == "processing"
-                and error.path[-1] == "max_parallel_workers"
-                and json_data.get("outputs", {}).get("show_image_level", 0) > 0
+                and error.path[-1] == "maxParallelWorkers"
+                and json_data.get("outputs", {}).get("showImageLevel", 0) > 0
             ):
-                # Custom message for show_image_level > 0 with max_parallel_workers > 1
-                custom_msg = "When show_image_level > 0 (interactive mode), max_parallel_workers must be 1. Parallel processing is not compatible with interactive image display."
+                # Custom message for showImageLevel > 0 with maxParallelWorkers > 1
+                custom_msg = "When showImageLevel > 0 (interactive mode), maxParallelWorkers must be 1. Parallel processing is not compatible with interactive image display."
                 table.add_row(
-                    "processing.max_parallel_workers",
+                    "processing.maxParallelWorkers",
                     custom_msg,
                 )
-                error_messages.append(f"processing.max_parallel_workers: {custom_msg}")
+                error_messages.append(f"processing.maxParallelWorkers: {custom_msg}")
             else:
                 table.add_row(key, msg)
                 error_messages.append(f"{key}: {msg}")

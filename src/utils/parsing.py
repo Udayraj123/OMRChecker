@@ -48,6 +48,10 @@ def open_config_with_defaults(config_path: Path, args: dict[str, Any]) -> Config
     output_mode = args["outputMode"]
     debug_mode = args["debug"]
     user_tuning_config = load_json(config_path)
+
+    # Validate user config BEFORE merging with defaults
+    validate_config_json(user_tuning_config, config_path)
+
     defaults_from_args = {
         "outputs": {
             "output_mode": output_mode,
@@ -63,8 +67,6 @@ def open_config_with_defaults(config_path: Path, args: dict[str, Any]) -> Config
     user_tuning_config = OVERRIDE_MERGER.merge(
         deepcopy(defaults_dict), user_tuning_config
     )
-
-    validate_config_json(user_tuning_config, config_path)
 
     # Inject config path
     user_tuning_config["path"] = str(config_path)
@@ -94,10 +96,13 @@ def open_template_with_defaults(template_path: Path) -> dict[str, Any]:
         dict-like access. Uses TemplateConfig dataclass internally for validation.
     """
     user_template = load_json(template_path)
+
+    # Validate user template BEFORE merging with defaults
+    validate_template_json(user_template, template_path)
+
     # Convert TEMPLATE_DEFAULTS to dict for merging
     defaults_dict = TEMPLATE_DEFAULTS.to_dict()
     user_template = OVERRIDE_MERGER.merge(deepcopy(defaults_dict), user_template)
-    validate_template_json(user_template, template_path)
     return user_template
 
 
@@ -115,12 +120,15 @@ def open_evaluation_with_defaults(evaluation_path: Path) -> dict[str, Any]:
         dict-like access. Uses EvaluationConfig dataclass internally for validation.
     """
     user_evaluation_config = load_json(evaluation_path)
+
+    # Validate user evaluation BEFORE merging with defaults
+    validate_evaluation_json(user_evaluation_config, evaluation_path)
+
     # Convert EVALUATION_CONFIG_DEFAULTS to dict for merging
     defaults_dict = EVALUATION_CONFIG_DEFAULTS.to_dict()
     user_evaluation_config = OVERRIDE_MERGER.merge(
         deepcopy(defaults_dict), user_evaluation_config
     )
-    validate_evaluation_json(user_evaluation_config, evaluation_path)
     return user_evaluation_config
 
 

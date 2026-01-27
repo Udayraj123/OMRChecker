@@ -1,10 +1,10 @@
 {
   "outputs": {
-    "display_image_dimensions": [
+    "displayImageDimensions": [
       300,
       650
     ],
-    "colored_outputs_enabled": true,
-    "show_image_level": 0
+    "coloredOutputsEnabled": true,
+    "showImageLevel": 0
   }
 }

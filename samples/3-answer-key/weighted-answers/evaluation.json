@@ -1,10 +1,10 @@
 {
-  "source_type": "local",
+  "sourceType": "local",
   "options": {
-    "questions_in_order": [
+    "questionsInOrder": [
       "q1..5"
     ],
-    "answers_in_order": [
+    "answersInOrder": [
       [
         [
           "A",
@@ -33,7 +33,7 @@
       "C"
     ]
   },
-  "marking_schemes": {
+  "markingSchemes": {
     "DEFAULT": {
       "correct": "3",
       "incorrect": "-1",
@@ -50,7 +50,7 @@
       }
     }
   },
-  "outputs_configuration": {
-    "should_explain_scoring": true
+  "outputsConfiguration": {
+    "shouldExplainScoring": true
   }
 }

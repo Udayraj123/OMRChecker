@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 
+from src.utils.json_conversion import convert_dict_keys_to_snake
 from src.utils.serialization import dataclass_to_dict
 
 
@@ -14,6 +15,16 @@ class AlignmentMarginsConfig:
     left: int = 0
     right: int = 0
 
+    @classmethod
+    def from_dict(cls, data: dict) -> "AlignmentMarginsConfig":
+        """Create AlignmentMarginsConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert AlignmentMarginsConfig to dictionary."""
+        return dataclass_to_dict(self)
+
 
 @dataclass
 class AlignmentConfig:
@@ -21,6 +32,18 @@ class AlignmentConfig:
 
     margins: AlignmentMarginsConfig = field(default_factory=AlignmentMarginsConfig)
     maxDisplacement: int = 10
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "AlignmentConfig":
+        """Create AlignmentConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        if "margins" in data:
+            data["margins"] = AlignmentMarginsConfig.from_dict(data["margins"])
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert AlignmentConfig to dictionary."""
+        return dataclass_to_dict(self)
 
 
 @dataclass
@@ -31,12 +54,32 @@ class OutputColumnsConfig:
     sortType: str = "ALPHANUMERIC"
     sortOrder: str = "ASC"
 
+    @classmethod
+    def from_dict(cls, data: dict) -> "OutputColumnsConfig":
+        """Create OutputColumnsConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert OutputColumnsConfig to dictionary."""
+        return dataclass_to_dict(self)
+
 
 @dataclass
 class SortFilesConfig:
     """Configuration for file sorting."""
 
     enabled: bool = False
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "SortFilesConfig":
+        """Create SortFilesConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert SortFilesConfig to dictionary."""
+        return dataclass_to_dict(self)
 
 
 @dataclass
@@ -63,39 +106,29 @@ class TemplateConfig:
     def from_dict(cls, data: dict) -> "TemplateConfig":
         """Create TemplateConfig from dictionary (typically from JSON).
 
+        Converts camelCase keys from JSON to snake_case for Python dataclass fields.
+
         Args:
-            data: Dictionary containing template configuration data
+            data: Dictionary containing template configuration data (with camelCase keys)
 
         Returns:
             TemplateConfig instance with nested dataclasses
         """
-        # Parse alignment if present
-        alignment_data = data.get("alignment", {})
-        alignment = AlignmentConfig(
-            margins=AlignmentMarginsConfig(**alignment_data.get("margins", {})),
-            maxDisplacement=alignment_data.get("maxDisplacement", 10),
-        )
-
-        # Parse outputColumns if present
-        output_columns_data = data.get("outputColumns", {})
-        output_columns = OutputColumnsConfig(**output_columns_data)
-
-        # Parse sortFiles if present
-        sort_files_data = data.get("sortFiles", {})
-        sort_files = SortFilesConfig(**sort_files_data)
+        # Convert all keys from camelCase to snake_case
+        data = convert_dict_keys_to_snake(data)
 
         return cls(
-            alignment=alignment,
-            conditionalSets=data.get("conditionalSets", []),
-            customLabels=data.get("customLabels", {}),
-            customBubbleFieldTypes=data.get("customBubbleFieldTypes", {}),
-            emptyValue=data.get("emptyValue", ""),
-            fieldBlocks=data.get("fieldBlocks", {}),
-            fieldBlocksOffset=data.get("fieldBlocksOffset", [0, 0]),
-            outputColumns=output_columns,
-            preProcessors=data.get("preProcessors", []),
-            processingImageShape=data.get("processingImageShape", [900, 650]),
-            sortFiles=sort_files,
+            alignment=AlignmentConfig.from_dict(data.get("alignment", {})),
+            conditionalSets=data.get("conditional_sets", []),
+            customLabels=data.get("custom_labels", {}),
+            customBubbleFieldTypes=data.get("custom_bubble_field_types", {}),
+            emptyValue=data.get("empty_value", ""),
+            fieldBlocks=data.get("field_blocks", {}),
+            fieldBlocksOffset=data.get("field_blocks_offset", [0, 0]),
+            outputColumns=OutputColumnsConfig.from_dict(data.get("output_columns", {})),
+            preProcessors=data.get("pre_processors", []),
+            processingImageShape=data.get("processing_image_shape", [900, 650]),
+            sortFiles=SortFilesConfig.from_dict(data.get("sort_files", {})),
         )
 
     def to_dict(self) -> dict:

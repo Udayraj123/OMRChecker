@@ -92,8 +92,8 @@ class BubblesThresholdInterpretationPass(FieldTypeInterpretationPass):
     ):
         config = self.tuning_config
         # ruff: noqa: N806
-        MIN_JUMP_STD = config.thresholding.MIN_JUMP_STD
-        GLOBAL_PAGE_THRESHOLD_STD = config.thresholding.GLOBAL_PAGE_THRESHOLD_STD
+        MIN_JUMP_STD = config.thresholding.min_jump_std
+        GLOBAL_PAGE_THRESHOLD_STD = config.thresholding.global_page_threshold_std
 
         # Use GlobalThresholdStrategy instead of static method
         strategy = GlobalThresholdStrategy()
@@ -112,8 +112,8 @@ class BubblesThresholdInterpretationPass(FieldTypeInterpretationPass):
     ):
         config = self.tuning_config
         # ruff: noqa: N806
-        GLOBAL_PAGE_THRESHOLD = config.thresholding.GLOBAL_PAGE_THRESHOLD
-        MIN_JUMP = config.thresholding.MIN_JUMP
+        GLOBAL_PAGE_THRESHOLD = config.thresholding.global_page_threshold
+        MIN_JUMP = config.thresholding.min_jump
 
         # Use GlobalThresholdStrategy instead of static method
         strategy = GlobalThresholdStrategy()

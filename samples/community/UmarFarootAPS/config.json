@@ -1,9 +1,9 @@
 {
   "outputs": {
-    "display_image_dimensions": [
+    "displayImageDimensions": [
       1280,
       960
     ],
-    "show_image_level": 0
+    "showImageLevel": 0
   }
 }

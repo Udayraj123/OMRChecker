@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import ClassVar
 
+from src.utils.json_conversion import convert_dict_keys_to_snake
 from src.utils.logger import logger
 from src.utils.serialization import dataclass_to_dict
 
@@ -14,17 +15,27 @@ from src.utils.serialization import dataclass_to_dict
 class ThresholdingConfig:
     """Configuration for bubble thresholding algorithm."""
 
-    GAMMA_LOW: float = 0.7
-    MIN_GAP_TWO_BUBBLES: int = 30
-    MIN_JUMP: int = 25
-    CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY: int = 25
-    MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK: int = 5
-    GLOBAL_THRESHOLD_MARGIN: int = 10
-    JUMP_DELTA: int = 30
-    GLOBAL_PAGE_THRESHOLD: int = 200
-    GLOBAL_PAGE_THRESHOLD_STD: int = 10
-    MIN_JUMP_STD: int = 15
-    JUMP_DELTA_STD: int = 5
+    gamma_low: float = 0.7
+    min_gap_two_bubbles: int = 30
+    min_jump: int = 25
+    confident_jump_surplus_for_disparity: int = 25
+    min_jump_surplus_for_global_fallback: int = 5
+    global_threshold_margin: int = 10
+    jump_delta: int = 30
+    global_page_threshold: int = 200
+    global_page_threshold_std: int = 10
+    min_jump_std: int = 15
+    jump_delta_std: int = 5
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "ThresholdingConfig":
+        """Create ThresholdingConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert ThresholdingConfig to dictionary."""
+        return dataclass_to_dict(self)
 
 
 @dataclass
@@ -37,6 +48,16 @@ class GroupingRule:
     matcher: dict  # { "formatString": "...", "matchRegex": "..." }
     action: str = "symlink"  # "symlink" or "copy"
     collision_strategy: str = "skip"  # "skip", "increment", or "overwrite"
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "GroupingRule":
+        """Create GroupingRule from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert GroupingRule to dictionary."""
+        return dataclass_to_dict(self)
 
 
 @dataclass
@@ -222,6 +243,22 @@ class FileGroupingConfig:
 
         return errors
 
+    @classmethod
+    def from_dict(cls, data: dict) -> "FileGroupingConfig":
+        """Create FileGroupingConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        rules_data = data.get("rules", [])
+        rules = [GroupingRule.from_dict(rule) for rule in rules_data]
+        return cls(
+            enabled=data.get("enabled", False),
+            default_pattern=data.get("default_pattern", "ungrouped/{original_name}"),
+            rules=rules,
+        )
+
+    def to_dict(self) -> dict:
+        """Convert FileGroupingConfig to dictionary."""
+        return dataclass_to_dict(self)
+
 
 @dataclass
 class OutputsConfig:
@@ -248,12 +285,34 @@ class OutputsConfig:
     filter_out_multimarked_files: bool = False
     file_grouping: FileGroupingConfig = field(default_factory=FileGroupingConfig)
 
+    @classmethod
+    def from_dict(cls, data: dict) -> "OutputsConfig":
+        """Create OutputsConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        if "file_grouping" in data:
+            data["file_grouping"] = FileGroupingConfig.from_dict(data["file_grouping"])
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert OutputsConfig to dictionary."""
+        return dataclass_to_dict(self)
+
 
 @dataclass
 class ProcessingConfig:
     """Configuration for parallel processing."""
 
     max_parallel_workers: int = 1
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "ProcessingConfig":
+        """Create ProcessingConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert ProcessingConfig to dictionary."""
+        return dataclass_to_dict(self)
 
 
 @dataclass
@@ -273,6 +332,16 @@ class ShiftDetectionConfig:
     # Comparison thresholds
     bubble_mismatch_threshold: int = 3  # Flag if >3 bubbles differ
     field_mismatch_threshold: int = 1  # Flag if any field response differs
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "ShiftDetectionConfig":
+        """Create ShiftDetectionConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert ShiftDetectionConfig to dictionary."""
+        return dataclass_to_dict(self)
 
 
 @dataclass
@@ -311,6 +380,20 @@ class MLConfig:
     field_block_dataset_dir: Path = Path("outputs/training_data/field_blocks")
     bubble_dataset_dir: Path = Path("outputs/training_data/bubbles")
 
+    @classmethod
+    def from_dict(cls, data: dict) -> "MLConfig":
+        """Create MLConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        if "shift_detection" in data:
+            data["shift_detection"] = ShiftDetectionConfig.from_dict(
+                data["shift_detection"]
+            )
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert MLConfig to dictionary."""
+        return dataclass_to_dict(self)
+
 
 @dataclass
 class VisualizationConfig:
@@ -325,6 +408,16 @@ class VisualizationConfig:
     export_format: str = "html"  # Options: "html", "json"
     output_dir: Path = Path("outputs/visualization")
     auto_open_browser: bool = True
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "VisualizationConfig":
+        """Create VisualizationConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert VisualizationConfig to dictionary."""
+        return dataclass_to_dict(self)
 
 
 @dataclass
@@ -345,34 +438,24 @@ class Config:
     def from_dict(cls, data: dict) -> "Config":
         """Create Config from dictionary (typically from JSON).
 
+        Converts camelCase keys from JSON to snake_case for Python dataclass fields.
+
         Args:
-            data: Dictionary containing configuration data
+            data: Dictionary containing configuration data (with camelCase keys)
 
         Returns:
             Config instance with nested dataclasses
         """
-        outputs_data = data.get("outputs", {})
-
-        # Parse file_grouping nested structure
-        if "file_grouping" in outputs_data:
-            grouping_data = outputs_data["file_grouping"]
-            rules_data = grouping_data.get("rules", [])
-            rules = [GroupingRule(**rule) for rule in rules_data]
-            outputs_data["file_grouping"] = FileGroupingConfig(
-                enabled=grouping_data.get("enabled", False),
-                default_pattern=grouping_data.get(
-                    "default_pattern", "ungrouped/{original_name}"
-                ),
-                rules=rules,
-            )
+        # Convert all keys from camelCase to snake_case
+        data = convert_dict_keys_to_snake(data)
 
         return cls(
             path=Path(data.get("path", "config.json")),
-            thresholding=ThresholdingConfig(**data.get("thresholding", {})),
-            outputs=OutputsConfig(**outputs_data),
-            processing=ProcessingConfig(**data.get("processing", {})),
-            ml=MLConfig(**data.get("ml", {})),
-            visualization=VisualizationConfig(**data.get("visualization", {})),
+            thresholding=ThresholdingConfig.from_dict(data.get("thresholding", {})),
+            outputs=OutputsConfig.from_dict(data.get("outputs", {})),
+            processing=ProcessingConfig.from_dict(data.get("processing", {})),
+            ml=MLConfig.from_dict(data.get("ml", {})),
+            visualization=VisualizationConfig.from_dict(data.get("visualization", {})),
         )
 
     def to_dict(self) -> dict:

@@ -1,14 +1,14 @@
 {
   "thresholding": {
-    "GLOBAL_PAGE_THRESHOLD": 210,
-    "GLOBAL_PAGE_THRESHOLD_STD": 15
+    "globalPageThreshold": 210,
+    "globalPageThresholdStd": 15
   },
   "outputs": {
-    "display_image_dimensions": [
+    "displayImageDimensions": [
       2400,
       1800
     ],
-    "show_image_level": 0,
-    "colored_outputs_enabled": true
+    "showImageLevel": 0,
+    "coloredOutputsEnabled": true
   }
 }
