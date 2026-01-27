@@ -6,6 +6,7 @@ from src.exceptions import OMRCheckerError
 from src.processors.constants import FieldDetectionType
 from src.processors.layout.field_block.base import FieldBlock
 from src.processors.manager import PROCESSOR_MANAGER
+from src.schemas.models.template import OutputColumnsConfig
 from src.utils.constants import BUILTIN_BUBBLE_FIELD_TYPES
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
@@ -29,31 +30,30 @@ class TemplateLayout:
         self.tuning_config = tuning_config
         self.template_dimensions: list[int] = [0, 0]
 
-        json_object = open_template_with_defaults(template_path)
+        template_config = open_template_with_defaults(template_path)
         # Required properties
-        self.bubble_dimensions = json_object["bubbleDimensions"]
-        self.template_dimensions = json_object["templateDimensions"]
+        self.bubble_dimensions = template_config.bubble_dimensions
+        self.template_dimensions = template_config.template_dimensions
         # Properties with defaults
-        field_blocks_object = json_object["fieldBlocks"]
-        pre_processors_object = json_object["preProcessors"]
-        alignment_object = json_object["alignment"]
-        custom_bubble_field_types = json_object["customBubbleFieldTypes"]
-        custom_labels_object = json_object["customLabels"]
-        output_columns = json_object["outputColumns"]
-        self.field_blocks_offset = json_object["fieldBlocksOffset"]
-        self.global_empty_val = json_object["emptyValue"]
+        field_blocks_object = template_config.field_blocks
+        pre_processors_object = template_config.pre_processors
+        alignment_object = template_config.alignment
+        custom_bubble_field_types = template_config.custom_bubble_field_types
+        custom_labels_object = template_config.custom_labels
+        output_columns_config = template_config.output_columns
+        self.field_blocks_offset = template_config.field_blocks_offset
+        self.global_empty_val = template_config.empty_value
 
         # Properties without defaults
-        self.output_image_shape = json_object.get("outputImageShape", None)
         page_width, page_height = self.template_dimensions
-        self.processing_image_shape = json_object.get(
-            # Default processingImageShape will be the page dimensions
-            "processingImageShape",
-            [page_height, page_width],
-        )
+        # Use processing_image_shape from config, or default to page dimensions
+        self.processing_image_shape = template_config.processing_image_shape or [
+            page_height,
+            page_width,
+        ]
         # TODO: support for "sortFiles" key
 
-        self.parse_output_columns(output_columns)
+        self.parse_output_columns(output_columns_config)
 
         # TODO: move outside
         self.setup_pre_processors(pre_processors_object, template_path.parent)
@@ -71,7 +71,7 @@ class TemplateLayout:
 
         if len(self.output_columns) == 0:
             self.fill_output_columns(
-                non_custom_columns, all_custom_columns, output_columns
+                non_custom_columns, all_custom_columns, output_columns_config
             )
 
         self.validate_template_columns(non_custom_columns, all_custom_columns)
@@ -176,9 +176,9 @@ class TemplateLayout:
 
         return gray_image, colored_image, template_layout
 
-    def parse_output_columns(self, output_columns):
-        custom_order = output_columns.get("customOrder")
-        sort_type = output_columns.get("sortType")
+    def parse_output_columns(self, output_columns_config: "OutputColumnsConfig"):
+        custom_order = output_columns_config.custom_order
+        sort_type = output_columns_config.sort_type
 
         # Make sure sort_type is set to CUSTOM if output columns are custom
         if len(custom_order) > 0 and sort_type != "CUSTOM":
@@ -221,10 +221,10 @@ class TemplateLayout:
         for block_name, field_block_object in field_blocks_object.items():
             # TODO: Check for validations if any for OCR
             if (
-                field_block_object["fieldDetectionType"]
+                field_block_object["field_detection_type"]
                 == FieldDetectionType.BUBBLES_THRESHOLD
             ):
-                bubble_field_type = field_block_object["bubbleFieldType"]
+                bubble_field_type = field_block_object["bubble_field_type"]
                 if bubble_field_type not in self.bubble_field_types_data:
                     logger.critical(
                         f"Cannot find definition for {bubble_field_type} in customBubbleFieldTypes"
@@ -237,12 +237,12 @@ class TemplateLayout:
                             "block_name": block_name,
                         },
                     )
-            field_labels = field_block_object["fieldLabels"]
-            if len(field_labels) > 1 and "labelsGap" not in field_block_object:
+            field_labels = field_block_object["field_labels"]
+            if len(field_labels) > 1 and "labels_gap" not in field_block_object:
                 logger.critical(
-                    f"More than one fieldLabels({field_labels}) provided, but labelsGap not present for block {block_name}"
+                    f"More than one fieldLabels({field_labels}) provided, but labels_gap not present for block {block_name}"
                 )
-                msg = f"More than one fieldLabels provided, but labelsGap not present for block {block_name}"
+                msg = f"More than one fieldLabels provided, but labels_gap not present for block {block_name}"
                 raise OMRCheckerError(
                     msg,
                     context={
@@ -411,7 +411,7 @@ class TemplateLayout:
         # TODO: support custom field types like Barcode and OCR
         self.field_blocks.append(block_instance)
         self.validate_parsed_field_block(
-            field_block_object["fieldLabels"], block_instance
+            field_block_object["field_labels"], block_instance
         )
         return block_instance
 
@@ -421,26 +421,27 @@ class TemplateLayout:
         }
 
         if (
-            field_block_object["fieldDetectionType"]
+            field_block_object["field_detection_type"]
             == FieldDetectionType.BUBBLES_THRESHOLD
         ):
-            bubble_field_type = field_block_object["bubbleFieldType"]
+            bubble_field_type = field_block_object["bubble_field_type"]
             field_type_data = self.bubble_field_types_data[bubble_field_type]
             filled_field_block_object = {
-                "bubbleFieldType": bubble_field_type,
+                "bubble_field_type": bubble_field_type,
                 # "direction": "vertical",
-                "emptyValue": self.global_empty_val,
-                "bubbleDimensions": self.bubble_dimensions,
+                "empty_value": self.global_empty_val,
+                "bubble_dimensions": self.bubble_dimensions,
                 **filled_field_block_object,
                 **field_type_data,
             }
         elif (
-            field_block_object["fieldDetectionType"] == FieldDetectionType.OCR
-            or field_block_object["fieldDetectionType"] == FieldDetectionType.BARCODE_QR
+            field_block_object["field_detection_type"] == FieldDetectionType.OCR
+            or field_block_object["field_detection_type"]
+            == FieldDetectionType.BARCODE_QR
         ):
             filled_field_block_object = {
-                "emptyValue": self.global_empty_val,
-                "labelsGap": 0,
+                "empty_value": self.global_empty_val,
+                "labels_gap": 0,
                 **filled_field_block_object,
             }
 

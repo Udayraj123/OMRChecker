@@ -31,7 +31,7 @@ class AlignmentConfig:
     """Configuration for template alignment."""
 
     margins: AlignmentMarginsConfig = field(default_factory=AlignmentMarginsConfig)
-    maxDisplacement: int = 10
+    max_displacement: int = 10
 
     @classmethod
     def from_dict(cls, data: dict) -> "AlignmentConfig":
@@ -50,9 +50,9 @@ class AlignmentConfig:
 class OutputColumnsConfig:
     """Configuration for output columns ordering and sorting."""
 
-    customOrder: list[str] = field(default_factory=list)
-    sortType: str = "ALPHANUMERIC"
-    sortOrder: str = "ASC"
+    custom_order: list[str] = field(default_factory=list)
+    sort_type: str = "ALPHANUMERIC"
+    sort_order: str = "ASC"
 
     @classmethod
     def from_dict(cls, data: dict) -> "OutputColumnsConfig":
@@ -90,17 +90,22 @@ class TemplateConfig:
     layout definition and field detection.
     """
 
+    # Required template properties
+    bubble_dimensions: list[int] = field(default_factory=lambda: [10, 10])
+    template_dimensions: list[int] = field(default_factory=lambda: [1200, 1600])
+
+    # Configuration properties
     alignment: AlignmentConfig = field(default_factory=AlignmentConfig)
-    conditionalSets: list = field(default_factory=list)
-    customLabels: dict = field(default_factory=dict)
-    customBubbleFieldTypes: dict = field(default_factory=dict)
-    emptyValue: str = ""
-    fieldBlocks: dict = field(default_factory=dict)
-    fieldBlocksOffset: list[int] = field(default_factory=lambda: [0, 0])
-    outputColumns: OutputColumnsConfig = field(default_factory=OutputColumnsConfig)
-    preProcessors: list = field(default_factory=list)
-    processingImageShape: list[int] = field(default_factory=lambda: [900, 650])
-    sortFiles: SortFilesConfig = field(default_factory=SortFilesConfig)
+    conditional_sets: list = field(default_factory=list)
+    custom_labels: dict = field(default_factory=dict)
+    custom_bubble_field_types: dict = field(default_factory=dict)
+    empty_value: str = ""
+    field_blocks: dict = field(default_factory=dict)
+    field_blocks_offset: list[int] = field(default_factory=lambda: [0, 0])
+    output_columns: OutputColumnsConfig = field(default_factory=OutputColumnsConfig)
+    pre_processors: list = field(default_factory=list)
+    processing_image_shape: list[int] = field(default_factory=lambda: [900, 650])
+    sort_files: SortFilesConfig = field(default_factory=SortFilesConfig)
 
     @classmethod
     def from_dict(cls, data: dict) -> "TemplateConfig":
@@ -118,17 +123,21 @@ class TemplateConfig:
         data = convert_dict_keys_to_snake(data)
 
         return cls(
+            bubble_dimensions=data.get("bubble_dimensions", [10, 10]),
+            template_dimensions=data.get("template_dimensions", [1200, 1600]),
             alignment=AlignmentConfig.from_dict(data.get("alignment", {})),
-            conditionalSets=data.get("conditional_sets", []),
-            customLabels=data.get("custom_labels", {}),
-            customBubbleFieldTypes=data.get("custom_bubble_field_types", {}),
-            emptyValue=data.get("empty_value", ""),
-            fieldBlocks=data.get("field_blocks", {}),
-            fieldBlocksOffset=data.get("field_blocks_offset", [0, 0]),
-            outputColumns=OutputColumnsConfig.from_dict(data.get("output_columns", {})),
-            preProcessors=data.get("pre_processors", []),
-            processingImageShape=data.get("processing_image_shape", [900, 650]),
-            sortFiles=SortFilesConfig.from_dict(data.get("sort_files", {})),
+            conditional_sets=data.get("conditional_sets", []),
+            custom_labels=data.get("custom_labels", {}),
+            custom_bubble_field_types=data.get("custom_bubble_field_types", {}),
+            empty_value=data.get("empty_value", ""),
+            field_blocks=data.get("field_blocks", {}),
+            field_blocks_offset=data.get("field_blocks_offset", [0, 0]),
+            output_columns=OutputColumnsConfig.from_dict(
+                data.get("output_columns", {})
+            ),
+            pre_processors=data.get("pre_processors", []),
+            processing_image_shape=data.get("processing_image_shape", [900, 650]),
+            sort_files=SortFilesConfig.from_dict(data.get("sort_files", {})),
         )
 
     def to_dict(self) -> dict:

@@ -34,9 +34,9 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
     default_scan_zone_descriptions: ClassVar = {
         **{
             zone_preset: {
-                "scannerType": ScannerType.TEMPLATE_MATCH,
+                "scanner_type": ScannerType.TEMPLATE_MATCH,
                 # "selector": "SELECT_CENTER",
-                "maxPoints": 2,  # for cropping
+                "max_points": 2,  # for cropping
                 # Note: all 4 margins are a required property for a patch zone
             }
             for zone_preset in MARKER_ZONE_TYPES_IN_ORDER
@@ -94,15 +94,15 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         self.init_resized_markers()
 
     def validate_and_remap_options_schema(self, options):
-        reference_image_path, layout_type = options["referenceImage"], options["type"]
-        tuning_options = options.get("tuningOptions", {})
-        # Note: options["tuningOptions"] is accessible in self.tuning_options at Processor level
+        reference_image_path, layout_type = options["reference_image"], options["type"]
+        tuning_options = options.get("tuning_options", {})
+        # Note: options["tuning_options"] is accessible in self.tuning_options at Processor level
         parsed_options = {
-            "defaultSelector": options.get("defaultSelector", "CENTERS"),
-            "pointsLayout": layout_type,
-            "enableCropping": True,
-            "tuningOptions": {
-                "warpMethod": tuning_options.get(
+            "default_selector": options.get("default_selector", "CENTERS"),
+            "points_layout": layout_type,
+            "enable_cropping": True,
+            "tuning_options": {
+                "warp_method": tuning_options.get(
                     "warpMethod", WarpMethod.PERSPECTIVE_TRANSFORM
                 )
             },
@@ -110,7 +110,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
 
         # TODO: add default values for provided scanZones?
         # Allow non-marker scanZones here too?
-        default_dimensions = options.get("markerDimensions", None)
+        default_dimensions = options.get("marker_dimensions", None)
         # inject scanZones (Note: override merge with defaults will happen in parent class)
         parsed_scan_zones = []
         for zone_preset in CropOnCustomMarkers.scan_zone_presets_for_layout[
@@ -121,20 +121,20 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             local_custom_options = local_description.pop("customOptions", {})
             parsed_scan_zones.append(
                 {
-                    "zonePreset": zone_preset,
-                    "zoneDescription": {
+                    "zone_preset": zone_preset,
+                    "zone_description": {
                         # Default box dimensions to markerDimensions
                         "dimensions": default_dimensions,
                         **local_description,
                     },
-                    "customOptions": {
-                        "referenceImage": reference_image_path,
-                        "markerDimensions": default_dimensions,
+                    "custom_options": {
+                        "reference_image": reference_image_path,
+                        "marker_dimensions": default_dimensions,
                         **local_custom_options,
                     },
                 }
             )
-        parsed_options["scanZones"] = parsed_scan_zones
+        parsed_options["scan_zones"] = parsed_scan_zones
         return parsed_options
 
     def validate_scan_zones(self) -> None:
@@ -142,18 +142,18 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         # Additional marker related validations
         for scan_zone in self.scan_zones:
             zone_preset, zone_description, custom_options = map(
-                scan_zone.get, ["zonePreset", "zoneDescription", "customOptions"]
+                scan_zone.get, ["zone_preset", "zone_description", "custom_options"]
             )
             zone_label = zone_description["label"]
             if zone_preset in self.scan_zone_presets_for_layout["FOUR_MARKERS"]:
-                if "referenceImage" not in custom_options:
+                if "reference_image" not in custom_options:
                     msg = f"referenceImage not provided for custom marker zone {zone_label}"
                     raise TemplateValidationError(
-                        msg,
-                        context={"zone_label": zone_label},
+                        Path("unknown"),
+                        errors=[msg],
                     )
                 reference_image_path = self.get_relative_path(
-                    custom_options["referenceImage"]
+                    custom_options["reference_image"]
                 )
 
                 if not reference_image_path.exists():
@@ -171,17 +171,17 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         self.marker_for_zone_label = {}
         for scan_zone in self.scan_zones:
             zone_description, custom_options = map(
-                scan_zone.get, ["zoneDescription", "customOptions"]
+                scan_zone.get, ["zone_description", "custom_options"]
             )
             zone_label, scanner_type = (
                 zone_description["label"],
-                zone_description["scannerType"],
+                zone_description["scanner_type"],
             )
 
             if scanner_type != ScannerType.TEMPLATE_MATCH:
                 continue
             reference_image_path = self.get_relative_path(
-                custom_options["referenceImage"]
+                custom_options["reference_image"]
             )
             if reference_image_path in self.loaded_reference_images:
                 reference_image = self.loaded_reference_images[reference_image_path]
@@ -214,9 +214,9 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         """
         options = self.options
         marker_dimensions = custom_options.get(
-            "markerDimensions", options.get("markerDimensions", None)
+            "markerDimensions", options.get("marker_dimensions", None)
         )
-        blur_kernel = custom_options.get("markerBlurKernel", (5, 5))
+        blur_kernel = custom_options.get("marker_blur_kernel", (5, 5))
 
         return prepare_marker_template(
             reference_image,
@@ -236,8 +236,8 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
 
     def get_runtime_zone_description_with_defaults(self, image, scan_zone):
         zone_preset, zone_description = (
-            scan_zone["zonePreset"],
-            scan_zone["zoneDescription"],
+            scan_zone["zone_preset"],
+            scan_zone["zone_description"],
         )
         logger.debug(scan_zone)
         # Note: currently user input would be restricted to only markers at once (no combination of markers and dots)
@@ -258,7 +258,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             zone_description = OVERRIDE_MERGER.merge(
                 quadrant_description, zone_description
             )
-        # Check for zone_description["scannerType"]
+        # Check for zone_description["scanner_type"]
 
         # Note: this runtime template is supposedly always valid
         return zone_description
@@ -315,7 +315,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 "left": margin_horizontal,
             },
             # "selector": "SELECT_CENTER",
-            "scannerType": "TEMPLATE_MARKER",
+            "scanner_type": "TEMPLATE_MARKER",
         }
 
     def find_marker_corners_in_patch(self, zone_description, image, file_path):

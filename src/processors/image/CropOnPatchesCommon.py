@@ -54,37 +54,37 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         options = self.options
         # Default to select centers for roi
         self.default_points_selector = self.default_points_selector_map[
-            options.get("defaultSelector")
+            options.get("default_selector")
         ]
 
     def exclude_files(self) -> list[Path]:
         return []
 
     def __str__(self) -> str:
-        return f'CropOnMarkers["{self.options["pointsLayout"]}"]'
+        return f'CropOnMarkers["{self.options["points_layout"]}"]'
 
     def prepare_image_before_extraction(self, image):
         return image
 
     def parse_and_apply_scan_zone_presets_and_defaults(self) -> None:
         options = self.options
-        scan_zones = options["scanZones"]
+        scan_zones = options["scan_zones"]
         scan_zones_with_defaults = []
         for scan_zone in scan_zones:
             zone_preset, zone_description, custom_options = (
-                scan_zone["zonePreset"],
-                scan_zone.get("zoneDescription", {}),
-                scan_zone.get("customOptions", {}),
+                scan_zone["zone_preset"],
+                scan_zone.get("zone_description", {}),
+                scan_zone.get("custom_options", {}),
             )
             zone_description["label"] = zone_description.get("label", zone_preset)
             scan_zones_with_defaults += [
                 {
-                    "zonePreset": zone_preset,
-                    "zoneDescription": OVERRIDE_MERGER.merge(
+                    "zone_preset": zone_preset,
+                    "zone_description": OVERRIDE_MERGER.merge(
                         deepcopy(self.default_scan_zone_descriptions[zone_preset]),
                         zone_description,
                     ),
-                    "customOptions": custom_options,
+                    "custom_options": custom_options,
                 }
             ]
         self.scan_zones = scan_zones_with_defaults
@@ -94,7 +94,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         seen_labels = set()
         repeat_labels = set()
         for scan_zone in self.scan_zones:
-            zone_label = scan_zone["zoneDescription"]["label"]
+            zone_label = scan_zone["zone_description"]["label"]
             if zone_label in seen_labels:
                 repeat_labels.add(zone_label)
             seen_labels.add(zone_label)
@@ -108,7 +108,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
     # TODO: check if this needs to move into child for working properly (accessing self attributes declared in child in parent's constructor)
     def validate_points_layouts(self) -> None:
         options = self.options
-        points_layout = options["pointsLayout"]
+        points_layout = options["points_layout"]
         if (
             points_layout not in self.scan_zone_presets_for_layout
             and points_layout != "CUSTOM"
@@ -120,7 +120,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             )
 
         expected_templates = set(self.scan_zone_presets_for_layout[points_layout])
-        provided_templates = {scan_zone["zonePreset"] for scan_zone in self.scan_zones}
+        provided_templates = {scan_zone["zone_preset"] for scan_zone in self.scan_zones}
         not_provided_zone_presets = expected_templates.difference(provided_templates)
 
         if len(not_provided_zone_presets) > 0:
@@ -151,7 +151,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                 image, scan_zone
             )
             # Inject runtime zone description
-            scan_zone["runtimeZoneDescription"] = zone_description
+            scan_zone["runtime_zone_description"] = zone_description
 
             self.draw_scan_zone(zone_description)
 
@@ -170,9 +170,9 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         zone_preset_points = {}
         page_corners, destination_page_corners = [], []
         for scan_zone in self.scan_zones:
-            zone_preset = scan_zone["zonePreset"]
-            zone_description = scan_zone["runtimeZoneDescription"]
-            scanner_type = zone_description["scannerType"]
+            zone_preset = scan_zone["zone_preset"]
+            zone_description = scan_zone["runtime_zone_description"]
+            scanner_type = zone_description["scanner_type"]
 
             if scanner_type in {ScannerType.PATCH_DOT, ScannerType.TEMPLATE_MATCH}:
                 dot_point, destination_point = self.find_and_select_point_from_dot(
@@ -233,7 +233,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         return control_points, destination_points, edge_contours_map
 
     def get_runtime_zone_description_with_defaults(self, _image, scan_zone):
-        return scan_zone["zoneDescription"]
+        return scan_zone["zone_description"]
 
     def find_and_select_point_from_dot(self, image, zone_description, file_path):
         zone_label = zone_description["label"]

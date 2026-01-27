@@ -13,6 +13,7 @@ from src.schemas.constants import FIELD_STRING_REGEX_GROUPS
 from src.schemas.defaults import CONFIG_DEFAULTS, TEMPLATE_DEFAULTS
 from src.schemas.defaults.evaluation import EVALUATION_CONFIG_DEFAULTS
 from src.schemas.models.config import Config
+from src.schemas.models.template import TemplateConfig
 from src.utils.constants import FIELD_LABEL_NUMBER_REGEX, SUPPORTED_PROCESSOR_NAMES
 from src.utils.file import load_json
 from src.utils.validations import (
@@ -82,28 +83,31 @@ def open_config_with_defaults(config_path: Path, args: dict[str, Any]) -> Config
     return Config.from_dict(user_tuning_config)
 
 
-def open_template_with_defaults(template_path: Path) -> dict[str, Any]:
+def open_template_with_defaults(template_path: Path) -> "TemplateConfig":
     """Load and merge template configuration from file with defaults.
 
     Args:
         template_path: Path to the template.json file
 
     Returns:
-        Dictionary representation of template configuration
-
-    Note:
-        Returns dict for backward compatibility with existing code that expects
-        dict-like access. Uses TemplateConfig dataclass internally for validation.
+        TemplateConfig dataclass instance with merged configuration
     """
+    from src.utils.json_conversion import convert_dict_keys_to_snake
+
     user_template = load_json(template_path)
 
     # Validate user template BEFORE merging with defaults
     validate_template_json(user_template, template_path)
 
+    # Convert camelCase keys to snake_case for internal Python use
+    user_template = convert_dict_keys_to_snake(user_template)
+
     # Convert TEMPLATE_DEFAULTS to dict for merging
     defaults_dict = TEMPLATE_DEFAULTS.to_dict()
-    user_template = OVERRIDE_MERGER.merge(deepcopy(defaults_dict), user_template)
-    return user_template
+    merged_template = OVERRIDE_MERGER.merge(deepcopy(defaults_dict), user_template)
+
+    # Convert merged dict to TemplateConfig dataclass
+    return TemplateConfig.from_dict(merged_template)
 
 
 def open_evaluation_with_defaults(evaluation_path: Path) -> dict[str, Any]:
@@ -119,10 +123,15 @@ def open_evaluation_with_defaults(evaluation_path: Path) -> dict[str, Any]:
         Returns dict for backward compatibility with existing code that expects
         dict-like access. Uses EvaluationConfig dataclass internally for validation.
     """
+    from src.utils.json_conversion import convert_dict_keys_to_snake
+
     user_evaluation_config = load_json(evaluation_path)
 
     # Validate user evaluation BEFORE merging with defaults
     validate_evaluation_json(user_evaluation_config, evaluation_path)
+
+    # Convert camelCase keys to snake_case for merging with defaults
+    user_evaluation_config = convert_dict_keys_to_snake(user_evaluation_config)
 
     # Convert EVALUATION_CONFIG_DEFAULTS to dict for merging
     defaults_dict = EVALUATION_CONFIG_DEFAULTS.to_dict()

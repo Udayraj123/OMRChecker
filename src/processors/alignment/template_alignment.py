@@ -15,7 +15,7 @@ def apply_template_alignment(gray_image, colored_image, template: "Template", co
     # Parsed
     template_margins, template_max_displacement = (
         template.alignment["margins"],
-        template.alignment["maxDisplacement"],
+        template.alignment["max_displacement"],
     )
 
     # Pre-processed

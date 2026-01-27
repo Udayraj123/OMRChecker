@@ -215,8 +215,8 @@ class FileOrganizerProcessor(Processor):
         """Find the first matching rule based on priority."""
         for rule in self.config.rules:
             try:
-                format_string = rule.matcher["formatString"]
-                match_regex = rule.matcher["matchRegex"]
+                format_string = rule.matcher["format_string"]
+                match_regex = rule.matcher["match_regex"]
 
                 formatted_string = format_string.format(**formatting_fields)
 

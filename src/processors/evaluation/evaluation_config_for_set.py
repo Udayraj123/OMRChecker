@@ -100,6 +100,9 @@ class EvaluationConfigForSet:
             ) = self.parse_csv_question_answers(
                 curr_dir, options, tuning_config, template
             )
+        else:
+            error_msg = f"Invalid source type: '{source_type}'"
+            raise ValueError(error_msg)
 
         # Merge set's questions with parent questions(if any)
         (

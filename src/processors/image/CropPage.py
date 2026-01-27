@@ -20,30 +20,32 @@ class CropPage(WarpOnPointsCommon):
 
     __is_internal_preprocessor__: ClassVar = False
     defaults: ClassVar = {
-        "morphKernel": (10, 10),
-        "useColoredCanny": False,
+        "morph_kernel": (10, 10),
+        "use_colored_canny": False,
     }
 
     def get_class_name(self) -> str:
         return "CropPage"
 
     def validate_and_remap_options_schema(self, options):
-        tuning_options = options.get("tuningOptions", {})
+        tuning_options = options.get("tuning_options", {})
 
         return {
             # Local defaults
-            "morphKernel": options.get("morphKernel", CropPage.defaults["morphKernel"]),
-            "useColoredCanny": options.get(
-                "useColoredCanny", CropPage.defaults["useColoredCanny"]
+            "morph_kernel": options.get(
+                "morph_kernel", CropPage.defaults["morph_kernel"]
             ),
-            "maxPointsPerEdge": options.get("maxPointsPerEdge", None),
-            "enableCropping": True,
-            "tuningOptions": {
-                "warpMethod": tuning_options.get(
-                    "warpMethod", WarpMethod.PERSPECTIVE_TRANSFORM
+            "use_colored_canny": options.get(
+                "use_colored_canny", CropPage.defaults["use_colored_canny"]
+            ),
+            "max_points_per_edge": options.get("max_points_per_edge", None),
+            "enable_cropping": True,
+            "tuning_options": {
+                "warp_method": tuning_options.get(
+                    "warp_method", WarpMethod.PERSPECTIVE_TRANSFORM
                 ),
-                "normalizeConfig": [],
-                "cannyConfig": [],
+                "normalize_config": [],
+                "canny_config": [],
             },
         }
 
@@ -51,10 +53,10 @@ class CropPage(WarpOnPointsCommon):
         # Parent's __init__ will call validate_and_remap_options_schema via polymorphism
         super().__init__(options, *args, **kwargs)
         options = self.options
-        self.use_colored_canny = options["useColoredCanny"]
+        self.use_colored_canny = options["use_colored_canny"]
 
         self.morph_kernel = cv2.getStructuringElement(
-            cv2.MORPH_RECT, tuple(options["morphKernel"])
+            cv2.MORPH_RECT, tuple(options["morph_kernel"])
         )
 
     def __str__(self) -> str:
@@ -114,7 +116,7 @@ class CropPage(WarpOnPointsCommon):
             return ordered_page_corners, destination_page_corners, edge_contours_map
 
         # For other methods (HOMOGRAPHY, REMAP_GRIDDATA), generate edge points
-        max_points_per_edge = options.get("maxPointsPerEdge", None)
+        max_points_per_edge = options.get("max_points_per_edge", None)
 
         control_points, destination_points = [], []
         for edge_type in EDGE_TYPES_IN_ORDER:

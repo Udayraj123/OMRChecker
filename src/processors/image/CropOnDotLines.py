@@ -53,15 +53,15 @@ class CropOnDotLines(CropOnPatchesCommon):
     default_scan_zone_descriptions: ClassVar = {
         **{
             zone_preset: {
-                "scannerType": ScannerType.PATCH_DOT,
+                "scanner_type": ScannerType.PATCH_DOT,
                 "selector": "SELECT_CENTER",
-                "maxPoints": 2,  # for cropping
+                "max_points": 2,  # for cropping
             }
             for zone_preset in DOT_ZONE_TYPES_IN_ORDER
         },
         **{
             zone_preset: {
-                "scannerType": ScannerType.PATCH_LINE,
+                "scanner_type": ScannerType.PATCH_LINE,
                 "selector": "LINE_OUTER_EDGE",
             }
             for zone_preset in LINE_ZONE_TYPES_IN_ORDER
@@ -117,10 +117,10 @@ class CropOnDotLines(CropOnPatchesCommon):
         super().__init__(options, *args, **kwargs)
         tuning_options = self.tuning_options
         self.line_kernel_morph = create_structuring_element(
-            "rect", tuple(tuning_options.get("lineKernel", [2, 10]))
+            "rect", tuple(tuning_options.get("line_kernel", [2, 10]))
         )
         self.dot_kernel_morph = create_structuring_element(
-            "rect", tuple(tuning_options.get("dotKernel", [5, 5]))
+            "rect", tuple(tuning_options.get("dot_kernel", [5, 5]))
         )
 
     def validate_scan_zones(self):
@@ -129,28 +129,28 @@ class CropOnDotLines(CropOnPatchesCommon):
 
     def validate_and_remap_options_schema(self, options):
         layout_type = options["type"]
-        tuning_options = options.get("tuningOptions", {})
+        tuning_options = options.get("tuning_options", {})
         parsed_options = {
-            "defaultSelector": options.get("defaultSelector", "CENTERS"),
-            "pointsLayout": layout_type,
-            "enableCropping": options.get("enableCropping", True),  # temp
+            "default_selector": options.get("default_selector", "CENTERS"),
+            "points_layout": layout_type,
+            "enable_cropping": options.get("enable_cropping", True),  # temp
             "tuningOptions": {
-                "warpMethod": tuning_options.get(
+                "warp_method": tuning_options.get(
                     "warpMethod", WarpMethod.PERSPECTIVE_TRANSFORM
                 )
             },
         }
 
-        # TODO: add default values for provided options["scanZones"]? like get "maxPoints" from options["lineMaxPoints"]
+        # TODO: add default values for provided options["scan_zones"]? like get "maxPoints" from options["line_max_points"]
         # inject scanZones
-        parsed_options["scanZones"] = [
+        parsed_options["scan_zones"] = [
             # Note: currently at CropOnMarkers/CropOnDotLines level, 'scanZones' is extended provided zones
-            *options.get("scanZones", []),
+            *options.get("scan_zones", []),
             *[
                 {
-                    "zonePreset": zone_preset,
-                    "zoneDescription": options[zone_preset],
-                    "customOptions": {
+                    "zone_preset": zone_preset,
+                    "zone_description": options[zone_preset],
+                    "custom_options": {
                         # TODO: get customOptions here
                     },
                 }
@@ -213,7 +213,7 @@ class CropOnDotLines(CropOnPatchesCommon):
             selected_contour.reverse()
             destination_line.reverse()
 
-        max_points = zone_description.get("maxPoints", None)
+        max_points = zone_description.get("max_points", None)
 
         # Extrapolates the destination_line to get approximate destination points
         (
@@ -253,7 +253,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         zone, zone_start, _ = compute_scan_zone(image, zone_description)
 
         # Validate and apply blur if configured
-        line_blur_kernel = tuning_options.get("lineBlurKernel", None)
+        line_blur_kernel = tuning_options.get("line_blur_kernel", None)
         if line_blur_kernel:
             zone_h, zone_w = zone.shape
             blur_h, blur_w = line_blur_kernel
@@ -270,7 +270,7 @@ class CropOnDotLines(CropOnPatchesCommon):
                 )
 
         # Use extracted detection module
-        line_threshold = tuning_options.get("lineThreshold", 180)
+        line_threshold = tuning_options.get("line_threshold", 180)
         _, edge_contours_map = detect_line_corners_and_edges(
             zone,
             zone_start,
@@ -309,7 +309,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         zone, zone_start, _ = compute_scan_zone(image, zone_description)
 
         # Validate and apply blur if configured
-        dot_blur_kernel = tuning_options.get("dotBlurKernel", None)
+        dot_blur_kernel = tuning_options.get("dot_blur_kernel", None)
         if dot_blur_kernel:
             zone_h, zone_w = zone.shape
             blur_h, blur_w = dot_blur_kernel
@@ -326,7 +326,7 @@ class CropOnDotLines(CropOnPatchesCommon):
                 )
 
         # Use extracted detection module
-        dot_threshold = tuning_options.get("dotThreshold", 150)
+        dot_threshold = tuning_options.get("dot_threshold", 150)
         corners = detect_dot_corners(
             zone,
             zone_start,

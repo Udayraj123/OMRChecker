@@ -88,7 +88,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         tuning_options = self.tuning_options
 
         # Cropping configuration
-        self.enable_cropping = options.get("enableCropping", False)
+        self.enable_cropping = options.get("enable_cropping", False)
 
         # Determine warp method (default depends on cropping)
         self.warp_method = tuning_options.get(
@@ -102,7 +102,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
 
         # Get interpolation flag
         self.warp_method_flag = self.warp_method_flags_map.get(
-            tuning_options.get("warpMethodFlag", "INTER_LINEAR")
+            tuning_options.get("warp_method_flag", "INTER_LINEAR")
         )
 
         # Create the appropriate warp strategy
@@ -180,7 +180,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         """
         return OVERRIDE_MERGER.merge(
             {
-                "tuningOptions": original_options.get("tuningOptions", {}),
+                "tuning_options": original_options.get("tuning_options", {}),
             },
             parsed_options,
         )
@@ -413,7 +413,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
                 reason=(
                     f"Expected 4 control points for perspective transform, "
                     f"found {len(control_points)}. "
-                    f"Use tuningOptions['warpMethod'] for different methods."
+                    f"Use tuningOptions['warp_method'] for different methods."
                 ),
             )
 

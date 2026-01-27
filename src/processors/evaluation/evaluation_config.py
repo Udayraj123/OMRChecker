@@ -108,7 +108,10 @@ class EvaluationConfig:
         }
         # loop on all sets and return first matched set
         for name, matcher in self.conditional_sets:
-            format_string, match_regex = matcher["formatString"], matcher["matchRegex"]
+            format_string, match_regex = (
+                matcher["format_string"],
+                matcher["match_regex"],
+            )
             try:
                 formatted_string = format_string.format(**formatting_fields)
                 if re.search(match_regex, formatted_string) is not None:

@@ -19,7 +19,7 @@ class AutoRotate(ImageTemplatePreprocessor):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        path = self.get_relative_path(self.options["referenceImage"])
+        path = self.get_relative_path(self.options["reference_image"])
         if not path.exists():
             msg = f"Reference image for AutoRotate not found at {path}"
             raise ImageReadError(
@@ -27,7 +27,7 @@ class AutoRotate(ImageTemplatePreprocessor):
                 context={"reference_image_path": str(path)},
             )
         self.reference_image = ImageUtils.load_image(path, cv2.IMREAD_GRAYSCALE)
-        self.marker_dimensions = self.options.get("markerDimensions", None)
+        self.marker_dimensions = self.options.get("marker_dimensions", None)
         self.resized_reference = self.reference_image
         self.threshold = self.options.get("threshold", None)
         if self.marker_dimensions:
@@ -113,5 +113,5 @@ class AutoRotate(ImageTemplatePreprocessor):
         return image, colored_image, _template
 
     def exclude_files(self) -> list[Path]:
-        path = self.get_relative_path(self.options["referenceImage"])
+        path = self.get_relative_path(self.options["reference_image"])
         return [path]
