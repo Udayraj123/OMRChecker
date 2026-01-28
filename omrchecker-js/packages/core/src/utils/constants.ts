@@ -9,7 +9,7 @@
 // Note: OpenCV.js expects BGRA format (4 elements) for Scalar values
 export type ColorTuple = [number, number, number, number];
 export type BubbleFieldType = {
-  readonly bubbleValues: readonly string[];
+  readonly bubble_values: readonly string[];
   readonly direction: 'horizontal' | 'vertical';
 };
 
@@ -110,7 +110,7 @@ function createFieldType(
   values: string[],
   direction: 'horizontal' | 'vertical'
 ): BubbleFieldType {
-  return { bubbleValues: values, direction } as const;
+  return { bubble_values: values, direction } as const;
 }
 
 // Built-in bubble field types using factory

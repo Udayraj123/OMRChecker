@@ -84,7 +84,7 @@ export class TemplateLoader {
       ...Object.fromEntries(
         Object.entries(BUILTIN_BUBBLE_FIELD_TYPES).map(([k, v]) => [
           k,
-          { bubbleValues: [...v.bubbleValues], direction: v.direction },
+          { bubble_values: [...v.bubble_values], direction: v.direction },
         ])
       ),
       ...config.customBubbleFieldTypes,
@@ -178,7 +178,7 @@ export class TemplateLoader {
       ...Object.fromEntries(
         Object.entries(BUILTIN_BUBBLE_FIELD_TYPES).map(([k, v]) => [
           k,
-          { bubbleValues: [...v.bubbleValues], direction: v.direction },
+          { bubble_values: [...v.bubble_values], direction: v.direction },
         ])
       ),
       ...config.customBubbleFieldTypes,
@@ -194,22 +194,22 @@ export class TemplateLoader {
       logger.debug(`Parsing field block: ${blockName}`);
 
       // Get bubble field type
-      const bubbleFieldType = allBubbleFieldTypes[fieldBlock.bubbleFieldType];
+      const bubbleFieldType = allBubbleFieldTypes[fieldBlock.bubble_field_type];
       if (!bubbleFieldType) {
         throw new Error(
-          `Unknown bubbleFieldType: ${fieldBlock.bubbleFieldType} in block ${blockName}`
+          `Unknown bubbleFieldType: ${fieldBlock.bubble_field_type} in block ${blockName}`
         );
       }
 
       // Expand field labels (e.g., "q1..10" → ["q1", "q2", ..., "q10"])
-      const expandedLabels = this.expandFieldLabels(fieldBlock.fieldLabels);
+      const expandedLabels = this.expandFieldLabels(fieldBlock.field_labels);
 
       // Get bubble dimensions (block-specific or global)
-      const bubbleDims = fieldBlock.bubbleDimensions || config.bubbleDimensions;
+      const bubbleDims = fieldBlock.bubble_dimensions || config.bubbleDimensions;
       const [bubbleWidth, bubbleHeight] = bubbleDims;
 
       // Get empty value (block-specific or global)
-      const emptyValue = fieldBlock.emptyValue ?? config.emptyValue ?? '';
+      const emptyValue = fieldBlock.empty_value ?? config.emptyValue ?? '';
 
       // Calculate bubble locations for each field
       const [originX, originY] = fieldBlock.origin;
@@ -221,24 +221,24 @@ export class TemplateLoader {
         const bubbles: BubbleLocation[] = [];
 
         // Calculate field origin (with labelsGap)
-        const fieldOriginX = adjustedOriginX + fieldIdx * fieldBlock.labelsGap;
+        const fieldOriginX = adjustedOriginX + fieldIdx * fieldBlock.labels_gap;
         const fieldOriginY = adjustedOriginY;
 
         // Create bubbles for this field
-        for (let bubbleIdx = 0; bubbleIdx < bubbleFieldType.bubbleValues.length; bubbleIdx++) {
-          const bubbleValue = bubbleFieldType.bubbleValues[bubbleIdx];
+        for (let bubbleIdx = 0; bubbleIdx < bubbleFieldType.bubble_values.length; bubbleIdx++) {
+          const bubbleValue = bubbleFieldType.bubble_values[bubbleIdx];
 
           // Calculate bubble position based on direction
           let bubbleX: number;
           let bubbleY: number;
 
           if (bubbleFieldType.direction === 'horizontal') {
-            bubbleX = fieldOriginX + bubbleIdx * fieldBlock.bubblesGap;
+            bubbleX = fieldOriginX + bubbleIdx * fieldBlock.bubbles_gap;
             bubbleY = fieldOriginY;
           } else {
             // vertical
             bubbleX = fieldOriginX;
-            bubbleY = fieldOriginY + bubbleIdx * fieldBlock.bubblesGap;
+            bubbleY = fieldOriginY + bubbleIdx * fieldBlock.bubbles_gap;
           }
 
           bubbles.push({
@@ -381,8 +381,8 @@ export class TemplateLoader {
     fieldBlockObject: any,
     bubbleFieldTypesData: Record<string, BubbleFieldType>
   ): void {
-    if (fieldBlockObject.fieldDetectionType === FieldDetectionType.BUBBLES_THRESHOLD) {
-      const bubbleFieldType = fieldBlockObject.bubbleFieldType;
+    if (fieldBlockObject.field_detection_type === FieldDetectionType.BUBBLES_THRESHOLD) {
+      const bubbleFieldType = fieldBlockObject.bubble_field_type;
       if (!bubbleFieldType || !bubbleFieldTypesData[bubbleFieldType]) {
         throw new OMRCheckerError(
           `Invalid bubble field type: ${bubbleFieldType} in block ${blockName}. Have you defined customBubbleFieldTypes?`,
@@ -394,8 +394,8 @@ export class TemplateLoader {
       }
     }
 
-    const fieldLabels = fieldBlockObject.fieldLabels;
-    if (fieldLabels.length > 1 && !fieldBlockObject.labelsGap) {
+    const fieldLabels = fieldBlockObject.field_labels;
+    if (fieldLabels.length > 1 && !fieldBlockObject.labels_gap) {
       throw new OMRCheckerError(
         `More than one fieldLabels provided, but labelsGap not present for block ${blockName}`,
         {
@@ -416,23 +416,23 @@ export class TemplateLoader {
     globalEmptyValue: string,
     bubbleFieldTypesData: Record<string, BubbleFieldType>
   ): FieldBlockConfig {
-    const filled: FieldBlockConfig = { ...fieldBlockObject };
+    const filled: any = { ...fieldBlockObject };
 
-    if (fieldBlockObject.fieldDetectionType === FieldDetectionType.BUBBLES_THRESHOLD) {
-      const bubbleFieldType = fieldBlockObject.bubbleFieldType;
+    if (fieldBlockObject.field_detection_type === FieldDetectionType.BUBBLES_THRESHOLD) {
+      const bubbleFieldType = fieldBlockObject.bubble_field_type;
       const fieldTypeData = bubbleFieldTypesData[bubbleFieldType];
 
-      filled.bubbleFieldType = bubbleFieldType;
-      filled.emptyValue = globalEmptyValue;
-      filled.bubbleDimensions = bubbleDimensions;
+      filled.bubble_field_type = bubbleFieldType;
+      filled.empty_value = globalEmptyValue;
+      filled.bubble_dimensions = bubbleDimensions;
       filled.direction = fieldTypeData.direction;
-      filled.bubbleValues = fieldTypeData.bubbleValues;
+      filled.bubble_values = fieldTypeData.bubble_values;
     } else if (
-      fieldBlockObject.fieldDetectionType === FieldDetectionType.OCR ||
-      fieldBlockObject.fieldDetectionType === FieldDetectionType.BARCODE_QR
+      fieldBlockObject.field_detection_type === FieldDetectionType.OCR ||
+      fieldBlockObject.field_detection_type === FieldDetectionType.BARCODE_QR
     ) {
-      filled.emptyValue = globalEmptyValue;
-      filled.labelsGap = 0;
+      filled.empty_value = globalEmptyValue;
+      filled.labels_gap = 0;
     }
 
     return filled;

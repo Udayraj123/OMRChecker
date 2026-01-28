@@ -85,11 +85,11 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
 
     // Determine warp method (default depends on cropping)
     this.warpMethod =
-      tuningOptions.warpMethod ??
+      tuningOptions.warp_method ??
       (this.enableCropping ? WarpMethod.PERSPECTIVE_TRANSFORM : WarpMethod.HOMOGRAPHY);
 
     // Get interpolation flag
-    const flagName = (tuningOptions.warpMethodFlag || 'INTER_LINEAR') as string;
+    const flagName = (tuningOptions.warp_method_flag || 'INTER_LINEAR') as string;
     this.warpMethodFlag =
       WarpOnPointsCommon.warpMethodFlagsMap[flagName] ?? cv.INTER_LINEAR;
 

@@ -19,7 +19,7 @@ import type { BubbleLocation } from '../processors/detection';
  */
 export interface BubbleFieldType {
   /** Values for each bubble (e.g., ["A", "B", "C", "D"]) */
-  bubbleValues: string[];
+  bubble_values: string[];
   /** Layout direction: "horizontal" or "vertical" */
   direction: 'horizontal' | 'vertical';
 }
@@ -33,29 +33,28 @@ export interface FieldBlock {
   /** Origin point [x, y] for the block */
   origin: [number, number];
   /** Labels for fields in this block (e.g., ["q1..10"] or ["q1", "q2", "q3"]) */
-  fieldLabels: string[];
+  field_labels: string[];
   /** Type of field detection (currently only "BUBBLES_THRESHOLD" supported) */
-  fieldDetectionType: 'BUBBLES_THRESHOLD';
+  field_detection_type: 'BUBBLES_THRESHOLD';
   /** Type of bubble field (e.g., "QTYPE_MCQ4", "QTYPE_INT", or custom) */
-  bubbleFieldType: string;
+  bubble_field_type: string;
   /** Gap between bubbles in pixels */
-  bubblesGap: number;
+  bubbles_gap: number;
   /** Gap between field labels in pixels */
-  labelsGap: number;
+  labels_gap: number;
   /** Optional: Override bubble dimensions [width, height] for this block */
-  bubbleDimensions?: [number, number];
+  bubble_dimensions?: [number, number];
   /** Optional: Empty value for this block */
-  emptyValue?: string;
+  empty_value?: string;
   /** Optional: Alignment shifts computed during processing [x, y] */
   shifts?: [number, number];
   /** Optional: Bounding box origin [x, y] */
-  boundingBoxOrigin?: [number, number];
+  bounding_box_origin?: [number, number];
   /** Optional: Bounding box dimensions [width, height] */
-  boundingBoxDimensions?: [number, number];
+  bounding_box_dimensions?: [number, number];
   /** Optional: Alignment configuration for this field block */
   alignment?: {
     margins?: AlignmentMargins;
-    maxDisplacement?: number;
     max_displacement?: number;
   };
   /** Optional: Fields in this block (populated during parsing) */
@@ -158,19 +157,19 @@ export interface TemplateConfig {
  */
 export const BUILTIN_BUBBLE_FIELD_TYPES: Record<string, BubbleFieldType> = {
   QTYPE_MCQ4: {
-    bubbleValues: ['A', 'B', 'C', 'D'],
+    bubble_values: ['A', 'B', 'C', 'D'],
     direction: 'horizontal',
   },
   QTYPE_MCQ5: {
-    bubbleValues: ['A', 'B', 'C', 'D', 'E'],
+    bubble_values: ['A', 'B', 'C', 'D', 'E'],
     direction: 'horizontal',
   },
   QTYPE_INT: {
-    bubbleValues: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+    bubble_values: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
     direction: 'vertical',
   },
   QTYPE_MED: {
-    bubbleValues: ['E', 'H'],
+    bubble_values: ['E', 'H'],
     direction: 'vertical',
   },
 };

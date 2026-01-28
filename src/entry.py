@@ -205,7 +205,7 @@ def process_directory_wise(
 
             if tuning_config.outputs.show_image_level <= 1:
                 logger.info(
-                    f"\nTip: To see some awesome visuals, increase `outputs.show_image_level` in your config: '{tuning_config.path}'"
+                    f"\nTip: To see some awesome visuals, increase `outputs.showImageLevel` in your config: '{tuning_config.path}'"
                 )
 
     elif not subdirs:

@@ -22,23 +22,22 @@ import { FieldBlockDrawing } from './fieldBlockDrawing';
  */
 export interface FieldBlockConfig {
   direction: 'horizontal' | 'vertical';
-  emptyValue?: string;
-  fieldDetectionType: FieldDetectionTypeValue;
-  fieldLabels: string[];
-  labelsGap: number;
+  empty_value?: string;
+  field_detection_type: FieldDetectionTypeValue;
+  field_labels: string[];
+  labels_gap: number;
   origin: [number, number];
   // Bubble-specific
-  bubbleDimensions?: [number, number];
-  bubbleValues?: string[];
-  bubblesGap?: number;
-  bubbleFieldType?: string;
+  bubble_dimensions?: [number, number];
+  bubble_values?: string[];
+  bubbles_gap?: number;
+  bubble_field_type?: string;
   alignment?: {
     margins?: { top?: number; bottom?: number; left?: number; right?: number };
-    maxDisplacement?: number;
     max_displacement?: number;
   };
   // OCR/Barcode-specific
-  scanZone?: unknown;
+  scan_zone?: unknown;
 }
 
 /**
@@ -105,36 +104,36 @@ export class FieldBlock {
   ): void {
     const {
       direction,
-      emptyValue = '',
-      fieldDetectionType,
-      fieldLabels,
-      labelsGap,
+      empty_value = '',
+      field_detection_type,
+      field_labels,
+      labels_gap,
       origin,
     } = fieldBlockObject;
 
     this.direction = direction;
-    this.emptyValue = emptyValue;
-    this.fieldDetectionType = fieldDetectionType;
-    this.labelsGap = labelsGap;
+    this.emptyValue = empty_value;
+    this.fieldDetectionType = field_detection_type;
+    this.labelsGap = labels_gap;
     const [offsetX, offsetY] = fieldBlocksOffset;
     this.origin = [origin[0] + offsetX, origin[1] + offsetY];
 
     this.parsedFieldLabels = parseFields(
       `Field Block Labels: ${this.name}`,
-      fieldLabels
+      field_labels
     );
 
     // Conditionally setup based on field detection type
-    if (fieldDetectionType === FieldDetectionType.BUBBLES_THRESHOLD) {
+    if (field_detection_type === FieldDetectionType.BUBBLES_THRESHOLD) {
       this.setupBubblesFieldBlock(fieldBlockObject);
-    } else if (fieldDetectionType === FieldDetectionType.OCR) {
+    } else if (field_detection_type === FieldDetectionType.OCR) {
       this.setupOcrFieldBlock(fieldBlockObject);
-    } else if (fieldDetectionType === FieldDetectionType.BARCODE_QR) {
+    } else if (field_detection_type === FieldDetectionType.BARCODE_QR) {
       this.setupBarcodeQrFieldBlock(fieldBlockObject);
     } else {
       throw new FieldDefinitionError(
-        `Unsupported field detection type: ${fieldDetectionType}`,
-        { field_detection_type: fieldDetectionType }
+        `Unsupported field detection type: ${field_detection_type}`,
+        { field_detection_type }
       );
     }
   }
@@ -145,23 +144,23 @@ export class FieldBlock {
   setupBubblesFieldBlock(fieldBlockObject: FieldBlockConfig): void {
     const {
       alignment,
-      bubbleDimensions,
-      bubbleValues,
-      bubblesGap,
-      bubbleFieldType,
+      bubble_dimensions,
+      bubble_values,
+      bubbles_gap,
+      bubble_field_type,
     } = fieldBlockObject;
 
-    if (!bubbleDimensions || !bubbleValues || bubblesGap === undefined || !bubbleFieldType) {
+    if (!bubble_dimensions || !bubble_values || bubbles_gap === undefined || !bubble_field_type) {
       throw new FieldDefinitionError(
         'Missing required bubble field block properties',
         { fieldBlockObject }
       );
     }
 
-    this.bubbleDimensions = bubbleDimensions;
-    this.bubbleValues = bubbleValues;
-    this.bubblesGap = bubblesGap;
-    this.bubbleFieldType = bubbleFieldType;
+    this.bubbleDimensions = bubble_dimensions;
+    this.bubbleValues = bubble_values;
+    this.bubblesGap = bubbles_gap;
+    this.bubbleFieldType = bubble_field_type;
 
     // Setup alignment
     this.alignment = {};
@@ -174,8 +173,8 @@ export class FieldBlock {
    * Setup OCR-specific field block properties.
    */
   setupOcrFieldBlock(fieldBlockObject: FieldBlockConfig): void {
-    const { scanZone } = fieldBlockObject;
-    this.scanZone = scanZone;
+    const { scan_zone } = fieldBlockObject;
+    this.scanZone = scan_zone;
     // TODO: compute scan zone?
   }
 
@@ -183,8 +182,8 @@ export class FieldBlock {
    * Setup barcode/QR-specific field block properties.
    */
   setupBarcodeQrFieldBlock(fieldBlockObject: FieldBlockConfig): void {
-    const { scanZone } = fieldBlockObject;
-    this.scanZone = scanZone;
+    const { scan_zone } = fieldBlockObject;
+    this.scanZone = scan_zone;
   }
 
   /**

@@ -92,14 +92,14 @@ export class Contrast extends Processor {
 
   constructor(
     options: {
-      clipPercentage?: number;
+      clip_percentage?: number;
       alpha?: number;
       beta?: number;
       mode?: 'manual' | 'auto';
     } = {}
   ) {
     super();
-    this.clipHistPercent = options.clipPercentage || 1;
+    this.clipHistPercent = options.clip_percentage || 1;
     this.alpha = options.alpha || 1.75;
     this.beta = options.beta || 0;
     this.mode = options.mode || 'manual';

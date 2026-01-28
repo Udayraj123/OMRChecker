@@ -66,8 +66,8 @@ export class CropPage extends WarpOnPointsCommon {
       useColoredCanny: options.useColoredCanny || false,
       maxPointsPerEdge: options.maxPointsPerEdge || null,
       enableCropping: true,
-      tuningOptions: {
-        warpMethod: tuningOptions.warpMethod || WarpMethod.PERSPECTIVE_TRANSFORM,
+      tuning_options: {
+        warp_method: tuningOptions.warp_method || WarpMethod.PERSPECTIVE_TRANSFORM,
         normalizeConfig: [],
         cannyConfig: [],
         ...tuningOptions,
@@ -95,8 +95,8 @@ export class CropPage extends WarpOnPointsCommon {
       useColoredCanny: options.useColoredCanny || false,
       maxPointsPerEdge: options.maxPointsPerEdge || null,
       enableCropping: true,
-      tuningOptions: {
-        warpMethod: tuningOptions.warpMethod || WarpMethod.PERSPECTIVE_TRANSFORM,
+      tuning_options: {
+        warp_method: tuningOptions.warp_method || WarpMethod.PERSPECTIVE_TRANSFORM,
         normalizeConfig: [],
         cannyConfig: [],
       },

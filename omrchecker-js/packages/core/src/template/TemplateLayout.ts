@@ -390,7 +390,7 @@ export class TemplateLayout {
       this.bubbleFieldTypesData = Object.fromEntries(
         Object.entries(BUILTIN_BUBBLE_FIELD_TYPES).map(([k, v]) => [
           k,
-          { bubbleValues: [...v.bubbleValues], direction: v.direction },
+          { bubble_values: [...v.bubble_values], direction: v.direction },
         ])
       ) as Record<string, BubbleFieldType>;
     } else {
@@ -398,7 +398,7 @@ export class TemplateLayout {
         ...Object.fromEntries(
           Object.entries(BUILTIN_BUBBLE_FIELD_TYPES).map(([k, v]) => [
             k,
-            { bubbleValues: [...v.bubbleValues], direction: v.direction },
+            { bubble_values: [...v.bubble_values], direction: v.direction },
           ])
         ),
         ...customBubbleFieldTypes,

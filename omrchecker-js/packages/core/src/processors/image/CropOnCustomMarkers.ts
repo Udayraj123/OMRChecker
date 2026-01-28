@@ -142,7 +142,7 @@ export class CropOnCustomMarkers extends CropOnPatchesCommon {
   }
 
   protected static override validateAndRemapOptionsSchema(options: any): Record<string, any> {
-    const referenceImagePath = options.referenceImage;
+    const referenceImagePath = options.reference_image;
     const layoutType = options.type;
     const tuningOptions = options.tuningOptions || {};
 
@@ -150,8 +150,8 @@ export class CropOnCustomMarkers extends CropOnPatchesCommon {
       defaultSelector: options.defaultSelector || 'CENTERS',
       pointsLayout: layoutType,
       enableCropping: true,
-      tuningOptions: {
-        warpMethod: tuningOptions.warpMethod || WarpMethod.PERSPECTIVE_TRANSFORM,
+      tuning_options: {
+        warp_method: tuningOptions.warp_method || WarpMethod.PERSPECTIVE_TRANSFORM,
         ...tuningOptions,
       },
     };

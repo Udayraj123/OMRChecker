@@ -98,6 +98,10 @@ def minimal_args():
         "outputMode": "default",
         "setLayout": False,
         "mode": "process",
+        "input_paths": [],
+        "output_dir": "./outputs",
+        "collect_training_data": False,
+        "confidence_threshold": 0.8,
     }
 
 

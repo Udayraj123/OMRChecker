@@ -27,12 +27,12 @@ export interface ImagePreprocessorOptions {
   /**
    * Tuning options for the preprocessor
    */
-  tuningOptions?: Record<string, any>;
+  tuning_options?: Record<string, any>;
 
   /**
    * Processing image shape [width, height]
    */
-  processingImageShape?: [number, number];
+  processing_image_shape?: [number, number];
 
   /**
    * Output configuration
@@ -87,7 +87,7 @@ export abstract class ImageTemplatePreprocessor extends Processor {
 
     // Initialize processor-specific attributes
     this.options = options;
-    this.tuningOptions = options.tuningOptions || {};
+    this.tuningOptions = options.tuning_options || {};
     this.relativeDir = relativeDir;
 
     // Image preprocessing specific attributes

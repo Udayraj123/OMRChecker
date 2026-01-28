@@ -5,6 +5,12 @@
  * Maintains 1:1 correspondence with Python implementation.
  */
 
+import {
+  validateNoKeyClash,
+  camelToSnake,
+  convertDictKeysToSnake,
+} from '../../utils/jsonConversion';
+
 /**
  * Configuration for drawing score on output images.
  */
@@ -99,12 +105,48 @@ export class EvaluationConfig {
   /**
    * Create EvaluationConfig from dictionary (typically from JSON).
    *
-   * @param data - Dictionary containing evaluation configuration data
+   * Converts camelCase keys from JSON to snake_case for internal use.
+   * Preserves user-defined names in options values and marking_schemes keys.
+   *
+   * @param data - Dictionary containing evaluation configuration data (with camelCase keys)
    * @returns EvaluationConfig instance with nested configs
+   * @throws Error if the evaluation JSON has clashing keys (both camelCase and snake_case)
    */
   static fromDict(data: Record<string, any>): EvaluationConfig {
+    // Validate no key clashes before conversion
+    try {
+      validateNoKeyClash(data);
+    } catch (e) {
+      throw new Error(`Invalid evaluation JSON: ${e instanceof Error ? e.message : String(e)}`);
+    }
+
+    // Preserve user-defined structures before conversion
+    const optionsRaw = data.options || {};
+    const markingSchemesRaw = data.markingSchemes || {};
+
+    // Convert top-level and nested keys from camelCase to snake_case
+    const dataConverted = convertDictKeysToSnake(data);
+
+    // For options: convert keys (like questionsInOrder -> questions_in_order)
+    // but preserve the VALUES (user-defined field names like "Roll_No")
+    const optionsConverted: Record<string, any> = {};
+    for (const [key, value] of Object.entries(optionsRaw)) {
+      const snakeKey = camelToSnake(key);
+      optionsConverted[snakeKey] = value; // Preserve value as-is
+    }
+
+    // For marking_schemes: preserve scheme names (keys like "DEFAULT")
+    // but convert keys within each scheme (like "correct", "incorrect")
+    const markingSchemesConverted: Record<string, any> = {};
+    for (const [schemeName, schemeData] of Object.entries(markingSchemesRaw)) {
+      // Preserve scheme name, convert keys within scheme
+      markingSchemesConverted[schemeName] = convertDictKeysToSnake(
+        schemeData as Record<string, any>
+      );
+    }
+
     // Parse outputs_configuration if present
-    const outputsConfigData = data.outputs_configuration || {};
+    const outputsConfigData = dataConverted.outputs_configuration || {};
     const outputsConfig: OutputsConfiguration = {
       should_explain_scoring: outputsConfigData.should_explain_scoring || false,
       should_export_explanation_csv:
@@ -153,9 +195,9 @@ export class EvaluationConfig {
     };
 
     return new EvaluationConfig(
-      data.options,
-      data.marking_schemes,
-      data.conditional_sets,
+      optionsConverted,
+      markingSchemesConverted,
+      dataConverted.conditional_sets,
       outputsConfig
     );
   }

@@ -11,18 +11,56 @@ import type {
   SortFilesConfig,
   TemplateConfig,
 } from '../../template/types';
+import {
+  validateNoKeyClash,
+  convertDictKeysToSnake,
+} from '../../utils/jsonConversion';
 
 /**
  * Create TemplateConfig from dictionary (typically from JSON).
  *
+ * Converts camelCase keys from JSON to snake_case for internal use.
+ * Preserves user-defined names in customBubbleFieldTypes and fieldBlocks.
+ *
  * Port of TemplateConfig.from_dict() from Python.
  *
- * @param data - Dictionary containing template configuration data
+ * @param data - Dictionary containing template configuration data (with camelCase keys)
  * @returns TemplateConfig instance with nested configs
+ * @throws Error if the template JSON has clashing keys (both camelCase and snake_case)
  */
 export function templateConfigFromDict(data: Record<string, any>): TemplateConfig {
+  // Validate no key clashes before conversion
+  try {
+    validateNoKeyClash(data);
+  } catch (e) {
+    throw new Error(`Invalid template JSON: ${e instanceof Error ? e.message : String(e)}`);
+  }
+
+  // Preserve and convert customBubbleFieldTypes
+  // Keep type names (keys), but convert keys within each type definition
+  const customBubbleFieldTypesRaw = data.customBubbleFieldTypes || {};
+  const customBubbleFieldTypesConverted: Record<string, any> = {};
+  for (const [typeName, typeData] of Object.entries(customBubbleFieldTypesRaw)) {
+    // Preserve type name, convert keys within type definition
+    customBubbleFieldTypesConverted[typeName] = convertDictKeysToSnake(
+      typeData as Record<string, any>
+    );
+  }
+
+  // Preserve and convert fieldBlocks
+  // Keep block names (keys), but convert keys within each block
+  const fieldBlocksRaw = data.fieldBlocks || {};
+  const fieldBlocksConverted: Record<string, any> = {};
+  for (const [blockName, blockData] of Object.entries(fieldBlocksRaw)) {
+    // Preserve block name, convert keys within block
+    fieldBlocksConverted[blockName] = convertDictKeysToSnake(blockData as Record<string, any>);
+  }
+
+  // Convert all other top-level keys from camelCase to snake_case
+  const dataConverted = convertDictKeysToSnake(data);
+
   // Parse alignment if present
-  const alignmentData = data.alignment || {};
+  const alignmentData = dataConverted.alignment || {};
   const alignment: AlignmentConfig = {
     margins: {
       top: 0,
@@ -31,37 +69,39 @@ export function templateConfigFromDict(data: Record<string, any>): TemplateConfi
       right: 0,
       ...alignmentData.margins,
     },
-    maxDisplacement: alignmentData.maxDisplacement ?? 10,
+    maxDisplacement: alignmentData.max_displacement ?? 10,
     ...alignmentData,
   };
 
   // Parse outputColumns if present
-  const outputColumnsData = data.outputColumns || {};
+  const outputColumnsData = dataConverted.output_columns || {};
   const outputColumns: OutputColumnsConfig = {
-    customOrder: outputColumnsData.customOrder || [],
-    sortType: outputColumnsData.sortType || 'ALPHANUMERIC',
-    sortOrder: outputColumnsData.sortOrder || 'ASC',
+    customOrder: outputColumnsData.custom_order || [],
+    sortType: outputColumnsData.sort_type || 'ALPHANUMERIC',
+    sortOrder: outputColumnsData.sort_order || 'ASC',
   };
 
   // Parse sortFiles if present
-  const sortFilesData = data.sortFiles || {};
+  const sortFilesData = dataConverted.sort_files || {};
   const sortFiles: SortFilesConfig = {
     enabled: sortFilesData.enabled ?? false,
   };
 
   return {
-    templateDimensions: data.templateDimensions,
-    bubbleDimensions: data.bubbleDimensions,
+    templateDimensions: dataConverted.template_dimensions || [1200, 1600],
+    bubbleDimensions: dataConverted.bubble_dimensions || [10, 10],
     alignment,
-    conditionalSets: data.conditionalSets || [],
-    customLabels: data.customLabels || {},
-    customBubbleFieldTypes: data.customBubbleFieldTypes || {},
-    emptyValue: data.emptyValue || '',
-    fieldBlocks: data.fieldBlocks || {},
-    fieldBlocksOffset: data.fieldBlocksOffset || [0, 0],
+    conditionalSets: dataConverted.conditional_sets || [],
+    customLabels: dataConverted.custom_labels || {},
+    // Use converted custom bubble field types (type names preserved, keys converted)
+    customBubbleFieldTypes: customBubbleFieldTypesConverted,
+    emptyValue: dataConverted.empty_value || '',
+    // Use converted field blocks (block names preserved, keys converted)
+    fieldBlocks: fieldBlocksConverted,
+    fieldBlocksOffset: dataConverted.field_blocks_offset || [0, 0],
     outputColumns,
-    preProcessors: data.preProcessors || [],
-    processingImageShape: data.processingImageShape || [900, 650],
+    preProcessors: dataConverted.pre_processors || [],
+    processingImageShape: dataConverted.processing_image_shape || [900, 650],
     sortFiles,
   };
 }

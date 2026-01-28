@@ -1,0 +1,69 @@
+# Dependencies
+**/node_modules/
+**/venv/
+**/.venv/
+**/pnpm-store/
+pnpm-lock.yaml
+uv.lock
+
+# Build outputs
+**/dist/
+**/build/
+**/.vite/
+**/lib/
+
+# Cache directories
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+**/.coverage
+**/coverage.json
+**/.DS_Store
+
+# Test outputs and snapshots
+pytestdebug.log
+**/__image_snapshots__/
+
+# Generated documentation
+docs/site/
+**/htmlcov/
+
+# Inputs and outputs
+inputs/*
+outputs/*
+
+# ML/Training outputs
+runs/**/*
+*.pt
+
+# Lock files
+pnpm-lock.yaml
+uv.lock
+
+# IDE and system files
+**/.DS_Store
+
+# Hidden directories (except specific ones)
+**/.git/
+**/.github/
+**/.vscode/
+**/.devcontainer/
+
+# Large data files
+**/*.pt
+**/*.pth
+**/*.onnx
+**/*.h5
+**/*.pb
+
+# Reports
+reports/sync-status-*.html
+.sync-suggestions/
+
+# Temporary files
+**/__ignore__
+*.log
+*.tmp
+
+# Wiki
+OMRChecker.wiki/
