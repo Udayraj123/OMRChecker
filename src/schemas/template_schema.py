@@ -208,7 +208,17 @@ TEMPLATE_SCHEMA = {
                         },
                         "emptyValue": {"type": "string"},
                         "fieldLabels": {"type": "array", "items": FIELD_STRING_TYPE},
-                        "labelsGap": positive_number,
+                        "labelsGap": {
+                            "oneOf": [
+                                positive_number,
+                                {
+                                    "type": "array",
+                                    "items": positive_number,
+                                    "description": "Array of gaps between consecutive field labels. Should have length equal to len(fieldLabels) - 1",
+                                },
+                            ],
+                            "description": "Gap between field labels. Can be a single number (constant gap) or an array of numbers (variable gaps)",
+                        },
                         "origin": two_positive_integers,
                         "fieldType": {
                             "type": "string",
