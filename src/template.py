@@ -289,7 +289,7 @@ class FieldBlock:
         # Sum all gaps in the labels_gap list
         total_labels_gap = sum(labels_gap) if labels_gap else 0
         fields_dimension = int(
-            total_labels_gap + bubble_dimensions[_v]
+            total_labels_gap + len(self.parsed_field_labels) * bubble_dimensions[_v]
         )
         self.dimensions = (
             [fields_dimension, values_dimension]
