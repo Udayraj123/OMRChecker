@@ -1,0 +1,13 @@
+{
+  "outputs": {
+    "show_image_level": 5,
+    "save_image_level": 2
+  },
+  "alignment_params": {
+    "auto_align": false
+  },
+"threshold_params": {
+  "BUBBLE_VALUE_METHOD": "min",
+  "MARK_SENSITIVITY_OFFSET": 10
+}
+}

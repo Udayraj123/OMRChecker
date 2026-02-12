@@ -70,6 +70,7 @@ TEMPLATE_SCHEMA = {
                     "name": {
                         "type": "string",
                         "enum": [
+                            "CropOnLogo",
                             "CropOnMarkers",
                             "CropPage",
                             "FeatureBasedAlignment",
@@ -81,6 +82,39 @@ TEMPLATE_SCHEMA = {
                 },
                 "required": ["name", "options"],
                 "allOf": [
+                    {
+                        "if": {"properties": {"name": {"const": "CropOnLogo"}}},
+                        "then": {
+                            "properties": {
+                                "options": {
+                                    "type": "object",
+                                    "additionalProperties": False,
+                                    "properties": {
+                                        "expected_origin": {
+                                            "type": "array",
+                                            "description": "[x, y] where the logo top-left should be (processing coords). Default [0, 0].",
+                                            "prefixItems": [
+                                                {"type": "integer", "minimum": 0},
+                                                {"type": "integer", "minimum": 0},
+                                            ],
+                                            "minItems": 2,
+                                            "maxItems": 2,
+                                        },
+                                        "min_matching_threshold": {
+                                            "type": "number",
+                                            "minimum": 0,
+                                            "maximum": 1,
+                                        },
+                                        "relativePath": {"type": "string"},
+                                        "sheetToLogoWidthRatio": {
+                                            "type": "number",
+                                        },
+                                    },
+                                    "required": ["relativePath"],
+                                }
+                            }
+                        },
+                    },
                     {
                         "if": {"properties": {"name": {"const": "CropOnMarkers"}}},
                         "then": {
