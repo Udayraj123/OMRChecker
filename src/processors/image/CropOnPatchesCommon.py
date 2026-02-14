@@ -153,7 +153,8 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             # Inject runtime zone description
             scan_zone["runtime_zone_description"] = zone_description
 
-            self.draw_scan_zone(zone_description)
+            if config.outputs.show_image_level >= 1:
+                draw_scan_zone(self.debug_image, zone_description)
 
         if (
             config.outputs.show_image_level >= 4
@@ -264,13 +265,3 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         )
 
         return dot_point, destination_point
-
-    def draw_scan_zone(self, zone_description):
-        """
-        Draw scan zone boundaries on debug image.
-
-        Delegates to patch_utils.draw_scan_zone for the core logic.
-        """
-        config = self.tuning_config
-        if config.outputs.show_image_level >= 1:
-            draw_scan_zone(self.debug_image, zone_description)

@@ -340,12 +340,12 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
    * Draw scan zone on debug image.
    * Delegates to patchUtils.drawScanZone for core logic.
    */
-  protected drawScanZone(zoneDescription: ZoneDescription): void {
-    const showImageLevel = this.tuningConfig?.outputs?.show_image_level ?? 0;
-    if (showImageLevel >= 1 && this.debugImage) {
-      drawScanZone(this.debugImage, zoneDescription);
-    }
-  }
+//   protected drawScanZone(zoneDescription: ZoneDescription): void {
+//     const showImageLevel = this.tuningConfig?.outputs?.show_image_level ?? 0;
+//     if (showImageLevel >= 1 && this.debugImage) {
+//       drawScanZone(this.debugImage, zoneDescription);
+//     }
+//   }
 
   // =========================================================================
   // Template method overrides

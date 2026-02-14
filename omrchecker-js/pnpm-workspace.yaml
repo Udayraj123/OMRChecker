@@ -1,4 +1,2 @@
 packages:
   - 'packages/*'
-  - 'change-propagation-tool'
-

@@ -132,5 +132,7 @@ class CropPage(WarpOnPointsCommon):
             )
             control_points += edge_control_points
             destination_points += edge_destination_points
-
+        logger.debug(
+            f"control_points: {control_points}, destination_points: {destination_points}"
+        )
         return control_points, destination_points, edge_contours_map

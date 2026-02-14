@@ -235,13 +235,13 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         """
         config = self.tuning_config
 
-        # Initialize debug state
-        self.debug_image = image.copy()
-        self.debug_hstack = []
-        self.debug_vstack = []
-
         # Step 1: Prepare image (subclass-specific)
         prepared_image = self.prepare_image_before_extraction(image)
+
+        # Initialize debug state with prepared image to ensure consistent dimensions
+        self.debug_image = prepared_image.copy()
+        self.debug_hstack = []
+        self.debug_vstack = []
 
         # Step 2: Extract control/destination points (subclass-specific)
         (
@@ -261,7 +261,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
 
         logger.debug(
             f"Cropping Enabled: {self.enable_cropping}\n"
-            f"Control points: {len(parsed_control_points)}\n"
+            f"Control points: {parsed_control_points}\n"
             f"Warped dimensions: {warped_dimensions}"
         )
 

@@ -41,7 +41,7 @@
   },
   "mappings": [
     {
-      "python": "src/core/omr_processor.py",
+      "python": "N/A (orchestration in entry.py + processors; no src/core/ in Python)",
       "typescript": "omrchecker-js/packages/core/src/core/OMRProcessor.ts",
       "status": "synced",
       "phase": 1,
@@ -71,10 +71,10 @@
           ]
         }
       ],
-      "notes": "Main OMR orchestrator. TypeScript uses class-based approach with processImage() and processBatch() methods instead of directory traversal."
+      "notes": "Main OMR orchestrator. Python has no src/core/; orchestration lives in entry.py and processors. TypeScript has dedicated OMRProcessor.ts with processImage() and processBatch()."
     },
     {
-      "python": "src/core/types.py",
+      "python": "N/A (TypeScript-only)",
       "typescript": "omrchecker-js/packages/core/src/core/types.ts",
       "status": "synced",
       "phase": 1,
@@ -1663,15 +1663,15 @@
     },
     {
       "python": "N/A (demo/frontend only)",
-      "typescript": "omrchecker-js/packages/demo/src/main.ts",
-      "status": "synced",
+      "typescript": "N/A (demo package not in workspace; only packages/core present)",
+      "status": "deviating",
       "phase": 1,
       "priority": "medium",
       "lastSyncedCommit": null,
       "lastPythonChange": null,
       "lastTypescriptChange": "2026-01-15T14:00:00Z",
       "testFile": null,
-      "notes": "Browser-based demo application integrating OMRProcessor with full pipeline support (preprocessing, alignment, detection, evaluation). Supports batch processing, folder upload, and CSV export. No direct Python equivalent as this is a web interface."
+      "notes": "Browser-based demo application. Demo package (packages/demo) not present in current workspace; only packages/core exists. When present, integrates OMRProcessor with preprocessing, alignment, detection, evaluation, batch processing, folder upload, CSV export."
     },
     {
       "python": "src/entry.py",

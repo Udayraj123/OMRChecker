@@ -199,12 +199,13 @@ def display_results(results: list[dict], all_synced: bool):
 [bold]Status:[/bold] {"TypeScript file needs to be created and updated" if status == "not_created" else "TypeScript file exists but not staged in this commit"}
 
 [bold yellow]Action required:[/bold yellow]
-  1. Update the TypeScript file: [cyan]{ts_file}[/cyan]
-  2. Stage the TypeScript changes: [green]git add {ts_file}[/green]
-  3. Retry commit
+  1. Review the auto-synced TypeScript file: [cyan]{ts_file}[/cyan]
+  2. Manually fix implementation details, types, and logic
+  3. Stage additional TypeScript changes: [green]git add {ts_file}[/green]
+  4. Retry commit
 
-[bold]Or use change propagation tool:[/bold]
-  [green]pnpm run change-tool[/green]
+[bold]Or generate suggestions:[/bold]
+  [green]uv run python scripts/sync_tool.py suggest {py_file}[/green]
 
 [dim]Bypass (not recommended):[/dim] [dim]git commit --no-verify[/dim]
 """

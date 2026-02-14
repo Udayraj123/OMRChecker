@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import cv2
 import numpy as np
@@ -27,11 +27,11 @@ from src.utils.parsing import OVERRIDE_MERGER
 
 # TODO: add support for showing patch zone centers during setLayout option?!
 class CropOnCustomMarkers(CropOnPatchesCommon):
-    __is_internal_preprocessor__: ClassVar = True
-    scan_zone_presets_for_layout: ClassVar = {
+    __is_internal_preprocessor__: ClassVar[bool] = True
+    scan_zone_presets_for_layout: ClassVar[dict[str, list[Any]]] = {
         "FOUR_MARKERS": MARKER_ZONE_TYPES_IN_ORDER,
     }
-    default_scan_zone_descriptions: ClassVar = {
+    default_scan_zone_descriptions: ClassVar[dict[str, Any]] = {
         **{
             zone_preset: {
                 "scanner_type": ScannerType.TEMPLATE_MATCH,
@@ -239,7 +239,6 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             scan_zone["zone_preset"],
             scan_zone["zone_description"],
         )
-        logger.debug(scan_zone)
         # Note: currently user input would be restricted to only markers at once (no combination of markers and dots)
         # TODO: >> handle a instance of this class from parent using scannerType for applicable ones!
         # Check for zone_preset
@@ -258,7 +257,9 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             zone_description = OVERRIDE_MERGER.merge(
                 quadrant_description, zone_description
             )
-        # Check for zone_description["scanner_type"]
+            logger.debug(
+                f"image_shape: {image_shape}, debug_shape: {self.debug_image.shape} zone_description: {zone_description}, zone_preset: {zone_preset}"
+            )
 
         # Note: this runtime template is supposedly always valid
         return zone_description

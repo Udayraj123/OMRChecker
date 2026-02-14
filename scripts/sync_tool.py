@@ -171,18 +171,16 @@ def cmd_detect(args):
         if status in ("not_started", "partial"):
             console.print(f"  {py_file} → {ts_file}")
 
-    # Ask to launch web UI
+    # Suggest running auto-sync
     if args.interactive and total > 0:
         console.print()
-        response = console.input("[bold]Launch web UI? [Y/n]:[/bold] ")
-        if response.lower() in ("", "y", "yes"):
-            console.print("\n[cyan]Opening http://localhost:5174...[/cyan]")
-            subprocess.Popen(
-                ["pnpm", "run", "change-tool"],
-                cwd=repo_root,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
+        console.print(
+            "[bold cyan]Run auto-sync to apply structural changes:[/bold cyan]"
+        )
+        console.print("  [green]uv run python scripts/sync_tool.py auto-sync[/green]")
+        console.print(
+            "\n[dim]Or commit your changes to trigger the pre-commit hook[/dim]"
+        )
 
 
 def cmd_suggest(args):
@@ -362,6 +360,26 @@ def cmd_watch(_args):
     console.print("Use 'git diff' hooks or IDE extensions for now")
 
 
+def cmd_auto_sync(args):
+    """Run auto-sync manually without committing."""
+    repo_root = Path(args.repo_root)
+
+    console.print("\n🔄 [bold cyan]Running auto-sync...[/bold cyan]\n")
+
+    # Run the auto-sync hook script
+    result = subprocess.run(
+        [sys.executable, "scripts/hooks/auto_sync_python_to_ts.py"],
+        cwd=repo_root,
+        check=False,
+    )
+
+    if result.returncode != 0:
+        console.print("[red]❌ Auto-sync failed[/red]")
+        sys.exit(1)
+
+    console.print("[green]✅ Auto-sync complete[/green]")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="OMRChecker Sync Tool - Manage Python-TypeScript synchronization"
@@ -412,6 +430,9 @@ def main():
     # watch command
     subparsers.add_parser("watch", help="Watch for changes and notify")
 
+    # auto-sync command
+    subparsers.add_parser("auto-sync", help="Run auto-sync manually")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -426,6 +447,7 @@ def main():
         "mark-synced": cmd_mark_synced,
         "report": cmd_report,
         "watch": cmd_watch,
+        "auto-sync": cmd_auto_sync,
     }
 
     commands[args.command](args)

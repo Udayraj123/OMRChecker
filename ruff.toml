@@ -1,5 +1,5 @@
 # Ruff configuration for OMRChecker
-extend-exclude = ["change-propagation-tool", "omrchecker-js", ".venv", "venv"]
+extend-exclude = ["omrchecker-js", ".venv", "venv"]
 
 [lint]
 ignore = [

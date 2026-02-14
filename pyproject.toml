@@ -30,11 +30,7 @@ dependencies = [
 # https://docs.astral.sh/uv/concepts/projects/dependencies/#optional-dependencies
 [project.optional-dependencies]
 easyocr = ["easyocr>=1.7.2"]
-ml = [
-    "ultralytics>=8.0.0",
-    "torch>=2.0.0",
-    "torchvision>=0.15.0",
-]
+ml = ["ultralytics>=8.0.0", "torch>=2.0.0", "torchvision>=0.15.0"]
 
 [dependency-groups]
 dev = [
@@ -56,7 +52,7 @@ dev = [
 
 [tool.ruff]
 # Exclude patterns
-extend-exclude = ["change-propagation-tool", "omrchecker-js"]
+extend-exclude = ["omrchecker-js"]
 
 # Linting rules
 [tool.ruff.lint]
@@ -77,4 +73,4 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"scripts/*" = ["E722"]  # Bare except acceptable in scripts
+"scripts/*" = ["E722"] # Bare except acceptable in scripts

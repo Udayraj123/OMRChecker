@@ -10,7 +10,6 @@ omrchecker-js/
 │   ├── core/               # Main OMRChecker library
 │   ├── demo/               # React demo application
 │   └── e2e/                # Playwright E2E tests
-├── change-propagation-tool/  # Interactive Python ↔ TypeScript sync tool
 └── pnpm-workspace.yaml     # pnpm workspace configuration
 ```
 
@@ -18,7 +17,7 @@ omrchecker-js/
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - pnpm 8+
 
 ### Installation
@@ -84,12 +83,39 @@ React-based demo application showcasing the OMRChecker library capabilities in t
 
 End-to-end tests using Playwright to ensure the library works correctly across different browsers.
 
-## Change Propagation Tool
+## Workflow
 
-Interactive web UI for synchronizing Python and TypeScript code changes. See [DEPENDENCY_MAPPING.md](../DEPENDENCY_MAPPING.md) for details.
+### Development Workflow
+
+1. Make changes to Python code in `src/`
+2. Stage your changes: `git add src/...`
+3. Commit: `git commit`
+4. The pre-commit hook will automatically:
+   - Auto-sync structural changes (classes/methods) to TypeScript
+   - Stage the updated TypeScript files
+   - Validate that all changes are synced
+5. Review the auto-synced TypeScript code
+6. Manually fix implementation details, types, and logic
+7. Run tests: `pnpm test`
+8. Stage additional changes if needed: `git add omrchecker-js/...`
+9. Amend or create a new commit
+
+### Manual Sync (without committing)
+
+You can also run the auto-sync manually:
 
 ```bash
-pnpm run change-tool
+# Run auto-sync on staged Python files
+uv run python scripts/sync_tool.py auto-sync
+
+# Check sync status
+uv run python scripts/sync_tool.py status
+
+# Detect changes
+uv run python scripts/sync_tool.py detect
+
+# Generate TypeScript suggestions for a specific file
+uv run python scripts/sync_tool.py suggest src/processors/image/CropPage.py
 ```
 
 ## Architecture

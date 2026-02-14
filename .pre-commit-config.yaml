@@ -1,4 +1,4 @@
-exclude: "(__snapshots__|__image_snapshots__|node_modules|workflow-viz-app|omrchecker-js|change-propagation-tool|code-browser)/.*$"
+exclude: "(__snapshots__|__image_snapshots__|node_modules|workflow-viz-app|omrchecker-js|code-browser)/.*$"
 default_install_hook_types: [pre-commit, pre-push]
 # default_stages: [pre-commit]
 repos:
@@ -82,9 +82,30 @@ repos:
         args: ["--quality", "90"]
         fail_fast: true # Wait for user to commit the files
 
-  # Python-TypeScript code correspondence validation
+  # Auto-sync Python changes to TypeScript (structural only)
   - repo: local
     hooks:
+      - id: auto-sync-python-to-ts
+        name: Auto-sync Python → TypeScript
+        entry: ./scripts/run_python_hook.sh scripts/hooks/auto_sync_python_to_ts.py
+        files: ^src/.*\.py$
+        language: script
+        pass_filenames: false
+        fail_fast: false
+        stages: [pre-commit]
+
+  # Python-TypeScript auto-sync and validation
+  - repo: local
+    hooks:
+      - id: auto-sync-python-to-ts
+        name: Auto-sync Python → TypeScript
+        entry: ./scripts/run_python_hook.sh scripts/hooks/auto_sync_python_to_ts.py
+        files: ^src/.*\.py$
+        language: script
+        pass_filenames: false
+        fail_fast: false
+        stages: [pre-commit]
+
       - id: validate-code-correspondence
         name: Validate Python ↔ TypeScript correspondence
         entry: ./scripts/run_python_hook.sh scripts/hooks/validate_code_correspondence.py

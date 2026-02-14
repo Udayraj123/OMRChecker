@@ -72,6 +72,9 @@ class ImageTemplatePreprocessor(Processor):
         file_path = context.file_path
 
         # Resize images to preprocessor's processing shape
+        logger.debug(
+            f"processing_image_shape: {self.processing_image_shape}, gray_image: {gray_image.shape}, colored_image: {colored_image.shape}"
+        )
         gray_image = ImageUtils.resize_to_shape(self.processing_image_shape, gray_image)
 
         if self.tuning_config.outputs.colored_outputs_enabled:

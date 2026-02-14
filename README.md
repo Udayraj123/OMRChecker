@@ -4,19 +4,6 @@ Evaluate OMR sheets fast and accurately using a scanner 🖨 or your phone 🤳.
 
 ---
 
-## 🚀 NEW: TypeScript Port Available!
-
-OMRChecker is now being ported to TypeScript for browser and Node.js use!
-
-- 📖 **[Quick Start Guide](QUICK_START_GUIDE.md)** - Get started in 5 minutes
-- 💻 **[TypeScript Port](omrchecker-js/)** - Modern ES6/TypeScript implementation
-- 🎨 **[Change Propagation Tool](change-propagation-tool/)** - Interactive progress tracker
-- 📊 **[Implementation Report](FINAL_IMPLEMENTATION_REPORT.md)** - Technical details
-
-**Port Status**: 3.2% complete (1/31 core files synced) | [Track Progress →](change-propagation-tool/)
-
----
-
 ## What is OMR?
 
 OMR stands for Optical Mark Recognition, used to detect and interpret human-marked data on documents. OMR refers to the process of reading and evaluating OMR sheets, commonly used in exams, surveys, and other forms. The OMR sheet scanning is typically done using a scanner, but with OMRChecker it's supported for images from a mobile camera as well.

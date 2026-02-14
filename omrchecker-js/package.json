@@ -12,7 +12,6 @@
     "lint": "pnpm -r lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "typecheck": "pnpm -r typecheck",
-    "change-tool": "pnpm --filter change-propagation-tool dev",
     "clean": "pnpm -r clean && rm -rf node_modules"
   },
   "devDependencies": {
