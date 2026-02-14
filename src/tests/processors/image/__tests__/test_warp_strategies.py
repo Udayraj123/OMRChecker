@@ -72,7 +72,7 @@ class TestPerspectiveTransformStrategy:
         """Test basic perspective warp"""
         strategy = PerspectiveTransformStrategy()
 
-        warped, warped_colored = strategy.warp_image(
+        warped, warped_colored, _ = strategy.warp_image(
             test_image, None, control_points, destination_points, (400, 400)
         )
 
@@ -92,7 +92,7 @@ class TestPerspectiveTransformStrategy:
         strategy = PerspectiveTransformStrategy()
         colored = cv2.cvtColor(test_image, cv2.COLOR_GRAY2BGR)
 
-        warped_gray, warped_colored = strategy.warp_image(
+        warped_gray, warped_colored, _ = strategy.warp_image(
             test_image, colored, control_points, destination_points, (400, 400)
         )
 
@@ -130,7 +130,7 @@ class TestPerspectiveTransformStrategy:
         # Same control and destination points
         points = np.array([[0, 0], [399, 0], [399, 399], [0, 399]], dtype=np.float32)
 
-        warped, _ = strategy.warp_image(test_image, None, points, points, (400, 400))
+        warped, _, _ = strategy.warp_image(test_image, None, points, points, (400, 400))
 
         # Should be nearly identical (allowing for interpolation artifacts)
         difference = np.abs(warped.astype(int) - test_image.astype(int))
@@ -167,7 +167,7 @@ class TestHomographyStrategy:
 
         dest = np.array([[50, 50], [350, 50], [350, 350], [50, 350]], dtype=np.float32)
 
-        warped, _ = strategy.warp_image(test_image, None, control, dest, (400, 400))
+        warped, _, _ = strategy.warp_image(test_image, None, control, dest, (400, 400))
 
         assert warped.shape == (400, 400)
 
@@ -204,7 +204,7 @@ class TestHomographyStrategy:
             dtype=np.float32,
         )
 
-        warped, _ = strategy.warp_image(test_image, None, control, dest, (400, 400))
+        warped, _, _ = strategy.warp_image(test_image, None, control, dest, (400, 400))
 
         assert warped.shape == (400, 400)
 
@@ -249,7 +249,7 @@ class TestHomographyStrategy:
         )
 
         # Should still work with RANSAC
-        warped, _ = strategy.warp_image(test_image, None, control, dest, (400, 400))
+        warped, _, _ = strategy.warp_image(test_image, None, control, dest, (400, 400))
 
         assert warped.shape == (400, 400)
 
@@ -302,7 +302,7 @@ class TestGridDataRemapStrategy:
             dtype=np.float32,
         )
 
-        warped, _ = strategy.warp_image(test_image, None, control, dest, (400, 400))
+        warped, _, _ = strategy.warp_image(test_image, None, control, dest, (400, 400))
 
         assert warped.shape == (400, 400)
 
@@ -330,7 +330,9 @@ class TestGridDataRemapStrategy:
 
         for method in ["linear", "nearest", "cubic"]:
             strategy = GridDataRemapStrategy(method)
-            warped, _ = strategy.warp_image(test_image, None, control, dest, (400, 400))
+            warped, _, _ = strategy.warp_image(
+                test_image, None, control, dest, (400, 400)
+            )
             assert warped.shape == (400, 400)
 
 
@@ -429,7 +431,7 @@ class TestWarpStrategyIntegration:
 
         for method_name in strategies:
             strategy = WarpStrategyFactory.create(method_name)
-            warped, _ = strategy.warp_image(
+            warped, _, _ = strategy.warp_image(
                 checkerboard, None, control, dest, (400, 400)
             )
 

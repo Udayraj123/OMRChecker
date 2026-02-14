@@ -32,8 +32,9 @@ class WarpStrategy(ABC):
         control_points: np.ndarray,
         destination_points: np.ndarray,
         warped_dimensions: Tuple[int, int],
+        debug_image: Optional[np.ndarray] = None,
         **kwargs,
-    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    ) -> Tuple[np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]:
         """
         Apply warping transformation to images.
 
@@ -43,10 +44,11 @@ class WarpStrategy(ABC):
             control_points: Source points in the original image
             destination_points: Target points in the warped image
             warped_dimensions: (width, height) of output image
+            debug_image: Optional debug/overlay image to warp with same transform
             **kwargs: Strategy-specific parameters
 
         Returns:
-            Tuple of (warped_gray_image, warped_colored_image)
+            Tuple of (warped_gray_image, warped_colored_image, warped_debug_image)
         """
         pass
 
@@ -86,8 +88,9 @@ class PerspectiveTransformStrategy(WarpStrategy):
         control_points: np.ndarray,
         destination_points: np.ndarray,
         warped_dimensions: Tuple[int, int],
+        debug_image: Optional[np.ndarray] = None,
         **kwargs,
-    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    ) -> Tuple[np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]:
         """
         Apply perspective transformation.
 
@@ -103,7 +106,7 @@ class PerspectiveTransformStrategy(WarpStrategy):
         control_pts = np.float32(control_points)
         dest_pts = np.float32(destination_points)
 
-        # Compute perspective transformation matrix
+        # Compute perspective transformation matrix (once)
         transform_matrix = cv2.getPerspectiveTransform(control_pts, dest_pts)
 
         # Apply to grayscale image
@@ -121,11 +124,21 @@ class PerspectiveTransformStrategy(WarpStrategy):
                 flags=self.interpolation_flag,
             )
 
+        # Apply same transform to debug image if provided
+        warped_debug_image = None
+        if debug_image is not None:
+            warped_debug_image = cv2.warpPerspective(
+                debug_image,
+                transform_matrix,
+                warped_dimensions,
+                flags=self.interpolation_flag,
+            )
+
         logger.debug(
             f"Applied perspective transform: {image.shape[:2]} -> {warped_dimensions}"
         )
 
-        return warped_image, warped_colored_image
+        return warped_image, warped_colored_image, warped_debug_image
 
 
 class HomographyStrategy(WarpStrategy):
@@ -164,8 +177,9 @@ class HomographyStrategy(WarpStrategy):
         control_points: np.ndarray,
         destination_points: np.ndarray,
         warped_dimensions: Tuple[int, int],
+        debug_image: Optional[np.ndarray] = None,
         **kwargs,
-    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    ) -> Tuple[np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]:
         """
         Apply homography transformation.
 
@@ -181,7 +195,7 @@ class HomographyStrategy(WarpStrategy):
         control_pts = np.float32(control_points)
         dest_pts = np.float32(destination_points)
 
-        # Compute homography
+        # Compute homography (once)
         method = cv2.RANSAC if self.use_ransac else 0
         homography, mask = cv2.findHomography(
             control_pts,
@@ -209,10 +223,19 @@ class HomographyStrategy(WarpStrategy):
                 flags=self.interpolation_flag,
             )
 
+        warped_debug_image = None
+        if debug_image is not None:
+            warped_debug_image = cv2.warpPerspective(
+                debug_image,
+                transform_matrix,
+                warped_dimensions,
+                flags=self.interpolation_flag,
+            )
+
         inliers = np.sum(mask) if mask is not None else len(control_points)
         logger.debug(f"Applied homography with {inliers}/{len(control_points)} inliers")
 
-        return warped_image, warped_colored_image
+        return warped_image, warped_colored_image, warped_debug_image
 
 
 class GridDataRemapStrategy(WarpStrategy):
@@ -242,8 +265,9 @@ class GridDataRemapStrategy(WarpStrategy):
         control_points: np.ndarray,
         destination_points: np.ndarray,
         warped_dimensions: Tuple[int, int],
+        debug_image: Optional[np.ndarray] = None,
         **kwargs,
-    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    ) -> Tuple[np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]:
         """
         Apply grid-based interpolation.
 
@@ -256,7 +280,7 @@ class GridDataRemapStrategy(WarpStrategy):
         # Create meshgrid for destination coordinates
         grid_y, grid_x = np.mgrid[0 : h - 1 : complex(h), 0 : w - 1 : complex(w)]
 
-        # Interpolate source coordinates for each destination pixel
+        # Interpolate source coordinates for each destination pixel (once)
         grid_z = griddata(
             points=destination_points,  # Where we want to be
             values=control_points,  # Where pixels come from
@@ -277,11 +301,17 @@ class GridDataRemapStrategy(WarpStrategy):
                 colored_image, map1=grid_z, map2=None, interpolation=cv2.INTER_CUBIC
             )
 
+        warped_debug_image = None
+        if debug_image is not None:
+            warped_debug_image = cv2.remap(
+                debug_image, map1=grid_z, map2=None, interpolation=cv2.INTER_CUBIC
+            )
+
         logger.debug(
             f"Applied griddata remap with {len(control_points)} control points"
         )
 
-        return warped_image, warped_colored_image
+        return warped_image, warped_colored_image, warped_debug_image
 
 
 class DocRefineRectifyStrategy(WarpStrategy):
@@ -302,8 +332,9 @@ class DocRefineRectifyStrategy(WarpStrategy):
         control_points: np.ndarray,
         destination_points: np.ndarray,
         warped_dimensions: Tuple[int, int],
+        debug_image: Optional[np.ndarray] = None,
         **kwargs,
-    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    ) -> Tuple[np.ndarray, Optional[np.ndarray], Optional[np.ndarray]]:
         """
         Apply document rectification.
 
@@ -315,7 +346,7 @@ class DocRefineRectifyStrategy(WarpStrategy):
         if edge_contours_map is None:
             raise ValueError("DocRefineRectify requires 'edge_contours_map' in kwargs")
 
-        # Create dense warp map using rectify algorithm
+        # Create dense warp map using rectify algorithm (once)
         scaled_map = rectify(edge_contours_map=edge_contours_map)
 
         # Apply remap
@@ -329,9 +360,15 @@ class DocRefineRectifyStrategy(WarpStrategy):
                 colored_image, map1=scaled_map, map2=None, interpolation=cv2.INTER_CUBIC
             )
 
+        warped_debug_image = None
+        if debug_image is not None:
+            warped_debug_image = cv2.remap(
+                debug_image, map1=scaled_map, map2=None, interpolation=cv2.INTER_NEAREST
+            )
+
         logger.debug("Applied doc-refine rectification")
 
-        return warped_image, warped_colored_image
+        return warped_image, warped_colored_image, warped_debug_image
 
 
 # Factory for creating strategies

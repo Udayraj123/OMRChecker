@@ -385,15 +385,22 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         # Select colored input based on config
         colored_input = self._get_colored_input(colored_image)
 
-        # Apply the warp
-        return self.warp_strategy.warp_image(
-            image,
-            colored_input,
-            control_points,
-            destination_points,
-            warped_dimensions,
-            **strategy_kwargs,
+        # Apply the warp (strategy warps image, colored_input, and debug_image in one go)
+        warped_image, warped_colored_image, warped_debug_image = (
+            self.warp_strategy.warp_image(
+                image,
+                colored_input,
+                control_points,
+                destination_points,
+                warped_dimensions,
+                debug_image=self.debug_image,
+                **strategy_kwargs,
+            )
         )
+        if warped_debug_image is not None:
+            self.debug_image = warped_debug_image
+
+        return warped_image, warped_colored_image
 
     def _prepare_points_for_strategy(
         self,
@@ -508,7 +515,10 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         title_prefix = "Cropped Image" if self.enable_cropping else "Warped Image"
 
         if self.enable_cropping:
-            DrawingUtils.draw_contour(self.debug_image, cv2.convexHull(control_points))
+            # debug_image is warped, so draw contour in destination space
+            DrawingUtils.draw_contour(
+                self.debug_image, cv2.convexHull(destination_points)
+            )
 
         if config.outputs.show_image_level >= 5:
             InteractionUtils.show("Anchor Points", self.debug_image, pause=False)
