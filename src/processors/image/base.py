@@ -5,8 +5,6 @@ from typing import Any, Never
 from cv2.typing import MatLike
 
 from src.processors.base import ProcessingContext, Processor
-from src.utils.image import ImageUtils
-from src.utils.logger import logger
 
 
 class ImageTemplatePreprocessor(Processor):
@@ -56,7 +54,8 @@ class ImageTemplatePreprocessor(Processor):
     def process(self, context: ProcessingContext) -> ProcessingContext:
         """Process images using the unified processor interface.
 
-        This is the interface that all processors must implement.
+        Note: Resizing is handled by PreprocessingCoordinator.
+        Individual preprocessors just apply their specific filter.
 
         Args:
             context: Processing context with images and state
@@ -64,35 +63,18 @@ class ImageTemplatePreprocessor(Processor):
         Returns:
             Updated context with processed images
         """
-        logger.debug(f"Starting {self.get_name()} processor")
-
-        gray_image = context.gray_image
-        colored_image = context.colored_image
-        template = context.template
-        file_path = context.file_path
-
-        # Resize images to preprocessor's processing shape
-        logger.debug(
-            f"processing_image_shape: {self.processing_image_shape}, gray_image: {gray_image.shape}, colored_image: {colored_image.shape}"
-        )
-        gray_image = ImageUtils.resize_to_shape(self.processing_image_shape, gray_image)
-
-        if self.tuning_config.outputs.colored_outputs_enabled:
-            colored_image = ImageUtils.resize_to_shape(
-                self.processing_image_shape, colored_image
-            )
-
-        # Apply the specific filter
+        # Apply the specific filter (no resizing here)
         gray_image, colored_image, template = self.apply_filter(
-            gray_image, colored_image, template, file_path
+            context.gray_image,
+            context.colored_image,
+            context.template,
+            context.file_path,
         )
 
         # Update context
         context.gray_image = gray_image
         context.colored_image = colored_image
         context.template = template
-
-        logger.debug(f"Completed {self.get_name()} processor")
 
         return context
 

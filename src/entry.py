@@ -234,11 +234,22 @@ def show_template_in_set_layout_mode(omr_files, template, tuning_config) -> None
         file_name = file_path.name
         gray_image, colored_image = ImageUtils.read_image_util(file_path, tuning_config)
 
-        (
-            gray_image,
-            colored_image,
-            template,
-        ) = template.apply_preprocessors(file_path, gray_image, colored_image)
+        # Use PreprocessingCoordinator directly from the pipeline
+        from src.processors.base import ProcessingContext
+
+        context = ProcessingContext(
+            file_path=file_path,
+            gray_image=gray_image,
+            colored_image=colored_image,
+            template=template,
+        )
+
+        # Run only preprocessing (first processor in pipeline)
+        coordinator = template.pipeline.processors[0]  # PreprocessingCoordinator
+        context = coordinator.process(context)
+
+        gray_image = context.gray_image
+        colored_image = context.colored_image
 
         gray_layout, colored_layout = template.drawing.draw_template_layout(
             gray_image,

@@ -12,7 +12,7 @@
  */
 
 import { ProcessingPipeline } from '../processors/Pipeline';
-import { PreprocessingProcessor } from '../processors/image/coordinator';
+import { PreprocessingCoordinator } from '../processors/image/coordinator';
 import { AlignmentProcessor } from '../processors/alignment/AlignmentProcessor';
 import {
   TemplateFileRunner,
@@ -143,7 +143,7 @@ export class OMRProcessor {
     this.pipeline = new ProcessingPipeline(this.template);
 
     // Add preprocessing processor
-    this.pipeline.addProcessor(new PreprocessingProcessor(this.template));
+    this.pipeline.addProcessor(new PreprocessingCoordinator(this.template));
     logger.debug('Added preprocessing processor');
 
     // Add alignment processor if configured

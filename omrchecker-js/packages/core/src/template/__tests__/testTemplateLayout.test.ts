@@ -583,3 +583,8 @@ describe('TemplateLayout', () => {
   });
 });
 
+
+export class MockTemplate {
+  // TODO: Implement class members
+}
+

@@ -47,19 +47,6 @@ class Template:
         self.pipeline = ProcessingPipeline(self, args=self.args)
 
     # TODO: move some other functions here
-    def apply_preprocessors(self, file_path, gray_image, colored_image):
-        (
-            gray_image,
-            colored_image,
-            next_template_layout,
-        ) = self.template_layout.apply_preprocessors(
-            file_path, gray_image, colored_image
-        )
-        self.template_layout = next_template_layout
-        # TODO: decide how shallow copy is handled now.
-        next_template = self
-        return gray_image, colored_image, next_template
-
     def __str__(self) -> str:
         return str(self.path)
 

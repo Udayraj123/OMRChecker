@@ -6,14 +6,18 @@ from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 
 
-class PreprocessingProcessor(Processor):
-    """Processor that runs all image preprocessing steps.
+class PreprocessingCoordinator(Processor):
+    """Coordinates all image preprocessing steps in sequence.
 
-    This processor:
-    1. Creates a copy of the template layout
+    This is NOT an individual preprocessor. It orchestrates all preprocessors
+    defined in template.template_layout.pre_processors.
+
+    Responsibilities:
+    1. Creates a copy of the template layout for mutation
     2. Resizes images to processing dimensions
-    3. Runs all preprocessors in sequence (they now implement Processor interface directly)
+    3. Runs all preprocessors in sequence (they implement Processor interface)
     4. Optionally resizes to output dimensions
+    5. Shows before/after diffs when configured
     """
 
     def __init__(self, template) -> None:

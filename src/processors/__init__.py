@@ -21,10 +21,10 @@ def __getattr__(name: str) -> Any:  # noqa: ANN401
         from src.processors.image import ImageTemplatePreprocessor
 
         return ImageTemplatePreprocessor
-    if name == "PreprocessingProcessor":
-        from src.processors.image import PreprocessingProcessor
+    if name == "PreprocessingCoordinator":
+        from src.processors.image import PreprocessingCoordinator
 
-        return PreprocessingProcessor
+        return PreprocessingCoordinator
     if name == "AlignmentProcessor":
         from src.processors.alignment import AlignmentProcessor
 
@@ -50,7 +50,7 @@ __all__ = [
     "EvaluationProcessor",
     "FileOrganizerProcessor",
     "ImageTemplatePreprocessor",
-    "PreprocessingProcessor",
+    "PreprocessingCoordinator",
     "ProcessingContext",
     "ProcessingPipeline",
     "Processor",

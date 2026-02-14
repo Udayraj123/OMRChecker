@@ -12,18 +12,22 @@ import { ImageUtils } from '../../utils/ImageUtils';
 import { Logger } from '../../utils/logger';
 import { InteractionUtils } from '../../utils/InteractionUtils';
 
-const logger = new Logger('PreprocessingProcessor');
+const logger = new Logger('PreprocessingCoordinator');
 
 /**
- * Processor that runs all image preprocessing steps.
+ * Coordinates all image preprocessing steps in sequence.
  *
- * This processor:
- * 1. Creates a copy of the template layout
+ * This is NOT an individual preprocessor. It orchestrates all preprocessors
+ * defined in template.templateLayout.pre_processors.
+ *
+ * Responsibilities:
+ * 1. Creates a copy of the template layout (in future)
  * 2. Resizes images to processing dimensions
- * 3. Runs all preprocessors in sequence (they now implement Processor interface directly)
+ * 3. Runs all preprocessors in sequence (they implement Processor interface)
  * 4. Optionally resizes to output dimensions
+ * 5. Shows before/after diffs when configured
  */
-export class PreprocessingProcessor extends Processor {
+export class PreprocessingCoordinator extends Processor {
   private tuningConfig: any;
 
   /**

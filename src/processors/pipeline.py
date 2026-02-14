@@ -43,7 +43,7 @@ class ProcessingPipeline:
         )
         from src.processors.detection.processor import ReadOMRProcessor
         from src.processors.image.coordinator import (
-            PreprocessingProcessor,
+            PreprocessingCoordinator,
         )
 
         # Check for ML model paths from args
@@ -53,7 +53,7 @@ class ProcessingPipeline:
 
         # Initialize all processors with unified interface
         self.processors: list[Processor] = [
-            PreprocessingProcessor(template),
+            PreprocessingCoordinator(template),
             AlignmentProcessor(template),
         ]
 

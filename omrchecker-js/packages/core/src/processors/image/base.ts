@@ -145,45 +145,25 @@ export abstract class ImageTemplatePreprocessor extends Processor {
   /**
    * Process images using the unified processor interface.
    *
-   * This is the interface that all processors must implement.
+   * Note: Resizing is handled by PreprocessingCoordinator.
+   * Individual preprocessors just apply their specific filter.
    *
    * @param context - Processing context with images and state
    * @returns Updated context with processed images
    */
   process(context: ProcessingContext): ProcessingContext {
-    logger.debug(`Starting ${this.getName()} processor`);
-
-    let grayImage = context.grayImage;
-    let coloredImage = context.coloredImage;
-    const template = context.template;
-    const filePath = context.filePath;
-
-    // Resize images to preprocessor's processing shape
-    if (this.processingImageShape) {
-      grayImage = ImageUtils.resizeToShape(this.processingImageShape, grayImage) as cv.Mat;
-
-      if (this.tuningConfig.outputs.colored_outputs_enabled) {
-        coloredImage = ImageUtils.resizeToShape(
-          this.processingImageShape,
-          coloredImage
-        ) as cv.Mat;
-      }
-    }
-
-    // Apply the specific filter
+    // Apply the specific filter (no resizing here)
     const [processedGray, processedColored, updatedTemplate] = this.applyFilter(
-      grayImage,
-      coloredImage,
-      template,
-      filePath
+      context.grayImage,
+      context.coloredImage,
+      context.template,
+      context.filePath
     );
 
     // Update context
     context.grayImage = processedGray;
     context.coloredImage = processedColored;
     context.template = updatedTemplate;
-
-    logger.debug(`Completed ${this.getName()} processor`);
 
     return context;
   }

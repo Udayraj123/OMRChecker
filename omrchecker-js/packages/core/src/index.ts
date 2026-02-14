@@ -44,7 +44,7 @@ export {
 } from './processors/image/processorManager';
 
 // Image processors - Coordinator
-export { PreprocessingProcessor } from './processors/image/coordinator';
+export { PreprocessingCoordinator } from './processors/image/coordinator';
 
 // Alignment processors
 export { AlignmentProcessor } from './processors/alignment/AlignmentProcessor';

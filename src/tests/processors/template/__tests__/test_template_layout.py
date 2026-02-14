@@ -212,11 +212,22 @@ class TestApplyPreprocessors:
         colored_image = np.zeros((800, 1000, 3), dtype=np.uint8)
         file_path = tmp_path / "test.jpg"
 
-        processed_gray, processed_colored, updated_layout = (
-            sample_template_layout.apply_preprocessors(
-                str(file_path), gray_image, colored_image
-            )
+        # Use PreprocessingCoordinator instead of apply_preprocessors
+        from src.processors.base import ProcessingContext
+        from src.processors.image.coordinator import PreprocessingCoordinator
+
+        coordinator = PreprocessingCoordinator(sample_template)
+        context = ProcessingContext(
+            file_path=str(file_path),
+            gray_image=gray_image,
+            colored_image=colored_image,
+            template=sample_template,
         )
+        context = coordinator.process(context)
+
+        processed_gray = context.gray_image
+        processed_colored = context.colored_image
+        updated_layout = context.template.template_layout
 
         assert processed_gray is not None
         assert processed_colored is not None
@@ -249,9 +260,29 @@ class TestApplyPreprocessors:
         colored_image = np.zeros((800, 1000, 3), dtype=np.uint8)
         file_path = tmp_path / "test.jpg"
 
-        processed_gray, processed_colored, updated_layout = layout.apply_preprocessors(
-            str(file_path), gray_image, colored_image
+        # Use PreprocessingCoordinator
+        from src.processors.base import ProcessingContext
+        from src.processors.image.coordinator import PreprocessingCoordinator
+
+        # Create a mock template for the layout
+        class MockTemplate:
+            def __init__(self, layout, tuning_config):
+                self.template_layout = layout
+                self.tuning_config = tuning_config
+
+        mock_template = MockTemplate(layout, mock_tuning_config)
+        coordinator = PreprocessingCoordinator(mock_template)
+        context = ProcessingContext(
+            file_path=str(file_path),
+            gray_image=gray_image,
+            colored_image=colored_image,
+            template=mock_template,
         )
+        context = coordinator.process(context)
+
+        processed_gray = context.gray_image
+        processed_colored = context.colored_image
+        updated_layout = context.template.template_layout
 
         assert processed_gray is not None
         assert processed_colored is not None
@@ -699,11 +730,23 @@ class TestTemplateApplyPreprocessors:
         colored_image = np.zeros((800, 1000, 3), dtype=np.uint8)
         file_path = tmp_path / "test.jpg"
 
-        processed_gray, processed_colored, updated_template = (
-            sample_template.apply_preprocessors(
-                str(file_path), gray_image, colored_image
-            )
+        # Use PreprocessingCoordinator via template.pipeline
+        from src.processors.base import ProcessingContext
+
+        context = ProcessingContext(
+            file_path=str(file_path),
+            gray_image=gray_image,
+            colored_image=colored_image,
+            template=sample_template,
         )
+
+        # Use the coordinator from the pipeline
+        coordinator = sample_template.pipeline.processors[0]
+        context = coordinator.process(context)
+
+        processed_gray = context.gray_image
+        processed_colored = context.colored_image
+        updated_template = context.template
 
         assert processed_gray is not None
         assert processed_colored is not None
@@ -744,9 +787,21 @@ class TestTemplateApplyPreprocessors:
         colored_image = np.zeros((800, 1000, 3), dtype=np.uint8)
         file_path = tmp_path / "test.jpg"
 
-        processed_gray, processed_colored, updated_template = (
-            template.apply_preprocessors(str(file_path), gray_image, colored_image)
+        # Use PreprocessingCoordinator from pipeline
+        from src.processors.base import ProcessingContext
+
+        context = ProcessingContext(
+            file_path=str(file_path),
+            gray_image=gray_image,
+            colored_image=colored_image,
+            template=template,
         )
+
+        coordinator = template.pipeline.processors[0]
+        context = coordinator.process(context)
+
+        processed_gray = context.gray_image
+        processed_colored = context.colored_image
 
         assert processed_gray is not None
         assert processed_colored is not None

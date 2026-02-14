@@ -9,7 +9,6 @@ from src.processors.manager import PROCESSOR_MANAGER
 from src.schemas.models.template import OutputColumnsConfig
 from src.utils.constants import BUILTIN_BUBBLE_FIELD_TYPES
 from src.utils.image import ImageUtils
-from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
 from src.utils.parsing import (
     alphanumerical_sort_key,
@@ -95,86 +94,6 @@ class TemplateLayout:
         ]
 
         return template_layout
-
-    # TODO: separate out preprocessing into a class?
-    def apply_preprocessors(self, file_path, gray_image, colored_image):
-        """Apply preprocessors using the unified processor interface.
-
-        Note: This method is maintained for backward compatibility with
-        TemplateLayout's internal processing, but uses the new unified interface.
-        """
-        from src.processors.base import ProcessingContext
-
-        config = self.tuning_config
-
-        next_template_layout = self.get_copy_for_shifting()
-
-        # Reset the shifts in the copied next_template_layout
-        next_template_layout.reset_all_shifts()
-
-        # resize to conform to common preprocessor input requirements
-        gray_image = ImageUtils.resize_to_shape(
-            next_template_layout.processing_image_shape, gray_image
-        )
-        if config.outputs.colored_outputs_enabled:
-            colored_image = ImageUtils.resize_to_shape(
-                next_template_layout.processing_image_shape, colored_image
-            )
-
-        show_preprocessors_diff = config.outputs.show_preprocessors_diff
-        # run pre_processors in sequence
-        for pre_processor in next_template_layout.pre_processors:
-            pre_processor_name = pre_processor.get_class_name()
-
-            # Show Before Preview
-            if show_preprocessors_diff[pre_processor_name]:
-                InteractionUtils.show(
-                    f"Before {pre_processor_name}: {file_path}",
-                    (
-                        colored_image
-                        if config.outputs.colored_outputs_enabled
-                        else gray_image
-                    ),
-                )
-
-            # Apply filter using unified processor interface
-            context = ProcessingContext(
-                gray_image=gray_image,
-                colored_image=colored_image,
-                template=next_template_layout,
-                file_path=file_path,
-            )
-            context = pre_processor.process(context)
-
-            # Extract results from context
-            gray_image = context.gray_image
-            colored_image = context.colored_image
-            next_template_layout = context.template
-
-            # Show After Preview
-            if show_preprocessors_diff[pre_processor_name]:
-                InteractionUtils.show(
-                    f"After {pre_processor_name}: {file_path}",
-                    (
-                        colored_image
-                        if config.outputs.colored_outputs_enabled
-                        else gray_image
-                    ),
-                )
-
-        template_layout = next_template_layout
-
-        if template_layout.output_image_shape:
-            # resize to output requirements
-            gray_image = ImageUtils.resize_to_shape(
-                template_layout.output_image_shape, gray_image
-            )
-            if config.outputs.colored_outputs_enabled:
-                colored_image = ImageUtils.resize_to_shape(
-                    template_layout.output_image_shape, colored_image
-                )
-
-        return gray_image, colored_image, template_layout
 
     def parse_output_columns(self, output_columns_config: "OutputColumnsConfig"):
         custom_order = output_columns_config.custom_order
@@ -277,16 +196,24 @@ class TemplateLayout:
             )
             # InteractionUtils.show("gray_alignment_image", gray_alignment_image)
 
-            # TODO: shouldn't pass self
-            (
-                processed_gray_alignment_image,
-                processed_colored_alignment_image,
-                _,
-            ) = self.apply_preprocessors(
-                self.alignment["reference_image_path"],
-                gray_alignment_image,
-                colored_alignment_image,
+            # Use PreprocessingCoordinator to preprocess the reference image
+            from src.processors.base import ProcessingContext
+            from src.processors.image.coordinator import PreprocessingCoordinator
+
+            coordinator = PreprocessingCoordinator(self.template)
+
+            context = ProcessingContext(
+                file_path=self.alignment["reference_image_path"],
+                gray_image=gray_alignment_image,
+                colored_image=colored_alignment_image,
+                template=self.template,
             )
+
+            context = coordinator.process(context)
+
+            processed_gray_alignment_image = context.gray_image
+            processed_colored_alignment_image = context.colored_image
+
             # Pre-processed alignment image
             self.alignment["gray_alignment_image"] = processed_gray_alignment_image
             self.alignment["colored_alignment_image"] = (
