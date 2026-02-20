@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from src.processors.constants import ScannerType
-from src.processors.image.dot_line_detection import (
+from src.processors.image.crop_on_patches.dot_line_detection import (
     preprocess_dot_zone,
     preprocess_line_zone,
     detect_contours_using_canny,

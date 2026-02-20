@@ -11,8 +11,8 @@ from src.processors.constants import (
     WarpMethod,
     ZonePreset,
 )
-from src.processors.image.CropOnPatchesCommon import CropOnPatchesCommon
-from src.processors.image.dot_line_detection import (
+from src.processors.image.crop_on_patches.common import CropOnPatchesCommon
+from src.processors.image.crop_on_patches.dot_line_detection import (
     detect_dot_corners,
     detect_line_corners_and_edges,
     create_structuring_element,
@@ -20,7 +20,7 @@ from src.processors.image.dot_line_detection import (
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.math import MathUtils
-from src.processors.image.patch_utils import compute_scan_zone
+from src.processors.image.crop_on_patches.patch_utils import compute_scan_zone
 
 # from src.utils.logger import logger
 

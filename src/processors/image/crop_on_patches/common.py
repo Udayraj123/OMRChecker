@@ -10,7 +10,7 @@ from src.processors.constants import (
     SelectorType,
     WarpMethod,
 )
-from src.processors.image.patch_utils import (
+from src.processors.image.crop_on_patches.patch_utils import (
     draw_scan_zone,
     draw_zone_contours_and_anchor_shifts,
     get_edge_contours_map_from_zone_points,

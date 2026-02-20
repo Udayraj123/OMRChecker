@@ -19,7 +19,6 @@ from src.processors.constants import (
 from src.utils.constants import CLR_DARK_GREEN, CLR_NEAR_BLACK
 from src.utils.drawing import DrawingUtils
 from src.utils.shapes import ShapeUtils
-from src.utils.logger import logger
 
 
 def select_point_from_rectangle(rectangle, points_selector):
@@ -166,11 +165,6 @@ def draw_scan_zone(debug_image, zone_description):
     zone_start_without_margins = scan_zone_rectangle_without_margins[0]
     zone_end_without_margins = scan_zone_rectangle_without_margins[2]
 
-    logger.debug(f"debug_image shape: {debug_image.shape}")
-    logger.debug(f"zone_start: {zone_start}, zone_end: {zone_end}")
-    logger.debug(
-        f"zone_start_without_margins: {zone_start_without_margins}, zone_end_without_margins: {zone_end_without_margins}"
-    )
     DrawingUtils.draw_box_diagonal(
         debug_image,
         zone_start,

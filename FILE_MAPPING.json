@@ -392,7 +392,7 @@
       ]
     },
     {
-      "python": "src/processors/image/patch_utils.py",
+      "python": "src/processors/image/crop_on_patches/patch_utils.py",
       "typescript": "omrchecker-js/packages/core/src/processors/image/patchUtils.ts",
       "status": "synced",
       "phase": 1,
@@ -464,7 +464,7 @@
           ]
         }
       ],
-      "notes": "Base class for warping processors. Phase 9: Type safety improvements - warpMethod property now correctly typed as WarpMethodValue. Simplified point handling to match Python implementation."
+      "notes": "Base class for warping processors. Phase 9: Type safety improvements - warpMethod property now correctly typed as WarpMethodValue. Simplified point handling to match Python implementation. Synced: warp strategy accepts debugImage and returns 3-tuple (warpedGray, warpedColored, warpedDebug); debugImage initialized from prepared image and warped in same call; convex hull drawn in destination space on warped debug image."
     },
     {
       "python": "src/processors/image/warp_strategies.py",
@@ -498,10 +498,10 @@
           "notes": "Phase 9: Added missing WarpMethodValue type import for type safety"
         }
       ],
-      "notes": "Extracted warp strategies using Strategy pattern. Phase 9: Type safety improvements with proper WarpMethodValue typing."
+      "notes": "Extracted warp strategies using Strategy pattern. Phase 9: Type safety improvements with proper WarpMethodValue typing. Synced: warpImage accepts optional debugImage and returns [warpedGray, warpedColored, warpedDebug]; all strategies apply same transform to debug image in one pass."
     },
     {
-      "python": "src/processors/image/CropOnCustomMarkers.py",
+      "python": "src/processors/image/crop_on_patches/custom_markers.py",
       "typescript": "omrchecker-js/packages/core/src/processors/image/CropOnCustomMarkers.ts",
       "status": "synced",
       "phase": 1,
@@ -520,7 +520,7 @@
       "notes": "Uses extracted markerDetection module. Point ordering implemented in Phase 7."
     },
     {
-      "python": "src/processors/image/CropOnDotLines.py",
+      "python": "src/processors/image/crop_on_patches/dot_lines.py",
       "typescript": "omrchecker-js/packages/core/src/processors/image/CropOnDotLines.ts",
       "status": "synced",
       "phase": 1,
@@ -539,7 +539,7 @@
       "notes": "Just refactored (528\u2192357 lines, -32%). Uses extracted dotLineDetection module. TypeScript needs sync update."
     },
     {
-      "python": "src/processors/image/marker_detection.py",
+      "python": "src/processors/image/crop_on_patches/marker_detection.py",
       "typescript": "omrchecker-js/packages/core/src/processors/image/markerDetection.ts",
       "status": "synced",
       "phase": 1,
@@ -578,7 +578,7 @@
       "notes": "Extracted page detection module. All functions ported with 1:1 correspondence. Used by CropPage."
     },
     {
-      "python": "src/processors/image/dot_line_detection.py",
+      "python": "src/processors/image/crop_on_patches/dot_line_detection.py",
       "typescript": "omrchecker-js/packages/core/src/processors/image/dotLineDetection.ts",
       "status": "synced",
       "phase": 1,
@@ -1708,7 +1708,7 @@
       "notes": "Point parsing utilities for warping operations. Handles parsing and validation of control and destination points from various formats."
     },
     {
-      "python": "src/processors/image/CropOnPatchesCommon.py",
+      "python": "src/processors/image/crop_on_patches/common.py",
       "typescript": "omrchecker-js/packages/core/src/processors/image/CropOnPatchesCommon.ts",
       "status": "synced",
       "phase": 1,

@@ -4,7 +4,7 @@ from typing import Any, ClassVar
 import cv2
 import numpy as np
 
-from src.processors.image.patch_utils import compute_scan_zone
+from src.processors.image.crop_on_patches.patch_utils import compute_scan_zone
 from src.exceptions import ImageProcessingError, ImageReadError, TemplateValidationError
 from src.processors.constants import (
     MARKER_ZONE_TYPES_IN_ORDER,
@@ -12,8 +12,8 @@ from src.processors.constants import (
     WarpMethod,
     ZonePreset,
 )
-from src.processors.image.CropOnPatchesCommon import CropOnPatchesCommon
-from src.processors.image.marker_detection import (
+from src.processors.image.crop_on_patches.common import CropOnPatchesCommon
+from src.processors.image.crop_on_patches.marker_detection import (
     prepare_marker_template,
     detect_marker_in_patch,
 )
@@ -21,7 +21,6 @@ from src.processors.image.marker_detection import (
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
-from src.utils.logger import logger
 from src.utils.parsing import OVERRIDE_MERGER
 
 
@@ -256,9 +255,6 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
             )
             zone_description = OVERRIDE_MERGER.merge(
                 quadrant_description, zone_description
-            )
-            logger.debug(
-                f"image_shape: {image_shape}, debug_shape: {self.debug_image.shape} zone_description: {zone_description}, zone_preset: {zone_preset}"
             )
 
         # Note: this runtime template is supposedly always valid

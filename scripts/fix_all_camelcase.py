@@ -52,12 +52,12 @@ def convert_all_camelcase_keys(file_path: Path) -> None:
 def main():
     """Convert all processor files comprehensively."""
     files_to_fix = [
-        "src/processors/image/CropOnDotLines.py",
-        "src/processors/image/CropOnCustomMarkers.py",
+        "src/processors/image/crop_on_patches/dot_lines.py",
+        "src/processors/image/crop_on_patches/custom_markers.py",
         "src/processors/image/AutoRotate.py",
         "src/processors/evaluation/evaluation_config.py",
         "src/processors/alignment/template_alignment.py",
-        "src/processors/image/CropOnPatchesCommon.py",
+        "src/processors/image/crop_on_patches/common.py",
         "src/processors/image/CropPage.py",
         "src/processors/organization/processor.py",
         "src/processors/image/WarpOnPointsCommon.py",

@@ -3,8 +3,7 @@ from pathlib import Path
 from src.processors.image.base import (
     ImageTemplatePreprocessor,
 )
-from src.processors.image.CropOnCustomMarkers import CropOnCustomMarkers
-from src.processors.image.CropOnDotLines import CropOnDotLines
+from src.processors.image.crop_on_patches import CropOnCustomMarkers, CropOnDotLines
 
 
 class CropOnMarkers(ImageTemplatePreprocessor):

@@ -187,17 +187,6 @@ def main() -> int:
         # Validate paths
         validate_paths(args)
 
-        # Log startup information
-        logger.info("=" * 70)
-        logger.info("OMRChecker - Optical Mark Recognition")
-        logger.info("=" * 70)
-        logger.info(f"Input directories: {', '.join(args['input_paths'])}")
-        logger.info(f"Output directory: {args['output_dir']}")
-        logger.info(f"Mode: {args['mode']}")
-        logger.info(f"Debug: {args['debug']}")
-        logger.info(f"Set Layout: {args['setLayout']}")
-        logger.info("=" * 70)
-
         # Run the CLI
         run_cli(args)
 

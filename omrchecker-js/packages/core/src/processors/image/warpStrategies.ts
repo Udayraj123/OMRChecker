@@ -27,8 +27,9 @@ export abstract class WarpStrategy {
    * @param controlPoints - Source points in the original image
    * @param destinationPoints - Target points in the warped image
    * @param warpedDimensions - [width, height] of output image
+   * @param debugImage - Optional debug/overlay image to warp with same transform
    * @param kwargs - Strategy-specific parameters
-   * @returns Tuple of [warpedGrayImage, warpedColoredImage]
+   * @returns Tuple of [warpedGrayImage, warpedColoredImage, warpedDebugImage]
    */
   abstract warpImage(
     image: cv.Mat,
@@ -36,8 +37,9 @@ export abstract class WarpStrategy {
     controlPoints: number[][],
     destinationPoints: number[][],
     warpedDimensions: [number, number],
+    debugImage?: cv.Mat | null,
     kwargs?: Record<string, any>
-  ): [cv.Mat, cv.Mat | null];
+  ): [cv.Mat, cv.Mat | null, cv.Mat | null];
 
   /**
    * Return the name of this warping strategy
@@ -77,8 +79,9 @@ export class PerspectiveTransformStrategy extends WarpStrategy {
     controlPoints: number[][],
     destinationPoints: number[][],
     warpedDimensions: [number, number],
+    debugImage?: cv.Mat | null,
     _kwargs?: Record<string, any>
-  ): [cv.Mat, cv.Mat | null] {
+  ): [cv.Mat, cv.Mat | null, cv.Mat | null] {
     if (controlPoints.length !== 4) {
       throw new Error(
         `PerspectiveTransform requires exactly 4 control points, got ${controlPoints.length}`
@@ -89,7 +92,7 @@ export class PerspectiveTransformStrategy extends WarpStrategy {
     const controlPts = cv.matFromArray(4, 1, cv.CV_32FC2, controlPoints.flat());
     const destPts = cv.matFromArray(4, 1, cv.CV_32FC2, destinationPoints.flat());
 
-    // Compute perspective transformation matrix
+    // Compute perspective transformation matrix (once)
     const transformMatrix = cv.getPerspectiveTransform(controlPts, destPts);
 
     // Apply to grayscale image
@@ -116,6 +119,19 @@ export class PerspectiveTransformStrategy extends WarpStrategy {
       );
     }
 
+    // Apply same transform to debug image if provided
+    let warpedDebugImage: cv.Mat | null = null;
+    if (debugImage != null && !debugImage.empty()) {
+      warpedDebugImage = new cv.Mat();
+      cv.warpPerspective(
+        debugImage,
+        warpedDebugImage,
+        transformMatrix,
+        new cv.Size(width, height),
+        this.interpolationFlag
+      );
+    }
+
     // Clean up temporary matrices
     controlPts.delete();
     destPts.delete();
@@ -125,7 +141,7 @@ export class PerspectiveTransformStrategy extends WarpStrategy {
       `Applied perspective transform: [${image.rows}, ${image.cols}] -> [${width}, ${height}]`
     );
 
-    return [warpedImage, warpedColoredImage];
+    return [warpedImage, warpedColoredImage, warpedDebugImage];
   }
 }
 
@@ -168,8 +184,9 @@ export class HomographyStrategy extends WarpStrategy {
     controlPoints: number[][],
     destinationPoints: number[][],
     warpedDimensions: [number, number],
+    debugImage?: cv.Mat | null,
     _kwargs?: Record<string, any>
-  ): [cv.Mat, cv.Mat | null] {
+  ): [cv.Mat, cv.Mat | null, cv.Mat | null] {
     if (controlPoints.length < 4) {
       throw new Error(
         `Homography requires at least 4 control points, got ${controlPoints.length}`
@@ -190,7 +207,7 @@ export class HomographyStrategy extends WarpStrategy {
       destinationPoints.flat()
     );
 
-    // Compute homography
+    // Compute homography (once)
     const method = this.useRansac ? cv.RANSAC : 0;
     const mask = new cv.Mat();
     const homography = cv.findHomography(
@@ -231,6 +248,18 @@ export class HomographyStrategy extends WarpStrategy {
       );
     }
 
+    let warpedDebugImage: cv.Mat | null = null;
+    if (debugImage != null && !debugImage.empty()) {
+      warpedDebugImage = new cv.Mat();
+      cv.warpPerspective(
+        debugImage,
+        warpedDebugImage,
+        homography,
+        new cv.Size(width, height),
+        this.interpolationFlag
+      );
+    }
+
     // Count inliers if using RANSAC
     let inliers = controlPoints.length;
     if (this.useRansac && !mask.empty()) {
@@ -245,7 +274,7 @@ export class HomographyStrategy extends WarpStrategy {
 
     logger.debug(`Applied homography with ${inliers}/${controlPoints.length} inliers`);
 
-    return [warpedImage, warpedColoredImage];
+    return [warpedImage, warpedColoredImage, warpedDebugImage];
   }
 }
 
@@ -282,8 +311,9 @@ export class GridDataRemapStrategy extends WarpStrategy {
     controlPoints: number[][],
     destinationPoints: number[][],
     warpedDimensions: [number, number],
-    _kwargs?: Record<string, any>
-  ): [cv.Mat, cv.Mat | null] {
+    debugImage?: cv.Mat | null,
+    kwargs?: Record<string, any>
+  ): [cv.Mat, cv.Mat | null, cv.Mat | null] {
     // TODO: Implement proper grid interpolation
     // This requires a JavaScript interpolation library or custom implementation
     // For now, fall back to perspective transform if we have 4 points
@@ -299,7 +329,9 @@ export class GridDataRemapStrategy extends WarpStrategy {
         coloredImage,
         controlPoints,
         destinationPoints,
-        warpedDimensions
+        warpedDimensions,
+        debugImage,
+        kwargs
       );
     }
 
@@ -328,8 +360,9 @@ export class DocRefineRectifyStrategy extends WarpStrategy {
     _controlPoints: number[][],
     _destinationPoints: number[][],
     _warpedDimensions: [number, number],
+    _debugImage?: cv.Mat | null,
     kwargs?: Record<string, any>
-  ): [cv.Mat, cv.Mat | null] {
+  ): [cv.Mat, cv.Mat | null, cv.Mat | null] {
     const edgeContoursMap = kwargs?.edgeContoursMap;
     if (!edgeContoursMap) {
       throw new Error("DocRefineRectify requires 'edgeContoursMap' in kwargs");

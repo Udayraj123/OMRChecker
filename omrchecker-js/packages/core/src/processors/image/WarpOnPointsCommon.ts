@@ -21,6 +21,7 @@ import { PointArray, orderFourPoints } from './pointUtils';
 import { logger } from '../../utils/logger';
 import { ImageUtils } from '../../utils/ImageUtils';
 import { InteractionUtils } from '../../utils/InteractionUtils';
+import { DrawingUtils } from '../../utils/drawing';
 import { appendSaveImage } from '../../utils/ImageSaver';
 import { WarpMethod, WarpMethodFlags, type WarpMethodValue } from '../constants';
 import type { TuningConfig } from '../../template/types';
@@ -213,13 +214,14 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
   ): [cv.Mat, cv.Mat, Record<string, any>] {
     const config = this.tuningConfig;
 
-    // Initialize debug state
-    this.debugImage = image.clone();
     this.debugHstack = [];
     this.debugVstack = [];
 
     // Step 1: Prepare image (subclass-specific)
     const preparedImage = this.prepareImageBeforeExtraction(image);
+
+    // Initialize debug state with prepared image so dimensions stay in sync after warp
+    this.debugImage = preparedImage.clone();
 
     // Step 2: Extract control/destination points (subclass-specific)
     const coloredOrNull = coloredImage || null;
@@ -376,15 +378,23 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
     // Select colored input based on config
     const coloredInput = this.getColoredInput(coloredImage);
 
-    // Apply the warp
-    return this.warpStrategy.warpImage(
-      image,
-      coloredInput,
-      preparedControl,
-      preparedDest,
-      preparedDims,
-      strategyKwargs
-    );
+    // Apply the warp (strategy warps image, colored input, and debug image in one go)
+    const [warpedImage, warpedColoredImage, warpedDebugImage] =
+      this.warpStrategy.warpImage(
+        image,
+        coloredInput,
+        preparedControl,
+        preparedDest,
+        preparedDims,
+        this.debugImage,
+        strategyKwargs
+      );
+
+    if (warpedDebugImage != null) {
+      this.debugImage = warpedDebugImage;
+    }
+
+    return [warpedImage, warpedColoredImage];
   }
 
   /**
@@ -497,16 +507,17 @@ export abstract class WarpOnPointsCommon extends ImageTemplatePreprocessor {
     _originalImage: cv.Mat,
     _warpedImage: cv.Mat,
     _controlPoints: PointArray,
-    _destinationPoints: PointArray
+    destinationPoints: PointArray
   ): void {
     const titlePrefix = this.enableCropping ? 'Cropped Image' : 'Warped Image';
 
-    // Draw convex hull if cropping
+    // Draw convex hull if cropping (debug_image is warped, so use destination-space points)
     if (this.enableCropping && this.debugImage) {
-      // Convex hull drawing - DrawingUtils already has drawContour capability
-      logger.debug('Drawing convex hull on debug image');
-      // Note: Actual convex hull drawing would require the hull points
-      // which would need to be passed as a parameter
+      const destInt = destinationPoints.map((p) => [
+        Math.round(p[0]),
+        Math.round(p[1]),
+      ]);
+      DrawingUtils.drawConvexHull(this.debugImage, destInt);
     }
 
     if (config.outputs.show_image_level >= 5 && this.debugImage) {

@@ -12,7 +12,7 @@ Tests cover:
 import numpy as np
 import cv2
 
-from src.processors.image.marker_detection import (
+from src.processors.image.crop_on_patches.marker_detection import (
     prepare_marker_template,
     multi_scale_template_match,
     extract_marker_corners,
