@@ -527,6 +527,20 @@ class FieldDefinitionError(TemplateError):
         )
 
 
+class TemplateConfigurationError(TemplateError):
+    """Raised when there's an issue with template configuration (preprocessors, scan zones, etc.)."""
+
+    def __init__(self, message: str, **context) -> None:
+        """Initialize the exception.
+
+        Args:
+            message: Description of the configuration issue
+            **context: Additional context information
+        """
+        self.context_data = context
+        super().__init__(message, context=context)
+
+
 # ============================================================================
 # Evaluation Exceptions
 # ============================================================================

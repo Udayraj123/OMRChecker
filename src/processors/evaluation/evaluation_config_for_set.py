@@ -364,7 +364,8 @@ class EvaluationConfigForSet:
             section_marking_scheme = SectionMarkingScheme(
                 section_key, section_scheme, self.set_name, template.global_empty_val
             )
-            if section_key == DEFAULT_SECTION_KEY:
+            # Note: section_key may be lowercase due to snake_case conversion
+            if section_key.upper() == DEFAULT_SECTION_KEY:
                 self.default_marking_scheme = section_marking_scheme
             else:
                 self.section_marking_schemes[section_key] = section_marking_scheme

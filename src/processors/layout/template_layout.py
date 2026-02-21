@@ -29,6 +29,10 @@ class TemplateLayout:
         self.tuning_config = tuning_config
         self.template_dimensions: list[int] = [0, 0]
 
+        # Set circular reference immediately for preprocessors that may need it
+        # during initialization (e.g., alignment preprocessing)
+        self.template.template_layout = self
+
         template_config = open_template_with_defaults(template_path)
         # Required properties
         self.bubble_dimensions = template_config.bubble_dimensions

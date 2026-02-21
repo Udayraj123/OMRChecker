@@ -66,6 +66,7 @@ class ImageTemplatePreprocessor(Processor):
         gray_image = ImageUtils.resize_to_shape(
             self.processing_image_shape, context.gray_image
         )
+        colored_image = context.colored_image
         if self.tuning_config.outputs.colored_outputs_enabled:
             colored_image = ImageUtils.resize_to_shape(
                 self.processing_image_shape, context.colored_image

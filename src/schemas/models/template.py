@@ -143,6 +143,9 @@ class TemplateConfig:
             # Preserve block name, convert keys within block
             field_blocks_converted[block_name] = convert_dict_keys_to_snake(block_data)
 
+        # Preserve customLabels keys (user-defined names should not be converted)
+        custom_labels_preserved = data.get("customLabels", {})
+
         # Convert all other top-level keys from camelCase to snake_case
         data = convert_dict_keys_to_snake(data)
 
@@ -151,7 +154,8 @@ class TemplateConfig:
             template_dimensions=data.get("template_dimensions", [1200, 1600]),
             alignment=AlignmentConfig.from_dict(data.get("alignment", {})),
             conditional_sets=data.get("conditional_sets", []),
-            custom_labels=data.get("custom_labels", {}),
+            # Use preserved custom labels (keys not converted to maintain user-defined names)
+            custom_labels=custom_labels_preserved,
             # Use converted custom bubble field types (type names preserved, keys converted)
             custom_bubble_field_types=custom_bubble_field_types_converted,
             empty_value=data.get("empty_value", ""),

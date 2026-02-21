@@ -25,7 +25,8 @@ class SectionMarkingScheme:
         self.reset_all_streaks()
 
         # DEFAULT marking scheme follows a shorthand
-        if section_key == DEFAULT_SECTION_KEY:
+        # Note: section_key may be lowercase due to snake_case conversion
+        if section_key.upper() == DEFAULT_SECTION_KEY:
             self.questions = None
             self.marking = self.parse_verdict_marking_from_scheme(section_scheme)
         else:

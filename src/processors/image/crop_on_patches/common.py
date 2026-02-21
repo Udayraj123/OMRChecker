@@ -4,7 +4,10 @@ from typing import Any, ClassVar
 
 import numpy as np
 
-from src.exceptions import ImageProcessingError, TemplateValidationError
+from src.exceptions import (
+    ImageProcessingError,
+    TemplateConfigurationError,
+)
 from src.processors.constants import (
     ScannerType,
     SelectorType,
@@ -100,9 +103,9 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             seen_labels.add(zone_label)
         if len(repeat_labels) > 0:
             msg = f"Found repeated labels in scanZones: {repeat_labels}"
-            raise TemplateValidationError(
+            raise TemplateConfigurationError(
                 msg,
-                context={"repeat_labels": list(repeat_labels)},
+                repeat_labels=list(repeat_labels),
             )
 
     # TODO: check if this needs to move into child for working properly (accessing self attributes declared in child in parent's constructor)
@@ -114,9 +117,9 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             and points_layout != "CUSTOM"
         ):
             msg = f"Invalid pointsLayout provided: {points_layout} for {self}"
-            raise TemplateValidationError(
+            raise TemplateConfigurationError(
                 msg,
-                context={"points_layout": points_layout},
+                points_layout=points_layout,
             )
 
         expected_templates = set(self.scan_zone_presets_for_layout[points_layout])
@@ -126,12 +129,10 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         if len(not_provided_zone_presets) > 0:
             logger.error(f"not_provided_zone_presets={not_provided_zone_presets}")
             msg = f"Missing a few zonePresets for the pointsLayout {points_layout}"
-            raise TemplateValidationError(
+            raise TemplateConfigurationError(
                 msg,
-                context={
-                    "points_layout": points_layout,
-                    "not_provided_zone_presets": list(not_provided_zone_presets),
-                },
+                points_layout=points_layout,
+                not_provided_zone_presets=list(not_provided_zone_presets),
             )
 
     def extract_control_destination_points(self, image, _colored_image, file_path):

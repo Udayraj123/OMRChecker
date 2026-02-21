@@ -81,19 +81,19 @@ class TestFileOrganizerProcessor:
                 name="Low Priority",
                 priority=3,
                 destination_pattern="low/{roll}",
-                matcher={"formatString": "{roll}", "matchRegex": ".*"},
+                matcher={"format_string": "{roll}", "match_regex": ".*"},
             ),
             GroupingRule(
                 name="High Priority",
                 priority=1,
                 destination_pattern="high/{roll}",
-                matcher={"formatString": "{roll}", "matchRegex": ".*"},
+                matcher={"format_string": "{roll}", "match_regex": ".*"},
             ),
             GroupingRule(
                 name="Medium Priority",
                 priority=2,
                 destination_pattern="med/{roll}",
-                matcher={"formatString": "{roll}", "matchRegex": ".*"},
+                matcher={"format_string": "{roll}", "match_regex": ".*"},
             ),
         ]
         config = FileGroupingConfig(enabled=True, rules=rules)
@@ -113,13 +113,13 @@ class TestFileOrganizerProcessor:
                 name="Specific Match",
                 priority=1,
                 destination_pattern="specific/{roll}",
-                matcher={"formatString": "{roll}", "matchRegex": "^123.*"},
+                matcher={"format_string": "{roll}", "match_regex": "^123.*"},
             ),
             GroupingRule(
                 name="General Match",
                 priority=2,
                 destination_pattern="general/{roll}",
-                matcher={"formatString": "{roll}", "matchRegex": ".*"},
+                matcher={"format_string": "{roll}", "match_regex": ".*"},
             ),
         ]
         config = FileGroupingConfig(enabled=True, rules=rules)
@@ -140,13 +140,13 @@ class TestFileOrganizerProcessor:
                 name="No Match",
                 priority=1,
                 destination_pattern="nomatch/{roll}",
-                matcher={"formatString": "{roll}", "matchRegex": "^999.*"},
+                matcher={"format_string": "{roll}", "match_regex": "^999.*"},
             ),
             GroupingRule(
                 name="Should Match",
                 priority=2,
                 destination_pattern="match/{roll}",
-                matcher={"formatString": "{roll}", "matchRegex": "^123.*"},
+                matcher={"format_string": "{roll}", "match_regex": "^123.*"},
             ),
         ]
         config = FileGroupingConfig(enabled=True, rules=rules)
@@ -167,7 +167,7 @@ class TestFileOrganizerProcessor:
                 name="No Match",
                 priority=1,
                 destination_pattern="nomatch/{roll}",
-                matcher={"formatString": "{roll}", "matchRegex": "^999.*"},
+                matcher={"format_string": "{roll}", "match_regex": "^999.*"},
             ),
         ]
         config = FileGroupingConfig(enabled=True, rules=rules)
@@ -269,7 +269,7 @@ class TestFileOrganizerProcessor:
                 name="Test Rule",
                 priority=1,
                 destination_pattern="output/{roll}",
-                matcher={"formatString": "{roll}", "matchRegex": ".*"},
+                matcher={"format_string": "{roll}", "match_regex": ".*"},
                 collision_strategy="skip",
             ),
         ]
@@ -327,7 +327,7 @@ class TestFileOrganizerProcessor:
                 name="Sort by Booklet Code",
                 priority=1,
                 destination_pattern="booklet_{barcode}/{original_name}",
-                matcher={"formatString": "{barcode}", "matchRegex": ".*"},
+                matcher={"format_string": "{barcode}", "match_regex": ".*"},
                 action="symlink",
                 collision_strategy="increment",
             ),
@@ -444,7 +444,7 @@ class TestFileOrganizerProcessor:
                 name="Sort by Booklet Code",
                 priority=1,
                 destination_pattern="booklet_{barcode}/{original_name}",
-                matcher={"formatString": "{barcode}", "matchRegex": ".*"},
+                matcher={"format_string": "{barcode}", "match_regex": ".*"},
                 action="symlink",
                 collision_strategy="increment",
             ),

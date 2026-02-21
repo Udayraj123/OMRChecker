@@ -22,7 +22,10 @@ def sample_template_layout(
     with open(temp_template_path, "w") as f:
         json.dump(minimal_template_json, f)
 
-    return TemplateLayout(mock_template, temp_template_path, mock_tuning_config)
+    layout = TemplateLayout(mock_template, temp_template_path, mock_tuning_config)
+    # Set the template_layout reference back to mock_template for proper circular reference
+    mock_template.template_layout = layout
+    return layout
 
 
 class TestTemplateLayoutInitialization:
@@ -122,6 +125,8 @@ class TestTemplateLayoutInitialization:
             layout = TemplateLayout(
                 mock_template, temp_template_path, mock_tuning_config
             )
+            # Set the template_layout reference back to mock_template for proper circular reference
+            mock_template.template_layout = layout
 
             assert layout.alignment["reference_image_path"] is not None
 
@@ -163,6 +168,8 @@ class TestGetExcludeFiles:
             layout = TemplateLayout(
                 mock_template, temp_template_path, mock_tuning_config
             )
+            # Set the template_layout reference back to mock_template for proper circular reference
+            mock_template.template_layout = layout
 
             excluded = layout.get_exclude_files()
             assert len(excluded) == 1
@@ -216,6 +223,7 @@ class TestApplyPreprocessors:
         from src.processors.base import ProcessingContext
         from src.processors.image.coordinator import PreprocessingCoordinator
 
+        sample_template = sample_template_layout.template
         coordinator = PreprocessingCoordinator(sample_template)
         context = ProcessingContext(
             file_path=str(file_path),
@@ -336,7 +344,7 @@ class TestParseCustomBubbleFieldTypes:
         layout = TemplateLayout(mock_template, temp_template_path, mock_tuning_config)
 
         assert "CUSTOM_1" in layout.bubble_field_types_data
-        assert layout.bubble_field_types_data["CUSTOM_1"]["bubbleValues"] == [
+        assert layout.bubble_field_types_data["CUSTOM_1"]["bubble_values"] == [
             "A",
             "B",
             "C",
@@ -373,12 +381,12 @@ class TestValidateFieldBlocks:
         # This tests the code logic, not schema validation
         invalid_field_blocks = {
             "block1": {
-                "fieldDetectionType": "BUBBLES_THRESHOLD",
+                "field_detection_type": "BUBBLES_THRESHOLD",
                 "origin": [100, 100],
-                "fieldLabels": ["q1"],
-                "bubbleFieldType": "INVALID_TYPE",  # Not in bubble_field_types_data
-                "bubblesGap": 30,
-                "labelsGap": 50,
+                "field_labels": ["q1"],
+                "bubble_field_type": "INVALID_TYPE",  # Not in bubble_field_types_data
+                "bubbles_gap": 30,
+                "labels_gap": 50,
             }
         }
 
@@ -395,12 +403,12 @@ class TestValidateFieldBlocks:
         # This tests the code logic, not schema validation
         invalid_field_blocks = {
             "block1": {
-                "fieldDetectionType": "BUBBLES_THRESHOLD",
+                "field_detection_type": "BUBBLES_THRESHOLD",
                 "origin": [100, 100],
-                "fieldLabels": ["q1", "q2"],  # Multiple labels but no labelsGap
-                "bubbleFieldType": "QTYPE_MCQ4",
-                "bubblesGap": 30,
-                # Missing labelsGap
+                "field_labels": ["q1", "q2"],  # Multiple labels but no labels_gap
+                "bubble_field_type": "QTYPE_MCQ4",
+                "bubbles_gap": 30,
+                # Missing labels_gap
             }
         }
 
@@ -548,12 +556,12 @@ class TestParseAndAddFieldBlock:
     def test_parse_and_add_field_block(self, sample_template_layout):
         """Test parsing and adding a new field block."""
         new_block = {
-            "fieldDetectionType": "BUBBLES_THRESHOLD",
+            "field_detection_type": "BUBBLES_THRESHOLD",
             "origin": [200, 200],
-            "fieldLabels": ["q3"],
-            "bubbleFieldType": "QTYPE_MCQ4",
-            "bubblesGap": 30,
-            "labelsGap": 50,
+            "field_labels": ["q3"],
+            "bubble_field_type": "QTYPE_MCQ4",
+            "bubbles_gap": 30,
+            "labels_gap": 50,
         }
 
         initial_count = len(sample_template_layout.field_blocks)
@@ -572,20 +580,20 @@ class TestPrefillFieldBlock:
     def test_prefill_field_block(self, sample_template_layout):
         """Test prefilling a field block."""
         field_block_object = {
-            "fieldDetectionType": "BUBBLES_THRESHOLD",
+            "field_detection_type": "BUBBLES_THRESHOLD",
             "origin": [200, 200],
-            "fieldLabels": ["q3"],
-            "bubbleFieldType": "QTYPE_MCQ4",
-            "bubblesGap": 30,
-            "labelsGap": 50,
+            "field_labels": ["q3"],
+            "bubble_field_type": "QTYPE_MCQ4",
+            "bubbles_gap": 30,
+            "labels_gap": 50,
         }
 
         # Should return filled field block object
         filled = sample_template_layout.prefill_field_block(field_block_object)
         assert filled is not None
-        assert "bubbleDimensions" in filled
-        assert "emptyValue" in filled
-        assert filled["bubbleFieldType"] == "QTYPE_MCQ4"
+        assert "bubble_dimensions" in filled
+        assert "empty_value" in filled
+        assert filled["bubble_field_type"] == "QTYPE_MCQ4"
 
 
 class TestValidateParsedFieldBlock:
