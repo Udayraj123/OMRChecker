@@ -1,6 +1,7 @@
 # Use all imports relative to root directory
 from pathlib import Path
 from typing import Any, Never
+from src.utils.image import ImageUtils
 
 from cv2.typing import MatLike
 
@@ -54,19 +55,26 @@ class ImageTemplatePreprocessor(Processor):
     def process(self, context: ProcessingContext) -> ProcessingContext:
         """Process images using the unified processor interface.
 
-        Note: Resizing is handled by PreprocessingCoordinator.
-        Individual preprocessors just apply their specific filter.
-
         Args:
             context: Processing context with images and state
 
         Returns:
             Updated context with processed images
         """
-        # Apply the specific filter (no resizing here)
+
+        # Resize to conform to common preprocessor input requirements
+        gray_image = ImageUtils.resize_to_shape(
+            self.processing_image_shape, context.gray_image
+        )
+        if self.tuning_config.outputs.colored_outputs_enabled:
+            colored_image = ImageUtils.resize_to_shape(
+                self.processing_image_shape, context.colored_image
+            )
+
+        # Apply the specific filter
         gray_image, colored_image, template = self.apply_filter(
-            context.gray_image,
-            context.colored_image,
+            gray_image,
+            colored_image,
             context.template,
             context.file_path,
         )

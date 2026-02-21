@@ -135,7 +135,7 @@ class PerspectiveTransformStrategy(WarpStrategy):
             )
 
         logger.debug(
-            f"Applied perspective transform: {image.shape[:2]} -> {warped_dimensions}"
+            f"Applied perspective transform: {image.shape[:2]} -> {warped_image.shape[:2]}"
         )
 
         return warped_image, warped_colored_image, warped_debug_image

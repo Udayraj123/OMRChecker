@@ -50,6 +50,7 @@ class TemplateLayout:
             page_height,
             page_width,
         ]
+        self.output_image_shape = template_config.output_image_shape
         # TODO: support for "sortFiles" key
 
         self.parse_output_columns(output_columns_config)

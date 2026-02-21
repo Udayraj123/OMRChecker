@@ -465,7 +465,7 @@ class Config:
     This replaces the DotMap-based tuning_config throughout the codebase.
     """
 
-    path: Path
+    path: Path = Path("config.json")
     thresholding: ThresholdingConfig = field(default_factory=ThresholdingConfig)
     outputs: OutputsConfig = field(default_factory=OutputsConfig)
     processing: ProcessingConfig = field(default_factory=ProcessingConfig)

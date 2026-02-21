@@ -8,14 +8,14 @@ from unittest.mock import Mock
 
 import pytest
 
-from src.schemas.defaults import CONFIG_DEFAULTS
+from src.schemas.models.config import Config
 
 
 @pytest.fixture
 def mock_template():
     """Create a mock template object."""
     template = Mock()
-    template.tuning_config = CONFIG_DEFAULTS
+    template.tuning_config = Config()
     template.all_fields = []
     template.all_field_detection_types = []
     return template
@@ -24,7 +24,7 @@ def mock_template():
 @pytest.fixture
 def mock_tuning_config():
     """Create a mock tuning config."""
-    return CONFIG_DEFAULTS
+    return Config()
 
 
 @pytest.fixture

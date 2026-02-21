@@ -3,5 +3,5 @@
 
 export * from './core';
 export * from './processors';
-export * from './schemas';
+export * from './opencv';
 export * from './errors';

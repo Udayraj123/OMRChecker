@@ -10,17 +10,6 @@ export class OMRCheckerError extends Error {
 }
 
 /**
- * OMRCheckerError
- * Source: exceptions.py
- */
-export class OMRCheckerError extends Error {
-  constructor(message: string, public context?: Record<string, any>) {
-    super(message);
-    this.name = 'OMRCheckerError';
-  }
-}
-
-/**
  * InputError
  * Source: exceptions.py
  */

@@ -284,9 +284,9 @@ def track_workflow(  # noqa: PLR0913
             Path(config_path), {"outputMode": "default", "debug": False}
         )
     else:
-        from src.schemas.defaults import CONFIG_DEFAULTS
+        from src.schemas.models.config import Config
 
-        config = CONFIG_DEFAULTS
+        config = Config()
 
     # Load template
     template = Template(Path(template_path), config)

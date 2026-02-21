@@ -42,8 +42,6 @@ class PreprocessingCoordinator(Processor):
         Returns:
             Updated context with preprocessed images and updated template
         """
-        logger.debug(f"Starting {self.get_name()} processor")
-
         # Get a copy of the template layout for mutation
         next_template_layout = context.template.template_layout.get_copy_for_shifting()
 
@@ -99,14 +97,14 @@ class PreprocessingCoordinator(Processor):
                 )
 
         # Resize to output requirements if specified
-        template_layout = context.template.template_layout
-        if template_layout.output_image_shape:
+        output_image_shape = context.template.template_layout.output_image_shape
+        if output_image_shape:
             context.gray_image = ImageUtils.resize_to_shape(
-                template_layout.output_image_shape, context.gray_image
+                output_image_shape, context.gray_image
             )
             if self.tuning_config.outputs.colored_outputs_enabled:
                 context.colored_image = ImageUtils.resize_to_shape(
-                    template_layout.output_image_shape, context.colored_image
+                    output_image_shape, context.colored_image
                 )
 
         logger.debug(f"Completed {self.get_name()} processor")

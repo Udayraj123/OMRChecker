@@ -10,9 +10,8 @@ from deepmerge import Merger
 
 from src.exceptions import OMRCheckerError
 from src.schemas.constants import FIELD_STRING_REGEX_GROUPS
-from src.schemas.defaults import CONFIG_DEFAULTS, TEMPLATE_DEFAULTS
-from src.schemas.defaults.evaluation import EVALUATION_CONFIG_DEFAULTS
 from src.schemas.models.config import Config
+from src.schemas.models.evaluation import EvaluationConfig
 from src.schemas.models.template import TemplateConfig
 from src.utils.constants import FIELD_LABEL_NUMBER_REGEX, SUPPORTED_PROCESSOR_NAMES
 from src.utils.file import load_json
@@ -76,10 +75,10 @@ def open_config_with_defaults(config_path: Path, args: dict[str, Any]) -> Config
             },
         }
     }
-    # Note: precedence: file > args > CONFIG_DEFAULTS
+    # Note: precedence: file > args > dataclass defaults
     user_tuning_config = OVERRIDE_MERGER.merge(defaults_from_args, user_tuning_config)
-    # Convert CONFIG_DEFAULTS to dict for merging
-    defaults_dict = CONFIG_DEFAULTS.to_dict()
+    # Create default config instance and convert to dict for merging
+    defaults_dict = Config().to_dict()
     user_tuning_config = OVERRIDE_MERGER.merge(
         deepcopy(defaults_dict), user_tuning_config
     )
@@ -122,8 +121,8 @@ def open_template_with_defaults(template_path: Path) -> "TemplateConfig":
         raise ValueError(f"Invalid template JSON at {template_path}: {e}") from e
 
     # Note: Keep user_template in camelCase for merging
-    # Convert TEMPLATE_DEFAULTS to dict for merging
-    defaults_dict = TEMPLATE_DEFAULTS.to_dict()
+    # Create default template instance and convert to dict for merging
+    defaults_dict = TemplateConfig().to_dict()
     # Convert defaults dict back to camelCase for proper merging with user JSON
     defaults_camel = convert_dict_keys_to_camel(defaults_dict)
 
@@ -164,8 +163,8 @@ def open_evaluation_with_defaults(evaluation_path: Path) -> dict[str, Any]:
     # Convert camelCase keys to snake_case for merging with defaults
     user_evaluation_config = convert_dict_keys_to_snake(user_evaluation_config)
 
-    # Convert EVALUATION_CONFIG_DEFAULTS to dict for merging
-    defaults_dict = EVALUATION_CONFIG_DEFAULTS.to_dict()
+    # Create default evaluation instance and convert to dict for merging
+    defaults_dict = EvaluationConfig().to_dict()
     user_evaluation_config = OVERRIDE_MERGER.merge(
         deepcopy(defaults_dict), user_evaluation_config
     )

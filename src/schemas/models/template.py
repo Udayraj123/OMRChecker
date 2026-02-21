@@ -32,6 +32,9 @@ class AlignmentConfig:
 
     margins: AlignmentMarginsConfig = field(default_factory=AlignmentMarginsConfig)
     max_displacement: int = 10
+    reference_image: str | None = None
+    max_match_count: int | None = None
+    anchor_window_size: list[int] | None = None
 
     @classmethod
     def from_dict(cls, data: dict) -> "AlignmentConfig":
@@ -102,7 +105,9 @@ class TemplateConfig:
     empty_value: str = ""
     field_blocks: dict = field(default_factory=dict)
     field_blocks_offset: list[int] = field(default_factory=lambda: [0, 0])
+    output: bool = False
     output_columns: OutputColumnsConfig = field(default_factory=OutputColumnsConfig)
+    output_image_shape: list[int] = field(default_factory=list)
     pre_processors: list = field(default_factory=list)
     processing_image_shape: list[int] = field(default_factory=lambda: [900, 650])
     sort_files: SortFilesConfig = field(default_factory=SortFilesConfig)
@@ -153,9 +158,11 @@ class TemplateConfig:
             # Use converted field blocks (block names preserved, keys converted)
             field_blocks=field_blocks_converted,
             field_blocks_offset=data.get("field_blocks_offset", [0, 0]),
+            output=data.get("output", False),
             output_columns=OutputColumnsConfig.from_dict(
                 data.get("output_columns", {})
             ),
+            output_image_shape=data.get("output_image_shape", []),
             pre_processors=data.get("pre_processors", []),
             processing_image_shape=data.get("processing_image_shape", [900, 650]),
             sort_files=SortFilesConfig.from_dict(data.get("sort_files", {})),

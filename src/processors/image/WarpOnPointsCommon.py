@@ -527,6 +527,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             InteractionUtils.show("Anchor Points", self.debug_image, pause=False)
 
         # Draw and show match lines
+        # TODO: debug why resizing the images is making matches not match with destination points.
         matched_lines = DrawingUtils.draw_matches(
             original_image, control_points, warped_image, destination_points
         )

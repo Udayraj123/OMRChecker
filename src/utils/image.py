@@ -72,7 +72,7 @@ class ImageUtils:
         ImageUtils.save_img(image_path, final_marked)
 
     @staticmethod
-    def resize_to_shape(image_shape, *images):
+    def resize_to_shape(image_shape, *images) -> MatLike | list[MatLike]:
         h, w = image_shape
         return ImageUtils.resize_multiple(images, w, h)
 
@@ -82,7 +82,7 @@ class ImageUtils:
         return ImageUtils.resize_multiple(images, w, h)
 
     @staticmethod
-    def resize_multiple(images, u_width=None, u_height=None):
+    def resize_multiple(images, u_width=None, u_height=None) -> MatLike | list[MatLike]:
         if len(images) == 1:
             return ImageUtils.resize_single(images[0], u_width, u_height)
         return [ImageUtils.resize_single(image, u_width, u_height) for image in images]
@@ -329,12 +329,12 @@ class ImageUtils:
                 )
                 for edge_type in EDGE_TYPES_IN_ORDER
             ]
-            min_distance, nearest_edge_type = min(edge_distances)
-            warn_distance = 10
-            distance_warning = "*" if min_distance > warn_distance else ""
-            logger.debug(
-                f"boundary_point={boundary_point}\t nearest_edge_type={nearest_edge_type}\t min_distance={min_distance:.2f}{distance_warning}"
-            )
+            _min_distance, nearest_edge_type = min(edge_distances)
+            # distance_warning = "*" if min_distance > 10 else ""
+            # logger.debug(
+            #     f"boundary_point={boundary_point}\t nearest_edge_type={nearest_edge_type}\t min_distance={min_distance:.2f}{distance_warning}"
+            # )
+
             # TODO: Each edge contour's points should be in the clockwise order
             edge_contours_map[nearest_edge_type].append(tuple(boundary_point))
 

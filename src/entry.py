@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path, PurePosixPath
 from time import time
+import traceback
 
 from rich.table import Table
 
@@ -12,7 +13,6 @@ from src.processors.evaluation.evaluation_config import EvaluationConfig
 from src.processors.evaluation.evaluation_meta import evaluate_concatenated_response
 from src.processors.template.template import Template
 from src.schemas.constants import DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING
-from src.schemas.defaults import CONFIG_DEFAULTS
 from src.schemas.models.config import Config
 from src.utils import constants
 from src.utils.csv import thread_safe_csv_append
@@ -79,9 +79,12 @@ def process_directory_wise(
     curr_dir: Path,
     args: dict,
     template: Template | None = None,
-    tuning_config: Config = CONFIG_DEFAULTS,
+    tuning_config: Config | None = None,
     evaluation_config: EvaluationConfig | None = None,
 ) -> None:
+    # Initialize tuning_config with default instance if not provided
+    if tuning_config is None:
+        tuning_config = Config()
     # Update local tuning_config (in current recursion stack)
     local_config_path = curr_dir.joinpath(constants.CONFIG_FILENAME)
     if local_config_path.exists():
@@ -201,6 +204,7 @@ def process_directory_wise(
                 tuning_config,
                 evaluation_config,
                 output_mode,
+                args,
             )
 
             if tuning_config.outputs.show_image_level <= 1:
@@ -281,7 +285,7 @@ def process_single_file(
     """Process a single OMR file and return results.
 
     Args:
-        file_info: Tuple of (file_path, file_counter, template, tuning_config, evaluation_config, output_mode)
+        file_info: Tuple of (file_path, file_counter, template, tuning_config, evaluation_config, output_mode, args)
 
     Returns:
         dict with processing results including:
@@ -298,6 +302,7 @@ def process_single_file(
         tuning_config,
         evaluation_config,
         output_mode,
+        args,
     ) = file_info
 
     result = {
@@ -524,7 +529,12 @@ def process_single_file(
     except Exception as e:
         result["status"] = "error"
         result["error"] = str(e)
-        logger.error(f"Error processing {file_path}: {e}")
+        # Show full traceback only in debug mode
+        if args.get("debug", False):
+            error_traceback = traceback.format_exc()
+            logger.error(f"Error processing {file_path}:\n{error_traceback}")
+        else:
+            logger.error(f"Error processing {file_path}: {e}")
 
     return result
 
@@ -536,6 +546,7 @@ def process_directory_files(
     tuning_config,
     evaluation_config,
     output_mode,
+    args: dict,
 ) -> None:
     """Process all OMR files in a directory using parallel threading.
 
@@ -574,6 +585,7 @@ def process_directory_files(
                 tuning_config,
                 evaluation_config,
                 output_mode,
+                args,
             )
         )
 
@@ -602,7 +614,16 @@ def process_directory_files(
                         )
                 except Exception as e:
                     file_info = future_to_file[future]
-                    logger.error(f"Unexpected error processing {file_info[0]}: {e}")
+                    file_path = file_info[0]
+                    args = file_info[6]  # args is the 7th element in the tuple
+                    # Show full traceback only in debug mode
+                    if args.get("debug", False):
+                        error_traceback = traceback.format_exc()
+                        logger.error(
+                            f"Unexpected error processing {file_path}:\n{error_traceback}"
+                        )
+                    else:
+                        logger.error(f"Unexpected error processing {file_path}: {e}")
 
             # Sort results by file_counter to maintain input order
             results.sort(key=lambda r: r["file_counter"])
@@ -630,7 +651,16 @@ def process_directory_files(
                         f"[{result['file_counter']}] Error in {result['file_path'].name}: {result['error']}"
                     )
             except Exception as e:
-                logger.error(f"Unexpected error processing {file_info[0]}: {e}")
+                file_path = file_info[0]
+                args = file_info[6]  # args is the 7th element in the tuple
+                # Show full traceback only in debug mode
+                if args.get("debug", False):
+                    error_traceback = traceback.format_exc()
+                    logger.error(
+                        f"Unexpected error processing {file_path}:\n{error_traceback}"
+                    )
+                else:
+                    logger.error(f"Unexpected error processing {file_path}: {e}")
 
     logger.reset_log_levels()
 

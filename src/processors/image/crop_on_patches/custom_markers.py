@@ -191,21 +191,13 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 )
                 self.loaded_reference_images[reference_image_path] = reference_image
 
-            # TODO: expose referenceZone support in schema with a better name (to extract an zone out of the reference image to use as a marker)
-            reference_zone = custom_options.get(
-                "referenceZone", self.get_default_scan_zone_for_image(reference_image)
-            )
-            # logger.debug("zone_label=", zone_label, custom_options)
-
             extracted_marker = self.extract_marker_from_reference(
-                reference_image, reference_zone, custom_options
+                reference_image, custom_options
             )
 
             self.marker_for_zone_label[zone_label] = extracted_marker
 
-    def extract_marker_from_reference(
-        self, reference_image, reference_zone, custom_options
-    ):
+    def extract_marker_from_reference(self, reference_image, custom_options):
         """
         Extract and prepare marker template from reference image.
 
@@ -213,10 +205,13 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         """
         options = self.options
         marker_dimensions = custom_options.get(
-            "markerDimensions", options.get("marker_dimensions", None)
+            "marker_dimensions", options.get("marker_dimensions", None)
         )
         blur_kernel = custom_options.get("marker_blur_kernel", (5, 5))
-
+        # TODO: expose referenceZone support in schema with a better name (to extract an zone out of the reference image to use as a marker)
+        reference_zone = custom_options.get(
+            "reference_zone", self.get_default_scan_zone_for_image(reference_image)
+        )
         return prepare_marker_template(
             reference_image,
             reference_zone,
@@ -387,7 +382,7 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         self.debug_hstack = []
 
         # Show detailed view if requested or on error
-        if config.outputs.show_image_level >= 4 or (
+        if config.outputs.show_image_level >= 5 or (
             corners is None and config.outputs.show_image_level >= 1
         ):
             is_not_matching = corners is None

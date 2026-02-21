@@ -390,54 +390,6 @@ CONFIG_SCHEMA = {
                         },
                     },
                 },
-                "visualization": {
-                    "description": "Configuration for workflow visualization and debugging",
-                    "type": "object",
-                    "additionalProperties": False,
-                    "properties": {
-                        "enabled": {
-                            "description": "Enable workflow visualization",
-                            "type": "boolean",
-                        },
-                        "captureProcessors": {
-                            "description": "List of processor names to capture or ['all'] for all processors",
-                            "type": "array",
-                            "items": {"type": "string"},
-                        },
-                        "captureFrequency": {
-                            "description": "When to capture images: 'always' or 'on_change'",
-                            "type": "string",
-                            "enum": ["always", "on_change"],
-                        },
-                        "includeColored": {
-                            "description": "Whether to capture colored images in addition to grayscale",
-                            "type": "boolean",
-                        },
-                        "maxImageWidth": {
-                            "description": "Maximum width for captured images in pixels",
-                            "type": "integer",
-                            "minimum": 100,
-                            "maximum": 4000,
-                        },
-                        "embedImages": {
-                            "description": "Whether to embed images in HTML (true) or reference externally (false)",
-                            "type": "boolean",
-                        },
-                        "exportFormat": {
-                            "description": "Format for exporting visualizations",
-                            "type": "string",
-                            "enum": ["html", "json"],
-                        },
-                        "outputDir": {
-                            "description": "Directory to save visualizations",
-                            "type": "string",
-                        },
-                        "autoOpenBrowser": {
-                            "description": "Automatically open visualization in browser",
-                            "type": "boolean",
-                        },
-                    },
-                },
             },
         },
         {

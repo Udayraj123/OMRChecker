@@ -12,7 +12,7 @@ from src.entry import entry_point, process_directory_wise, print_config_summary
 from src.exceptions import InputDirectoryNotFoundError, TemplateNotFoundError
 from src.processors.evaluation.evaluation_config import EvaluationConfig
 from src.processors.template.template import Template
-from src.schemas.defaults import CONFIG_DEFAULTS
+from src.schemas.models.config import Config
 
 
 @pytest.fixture
@@ -100,7 +100,7 @@ class TestProcessDirectoryWise:
             patch("src.entry.open_config_with_defaults") as mock_config,
             patch("src.entry.EvaluationConfig"),
         ):
-            mock_config.return_value = CONFIG_DEFAULTS
+            mock_config.return_value = Config()
             mock_template_class.side_effect = FileNotFoundError("No template")
 
             # Should handle missing template gracefully
@@ -127,7 +127,7 @@ class TestProcessDirectoryWise:
             patch("src.entry.Template") as mock_template_class,
             patch("src.entry.open_config_with_defaults") as mock_config,
         ):
-            mock_config.return_value = CONFIG_DEFAULTS
+            mock_config.return_value = Config()
             mock_template_class.side_effect = FileNotFoundError("No template")
 
             try:

@@ -144,12 +144,7 @@ class ProcessingPipeline:
         for processor in self.processors:
             processor_name = processor.get_name()
             logger.debug(f"Executing processor: {processor_name}")
-
-            try:
-                context = processor.process(context)
-            except Exception as e:
-                logger.error(f"Error in processor {processor_name}: {e}")
-                raise
+            context = processor.process(context)
 
         logger.info(f"Completed pipeline for file: {file_path}")
 

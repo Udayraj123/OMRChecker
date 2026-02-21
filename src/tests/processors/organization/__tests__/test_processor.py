@@ -436,7 +436,7 @@ class TestFileOrganizerProcessor:
         and validates that files are sorted based on decoded QR values.
         """
         from src.processors.template.template import Template
-        from src.schemas.defaults.config import CONFIG_DEFAULTS
+        from src.schemas.models.config import Config
         from src.utils.image import ImageUtils
 
         rules = [
@@ -534,7 +534,7 @@ class TestFileOrganizerProcessor:
             # Load template with colored outputs enabled
             from copy import deepcopy
 
-            tuning_config = deepcopy(CONFIG_DEFAULTS)
+            tuning_config = deepcopy(Config())
             tuning_config.outputs.colored_outputs_enabled = True
 
             template = Template(

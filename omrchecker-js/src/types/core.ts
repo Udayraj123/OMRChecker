@@ -26,8 +26,8 @@ export interface ThresholdingConfig {
 export interface GroupingRule {
   name: string;
   priority: number;
-  destinationPattern: str  # Full path pattern: "folder/{booklet}/roll_{roll}.jpg";  // Python: destination_pattern
-  matcher: dict  # { "formatString": "...", "matchRegex": "..." };
+  destinationPattern: string;  // Full path pattern: "folder/{booklet}/roll_{roll}.jpg" | Python: destination_pattern
+  matcher: Record<string, any>;  // { "formatString": "...", "matchRegex": "..." }
   action?: string;
   collisionStrategy?: string;  // Python: collision_strategy
 }
@@ -40,19 +40,7 @@ export interface FileGroupingConfig {
   enabled?: boolean;
   rules?: GroupingRule[];
   defaultPattern?: string;  // Python: default_pattern
-  BUILTIN_FIELDS?: ClassVar[set[str]];
-  EVALUATION_FIELDS?: ClassVar[set[str]];
-  Args?: template: Optional template object to check available OMR fields;
-  hasEvaluation: Whether evaluation is enabled;  // Python: has_evaluation
-  rule: GroupingRule,;
-  ruleNum: int,;  // Python: rule_num
-  hasEvaluation: bool,;  // Python: has_evaluation
-  pattern: str,;
-  patternName: str,;  // Python: pattern_name
-  hasEvaluation: bool,;  // Python: has_evaluation
   allowEmpty?: boolean;  // Python: allow_empty
-  try?: formatter;
-  else: # No template available for validation - just warn;
 }
 
 /**
@@ -63,9 +51,9 @@ export interface OutputsConfig {
   outputMode?: string;  // Python: output_mode
   displayImageDimensions?: number[];  // Python: display_image_dimensions
   showImageLevel?: number;  // Python: show_image_level
-  showPreprocessorsDiff?: Record<[str, bool], string>;  // Python: show_preprocessors_diff
+  showPreprocessorsDiff?: Record<string, boolean>;  // Python: show_preprocessors_diff
   saveImageLevel?: number;  // Python: save_image_level
-  showLogsByType?: Record<[str, bool], string>;  // Python: show_logs_by_type
+  showLogsByType?: Record<string, boolean>;  // Python: show_logs_by_type
   saveDetections?: boolean;  // Python: save_detections
   coloredOutputsEnabled?: boolean;  // Python: colored_outputs_enabled
   saveImageMetrics?: boolean;  // Python: save_image_metrics
@@ -89,7 +77,7 @@ export interface ProcessingConfig {
 export interface ShiftDetectionConfig {
   enabled?: boolean;
   globalMaxShiftPixels?: number;  // Python: global_max_shift_pixels
-  perBlockMaxShiftPixels?: Record<[str, int], string>;  // Python: per_block_max_shift_pixels
+  perBlockMaxShiftPixels?: Record<string, number>;  // Python: per_block_max_shift_pixels
   confidenceReductionMin?: number;  // Python: confidence_reduction_min
   confidenceReductionMax?: number;  // Python: confidence_reduction_max
   bubbleMismatchThreshold?: number;  // Python: bubble_mismatch_threshold
@@ -174,8 +162,8 @@ export interface DrawAnswerGroupsConfig {
  */
 export interface DrawQuestionVerdictsConfig {
   enabled?: boolean;
-  verdictColors?: Record<[str, str | None], string>;  // Python: verdict_colors
-  verdictSymbolColors?: Record<[str, str], string>;  // Python: verdict_symbol_colors
+  verdictColors?: Record<string, string | null>;  // Python: verdict_colors
+  verdictSymbolColors?: Record<string, string>;  // Python: verdict_symbol_colors
   drawAnswerGroups?: DrawAnswerGroupsConfig;  // Python: draw_answer_groups
 }
 
