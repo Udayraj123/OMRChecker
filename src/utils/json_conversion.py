@@ -55,24 +55,6 @@ def snake_to_camel(name: str) -> str:
     return components[0] + "".join(x.title() for x in components[1:])
 
 
-def screaming_to_camel(name: str) -> str:
-    """Convert SCREAMING_SNAKE_CASE to camelCase.
-
-    Args:
-        name: String in SCREAMING_SNAKE_CASE format
-
-    Returns:
-        String in camelCase format
-
-    Examples:
-        >>> screaming_to_camel("GLOBAL_PAGE_THRESHOLD")
-        'globalPageThreshold'
-        >>> screaming_to_camel("MIN_JUMP")
-        'minJump'
-    """
-    return snake_to_camel(name.lower())
-
-
 def validate_no_key_clash(data: dict[str, Any], path: str = "") -> None:
     """Validate that a dictionary has no keys that would clash after case conversion.
 

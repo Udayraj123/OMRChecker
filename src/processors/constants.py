@@ -156,6 +156,7 @@ SELECTOR_TYPES_IN_ORDER = [
     SelectorType.LINE_INNER_EDGE,
     SelectorType.LINE_OUTER_EDGE,
 ]
+
 WarpMethodFlags = DotMap(
     {
         "INTER_LINEAR": "INTER_LINEAR",
