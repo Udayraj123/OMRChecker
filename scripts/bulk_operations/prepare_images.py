@@ -14,11 +14,12 @@ USAGE EXAMPLES:
   python prepare_images.py rename --path ./images --recursive
 
   # Resize images larger than 500KB to fit 1920x1440 pixels:
-  python prepare_images.py resize --path ./images \\
+  python prepare_images.py resize --path ./images \
     --max-size 500000 --max-width 1920 --max-height 1440
+  # Note: 500000 bytes = ~500KB
 
   # Resize recursively:
-  python prepare_images.py resize --path ./images \\
+  python prepare_images.py resize --path ./images \
     --max-size 500000 --max-width 1920 --max-height 1440 --recursive
 
 SUPPORTED FORMATS:
@@ -48,8 +49,6 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 import cv2
-import numpy as np
-
 
 # ============================================================================
 # LOGGING UTILITIES
@@ -71,9 +70,7 @@ def log_section(title: str) -> None:
     print(f"\n=== {title} ===")
 
 
-def log_summary(
-    processed: int, success: int, skipped: int, errors: int
-) -> None:
+def log_summary(processed: int, success: int, skipped: int, errors: int) -> None:
     """Print operation summary statistics."""
     log_section("Summary")
     print(f"Processed: {processed} files")
@@ -92,9 +89,7 @@ def get_supported_image_extensions() -> Tuple[str, ...]:
     return (".png", ".jpg", ".jpeg", ".tiff", ".tif")
 
 
-def find_image_files(
-    directory: Path, recursive: bool = False
-) -> List[Path]:
+def find_image_files(directory: Path, recursive: bool = False) -> List[Path]:
     """Scan directory for image files.
 
     Args:
@@ -120,11 +115,6 @@ def find_image_files(
             image_files.append(file_path)
 
     return sorted(image_files)
-
-
-def get_file_size_kb(file_path: Path) -> float:
-    """Get file size in kilobytes."""
-    return os.path.getsize(file_path) / 1024
 
 
 # ============================================================================
@@ -169,19 +159,28 @@ def clean_filename(filename: str) -> str:
     # Strip leading/trailing underscores
     cleaned = cleaned.strip("_")
 
+    # Fallback if cleaning removed all characters
+    if not cleaned:
+        cleaned = "unnamed_file"
+
     return cleaned + ext
 
 
-def rename_files(directory: Path, recursive: bool = False) -> None:
+def rename_files(
+    directory: Path, recursive: bool = False, dry_run: bool = False
+) -> None:
     """Bulk rename files, removing non-UTF characters from filenames.
 
     Args:
         directory: Directory to process
         recursive: If True, process subdirectories recursively
+        dry_run: If True, preview changes without actually renaming
     """
     log_section("Bulk Rename Operation")
     print(f"Path: {directory}")
     print(f"Recursive: {recursive}")
+    if dry_run:
+        print("Mode: DRY-RUN (preview only, no changes made)")
 
     image_files = find_image_files(directory, recursive)
 
@@ -218,7 +217,9 @@ def rename_files(directory: Path, recursive: bool = False) -> None:
                 errors += 1
                 continue
 
-            file_path.rename(new_path)
+            if not dry_run:
+                file_path.rename(new_path)
+
             log_status("RENAMED", f"{original_name} → {cleaned_name}")
             renamed += 1
 
@@ -251,6 +252,29 @@ def get_image_dimensions(file_path: Path) -> Optional[Tuple[int, int]]:
             return None
         height, width = image.shape[:2]
         return width, height
+    except Exception:
+        return None
+
+
+def read_and_get_dimensions(
+    file_path: Path,
+) -> Optional[Tuple]:
+    """Read image and return (image_data, width, height).
+
+    Returns None if file cannot be read.
+
+    Args:
+        file_path: Path to image file
+
+    Returns:
+        Tuple of (image, width, height) or None if unreadable
+    """
+    try:
+        image = cv2.imread(str(file_path))
+        if image is None:
+            return None
+        height, width = image.shape[:2]
+        return image, width, height
     except Exception:
         return None
 
@@ -297,6 +321,7 @@ def resize_files(
     max_width: int,
     max_height: int,
     recursive: bool = False,
+    dry_run: bool = False,
 ) -> None:
     """Bulk resize images exceeding file size threshold.
 
@@ -309,12 +334,15 @@ def resize_files(
         max_width: Maximum image width in pixels
         max_height: Maximum image height in pixels
         recursive: If True, process subdirectories recursively
+        dry_run: If True, preview changes without actually resizing
     """
     log_section("Bulk Resize Operation")
     print(f"Path: {directory}")
     print(f"Recursive: {recursive}")
     print(f"Size threshold: {max_size_bytes / 1024:.1f} KB")
     print(f"Max dimensions: {max_width}x{max_height} pixels")
+    if dry_run:
+        print("Mode: DRY-RUN (preview only, no changes made)")
 
     image_files = find_image_files(directory, recursive)
 
@@ -331,15 +359,6 @@ def resize_files(
         processed += 1
         original_name = file_path.name
 
-        # Skip PDF files
-        if file_path.suffix.lower() in (".pdf",):
-            log_status(
-                "SKIP",
-                f"{original_name} (PDF format not supported)",
-            )
-            skipped += 1
-            continue
-
         # Check file size
         file_size = os.path.getsize(file_path)
         if file_size <= max_size_bytes:
@@ -353,9 +372,9 @@ def resize_files(
             skipped += 1
             continue
 
-        # Get image dimensions
-        dimensions = get_image_dimensions(file_path)
-        if dimensions is None:
+        # Read image and get dimensions (single I/O operation)
+        image_data = read_and_get_dimensions(file_path)
+        if image_data is None:
             log_status(
                 "ERROR",
                 f"{original_name}: Unable to read image file",
@@ -363,7 +382,7 @@ def resize_files(
             errors += 1
             continue
 
-        original_width, original_height = dimensions
+        image, original_width, original_height = image_data
 
         # Calculate new dimensions
         new_width, new_height = calculate_resized_dimensions(
@@ -381,12 +400,7 @@ def resize_files(
             continue
 
         try:
-            # Read original image
-            image = cv2.imread(str(file_path))
-            if image is None:
-                raise ValueError("Unable to read image")
-
-            # Resize using OpenCV
+            # Resize using OpenCV (image already loaded)
             resized_image = cv2.resize(
                 image, (new_width, new_height), interpolation=cv2.INTER_AREA
             )
@@ -396,21 +410,30 @@ def resize_files(
             resized_name = f"{name}_resized{ext}"
             resized_path = file_path.parent / resized_name
 
-            # Write resized image
-            cv2.imwrite(str(resized_path), resized_image)
-
-            # Calculate new file size
-            new_file_size = os.path.getsize(resized_path)
-
             original_kb = file_size / 1024
-            new_kb = new_file_size / 1024
 
-            log_status(
-                "RESIZED",
-                f"{original_name}: {original_width}x{original_height} → "
-                f"{new_width}x{new_height} ({original_kb:.1f} KB → "
-                f"{new_kb:.1f} KB)",
-            )
+            if not dry_run:
+                # Write resized image
+                cv2.imwrite(str(resized_path), resized_image)
+                new_file_size = os.path.getsize(resized_path)
+                new_kb = new_file_size / 1024
+            else:
+                # Estimate file size in dry-run mode
+                new_kb = None
+
+            if new_kb is not None:
+                log_status(
+                    "RESIZED",
+                    f"{original_name}: {original_width}x{original_height} → "
+                    f"{new_width}x{new_height} ({original_kb:.1f} KB → "
+                    f"{new_kb:.1f} KB)",
+                )
+            else:
+                log_status(
+                    "RESIZED",
+                    f"{original_name}: {original_width}x{original_height} → "
+                    f"{new_width}x{new_height} (~{original_kb:.1f} KB reduced)",
+                )
             resized += 1
 
         except Exception as e:
@@ -454,6 +477,11 @@ def create_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Recursively process subdirectories",
     )
+    rename_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview changes without actually renaming",
+    )
 
     # Resize subcommand
     resize_parser = subparsers.add_parser(
@@ -494,6 +522,11 @@ def create_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Recursively process subdirectories",
     )
+    resize_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview changes without actually resizing",
+    )
 
     return parser
 
@@ -514,7 +547,7 @@ def main() -> int:
             return 1
 
         if args.operation == "rename":
-            rename_files(args.path, args.recursive)
+            rename_files(args.path, args.recursive, args.dry_run)
 
         elif args.operation == "resize":
             # Validate resize arguments
@@ -535,6 +568,7 @@ def main() -> int:
                 args.max_width,
                 args.max_height,
                 args.recursive,
+                args.dry_run,
             )
 
         return 0
