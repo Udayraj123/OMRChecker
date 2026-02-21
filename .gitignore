@@ -3,6 +3,7 @@
 
 # Exceptions for dot directories -
 !.github/
+!.agents/
 !.vscode/
 !.devcontainer/
 !docs/overrides/.icons

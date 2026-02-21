@@ -1,0 +1,28 @@
+{
+  "name": "omrchecker-migration-toolkit",
+  "version": "1.0.0",
+  "description": "Automated migration toolkit for OMRChecker Python \u2192 TypeScript",
+  "type": "module",
+  "scripts": {
+    "setup": "./1-setup-project.sh",
+    "generate-interfaces": "node 2-generate-interfaces.js",
+    "generate-tests": "node 3-generate-tests.js",
+    "migrate": "node 4-migrate-files.js",
+    "migrate:dry-run": "node 4-migrate-files.js --dry-run",
+    "migrate:resume": "node 4-migrate-files.js --resume",
+    "all": "npm run setup && npm run generate-interfaces && npm run generate-tests && npm run migrate"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "omrchecker",
+    "migration",
+    "python",
+    "typescript",
+    "automation"
+  ],
+  "author": "OMRChecker Contributors",
+  "license": "GPL-3.0"
+}
