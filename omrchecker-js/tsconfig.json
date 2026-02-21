@@ -12,22 +12,34 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    "jsx": "react-jsx",
 
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
 
     /* Path aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./packages/core/src/*"],
-      "@utils/*": ["./packages/core/src/utils/*"]
-    }
+      "@/*": ["src/*"],
+      "@core/*": ["src/core/*"],
+      "@processors/*": ["src/processors/*"],
+      "@utils/*": ["src/utils/*"],
+      "@types/*": ["src/types/*"],
+      "@schemas/*": ["src/schemas/*"]
+    },
+
+    /* Output */
+    "outDir": "./dist",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
   },
-  "include": ["packages/*/src"],
-  "references": [
-    { "path": "./packages/core" }
-  ]
+  "include": ["src/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

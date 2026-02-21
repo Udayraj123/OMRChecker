@@ -253,11 +253,14 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         )
 
         # Step 3: Parse and validate points
+        # Use prepared_image for consistency with control point extraction
         (
             parsed_control_points,
             parsed_destination_points,
             warped_dimensions,
-        ) = self._parse_and_prepare_points(image, control_points, destination_points)
+        ) = self._parse_and_prepare_points(
+            prepared_image, control_points, destination_points
+        )
 
         logger.debug(
             f"Cropping Enabled: {self.enable_cropping}\n"

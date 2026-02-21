@@ -1,151 +1,105 @@
-# OMRChecker TypeScript Port
+# OMRChecker.js
 
-This is the TypeScript/JavaScript port of OMRChecker, built as a browser-compatible library with React demo and E2E tests.
+Browser-based OMR (Optical Mark Recognition) Checker - TypeScript port of [OMRChecker](https://github.com/Udayraj123/OMRChecker).
 
-## Project Structure
+## Features
 
-```
-omrchecker-js/
-├── packages/
-│   ├── core/               # Main OMRChecker library
-│   ├── demo/               # React demo application
-│   └── e2e/                # Playwright E2E tests
-└── pnpm-workspace.yaml     # pnpm workspace configuration
-```
+- ✅ Client-side OMR processing (no server required)
+- ✅ Template-based configuration
+- ✅ Multiple detection types (bubbles, barcodes, OCR)
+- ✅ Image alignment and preprocessing
+- ✅ Parallel processing with Web Workers
+- ✅ Batch evaluation and grading
+- ✅ Debug visualization
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- pnpm 8+
+## Quick Start
 
 ### Installation
 
 ```bash
-# Install pnpm globally if you haven't
-npm install -g pnpm
-
-# Install dependencies
-pnpm install
+npm install omrchecker-js
 ```
 
-### Development
+### Usage
+
+```typescript
+import { OMRChecker } from 'omrchecker-js';
+
+// Load template
+const template = await OMRChecker.loadTemplate('/path/to/template.json');
+
+// Process image
+const image = await loadImageFile(file);
+const result = await OMRChecker.processImage(image, template);
+
+console.log('Detected responses:', result.responses);
+console.log('Score:', result.score);
+```
+
+## Development
 
 ```bash
-# Run demo app in development mode
-pnpm dev
+# Install dependencies
+npm install
 
-# Run core library in watch mode
-pnpm dev:core
+# Run dev server
+npm run dev
 
 # Run tests
-pnpm test
+npm test
 
-# Run E2E tests
-pnpm test:e2e
-
-# Lint all packages
-pnpm lint
-
-# Format code
-pnpm format
-
-# Type check all packages
-pnpm typecheck
+# Build for production
+npm run build
 ```
-
-### Building
-
-```bash
-# Build all packages
-pnpm build
-
-# Build only core library
-pnpm build:core
-```
-
-## Packages
-
-### @omrchecker/core
-
-The main OMRChecker library ported to TypeScript. Provides core functionality for:
-- Image preprocessing
-- Template alignment
-- OMR detection and interpretation
-- Answer evaluation
-
-### @omrchecker/demo
-
-React-based demo application showcasing the OMRChecker library capabilities in the browser.
-
-### @omrchecker/e2e
-
-End-to-end tests using Playwright to ensure the library works correctly across different browsers.
-
-## Workflow
-
-### Development Workflow
-
-1. Make changes to Python code in `src/`
-2. Stage your changes: `git add src/...`
-3. Commit: `git commit`
-4. The pre-commit hook will automatically:
-   - Auto-sync structural changes (classes/methods) to TypeScript
-   - Stage the updated TypeScript files
-   - Validate that all changes are synced
-5. Review the auto-synced TypeScript code
-6. Manually fix implementation details, types, and logic
-7. Run tests: `pnpm test`
-8. Stage additional changes if needed: `git add omrchecker-js/...`
-9. Amend or create a new commit
-
-### Manual Sync (without committing)
-
-You can also run the auto-sync manually:
-
-```bash
-# Run auto-sync on staged Python files
-uv run python scripts/sync_tool.py auto-sync
-
-# Check sync status
-uv run python scripts/sync_tool.py status
-
-# Detect changes
-uv run python scripts/sync_tool.py detect
-
-# Generate TypeScript suggestions for a specific file
-uv run python scripts/sync_tool.py suggest src/processors/image/CropPage.py
-```
-
-## Architecture
-
-This TypeScript port maintains 1:1 correspondence with the Python codebase:
-
-- **Module Structure**: Mirrors Python `src/` structure
-- **Naming Conventions**: snake_case → camelCase for functions, PascalCase preserved for classes
-- **Type System**: Python type hints → TypeScript types
-- **OpenCV**: Uses opencv.js (WASM) instead of cv2
-
-See [FILE_MAPPING.json](../FILE_MAPPING.json) for complete Python ↔ TypeScript mapping.
 
 ## Browser Compatibility
 
-- Chrome/Edge 90+
-- Firefox 89+
-- Safari 14.1+
+| Feature | Chrome | Firefox | Safari | Edge |
+|---------|--------|---------|--------|------|
+| OpenCV.js | ✅ | ✅ | ✅ | ✅ |
+| Web Workers | ✅ | ✅ | ✅ | ✅ |
+| File API | ✅ | ✅ | ✅ | ✅ |
+| WASM | ✅ | ✅ | ✅ | ✅ |
 
-Requires WebAssembly and Web Workers support.
+Minimum versions: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
 
-## Contributing
+## Architecture
 
-Please refer to [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines on:
-- Code style and conventions
-- Python-TypeScript synchronization workflow
-- Testing requirements
-- Pull request process
+- **Core**: Template, Field, FieldBlock, Config
+- **Processors**: Alignment, Detection, Threshold, Evaluation, Preprocessing
+- **Utils**: Logger, Validation, Parsing, File handling
+- **Workers**: Parallel image processing
+
+See [migration documentation](../.agents/skills/omrchecker-migration-skill/) for detailed architecture.
+
+## Migration from Python
+
+This is a TypeScript port of the original Python OMRChecker. Key differences:
+
+| Python | JavaScript/TypeScript |
+|--------|-----------------------|
+| OpenCV (cv2) | OpenCV.js (WASM) |
+| NumPy | TypedArrays + ndarray.js |
+| Pydantic | Zod |
+| pytest | Vitest |
+| ThreadPoolExecutor | Web Workers |
+| Rich terminal | HTML/Canvas |
+
+## Documentation
+
+- [Migration Guide](../.agents/skills/omrchecker-migration-skill/README.md)
+- [API Documentation](./docs/api.md)
+- [Template Format](../.agents/skills/omrchecker-migration-skill/modules/integration/template-format/template-format.md)
+- [Configuration](../.agents/skills/omrchecker-migration-skill/modules/foundation/configuration.md)
 
 ## License
 
-Same as main OMRChecker project - see [LICENSE](../LICENSE).
+GPL-3.0 (same as OMRChecker)
 
+## Contributing
+
+Contributions welcome! This is an automated migration from Python OMRChecker.
+
+## Acknowledgments
+
+Original Python OMRChecker by [Udayraj Deshmukh](https://github.com/Udayraj123)
