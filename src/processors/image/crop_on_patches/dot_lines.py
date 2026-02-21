@@ -19,6 +19,7 @@ from src.processors.image.crop_on_patches.dot_line_detection import (
 )
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
+from src.utils.json_conversion import camel_to_snake
 from src.utils.math import MathUtils
 from src.processors.image.crop_on_patches.patch_utils import compute_scan_zone
 
@@ -149,7 +150,7 @@ class CropOnDotLines(CropOnPatchesCommon):
             *[
                 {
                     "zone_preset": zone_preset,
-                    "zone_description": options[zone_preset],
+                    "zone_description": options[camel_to_snake(zone_preset)],
                     "custom_options": {
                         # TODO: get customOptions here
                     },
@@ -157,7 +158,7 @@ class CropOnDotLines(CropOnPatchesCommon):
                 for zone_preset in CropOnDotLines.scan_zone_presets_for_layout[
                     layout_type
                 ]
-                if zone_preset in options
+                if camel_to_snake(zone_preset) in options
             ],
         ]
         return parsed_options

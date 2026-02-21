@@ -190,10 +190,6 @@ def main() -> int:
         # Run the CLI
         run_cli(args)
 
-        logger.info("=" * 70)
-        logger.info("Processing completed successfully!")
-        logger.info("=" * 70)
-
         return 0
 
     except KeyboardInterrupt:

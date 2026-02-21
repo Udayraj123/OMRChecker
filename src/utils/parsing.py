@@ -21,7 +21,6 @@ from src.utils.validations import (
     validate_template_json,
 )
 from src.utils.json_conversion import (
-    convert_dict_keys_to_snake,
     convert_dict_keys_to_camel,
     validate_no_key_clash,
 )
@@ -160,15 +159,19 @@ def open_evaluation_with_defaults(evaluation_path: Path) -> dict[str, Any]:
     except ValueError as e:
         raise ValueError(f"Invalid evaluation JSON at {evaluation_path}: {e}") from e
 
-    # Convert camelCase keys to snake_case for merging with defaults
-    user_evaluation_config = convert_dict_keys_to_snake(user_evaluation_config)
+    # Use EvaluationConfig.from_dict to properly convert keys while preserving
+    # user-defined marking scheme names and option values
+    user_config = EvaluationConfig.from_dict(user_evaluation_config)
 
-    # Create default evaluation instance and convert to dict for merging
-    defaults_dict = EvaluationConfig().to_dict()
-    user_evaluation_config = OVERRIDE_MERGER.merge(
-        deepcopy(defaults_dict), user_evaluation_config
-    )
-    return user_evaluation_config
+    # Create default evaluation instance for merging
+    defaults = EvaluationConfig()
+
+    # Merge user config with defaults
+    defaults_dict = defaults.to_dict()
+    user_dict = user_config.to_dict()
+    merged_config = OVERRIDE_MERGER.merge(deepcopy(defaults_dict), user_dict)
+
+    return merged_config
 
 
 def parse_fields(key: str, fields: list[str]) -> list[str]:

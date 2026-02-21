@@ -83,7 +83,7 @@ class TestWarpOnPointsCommonInitialization:
 
     def test_initialization_with_cropping(self):
         """Test initialization with cropping enabled"""
-        options = {"enableCropping": True}
+        options = {"enable_cropping": True}
         processor = ConcreteWarpProcessor(options=options)
 
         assert processor.enable_cropping is True
@@ -92,8 +92,8 @@ class TestWarpOnPointsCommonInitialization:
     def test_custom_warp_method(self):
         """Test custom warp method in tuning options"""
         options = {
-            "enableCropping": False,
-            "tuningOptions": {"warpMethod": WarpMethod.REMAP_GRIDDATA},
+            "enable_cropping": False,
+            "tuning_options": {"warp_method": WarpMethod.REMAP_GRIDDATA},
         }
         processor = ConcreteWarpProcessor(options=options)
 
@@ -102,7 +102,7 @@ class TestWarpOnPointsCommonInitialization:
     def test_custom_interpolation_flag(self):
         """Test custom interpolation flag"""
 
-        options = {"tuningOptions": {"warpMethodFlag": "INTER_CUBIC"}}
+        options = {"tuning_options": {"warp_method_flag": "INTER_CUBIC"}}
         processor = ConcreteWarpProcessor(options=options)
 
         assert processor.warp_method_flag == cv2.INTER_CUBIC
@@ -133,7 +133,7 @@ class TestWarpOnPointsCommonPointParsing:
 
     def test_parse_points_with_cropping(self, test_image):
         """Test parsing points with cropping enabled"""
-        options = {"enableCropping": True}
+        options = {"enable_cropping": True}
         processor = ConcreteWarpProcessor(options=options)
 
         control = [[100, 100], [500, 100], [500, 300], [100, 300]]
@@ -193,8 +193,8 @@ class TestWarpOnPointsCommonWarpingStrategies:
     def test_perspective_transform_strategy(self, test_image, simple_points):
         """Test perspective transform application"""
         options = {
-            "enableCropping": True,
-            "tuningOptions": {"warpMethod": WarpMethod.PERSPECTIVE_TRANSFORM},
+            "enable_cropping": True,
+            "tuning_options": {"warp_method": WarpMethod.PERSPECTIVE_TRANSFORM},
         }
         processor = ConcreteWarpProcessor(options=options)
 
@@ -209,7 +209,7 @@ class TestWarpOnPointsCommonWarpingStrategies:
 
     def test_homography_strategy(self, test_image, simple_points):
         """Test homography application"""
-        options = {"tuningOptions": {"warpMethod": WarpMethod.HOMOGRAPHY}}
+        options = {"tuning_options": {"warp_method": WarpMethod.HOMOGRAPHY}}
         processor = ConcreteWarpProcessor(options=options)
 
         control, destination = simple_points
@@ -222,7 +222,7 @@ class TestWarpOnPointsCommonWarpingStrategies:
 
     def test_griddata_strategy(self, test_image):
         """Test griddata remap strategy"""
-        options = {"tuningOptions": {"warpMethod": WarpMethod.REMAP_GRIDDATA}}
+        options = {"tuning_options": {"warp_method": WarpMethod.REMAP_GRIDDATA}}
         processor = ConcreteWarpProcessor(options=options)
 
         # Can use more than 4 points with griddata
@@ -262,7 +262,7 @@ class TestWarpOnPointsCommonWarpingStrategies:
 
     def test_perspective_transform_requires_4_points(self, test_image):
         """Test that perspective transform validates point count"""
-        options = {"tuningOptions": {"warpMethod": WarpMethod.PERSPECTIVE_TRANSFORM}}
+        options = {"tuning_options": {"warp_method": WarpMethod.PERSPECTIVE_TRANSFORM}}
         processor = ConcreteWarpProcessor(options=options)
 
         # Only 3 points (should fail)
@@ -342,7 +342,7 @@ class TestWarpOnPointsCommonFullPipeline:
 
     def test_pipeline_with_cropping(self, test_image):
         """Test pipeline with cropping enabled"""
-        options = {"enableCropping": True}
+        options = {"enable_cropping": True}
         processor = ConcreteWarpProcessor(options=options)
 
         # Set test points

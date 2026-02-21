@@ -21,6 +21,7 @@ from src.processors.image.crop_on_patches.marker_detection import (
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
+from src.utils.json_conversion import camel_to_snake
 from src.utils.parsing import OVERRIDE_MERGER
 
 
@@ -115,9 +116,9 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         for zone_preset in CropOnCustomMarkers.scan_zone_presets_for_layout[
             layout_type
         ]:
-            local_description = options.get(zone_preset, {})
-            # .pop() will delete the customOptions key from the description if it exists
-            local_custom_options = local_description.pop("customOptions", {})
+            local_description = options.get(camel_to_snake(zone_preset), {})
+            # .pop() will delete the custom_options key from the description if it exists
+            local_custom_options = local_description.pop("custom_options", {})
             parsed_scan_zones.append(
                 {
                     "zone_preset": zone_preset,

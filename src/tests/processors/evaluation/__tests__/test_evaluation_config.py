@@ -33,19 +33,19 @@ def mock_tuning_config():
 def minimal_evaluation_json():
     """Minimal valid evaluation JSON."""
     return {
-        "source_type": "local",
+        "sourceType": "local",
         "options": {
-            "questions_in_order": ["q1", "q2"],
-            "answers_in_order": ["A", "B"],
+            "questionsInOrder": ["q1", "q2"],
+            "answersInOrder": ["A", "B"],
         },
-        "marking_schemes": {
+        "markingSchemes": {
             DEFAULT_SECTION_KEY: {
                 "correct": 1,
                 "incorrect": 0,
                 "unmarked": 0,
             }
         },
-        "outputs_configuration": {},
+        "outputsConfiguration": {},
     }
 
 
@@ -55,9 +55,9 @@ class TestEvaluationConfigValidation:
     def test_reject_conditional_set_with_answers_but_no_questions(
         self, minimal_evaluation_json, mock_template, mock_tuning_config, tmp_path
     ):
-        """Test that conditional set with answers_in_order but no questions_in_order is rejected."""
+        """Test that conditional set with answersInOrder but no questionsInOrder is rejected."""
         evaluation_json = minimal_evaluation_json.copy()
-        evaluation_json["conditional_sets"] = [
+        evaluation_json["conditionalSets"] = [
             {
                 "name": "Set A",
                 "matcher": {
@@ -65,18 +65,18 @@ class TestEvaluationConfigValidation:
                     "matchRegex": "^A$",
                 },
                 "evaluation": {
-                    "source_type": "local",
+                    "sourceType": "local",
                     "options": {
-                        "answers_in_order": ["B", "C"],  # Missing questions_in_order
+                        "answersInOrder": ["B", "C"],  # Missing questionsInOrder
                     },
-                    "marking_schemes": {
+                    "markingSchemes": {
                         DEFAULT_SECTION_KEY: {
                             "correct": 1,
                             "incorrect": 0,
                             "unmarked": 0,
                         }
                     },
-                    "outputs_configuration": {},
+                    "outputsConfiguration": {},
                 },
             },
         ]
@@ -86,7 +86,7 @@ class TestEvaluationConfigValidation:
         with open(eval_file, "w") as f:
             json.dump(evaluation_json, f)
 
-        # Schema validation happens first and will catch missing questions_in_order
+        # Schema validation happens first and will catch missing questionsInOrder
         with pytest.raises(EvaluationValidationError) as exc_info:
             EvaluationConfig(
                 tmp_path,
@@ -95,14 +95,14 @@ class TestEvaluationConfigValidation:
                 mock_tuning_config,
             )
 
-        assert "questions_in_order" in str(exc_info.value)
+        assert "questionsInOrder" in str(exc_info.value)
 
     def test_reject_conditional_set_with_questions_but_no_answers(
         self, minimal_evaluation_json, mock_template, mock_tuning_config, tmp_path
     ):
-        """Test that conditional set with questions_in_order but no answers_in_order is rejected."""
+        """Test that conditional set with questionsInOrder but no answersInOrder is rejected."""
         evaluation_json = minimal_evaluation_json.copy()
-        evaluation_json["conditional_sets"] = [
+        evaluation_json["conditionalSets"] = [
             {
                 "name": "Set A",
                 "matcher": {
@@ -110,18 +110,18 @@ class TestEvaluationConfigValidation:
                     "matchRegex": "^A$",
                 },
                 "evaluation": {
-                    "source_type": "local",
+                    "sourceType": "local",
                     "options": {
-                        "questions_in_order": ["q1", "q2"],  # Missing answers_in_order
+                        "questionsInOrder": ["q1", "q2"],  # Missing answersInOrder
                     },
-                    "marking_schemes": {
+                    "markingSchemes": {
                         DEFAULT_SECTION_KEY: {
                             "correct": 1,
                             "incorrect": 0,
                             "unmarked": 0,
                         }
                     },
-                    "outputs_configuration": {},
+                    "outputsConfiguration": {},
                 },
             },
         ]
@@ -131,7 +131,7 @@ class TestEvaluationConfigValidation:
         with open(eval_file, "w") as f:
             json.dump(evaluation_json, f)
 
-        # Schema validation happens first and will catch missing answers_in_order
+        # Schema validation happens first and will catch missing answersInOrder
         with pytest.raises(EvaluationValidationError) as exc_info:
             EvaluationConfig(
                 tmp_path,
@@ -140,14 +140,14 @@ class TestEvaluationConfigValidation:
                 mock_tuning_config,
             )
 
-        assert "answers_in_order" in str(exc_info.value)
+        assert "answersInOrder" in str(exc_info.value)
 
     def test_accept_conditional_set_with_both_questions_and_answers(
         self, minimal_evaluation_json, mock_template, mock_tuning_config, tmp_path
     ):
-        """Test that conditional set with both questions_in_order and answers_in_order is accepted."""
+        """Test that conditional set with both questionsInOrder and answersInOrder is accepted."""
         evaluation_json = minimal_evaluation_json.copy()
-        evaluation_json["conditional_sets"] = [
+        evaluation_json["conditionalSets"] = [
             {
                 "name": "Set A",
                 "matcher": {
@@ -155,19 +155,19 @@ class TestEvaluationConfigValidation:
                     "matchRegex": "^A$",
                 },
                 "evaluation": {
-                    "source_type": "local",
+                    "sourceType": "local",
                     "options": {
-                        "questions_in_order": ["q1", "q2"],
-                        "answers_in_order": ["B", "C"],
+                        "questionsInOrder": ["q1", "q2"],
+                        "answersInOrder": ["B", "C"],
                     },
-                    "marking_schemes": {
+                    "markingSchemes": {
                         DEFAULT_SECTION_KEY: {
                             "correct": 1,
                             "incorrect": 0,
                             "unmarked": 0,
                         }
                     },
-                    "outputs_configuration": {},
+                    "outputsConfiguration": {},
                 },
             },
         ]

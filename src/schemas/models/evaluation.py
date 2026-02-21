@@ -176,6 +176,7 @@ class EvaluationConfig:
     matching and scoring configuration.
     """
 
+    source_type: str = "local"
     options: dict = field(default_factory=dict)
     marking_schemes: dict = field(default_factory=dict)
     conditional_sets: list = field(default_factory=list)
@@ -220,6 +221,7 @@ class EvaluationConfig:
             )
 
         return cls(
+            source_type=data.get("source_type", "local"),
             options=options_converted,
             marking_schemes=marking_schemes_converted,
             conditional_sets=data.get("conditional_sets", []),
