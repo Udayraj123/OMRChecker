@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from src.exceptions import ConfigLoadError, InputFileNotFoundError
+from src.utils.exceptions import ConfigLoadError, InputFileNotFoundError
 from src.utils.file import PathUtils, load_json
 
 

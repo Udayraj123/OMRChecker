@@ -5,7 +5,7 @@ from collections import defaultdict
 from pathlib import Path, PureWindowsPath
 from typing import Any, ClassVar
 
-from src.exceptions import ConfigLoadError, InputFileNotFoundError
+from src.utils.exceptions import ConfigLoadError, InputFileNotFoundError
 from src.utils.image import ImageUtils
 from src.utils.logger import logger
 from src.utils.math import MathUtils

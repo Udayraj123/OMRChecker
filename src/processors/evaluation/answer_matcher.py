@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from src.exceptions import EvaluationError
+from src.utils.exceptions import EvaluationError
 from src.schemas.constants import (
     VERDICT_TO_SCHEMA_VERDICT,
     VERDICTS_IN_ORDER,

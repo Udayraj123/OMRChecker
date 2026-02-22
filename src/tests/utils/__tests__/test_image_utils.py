@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import pytest
 
-from src.exceptions import ImageReadError
+from src.utils.exceptions import ImageReadError
 from src.utils.image import ImageUtils
 
 

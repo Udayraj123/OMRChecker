@@ -17,7 +17,7 @@ from src.processors.image.page_detection import (
     extract_page_rectangle,
     find_page_contour_and_corners,
 )
-from src.exceptions import ImageProcessingError
+from src.utils.exceptions import ImageProcessingError
 
 
 class TestPreparePageImage:
@@ -139,7 +139,7 @@ class TestFindPageContours:
 
     def test_returns_top_candidates_only(self, edge_image):
         """Test that only top N contours are returned"""
-        from src.constants import TOP_CONTOURS_COUNT
+        from src.processors.image.constants import TOP_CONTOURS_COUNT
 
         contours = find_page_contours(edge_image)
 

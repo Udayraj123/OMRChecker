@@ -15,7 +15,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from src.cli import run_cli
+from src.entry import run_cli
 from src.utils.logger import logger
 
 

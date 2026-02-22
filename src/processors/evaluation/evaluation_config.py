@@ -1,6 +1,6 @@
 import re
 
-from src.exceptions import ConfigError
+from src.utils.exceptions import ConfigError
 from src.processors.evaluation.evaluation_config_for_set import EvaluationConfigForSet
 from src.schemas.constants import DEFAULT_SET_NAME
 from src.utils.logger import logger

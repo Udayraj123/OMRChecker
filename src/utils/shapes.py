@@ -1,4 +1,4 @@
-from src.exceptions import TemplateValidationError
+from src.utils.exceptions import TemplateValidationError
 from src.utils.logger import logger
 from src.utils.math import MathUtils
 

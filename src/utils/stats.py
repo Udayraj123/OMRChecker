@@ -1,7 +1,7 @@
 import json
 from typing import Any
 
-from src.exceptions import ConfigError
+from src.utils.exceptions import ConfigError
 from src.utils.parsing import default_dump
 
 

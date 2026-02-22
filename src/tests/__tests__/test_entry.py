@@ -9,9 +9,9 @@ from unittest.mock import Mock, patch
 import pytest
 
 from src.entry import entry_point, process_directory_wise, print_config_summary
-from src.exceptions import InputDirectoryNotFoundError, TemplateNotFoundError
+from src.utils.exceptions import InputDirectoryNotFoundError, TemplateNotFoundError
 from src.processors.evaluation.evaluation_config import EvaluationConfig
-from src.processors.template.template import Template
+from src.processors.layout.template.template import Template
 from src.schemas.models.config import Config
 
 

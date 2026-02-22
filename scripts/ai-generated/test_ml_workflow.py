@@ -15,7 +15,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.training.trainer import AutoTrainer
+from src.processors.experimental.training.trainer import AutoTrainer
 from src.utils.logger import logger
 
 

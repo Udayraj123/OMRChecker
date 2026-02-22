@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from deepmerge import Merger
 
-from src.exceptions import OMRCheckerError
+from src.utils.exceptions import OMRCheckerError
 from src.schemas.constants import FIELD_STRING_REGEX_GROUPS
 from src.schemas.models.config import Config
 from src.schemas.models.evaluation import EvaluationConfig

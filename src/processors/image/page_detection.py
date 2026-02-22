@@ -15,7 +15,7 @@ import cv2
 import numpy as np
 from pathlib import Path
 
-from src.constants import (
+from src.processors.image.constants import (
     APPROX_POLY_EPSILON_FACTOR,
     CANNY_THRESHOLD_HIGH,
     CANNY_THRESHOLD_LOW,
@@ -26,7 +26,7 @@ from src.constants import (
     THRESH_PAGE_TRUNCATE_SECONDARY,
     TOP_CONTOURS_COUNT,
 )
-from src.exceptions import ImageProcessingError
+from src.utils.exceptions import ImageProcessingError
 from src.utils.constants import CLR_WHITE, hsv_white_high, hsv_white_low
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils

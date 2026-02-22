@@ -2,7 +2,7 @@ from copy import copy as shallowcopy
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from src.exceptions import OMRCheckerError
+from src.utils.exceptions import OMRCheckerError
 from src.processors.constants import FieldDetectionType
 from src.processors.layout.field_block.base import FieldBlock
 from src.processors.manager import PROCESSOR_MANAGER

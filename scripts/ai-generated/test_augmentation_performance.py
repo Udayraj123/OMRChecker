@@ -257,7 +257,9 @@ def generate_comprehensive_report() -> None:
 
         f.write("2. **Train Field Block Detector**:\n")
         f.write("   ```python\n")
-        f.write("   from src.training.trainer import AutoTrainer\n")
+        f.write(
+            "   from src.processors.experimental.training.trainer import AutoTrainer\n"
+        )
         f.write("   trainer = AutoTrainer()\n")
         f.write(
             "   model_path, metrics = trainer.train_field_block_detector('outputs/training_data/yolo_augmented', epochs=50)\n"

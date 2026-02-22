@@ -9,7 +9,7 @@ from src.processors.detection.bubbles_threshold.detection import (
     BubblesFieldDetection,
 )
 from src.processors.layout.field.base import Field
-from src.processors.repositories.detection_repository import (
+from src.processors.detection.detection_repository import (
     DetectionRepository,
 )
 from src.utils.logger import Logger

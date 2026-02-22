@@ -4,7 +4,7 @@ from src.processors.detection.ocr.detection_pass import OCRDetectionPass
 from src.processors.detection.ocr.interpretation_pass import (
     OCRInterpretationPass,
 )
-from src.processors.repositories.detection_repository import DetectionRepository
+from src.processors.detection.detection_repository import DetectionRepository
 
 
 class OCRFileRunner(FieldTypeFileLevelRunner):

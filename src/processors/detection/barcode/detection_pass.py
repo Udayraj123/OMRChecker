@@ -1,7 +1,7 @@
 from src.processors.detection.barcode.detection import BarcodeFieldDetection
 from src.processors.detection.base.detection_pass import FieldTypeDetectionPass
 from src.processors.layout.field.base import Field
-from src.processors.repositories.detection_repository import DetectionRepository
+from src.processors.detection.detection_repository import DetectionRepository
 
 
 class BarcodeDetectionPass(FieldTypeDetectionPass):

@@ -3,7 +3,7 @@ from src.processors.detection.base.interpretation_pass import (
 )
 from src.processors.detection.ocr.interpretation import OCRFieldInterpretation
 from src.processors.layout.field.base import Field
-from src.processors.repositories.detection_repository import DetectionRepository
+from src.processors.detection.detection_repository import DetectionRepository
 
 
 class OCRInterpretationPass(FieldTypeInterpretationPass):

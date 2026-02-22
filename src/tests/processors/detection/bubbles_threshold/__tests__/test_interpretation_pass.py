@@ -18,7 +18,7 @@ from src.processors.detection.models.detection_results import (
     BubbleFieldDetectionResult,
     BubbleMeanValue,
 )
-from src.processors.repositories.detection_repository import DetectionRepository
+from src.processors.detection.detection_repository import DetectionRepository
 
 
 class MockField:

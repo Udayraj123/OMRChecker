@@ -1,4 +1,4 @@
-exclude: "(__snapshots__|__image_snapshots__|node_modules|workflow-viz-app|omrchecker-js|code-browser)/.*$"
+exclude: "(__snapshots__|__image_snapshots__|node_modules|omrchecker-js|code-browser)/.*$"
 default_install_hook_types: [pre-commit, pre-push]
 # default_stages: [pre-commit]
 repos:

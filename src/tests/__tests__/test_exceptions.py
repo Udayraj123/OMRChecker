@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from src.exceptions import (
+from src.utils.exceptions import (
     AlignmentError,
     AnswerKeyError,
     BarcodeDetectionError,

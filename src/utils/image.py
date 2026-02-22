@@ -6,7 +6,7 @@ from cv2.typing import MatLike
 from matplotlib import pyplot as plt
 from shapely import LineString, Point
 
-from src.exceptions import ImageProcessingError, ImageReadError
+from src.utils.exceptions import ImageProcessingError, ImageReadError
 from src.processors.constants import EDGE_TYPES_IN_ORDER, EdgeType
 from src.schemas.models.config import Config
 from src.utils.checksum import print_file_checksum

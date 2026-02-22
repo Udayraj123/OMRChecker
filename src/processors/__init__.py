@@ -26,7 +26,7 @@ def __getattr__(name: str) -> Any:  # noqa: ANN401
 
         return PreprocessingCoordinator
     if name == "AlignmentProcessor":
-        from src.processors.alignment import AlignmentProcessor
+        from src.processors.image.alignment import AlignmentProcessor
 
         return AlignmentProcessor
     if name == "ReadOMRProcessor":
@@ -38,7 +38,7 @@ def __getattr__(name: str) -> Any:  # noqa: ANN401
 
         return EvaluationProcessor
     if name == "FileOrganizerProcessor":
-        from src.processors.organization import FileOrganizerProcessor
+        from src.processors.experimental.organization import FileOrganizerProcessor
 
         return FileOrganizerProcessor
     msg = f"module {__name__!r} has no attribute {name!r}"

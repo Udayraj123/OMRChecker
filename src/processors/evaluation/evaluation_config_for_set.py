@@ -5,7 +5,7 @@ from csv import QUOTE_NONNUMERIC
 import pandas as pd
 from rich.table import Table
 
-from src.exceptions import (
+from src.utils.exceptions import (
     ConfigError,
     EvaluationError,
     FieldDefinitionError,

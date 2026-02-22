@@ -6,8 +6,11 @@ from src.processors.detection.models.detection_results import (
     BubbleFieldDetectionResult,
 )
 from src.processors.layout.field.base import Field
-from src.processors.threshold.local_threshold import LocalThresholdStrategy
-from src.processors.threshold.threshold_result import ThresholdConfig, ThresholdResult
+from src.processors.detection.threshold.local_threshold import LocalThresholdStrategy
+from src.processors.detection.threshold.threshold_result import (
+    ThresholdConfig,
+    ThresholdResult,
+)
 from src.utils.logger import logger
 
 

@@ -1,7 +1,7 @@
 from src.processors.detection.base.detection_pass import FieldTypeDetectionPass
 from src.processors.detection.ocr.detection import OCRFieldDetection
 from src.processors.layout.field.base import Field
-from src.processors.repositories.detection_repository import DetectionRepository
+from src.processors.detection.detection_repository import DetectionRepository
 
 
 class OCRDetectionPass(FieldTypeDetectionPass):

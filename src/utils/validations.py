@@ -5,7 +5,7 @@ import jsonschema
 from jsonschema import validate
 from rich.table import Table
 
-from src.exceptions import (
+from src.utils.exceptions import (
     ConfigValidationError,
     EvaluationValidationError,
     TemplateValidationError,

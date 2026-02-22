@@ -25,6 +25,10 @@ def mock_template():
     template.tuning_config.outputs.show_preprocessors_diff = {}
     template.tuning_config.outputs.show_image_level = 1
 
+    # Add alignment config (disabled by default for cleaner tests)
+    template.tuning_config.alignment = Mock()
+    template.tuning_config.alignment.enabled = False
+
     template.template_layout = Mock()
     template.template_layout.processing_image_shape = [800, 600]
     template.template_layout.output_image_shape = None
@@ -140,7 +144,7 @@ class TestReadOMRProcessor:
 class TestAlignmentProcessor:
     """Tests for AlignmentProcessor."""
 
-    @patch("src.processors.alignment.processor.apply_template_alignment")
+    @patch("src.processors.image.alignment.processor.apply_template_alignment")
     def test_alignment_with_reference_image(
         self, mock_apply_alignment, mock_template, mock_images
     ):
@@ -202,10 +206,9 @@ class TestProcessingPipeline:
         """Test adding and removing processors."""
         pipeline = ProcessingPipeline(mock_template)
 
-        # Check initial processors
+        # Check initial processors (Alignment not included by default)
         processor_names = pipeline.get_processor_names()
         assert "Preprocessing" in processor_names
-        assert "Alignment" in processor_names
         assert "ReadOMR" in processor_names
 
         # Add a custom processor
@@ -220,3 +223,29 @@ class TestProcessingPipeline:
         pipeline.remove_processor("CustomProcessor")
         processor_names = pipeline.get_processor_names()
         assert "CustomProcessor" not in processor_names
+
+    def test_pipeline_with_alignment_enabled(self, mock_template, mock_images):
+        """Test pipeline includes alignment when enabled and configured."""
+        gray_image, colored_image = mock_images
+
+        # Enable alignment and provide alignment data
+        mock_template.tuning_config.alignment.enabled = True
+        mock_template.alignment = {"gray_alignment_image": np.zeros((100, 100))}
+
+        pipeline = ProcessingPipeline(mock_template)
+
+        processor_names = pipeline.get_processor_names()
+        assert "Alignment" in processor_names
+        assert "Preprocessing" in processor_names
+        assert "ReadOMR" in processor_names
+
+    def test_pipeline_without_alignment_data(self, mock_template):
+        """Test pipeline excludes alignment when no alignment data exists."""
+        # Enable in config but no alignment data
+        mock_template.tuning_config.alignment.enabled = True
+        mock_template.alignment = {}  # No gray_alignment_image
+
+        pipeline = ProcessingPipeline(mock_template)
+
+        processor_names = pipeline.get_processor_names()
+        assert "Alignment" not in processor_names

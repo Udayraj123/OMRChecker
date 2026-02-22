@@ -15,7 +15,7 @@ from src.processors.detection.bubbles_threshold.file_runner import (
 )
 from src.processors.detection.ocr.file_runner import OCRFileRunner
 from src.processors.layout.field.base import Field
-from src.processors.repositories.detection_repository import DetectionRepository
+from src.processors.detection.detection_repository import DetectionRepository
 
 
 class TemplateFileRunner(

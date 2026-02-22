@@ -1,7 +1,7 @@
 from copy import copy as shallowcopy
 from typing import TYPE_CHECKING, ClassVar
 
-from src.exceptions import FieldDefinitionError
+from src.utils.exceptions import FieldDefinitionError
 from src.processors.constants import FieldDetectionType
 from src.processors.layout.field.barcode_field import BarcodeField
 from src.processors.layout.field.bubble_field import BubbleField

@@ -12,7 +12,7 @@ from src.utils.validations import (
     validate_template_json,
     validate_evaluation_json,
 )
-from src.exceptions import (
+from src.utils.exceptions import (
     ConfigValidationError,
     TemplateValidationError,
     EvaluationValidationError,

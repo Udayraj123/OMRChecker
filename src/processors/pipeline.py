@@ -38,9 +38,6 @@ class ProcessingPipeline:
 
         # Lazy import processors to avoid circular dependencies
         # These imports are intentionally not at top-level
-        from src.processors.alignment.processor import (
-            AlignmentProcessor,
-        )
         from src.processors.detection.processor import ReadOMRProcessor
         from src.processors.image.coordinator import (
             PreprocessingCoordinator,
@@ -51,11 +48,17 @@ class ProcessingPipeline:
         field_block_model_path = self.args.get("field_block_model_path")
         use_field_block_detection = self.args.get("use_field_block_detection", False)
 
-        # Initialize all processors with unified interface
+        # Initialize core processors
         self.processors: list[Processor] = [
             PreprocessingCoordinator(template),
-            AlignmentProcessor(template),
         ]
+
+        # Add alignment processor if enabled and configured
+        if self._should_enable_alignment():
+            from src.processors.image.alignment.processor import AlignmentProcessor
+
+            self.processors.append(AlignmentProcessor(template))
+            logger.info("Template alignment enabled")
 
         # Add ML field block detector if enabled (Stage 1)
         if use_field_block_detection and field_block_model_path:
@@ -86,18 +89,65 @@ class ProcessingPipeline:
         # Add traditional + ML bubble detection (Stage 2)
         self.processors.append(ReadOMRProcessor(template, ml_model_path=ml_model_path))
 
-        # Add training data collector if enabled
-        if self.args.get("collect_training_data", False):
+        # Add experimental training data collector if enabled
+        if self._should_enable_training_collection():
             self._add_training_data_collector()
 
-    def _add_training_data_collector(self) -> None:
-        """Add training data collector processor."""
-        try:
-            from src.processors.training import TrainingDataCollector
+    def _should_enable_alignment(self) -> bool:
+        """Check if alignment processor should be enabled.
 
-            confidence_threshold = self.args.get("confidence_threshold", 0.85)
+        Alignment is enabled if:
+        1. Config has alignment enabled (default: True for backward compatibility)
+        2. Template has alignment reference image configured
+
+        Returns:
+            True if alignment should be enabled
+        """
+        # Check config flag
+        alignment_config = self.tuning_config.alignment
+        if not alignment_config.enabled:
+            return False
+
+        # Check if template has alignment data
+        has_alignment_data = "gray_alignment_image" in self.template.alignment
+        return has_alignment_data
+
+    def _should_enable_training_collection(self) -> bool:
+        """Check if experimental training data collection should be enabled.
+
+        Training collection is enabled if:
+        1. Config has experimental.enable_training_collection = True
+        2. OR CLI args have collect_training_data = True (backward compatibility)
+
+        Returns:
+            True if training collection should be enabled
+        """
+        # Check config flag first
+        experimental_config = self.tuning_config.experimental
+        if experimental_config.enable_training_collection:
+            return True
+
+        # Backward compatibility: check CLI args
+        if self.args.get("collect_training_data", False):
+            return True
+
+        return False
+
+    def _add_training_data_collector(self) -> None:
+        """Add experimental training data collector processor."""
+        try:
+            from src.processors.experimental.training import TrainingDataCollector
+
+            # Get config from experimental namespace
+            experimental_config = self.tuning_config.experimental
+
+            # CLI args override config (for backward compatibility)
+            confidence_threshold = self.args.get(
+                "confidence_threshold",
+                experimental_config.training_confidence_threshold,
+            )
             training_data_dir = self.args.get(
-                "training_data_dir", "outputs/training_data"
+                "training_data_dir", str(experimental_config.training_data_dir)
             )
 
             collector = TrainingDataCollector(
@@ -107,8 +157,8 @@ class ProcessingPipeline:
             )
 
             self.processors.append(collector)
-            logger.info(
-                f"Training data collection enabled (confidence threshold: {confidence_threshold})"
+            logger.warning(
+                f"⚠️  Experimental training collection enabled (confidence: {confidence_threshold})"
             )
 
         except ImportError as e:

@@ -5,7 +5,11 @@ import cv2
 import numpy as np
 
 from src.processors.image.crop_on_patches.patch_utils import compute_scan_zone
-from src.exceptions import ImageProcessingError, ImageReadError, TemplateValidationError
+from src.utils.exceptions import (
+    ImageProcessingError,
+    ImageReadError,
+    TemplateValidationError,
+)
 from src.processors.constants import (
     MARKER_ZONE_TYPES_IN_ORDER,
     ScannerType,

@@ -19,7 +19,7 @@ from typing import Any, ClassVar, Optional, Tuple
 import cv2
 import numpy as np
 
-from src.exceptions import ImageProcessingError, TemplateValidationError
+from src.utils.exceptions import ImageProcessingError, TemplateValidationError
 from src.processors.constants import WarpMethod, WarpMethodFlags
 from src.processors.image.base import ImageTemplatePreprocessor
 from src.processors.image.warp_strategies import WarpStrategyFactory, WarpStrategy

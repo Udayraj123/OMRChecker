@@ -6,7 +6,7 @@ from src.processors.detection.barcode.interpretation_pass import (
     BarcodeInterpretationPass,
 )
 from src.processors.detection.base.file_runner import FieldTypeFileLevelRunner
-from src.processors.repositories.detection_repository import DetectionRepository
+from src.processors.detection.detection_repository import DetectionRepository
 
 
 class BarcodeFileRunner(FieldTypeFileLevelRunner):

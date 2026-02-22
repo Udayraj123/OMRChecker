@@ -6,7 +6,7 @@ from src.processors.detection.bubbles_threshold.detection_pass import (
 from src.processors.detection.bubbles_threshold.interpretation_pass import (
     BubblesThresholdInterpretationPass,
 )
-from src.processors.repositories.detection_repository import DetectionRepository
+from src.processors.detection.detection_repository import DetectionRepository
 
 
 class BubblesThresholdFileRunner(FieldTypeFileLevelRunner):

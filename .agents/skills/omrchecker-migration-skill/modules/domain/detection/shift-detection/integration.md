@@ -790,7 +790,7 @@ class ShiftDetectionProcessor implements Processor {
 ### Error Propagation
 
 ```python
-from src.exceptions import ProcessorException
+from src.utils.exceptions import ProcessorException
 
 class ShiftDetectionProcessor(Processor):
     def process(self, context: ProcessingContext) -> ProcessingContext:

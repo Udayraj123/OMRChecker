@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from src.exceptions import ImageProcessingError
+from src.utils.exceptions import ImageProcessingError
 from src.utils.constants import CLR_DARK_GREEN, CLR_DARK_RED
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils

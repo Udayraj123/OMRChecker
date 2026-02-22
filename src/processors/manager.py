@@ -1,4 +1,4 @@
-from src.exceptions import ConfigError
+from src.utils.exceptions import ConfigError
 from src.processors.image.AutoRotate import AutoRotate
 from src.processors.image.Contrast import Contrast
 from src.processors.image.CropOnMarkers import CropOnMarkers

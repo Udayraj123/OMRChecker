@@ -269,7 +269,7 @@ class TestWarpOnPointsCommonWarpingStrategies:
         control = np.array([[0, 0], [100, 0], [100, 100]], dtype=np.float32)
         destination = np.array([[0, 0], [100, 0], [100, 100]], dtype=np.float32)
 
-        from src.exceptions import TemplateValidationError
+        from src.utils.exceptions import TemplateValidationError
 
         with pytest.raises(TemplateValidationError, match="Expected 4 control points"):
             processor._apply_warp_strategy(

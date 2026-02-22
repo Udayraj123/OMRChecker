@@ -4,7 +4,7 @@ from typing import Any, ClassVar
 
 import numpy as np
 
-from src.exceptions import (
+from src.utils.exceptions import (
     ImageProcessingError,
     TemplateConfigurationError,
 )

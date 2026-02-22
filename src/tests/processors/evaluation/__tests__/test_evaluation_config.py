@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from src.exceptions import EvaluationValidationError
+from src.utils.exceptions import EvaluationValidationError
 from src.processors.evaluation.evaluation_config import EvaluationConfig
 from src.schemas.constants import DEFAULT_SECTION_KEY
 

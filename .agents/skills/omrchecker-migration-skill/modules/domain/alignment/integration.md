@@ -516,7 +516,7 @@ class TemplateConfig:
 **Used Exception**:
 ```python
 # sift_matcher.py:6, 194-200
-from src.exceptions import ImageProcessingError
+from src.utils.exceptions import ImageProcessingError
 
 if warped_block_image.shape != block_gray_image.shape:
     raise ImageProcessingError(

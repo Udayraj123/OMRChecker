@@ -5,13 +5,13 @@ import traceback
 
 from rich.table import Table
 
-from src.exceptions import (
+from src.utils.exceptions import (
     InputDirectoryNotFoundError,
     TemplateNotFoundError,
 )
 from src.processors.evaluation.evaluation_config import EvaluationConfig
 from src.processors.evaluation.evaluation_meta import evaluate_concatenated_response
-from src.processors.template.template import Template
+from src.processors.layout.template.template import Template
 from src.schemas.constants import DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING
 from src.schemas.models.config import Config
 from src.utils import constants
@@ -24,6 +24,31 @@ from src.utils.parsing import open_config_with_defaults
 
 # Load processors
 STATS = Stats()
+
+
+def run_cli(args: dict) -> None:
+    """Run the CLI with the provided arguments.
+
+    Args:
+        args: Dictionary containing CLI arguments including:
+            - input_paths: List of input directory paths
+            - output_dir: Output directory path
+            - debug: Debug mode flag
+            - setLayout: Layout mode flag
+            - outputMode: Output mode (default, csv, etc.)
+            - mode: Processing mode
+    """
+    # Get the input paths from args
+    input_paths = args.get("input_paths", [])
+
+    if not input_paths:
+        msg = "No input paths provided"
+        raise ValueError(msg)
+
+    # Process each input path
+    for input_path in input_paths:
+        input_dir = Path(input_path)
+        entry_point(input_dir, args)
 
 
 def entry_point(input_dir: Path, args: dict) -> None:
@@ -172,7 +197,7 @@ def process_directory_wise(
                     "Fix the errors in your config.json to enable it."
                 )
             else:
-                from src.processors.organization import (
+                from src.processors.experimental.organization import (
                     FileOrganizerProcessor,
                 )
 

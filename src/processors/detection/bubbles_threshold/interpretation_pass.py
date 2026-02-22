@@ -5,9 +5,9 @@ from src.processors.detection.bubbles_threshold.interpretation import (
     BubblesFieldInterpretation,
 )
 from src.processors.layout.field.base import Field
-from src.processors.repositories.detection_repository import DetectionRepository
-from src.processors.threshold.global_threshold import GlobalThresholdStrategy
-from src.processors.threshold.threshold_result import ThresholdConfig
+from src.processors.detection.detection_repository import DetectionRepository
+from src.processors.detection.threshold.global_threshold import GlobalThresholdStrategy
+from src.processors.detection.threshold.threshold_result import ThresholdConfig
 from src.utils.logger import logger
 from src.utils.stats import NumberAggregate
 

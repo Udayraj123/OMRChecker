@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from src.training.trainer import AutoTrainer
+from src.processors.experimental.training.trainer import AutoTrainer
 from src.utils.logger import logger
 
 

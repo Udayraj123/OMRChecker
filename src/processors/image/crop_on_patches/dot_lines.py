@@ -1,6 +1,6 @@
 from typing import ClassVar
 
-from src.exceptions import ImageProcessingError, TemplateValidationError
+from src.utils.exceptions import ImageProcessingError, TemplateValidationError
 from src.processors.constants import (
     DOT_ZONE_TYPES_IN_ORDER,
     LINE_ZONE_TYPES_IN_ORDER,

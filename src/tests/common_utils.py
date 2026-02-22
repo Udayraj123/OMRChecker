@@ -9,7 +9,7 @@ from typing import Literal
 import pandas as pd
 from freezegun import freeze_time
 
-from src.cli import run_cli
+from src.entry import run_cli
 from src.tests.constants import FROZEN_TIMESTAMP, IMAGE_SNAPSHOTS_PATH
 from src.utils.file import PathUtils
 

@@ -8,7 +8,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from src.exceptions import (
+from src.utils.exceptions import (
     ConfigError,
     EvaluationError,
     FieldDefinitionError,

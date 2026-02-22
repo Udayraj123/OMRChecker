@@ -354,6 +354,52 @@ class ProcessingConfig:
 
 
 @dataclass
+class AlignmentConfig:
+    """Configuration for template alignment feature."""
+
+    enabled: bool = True  # Enabled by default for backward compatibility
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "AlignmentConfig":
+        """Create AlignmentConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert AlignmentConfig to dictionary."""
+        return dataclass_to_dict(self)
+
+
+@dataclass
+class ExperimentalConfig:
+    """Configuration for experimental features (use at your own risk).
+
+    ⚠️  Features in this config are experimental and may change or be removed.
+    """
+
+    # Training data collection (experimental)
+    enable_training_collection: bool = False
+    training_confidence_threshold: float = 0.85
+    training_data_dir: Path = Path("outputs/training_data")
+    model_output_dir: Path = Path("outputs/models")
+
+    # Hierarchical training settings
+    collect_field_block_data: bool = True  # Collect both stages
+    field_block_dataset_dir: Path = Path("outputs/training_data/field_blocks")
+    bubble_dataset_dir: Path = Path("outputs/training_data/bubbles")
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "ExperimentalConfig":
+        """Create ExperimentalConfig from dictionary with camelCase keys."""
+        data = convert_dict_keys_to_snake(data)
+        return cls(**data)
+
+    def to_dict(self) -> dict:
+        """Convert ExperimentalConfig to dictionary."""
+        return dataclass_to_dict(self)
+
+
+@dataclass
 class ShiftDetectionConfig:
     """Configuration for ML-based shift detection and application."""
 
@@ -407,17 +453,6 @@ class MLConfig:
     # Shift detection settings
     shift_detection: ShiftDetectionConfig = field(default_factory=ShiftDetectionConfig)
 
-    # Training data collection settings
-    collect_training_data: bool = False
-    min_training_confidence: float = 0.85
-    training_data_dir: Path = Path("outputs/training_data")
-    model_output_dir: Path = Path("outputs/models")
-
-    # Hierarchical training settings
-    collect_field_block_data: bool = True  # Collect both stages
-    field_block_dataset_dir: Path = Path("outputs/training_data/field_blocks")
-    bubble_dataset_dir: Path = Path("outputs/training_data/bubbles")
-
     @classmethod
     def from_dict(cls, data: dict) -> "MLConfig":
         """Create MLConfig from dictionary with camelCase keys."""
@@ -434,31 +469,6 @@ class MLConfig:
 
 
 @dataclass
-class VisualizationConfig:
-    """Configuration for workflow visualization and debugging."""
-
-    enabled: bool = False
-    capture_processors: list[str] = field(default_factory=lambda: ["all"])
-    capture_frequency: str = "on_change"  # Options: "always", "on_change"
-    include_colored: bool = True
-    max_image_width: int = 800
-    embed_images: bool = True
-    export_format: str = "html"  # Options: "html", "json"
-    output_dir: Path = Path("outputs/visualization")
-    auto_open_browser: bool = True
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "VisualizationConfig":
-        """Create VisualizationConfig from dictionary with camelCase keys."""
-        data = convert_dict_keys_to_snake(data)
-        return cls(**data)
-
-    def to_dict(self) -> dict:
-        """Convert VisualizationConfig to dictionary."""
-        return dataclass_to_dict(self)
-
-
-@dataclass
 class Config:
     """Main configuration object for OMRChecker.
 
@@ -469,8 +479,9 @@ class Config:
     thresholding: ThresholdingConfig = field(default_factory=ThresholdingConfig)
     outputs: OutputsConfig = field(default_factory=OutputsConfig)
     processing: ProcessingConfig = field(default_factory=ProcessingConfig)
+    alignment: AlignmentConfig = field(default_factory=AlignmentConfig)
     ml: MLConfig = field(default_factory=MLConfig)
-    visualization: VisualizationConfig = field(default_factory=VisualizationConfig)
+    experimental: ExperimentalConfig = field(default_factory=ExperimentalConfig)
 
     @classmethod
     def from_dict(cls, data: dict) -> "Config":
@@ -492,8 +503,9 @@ class Config:
             thresholding=ThresholdingConfig.from_dict(data.get("thresholding", {})),
             outputs=OutputsConfig.from_dict(data.get("outputs", {})),
             processing=ProcessingConfig.from_dict(data.get("processing", {})),
+            alignment=AlignmentConfig.from_dict(data.get("alignment", {})),
             ml=MLConfig.from_dict(data.get("ml", {})),
-            visualization=VisualizationConfig.from_dict(data.get("visualization", {})),
+            experimental=ExperimentalConfig.from_dict(data.get("experimental", {})),
         )
 
     def to_dict(self) -> dict:
