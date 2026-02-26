@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "jsonl_export": "issues.jsonl",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "beads_OMRChecker"
+}
