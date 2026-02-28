@@ -41,6 +41,32 @@ Before starting migration, verify:
 
 ## Migration Workflow
 
+### Step 0: Get and Claim Task (Recommended for Parallel Work)
+
+**Using migration_tasks.py orchestrator:**
+
+```bash
+# Get next available task
+TASK_JSON=$(uv run scripts/migration_tasks.py next)
+TASK_ID=$(echo $TASK_JSON | jq -r '.id')
+PYTHON_FILE=$(echo $TASK_JSON | jq -r '.python_file')
+TS_FILE=$(echo $TASK_JSON | jq -r '.typescript_file')
+
+# Claim the task (prevents duplicate work)
+uv run scripts/migration_tasks.py claim $TASK_ID --agent $(whoami)
+
+# Or use your agent name
+uv run scripts/migration_tasks.py claim $TASK_ID --agent Foundation-Alpha
+```
+
+**Alternative: Check assigned task list**
+- See `.agents/SUBAGENT_TASKS.md` for your agent's assignments
+- Pick next unclaimed task from your list
+
+**Expected outcome**: Task claimed, other agents won't pick it up
+
+---
+
 ### Step 1: Pre-Migration Checks
 
 ```bash
@@ -304,12 +330,27 @@ Co-Authored-By: Oz <oz-agent@warp.dev>"
 ### Step 9: Push and Report Progress
 
 ```bash
+# Get validation score for tracking
+SCORE=$(uv run scripts/validate_ts_migration.py \
+  --python-file <python_file> \
+  --typescript-file <typescript_file> \
+  --json | jq -r '.score')
+
+# Mark task as complete in orchestrator
+uv run scripts/migration_tasks.py complete <task_id> --score $SCORE
+
 # Push to remote
 git push origin <branch-name>
 
-# Update progress (if tracking file exists)
-echo "<typescript_file>|completed|<score>" >> migration-progress-phase-<N>.txt
+# Check overall progress
+uv run scripts/migration_tasks.py progress
 ```
+
+**What this does**:
+- Records completion in `.migration-tasks.jsonl`
+- Makes task unavailable to other agents
+- Tracks quality score for metrics
+- Shows team progress
 
 ---
 
