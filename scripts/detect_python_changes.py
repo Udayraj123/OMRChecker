@@ -73,7 +73,15 @@ class PythonASTAnalyzer(ast.NodeVisitor):
                         "name": item.name,
                         "lineno": item.lineno,
                         "end_lineno": item.end_lineno,
-                        "args": [arg.arg for arg in item.args.args],
+                        "args": [
+                            {
+                                "name": arg.arg,
+                                "type": self._get_type_annotation(arg.annotation),
+                                "has_default": self._has_default(item.args, arg)
+                            }
+                            for arg in item.args.args
+                        ],
+                        "return_type": self._get_type_annotation(item.returns),
                         "decorators": [
                             self._get_decorator_name(d) for d in item.decorator_list
                         ],
@@ -124,6 +132,41 @@ class PythonASTAnalyzer(ast.NodeVisitor):
         if isinstance(node, ast.Attribute):
             return f"{PythonASTAnalyzer._get_name(node.value)}.{node.attr}"
         return str(node)
+    
+    @staticmethod
+    def _get_type_annotation(annotation_node) -> str | None:
+        """Extract type annotation as string."""
+        if annotation_node is None:
+            return None
+        
+        if isinstance(annotation_node, ast.Name):
+            return annotation_node.id
+        elif isinstance(annotation_node, ast.Subscript):
+            # Generic types like List[int], Dict[str, Any]
+            base = PythonASTAnalyzer._get_name(annotation_node.value)
+            if isinstance(annotation_node.slice, ast.Name):
+                inner = annotation_node.slice.id
+                return f"{base}[{inner}]"
+            elif isinstance(annotation_node.slice, ast.Tuple):
+                inner_types = []
+                for elt in annotation_node.slice.elts:
+                    if isinstance(elt, ast.Name):
+                        inner_types.append(elt.id)
+                    else:
+                        inner_types.append(str(elt))
+                return f"{base}[{', '.join(inner_types)}]"
+            return f"{base}[...]"
+        elif isinstance(annotation_node, ast.Constant):
+            return str(annotation_node.value)
+        
+        return str(annotation_node)
+    
+    @staticmethod
+    def _has_default(args, arg) -> bool:
+        """Check if argument has a default value."""
+        defaults_offset = len(args.args) - len(args.defaults)
+        arg_index = args.args.index(arg)
+        return arg_index >= defaults_offset
 
 
 class ChangeDetector:
