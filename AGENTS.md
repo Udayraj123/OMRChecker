@@ -1,8 +1,172 @@
-# Agent Instructions
+# AGENTS.md
 
-This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get started.
+This file provides guidance to WARP (warp.dev) when working with code in this repository.
 
-## Quick Reference
+## Project Overview
+
+OMRChecker evaluates OMR (Optical Mark Recognition) sheets using computer vision. It processes scanned documents or mobile camera images to detect marked responses on bubble sheets, similar to standardized test forms.
+
+**Tech Stack:** Python 3.11+, OpenCV, uv package manager, pytest, ruff (linting/formatting)
+
+**Key Features:**
+- Classical image processing pipeline (no ML required for basic usage)
+- Optional ML-based detection (YOLO, custom models)
+- Supports low resolution, xeroxed, colored sheets at any angle
+- Parallel TypeScript port in `omrchecker-js/` (browser-based)
+
+## Development Commands
+
+### Setup
+```bash
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install dependencies
+uv sync
+
+# Install pre-commit hooks
+uv run pre-commit install
+```
+
+### Running OMRChecker
+```bash
+# Process default inputs directory
+uv run main.py
+
+# Process specific directory
+uv run main.py -i inputs/sample1
+
+# Process with custom output directory
+uv run main.py -i inputs/sample1 -o outputs/results
+
+# Set up template layout (interactive mode)
+uv run main.py --setLayout -i inputs/sample1
+
+# Debug mode
+uv run main.py -i inputs/sample1 --debug
+```
+
+### Testing
+```bash
+# Run single quick test (used in pre-commit)
+./scripts/run_single_test.sh
+
+# Run all tests with coverage (used in pre-push, requires 70% coverage)
+./scripts/run_all_tests_and_coverage.sh
+
+# Run specific test
+uv run pytest src/tests/path/to/test_file.py::test_function_name -vv
+
+# Run tests in parallel (auto-detect CPUs)
+uv run pytest -n auto
+
+# Run tests with specific marker
+uv run pytest -m "sample_1_mobile_camera"
+
+# Keep output files for inspection
+uv run pytest --keep-outputs
+```
+
+### Code Quality
+```bash
+# Run ruff linter (with auto-fix)
+uv run ruff check --fix
+
+# Run ruff formatter
+uv run ruff format
+
+# Run pre-commit hooks manually
+pre-commit run -a
+
+# Type checking (pyright)
+uv run pyright tools/
+```
+
+### Pre-commit Hooks
+The project uses extensive pre-commit hooks that run automatically on `git commit` and `git push`:
+- **On commit**: ruff check/format, image optimization, Python→TypeScript sync, single test
+- **On push**: full test suite with coverage (must be ≥70%)
+
+Important hooks:
+- Python→TypeScript auto-sync and validation (maintains dual codebase)
+- Image optimization (PNG→JPG conversion, resizing, compression)
+- uv lock file synchronization
+
+## Architecture Overview
+
+### Core Pipeline
+OMRChecker uses a **unified processor-based pipeline** where all processing stages implement the same `Processor` interface:
+
+```
+Input Image → Preprocessing → Alignment → Detection → Evaluation → Output
+                   ↓              ↓           ↓           ↓
+           (rotate, crop)  (feature-based) (bubbles)  (scoring)
+```
+
+**Main Entry Point:** `main.py` → `src/entry.py` → processes directories recursively
+
+**Processing Flow:**
+1. **Template Loading** (`src/processors/layout/template/`): Loads `template.json` defining OMR layout
+2. **Preprocessing** (`src/processors/image/`): Rotation, cropping, filtering (Gaussian/Median blur, Levels, Contrast)
+3. **Alignment** (`src/processors/image/alignment/`): Feature-based alignment (ORB/AKAZE), homography warping
+4. **Detection** (`src/processors/detection/`): Multi-pass bubble detection with ML fallback
+5. **Evaluation** (`src/processors/evaluation/`): Scoring based on answer keys from `evaluation.json`
+
+### Directory Structure
+```
+src/
+├── entry.py              # Main CLI entry point
+├── processors/           # All processing stages
+│   ├── base.py          # Base Processor interface
+│   ├── pipeline.py      # ProcessingPipeline orchestration
+│   ├── image/           # Preprocessing (rotation, crop, filters)
+│   ├── detection/       # Bubble detection (traditional + ML)
+│   ├── evaluation/      # Answer key matching & scoring
+│   ├── layout/          # Template parsing & field definitions
+│   └── experimental/    # Training data collection, file organization
+├── schemas/             # Pydantic models for config/template validation
+│   └── models/          # Config, Template, Evaluation models
+├── utils/               # Image utils, file I/O, logging, CSV
+└── tests/               # Pytest tests with snapshot testing
+```
+
+### Key Concepts
+
+**Template (`template.json`)**: Defines OMR sheet layout - field blocks, bubble positions, pre-processors
+**Config (`config.json`)**: Tuning parameters - thresholds, output settings, ML config
+**Evaluation (`evaluation.json`)**: Answer keys, scoring rules, grouping
+
+**Processor Interface**: All processors implement `process(context) -> context`
+**ProcessingContext**: Carries state through pipeline (images, responses, metadata)
+**TemplateFileRunner**: Manages multi-pass detection (initial detection → label stats → interpretation)
+
+**Field Types**: `QTYPE_INT`, `QTYPE_MED`, `QTYPE_MCQX` (multi-mark allowed), `QTYPE_MCQ5` (max 5 options)
+**Detection Types**: `BUBBLES_THRESHOLD`, `BUBBLES_ML` (ML fallback), `BARCODE`, `OCR`
+
+### Python ↔ TypeScript Dual Codebase
+
+This project maintains **parallel Python and TypeScript implementations**:
+- **Python**: Full-featured CLI tool (this codebase)
+- **TypeScript**: Browser-based demo in `omrchecker-js/packages/core/`
+
+**Synchronization**:
+- `FILE_MAPPING.json`: Tracks Python↔TypeScript file correspondence
+- `CHANGE_PATTERNS.yaml`: Translation patterns (snake_case → camelCase, etc.)
+- `scripts/auto_sync_python_to_ts.py`: Pre-commit hook for auto-sync
+- `scripts/validate_code_correspondence.py`: Pre-commit validation
+
+When editing Python files, the pre-commit hooks automatically:
+1. Detect changes in `src/**/*.py`
+2. Generate TypeScript suggestions using `generate_ts_suggestions.py`
+3. Validate correspondence (fails commit if out of sync)
+
+**Important:** If you modify Python code in `src/`, you may need to update the corresponding TypeScript files in `omrchecker-js/`.
+
+## Issue Tracking with bd (beads)
+
+**IMPORTANT**: This project uses **bd (beads)** for ALL issue tracking. Do NOT use markdown TODOs, task lists, or other tracking methods.
+
+### Quick Reference
 
 ```bash
 bd ready              # Find available work
