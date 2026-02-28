@@ -1,0 +1,48 @@
+# TypeScript Migration Exclusion List
+# Files and directories that should NOT be migrated to TypeScript
+# These are typically ML training, experimental features, or CLI-only components
+
+# Experimental features (training, organization)
+src/processors/experimental/
+src/processors/experimental/training/
+src/processors/experimental/organization/
+
+# ML training and model files (not needed in browser)
+src/processors/detection/ml_bubble_detector.py
+src/processors/detection/ml_field_block_detector.py
+src/processors/detection/models/stn_module.py
+src/processors/detection/models/stn_utils.py
+
+# Advanced alignment features (future/optional)
+src/processors/image/alignment/k_nearest_interpolation.py
+src/processors/image/alignment/piecewise_affine_delaunay.py
+
+# CLI entry point (no browser equivalent)
+src/entry.py
+main.py
+
+# Training-related scripts
+scripts/ai-generated/train_stn_yolo.py
+scripts/ai-generated/train_with_augmented_data.py
+scripts/ai-generated/benchmark_stn_yolo.py
+scripts/ai-generated/test_ml_workflow.py
+scripts/ai-generated/augment_data.py
+scripts/ai-generated/export_augmented_data.py
+scripts/ai-generated/test_augmentation.py
+scripts/ai-generated/test_augmentation_performance.py
+scripts/ai-generated/compare_augmentation_impact.py
+
+# Local utility scripts (development only)
+scripts/local/
+scripts/convert_schema_keys.py
+scripts/migrate_jsons_to_camelcase.py
+
+# Test configuration and utilities (pytest-specific)
+conftest.py
+src/tests/conftest.py
+
+# Interaction utilities (CLI-only, user prompts)
+src/utils/interaction.py
+
+# Environment utilities (local development)
+src/utils/env.py
