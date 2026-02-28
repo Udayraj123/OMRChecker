@@ -52,3 +52,6 @@ runs/**/*
 # Sync tool reports
 reports/sync-status-*.html
 .sync-suggestions/
+# Agent toolkit dependencies
+.agents/migration-toolkit/node_modules/
+.agents/migration-toolkit/package-lock.json
