@@ -55,3 +55,4 @@ reports/sync-status-*.html
 # Agent toolkit dependencies
 .agents/migration-toolkit/node_modules/
 .agents/migration-toolkit/package-lock.json
+.migration-tasks.jsonl

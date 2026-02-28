@@ -11,7 +11,7 @@
 # Use no-db mode: load from JSONL, write back after each command
 # When true, bd will use .beads/issues.jsonl as the source of truth
 # instead of the Dolt database
-# no-db: false
+no-db: true
 
 # Enable JSON output by default
 # json: false
