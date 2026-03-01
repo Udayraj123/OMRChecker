@@ -13,10 +13,17 @@
   },
   "scripts": {
     "test": "vitest",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:browser": "vitest run --config vitest.config.browser.ts",
+    "test:all": "npm run test:unit && npm run test:browser",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "test:watch:browser": "vitest --config vitest.config.browser.ts",
     "coverage": "vitest run --coverage",
+    "coverage:unit": "vitest run --coverage --config vitest.config.ts",
+    "coverage:browser": "vitest run --coverage --config vitest.config.browser.ts",
+    "coverage:all": "npm run coverage:unit && npm run coverage:browser",
     "build": "tsc",
     "typecheck": "tsc --noEmit"
   },
@@ -29,10 +36,12 @@
   "author": "OMRChecker Contributors",
   "license": "MIT",
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/node": "^20.11.0",
     "@vitest/coverage-v8": "^1.2.0",
     "@vitest/ui": "^1.2.0",
     "jsdom": "^27.0.1",
+    "playwright": "^1.58.2",
     "typescript": "^5.3.3",
     "vitest": "^1.2.0"
   },
