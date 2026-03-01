@@ -1,0 +1,321 @@
+{
+  "math": {
+    "distance": [
+      {
+        "input": {
+          "p1": [
+            0,
+            0
+          ],
+          "p2": [
+            3,
+            4
+          ]
+        },
+        "output": 5.0
+      },
+      {
+        "input": {
+          "p1": [
+            0,
+            0
+          ],
+          "p2": [
+            0,
+            0
+          ]
+        },
+        "output": 0.0
+      },
+      {
+        "input": {
+          "p1": [
+            1,
+            1
+          ],
+          "p2": [
+            1,
+            1
+          ]
+        },
+        "output": 0.0
+      },
+      {
+        "input": {
+          "p1": [
+            -1,
+            -1
+          ],
+          "p2": [
+            1,
+            1
+          ]
+        },
+        "output": 2.8284271247461903
+      },
+      {
+        "input": {
+          "p1": [
+            10,
+            20
+          ],
+          "p2": [
+            13,
+            24
+          ]
+        },
+        "output": 5.0
+      }
+    ],
+    "add_points": [
+      {
+        "input": {
+          "p1": [
+            0,
+            0
+          ],
+          "p2": [
+            1,
+            1
+          ]
+        },
+        "output": [
+          1,
+          1
+        ]
+      },
+      {
+        "input": {
+          "p1": [
+            5,
+            10
+          ],
+          "p2": [
+            3,
+            4
+          ]
+        },
+        "output": [
+          8,
+          14
+        ]
+      },
+      {
+        "input": {
+          "p1": [
+            -1,
+            -2
+          ],
+          "p2": [
+            3,
+            4
+          ]
+        },
+        "output": [
+          2,
+          2
+        ]
+      }
+    ],
+    "subtract_points": [
+      {
+        "input": {
+          "p1": [
+            5,
+            5
+          ],
+          "p2": [
+            2,
+            3
+          ]
+        },
+        "output": [
+          3,
+          2
+        ]
+      },
+      {
+        "input": {
+          "p1": [
+            10,
+            20
+          ],
+          "p2": [
+            5,
+            10
+          ]
+        },
+        "output": [
+          5,
+          10
+        ]
+      },
+      {
+        "input": {
+          "p1": [
+            0,
+            0
+          ],
+          "p2": [
+            1,
+            1
+          ]
+        },
+        "output": [
+          -1,
+          -1
+        ]
+      }
+    ],
+    "angle": [
+      {
+        "input": {
+          "p1": [
+            1,
+            0
+          ],
+          "p2": [
+            0,
+            1
+          ],
+          "p0": [
+            0,
+            0
+          ]
+        },
+        "output": 0.0
+      },
+      {
+        "input": {
+          "p1": [
+            1,
+            0
+          ],
+          "p2": [
+            1,
+            0
+          ],
+          "p0": [
+            0,
+            0
+          ]
+        },
+        "output": 0.99999999995
+      },
+      {
+        "input": {
+          "p1": [
+            2,
+            0
+          ],
+          "p2": [
+            0,
+            2
+          ],
+          "p0": [
+            0,
+            0
+          ]
+        },
+        "output": 0.0
+      }
+    ],
+    "check_collinear_points": [
+      {
+        "input": {
+          "p1": [
+            0,
+            0
+          ],
+          "p2": [
+            1,
+            1
+          ],
+          "p3": [
+            2,
+            2
+          ]
+        },
+        "output": true
+      },
+      {
+        "input": {
+          "p1": [
+            0,
+            0
+          ],
+          "p2": [
+            1,
+            0
+          ],
+          "p3": [
+            2,
+            0
+          ]
+        },
+        "output": true
+      },
+      {
+        "input": {
+          "p1": [
+            0,
+            0
+          ],
+          "p2": [
+            1,
+            1
+          ],
+          "p3": [
+            1,
+            0
+          ]
+        },
+        "output": false
+      }
+    ]
+  },
+  "checksum": {
+    "calculate_checksum": [
+      {
+        "input": {
+          "data": "hello world",
+          "algorithm": "md5"
+        },
+        "output": "5eb63bbbe01eeed093cb22bb8f5acdc3"
+      },
+      {
+        "input": {
+          "data": "test data",
+          "algorithm": "md5"
+        },
+        "output": "eb733a00c0c9d336e65691a37ab54293"
+      },
+      {
+        "input": {
+          "data": "",
+          "algorithm": "md5"
+        },
+        "output": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "input": {
+          "data": "The quick brown fox",
+          "algorithm": "sha256"
+        },
+        "output": "5cac4f980fedc3d3f1f99b4be3472c9b30d56523e632d151237ec9309048bda9"
+      },
+      {
+        "input": {
+          "data": "test",
+          "algorithm": "sha256"
+        },
+        "output": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+      }
+    ]
+  },
+  "metadata": {
+    "generated_by": "scripts/generate_parity_fixtures.py",
+    "python_version": "3.11.11 (main, Dec  3 2024, 17:20:40) [Clang 16.0.0 (clang-1600.0.26.4)]",
+    "description": "Test fixtures for verifying Python-TypeScript parity"
+  }
+}
