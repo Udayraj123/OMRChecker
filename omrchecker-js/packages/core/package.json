@@ -14,15 +14,15 @@
   "scripts": {
     "test": "vitest",
     "test:unit": "vitest run --config vitest.config.ts",
-    "test:browser": "vitest run --config vitest.config.browser.ts",
+    "test:browser": "playwright test",
     "test:all": "npm run test:unit && npm run test:browser",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:watch": "vitest",
-    "test:watch:browser": "vitest --config vitest.config.browser.ts",
+    "test:watch:browser": "playwright test --ui",
     "coverage": "vitest run --coverage",
     "coverage:unit": "vitest run --coverage --config vitest.config.ts",
-    "coverage:browser": "vitest run --coverage --config vitest.config.browser.ts",
+    "coverage:browser": "playwright test --reporter=html",
     "coverage:all": "npm run coverage:unit && npm run coverage:browser",
     "build": "tsc",
     "typecheck": "tsc --noEmit"

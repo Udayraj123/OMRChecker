@@ -67,6 +67,36 @@ uv run pytest -m "sample_1_mobile_camera"
 uv run pytest --keep-outputs
 ```
 
+### TypeScript Testing (omrchecker-js)
+```bash
+# Navigate to TypeScript package
+cd omrchecker-js/packages/core
+
+# Run unit tests only (fast, jsdom)
+npm run test:unit
+
+# Run browser tests (Playwright + Chromium)
+npm run test:browser
+
+# Run all tests (unit + browser)
+npm run test:all
+
+# Watch mode
+npm run test:watch              # Unit tests
+npm run test:watch:browser      # Browser tests with UI
+
+# Coverage
+npm run coverage:unit
+npm run coverage:browser
+npm run coverage:all
+```
+
+**IMPORTANT for AI Agents**: 
+- The `npm run test:browser` command uses Playwright and is configured with `{ open: 'never' }` to avoid waiting for user input
+- DO NOT use `playwright test --ui` or any watch mode commands in automated workflows as they wait indefinitely
+- Browser tests load OpenCV.js from CDN and may take 30-60 seconds to complete
+- If tests hang, check `playwright.config.ts` reporter configuration
+
 ### Code Quality
 ```bash
 # Run ruff linter (with auto-fix)
