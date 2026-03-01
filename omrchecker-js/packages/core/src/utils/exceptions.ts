@@ -34,6 +34,7 @@ export class InputError extends OMRCheckerError {
   constructor(message: string, context: Record<string, any> = {}) {
     super(message, context);
     this.name = 'InputError';
+    Object.setPrototypeOf(this, InputError.prototype);
   }
 }
 
@@ -47,6 +48,7 @@ export class ImageReadError extends InputError {
     this.name = 'ImageReadError';
     this.path = path;
     this.reason = reason;
+    Object.setPrototypeOf(this, ImageReadError.prototype);
   }
 }
 
@@ -58,6 +60,7 @@ export class ValidationError extends OMRCheckerError {
   constructor(message: string, context: Record<string, any> = {}) {
     super(message, context);
     this.name = 'ValidationError';
+    Object.setPrototypeOf(this, ValidationError.prototype);
   }
 }
 
@@ -75,6 +78,7 @@ export class SchemaValidationError extends ValidationError {
     this.schemaName = schemaName;
     this.errors = errors;
     this.dataPath = dataPath;
+    Object.setPrototypeOf(this, SchemaValidationError.prototype);
   }
 }
 
@@ -86,6 +90,7 @@ export class ProcessingError extends OMRCheckerError {
   constructor(message: string, context: Record<string, any> = {}) {
     super(message, context);
     this.name = 'ProcessingError';
+    Object.setPrototypeOf(this, ProcessingError.prototype);
   }
 }
 
@@ -100,6 +105,7 @@ export class ImageProcessingError extends ProcessingError {
     this.operation = context.operation;
     this.filePath = context.filePath;
     this.reason = context.reason;
+    Object.setPrototypeOf(this, ImageProcessingError.prototype);
   }
 }
 
@@ -113,6 +119,7 @@ export class AlignmentError extends ProcessingError {
     this.name = 'AlignmentError';
     this.filePath = filePath;
     this.reason = reason;
+    Object.setPrototypeOf(this, AlignmentError.prototype);
   }
 }
 
@@ -130,6 +137,7 @@ export class BubbleDetectionError extends ProcessingError {
     this.filePath = filePath;
     this.fieldId = fieldId;
     this.reason = reason;
+    Object.setPrototypeOf(this, BubbleDetectionError.prototype);
   }
 }
 
@@ -141,6 +149,7 @@ export class TemplateError extends OMRCheckerError {
   constructor(message: string, context: Record<string, any> = {}) {
     super(message, context);
     this.name = 'TemplateError';
+    Object.setPrototypeOf(this, TemplateError.prototype);
   }
 }
 
@@ -158,6 +167,7 @@ export class PreprocessorError extends TemplateError {
     this.preprocessorName = preprocessorName;
     this.filePath = filePath;
     this.reason = reason;
+    Object.setPrototypeOf(this, PreprocessorError.prototype);
   }
 }
 
@@ -175,6 +185,7 @@ export class FieldDefinitionError extends TemplateError {
     this.fieldId = fieldId;
     this.reason = reason;
     this.templatePath = templatePath;
+    Object.setPrototypeOf(this, FieldDefinitionError.prototype);
   }
 }
 
@@ -186,6 +197,7 @@ export class EvaluationError extends OMRCheckerError {
   constructor(message: string, context: Record<string, any> = {}) {
     super(message, context);
     this.name = 'EvaluationError';
+    Object.setPrototypeOf(this, EvaluationError.prototype);
   }
 }
 
@@ -199,6 +211,7 @@ export class AnswerKeyError extends EvaluationError {
     this.name = 'AnswerKeyError';
     this.reason = reason;
     this.questionId = questionId;
+    Object.setPrototypeOf(this, AnswerKeyError.prototype);
   }
 }
 
@@ -216,6 +229,7 @@ export class ScoringError extends EvaluationError {
     this.reason = reason;
     this.filePath = filePath;
     this.questionId = questionId;
+    Object.setPrototypeOf(this, ScoringError.prototype);
   }
 }
 
@@ -227,6 +241,7 @@ export class ConfigError extends OMRCheckerError {
   constructor(message: string, context: Record<string, any> = {}) {
     super(message, context);
     this.name = 'ConfigError';
+    Object.setPrototypeOf(this, ConfigError.prototype);
   }
 }
 
@@ -245,5 +260,6 @@ export class InvalidConfigValueError extends ConfigError {
     this.key = key;
     this.value = value;
     this.reason = reason;
+    Object.setPrototypeOf(this, InvalidConfigValueError.prototype);
   }
 }
