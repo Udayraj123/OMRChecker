@@ -18,13 +18,10 @@ import { getMatCount, withMemoryTracking, getMemoryStats } from './memory-utils'
 test.setTimeout(60000);
 
 test.describe('OpenCV.js Smoke Tests', () => {
-  test.beforeAll(async ({ page }) => {
-    // Setup OpenCV.js once for all tests
-    await setupBrowser(page, { verbose: true });
-  });
-
-  test.afterAll(async ({ page }) => {
-    await teardownBrowser(page);
+  test.beforeEach(async ({ page }) => {
+    // Setup OpenCV.js for each test
+    // Note: OpenCV.js is cached by the browser, so subsequent loads are fast
+    await setupBrowser(page, { verbose: false });
   });
 
   test('should load OpenCV.js successfully', async ({ page }) => {

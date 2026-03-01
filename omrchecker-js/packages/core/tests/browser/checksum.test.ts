@@ -5,22 +5,22 @@
  * environment with the Web Crypto API. Tests SHA-256 and other algorithms
  * with known hash values.
  * 
+ * Note: These tests don't require OpenCV.js - they only use the Web Crypto API
+ * which is available in all modern browsers.
+ * 
  * Run with: npm run test:browser
  */
 
 import { test, expect } from '@playwright/test';
-import { setupBrowser, teardownBrowser } from './browser-setup';
 
 // Increase timeout for browser tests
 test.setTimeout(60000);
 
 test.describe('Checksum Utils - Browser Tests', () => {
-  test.beforeAll(async ({ page }) => {
-    await setupBrowser(page);
-  });
-
-  test.afterAll(async ({ page }) => {
-    await teardownBrowser(page);
+  test.beforeEach(async ({ page }) => {
+    // Navigate to data URL to ensure secure context for crypto.subtle
+    // Using data URL with HTML provides a secure context in most browsers
+    await page.goto('data:text/html,<!DOCTYPE html><html><head></head><body></body></html>');
   });
 
   test.describe('calculateFileChecksum - SHA-256', () => {

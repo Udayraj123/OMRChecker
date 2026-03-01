@@ -16,12 +16,9 @@ import { withMemoryTracking, getMatCount, getMemoryStats } from './memory-utils'
 test.setTimeout(60000);
 
 test.describe('Memory Leak Detection - Browser Tests', () => {
-  test.beforeAll(async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
+    // Setup OpenCV.js for each test
     await setupBrowser(page);
-  });
-
-  test.afterAll(async ({ page }) => {
-    await teardownBrowser(page);
   });
 
   test.describe('withMemoryTracking - Clean Operations', () => {
