@@ -259,7 +259,49 @@ bd automatically syncs with git:
 - ❌ Do NOT use external issue trackers
 - ❌ Do NOT duplicate tracking systems
 
-For more details, see README.md and docs/QUICKSTART.md.
+### Commit Message Standard
+
+**REQUIRED FORMAT**: All commits must include beads issue ID:
+```bash
+<type>(<scope>): <summary> (<issue-id>)
+```
+
+**Examples**:
+```bash
+git commit -m "feat(auth): add OAuth2 login (omr-abc)"
+git commit -m "test: add unit tests for math.ts (omr-z8z)"
+```
+
+**After committing, manually close issue**:
+```bash
+bd close <issue-id> --reason "Complete (commit $(git rev-parse --short HEAD))"
+```
+
+**Note**: Beads does NOT auto-update from commit messages. Always manually close issues with `bd close`.
+
+For complete commit standard including multi-issue commits, agent patterns, and discovered work, see **docs/BEADS_AGENT_WORKFLOW.md**.
+
+### Sub-Agent Task Assignment
+
+When spawning sub-agents for parallel work:
+
+1. **Create issues with agent role prefix**: `[Agent-Role]: Task description`
+2. **Include detailed description** with `Agent:` field and success criteria
+3. **Set dependencies** with `--deps blocks:parent-id` or `discovered-from:parent-id`
+4. **Sub-agents claim** with `bd update <id> --status in_progress`
+5. **Sub-agents close** with `bd close <id> --reason "..."`
+
+**Example**:
+```bash
+bd create "Foundation-Alpha: Migrate math.py to math.ts" \
+  --description="Agent: Foundation-Alpha
+Responsibilities: Migrate all 19 methods with type coverage
+Success Criteria: Compiles, 100% types, no 'any'
+Estimated: 30-45 min" \
+  -t task -p 1 --deps blocks:omr-setup --json
+```
+
+For complete sub-agent workflow, role naming conventions, and multi-agent coordination, see **docs/BEADS_AGENT_WORKFLOW.md**.
 
 <!-- END BEADS INTEGRATION -->
 
