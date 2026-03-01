@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# bd hook: on_close — fires after `bd close <id> --reason "..."`
+# Args: $1=issue_id  $2=event_type ("closed")
+# Stdin: JSON issue object
+
+ISSUE_ID="$1"
+ISSUE_JSON=$(cat)
+
+SERVER="${PIXEL_AGENTS_SERVER:-http://localhost:3001}"
+SESSION="${PIXEL_AGENTS_SESSION:-}"
+AGENT_ID="${PIXEL_AGENTS_AGENT_ID:-$(git config user.name 2>/dev/null || echo "${USER:-agent}")}"
+
+TITLE=$(printf '%s' "$ISSUE_JSON" | python3 -c \
+  "import sys,json; d=json.load(sys.stdin); print(d.get('title','')[:50])" 2>/dev/null || echo "")
+
+# Show green checkmark bubble (auto-fades after 2s)
+curl -sf -X POST "${SERVER}/event" \
+  -H "Content-Type: application/json" \
+  -d "{\"sessionId\":\"${SESSION}\",\"type\":\"setComplete\",\"agentId\":\"${AGENT_ID}\"}" \
+  >/dev/null 2>&1 || true
+
+# Brief pause so the checkmark is visible before going idle
+sleep 0.5
+
+# Return to idle (character wanders)
+curl -sf -X POST "${SERVER}/event" \
+  -H "Content-Type: application/json" \
+  -d "{\"sessionId\":\"${SESSION}\",\"type\":\"setIdle\",\"agentId\":\"${AGENT_ID}\"}" \
+  >/dev/null 2>&1 || true

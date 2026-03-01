@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# bd hook: on_update — fires after `bd update <id> [--claim] [--description ...] ...`
+# Args: $1=issue_id  $2=event_type ("updated")
+# Stdin: JSON issue object (reflects the NEW state after the update)
+
+ISSUE_ID="$1"
+ISSUE_JSON=$(cat)
+
+SERVER="${PIXEL_AGENTS_SERVER:-http://localhost:3001}"
+SESSION="${PIXEL_AGENTS_SESSION:-}"
+AGENT_ID="${PIXEL_AGENTS_AGENT_ID:-$(git config user.name 2>/dev/null || echo "${USER:-agent}")}"
+
+# Extract fields from the updated issue
+STATUS=$(printf '%s' "$ISSUE_JSON" | python3 -c \
+  "import sys,json; d=json.load(sys.stdin); print(d.get('status',''))" 2>/dev/null || echo "")
+TITLE=$(printf '%s' "$ISSUE_JSON" | python3 -c \
+  "import sys,json; d=json.load(sys.stdin); print(d.get('title','')[:50])" 2>/dev/null || echo "")
+
+# Map bd status → pixel agents event
+case "$STATUS" in
+  in_progress)
+    # Task claimed — show as actively working
+    LABEL="bd: ${ISSUE_ID}"
+    if [ -n "$TITLE" ]; then
+      LABEL="bd: ${ISSUE_ID} – ${TITLE}"
+    fi
+    curl -sf -X POST "${SERVER}/event" \
+      -H "Content-Type: application/json" \
+      -d "{\"sessionId\":\"${SESSION}\",\"type\":\"setWorking\",\"agentId\":\"${AGENT_ID}\",\"label\":\"${LABEL}\"}" \
+      >/dev/null 2>&1 || true
+
+    # If a coordinator is set, show an assignment bubble on the coordinator pointing at this agent
+    COORDINATOR_ID="${PIXEL_AGENTS_COORDINATOR_ID:-}"
+    if [ -n "$COORDINATOR_ID" ] && [ "$COORDINATOR_ID" != "$AGENT_ID" ]; then
+      ASSIGN_LABEL="${TITLE:-${ISSUE_ID}}"
+      curl -sf -X POST "${SERVER}/event" \
+        -H "Content-Type: application/json" \
+        -d "{\"sessionId\":\"${SESSION}\",\"type\":\"assignTask\",\"agentId\":\"${COORDINATOR_ID}\",\"targetAgentId\":\"${AGENT_ID}\",\"label\":\"${ASSIGN_LABEL}\"}" \
+        >/dev/null 2>&1 || true
+    fi
+    ;;
+
+  ready|blocked)
+    # Task unclaimed or blocked — agent goes idle
+    curl -sf -X POST "${SERVER}/event" \
+      -H "Content-Type: application/json" \
+      -d "{\"sessionId\":\"${SESSION}\",\"type\":\"setIdle\",\"agentId\":\"${AGENT_ID}\"}" \
+      >/dev/null 2>&1 || true
+    ;;
+
+  *)
+    # Any other update (notes, description, deps) — show brief label
+    LABEL="bd: updating ${ISSUE_ID}"
+    curl -sf -X POST "${SERVER}/event" \
+      -H "Content-Type: application/json" \
+      -d "{\"sessionId\":\"${SESSION}\",\"type\":\"setWorking\",\"agentId\":\"${AGENT_ID}\",\"label\":\"${LABEL}\"}" \
+      >/dev/null 2>&1 || true
+    ;;
+esac
