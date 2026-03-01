@@ -79,7 +79,7 @@ Phase 1: Infrastructure Setup
 
 **Format**:
 ```bash
-bd create "[Agent-Role]: [Task Summary]" \
+bd --actor "[Agent-Role]" create "[Agent-Role]: [Task Summary]" \
   --description="[Detailed instructions with Agent field]" \
   -t task \
   -p [priority] \
@@ -87,9 +87,14 @@ bd create "[Agent-Role]: [Task Summary]" \
   --json
 ```
 
+**IMPORTANT**: Use `--actor` flag to set the agent role as the creator. This ensures:
+- `created_by` field shows agent name (e.g., "Browser-Alpha")
+- `owner` field shows agent identifier for accountability
+- Clear audit trail of which agent created which task
+
 **Concrete Example**:
 ```bash
-bd create "Foundation-Alpha: Migrate math.py to math.ts" \
+bd --actor "Foundation-Alpha" create "Foundation-Alpha: Migrate math.py to math.ts" \
   --description="Agent: Foundation-Alpha
 Responsibilities:
 - Migrate src/utils/math.py to TypeScript
@@ -110,9 +115,11 @@ Success Criteria:
 Estimated Time: 30-45 minutes" \
   -t task \
   -p 1 \
-  --deps blocks:omr-setup-123 \
+  --deps blocked-by:omr-setup-123 \
   --json
 ```
+
+**Note**: Also fixed dependency from `blocks` to `blocked-by` (see BEADS_DEPENDENCY_GUIDE.md).
 
 ### Step 3: Document Sub-Agent Roles
 
@@ -161,8 +168,15 @@ Each sub-agent follows this workflow:
 
 **Claim Task**:
 ```bash
-bd update omr-123 --status in_progress --json
+bd --actor "[Agent-Role]" update omr-123 --status in_progress --json
 ```
+
+**IMPORTANT**: Always use `--actor` flag with the agent role name for all bd commands:
+- Issue creation: `bd --actor "Browser-Alpha" create ...`
+- Updates: `bd --actor "Browser-Alpha" update ...`
+- Closing: `bd --actor "Browser-Alpha" close ...`
+
+This ensures proper attribution in the audit trail.
 
 **Work on Task**:
 - Follow instructions in issue description
@@ -183,7 +197,7 @@ Issue: omr-123"
 
 **Close Task**:
 ```bash
-bd close omr-123 --reason "Migration complete. All success criteria met." --json
+bd --actor "[Agent-Role]" close omr-123 --reason "Migration complete. All success criteria met." --json
 ```
 
 ### Step 6: Lead Agent Monitors Progress
@@ -208,8 +222,8 @@ bd list --status open --json
 If a sub-agent discovers new work:
 
 ```bash
-# Create linked issue
-bd create "Found issue in math.py: Division by zero not handled" \
+# Create linked issue with agent attribution
+bd --actor "Foundation-Alpha" create "Found issue in math.py: Division by zero not handled" \
   --description="Discovered during migration of math.py by Foundation-Alpha.
   
 Line 45 in distance() function can divide by zero if points are identical.
@@ -276,31 +290,33 @@ Phase 4: Migrate processors (3 files) - Parallel
 **Lead Agent Commands**:
 ```bash
 # Create Phase 1 (done by lead agent)
-bd create "Lead: Setup TypeScript project structure" -t task -p 0
+bd --actor "Lead-Agent" create "Lead: Setup TypeScript project structure" -t task -p 0
 
-# Create Phase 2 (parallel work)
-bd create "Foundation-Alpha: Migrate math.py to math.ts" \
-  --description="..." -t task -p 1 --deps blocks:omr-001
+# Create Phase 2 (parallel work) with agent attribution
+bd --actor "Foundation-Alpha" create "Foundation-Alpha: Migrate math.py to math.ts" \
+  --description="..." -t task -p 1 --deps blocked-by:omr-001
 
-bd create "Foundation-Alpha: Migrate geometry.py to geometry.ts" \
-  --description="..." -t task -p 1 --deps blocks:omr-001
+bd --actor "Foundation-Alpha" create "Foundation-Alpha: Migrate geometry.py to geometry.ts" \
+  --description="..." -t task -p 1 --deps blocked-by:omr-001
 
 # ... and so on
 ```
 
+**Note**: Lead agent creates tasks with agent-specific `--actor` flags, so each issue shows the correct agent as creator.
+
 **Sub-Agent (Foundation-Alpha) Commands**:
 ```bash
 # Claim first task
-bd update omr-002 --status in_progress
+bd --actor "Foundation-Alpha" update omr-002 --status in_progress
 
 # Do work...
 # Commit...
 
 # Close task
-bd close omr-002 --reason "Migration complete. 19/19 methods migrated, 100% type coverage."
+bd --actor "Foundation-Alpha" close omr-002 --reason "Migration complete. 19/19 methods migrated, 100% type coverage."
 
 # Claim next task
-bd update omr-003 --status in_progress
+bd --actor "Foundation-Alpha" update omr-003 --status in_progress
 
 # ... continue
 ```
@@ -336,7 +352,7 @@ Success Criteria: [measurable outcomes]
 
 ✅ **Track dependencies explicitly**
 ```bash
---deps blocks:parent-id
+--deps blocked-by:parent-id  # Current task depends on parent
 ```
 
 ✅ **Use standardized commit messages**
@@ -352,8 +368,14 @@ Issue: omr-123
 
 ✅ **Report status at key milestones**
 ```bash
-bd update omr-123 --status in_progress  # When starting
-bd close omr-123 --reason "..."         # When done
+bd --actor "[Agent-Role]" update omr-123 --status in_progress  # When starting
+bd --actor "[Agent-Role]" close omr-123 --reason "..."         # When done
+```
+
+✅ **Always use --actor flag for attribution**
+```bash
+bd --actor "Browser-Alpha" create "Task" ...  # Sets created_by field
+bd --actor "Browser-Alpha" update ...          # Sets actor in audit trail
 ```
 
 ### DON'T

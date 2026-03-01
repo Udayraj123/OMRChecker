@@ -235,11 +235,13 @@ bd close bd-42 --reason "Completed" --json
 ### Workflow for AI Agents
 
 1. **Check ready work**: `bd ready` shows unblocked issues
-2. **Claim your task**: `bd update <id> --status in_progress`
+2. **Claim your task**: `bd --actor "[Agent-Name]" update <id> --status in_progress`
 3. **Work on it**: Implement, test, document
 4. **Discover new work?** Create linked issue:
-   - `bd create "Found bug" --description="Details about what was found" -p 1 --deps discovered-from:<parent-id>`
-5. **Complete**: `bd close <id> --reason "Done"`
+   - `bd --actor "[Agent-Name]" create "Found bug" --description="Details about what was found" -p 1 --deps discovered-from:<parent-id>`
+5. **Complete**: `bd --actor "[Agent-Name]" close <id> --reason "Done"`
+
+**IMPORTANT**: Always use `--actor` flag with your agent name/role to ensure proper attribution in beads audit trail.
 
 ### Auto-Sync
 
@@ -286,20 +288,26 @@ For complete commit standard including multi-issue commits, agent patterns, and 
 When spawning sub-agents for parallel work:
 
 1. **Create issues with agent role prefix**: `[Agent-Role]: Task description`
-2. **Include detailed description** with `Agent:` field and success criteria
-3. **Set dependencies** with `--deps blocks:parent-id` or `discovered-from:parent-id`
-4. **Sub-agents claim** with `bd update <id> --status in_progress`
-5. **Sub-agents close** with `bd close <id> --reason "..."`
+2. **Use --actor flag** to set agent as creator: `bd --actor "Agent-Name" create ...`
+3. **Include detailed description** with `Agent:` field and success criteria
+4. **Set dependencies** with `--deps blocked-by:parent-id` or `discovered-from:parent-id`
+5. **Sub-agents claim** with `bd --actor "Agent-Name" update <id> --status in_progress`
+6. **Sub-agents close** with `bd --actor "Agent-Name" close <id> --reason "..."`
 
 **Example**:
 ```bash
-bd create "Foundation-Alpha: Migrate math.py to math.ts" \
+bd --actor "Foundation-Alpha" create "Foundation-Alpha: Migrate math.py to math.ts" \
   --description="Agent: Foundation-Alpha
 Responsibilities: Migrate all 19 methods with type coverage
 Success Criteria: Compiles, 100% types, no 'any'
 Estimated: 30-45 min" \
-  -t task -p 1 --deps blocks:omr-setup --json
+  -t task -p 1 --deps blocked-by:omr-setup --json
 ```
+
+**Why --actor?** This ensures:
+- `created_by` field shows "Foundation-Alpha" instead of lead agent name
+- `owner` field shows agent identifier for accountability
+- Clear audit trail of which agent created/updated which task
 
 For complete sub-agent workflow, role naming conventions, and multi-agent coordination, see **docs/BEADS_AGENT_WORKFLOW.md**.
 
