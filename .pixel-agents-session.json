@@ -1,0 +1,7 @@
+{
+  "server": "http://localhost:3001",
+  "sessionId": "omr-run",
+  "coordinatorId": "coordinator",
+  "agentId": "auto",
+  "_comment": "agentId='auto' means each agent derives its own ID from git user.name or USER"
+}
