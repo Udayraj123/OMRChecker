@@ -1,0 +1,43 @@
+{
+  "name": "@omrchecker/core",
+  "version": "0.1.0",
+  "description": "OMRChecker core library - TypeScript implementation",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "coverage": "vitest run --coverage",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "omr",
+    "optical-mark-recognition",
+    "computer-vision",
+    "opencv"
+  ],
+  "author": "OMRChecker Contributors",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@vitest/coverage-v8": "^1.2.0",
+    "@vitest/ui": "^1.2.0",
+    "jsdom": "^27.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  },
+  "dependencies": {
+    "@techstark/opencv-js": "4.9.0-release.3",
+    "zod": "^3.22.4"
+  }
+}
