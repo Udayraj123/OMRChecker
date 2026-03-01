@@ -7,29 +7,38 @@ This directory contains comprehensive tests for the OMRChecker TypeScript implem
 ```
 tests/
 ├── unit/          # Unit tests for utilities and pure functions
+├── browser/       # Browser tests using Playwright (OpenCV.js, Web Crypto)
 ├── integration/   # Integration tests for processors and pipelines
 ├── schema/        # Schema validation tests (Zod)
-├── memory/        # Memory leak tests (OpenCV.js cv.Mat)
 ├── parity/        # Python-TypeScript behavior comparison tests
-├── setup.ts       # Test environment setup
+├── setup.ts       # Test environment setup (jsdom)
 └── README.md      # This file
 ```
 
 ## Running Tests
 
-### Run all tests
+### Run all tests (unit + browser)
 ```bash
-npm test
+npm run test:all
 ```
 
-### Run tests in watch mode (interactive)
+### Run unit tests only (jsdom)
 ```bash
-npm test
+npm run test:unit
 ```
 
-### Run tests once (CI mode)
+### Run browser tests only (Playwright)
 ```bash
-npm run test:run
+npm run test:browser
+```
+
+### Run tests in watch mode
+```bash
+# Unit tests watch
+npm run test:watch
+
+# Browser tests watch
+npm run test:watch:browser
 ```
 
 ### Run tests with UI
@@ -39,15 +48,22 @@ npm run test:ui
 
 ### Run tests with coverage
 ```bash
-npm run coverage
+# All tests with coverage
+npm run coverage:all
+
+# Unit tests only
+npm run coverage:unit
+
+# Browser tests only
+npm run coverage:browser
 ```
 
 ## Coverage Targets
 
 - **Unit tests**: ≥90% line coverage
+- **Browser tests**: ≥85% line coverage (drawing, checksum, memory utilities)
 - **Schema tests**: 100% field coverage
 - **Integration tests**: ≥80% coverage
-- **Memory tests**: 100% cv.Mat usage covered
 
 ## Test Patterns
 
@@ -72,21 +88,31 @@ describe('MathUtils', () => {
 });
 ```
 
-### Memory Leak Test Example
+### Browser Test Example (Playwright)
 
 ```typescript
-import { describe, it, expect } from 'vitest';
-import { getMatCount, skipIfNoMatCount } from '../setup';
+import { describe, it, expect, beforeAll } from 'vitest';
+import { setupOpenCV, withMemoryTracking } from './browser-setup';
 
-describe('DrawingUtils Memory', () => {
-  it('should not leak cv.Mat', skipIfNoMatCount(() => {
-    const initialCount = getMatCount();
-    
-    // ... perform operations with cv.Mat
-    
-    const finalCount = getMatCount();
-    expect(finalCount).toBe(initialCount);
-  }));
+describe('DrawingUtils', () => {
+  beforeAll(async () => {
+    await setupOpenCV();
+  });
+
+  it('should draw rectangle without leaking memory', async () => {
+    await withMemoryTracking(async (cv) => {
+      const mat = cv.Mat.zeros(100, 100, cv.CV_8UC3);
+      const rect = new cv.Rect(10, 10, 50, 50);
+      const color = new cv.Scalar(255, 0, 0);
+      
+      cv.rectangle(mat, rect, color, 2);
+      
+      // Cleanup
+      mat.delete();
+      rect.delete();
+      color.delete();
+    });
+  });
 });
 ```
 
@@ -111,20 +137,37 @@ describe('TemplateConfig Schema', () => {
 
 ## Test Environment
 
+### Unit Tests
 - **Framework**: Vitest
 - **Environment**: jsdom (for browser APIs)
-- **Setup**: OpenCV.js loading handled in setup.ts
-- **Memory tracking**: cv.matCount wrapper for leak detection
+- **Setup**: Minimal test environment in setup.ts
+
+### Browser Tests
+- **Framework**: Vitest + Playwright
+- **Environment**: Real Chromium browser
+- **OpenCV.js**: Full OpenCV.js loaded from CDN (browser-setup.ts)
+- **Memory tracking**: cv.getBuildInformation() and Mat tracking (memory-utils.ts)
+- **Web Crypto**: Native SubtleCrypto API for checksums
 
 ## Notes
 
 ### OpenCV.js Testing
 
-OpenCV.js requires a browser environment. For unit tests that don't need actual OpenCV functionality, operations can be mocked. For integration tests, the setup.ts file handles initialization gracefully, skipping tests if OpenCV is unavailable.
+**Unit tests**: OpenCV functionality is mocked in jsdom since full OpenCV.js requires a real browser.
+
+**Browser tests**: Full OpenCV.js is loaded from CDN using Playwright in real Chromium:
+- `browser-setup.ts` handles asynchronous OpenCV loading
+- `setupOpenCV()` must be called in `beforeAll()` hooks
+- Tests wait for OpenCV.js to be fully initialized before running
 
 ### Memory Leak Detection
 
-The `getMatCount()` helper function tracks cv.Mat allocations. If cv.matCount is not available (e.g., in Node environment), memory tests are automatically skipped with a warning.
+The `withMemoryTracking()` helper (in `memory-utils.ts`) automatically tracks cv.Mat allocations:
+- Takes initial snapshot using `cv.getBuildInformation()`
+- Runs test callback
+- Takes final snapshot and compares
+- Throws error if memory leaks detected
+- Provides verbose logging with `getMemoryStats()`
 
 ### Coverage Thresholds
 
@@ -136,9 +179,9 @@ Coverage thresholds are enforced in CI. If coverage falls below targets:
 ## CI Integration
 
 Tests run automatically on:
-- Every commit (pre-commit hook)
-- Every push (pre-push hook)
-- Pull requests (GitHub Actions)
+- **Pre-commit hook**: Unit tests only (`npm run test:unit`) - fast feedback
+- **Pre-push hook**: All tests (`npm run test:all`) - full validation
+- **Pull requests**: GitHub Actions with coverage reporting
 
 ## Documentation
 
@@ -148,5 +191,12 @@ For detailed testing strategy, see:
 
 ## Status
 
-**Current Coverage**: 0% (Phase 1 files migrated, tests pending)  
-**Next Milestone**: Complete Phase 1 unit tests (90%+ coverage)
+**Browser Tests**: ✅ Complete (Phase 1-3)
+- 10 OpenCV smoke tests (opencv-smoke.test.ts)
+- 27 drawing tests (drawing.test.ts)
+- 10 checksum tests (checksum.test.ts)
+- 10 memory leak tests (memory-leak.test.ts)
+
+**Total**: 57 browser tests across 4 files
+
+**Next Milestone**: Unit tests for utilities (math.ts, array.ts, etc.)
