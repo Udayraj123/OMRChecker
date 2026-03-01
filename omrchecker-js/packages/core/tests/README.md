@@ -176,6 +176,89 @@ Coverage thresholds are enforced in CI. If coverage falls below targets:
 - Add TODO for future improvement
 - Get approval for exception
 
+## Troubleshooting
+
+### Issue: Tests Fail with "page and context fixtures not supported in beforeAll/afterAll"
+
+**Problem**: Playwright does not support using `page` or `context` fixtures in `beforeAll` or `afterAll` hooks. These fixtures are created per-test, not per-suite.
+
+**Error Message**:
+```
+Error: "page" and "context" fixtures are not supported in "beforeAll" 
+since they are created on a per-test basis.
+```
+
+**Solution**: Use `beforeEach` instead of `beforeAll`:
+
+```typescript
+// ❌ Don't do this
+test.beforeAll(async ({ page }) => {
+  await setupBrowser(page);
+});
+
+// ✅ Do this instead
+test.beforeEach(async ({ page }) => {
+  await setupBrowser(page);
+});
+```
+
+**Note**: OpenCV.js is cached by the browser after first load, so `beforeEach` is still fast (~2-3s first test, <1s subsequent tests).
+
+### Issue: getMatCount() Returns 0 or Unreliable Values
+
+**Problem**: OpenCV.js doesn't expose a reliable API for tracking Mat allocations. The `getMatCount()` function in `memory-utils.ts` tries several methods but may return 0.
+
+**Root Cause**:
+- OpenCV.js WASM implementation doesn't expose `matRegistry` or `getAllocatedMatCount()`
+- Different OpenCV.js versions have different internal structures
+- Mat count doesn't persist across `page.evaluate()` calls
+
+**Solution**: Write tests that verify Mat lifecycle within a single `page.evaluate()` call:
+
+```typescript
+// ❌ Don't rely on cross-evaluation Mat counting
+const before = await getMatCount(page);
+await page.evaluate(() => { const mat = new cv.Mat(...); });
+const after = await getMatCount(page); // May return 0
+
+// ✅ Do verification within single evaluation
+const result = await page.evaluate(() => {
+  const mat = new cv.Mat(10, 10, cv.CV_8UC1);
+  const created = mat.rows === 10; // Verify properties
+  mat.delete(); // Clean up
+  return created;
+});
+expect(result).toBe(true);
+```
+
+**Alternative**: Use `withMemoryTracking()` for detecting leaks in complete operations, but don't rely on exact Mat counts.
+
+### Issue: crypto.subtle is undefined in Browser Tests
+
+**Problem**: The Web Crypto API (`crypto.subtle`) requires a secure context (HTTPS or localhost). Data URLs and `about:blank` don't provide secure contexts.
+
+**Error Message**:
+```
+TypeError: Cannot read properties of undefined (reading 'digest')
+```
+
+**Solution**: Either:
+1. Navigate to `data:text/html,...` (limited support)
+2. Use `webServer` in `playwright.config.ts` to serve over localhost
+3. Skip crypto tests in Playwright, test only in real browser environment
+
+**Recommended**: Add webServer configuration:
+```typescript
+// playwright.config.ts
+export default defineConfig({
+  webServer: {
+    command: 'python -m http.server 8000',
+    url: 'http://localhost:8000',
+    reuseExistingServer: !process.env.CI,
+  },
+});
+```
+
 ## CI Integration
 
 Tests run automatically on:
