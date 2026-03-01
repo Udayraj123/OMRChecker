@@ -96,6 +96,7 @@ npm run coverage:all
 - DO NOT use `playwright test --ui` or any watch mode commands in automated workflows as they wait indefinitely
 - Browser tests load OpenCV.js from CDN and may take 30-60 seconds to complete
 - If tests hang, check `playwright.config.ts` reporter configuration
+- **When writing browser tests, see `omrchecker-js/packages/core/tests/AGENT_TESTING_GUIDE.md` for critical rules and patterns**
 
 ### Code Quality
 ```bash
