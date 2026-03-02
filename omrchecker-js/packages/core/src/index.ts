@@ -10,3 +10,4 @@ export * from './utils/drawing';
 export * from './utils/serialization';
 export * from './utils/logger';
 export * from './utils/csv';
+export * from './utils/file';

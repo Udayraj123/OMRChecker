@@ -263,3 +263,36 @@ export class InvalidConfigValueError extends ConfigError {
     Object.setPrototypeOf(this, InvalidConfigValueError.prototype);
   }
 }
+
+export class ConfigLoadError extends ConfigError {
+  public path: string;
+  public reason: string;
+
+  constructor(path: string, reason: string) {
+    super(`Failed to load configuration '${path}': ${reason}`, {
+      path,
+      reason,
+    });
+    this.name = 'ConfigLoadError';
+    this.path = path;
+    this.reason = reason;
+    Object.setPrototypeOf(this, ConfigLoadError.prototype);
+  }
+}
+
+export class InputFileNotFoundError extends InputError {
+  public path: string;
+  public fileType?: string;
+
+  constructor(path: string, fileType?: string) {
+    const fileDesc = fileType ? `${fileType} ` : '';
+    super(`Input ${fileDesc}file not found: '${path}'`, {
+      path,
+      file_type: fileType,
+    });
+    this.name = 'InputFileNotFoundError';
+    this.path = path;
+    this.fileType = fileType;
+    Object.setPrototypeOf(this, InputFileNotFoundError.prototype);
+  }
+}
