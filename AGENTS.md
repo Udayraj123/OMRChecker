@@ -98,6 +98,94 @@ npm run coverage:all
 - If tests hang, check `playwright.config.ts` reporter configuration
 - **When writing browser tests, see `omrchecker-js/packages/core/tests/AGENT_TESTING_GUIDE.md` for critical rules and patterns**
 
+### TypeScript Testing Principles: "Translate, Don't Invent"
+
+**CRITICAL RULE**: When migrating Python code to TypeScript, you MUST translate existing Python tests, not create new ones from scratch.
+
+**Why This Matters**:
+- Ensures behavioral parity between Python and TypeScript implementations
+- Prevents test coverage drift and redundant testing
+- Maintains single source of truth for business logic validation
+- Avoids inventing test cases that may not reflect actual requirements
+
+**Workflow for Test Migration**:
+
+1. **Before writing ANY TypeScript test**, check if Python test exists:
+   ```bash
+   # For utils/math.ts, check for:
+   find src/tests -name "*math*" -o -name "test_math.py"
+   
+   # For processors/image/GaussianBlur.ts, check for:
+   find src/tests -name "*gaussian*" -o -name "*blur*" -o -name "*processor*"
+   ```
+
+2. **If Python test exists**: Translate it line-by-line to TypeScript
+   - Match test names (e.g., `test_add_two_numbers()` → `describe('add', () => { it('adds two numbers', ...) }`)
+   - Match test inputs and expected outputs exactly
+   - Preserve edge cases and boundary conditions
+   - Keep same assertion logic
+
+3. **If Python test does NOT exist**: Check with project lead before writing tests
+   - Python may have inline doctests or integration tests instead
+   - The function may be untested intentionally (e.g., simple wrappers)
+   - Adding tests without Python equivalent creates maintenance burden
+
+4. **Exception: Processor/Integration Tests**
+   - Python has NO unit tests for individual processors
+   - Python tests entire pipeline end-to-end with sample images
+   - TypeScript CAN add processor unit tests (they're environment-specific)
+   - Browser tests for processors are ACCEPTABLE and encouraged
+
+**Audit Process**:
+
+Before completing migration, audit test coverage:
+
+```bash
+cd omrchecker-js/packages/core
+
+# Check test files against Python tests
+ls tests/unit/*.test.ts | while read f; do
+  echo "\nTypeScript: $f"
+  basename="$(basename $f .test.ts)"
+  echo "Python equivalent: src/tests/test_${basename}.py"
+  ls ../../src/tests/test_${basename}.py 2>/dev/null || echo "  ⚠️  NO PYTHON TEST FOUND"
+done
+```
+
+**Reference**: See `omrchecker-js/packages/core/tests/TEST_COVERAGE_AUDIT.md` for current coverage analysis.
+
+**Examples**:
+
+✅ **CORRECT**: Translating Python test
+```python
+# Python: src/tests/test_drawing.py
+def test_draw_contour():
+    img = np.zeros((100, 100, 3), dtype=np.uint8)
+    contour = np.array([[10, 10], [90, 10], [90, 90], [10, 90]])
+    result = draw_contour(img, contour, (255, 0, 0), 2)
+    assert result.shape == (100, 100, 3)
+```
+
+```typescript
+// TypeScript: tests/unit/drawing.test.ts
+it('draws contour on image', () => {
+  const img = cv.Mat.zeros(100, 100, cv.CV_8UC3);
+  const contour = cv.matFromArray(4, 1, cv.CV_32SC2, [10,10, 90,10, 90,90, 10,90]);
+  const result = drawContour(img, contour, [255, 0, 0], 2);
+  expect(result.rows).toBe(100);
+  expect(result.cols).toBe(100);
+});
+```
+
+❌ **INCORRECT**: Inventing new tests
+```typescript
+// TypeScript: tests/unit/math.test.ts
+// NO Python equivalent exists - these 59 tests were invented!
+it('handles negative infinity', () => { /* ... */ });
+it('handles subnormal numbers', () => { /* ... */ });
+it('validates IEEE 754 compliance', () => { /* ... */ });
+```
+
 ### Code Quality
 ```bash
 # Run ruff linter (with auto-fix)
