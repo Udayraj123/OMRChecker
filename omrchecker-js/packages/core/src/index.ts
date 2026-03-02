@@ -7,3 +7,4 @@ export * from './utils/geometry';
 export * from './utils/checksum';
 export * from './utils/image';
 export * from './utils/drawing';
+export * from './utils/serialization';
