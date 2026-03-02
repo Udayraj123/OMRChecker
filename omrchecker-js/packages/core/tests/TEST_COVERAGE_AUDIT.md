@@ -24,11 +24,11 @@
 | math.py | ❌ None | ❌ Removed (was 59 tests, 395 lines) | ✅ Complete | No Python tests → removed invented tests |
 | stats.py | ❌ None | ❌ Removed (was 36 tests, 356 lines) | ✅ Complete | No Python tests → removed invented tests |
 
-### ⚠️ Utils - Browser-Only Tests
+### ✅ Utils - Cleaned (Python Has No Tests)
 
 | Module | Python Test | TypeScript Test | Status | Notes |
 |--------|------------|-----------------|--------|-------|
-| checksum.py | ❌ None (browser-only) | unit/checksum.test.ts | ⚠️ Browser-only | 7 tests failing, should be browser tests |
+| checksum.py | ❌ None | ❌ Removed (unit + browser) | ✅ Complete | No Python tests → removed invented tests |
 
 ### ❌ Utils - Not Yet Tested
 
@@ -67,7 +67,6 @@
 
 ### Medium Priority
 5. **Review geometry tests** - Verify unit/geometry.test.ts matches test_geometry.py exactly
-6. **Move checksum tests** - Convert unit/checksum.test.ts to browser-only tests
 
 ### Low Priority  
 7. **Document policy** - Update AGENTS.md with "translate, don't invent" principle
