@@ -8,3 +8,5 @@ export * from './utils/checksum';
 export * from './utils/image';
 export * from './utils/drawing';
 export * from './utils/serialization';
+export * from './utils/logger';
+export * from './utils/csv';
