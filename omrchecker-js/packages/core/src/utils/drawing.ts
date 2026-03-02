@@ -1,13 +1,9 @@
 import cv from '@techstark/opencv-js';
 import { MathUtils, Point } from './math';
 import { ImageProcessingError } from './exceptions';
+import { CLR_BLACK, CLR_DARK_GRAY, CLR_GRAY, CLR_GREEN, TEXT_SIZE } from './constants';
 
-// Color constants (BGR format matching Python)
-export const CLR_BLACK: [number, number, number] = [0, 0, 0];
-export const CLR_DARK_GRAY: [number, number, number] = [100, 100, 100];
-export const CLR_GRAY: [number, number, number] = [130, 130, 130];
-export const CLR_GREEN: [number, number, number] = [100, 200, 100];
-export const TEXT_SIZE = 0.95;
+export { CLR_BLACK, CLR_DARK_GRAY, CLR_GRAY, CLR_GREEN, TEXT_SIZE };
 
 type BoxStyle = 'BOX_HOLLOW' | 'BOX_FILLED';
 
