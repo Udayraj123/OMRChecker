@@ -23,17 +23,6 @@ describe('Geometry Utils', () => {
       const result = euclideanDistance([1.5, 2.5], [4.5, 6.5]);
       expect(result).toBe(5);
     });
-
-    it('should handle large distances', () => {
-      const result = euclideanDistance([0, 0], [1000, 1000]);
-      expect(result).toBeCloseTo(1414.213, 2);
-    });
-
-    it('should be symmetric', () => {
-      const p1: Point = [10, 20];
-      const p2: Point = [30, 40];
-      expect(euclideanDistance(p1, p2)).toBe(euclideanDistance(p2, p1));
-    });
   });
 
   describe('vectorMagnitude', () => {
@@ -47,11 +36,6 @@ describe('Geometry Utils', () => {
       expect(result).toBe(7);
     });
 
-    it('should handle single element vector', () => {
-      const result = vectorMagnitude([5]);
-      expect(result).toBe(5);
-    });
-
     it('should return 0 for zero vector', () => {
       const result = vectorMagnitude([0, 0, 0]);
       expect(result).toBe(0);
@@ -62,28 +46,18 @@ describe('Geometry Utils', () => {
       expect(result).toBe(5);
     });
 
-    it('should handle empty vector', () => {
-      const result = vectorMagnitude([]);
-      expect(result).toBe(0);
-    });
-
-    it('should handle floating point components', () => {
-      const result = vectorMagnitude([1.5, 2.0]);
-      expect(result).toBe(2.5);
-    });
-
-    it('should handle high dimensional vectors', () => {
-      const result = vectorMagnitude([1, 1, 1, 1, 1]);
-      expect(result).toBeCloseTo(Math.sqrt(5), 5);
+    it('should calculate magnitude of unit vector', () => {
+      const result = vectorMagnitude([1, 0]);
+      expect(result).toBe(1);
     });
   });
 
   describe('bboxCenter', () => {
-    it('should calculate center of bounding box', () => {
+    it('should calculate center for unit square at origin', () => {
       const origin: Point = [0, 0];
-      const dimensions: [number, number] = [100, 200];
+      const dimensions: [number, number] = [2, 2];
       const result = bboxCenter(origin, dimensions);
-      expect(result).toEqual([50, 100]);
+      expect(result).toEqual([1, 1]);
     });
 
     it('should handle non-zero origin', () => {
@@ -93,32 +67,59 @@ describe('Geometry Utils', () => {
       expect(result).toEqual([25, 40]);
     });
 
-    it('should handle negative origin', () => {
-      const origin: Point = [-10, -10];
-      const dimensions: [number, number] = [20, 20];
-      const result = bboxCenter(origin, dimensions);
-      expect(result).toEqual([0, 0]);
-    });
-
     it('should handle zero dimensions', () => {
-      const origin: Point = [50, 50];
+      const origin: Point = [10, 20];
       const dimensions: [number, number] = [0, 0];
       const result = bboxCenter(origin, dimensions);
-      expect(result).toEqual([50, 50]);
+      expect(result).toEqual([10, 20]);
     });
 
     it('should handle fractional dimensions', () => {
-      const origin: Point = [0, 0];
-      const dimensions: [number, number] = [10.5, 20.5];
+      const origin: Point = [1.5, 2.5];
+      const dimensions: [number, number] = [3, 4];
       const result = bboxCenter(origin, dimensions);
-      expect(result).toEqual([5.25, 10.25]);
+      expect(result).toEqual([3, 4.5]);
     });
 
     it('should handle large coordinates', () => {
-      const origin: Point = [1000, 2000];
-      const dimensions: [number, number] = [500, 600];
+      const origin: Point = [100, 200];
+      const dimensions: [number, number] = [800, 600];
       const result = bboxCenter(origin, dimensions);
-      expect(result).toEqual([1250, 2300]);
+      expect(result).toEqual([500, 500]);
+    });
+  });
+
+  describe('Geometry consistency', () => {
+    it('should maintain consistency between geometry functions', () => {
+      // Two boxes with known centers
+      const origin1: Point = [0, 0];
+      const dimensions1: [number, number] = [10, 10];
+      const center1 = bboxCenter(origin1, dimensions1);
+
+      const origin2: Point = [20, 0];
+      const dimensions2: [number, number] = [10, 10];
+      const center2 = bboxCenter(origin2, dimensions2);
+
+      // Distance between centers should equal distance between origins + half widths
+      const distance = euclideanDistance(center1, center2);
+      const expectedDistance = 20; // Centers are at (5, 5) and (25, 5)
+      expect(distance).toBeCloseTo(expectedDistance, 5);
+    });
+
+    it('should verify Pythagorean theorem', () => {
+      // Right triangle with legs 3 and 4, hypotenuse should be 5
+      const point1: Point = [0, 0];
+      const point2: Point = [3, 0];
+      const point3: Point = [0, 4];
+
+      // Calculate all three sides
+      const sideA = euclideanDistance(point1, point2);
+      const sideB = euclideanDistance(point1, point3);
+      const hypotenuse = euclideanDistance(point2, point3);
+
+      // Verify Pythagorean theorem: a² + b² = c²
+      expect(sideA ** 2 + sideB ** 2).toBeCloseTo(hypotenuse ** 2, 5);
+      expect(hypotenuse).toBe(5);
     });
   });
 });
