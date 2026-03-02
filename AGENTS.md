@@ -91,7 +91,7 @@ npm run coverage:browser
 npm run coverage:all
 ```
 
-**IMPORTANT for AI Agents**: 
+**IMPORTANT for AI Agents**:
 - The `npm run test:browser` command uses Playwright and is configured with `{ open: 'never' }` to avoid waiting for user input
 - DO NOT use `playwright test --ui` or any watch mode commands in automated workflows as they wait indefinitely
 - Browser tests load OpenCV.js from CDN and may take 30-60 seconds to complete
@@ -114,7 +114,7 @@ npm run coverage:all
    ```bash
    # For utils/math.ts, check for:
    find src/tests -name "*math*" -o -name "test_math.py"
-   
+
    # For processors/image/GaussianBlur.ts, check for:
    find src/tests -name "*gaussian*" -o -name "*blur*" -o -name "*processor*"
    ```
@@ -432,28 +432,37 @@ For complete sub-agent workflow, role naming conventions, and multi-agent coordi
 
 <!-- END BEADS INTEGRATION -->
 
-## Landing the Plane (Session Completion)
+## Pixel Agents Visualizer (optional)
 
-**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
+The **Pixel Agents** VS Code extension shows bd activity as animated pixel-art characters in a virtual office. When it's running, exporting `PIXEL_AGENTS_*` env vars causes your `bd update` calls to automatically push live status to the visualizer — no extra commands needed.
 
-**MANDATORY WORKFLOW:**
+### Setup (do this once per session)
 
-1. **File issues for remaining work** - Create issues for anything that needs follow-up
-2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE** - This is MANDATORY:
-   ```bash
-   git pull --rebase
-   bd sync
-   git push
-   git status  # MUST show "up to date with origin"
-   ```
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
+**First, check the server is live:**
+```bash
+curl -sf http://localhost:3001/health >/dev/null 2>&1 \
+  && echo "✓ Pixel Agents server live" \
+  || { echo "⚠️  Pixel Agents server not live — skipping hook setup"; return 0 2>/dev/null || true; }
+```
 
-**CRITICAL RULES:**
-- Work is NOT complete until `git push` succeeds
-- NEVER stop before pushing - that leaves work stranded locally
-- NEVER say "ready to push when you are" - YOU must push
-- If push fails, resolve and retry until it succeeds
+**If live, export your session variables:**
+```bash
+# Replace with your actual agent name (matches the name prefix in your bd issue titles)
+# and the shared session ID for this run (ask the coordinator or use the default below)
+export PIXEL_AGENTS_SESSION=omr-run
+export PIXEL_AGENTS_AGENT_ID=Schema-Validator   # e.g. Foundation-Alpha, Processor-Delta …
+```
+
+After this, every `bd update <id> --status in_progress` or `bd close <id>` automatically
+updates the visualizer. No other changes to your workflow.
+
+**Optional — tell the visualizer who your coordinator is (for task-assignment animations):**
+```bash
+export PIXEL_AGENTS_COORDINATOR_ID=coordinator
+```
+
+### How the hook maps bd titles → agent names
+
+If your agent name is embedded as a title prefix (`Schema-Validator: Write schema tests`),
+the hook extracts it automatically even without `PIXEL_AGENTS_AGENT_ID`. The explicit env var
+always takes priority if set.
