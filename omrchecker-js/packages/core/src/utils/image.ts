@@ -10,11 +10,45 @@
  */
 
 import cv from '@techstark/opencv-js';
+import { MathUtils } from './math';
 
 /**
  * Image utility functions for OpenCV.js operations
  */
 export class ImageUtils {
+  /**
+   * Compute warped rectangle points for a perspective-cropped region.
+   *
+   * Given four ordered corner points [tl, tr, br, bl], computes the destination
+   * rectangle dimensions that preserve the maximum width and height, and returns
+   * the axis-aligned destination points starting from the origin.
+   *
+   * Port of Python ImageUtils.get_cropped_warped_rectangle_points.
+   *
+   * @param orderedCorners - Four points [tl, tr, br, bl] as [x, y] arrays
+   * @returns Tuple of [warpedPoints, [maxWidth, maxHeight]]
+   */
+  static getCroppedWarpedRectanglePoints(
+    orderedCorners: number[][]
+  ): [number[][], [number, number]] {
+    const [tl, tr, br, bl] = orderedCorners;
+    const maxWidth = Math.max(
+      Math.floor(MathUtils.distance(tr as [number, number], tl as [number, number])),
+      Math.floor(MathUtils.distance(br as [number, number], bl as [number, number]))
+    );
+    const maxHeight = Math.max(
+      Math.floor(MathUtils.distance(tr as [number, number], br as [number, number])),
+      Math.floor(MathUtils.distance(tl as [number, number], bl as [number, number]))
+    );
+    const warpedPoints: number[][] = [
+      [0, 0],
+      [maxWidth - 1, 0],
+      [maxWidth - 1, maxHeight - 1],
+      [0, maxHeight - 1],
+    ];
+    return [warpedPoints, [maxWidth, maxHeight]];
+  }
+
   /**
    * Resize a single image with optional aspect ratio preservation.
    * 
@@ -282,8 +316,162 @@ export class ImageUtils {
   }
 
   /**
+   * Pad an image symmetrically from the center with a constant border value.
+   *
+   * Port of Python ImageUtils.pad_image_from_center.
+   *
+   * @param image - Input image Mat
+   * @param paddingWidth - Number of pixels to pad on each side horizontally
+   * @param paddingHeight - Number of pixels to pad on each side vertically (default: 0)
+   * @param value - Border fill value (default: 255 = white)
+   * @returns Object containing paddedImage Mat and padRange [top, bottom, left, right]
+   *          padRange indices into the padded image where the original image was placed.
+   *          The caller is responsible for deleting the returned paddedImage.
+   */
+  static padImageFromCenter(
+    image: cv.Mat,
+    paddingWidth: number,
+    paddingHeight: number = 0,
+    value: number = 255
+  ): { paddedImage: cv.Mat; padRange: [number, number, number, number] } {
+    const padRange: [number, number, number, number] = [
+      paddingHeight,
+      paddingHeight + image.rows,
+      paddingWidth,
+      paddingWidth + image.cols,
+    ];
+    const paddedImage = new cv.Mat();
+    cv.copyMakeBorder(
+      image,
+      paddedImage,
+      paddingHeight,
+      paddingHeight,
+      paddingWidth,
+      paddingWidth,
+      cv.BORDER_CONSTANT,
+      new cv.Scalar(value, value, value, value)
+    );
+    return { paddedImage, padRange };
+  }
+
+  /**
+   * Apply gamma correction to an image.
+   *
+   * Builds a lookup table mapping each pixel intensity i → ((i/255)^(1/gamma))*255,
+   * then applies it via cv.LUT.
+   *
+   * Port of Python ImageUtils.adjust_gamma.
+   *
+   * @param image - Input grayscale image Mat (CV_8UC1)
+   * @param gamma - Gamma value (default: 1.0, >1 brightens, <1 darkens)
+   * @returns Gamma-corrected image Mat (caller must delete)
+   */
+  static adjustGamma(image: cv.Mat, gamma: number = 1.0): cv.Mat {
+    const invGamma = 1.0 / gamma;
+    const tableData = new Uint8Array(256);
+    for (let i = 0; i < 256; i++) {
+      tableData[i] = Math.round(Math.pow(i / 255.0, invGamma) * 255);
+    }
+    const lutMat = cv.matFromArray(1, 256, cv.CV_8UC1, Array.from(tableData));
+    const result = new cv.Mat();
+    cv.LUT(image, lutMat, result);
+    lutMat.delete();
+    return result;
+  }
+
+  /**
+   * Split a contour's boundary points into four edge groups based on proximity
+   * to each side of a quadrilateral defined by four corner points.
+   *
+   * The patch corners are first ordered [tl, tr, br, bl] via MathUtils.orderFourPoints.
+   * Each source contour point is assigned to the nearest edge (TOP, RIGHT, BOTTOM, LEFT)
+   * using point-to-segment distance. Corner points are inserted at the start and end of
+   * each edge's list, and the list is reversed if needed to maintain clockwise order.
+   *
+   * Port of Python ImageUtils.split_patch_contour_on_corners.
+   *
+   * @param patchCorners - Four [x, y] corner points of the bounding patch
+   * @param sourceContour - Array of [x, y] points from the detected contour boundary
+   * @returns Object with orderedCorners [tl, tr, br, bl] and edgeContoursMap
+   *          keyed by 'TOP' | 'RIGHT' | 'BOTTOM' | 'LEFT'
+   */
+  static splitPatchContourOnCorners(
+    patchCorners: [number, number][],
+    sourceContour: [number, number][]
+  ): {
+    orderedCorners: [number, number][];
+    edgeContoursMap: Record<string, [number, number][]>;
+  } {
+    const { rect } = MathUtils.orderFourPoints(patchCorners);
+    const orderedCorners = Array.from(rect) as [number, number][];
+    // orderedCorners = [tl, tr, br, bl]
+
+    const edgeTypes = ['TOP', 'RIGHT', 'BOTTOM', 'LEFT'];
+    const edgeContoursMap: Record<string, [number, number][]> = {
+      TOP: [],
+      RIGHT: [],
+      BOTTOM: [],
+      LEFT: [],
+    };
+
+    // Point-to-line-segment distance helper
+    function distToSegment(
+      px: number,
+      py: number,
+      ax: number,
+      ay: number,
+      bx: number,
+      by: number
+    ): number {
+      const dx = bx - ax;
+      const dy = by - ay;
+      const lenSq = dx * dx + dy * dy;
+      if (lenSq === 0) return Math.hypot(px - ax, py - ay);
+      let t = ((px - ax) * dx + (py - ay) * dy) / lenSq;
+      t = Math.max(0, Math.min(1, t));
+      return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+    }
+
+    // Assign each source contour point to the nearest edge
+    for (const pt of sourceContour) {
+      let minDist = Infinity;
+      let nearestEdge = 'TOP';
+      for (let i = 0; i < 4; i++) {
+        const [ax, ay] = orderedCorners[i];
+        const [bx, by] = orderedCorners[(i + 1) % 4];
+        const d = distToSegment(pt[0], pt[1], ax, ay, bx, by);
+        if (d < minDist) {
+          minDist = d;
+          nearestEdge = edgeTypes[i];
+        }
+      }
+      edgeContoursMap[nearestEdge].push(pt);
+    }
+
+    // Ensure clockwise order and add corner points at start/end of each edge
+    for (let i = 0; i < 4; i++) {
+      const edgeType = edgeTypes[i];
+      const startPt = orderedCorners[i];
+      const endPt = orderedCorners[(i + 1) % 4];
+      const edgeContour = edgeContoursMap[edgeType];
+
+      if (edgeContour.length > 0) {
+        const distToFirst = MathUtils.distance(startPt, edgeContour[0]);
+        const distToLast = MathUtils.distance(startPt, edgeContour[edgeContour.length - 1]);
+        if (distToLast < distToFirst) {
+          edgeContour.reverse();
+        }
+      }
+      edgeContoursMap[edgeType].unshift(startPt);
+      edgeContoursMap[edgeType].push(endPt);
+    }
+
+    return { orderedCorners, edgeContoursMap };
+  }
+
+  /**
    * Overlay two images with transparency.
-   * 
+   *
    * @param image1 - First image
    * @param image2 - Second image (must be same size as image1)
    * @param transparency - Alpha value for image1 (0-1, default: 0.5)
