@@ -116,3 +116,65 @@ When migrating a Python module to TypeScript:
 - **Parity tests** (python-comparison.test.ts) are the gold standard - they literally compare outputs
 - **Browser tests** for OpenCV.js are necessary because OpenCV.js ≠ cv2 in all aspects
 - **Integration tests** in Python cover processors; we need unit tests for TypeScript compilation
+
+## Detailed Test-by-Test Audit
+
+### geometry.test.ts Analysis
+
+**Python Source:** `src/tests/utils/__tests__/test_geometry.py` (17 tests)
+**TypeScript:** `tests/unit/geometry.test.ts` (20 tests)
+**Status:** ⚠️ 6 extra tests, 3 missing tests
+
+**Python Tests (17 total):**
+1. test_euclidean_distance_2d → ✅ Translated ("calculate distance between two points")
+2. test_euclidean_distance_same_point → ✅ Translated ("return 0 for same point")
+3. test_euclidean_distance_negative_coords → ✅ Translated ("handle negative coordinates")
+4. test_euclidean_distance_float_coords → ✅ Translated ("handle floating point coordinates")
+5. test_vector_magnitude_zero → ✅ Translated ("return 0 for zero vector")
+6. test_vector_magnitude_unit_vector → ❌ MISSING
+7. test_vector_magnitude_2d → ✅ Translated ("calculate magnitude of 2D vector")
+8. test_vector_magnitude_negative → ✅ Translated ("handle negative components")
+9. test_vector_magnitude_3d → ✅ Translated ("calculate magnitude of 3D vector")
+10. test_bbox_center_unit_square → ⚠️ Different (origin [0,0] dims [2,2] vs [0,0] dims [100,200])
+11. test_bbox_center_offset_box → ✅ Translated ("handle non-zero origin")
+12. test_bbox_center_float_coords → ✅ Translated ("handle fractional dimensions")
+13. test_bbox_center_zero_dimensions → ✅ Translated ("handle zero dimensions")
+14. test_bbox_center_large_box → ✅ Translated ("handle large coordinates")
+15. test_geometry_consistency → ❌ MISSING (tests bbox_center + euclideanDistance together)
+16. test_pythagorean_theorem → ❌ MISSING (validates right triangle)
+
+**Extra Tests in TypeScript (6 invented tests):**
+1. euclideanDistance - handle large distances (NO Python equivalent)
+2. euclideanDistance - be symmetric (NO Python equivalent)
+3. vectorMagnitude - handle single element vector (NO Python equivalent)
+4. vectorMagnitude - handle empty vector (NO Python equivalent)
+5. vectorMagnitude - handle floating point components (NO Python equivalent)
+6. vectorMagnitude - handle high dimensional vectors (NO Python equivalent)
+
+**Action Required:**
+- Remove 6 extra tests from geometry.test.ts
+- Add 3 missing tests: test_vector_magnitude_unit_vector, test_geometry_consistency, test_pythagorean_theorem
+- Fix bbox_center test #10 to match Python (unit square)
+
+### drawing.test.ts Analysis
+
+**Python Source:** `src/tests/utils/__tests__/test_drawing.py` (10 tests)
+**TypeScript:** ❌ File does not exist
+**Status:** ❌ Not migrated
+
+**Missing Tests (10 total):**
+1. test_draw_box_diagonal
+2. test_draw_box_hollow
+3. test_draw_box_filled
+4. test_draw_box_centered
+5. test_draw_text
+6. test_draw_text_centered
+7. test_draw_line
+8. test_draw_polygon_closed
+9. test_draw_polygon_open
+10. test_draw_contour
+
+**Action Required:**
+- Create tests/unit/drawing.test.ts
+- Translate all 10 Python tests exactly
+- No extra tests should be added
