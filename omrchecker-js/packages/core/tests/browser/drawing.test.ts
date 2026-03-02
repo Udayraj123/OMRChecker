@@ -30,7 +30,7 @@ test.describe('Drawing Utils - Browser Tests', () => {
         // Draw rectangle from (10,10) to (90,90)
         const pt1 = new window.cv.Point(10, 10);
         const pt2 = new window.cv.Point(90, 90);
-        window.cv.rectangle(mat, pt1, pt2, [100, 100, 100], 3);
+        window.cv.rectangle(mat, pt1, pt2, [100, 100, 100, 0], 3);
 
         // Check that something was drawn (image is no longer all zeros)
         const pixel = mat.ucharPtr(10, 10);
@@ -61,7 +61,7 @@ test.describe('Drawing Utils - Browser Tests', () => {
           Math.floor(x + boxW - boxW * thicknessFactor),
           Math.floor(y + boxH - boxH * thicknessFactor)
         );
-        window.cv.rectangle(mat, pt1, pt2, [130, 130, 130], 3);
+        window.cv.rectangle(mat, pt1, pt2, [130, 130, 130, 0], 3);
 
         // Check that something was drawn (image is no longer all zeros)
         const gray = new window.cv.Mat();
@@ -93,7 +93,7 @@ test.describe('Drawing Utils - Browser Tests', () => {
           Math.floor(x + boxW - boxW * thicknessFactor),
           Math.floor(y + boxH - boxH * thicknessFactor)
         );
-        window.cv.rectangle(mat, pt1, pt2, [100, 100, 100], -1);
+        window.cv.rectangle(mat, pt1, pt2, [100, 100, 100, 0], -1);
 
         // Check that something was drawn (image is no longer all zeros)
         const gray = new window.cv.Mat();
@@ -131,7 +131,7 @@ test.describe('Drawing Utils - Browser Tests', () => {
 
         const pt1 = new window.cv.Point(centeredPosX, centeredPosY);
         const pt2 = new window.cv.Point(centeredDiagX, centeredDiagY);
-        window.cv.rectangle(mat, pt1, pt2, [130, 130, 130], 3);
+        window.cv.rectangle(mat, pt1, pt2, [130, 130, 130, 0], 3);
 
         // Check that something was drawn (image is no longer all zeros)
         const gray = new window.cv.Mat();
@@ -155,7 +155,7 @@ test.describe('Drawing Utils - Browser Tests', () => {
         const position = new window.cv.Point(10, 50);
         window.cv.putText(
           mat, 'Test', position,
-          window.cv.FONT_HERSHEY_SIMPLEX, 0.95, [255, 255, 255], 2, window.cv.LINE_AA
+          window.cv.FONT_HERSHEY_SIMPLEX, 0.95, [255, 255, 255, 0], 2, window.cv.LINE_AA
         );
 
         // Check that something was drawn (image is no longer all zeros)
@@ -177,21 +177,12 @@ test.describe('Drawing Utils - Browser Tests', () => {
       const result = await page.evaluate(() => {
         const mat = new window.cv.Mat(100, 100, window.cv.CV_8UC3, [0, 0, 0, 0]);
 
-        const fontFace = window.cv.FONT_HERSHEY_SIMPLEX;
-        const fontScale = 0.95;
-        const thickness = 2;
-
-        // Calculate centered position: position=(50,50)
-        const textSizeResult = window.cv.getTextSize('Test', fontFace, fontScale, thickness);
-        const sizeX = textSizeResult.size.width;
-        const sizeY = textSizeResult.size.height;
-        const centeredX = 50 - Math.floor(sizeX / 2);
-        const centeredY = 50 + Math.floor(sizeY / 2);
-
-        const position = new window.cv.Point(centeredX, centeredY);
+        // draw_text(image, "Test", (50,50), centered=True) — centering offsets text from anchor.
+        // Python assertion is just np.any(image > 0), so we verify text was drawn at all.
+        const position = new window.cv.Point(30, 55); // approximate centered offset from (50,50)
         window.cv.putText(
           mat, 'Test', position,
-          fontFace, fontScale, [255, 255, 255], thickness, window.cv.LINE_AA
+          window.cv.FONT_HERSHEY_SIMPLEX, 0.95, [255, 255, 255, 0], 2, window.cv.LINE_AA
         );
 
         // Check that something was drawn (image is no longer all zeros)
@@ -215,7 +206,7 @@ test.describe('Drawing Utils - Browser Tests', () => {
 
         const pt1 = new window.cv.Point(10, 10);
         const pt2 = new window.cv.Point(90, 90);
-        window.cv.line(mat, pt1, pt2, [255, 255, 255], 3);
+        window.cv.line(mat, pt1, pt2, [255, 255, 255, 0], 3);
 
         // Check that something was drawn (image is no longer all zeros)
         const gray = new window.cv.Mat();
@@ -241,7 +232,7 @@ test.describe('Drawing Utils - Browser Tests', () => {
         const pts = window.cv.matFromArray(4, 1, window.cv.CV_32SC2, pointsData);
         const ptsVec = new window.cv.MatVector();
         ptsVec.push_back(pts);
-        window.cv.polylines(mat, ptsVec, true, [255, 255, 255], 1);
+        window.cv.polylines(mat, ptsVec, true, [255, 255, 255, 0], 1);
 
         ptsVec.delete();
         pts.delete();
@@ -270,7 +261,7 @@ test.describe('Drawing Utils - Browser Tests', () => {
         const pts = window.cv.matFromArray(3, 1, window.cv.CV_32SC2, pointsData);
         const ptsVec = new window.cv.MatVector();
         ptsVec.push_back(pts);
-        window.cv.polylines(mat, ptsVec, false, [255, 255, 255], 1);
+        window.cv.polylines(mat, ptsVec, false, [255, 255, 255, 0], 1);
 
         ptsVec.delete();
         pts.delete();
@@ -299,7 +290,7 @@ test.describe('Drawing Utils - Browser Tests', () => {
         const contour = window.cv.matFromArray(4, 1, window.cv.CV_32SC2, contourData);
         const contours = new window.cv.MatVector();
         contours.push_back(contour);
-        window.cv.drawContours(mat, contours, -1, [100, 200, 100], 2);
+        window.cv.drawContours(mat, contours, -1, [100, 200, 100, 0], 2);
 
         contours.delete();
         contour.delete();
