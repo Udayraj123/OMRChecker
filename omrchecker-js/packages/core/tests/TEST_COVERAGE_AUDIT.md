@@ -36,6 +36,18 @@
 |--------|------------|-----------------|--------|---------------|
 | image.py | test_image_utils.py | ❌ None | ❌ Missing | Translate Python tests for resize, normalize, autoCanny, rotate, overlay |
 
+### ✅ Processors - Translated from Python Tests
+
+| Processor | Python Test | TypeScript Test | Status | Notes |
+|-----------|------------|-----------------|--------|-------|
+| Pipeline + Context | test_pipeline.py (8 tests) | unit/pipeline.test.ts (3 tests) | ✅ Translated | 3/8 translated; 5 skip (Python-only classes not in TS) |
+| point_utils | test_point_utils.py | unit/point_utils.test.ts | ✅ Translated | All Python tests translated |
+| page_detection | test_page_detection.py | browser/processors/page_detection.test.ts | ✅ Translated | All Python tests translated |
+| warp_strategies | test_warp_strategies.py | browser/processors/warp_strategies.test.ts | ✅ Translated | All Python tests translated |
+| WarpOnPointsCommon | test_WarpOnPointsCommon.py (18) | browser/processors/WarpOnPointsCommon.test.ts (15) | ✅ Translated | 15/18 (some consolidated) |
+| dot_line_detection | test_dot_line_detection.py (28) | browser/processors/dot_line_detection.test.ts (28) | ✅ Translated | 28/28 |
+| marker_detection | test_marker_detection.py (25) | browser/processors/marker_detection.test.ts (25) | ✅ Translated | 25/25 |
+
 ### ✅ Processors - Created from Scratch (No Python Tests)
 
 | Processor | Python Test | TypeScript Test | Status | Notes |
@@ -164,25 +176,20 @@ When migrating a Python module to TypeScript:
 ### drawing.test.ts Analysis
 
 **Python Source:** `src/tests/utils/__tests__/test_drawing.py` (10 tests)
-**TypeScript:** ❌ File does not exist
-**Status:** ❌ Not migrated
+**TypeScript:** `tests/browser/drawing.test.ts` (10 tests)
+**Status:** ✅ Complete — all 10 Python tests translated as browser tests
 
-**Missing Tests (10 total):**
-1. test_draw_box_diagonal
-2. test_draw_box_hollow
-3. test_draw_box_filled
-4. test_draw_box_centered
-5. test_draw_text
-6. test_draw_text_centered
-7. test_draw_line
-8. test_draw_polygon_closed
-9. test_draw_polygon_open
-10. test_draw_contour
-
-**Action Required:**
-- Create tests/unit/drawing.test.ts
-- Translate all 10 Python tests exactly
-- No extra tests should be added
+**Translated Tests (10/10):**
+1. test_draw_box_diagonal ✅
+2. test_draw_box_hollow ✅
+3. test_draw_box_filled ✅
+4. test_draw_box_centered ✅
+5. test_draw_text ✅
+6. test_draw_text_centered ✅
+7. test_draw_line ✅
+8. test_draw_polygon_closed ✅
+9. test_draw_polygon_open ✅
+10. test_draw_contour ✅
 
 ### math.test.ts Analysis
 
