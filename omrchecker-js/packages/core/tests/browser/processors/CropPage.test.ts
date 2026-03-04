@@ -13,6 +13,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { setupBrowser } from '../browser-setup';
 import { withMemoryTracking } from '../memory-utils';
+import { SHARED_UTILS_SCRIPT } from './shared-browser-utils';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -24,120 +25,27 @@ test.setTimeout(90_000);
 
 // ── Setup script ─────────────────────────────────────────────────────────────
 //
-// Playwright's page.evaluate() runs inside the browser, so TypeScript module
-// imports are unavailable there. We inject all required helpers + the CropPage
-// class as plain JavaScript strings via page.addInitScript / page.evaluate.
+// SHARED_UTILS_SCRIPT provides: WarpMethod, MathUtils, ImageUtils,
+// WarpStrategyFactory, WarpOnPointsCommon, __loadGray.
+// CROP_PAGE_SCRIPT adds the page_detection helpers and CropPage class.
 
-const SETUP_SCRIPT = `
+const CROP_PAGE_SCRIPT = `
 (function() {
-  // ── Constants ──────────────────────────────────────────────────────────────
-  const WarpMethod = {
-    PERSPECTIVE_TRANSFORM: 'PERSPECTIVE_TRANSFORM',
-    HOMOGRAPHY: 'HOMOGRAPHY',
-    REMAP_GRIDDATA: 'REMAP_GRIDDATA',
-    DOC_REFINE: 'DOC_REFINE',
-  };
-  window.WarpMethod = WarpMethod;
+  const cv                 = window.cv;
+  const WarpMethod         = window.WarpMethod;
+  const WARP_METHOD_FLAG_VALUES = window.WARP_METHOD_FLAG_VALUES;
+  const MathUtils          = window.MathUtils;
+  const ImageUtils         = window.ImageUtils;
+  const WarpOnPointsCommon = window.WarpOnPointsCommon;
 
-  const WARP_METHOD_FLAG_VALUES = {
-    INTER_LINEAR: 1,
-    INTER_CUBIC: 2,
-    INTER_NEAREST: 0,
-  };
-  window.WARP_METHOD_FLAG_VALUES = WARP_METHOD_FLAG_VALUES;
-
-  // page_detection constants
-  const THRESH_PAGE_TRUNCATE_HIGH = 210;
+  // ── page_detection constants ──────────────────────────────────────────────
+  const THRESH_PAGE_TRUNCATE_HIGH      = 210;
   const THRESH_PAGE_TRUNCATE_SECONDARY = 200;
-  const CANNY_THRESHOLD_HIGH = 185;
-  const CANNY_THRESHOLD_LOW = 55;
-  const MIN_PAGE_AREA = 80000;
-  const APPROX_POLY_EPSILON_FACTOR = 0.025;
-  const TOP_CONTOURS_COUNT = 5;
-
-  // ── MathUtils ────────────────────────────────────────────────────────────
-  const MathUtils = {
-    distance(p1, p2) {
-      const dx = p1[0] - p2[0];
-      const dy = p1[1] - p2[1];
-      return Math.hypot(dx, dy);
-    },
-    getBoundingBoxOfPoints(points) {
-      const xs = points.map(p => p[0]);
-      const ys = points.map(p => p[1]);
-      const minX = Math.min(...xs);
-      const minY = Math.min(...ys);
-      const maxX = Math.max(...xs);
-      const maxY = Math.max(...ys);
-      const boundingBox = [[minX, minY], [maxX, minY], [maxX, maxY], [minX, maxY]];
-      const boxDimensions = [Math.floor(maxX - minX), Math.floor(maxY - minY)];
-      return { boundingBox, boxDimensions };
-    },
-    shiftPointsFromOrigin(newOrigin, listOfPoints) {
-      return listOfPoints.map(p => [newOrigin[0] + p[0], newOrigin[1] + p[1]]);
-    },
-    orderFourPoints(points) {
-      const sums  = points.map(p => p[0] + p[1]);
-      const diffs = points.map(p => p[1] - p[0]);
-      const minSumIdx  = sums.indexOf(Math.min(...sums));
-      const minDiffIdx = diffs.indexOf(Math.min(...diffs));
-      const maxSumIdx  = sums.indexOf(Math.max(...sums));
-      const maxDiffIdx = diffs.indexOf(Math.max(...diffs));
-      const rect = [points[minSumIdx], points[minDiffIdx], points[maxSumIdx], points[maxDiffIdx]];
-      return { rect, orderedIndices: [minSumIdx, minDiffIdx, maxSumIdx, maxDiffIdx] };
-    },
-    validateRect(points) {
-      if (points.length !== 4) return false;
-      // Check max cosine of angles at each corner < 0.35
-      let maxCos = 0;
-      for (let i = 2; i < 5; i++) {
-        const p1 = points[i % 4];
-        const p2 = points[(i - 2) % 4];
-        const p0 = points[(i - 1) % 4];
-        const dx1 = p1[0] - p0[0], dy1 = p1[1] - p0[1];
-        const dx2 = p2[0] - p0[0], dy2 = p2[1] - p0[1];
-        const cos = Math.abs((dx1*dx2 + dy1*dy2) / Math.sqrt((dx1**2+dy1**2)*(dx2**2+dy2**2) + 1e-10));
-        if (cos > maxCos) maxCos = cos;
-      }
-      return maxCos < 0.35;
-    },
-  };
-  window.MathUtils = MathUtils;
-
-  // ── ImageUtils ─────────────────────────────────────────────────────────────
-  const ImageUtils = {
-    normalizeSingle(image, alpha, beta, normType) {
-      const cv = window.cv;
-      alpha = alpha != null ? alpha : 0;
-      beta  = beta  != null ? beta  : 255;
-      normType = normType != null ? normType : cv.NORM_MINMAX;
-      if (!image || image.empty()) return image;
-      const minMax = cv.minMaxLoc(image, new cv.Mat());
-      if (minMax.maxVal === minMax.minVal) return image.clone();
-      const normalized = new cv.Mat();
-      cv.normalize(image, normalized, alpha, beta, normType);
-      return normalized;
-    },
-    getCroppedWarpedRectanglePoints(orderedCorners) {
-      const [tl, tr, br, bl] = orderedCorners;
-      const maxWidth = Math.max(
-        Math.floor(MathUtils.distance(tr, tl)),
-        Math.floor(MathUtils.distance(br, bl))
-      );
-      const maxHeight = Math.max(
-        Math.floor(MathUtils.distance(tr, br)),
-        Math.floor(MathUtils.distance(tl, bl))
-      );
-      const warpedPoints = [
-        [0, 0],
-        [maxWidth - 1, 0],
-        [maxWidth - 1, maxHeight - 1],
-        [0, maxHeight - 1],
-      ];
-      return [warpedPoints, [maxWidth, maxHeight]];
-    },
-  };
-  window.ImageUtils = ImageUtils;
+  const CANNY_THRESHOLD_HIGH           = 185;
+  const CANNY_THRESHOLD_LOW            = 55;
+  const MIN_PAGE_AREA                  = 80000;
+  const APPROX_POLY_EPSILON_FACTOR     = 0.025;
+  const TOP_CONTOURS_COUNT             = 5;
 
   // ── page_detection helpers ─────────────────────────────────────────────────
   function preparePageImage(image) {
@@ -259,122 +167,6 @@ const SETUP_SCRIPT = `
   }
   window.findPageContourAndCorners = findPageContourAndCorners;
 
-  // ── WarpStrategyFactory ────────────────────────────────────────────────────
-  const WarpStrategyFactory = {
-    create(methodName) {
-      return {
-        methodName,
-        warpImage(image, coloredImage, ctrl, dest, dims) {
-          const cv = window.cv;
-          const [w, h] = dims;
-          const n = ctrl.length;
-          const dsize = new cv.Size(w, h);
-          let M;
-          if (methodName === 'PERSPECTIVE_TRANSFORM') {
-            const cMat = cv.matFromArray(4, 1, cv.CV_32FC2, ctrl.flat());
-            const dMat = cv.matFromArray(4, 1, cv.CV_32FC2, dest.flat());
-            M = cv.getPerspectiveTransform(cMat, dMat);
-            cMat.delete(); dMat.delete();
-          } else {
-            const cMat = cv.matFromArray(n, 1, cv.CV_32FC2, ctrl.flat());
-            const dMat = cv.matFromArray(n, 1, cv.CV_32FC2, dest.flat());
-            M = cv.findHomography(cMat, dMat, 0, 3.0);
-            cMat.delete(); dMat.delete();
-          }
-          const warpedGray = new cv.Mat();
-          cv.warpPerspective(image, warpedGray, M, dsize, cv.INTER_LINEAR);
-          let warpedColored = null;
-          if (coloredImage) {
-            warpedColored = new cv.Mat();
-            cv.warpPerspective(coloredImage, warpedColored, M, dsize, cv.INTER_LINEAR);
-          }
-          M.delete();
-          return { warpedGray, warpedColored, warpedDebug: null };
-        },
-      };
-    },
-  };
-  window.WarpStrategyFactory = WarpStrategyFactory;
-
-  // ── WarpOnPointsCommon (abstract base) ────────────────────────────────────
-  class WarpOnPointsCommon {
-    constructor(options = {}) {
-      const parsed = this.validateAndRemapOptionsSchema(options);
-      const tuningOptions = options.tuning_options != null ? options.tuning_options
-        : (parsed.tuning_options != null ? parsed.tuning_options : {});
-      this.enableCropping = parsed.enable_cropping != null ? parsed.enable_cropping
-        : (options.enable_cropping != null ? options.enable_cropping : false);
-      this.warpMethod = tuningOptions.warp_method != null ? tuningOptions.warp_method
-        : (this.enableCropping ? WarpMethod.PERSPECTIVE_TRANSFORM : WarpMethod.HOMOGRAPHY);
-      const flagKey = tuningOptions.warp_method_flag != null ? tuningOptions.warp_method_flag : 'INTER_LINEAR';
-      this.warpMethodFlag = WARP_METHOD_FLAG_VALUES[flagKey] != null ? WARP_METHOD_FLAG_VALUES[flagKey] : 1;
-      this.coloredOutputsEnabled = options.colored_outputs_enabled != null ? options.colored_outputs_enabled : false;
-      this.warpStrategy = WarpStrategyFactory.create(this.warpMethod);
-    }
-
-    validateAndRemapOptionsSchema(_options) { throw new Error('Not implemented'); }
-    prepareImageBeforeExtraction(_image)    { throw new Error('Not implemented'); }
-    extractControlDestinationPoints(_image, _colored, _filePath) { throw new Error('Not implemented'); }
-
-    appendSaveImage(..._args) {}
-
-    applyFilter(image, coloredImage, template, filePath) {
-      const prepared = this.prepareImageBeforeExtraction(image);
-      const [controlPts, destPts, edgeMap] = this.extractControlDestinationPoints(prepared, coloredImage, filePath);
-      const [parsedCtrl, parsedDest, dims] = this._parseAndPreparePoints(prepared, controlPts, destPts);
-      const [warpedImage, warpedColored] = this._applyWarpStrategy(image, coloredImage, parsedCtrl, parsedDest, dims, edgeMap);
-      this.appendSaveImage('Warped Image', [4, 5, 6], warpedImage, warpedColored);
-      return [warpedImage, warpedColored, template];
-    }
-
-    _parseAndPreparePoints(image, controlPoints, destinationPoints) {
-      const seen = new Map();
-      const uniqueCtrl = [];
-      const uniqueDest = [];
-      for (let i = 0; i < controlPoints.length; i++) {
-        const key = JSON.stringify(controlPoints[i]);
-        if (!seen.has(key)) {
-          seen.set(key, destinationPoints[i]);
-          uniqueCtrl.push(controlPoints[i]);
-          uniqueDest.push(destinationPoints[i]);
-        }
-      }
-      const dims = this._calculateWarpedDimensions([image.cols, image.rows], uniqueDest);
-      return [uniqueCtrl, uniqueDest, dims];
-    }
-
-    _calculateWarpedDimensions(defaultDims, destinationPoints) {
-      if (!this.enableCropping) return defaultDims;
-      const { boundingBox, boxDimensions } = MathUtils.getBoundingBoxOfPoints(destinationPoints);
-      const fromOrigin = [-boundingBox[0][0], -boundingBox[0][1]];
-      const shifted = MathUtils.shiftPointsFromOrigin(fromOrigin, destinationPoints);
-      for (let i = 0; i < destinationPoints.length; i++) {
-        destinationPoints[i] = shifted[i];
-      }
-      return boxDimensions;
-    }
-
-    _applyWarpStrategy(image, coloredImage, controlPoints, destinationPoints, warpedDimensions, _edgeContoursMap) {
-      const [ctrl, dest, dims] = this._preparePointsForStrategy(controlPoints, destinationPoints, warpedDimensions);
-      const coloredInput = this.coloredOutputsEnabled ? coloredImage : null;
-      const result = this.warpStrategy.warpImage(image, coloredInput, ctrl, dest, dims);
-      return [result.warpedGray, result.warpedColored];
-    }
-
-    _preparePointsForStrategy(controlPoints, destinationPoints, warpedDimensions) {
-      if (this.warpMethod !== WarpMethod.PERSPECTIVE_TRANSFORM) {
-        return [controlPoints, destinationPoints, warpedDimensions];
-      }
-      if (controlPoints.length !== 4) {
-        throw new Error('Expected 4 control points for perspective transform, found ' + controlPoints.length + '.');
-      }
-      const { rect: orderedCtrl } = MathUtils.orderFourPoints(controlPoints);
-      const [newDest, newDims] = ImageUtils.getCroppedWarpedRectanglePoints(orderedCtrl);
-      return [orderedCtrl, newDest, newDims];
-    }
-  }
-  window.WarpOnPointsCommon = WarpOnPointsCommon;
-
   // ── CropPage ──────────────────────────────────────────────────────────────
   class CropPage extends WarpOnPointsCommon {
     constructor(options = {}) {
@@ -426,24 +218,11 @@ const SETUP_SCRIPT = `
     }
   }
   window.CropPage = CropPage;
-
-  // ── Image loader helper ────────────────────────────────────────────────────
-  window.__loadGray = async function(b64) {
-    const img = new Image();
-    img.src = 'data:image/jpeg;base64,' + b64;
-    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
-    const canvas = document.createElement('canvas');
-    canvas.width = img.width; canvas.height = img.height;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-    const rgba = window.cv.matFromImageData(ctx.getImageData(0, 0, img.width, img.height));
-    const gray = new window.cv.Mat();
-    window.cv.cvtColor(rgba, gray, window.cv.COLOR_RGBA2GRAY);
-    rgba.delete();
-    return gray;
-  };
 })();
 `;
+
+// Combine shared base + CropPage-specific code.
+const SETUP_SCRIPT = SHARED_UTILS_SCRIPT + '\n' + CROP_PAGE_SCRIPT;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tests
