@@ -26,5 +26,6 @@ export {
 } from './processors/constants';
 export type { WarpMethodValue, WarpMethodFlagsValue, ScannerTypeValue } from './processors/constants';
 export * from './processors/image/WarpOnPointsCommon';
+export * from './processors/image/CropPage';
 export * from './processors/image/crop_on_patches/dot_line_detection';
 export * from './processors/image/crop_on_patches/marker_detection';
