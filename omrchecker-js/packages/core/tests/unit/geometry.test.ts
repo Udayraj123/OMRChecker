@@ -10,8 +10,8 @@ describe('Geometry Utils', () => {
     });
 
     it('should handle negative coordinates', () => {
-      const result = euclideanDistance([-1, -1], [2, 3]);
-      expect(result).toBeCloseTo(5, 5);
+      const result = euclideanDistance([-3, -4], [0, 0]);
+      expect(result).toBe(5);
     });
 
     it('should return 0 for same point', () => {
