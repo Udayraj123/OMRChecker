@@ -25,6 +25,7 @@
     "coverage:browser": "playwright test --reporter=html",
     "coverage:all": "npm run coverage:unit && npm run coverage:browser",
     "build": "tsc",
+    "build:browser": "node build-browser.mjs",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
@@ -40,6 +41,7 @@
     "@types/node": "^20.11.0",
     "@vitest/coverage-v8": "^1.2.0",
     "@vitest/ui": "^1.2.0",
+    "esbuild": "^0.27.3",
     "jsdom": "^27.0.1",
     "playwright": "^1.58.2",
     "typescript": "^5.3.3",
