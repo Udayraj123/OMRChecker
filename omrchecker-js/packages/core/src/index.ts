@@ -36,3 +36,5 @@ export * from './template/BubbleField';
 export * from './template/BubblesScanBox';
 export * from './template/parseFields';
 export * from './template/constants';
+export * from './detection/BubbleReader';
+export * from './OMRChecker';
