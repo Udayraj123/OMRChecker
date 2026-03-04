@@ -10,15 +10,17 @@
 
 import { test, expect } from '@playwright/test';
 import { setupBrowser, teardownBrowser } from './browser-setup';
-import { withMemoryTracking, getMatCount, getMemoryStats } from './memory-utils';
+import { withMemoryTracking, getMatCount, getMemoryStats, installMatTracking } from './memory-utils';
 
 // Increase timeout for browser tests
 test.setTimeout(60000);
 
 test.describe('Memory Leak Detection - Browser Tests', () => {
   test.beforeEach(async ({ page }) => {
-    // Setup OpenCV.js for each test
+    // Setup OpenCV.js for each test, then install the Mat-tracking shim so
+    // getMatCount() returns real allocation counts instead of always-0.
     await setupBrowser(page);
+    await installMatTracking(page);
   });
 
   test.describe('withMemoryTracking - Clean Operations', () => {

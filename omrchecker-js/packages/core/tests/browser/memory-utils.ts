@@ -26,6 +26,90 @@
 import type { Page } from '@playwright/test';
 
 /**
+ * Install a Mat-tracking shim into the browser page.
+ *
+ * Wraps cv.Mat (and cv.MatVector) so that every explicit `new cv.Mat()`
+ * increments cv.__matCount and every `.delete()` on a tracked object
+ * decrements it.  Mats created internally by OpenCV (e.g. via cv.threshold
+ * output buffers passed as `new cv.Mat()` by the caller) are handled the
+ * same way; Mats created deep inside WASM (e.g. returned by cvtColor result
+ * args) are NOT tracked, which is intentional — they don't affect the count.
+ *
+ * Call this once per page after setupBrowser() if you need real leak detection.
+ * Tests that use withMemoryTracking() for correctness checking (CropPage,
+ * CropOnMarkers, etc.) do NOT call this — they rely on the silent no-op
+ * behaviour (before===after===0).
+ *
+ * @param page - Playwright page instance
+ */
+export async function installMatTracking(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const cv = (window as any).cv;
+    if (typeof cv === 'undefined') throw new Error('OpenCV.js not loaded');
+    if (cv.__matTrackingInstalled) return; // idempotent
+
+    cv.__matCount = 0;
+    const tracked = new WeakSet<object>();
+
+    // ── Wrap cv.Mat constructor ────────────────────────────────────────────
+    const _OriginalMat = cv.Mat;
+
+    cv.Mat = function (...args: any[]) {
+      const mat = new _OriginalMat(...args);
+      cv.__matCount++;
+      tracked.add(mat);
+      return mat; // explicit object return → new cv.Mat() returns this object
+    };
+    cv.Mat.prototype = _OriginalMat.prototype;
+
+    // Copy static helpers (Mat.ones, Mat.zeros, Mat.eye, …)
+    for (const name of ['ones', 'zeros', 'eye']) {
+      if (typeof _OriginalMat[name] === 'function') {
+        cv.Mat[name] = (...args: any[]) => {
+          const mat = _OriginalMat[name](...args);
+          cv.__matCount++;
+          tracked.add(mat);
+          return mat;
+        };
+      }
+    }
+
+    // ── Patch delete to decrement only tracked Mats ───────────────────────
+    const _origDelete = _OriginalMat.prototype.delete;
+    cv.Mat.prototype.delete = function () {
+      if (tracked.has(this) && !this.isDeleted()) {
+        cv.__matCount--;
+        tracked.delete(this);
+      }
+      return _origDelete.call(this);
+    };
+
+    // ── Wrap cv.MatVector (count alongside Mats for leak detection) ────────
+    if (typeof cv.MatVector !== 'undefined') {
+      const _OriginalMV = cv.MatVector;
+      cv.MatVector = function (...args: any[]) {
+        const mv = new _OriginalMV(...args);
+        cv.__matCount++;
+        tracked.add(mv);
+        return mv;
+      };
+      cv.MatVector.prototype = _OriginalMV.prototype;
+
+      const _origMVDelete = _OriginalMV.prototype.delete;
+      cv.MatVector.prototype.delete = function () {
+        if (tracked.has(this) && !this.isDeleted()) {
+          cv.__matCount--;
+          tracked.delete(this);
+        }
+        return _origMVDelete.call(this);
+      };
+    }
+
+    cv.__matTrackingInstalled = true;
+  });
+}
+
+/**
  * Memory snapshot containing Mat count and metadata
  */
 export interface MemorySnapshot {
@@ -64,31 +148,21 @@ export async function getMatCount(page: Page): Promise<number> {
       throw new Error('OpenCV.js not loaded - cannot get Mat count');
     }
 
-    // OpenCV.js tracks allocated objects internally
-    // Access the registry if available
+    // Prefer our own tracking shim (installed via installMatTracking)
+    if (typeof (window.cv as any).__matCount === 'number') {
+      return (window.cv as any).__matCount;
+    }
+
+    // Fallback: OpenCV.js internal registry (version-specific, usually absent)
     if (typeof (window.cv as any).matRegistry !== 'undefined') {
       return Object.keys((window.cv as any).matRegistry).length;
     }
-
-    // Fallback: Try to count through internal tracking
-    // Note: This relies on OpenCV.js implementation details
-    // and may need adjustment for different versions
-    let count = 0;
-    try {
-      // Some OpenCV.js versions expose getAllocatedMatCount
-      if (typeof (window.cv as any).getAllocatedMatCount === 'function') {
-        count = (window.cv as any).getAllocatedMatCount();
-      } else {
-        // Fallback: estimate from internal data structures
-        // This is a heuristic and may not be 100% accurate
-        count = 0; // Default to 0 if we can't determine
-      }
-    } catch (e) {
-      console.warn('Unable to get accurate Mat count:', e);
-      count = 0;
+    if (typeof (window.cv as any).getAllocatedMatCount === 'function') {
+      return (window.cv as any).getAllocatedMatCount();
     }
 
-    return count;
+    // Tracking shim not installed → return 0 (silent no-op mode)
+    return 0;
   });
 }
 
