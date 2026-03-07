@@ -1,0 +1,40 @@
+{
+  "pageDimensions": [500, 700],
+  "bubbleDimensions": [10, 10],
+  "customLabels": {},
+  "fieldBlocks": {
+    "MCQBlock1": {
+      "fieldType": "QTYPE_MCQ5",
+      "origin": [342, 196],
+      "fieldLabels": [
+        "Overall, how friendly were the hotel staff members?",
+        "Overall, how polite were the hotel staff members?",
+        "Overall, how professional were the hotel staff members?",
+        "How quick was the check-in process?",
+        "How clean was your room upon arrival?",
+        "How well did the housekeeping staff clean your room?",
+        "Overall, how well-equipped was your room?",
+        "How helpful was the concierge throughout your stay?",
+        "How comfortable were your bed linens?",
+        "Overall, how quickly did the hotel staff respond to your requests?",
+        "How convenient were the hours of the food service options at our hotel?",
+        "How delicious was the hotel breakfast service?",
+        "How pleased were you with the quality of the food offered at our hotel?",
+        "How affordable was the hotel breakfast service?",
+        "How affordable was your stay at our hotel?",
+        "How likely are you to stay at our hotel again?",
+        "How likely are you to discourage others from staying at our hotel?"
+      ],
+      "bubblesGap": 25.5,
+      "labelsGap": 14.3
+    }
+  },
+  "preProcessors": [
+    {
+      "name": "CropPage",
+      "options": {
+        "morphKernel": [10, 10]
+      }
+    }
+  ]
+}
