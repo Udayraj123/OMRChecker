@@ -1,0 +1,98 @@
+{
+  "templateDimensions": [
+    1500,
+    2000
+  ],
+  "bubbleDimensions": [
+    30,
+    30
+  ],
+  "preProcessors": [
+    {
+      "name": "CropOnMarkers",
+      "options": {
+        "type": "L_MARKERS",
+        "processingImageShape": [
+          1500,
+          2000
+        ],
+        "enableCropping": true,
+        "tuningOptions": {
+          "warpMethod": "HOMOGRAPHY",
+          "morphKernelSize": [
+            5,
+            5
+          ],
+          "morphIterations": 2,
+          "minMarkerArea": 500,
+          "maxMarkerArea": 50000
+        },
+        "topLeftLMarker": {
+          "origin": [
+            10,
+            10
+          ],
+          "dimensions": [
+            120,
+            120
+          ],
+          "margins": {
+            "top": 20,
+            "right": 20,
+            "bottom": 20,
+            "left": 20
+          }
+        },
+        "topRightLMarker": {
+          "origin": [
+            1370,
+            10
+          ],
+          "dimensions": [
+            120,
+            120
+          ],
+          "margins": {
+            "top": 20,
+            "right": 20,
+            "bottom": 20,
+            "left": 20
+          }
+        },
+        "bottomRightLMarker": {
+          "origin": [
+            1370,
+            1870
+          ],
+          "dimensions": [
+            120,
+            120
+          ],
+          "margins": {
+            "top": 20,
+            "right": 20,
+            "bottom": 20,
+            "left": 20
+          }
+        },
+        "bottomLeftLMarker": {
+          "origin": [
+            10,
+            1870
+          ],
+          "dimensions": [
+            120,
+            120
+          ],
+          "margins": {
+            "top": 20,
+            "right": 20,
+            "bottom": 20,
+            "left": 20
+          }
+        }
+      }
+    }
+  ],
+  "fieldBlocks": {}
+}
