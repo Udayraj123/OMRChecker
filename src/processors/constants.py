@@ -23,6 +23,10 @@ ZonePreset = DotMap(
         "topRightMarker": "topRightMarker",
         "bottomRightMarker": "bottomRightMarker",
         "bottomLeftMarker": "bottomLeftMarker",
+        "topLeftLMarker": "topLeftLMarker",
+        "topRightLMarker": "topRightLMarker",
+        "bottomRightLMarker": "bottomRightLMarker",
+        "bottomLeftLMarker": "bottomLeftLMarker",
         "topLine": "topLine",
         "leftLine": "leftLine",
         "bottomLine": "bottomLine",
@@ -45,6 +49,13 @@ MARKER_ZONE_TYPES_IN_ORDER = [
     ZonePreset.bottomLeftMarker,
 ]
 
+L_MARKER_ZONE_TYPES_IN_ORDER = [
+    ZonePreset.topLeftLMarker,
+    ZonePreset.topRightLMarker,
+    ZonePreset.bottomRightLMarker,
+    ZonePreset.bottomLeftLMarker,
+]
+
 LINE_ZONE_TYPES_IN_ORDER = [
     ZonePreset.topLine,
     ZonePreset.rightLine,
@@ -64,38 +75,46 @@ TARGET_ENDPOINTS_FOR_EDGES = {
     EdgeType.TOP: [
         [ZonePreset.topLeftDot, 0],
         [ZonePreset.topLeftMarker, 0],
+        [ZonePreset.topLeftLMarker, 0],
         [ZonePreset.leftLine, -1],
         [ZonePreset.topLine, "ALL"],
         [ZonePreset.rightLine, 0],
         [ZonePreset.topRightDot, 0],
         [ZonePreset.topRightMarker, 0],
+        [ZonePreset.topRightLMarker, 0],
     ],
     EdgeType.RIGHT: [
         [ZonePreset.topRightDot, 0],
         [ZonePreset.topRightMarker, 0],
+        [ZonePreset.topRightLMarker, 0],
         [ZonePreset.topLine, -1],
         [ZonePreset.rightLine, "ALL"],
         [ZonePreset.bottomLine, 0],
         [ZonePreset.bottomRightDot, 0],
         [ZonePreset.bottomRightMarker, 0],
+        [ZonePreset.bottomRightLMarker, 0],
     ],
     EdgeType.LEFT: [
         [ZonePreset.bottomLeftDot, 0],
         [ZonePreset.bottomLeftMarker, 0],
+        [ZonePreset.bottomLeftLMarker, 0],
         [ZonePreset.bottomLine, -1],
         [ZonePreset.leftLine, "ALL"],
         [ZonePreset.topLine, 0],
         [ZonePreset.topLeftDot, 0],
         [ZonePreset.topLeftMarker, 0],
+        [ZonePreset.topLeftLMarker, 0],
     ],
     EdgeType.BOTTOM: [
         [ZonePreset.bottomRightDot, 0],
         [ZonePreset.bottomRightMarker, 0],
+        [ZonePreset.bottomRightLMarker, 0],
         [ZonePreset.rightLine, -1],
         [ZonePreset.bottomLine, "ALL"],
         [ZonePreset.leftLine, 0],
         [ZonePreset.bottomLeftDot, 0],
         [ZonePreset.bottomLeftMarker, 0],
+        [ZonePreset.bottomLeftLMarker, 0],
     ],
 }
 
@@ -122,6 +141,7 @@ ScannerType = DotMap(
         "PATCH_DOT": "PATCH_DOT",
         "PATCH_LINE": "PATCH_LINE",
         "TEMPLATE_MATCH": "TEMPLATE_MATCH",
+        "PATCH_L_MARKER": "PATCH_L_MARKER",
         # TODO: OCR, QR
     },
     _dynamic=False,
@@ -132,6 +152,7 @@ SCANNER_TYPES_IN_ORDER = [
     ScannerType.PATCH_DOT,
     ScannerType.PATCH_LINE,
     ScannerType.TEMPLATE_MATCH,
+    ScannerType.PATCH_L_MARKER,
 ]
 
 
@@ -144,6 +165,7 @@ SelectorType = DotMap(
         "SELECT_CENTER": "SELECT_CENTER",
         "LINE_INNER_EDGE": "LINE_INNER_EDGE",
         "LINE_OUTER_EDGE": "LINE_OUTER_EDGE",
+        "L_INNER_CORNER": "L_INNER_CORNER",
     },
     _dynamic=False,
 )
@@ -155,6 +177,7 @@ SELECTOR_TYPES_IN_ORDER = [
     SelectorType.SELECT_CENTER,
     SelectorType.LINE_INNER_EDGE,
     SelectorType.LINE_OUTER_EDGE,
+    SelectorType.L_INNER_CORNER,
 ]
 
 WarpMethodFlags = DotMap(

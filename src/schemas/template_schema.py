@@ -1,5 +1,6 @@
 from src.processors.constants import (
     FIELD_DETECTION_TYPES_IN_ORDER,
+    L_MARKER_ZONE_TYPES_IN_ORDER,
     MARKER_ZONE_TYPES_IN_ORDER,
     SCANNER_TYPES_IN_ORDER,
     SELECTOR_TYPES_IN_ORDER,
@@ -167,6 +168,7 @@ default_points_selector_types = [
 # TODO: deprecate crop_on_marker_types
 crop_on_marker_types = [
     "FOUR_MARKERS",
+    "L_MARKERS",
     "ONE_LINE_TWO_DOTS",
     "TWO_DOTS_ONE_LINE",
     "TWO_LINES",
@@ -288,6 +290,32 @@ crop_on_four_markers_tuning_options_def = {
         "minMatchingThreshold": {
             "description": "The threshold for template matching",
             "type": "number",
+        },
+    },
+}
+
+crop_on_l_markers_tuning_options_def = {
+    "description": "Custom tuning options for the CropOnLMarkers pre-processor",
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        **crop_on_markers_tuning_options_available_keys,
+        **warp_on_points_tuning_options,
+        "morphKernelSize": {
+            "$ref": "#/$def/two_positive_integers",
+            "description": "The size of the morphological kernel [width, height], default [5, 5]",
+        },
+        "morphIterations": {
+            "$ref": "#/$def/positive_integer",
+            "description": "The number of morphological iterations, default 2",
+        },
+        "minMarkerArea": {
+            "$ref": "#/$def/positive_integer",
+            "description": "The minimum area in pixels for a valid L-marker contour, default 500",
+        },
+        "maxMarkerArea": {
+            "$ref": "#/$def/positive_integer",
+            "description": "The maximum area in pixels for a valid L-marker contour, default 50000",
         },
     },
 }
@@ -484,6 +512,7 @@ TEMPLATE_SCHEMA = {
         ),
         "marker_zone_description": marker_zone_description_def,
         "crop_on_four_markers_tuning_options": crop_on_four_markers_tuning_options_def,
+        "crop_on_l_markers_tuning_options": crop_on_l_markers_tuning_options_def,
         "scan_zones_array": scan_zones_array_def,
         "margins_schema": margins_schema_def,
         "point_selector_patch_zone": point_selector_patch_zone_def,
@@ -926,6 +955,39 @@ TEMPLATE_SCHEMA = {
                                                     },
                                                     "tuningOptions": {
                                                         "$ref": "#/$def/crop_on_four_markers_tuning_options"
+                                                    },
+                                                },
+                                            },
+                                        },
+                                        {
+                                            "if": {
+                                                **crop_on_markers_options_if_required_attrs,
+                                                "properties": {
+                                                    "type": {"const": "L_MARKERS"}
+                                                },
+                                            },
+                                            "then": {
+                                                "anyOf": [
+                                                    {
+                                                        "required": ["scanZones"],
+                                                    },
+                                                    {
+                                                        "required": [
+                                                            *L_MARKER_ZONE_TYPES_IN_ORDER,
+                                                        ],
+                                                    },
+                                                ],
+                                                "additionalProperties": False,
+                                                "properties": {
+                                                    **crop_on_markers_options_available_keys,
+                                                    **{
+                                                        zone_preset: {
+                                                            "$ref": "#/$def/marker_zone_description"
+                                                        }
+                                                        for zone_preset in L_MARKER_ZONE_TYPES_IN_ORDER
+                                                    },
+                                                    "tuningOptions": {
+                                                        "$ref": "#/$def/crop_on_l_markers_tuning_options"
                                                     },
                                                 },
                                             },
