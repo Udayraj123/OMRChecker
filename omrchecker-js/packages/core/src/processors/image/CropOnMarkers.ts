@@ -6,6 +6,11 @@
  * Handles the FOUR_MARKERS layout type: detects 4 corner markers via template matching
  * and perspective-warps the image to align the sheet.
  *
+ * Note: The Python CropOnMarkers dispatcher uses an explicit type registry (_DOT_LINE_TYPES)
+ * to route ONE_LINE_TWO_DOTS / TWO_DOTS_ONE_LINE / TWO_LINES / TWO_LINES_HORIZONTAL / FOUR_DOTS
+ * to CropOnDotLines and unknown types to TemplateConfigurationError (omr-c71).
+ * The TypeScript port handles only FOUR_MARKERS here; dot-line types are a separate class.
+ *
  * Browser-compatible: accepts marker reference image as a pre-decoded grayscale cv.Mat
  * via the `assetMats` map. For convenience, use the static async factory method
  * `CropOnMarkers.fromBase64(options, assets)` which decodes the image via canvas.
