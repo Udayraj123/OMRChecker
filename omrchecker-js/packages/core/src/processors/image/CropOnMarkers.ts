@@ -8,7 +8,8 @@
  *
  * Note: The Python CropOnMarkers dispatcher uses an explicit type registry (_DOT_LINE_TYPES)
  * to route ONE_LINE_TWO_DOTS / TWO_DOTS_ONE_LINE / TWO_LINES / TWO_LINES_HORIZONTAL / FOUR_DOTS
- * to CropOnDotLines and unknown types to TemplateConfigurationError (omr-c71).
+ * to CropOnDotLines, L_MARKERS to CropOnLMarkers (omr-rj7), and unknown types to
+ * TemplateConfigurationError (omr-c71).
  * The TypeScript port handles only FOUR_MARKERS here; dot-line types are a separate class.
  *
  * Browser-compatible: accepts marker reference image as a pre-decoded grayscale cv.Mat
@@ -114,7 +115,7 @@ export class CropOnMarkers extends WarpOnPointsCommon {
 
     if (options.type !== 'FOUR_MARKERS') {
       throw new ImageProcessingError(
-        `CropOnMarkers: unsupported type '${options.type}'. Only 'FOUR_MARKERS' is supported.`
+        `CropOnMarkers: unsupported type '${options.type}'. Only 'FOUR_MARKERS' is supported in TypeScript port; use CropOnLMarkers for L_MARKERS.`
       );
     }
 
