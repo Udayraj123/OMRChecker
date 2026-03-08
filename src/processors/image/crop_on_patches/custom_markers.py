@@ -149,7 +149,9 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
                 scan_zone.get, ["zone_preset", "zone_description", "custom_options"]
             )
             zone_label = zone_description["label"]
-            if zone_preset in self.scan_zone_presets_for_layout["FOUR_MARKERS"]:
+            if zone_preset in self.scan_zone_presets_for_layout.get(
+                self.options.get("points_layout", ""), []
+            ):
                 if "reference_image" not in custom_options:
                     msg = f"referenceImage not provided for custom marker zone {zone_label}"
                     raise TemplateValidationError(
@@ -241,7 +243,9 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
         # Note: currently user input would be restricted to only markers at once (no combination of markers and dots)
         # TODO: >> handle a instance of this class from parent using scannerType for applicable ones!
         # Check for zone_preset
-        if zone_preset not in self.scan_zone_presets_for_layout["FOUR_MARKERS"]:
+        if zone_preset not in self.scan_zone_presets_for_layout.get(
+            self.options.get("points_layout", ""), []
+        ):
             return zone_description
 
         zone_label, origin, dimensions = map(
