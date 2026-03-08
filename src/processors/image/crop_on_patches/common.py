@@ -35,6 +35,9 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
     # Expected to be overridden by child
     default_points_selector_map: ClassVar = {}
     scan_zone_presets_for_layout: ClassVar = {}
+    dot_like_scanner_types: ClassVar[frozenset] = frozenset(
+        {ScannerType.PATCH_DOT, ScannerType.TEMPLATE_MATCH}
+    )
 
     def find_and_select_points_from_line(
         self, _image, _zone_preset, _zone_description, _file_path
@@ -176,7 +179,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             zone_description = scan_zone["runtime_zone_description"]
             scanner_type = zone_description["scanner_type"]
 
-            if scanner_type in {ScannerType.PATCH_DOT, ScannerType.TEMPLATE_MATCH}:
+            if scanner_type in self.dot_like_scanner_types:
                 dot_point, destination_point = self.find_and_select_point_from_dot(
                     image, zone_description, file_path
                 )
