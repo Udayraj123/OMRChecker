@@ -46,6 +46,10 @@ def select_point_from_rectangle(rectangle, points_selector):
             (tl[0] + br[0]) // 2,
             (tl[1] + br[1]) // 2,
         ]
+    if points_selector == "L_INNER_CORNER":
+        # For L-marker detection, all 4 corners of the degenerate rectangle are
+        # the same point (the detected inner corner), so just return tl.
+        return tl
     return None
 
 
