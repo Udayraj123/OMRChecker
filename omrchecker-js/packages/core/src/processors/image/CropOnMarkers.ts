@@ -170,6 +170,8 @@ export class CropOnMarkers extends WarpOnPointsCommon {
 
   // ── Abstract method implementations ──────────────────────────────────────────
 
+  // NOTE(omr-sun): Python equivalent now delegates to CropOnPatchesCommon._build_base_parsed_options.
+  // This inline implementation mirrors that helper for the FOUR_MARKERS case.
   validateAndRemapOptionsSchema(options: Record<string, any>): Record<string, any> {
     const tuning = options['tuning_options'] ?? {};
     return {

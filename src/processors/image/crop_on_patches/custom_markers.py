@@ -99,18 +99,13 @@ class CropOnCustomMarkers(CropOnPatchesCommon):
 
     def validate_and_remap_options_schema(self, options):
         reference_image_path, layout_type = options["reference_image"], options["type"]
-        tuning_options = options.get("tuning_options", {})
         # Note: options["tuning_options"] is accessible in self.tuning_options at Processor level
-        parsed_options = {
-            "default_selector": options.get("default_selector", "CENTERS"),
-            "points_layout": layout_type,
-            "enable_cropping": True,
-            "tuning_options": {
-                "warp_method": tuning_options.get(
-                    "warp_method", WarpMethod.PERSPECTIVE_TRANSFORM
-                )
-            },
-        }
+        parsed_options = self._build_base_parsed_options(
+            options,
+            layout_type,
+            enable_cropping=True,
+            default_warp_method=WarpMethod.PERSPECTIVE_TRANSFORM,
+        )
 
         # TODO: add default values for provided scanZones?
         # Allow non-marker scanZones here too?

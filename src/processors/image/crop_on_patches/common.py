@@ -63,6 +63,28 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             options.get("default_selector")
         ]
 
+    def _build_base_parsed_options(
+        self,
+        options: dict,
+        layout_type: str,
+        *,
+        enable_cropping: bool = True,
+        default_warp_method: str,
+    ) -> dict:
+        """
+        Build the common base structure for validate_and_remap_options_schema.
+        Subclasses call this then add their scan_zones and other fields.
+        """
+        tuning_options = options.get("tuning_options", {})
+        return {
+            "default_selector": options.get("default_selector", "CENTERS"),
+            "points_layout": layout_type,
+            "enable_cropping": enable_cropping,
+            "tuning_options": {
+                "warp_method": tuning_options.get("warp_method", default_warp_method),
+            },
+        }
+
     def exclude_files(self) -> list[Path]:
         return []
 

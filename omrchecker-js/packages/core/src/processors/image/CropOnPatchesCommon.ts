@@ -52,7 +52,31 @@ export abstract class CropOnPatchesCommon extends WarpOnPointsCommon {
     filePath: string
   ): number[][];
 
-  _buildBaseParsedOptions(): any { // TODO: Add parameters and return type
-    // TODO: Implement
+  /**
+   * Build the common base structure for validateAndRemapOptionsSchema.
+   * Subclasses call this then add their scanZones and other fields.
+   *
+   * Port of Python: CropOnPatchesCommon._build_base_parsed_options (omr-sun)
+   */
+  protected _buildBaseParsedOptions(
+    options: Record<string, any>,
+    layoutType: string,
+    {
+      enableCropping = true,
+      defaultWarpMethod,
+    }: {
+      enableCropping?: boolean;
+      defaultWarpMethod: string;
+    }
+  ): Record<string, any> {
+    const tuningOptions: Record<string, any> = options['tuning_options'] ?? {};
+    return {
+      default_selector: options['default_selector'] ?? 'CENTERS',
+      points_layout: layoutType,
+      enable_cropping: enableCropping,
+      tuning_options: {
+        warp_method: tuningOptions['warp_method'] ?? defaultWarpMethod,
+      },
+    };
   }
 }

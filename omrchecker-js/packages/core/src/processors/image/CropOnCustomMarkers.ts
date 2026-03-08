@@ -14,6 +14,10 @@
  * TODO: Expand this stub into a full port of CropOnCustomMarkers with
  *       subclass-extensible scanZonePresetsForLayout when additional layout
  *       types are added beyond FOUR_MARKERS.
+ *
+ * Note(omr-sun): Python equivalent now uses CropOnPatchesCommon._build_base_parsed_options
+ *       for the validate_and_remap_options_schema base dict. CropOnMarkers.validateAndRemapOptionsSchema
+ *       mirrors that logic inline.
  */
 
 export { CropOnMarkers as CropOnCustomMarkers } from './CropOnMarkers';

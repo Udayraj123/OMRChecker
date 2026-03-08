@@ -130,17 +130,12 @@ class CropOnDotLines(CropOnPatchesCommon):
 
     def validate_and_remap_options_schema(self, options):
         layout_type = options["type"]
-        tuning_options = options.get("tuning_options", {})
-        parsed_options = {
-            "default_selector": options.get("default_selector", "CENTERS"),
-            "points_layout": layout_type,
-            "enable_cropping": options.get("enable_cropping", True),  # temp
-            "tuning_options": {
-                "warp_method": tuning_options.get(
-                    "warp_method", WarpMethod.PERSPECTIVE_TRANSFORM
-                )
-            },
-        }
+        parsed_options = self._build_base_parsed_options(
+            options,
+            layout_type,
+            enable_cropping=options.get("enable_cropping", True),
+            default_warp_method=WarpMethod.PERSPECTIVE_TRANSFORM,
+        )
 
         # TODO: add default values for provided options["scan_zones"]? like get "maxPoints" from options["line_max_points"]
         # inject scanZones
