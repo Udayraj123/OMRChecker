@@ -21,7 +21,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.utils import math as math_utils
 from src.utils import stats as stats_utils
-from src.utils import checksum as checksum_utils
 
 
 def generate_math_fixtures():
@@ -45,10 +44,9 @@ def generate_math_fixtures():
 
     for case in distance_cases:
         result = math_utils.MathUtils.distance(case["p1"], case["p2"])
-        fixtures["distance"].append({
-            "input": {"p1": case["p1"], "p2": case["p2"]},
-            "output": result
-        })
+        fixtures["distance"].append(
+            {"input": {"p1": case["p1"], "p2": case["p2"]}, "output": result}
+        )
 
     # Add points tests
     add_cases = [
@@ -59,10 +57,7 @@ def generate_math_fixtures():
 
     for case in add_cases:
         result = math_utils.MathUtils.add_points(case["p1"], case["p2"])
-        fixtures["add_points"].append({
-            "input": case,
-            "output": result
-        })
+        fixtures["add_points"].append({"input": case, "output": result})
 
     # Subtract points tests
     sub_cases = [
@@ -73,10 +68,7 @@ def generate_math_fixtures():
 
     for case in sub_cases:
         result = math_utils.MathUtils.subtract_points(case["p1"], case["p2"])
-        fixtures["subtract_points"].append({
-            "input": case,
-            "output": result
-        })
+        fixtures["subtract_points"].append({"input": case, "output": result})
 
     # Angle tests (cosine between three points)
     angle_cases = [
@@ -87,10 +79,7 @@ def generate_math_fixtures():
 
     for case in angle_cases:
         result = math_utils.MathUtils.angle(case["p1"], case["p2"], case["p0"])
-        fixtures["angle"].append({
-            "input": case,
-            "output": result
-        })
+        fixtures["angle"].append({"input": case, "output": result})
 
     # Check collinear points
     collinear_cases = [
@@ -100,11 +89,10 @@ def generate_math_fixtures():
     ]
 
     for case in collinear_cases:
-        result = math_utils.MathUtils.check_collinear_points(case["p1"], case["p2"], case["p3"])
-        fixtures["check_collinear_points"].append({
-            "input": case,
-            "output": result
-        })
+        result = math_utils.MathUtils.check_collinear_points(
+            case["p1"], case["p2"], case["p3"]
+        )
+        fixtures["check_collinear_points"].append({"input": case, "output": result})
 
     return fixtures
 
@@ -129,10 +117,7 @@ def generate_stats_fixtures():
 
     for case in mean_cases:
         result = stats_utils.mean(case)
-        fixtures["mean"].append({
-            "input": case,
-            "output": result
-        })
+        fixtures["mean"].append({"input": case, "output": result})
 
     # Median tests
     median_cases = [
@@ -145,10 +130,7 @@ def generate_stats_fixtures():
 
     for case in median_cases:
         result = stats_utils.median(case)
-        fixtures["median"].append({
-            "input": case,
-            "output": result
-        })
+        fixtures["median"].append({"input": case, "output": result})
 
     # Standard deviation tests
     std_cases = [
@@ -160,13 +142,10 @@ def generate_stats_fixtures():
 
     for case in std_cases:
         result = stats_utils.standard_deviation(case)
-        fixtures["standard_deviation"].append({
-            "input": case,
-            "output": result
-        })
+        fixtures["standard_deviation"].append({"input": case, "output": result})
 
     # Mode tests (if available)
-    if hasattr(stats_utils, 'mode'):
+    if hasattr(stats_utils, "mode"):
         mode_cases = [
             [1, 2, 2, 3],
             [1, 1, 2, 2, 3],
@@ -175,10 +154,7 @@ def generate_stats_fixtures():
 
         for case in mode_cases:
             result = stats_utils.mode(case)
-            fixtures["mode"].append({
-                "input": case,
-                "output": result
-            })
+            fixtures["mode"].append({"input": case, "output": result})
 
     return fixtures
 
@@ -186,7 +162,7 @@ def generate_stats_fixtures():
 def generate_checksum_fixtures():
     """Generate fixtures for checksum utility functions."""
     import hashlib
-    
+
     fixtures = {
         "calculate_checksum": [],
     }
@@ -204,14 +180,13 @@ def generate_checksum_fixtures():
         hasher = hashlib.new(case["algorithm"])
         hasher.update(case["data"].encode("utf-8"))
         result = hasher.hexdigest()
-        
-        fixtures["calculate_checksum"].append({
-            "input": {
-                "data": case["data"],
-                "algorithm": case["algorithm"]
-            },
-            "output": result
-        })
+
+        fixtures["calculate_checksum"].append(
+            {
+                "input": {"data": case["data"], "algorithm": case["algorithm"]},
+                "output": result,
+            }
+        )
 
     return fixtures
 
@@ -226,12 +201,19 @@ def main():
         "metadata": {
             "generated_by": "scripts/generate_parity_fixtures.py",
             "python_version": sys.version,
-            "description": "Test fixtures for verifying Python-TypeScript parity"
-        }
+            "description": "Test fixtures for verifying Python-TypeScript parity",
+        },
     }
 
     # Create output directory
-    output_dir = Path(__file__).parent.parent / "omrchecker-js" / "packages" / "core" / "tests" / "parity"
+    output_dir = (
+        Path(__file__).parent.parent
+        / "omrchecker-js"
+        / "packages"
+        / "core"
+        / "tests"
+        / "parity"
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Write fixtures

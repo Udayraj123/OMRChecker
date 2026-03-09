@@ -146,9 +146,7 @@ class TestTemplateSchemaInvalidMissingRequired:
 
     def test_missing_pre_processors(self):
         """preProcessors is required."""
-        instance = {
-            k: v for k, v in _MINIMAL_TEMPLATE.items() if k != "preProcessors"
-        }
+        instance = {k: v for k, v in _MINIMAL_TEMPLATE.items() if k != "preProcessors"}
         assert not _is_valid("template", instance)
         errors = _schema_errors("template", instance)
         assert any("preProcessors" in e for e in errors)
@@ -347,7 +345,9 @@ class TestConfigSchemaValid:
             "ml_only",
         ]:
             instance = {"ml": {"fusionStrategy": strategy}}
-            assert _is_valid("config", instance), f"Expected valid for strategy={strategy}"
+            assert _is_valid("config", instance), (
+                f"Expected valid for strategy={strategy}"
+            )
 
     def test_config_show_image_level_zero_allows_multiple_workers(self):
         """showImageLevel=0 (non-interactive) allows maxParallelWorkers > 1."""
@@ -495,7 +495,9 @@ class TestConfigSchemaValidationFunctions:
         with pytest.raises((ConfigValidationError, Exception)) as exc_info:
             validate_config_json(instance, _DUMMY_PATH)
         error_str = str(exc_info.value)
-        assert "Invalid config JSON" in error_str or "config JSON is Invalid" in error_str
+        assert (
+            "Invalid config JSON" in error_str or "config JSON is Invalid" in error_str
+        )
 
     def test_invalid_output_mode_raises(self):
         """An invalid outputMode must raise ConfigValidationError."""
@@ -692,14 +694,18 @@ class TestEvaluationSchemaInvalidMissingRequired:
 
     def test_missing_source_type(self):
         """sourceType is required."""
-        instance = {k: v for k, v in _MINIMAL_EVALUATION_LOCAL.items() if k != "sourceType"}
+        instance = {
+            k: v for k, v in _MINIMAL_EVALUATION_LOCAL.items() if k != "sourceType"
+        }
         assert not _is_valid("evaluation", instance)
         errors = _schema_errors("evaluation", instance)
         assert any("sourceType" in e for e in errors)
 
     def test_missing_options(self):
         """options is required."""
-        instance = {k: v for k, v in _MINIMAL_EVALUATION_LOCAL.items() if k != "options"}
+        instance = {
+            k: v for k, v in _MINIMAL_EVALUATION_LOCAL.items() if k != "options"
+        }
         assert not _is_valid("evaluation", instance)
         errors = _schema_errors("evaluation", instance)
         assert any("options" in e for e in errors)
