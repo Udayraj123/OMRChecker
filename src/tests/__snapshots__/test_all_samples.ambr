@@ -226,6 +226,51 @@
 # ---
 # name: test_run_crop_four_dots
   dict({
+    'Evaluation/IMG_20201116_143512_evaluation.csv': '''
+      "Question","Marked","Answer(s)","Verdict","Delta","Score"
+      "q1","B","B","Correct","3.0","3.0"
+      "q2","D","D","Correct","3.0","6.0"
+      "q3","C","C","Correct","3.0","9.0"
+      "q4","B","B","Correct","3.0","12.0"
+      "q5","D","D","Correct","3.0","15.0"
+      "q6","C","C","Correct","3.0","18.0"
+      "q7","BC","['B', 'C', 'BC']","Correct-Bc","3.0","21.0"
+      "q8","A","A","Correct","3.0","24.0"
+      "q9","C","C","Correct","3.0","27.0"
+      "q10","D","D","Correct","3.0","30.0"
+      "q11","C","C","Correct","3.0","33.0"
+  
+    ''',
+    'Evaluation/IMG_20201116_150717658_evaluation.csv': '''
+      "Question","Marked","Answer(s)","Verdict","Delta","Score"
+      "q1","B","B","Correct","3.0","3.0"
+      "q2","D","D","Correct","3.0","6.0"
+      "q3","C","C","Correct","3.0","9.0"
+      "q4","B","B","Correct","3.0","12.0"
+      "q5","D","D","Correct","3.0","15.0"
+      "q6","C","C","Correct","3.0","18.0"
+      "q7","BC","['B', 'C', 'BC']","Correct-Bc","3.0","21.0"
+      "q8","A","A","Correct","3.0","24.0"
+      "q9","C","C","Correct","3.0","27.0"
+      "q10","D","D","Correct","3.0","30.0"
+      "q11","C","C","Correct","3.0","33.0"
+  
+    ''',
+    'Evaluation/IMG_20201116_150750830_evaluation.csv': '''
+      "Question","Marked","Answer(s)","Verdict","Delta","Score"
+      "q1","A","B","Incorrect","-1.0","-1.0"
+      "q2","","D","Unmarked","0.0","-1.0"
+      "q3","D","C","Incorrect","-1.0","-2.0"
+      "q4","C","B","Incorrect","-1.0","-3.0"
+      "q5","AC","D","Incorrect","-1.0","-4.0"
+      "q6","A","C","Incorrect","-1.0","-5.0"
+      "q7","D","['B', 'C', 'BC']","Incorrect","-1.0","-6.0"
+      "q8","B","A","Incorrect","-1.0","-7.0"
+      "q9","C","C","Correct","3.0","-4.0"
+      "q10","D","D","Correct","3.0","-1.0"
+      "q11","D","C","Incorrect","-1.0","-2.0"
+  
+    ''',
     'Manual/ErrorFiles.csv': '''
       Empty DataFrame
       Columns: [file_id, input_path, output_path, score, Roll, Subject Code, bookletNo, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14, q15, q16, q17, q18, q19, q20, q21, q22, q23, q24, q25, q26, q27, q28, q29, q30, q31, q32, q33, q34, q35, q36, q37, q38, q39, q40, q41, q42, q43, q44, q45, q46, q47, q48, q49, q50, q51, q52, q53, q54, q55, q56, q57, q58, q59, q60, q61, q62, q63, q64, q65, q66, q67, q68, q69, q70, q71, q72, q73, q74, q75, q76, q77, q78, q79, q80, q81, q82, q83, q84, q85, q86, q87, q88, q89, q90, q91, q92, q93, ...]
