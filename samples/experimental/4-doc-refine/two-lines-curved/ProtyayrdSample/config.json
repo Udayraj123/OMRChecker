@@ -1,0 +1,16 @@
+{
+  "thresholding": {
+    "MIN_JUMP": 15,
+    "MIN_JUMP_SURPLUS_FOR_GLOBAL_FALLBACK": 10,
+    "GLOBAL_PAGE_THRESHOLD": 150,
+    "CONFIDENT_JUMP_SURPLUS_FOR_DISPARITY": 25
+  },
+  "outputs": {
+    "display_image_dimensions": [
+      3508,
+      2480
+    ],
+    "show_image_level": 0,
+    "save_image_metrics": true
+  }
+}

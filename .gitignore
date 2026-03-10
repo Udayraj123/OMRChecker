@@ -1,7 +1,14 @@
 # Any directory starting with a dot
 **/\.*/
-# Except .github
+
+# Exceptions for dot directories -
 !.github/
+!.vscode/
+!.devcontainer/
+!docs/overrides/.icons
+
+# mkdocs generated site
+docs/site
 
 # Everything in inputs/ and outputs/
 inputs/*
@@ -9,6 +16,17 @@ outputs/*
 
 # Misc
 **/.DS_Store
+**/__ignore__
 **/__pycache__
 venv/
+.venv/
 OMRChecker.wiki/
+
+# pytest
+pytestdebug.log
+.coverage
+.pytest_cache
+
+# ruff
+.ruff_cache
+

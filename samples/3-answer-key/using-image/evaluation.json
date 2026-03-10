@@ -1,0 +1,20 @@
+{
+  "source_type": "image_and_csv",
+  "options": {
+    "answer_key_image_path": "answer_key.jpg",
+    "answer_key_csv_path": "answer_key.csv",
+    "questions_in_order": [
+      "q1..100"
+    ]
+  },
+  "marking_schemes": {
+    "DEFAULT": {
+      "correct": "2",
+      "incorrect": "-2/3",
+      "unmarked": "0"
+    }
+  },
+  "outputs_configuration": {
+    "should_explain_scoring": true
+  }
+}

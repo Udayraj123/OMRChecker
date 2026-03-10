@@ -1,18 +1,10 @@
-"""
-
- OMRChecker
-
- Author: Udayraj Deshmukh
- Github: https://github.com/Udayraj123
-
-"""
-
 import argparse
 import sys
 from pathlib import Path
 
 from src.entry import entry_point
-from src.logger import logger
+from src.utils.constants import OUTPUT_MODES
+from src.utils.logger import logger
 
 
 def parse_args():
@@ -36,7 +28,7 @@ def parse_args():
         "--debug",
         required=False,
         dest="debug",
-        action="store_false",
+        action="store_true",
         help="Enables debugging mode for showing detailed errors",
     )
 
@@ -50,13 +42,13 @@ def parse_args():
     )
 
     argparser.add_argument(
-        "-a",
-        "--autoAlign",
+        "-m",
+        "--outputMode",
+        default="default",
         required=False,
-        dest="autoAlign",
-        action="store_true",
-        help="(experimental) Enables automatic template alignment - \
-        use if the scans show slight misalignments.",
+        choices=[*list(OUTPUT_MODES.values())],
+        dest="outputMode",
+        help="Specify the output mode. Supported: moderation, default",
     )
 
     argparser.add_argument(
@@ -77,21 +69,35 @@ def parse_args():
     args = vars(args)
 
     if len(unknown) > 0:
-        logger.warning(f"\nError: Unknown arguments: {unknown}", unknown)
         argparser.print_help()
-        exit(11)
+        msg = f"\nError: Unknown arguments: {unknown}"
+        raise Exception(msg)
+
+    if args["setLayout"] is True:
+        if args["outputMode"] not in {OUTPUT_MODES.SET_LAYOUT, OUTPUT_MODES.DEFAULT}:
+            msg = f"Error: --setLayout cannot be used together with --outputMode={args['outputMode']}"
+            raise Exception(msg)
+        args["outputMode"] = "setLayout"
     return args
 
 
-def entry_point_for_args(args):
-    if args["debug"] is True:
-        # Disable tracebacks
+def entry_point_for_args(args) -> None:
+    if args["debug"] is False:
+        # Disable traceback limit
         sys.tracebacklimit = 0
+        logger.set_log_levels({"debug": True})
     for root in args["input_paths"]:
-        entry_point(
-            Path(root),
-            args,
-        )
+        try:
+            entry_point(
+                Path(root),
+                args,
+            )
+        except Exception:
+            if args["debug"] is False:
+                logger.critical(
+                    "OMRChecker crashed. add --debug and run again to see error details"
+                )
+            raise
 
 
 if __name__ == "__main__":

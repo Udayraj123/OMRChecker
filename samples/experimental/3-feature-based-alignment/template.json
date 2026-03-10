@@ -1,0 +1,138 @@
+{
+  "templateDimensions": [
+    2480,
+    3508
+  ],
+  "bubbleDimensions": [
+    42,
+    42
+  ],
+  "processingImageShape": [
+    2339,
+    1653
+  ],
+  "preProcessors": [
+    {
+      "name": "Levels",
+      "options": {
+        "low": 0.7,
+        "high": 0.8
+      }
+    },
+    {
+      "name": "FeatureBasedAlignment",
+      "options": {
+        "reference": "reference.png",
+        "maxFeatures": 1000,
+        "goodMatchPercent": 0.08,
+        "2d": true
+      }
+    },
+    {
+      "name": "GaussianBlur",
+      "options": {
+        "kSize": [
+          3,
+          3
+        ],
+        "sigmaX": 0
+      }
+    }
+  ],
+  "customLabels": {
+    "Roll": [
+      "stu",
+      "roll1..7",
+      "check_1",
+      "check_2"
+    ]
+  },
+  "customBubbleFieldTypes": {
+    "CUSTOM_CHECK_1": {
+      "bubbleValues": [
+        "A",
+        "B",
+        "E",
+        "H",
+        "J",
+        "L",
+        "M"
+      ],
+      "direction": "vertical"
+    },
+    "CUSTOM_CHECK_2": {
+      "bubbleValues": [
+        "N",
+        "R",
+        "U",
+        "W",
+        "X",
+        "Y"
+      ],
+      "direction": "vertical"
+    },
+    "CUSTOM_STU_FIELD": {
+      "bubbleValues": [
+        "U",
+        "A",
+        "HT",
+        "GT"
+      ],
+      "direction": "vertical"
+    }
+  },
+  "fieldBlocks": {
+    "Check1": {
+      "origin": [
+        2033,
+        1290
+      ],
+      "bubblesGap": 50,
+      "labelsGap": 50,
+      "fieldLabels": [
+        "check_1"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_CHECK_1"
+    },
+    "Check2": {
+      "origin": [
+        2083,
+        1290
+      ],
+      "bubblesGap": 50,
+      "labelsGap": 50,
+      "fieldLabels": [
+        "check_2"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_CHECK_2"
+    },
+    "Stu": {
+      "origin": [
+        1636,
+        1290
+      ],
+      "bubblesGap": 50,
+      "labelsGap": 50,
+      "fieldLabels": [
+        "stu"
+      ],
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "CUSTOM_STU_FIELD"
+    },
+    "Roll": {
+      "fieldDetectionType": "BUBBLES_THRESHOLD",
+      "bubbleFieldType": "QTYPE_INT",
+      "origin": [
+        1685,
+        1290
+      ],
+      "bubblesGap": 50.5,
+      "labelsGap": 50.5,
+      "fieldLabels": [
+        "roll1..7"
+      ]
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "templateDimensions": [
+    1200,
+    1500
+  ],
+  "bubbleDimensions": [
+    40,
+    50
+  ],
+  "customLabels": {},
+  "processingImageShape": [
+    900,
+    650
+  ],
+  "fieldBlocks": {
+    "BookletNo": {
+      "fieldDetectionType": "BARCODE_QR",
+      "origin": [
+        220,
+        1255
+      ],
+      "scanZone": {
+        "margins": {
+          "top": 100,
+          "bottom": 100,
+          "left": 100,
+          "right": 100
+        },
+        "dimensions": [
+          180,
+          175
+        ]
+      },
+      "fieldLabels": [
+        "barcode"
+      ]
+    }
+  },
+  "preProcessors": []
+}
