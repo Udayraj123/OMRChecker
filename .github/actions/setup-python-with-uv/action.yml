@@ -22,8 +22,3 @@ runs:
       run: uv sync --frozen
       shell: bash
 
-    - name: Activate venv
-      run: |
-        uv venv
-        source .venv/bin/activate
-      shell: bash
