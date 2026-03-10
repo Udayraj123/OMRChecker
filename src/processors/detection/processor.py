@@ -1,5 +1,6 @@
 """ReadOMR Processor for OMR detection and interpretation."""
 
+import threading
 from pathlib import Path
 
 from src.processors.base import ProcessingContext, Processor
@@ -34,6 +35,12 @@ class ReadOMRProcessor(Processor):
         # Instantiate the TemplateFileRunner here instead of in Template
         # This decouples Template from processing logic
         self.template_file_runner = TemplateFileRunner(template)
+
+        # Reentrant lock so that process_single_file and process() can both
+        # acquire it from the same thread without deadlocking.  This serialises
+        # access to template_file_runner aggregates and save_image_ops across
+        # threads when parallel processing is enabled.
+        self._lock = threading.RLock()
 
         # Optional ML fallback
         self.ml_detector = None
@@ -121,70 +128,75 @@ class ReadOMRProcessor(Processor):
         input_gray_image = context.gray_image
         colored_image = context.colored_image
 
-        # Resize to template dimensions for saved outputs
-        gray_image, colored_image = ImageUtils.resize_to_dimensions(
-            template.template_dimensions, input_gray_image, colored_image
-        )
-
-        # Save resized image
-        template.save_image_ops.append_save_image(
-            "Resized Image", range(3, 7), gray_image, colored_image
-        )
-
-        # Normalize images
-        gray_image, colored_image = ImageUtils.normalize(gray_image, colored_image)
-
-        # Run detection and interpretation via TemplateFileRunner
-        raw_omr_response = self.template_file_runner.read_omr_and_update_metrics(
-            file_path, gray_image, colored_image
-        )
-
-        # Get concatenated response (handles custom labels)
-        concatenated_omr_response = template.get_concatenated_omr_response(
-            raw_omr_response
-        )
-
-        # Extract interpretation metrics
-        directory_level_interpretation_aggregates = (
-            self.template_file_runner.get_directory_level_interpretation_aggregates()
-        )
-
-        template_file_level_interpretation_aggregates = (
-            directory_level_interpretation_aggregates["file_wise_aggregates"][file_path]
-        )
-
-        is_multi_marked = template_file_level_interpretation_aggregates[
-            "read_response_flags"
-        ]["is_multi_marked"]
-
-        field_id_to_interpretation = template_file_level_interpretation_aggregates[
-            "field_id_to_interpretation"
-        ]
-
-        # Update context with results
-        context.omr_response = concatenated_omr_response
-        context.is_multi_marked = is_multi_marked
-        context.field_id_to_interpretation = field_id_to_interpretation
-        context.gray_image = gray_image
-        context.colored_image = colored_image
-
-        # Store raw response and aggregates in metadata
-        context.metadata["raw_omr_response"] = raw_omr_response
-        context.metadata["directory_level_interpretation_aggregates"] = (
-            directory_level_interpretation_aggregates
-        )
-
-        # Check for low-confidence fields and use ML fallback if needed
-        if self.hybrid_strategy and self.hybrid_strategy.should_use_ml_fallback(
-            context
-        ):
-            logger.info(
-                f"Using ML fallback for low-confidence fields in {Path(file_path).name}"
+        # Acquire the per-processor lock so that concurrent threads cannot
+        # interleave writes to template_file_runner aggregates or
+        # save_image_ops.  process_single_file also acquires this lock before
+        # reset_all_save_img() so the whole sequence is atomic per file.
+        with self._lock:
+            # Resize to template dimensions for saved outputs
+            gray_image, colored_image = ImageUtils.resize_to_dimensions(
+                template.template_dimensions, input_gray_image, colored_image
             )
-            self.ml_detector.enable_for_low_confidence()
-            context = self.ml_detector.process(context)
-            self.ml_detector.disable()
-            self.hybrid_strategy.stats["ml_fallback_used"] += 1
+
+            # Save resized image
+            template.save_image_ops.append_save_image(
+                "Resized Image", range(3, 7), gray_image, colored_image
+            )
+
+            # Normalize images
+            gray_image, colored_image = ImageUtils.normalize(gray_image, colored_image)
+
+            # Run detection and interpretation via TemplateFileRunner
+            raw_omr_response = self.template_file_runner.read_omr_and_update_metrics(
+                file_path, gray_image, colored_image
+            )
+
+            # Get concatenated response (handles custom labels)
+            concatenated_omr_response = template.get_concatenated_omr_response(
+                raw_omr_response
+            )
+
+            # Extract interpretation metrics
+            directory_level_interpretation_aggregates = self.template_file_runner.get_directory_level_interpretation_aggregates()
+
+            template_file_level_interpretation_aggregates = (
+                directory_level_interpretation_aggregates["file_wise_aggregates"][
+                    file_path
+                ]
+            )
+
+            is_multi_marked = template_file_level_interpretation_aggregates[
+                "read_response_flags"
+            ]["is_multi_marked"]
+
+            field_id_to_interpretation = template_file_level_interpretation_aggregates[
+                "field_id_to_interpretation"
+            ]
+
+            # Update context with results
+            context.omr_response = concatenated_omr_response
+            context.is_multi_marked = is_multi_marked
+            context.field_id_to_interpretation = field_id_to_interpretation
+            context.gray_image = gray_image
+            context.colored_image = colored_image
+
+            # Store raw response and aggregates in metadata
+            context.metadata["raw_omr_response"] = raw_omr_response
+            context.metadata["directory_level_interpretation_aggregates"] = (
+                directory_level_interpretation_aggregates
+            )
+
+            # Check for low-confidence fields and use ML fallback if needed
+            if self.hybrid_strategy and self.hybrid_strategy.should_use_ml_fallback(
+                context
+            ):
+                logger.info(
+                    f"Using ML fallback for low-confidence fields in {Path(file_path).name}"
+                )
+                self.ml_detector.enable_for_low_confidence()
+                context = self.ml_detector.process(context)
+                self.ml_detector.disable()
+                self.hybrid_strategy.stats["ml_fallback_used"] += 1
 
         logger.debug(f"Completed {self.get_name()} processor")
 

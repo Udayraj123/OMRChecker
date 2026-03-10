@@ -87,11 +87,18 @@ class ProcessingPipeline:
                 logger.info("ML-based shift detection enabled")
 
         # Add traditional + ML bubble detection (Stage 2)
-        self.processors.append(ReadOMRProcessor(template, ml_model_path=ml_model_path))
+        read_omr = ReadOMRProcessor(template, ml_model_path=ml_model_path)
+        self.read_omr_processor = read_omr
+        self.processors.append(read_omr)
 
         # Add experimental training data collector if enabled
         if self._should_enable_training_collection():
             self._add_training_data_collector()
+
+        # Snapshot how many processors belong to the core pipeline.
+        # Processors added later (e.g. FileOrganizerProcessor per-directory)
+        # are reset between directories via reset_extra_processors().
+        self._base_processor_count = len(self.processors)
 
     def _should_enable_alignment(self) -> bool:
         """Check if alignment processor should be enabled.
@@ -199,6 +206,15 @@ class ProcessingPipeline:
         logger.info(f"Completed pipeline for file: {file_path}")
 
         return context
+
+    def reset_extra_processors(self) -> None:
+        """Remove processors added after pipeline initialisation.
+
+        Called by reset_and_setup_for_directory so that per-directory
+        processors (e.g. FileOrganizerProcessor) don't accumulate across
+        directories when the same template is reused.
+        """
+        self.processors = self.processors[: self._base_processor_count]
 
     def add_processor(self, processor: Processor) -> None:
         """Add a custom processor to the pipeline.

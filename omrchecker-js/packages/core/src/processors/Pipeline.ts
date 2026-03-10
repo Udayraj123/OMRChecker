@@ -124,4 +124,8 @@ export class ProcessingPipeline {
   getTuningConfig(): any {
     return this.tuningConfig;
   }
+
+  resetExtraProcessors(): any { // TODO: Add parameters and return type
+    // TODO: Implement
+  }
 }

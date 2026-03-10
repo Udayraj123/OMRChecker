@@ -54,6 +54,9 @@ class Template:
         """Reset all mutations to the template and setup output directories."""
         self.template_layout.reset_all_shifts()
         self.reset_and_setup_outputs(output_dir)
+        # Drop per-directory processors (e.g. FileOrganizerProcessor) so they
+        # don't accumulate when the same template is reused across directories.
+        self.pipeline.reset_extra_processors()
 
     def reset_and_setup_outputs(self, output_dir: Path) -> None:
         output_mode = self.tuning_config.outputs.output_mode
@@ -98,15 +101,17 @@ class Template:
     def get_errors_file(self):
         return self.directory_handler.output_files["Errors"]
 
+    @property
+    def path_utils(self):
+        return self.directory_handler.path_utils
+
     def finish_processing_directory(self):
         """Finish processing directory and get aggregated results.
 
         Note: This delegates to the ReadOMRProcessor via the pipeline.
         """
         self.directory_handler.finish_processing_directory()
-        # Get the ReadOMRProcessor from the pipeline
-        read_omr_processor = self.pipeline.processors[-1]  # Last processor
-        return read_omr_processor.finish_processing_directory()
+        return self.pipeline.read_omr_processor.finish_processing_directory()
 
     def get_save_marked_dir(self):
         return self.directory_handler.path_utils.save_marked_dir

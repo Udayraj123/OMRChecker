@@ -27,6 +27,10 @@ class TemplateFileRunner(
     It maintains own template level runners as well as all the field detection type level runners.
     We create one instance of TemplateFileRunner per Template - thus it is reused for all images mapped to that Template.
     Note: a Template may get reused for multiple directories(in nested case).
+
+    Thread-safety: this class is NOT thread-safe on its own.  All concurrent
+    access must be serialised by the caller (ReadOMRProcessor acquires
+    ``self._lock`` around every call into this runner).
     """
 
     field_detection_type_to_runner: ClassVar = {

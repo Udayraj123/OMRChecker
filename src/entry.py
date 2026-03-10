@@ -1,7 +1,8 @@
+import shutil
+import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path, PurePosixPath
 from time import time
-import traceback
 
 from rich.table import Table
 
@@ -349,19 +350,23 @@ def process_single_file(
             f"({file_counter}) Opening image: \t'{file_path}'\tResolution: {gray_image.shape}"
         )
 
-        # Start with blank saved images list
-        template.save_image_ops.reset_all_save_img()
+        # Acquire the ReadOMR lock before touching save_image_ops so that the
+        # reset→append→process_file sequence is atomic across threads.  The
+        # lock is reentrant, so ReadOMRProcessor.process() can re-acquire it.
+        with template.pipeline.read_omr_processor._lock:
+            # Start with blank saved images list
+            template.save_image_ops.reset_all_save_img()
 
-        template.save_image_ops.append_save_image(
-            "Input Image", range(1, 7), gray_image, colored_image
-        )
+            template.save_image_ops.append_save_image(
+                "Input Image", range(1, 7), gray_image, colored_image
+            )
 
-        # Use the unified pipeline to process the file
-        # This replaces the separate calls to:
-        # - template.apply_preprocessors()
-        # - apply_template_alignment()
-        # - template.read_omr_response()
-        context = template.process_file(file_path, gray_image, colored_image)
+            # Use the unified pipeline to process the file
+            # This replaces the separate calls to:
+            # - template.apply_preprocessors()
+            # - apply_template_alignment()
+            # - template.read_omr_response()
+            context = template.process_file(file_path, gray_image, colored_image)
 
         # Extract results from the context
         concatenated_omr_response = context.omr_response
@@ -616,6 +621,9 @@ def process_directory_files(
 
     logger.info(
         f"\nProcessing {len(omr_files)} files with {max_workers} worker thread(s)..."
+        # Note: OMR detection is serialised per template via ReadOMRProcessor._lock
+        # to protect shared aggregates; parallelism still helps for I/O and
+        # image preprocessing steps that precede detection.
     )
 
     # Process files in parallel
@@ -696,11 +704,16 @@ def process_directory_files(
     print_stats(start_time, files_counter, tuning_config)
 
 
-def check_and_move(_error_code, _file_path, _filepath2) -> bool:
+def check_and_move(_error_code, file_path, output_file_path) -> bool:
     # TODO: use StatsByLabel class here
-    # TODO: fix file movement into error/multimarked/invalid etc again
-    STATS.increment_files_not_moved()
-    return True
+    try:
+        shutil.move(str(file_path), str(output_file_path))
+        STATS.increment_files_moved()
+        return True
+    except Exception as e:
+        logger.warning(f"Failed to move '{file_path}' → '{output_file_path}': {e}")
+        STATS.increment_files_not_moved()
+        return False
 
 
 # TODO: move into template.directory_handler
