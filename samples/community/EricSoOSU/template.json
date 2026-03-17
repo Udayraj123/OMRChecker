@@ -1,5 +1,5 @@
 {
-  "pageDimensions": [300, 400],
+  "pageDimensions": [340, 500],
   "bubbleDimensions": [20, 20],
 
   "fieldBlocks": {
@@ -15,10 +15,10 @@
     "MCQBlock_RTL_Custom": {
       "bubbleValues": ["G", "F", "E", "D", "C", "B", "A"],
       "direction": "horizontal",
-      "fieldLabels": ["q6..10"],
-      "bubblesGap": 40,
+      "fieldLabels": ["q6..7"],
+      "bubblesGap": 42,
       "labelsGap": 50,
-      "origin": [50, 100]
+      "origin": [30, 380]
     }
   },
   "preProcessors": []
