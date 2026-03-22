@@ -5,30 +5,30 @@ repos:
     rev: v4.4.0
     hooks:
       - id: check-yaml
-        stages: [commit]
+        stages: [pre-commit]
       - id: check-added-large-files
         args: ['--maxkb=300']
         fail_fast: false
-        stages: [commit]
+        stages: [pre-commit]
       - id: pretty-format-json
         args: ['--autofix', '--no-sort-keys']
       - id: end-of-file-fixer
         exclude_types: ["csv", "json"]
-        stages: [commit]
+        stages: [pre-commit]
       - id: trailing-whitespace
-        stages: [commit]
+        stages: [pre-commit]
   - repo: https://github.com/pycqa/isort
     rev: 5.12.0
     hooks:
       - id: isort
         args: ["--profile", "black"]
-        stages: [commit]
+        stages: [pre-commit]
   - repo: https://github.com/psf/black
     rev: 23.3.0
     hooks:
       - id: black
         fail_fast: true
-        stages: [commit]
+        stages: [pre-commit]
   - repo: https://github.com/pycqa/flake8
     rev: 6.0.0
     hooks:
@@ -36,7 +36,7 @@ repos:
         args:
           - "--ignore=E501,W503,E203,E225,E713,E741,F541" # Line too long, Line break occurred before a binary operator, Whitespace before ':'
         fail_fast: true
-        stages: [commit]
+        stages: [pre-commit]
   - repo: local
     hooks:
       - id: pytest-on-commit
@@ -46,7 +46,7 @@ repos:
         pass_filenames: false
         always_run: true
         fail_fast: true
-        stages: [commit]
+        stages: [pre-commit]
   - repo: local
     hooks:
       - id: pytest-on-push
@@ -56,4 +56,4 @@ repos:
         pass_filenames: false
         always_run: true
         fail_fast: true
-        stages: [push]
+        stages: [pre-push]

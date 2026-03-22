@@ -7,6 +7,7 @@
 
 """
 import os
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from csv import QUOTE_NONNUMERIC
 from pathlib import Path
 from time import time
@@ -22,13 +23,14 @@ from src.constants.common import (
     TEMPLATE_FILENAME,
 )
 from src.defaults import CONFIG_DEFAULTS
-from src.evaluation import EvaluationConfig, evaluate_concatenated_response
+from src.evaluation import EvaluationConfig
 from src.logger import console, logger
 from src.template import Template
 from src.utils.file import Paths, setup_dirs_for_paths, setup_outputs_for_template
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils, Stats
-from src.utils.parsing import get_concatenated_response, open_config_with_defaults
+from src.utils.parallel import process_single_file_worker
+from src.utils.parsing import open_config_with_defaults
 
 # Load processors
 STATS = Stats()
@@ -212,129 +214,125 @@ def process_files(
     files_counter = 0
     STATS.files_not_moved = 0
 
-    for file_path in omr_files:
-        files_counter += 1
-        file_name = file_path.name
+    save_dir = outputs_namespace.paths.save_marked_dir
+    evaluation_dir = outputs_namespace.paths.evaluation_dir
 
-        in_omr = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
-
-        logger.info("")
-        logger.info(
-            f"({files_counter}) Opening image: \t'{file_path}'\tResolution: {in_omr.shape}"
-        )
-
-        template.image_instance_ops.reset_all_save_img()
-
-        template.image_instance_ops.append_save_img(1, in_omr)
-
-        in_omr = template.image_instance_ops.apply_preprocessors(
-            file_path, in_omr, template
-        )
-
-        if in_omr is None:
-            # Error OMR case
-            new_file_path = outputs_namespace.paths.errors_dir.joinpath(file_name)
-            outputs_namespace.OUTPUT_SET.append(
-                [file_name] + outputs_namespace.empty_resp
+    futures = []
+    # If multiprocessing behaves badly, consider exposing max_workers configuraton.
+    with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
+        for file_path in omr_files:
+            futures.append(
+                executor.submit(
+                    process_single_file_worker,
+                    file_path,
+                    template,
+                    tuning_config,
+                    evaluation_config,
+                    save_dir,
+                    evaluation_dir,
+                )
             )
-            if check_and_move(ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path):
-                err_line = [
+
+        for future in as_completed(futures):
+            res = future.result()
+            files_counter += 1
+            file_name = res["file_name"]
+            file_path = res["file_path"]
+
+            logger.info("")
+            if res["status"] == "error":
+                new_file_path = outputs_namespace.paths.errors_dir.joinpath(file_name)
+                outputs_namespace.OUTPUT_SET.append(
+                    [file_name] + outputs_namespace.empty_resp
+                )
+                if check_and_move(res["error_code"], file_path, new_file_path):
+                    err_line = [
+                        file_name,
+                        file_path,
+                        new_file_path,
+                        "NA",
+                    ] + outputs_namespace.empty_resp
+                    pd.DataFrame(err_line, dtype=str).T.to_csv(
+                        outputs_namespace.files_obj["Errors"],
+                        mode="a",
+                        quoting=QUOTE_NONNUMERIC,
+                        header=False,
+                        index=False,
+                    )
+                continue
+
+            logger.info(
+                f"({files_counter}) Opened image: \t'{file_path}'\tResolution: {res.get('resolution', 'N/A')}"
+            )
+
+            file_id = res["file_id"]
+
+            if (
+                evaluation_config is None
+                or not evaluation_config.get_should_explain_scoring()
+            ):
+                logger.info(f"Read Response: \n{res['omr_response']}")
+
+            if evaluation_config is not None:
+                logger.info(
+                    f"(/{files_counter}) Graded with score: {round(res['score'], 2)}\t for file: '{file_id}'"
+                )
+            else:
+                logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
+
+            if res.get("final_marked") is not None:
+                InteractionUtils.show(
+                    f"Final Marked Bubbles : '{file_id}'",
+                    ImageUtils.resize_util_h(
+                        res["final_marked"],
+                        int(tuning_config.dimensions.display_height * 1.3),
+                    ),
+                    1,
+                    1,
+                    config=tuning_config,
+                )
+
+            outputs_namespace.OUTPUT_SET.append([file_name] + res["resp_array"])
+
+            if (
+                res["multi_marked"] == 0
+                or not tuning_config.outputs.filter_out_multimarked_files
+            ):
+                STATS.files_not_moved += 1
+                new_file_path = save_dir.joinpath(file_id)
+                # Enter into Results sheet-
+                results_line = [
                     file_name,
                     file_path,
                     new_file_path,
-                    "NA",
-                ] + outputs_namespace.empty_resp
-                pd.DataFrame(err_line, dtype=str).T.to_csv(
-                    outputs_namespace.files_obj["Errors"],
+                    res["score"],
+                ] + res["resp_array"]
+                pd.DataFrame(results_line, dtype=str).T.to_csv(
+                    outputs_namespace.files_obj["Results"],
                     mode="a",
                     quoting=QUOTE_NONNUMERIC,
                     header=False,
                     index=False,
                 )
-            continue
-
-        # uniquify
-        file_id = str(file_name)
-        save_dir = outputs_namespace.paths.save_marked_dir
-        (
-            response_dict,
-            final_marked,
-            multi_marked,
-            _,
-        ) = template.image_instance_ops.read_omr_response(
-            template, image=in_omr, name=file_id, save_dir=save_dir
-        )
-
-        # TODO: move inner try catch here
-        # concatenate roll nos, set unmarked responses, etc
-        omr_response = get_concatenated_response(response_dict, template)
-
-        if (
-            evaluation_config is None
-            or not evaluation_config.get_should_explain_scoring()
-        ):
-            logger.info(f"Read Response: \n{omr_response}")
-
-        score = 0
-        if evaluation_config is not None:
-            score = evaluate_concatenated_response(
-                omr_response,
-                evaluation_config,
-                file_path,
-                outputs_namespace.paths.evaluation_dir,
-            )
-            logger.info(
-                f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: '{file_id}'"
-            )
-        else:
-            logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
-
-        if tuning_config.outputs.show_image_level >= 2:
-            InteractionUtils.show(
-                f"Final Marked Bubbles : '{file_id}'",
-                ImageUtils.resize_util_h(
-                    final_marked, int(tuning_config.dimensions.display_height * 1.3)
-                ),
-                1,
-                1,
-                config=tuning_config,
-            )
-
-        resp_array = []
-        for k in template.output_columns:
-            resp_array.append(omr_response[k])
-
-        outputs_namespace.OUTPUT_SET.append([file_name] + resp_array)
-
-        if multi_marked == 0 or not tuning_config.outputs.filter_out_multimarked_files:
-            STATS.files_not_moved += 1
-            new_file_path = save_dir.joinpath(file_id)
-            # Enter into Results sheet-
-            results_line = [file_name, file_path, new_file_path, score] + resp_array
-            # Write/Append to results_line file(opened in append mode)
-            pd.DataFrame(results_line, dtype=str).T.to_csv(
-                outputs_namespace.files_obj["Results"],
-                mode="a",
-                quoting=QUOTE_NONNUMERIC,
-                header=False,
-                index=False,
-            )
-        else:
-            # multi_marked file
-            logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
-            new_file_path = outputs_namespace.paths.multi_marked_dir.joinpath(file_name)
-            if check_and_move(ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path):
-                mm_line = [file_name, file_path, new_file_path, "NA"] + resp_array
-                pd.DataFrame(mm_line, dtype=str).T.to_csv(
-                    outputs_namespace.files_obj["MultiMarked"],
-                    mode="a",
-                    quoting=QUOTE_NONNUMERIC,
-                    header=False,
-                    index=False,
+            else:
+                # multi_marked file
+                logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
+                new_file_path = outputs_namespace.paths.multi_marked_dir.joinpath(
+                    file_name
                 )
-            # else:
-            #     TODO:  Add appropriate record handling here
-            #     pass
+                if check_and_move(
+                    ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path
+                ):
+                    mm_line = [file_name, file_path, new_file_path, "NA"] + res[
+                        "resp_array"
+                    ]
+                    pd.DataFrame(mm_line, dtype=str).T.to_csv(
+                        outputs_namespace.files_obj["MultiMarked"],
+                        mode="a",
+                        quoting=QUOTE_NONNUMERIC,
+                        header=False,
+                        index=False,
+                    )
 
     print_stats(start_time, files_counter, tuning_config)
 
