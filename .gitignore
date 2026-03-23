@@ -56,3 +56,4 @@ reports/sync-status-*.html
 .agents/migration-toolkit/node_modules/
 .agents/migration-toolkit/package-lock.json
 .migration-tasks.jsonl
+.gitnexus
