@@ -39,7 +39,7 @@ def rectify(
 
 def _get_output_shape_for_segments(
     edge_contours_map: dict[str, list[tuple[int, int]]],
-    # enable_cropping: bool,
+    # cropping_enabled: bool,
 ) -> tuple[int, int]:
     max_width = max(
         MathUtils.distance(edge_contours_map[name][0], edge_contours_map[name][-1])
@@ -61,12 +61,12 @@ def transform_line(line, transform_matrix):
 def _create_backward_output_map(
     segments: dict[str, LineString],
     output_shape: tuple[int, int],
-    # TODO: _enable_cropping: bool,
+    # TODO: _cropping_enabled: bool,
 ) -> np.ndarray:
     resolution_h, resolution_w = output_shape
     transformed_backward_points_map = np.zeros((resolution_h, resolution_w, 2))
 
-    # TODO: support for in-place transforms when enable_cropping is False
+    # TODO: support for in-place transforms when cropping_enabled is False
     # map geometric objects to normalized space
     coord_map = {
         (0, 0): segments["top"].coords[0],

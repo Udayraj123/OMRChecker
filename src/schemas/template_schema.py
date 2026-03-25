@@ -193,7 +193,34 @@ warp_on_points_options_if_required_attrs = {
 }
 pre_processor_options_available_keys = {"processingImageShape": True}
 
+warp_on_points_tuning_options = {
+    "warpMethod": {
+        "type": "string",
+        "enum": [*WarpMethod.values()],
+    },
+    "warpMethodFlag": {
+        "type": "string",
+        "enum": [*WarpMethodFlags.values()],
+    },
+    "croppingUseBoundingBox": {
+        "type": "boolean",
+        "description": "To use bounding box(min area rectangle) method for cropping over the detected anchor points (Requires croppingEnabled: true)",
+    },
+    "croppingUseApproxPoly": {
+        "type": "boolean",
+        "description": "Tto use approx polygon method(Douglas Pecker) for cropping over the detected anchor points (Requires croppingEnabled: true)",
+    },
+}
+
+warp_on_points_tuning_options_available_keys = {
+    "warpMethod": True,
+    "warpMethodFlag": True,
+    "croppingUseBoundingBox": True,
+    "croppingUseApproxPoly": True,
+}
+
 crop_on_markers_tuning_options_available_keys = {
+    **warp_on_points_tuning_options_available_keys,
     "dotThreshold": True,
     "dotKernel": True,
     "lineThreshold": True,
@@ -207,28 +234,17 @@ crop_on_markers_tuning_options_available_keys = {
 }
 crop_on_markers_options_available_keys = {
     **pre_processor_options_available_keys,
-    "enableCropping": True,
+    "croppingEnabled": True,
     "scanZones": True,
     "defaultSelector": True,
     "tuningOptions": True,
     "type": True,
 }
 
-warp_on_points_tuning_options = {
-    "warpMethod": {
-        "type": "string",
-        "enum": [*WarpMethod.values()],
-    },
-    "warpMethodFlag": {
-        "type": "string",
-        "enum": [*WarpMethodFlags.values()],
-    },
-}
-
 
 warp_on_points_options_available_keys = {
     **pre_processor_options_available_keys,
-    "enableCropping": True,
+    "croppingEnabled": True,
     "defaultSelector": True,
     "scanZones": True,
     "tuningOptions": True,
@@ -872,7 +888,7 @@ TEMPLATE_SCHEMA = {
                                             "type": "string",
                                             "enum": default_points_selector_types,
                                         },
-                                        "enableCropping": {
+                                        "croppingEnabled": {
                                             "description": "Whether to crop the image to a bounding box of the given anchor points",
                                             "type": "boolean",
                                         },
@@ -911,7 +927,7 @@ TEMPLATE_SCHEMA = {
                                     "properties": {
                                         # Note: the keys need to match with crop_on_markers_options_available_keys
                                         **crop_on_markers_options_available_keys,
-                                        "enableCropping": {
+                                        "croppingEnabled": {
                                             "description": "Whether to crop the image to a bounding box of the given anchor points",
                                             "type": "boolean",
                                         },

@@ -88,14 +88,14 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         tuning_options = self.tuning_options
 
         # Cropping configuration
-        self.enable_cropping = options.get("enable_cropping", False)
+        self.cropping_enabled = options.get("cropping_enabled", False)
 
         # Determine warp method (default depends on cropping)
         self.warp_method = tuning_options.get(
             "warp_method",
             (
                 WarpMethod.PERSPECTIVE_TRANSFORM
-                if self.enable_cropping
+                if self.cropping_enabled
                 else WarpMethod.HOMOGRAPHY
             ),
         )
@@ -263,7 +263,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         )
 
         logger.debug(
-            f"Cropping Enabled: {self.enable_cropping}\n"
+            f"Cropping Enabled: {self.cropping_enabled}\n"
             f"Control points: {parsed_control_points}\n"
             f"Warped dimensions: {warped_dimensions}"
         )
@@ -312,7 +312,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         Returns:
             Tuple of (parsed_control_points, parsed_destination_points, warped_dimensions)
         """
-        # Deduplicate points using dict to preserve order
+        # Deduplicate points using dict to preserve order (insert order)
         unique_pairs = {
             tuple(ctrl): dest
             for ctrl, dest in zip(control_points, destination_points, strict=False)
@@ -333,7 +333,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         self, default_dims: Tuple[int, int], destination_points: np.ndarray
     ) -> Tuple[int, int]:
         """Calculate warped dimensions based on cropping settings."""
-        if not self.enable_cropping:
+        if not self.cropping_enabled:
             return default_dims
 
         destination_box, rectangle_dimensions = MathUtils.get_bounding_box_of_points(
@@ -502,7 +502,7 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
 
         # Show final preview if configured
         if config.outputs.show_image_level >= 5:
-            title = f"{'Cropped' if self.enable_cropping else 'Warped'} Image Preview"
+            title = f"{'Cropped' if self.cropping_enabled else 'Warped'} Image Preview"
             InteractionUtils.show(f"{title}: {file_path}", warped_image, pause=True)
 
     def _show_high_detail_visualizations(
@@ -515,9 +515,9 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         destination_points,
     ):
         """Show detailed debug visualizations."""
-        title_prefix = "Cropped Image" if self.enable_cropping else "Warped Image"
+        title_prefix = "Cropped Image" if self.cropping_enabled else "Warped Image"
 
-        if self.enable_cropping:
+        if self.cropping_enabled:
             # debug_image is warped, so draw contour in destination space
             DrawingUtils.draw_contour(
                 self.debug_image, cv2.convexHull(destination_points)

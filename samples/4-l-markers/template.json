@@ -16,7 +16,7 @@
           1500,
           2000
         ],
-        "enableCropping": true,
+        "croppingEnabled": true,
         "tuningOptions": {
           "warpMethod": "HOMOGRAPHY",
           "morphKernelSize": [

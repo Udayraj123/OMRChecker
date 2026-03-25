@@ -68,7 +68,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         options: dict,
         layout_type: str,
         *,
-        enable_cropping: bool = True,
+        cropping_enabled: bool = True,
         default_warp_method: str,
     ) -> dict:
         """
@@ -79,7 +79,9 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         return {
             "default_selector": options.get("default_selector", "CENTERS"),
             "points_layout": layout_type,
-            "enable_cropping": enable_cropping,
+            "cropping_enabled": cropping_enabled,
+            "cropping_use_bounding_box": options.get("cropping_use_bounding_box", True),
+            "cropping_use_approx_poly": options.get("cropping_use_approx_poly", False),
             "tuning_options": {
                 "warp_method": tuning_options.get("warp_method", default_warp_method),
             },
@@ -171,12 +173,12 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
             [],
         )
 
+        # Inject runtime zone description
         for scan_zone in self.scan_zones:
             # Note: zone_description is computed at runtime(e.g. for CropOnCustomMarkers with default quadrants)
             zone_description = self.get_runtime_zone_description_with_defaults(
                 image, scan_zone
             )
-            # Inject runtime zone description
             scan_zone["runtime_zone_description"] = zone_description
 
             if config.outputs.show_image_level >= 1:
@@ -196,6 +198,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         # TODO: use shapely and corner points to split easily?
         zone_preset_points = {}
         page_corners, destination_page_corners = [], []
+        # TODO: have a better control over ordering in the scan zones for getting a contiguous contour
         for scan_zone in self.scan_zones:
             zone_preset = scan_zone["zone_preset"]
             zone_description = scan_zone["runtime_zone_description"]
@@ -211,6 +214,7 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
                 )
                 zone_preset_points[zone_preset] = zone_control_points
 
+                # TODO: check if we really need page_corners array separately if we're taking bounding rect directly
                 page_corners.append(dot_point)
                 destination_page_corners.append(destination_point)
 
@@ -248,13 +252,41 @@ class CropOnPatchesCommon(WarpOnPointsCommon):
         edge_contours_map = get_edge_contours_map_from_zone_points(zone_preset_points)
 
         if self.warp_method == WarpMethod.PERSPECTIVE_TRANSFORM:
-            ordered_page_corners, ordered_indices = MathUtils.order_four_points(
-                page_corners, dtype="float32"
-            )
-            destination_page_corners = [
-                destination_page_corners[i] for i in ordered_indices
-            ]
-            return ordered_page_corners, destination_page_corners, edge_contours_map
+            if (
+                self.options["cropping_enabled"]
+                and self.options["cropping_use_bounding_box"]
+            ):
+                logger.debug("control_points", control_points)
+                if self.options["cropping_use_approx_poly"]:
+                    # create a contour from the given points
+                    contour_points = (
+                        np.array(control_points).reshape((-1, 1, 2)).astype(np.int32)
+                    )
+                    page_corners = ImageUtils.get_four_corners_from_contour(
+                        contour_points
+                    )
+                else:
+                    page_corners = MathUtils.get_rotated_rectangle_points(
+                        np.array(control_points).astype(np.int32)
+                    )
+
+                ordered_page_corners, _ = MathUtils.order_four_points(
+                    page_corners, dtype="float32"
+                )
+                (
+                    destination_page_corners,
+                    _,
+                ) = ImageUtils.get_cropped_warped_rectangle_points(ordered_page_corners)
+
+                return ordered_page_corners, destination_page_corners, edge_contours_map
+            else:
+                ordered_page_corners, ordered_indices = MathUtils.order_four_points(
+                    page_corners, dtype="float32"
+                )
+                destination_page_corners = [
+                    destination_page_corners[i] for i in ordered_indices
+                ]
+                return ordered_page_corners, destination_page_corners, edge_contours_map
 
         # TODO: sort edge_contours_map manually?
         return control_points, destination_points, edge_contours_map

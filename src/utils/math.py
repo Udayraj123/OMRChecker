@@ -1,5 +1,6 @@
 import math
 
+import cv2
 import numpy as np
 from matplotlib import colors
 
@@ -67,6 +68,12 @@ class MathUtils:
     @staticmethod
     def get_tuple_points(points):
         return [(int(point[0]), int(point[1])) for point in points]
+
+    @staticmethod
+    def get_rotated_rectangle_points(points):
+        rotated_rect = cv2.minAreaRect(points)
+        rotated_rect_points = cv2.boxPoints(rotated_rect)
+        return np.intp(rotated_rect_points)
 
     @staticmethod
     def get_bounding_box_of_points(points):

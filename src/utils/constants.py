@@ -69,6 +69,7 @@ hsv_white_low, hsv_white_high = (
     np.array([180, PAPER_SATURATION_THRESHOLD, 255]),
 )
 
+APPROX_POLY_EPSILON_FACTOR = 0.025  # Epsilon factor for polygon approximation
 
 MATPLOTLIB_COLORS = mpl.colors.get_named_colors_mapping()
 

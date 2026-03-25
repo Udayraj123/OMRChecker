@@ -49,6 +49,7 @@ class CropOnDotLines(CropOnPatchesCommon):
             ZonePreset.bottomLine,
         ],
         "FOUR_DOTS": DOT_ZONE_TYPES_IN_ORDER,
+        # "BOUNDING_RECTANGLE" : DOT_ZONE_TYPES_IN_ORDER,
     }
 
     default_scan_zone_descriptions: ClassVar = {
@@ -133,7 +134,7 @@ class CropOnDotLines(CropOnPatchesCommon):
         parsed_options = self._build_base_parsed_options(
             options,
             layout_type,
-            enable_cropping=options.get("enable_cropping", True),
+            cropping_enabled=options.get("cropping_enabled", True),
             default_warp_method=WarpMethod.PERSPECTIVE_TRANSFORM,
         )
 

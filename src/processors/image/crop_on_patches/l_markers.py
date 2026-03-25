@@ -77,7 +77,7 @@ class CropOnLMarkers(CropOnPatchesCommon):
         parsed_options = self._build_base_parsed_options(
             options,
             layout_type,
-            enable_cropping=True,
+            cropping_enabled=True,
             default_warp_method=WarpMethod.HOMOGRAPHY,
         )
 

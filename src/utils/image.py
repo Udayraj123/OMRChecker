@@ -10,7 +10,7 @@ from src.utils.exceptions import ImageProcessingError, ImageReadError
 from src.processors.constants import EDGE_TYPES_IN_ORDER, EdgeType
 from src.schemas.models.config import Config
 from src.utils.checksum import print_file_checksum
-from src.utils.constants import CLR_WHITE
+from src.utils.constants import CLR_WHITE, APPROX_POLY_EPSILON_FACTOR
 from src.utils.logger import logger
 from src.utils.math import MathUtils
 
@@ -209,6 +209,18 @@ class ImageUtils:
 
         # apply gamma correction using the lookup table
         return cv2.LUT(image, table)
+
+    @staticmethod
+    def get_four_corners_from_contour(contour):
+        # Get approximate contour to polygon using Douglas - Pecker algorithm
+        perimeter = cv2.arcLength(contour, closed=True)
+        epsilon = APPROX_POLY_EPSILON_FACTOR * perimeter
+        approx = cv2.approxPolyDP(contour, epsilon, closed=True)
+        # Check if it's a valid rectangle (4 corners)
+        if MathUtils.validate_rect(approx):
+            corners = np.reshape(approx, (4, -1))
+            return corners
+        return None
 
     @staticmethod
     def get_control_destination_points_from_contour(

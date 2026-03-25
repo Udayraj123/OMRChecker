@@ -116,6 +116,9 @@ def preprocess_line_zone(
         normalised, kernel_width * 2, kernel_height * 2, 255
     )
 
+    # TODO: get tuning_config here via context here to show the images
+    # InteractionUtils.show("padded white", white)
+
     # Threshold-normalize again after padding
     _, white_thresholded = cv2.threshold(white, line_threshold, 255, cv2.THRESH_TRUNC)
     white_normalised = ImageUtils.normalize(white_thresholded)
@@ -127,11 +130,13 @@ def preprocess_line_zone(
         line_kernel,
         iterations=3,
     )
+    # InteractionUtils.show("line_morphed padded", line_morphed)
 
     # Remove white padding
     line_morphed = line_morphed[
         pad_range[0] : pad_range[1], pad_range[2] : pad_range[3]
     ]
+    # InteractionUtils.show("line_morphed", line_morphed)
 
     return line_morphed
 
@@ -195,9 +200,7 @@ def extract_patch_corners_and_edges(
         patch_corners = MathUtils.get_rectangle_points(x, y, w, h)
     elif scanner_type == ScannerType.PATCH_LINE:
         # Use rotated rectangle for lines (handles slight rotations)
-        rotated_rect = cv2.minAreaRect(bounding_hull)
-        rotated_rect_points = cv2.boxPoints(rotated_rect)
-        patch_corners = np.intp(rotated_rect_points)
+        patch_corners = MathUtils.get_rotated_rectangle_points(bounding_hull)
     else:
         raise ValueError(f"Unsupported scanner type: {scanner_type}")
 

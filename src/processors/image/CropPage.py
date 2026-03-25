@@ -39,7 +39,7 @@ class CropPage(WarpOnPointsCommon):
                 "use_colored_canny", CropPage.defaults["use_colored_canny"]
             ),
             "max_points_per_edge": options.get("max_points_per_edge", None),
-            "enable_cropping": True,
+            "cropping_enabled": True,
             "tuning_options": {
                 "warp_method": tuning_options.get(
                     "warp_method", WarpMethod.PERSPECTIVE_TRANSFORM

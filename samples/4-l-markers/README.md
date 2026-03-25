@@ -22,7 +22,7 @@ the control point for perspective correction and cropping.
 
 The `template.json` in this directory uses:
 - `type: "L_MARKERS"` — activates `CropOnLMarkers` processor
-- `enable_cropping: true` — crops to the bounding box of the 4 detected corners
+- `cropping_enabled: true` — crops to the bounding box of the 4 detected corners
 - `warp_method: "HOMOGRAPHY"` — supports N control points (not limited to 4)
 - Each zone preset covers one quadrant of the page
 

@@ -16,7 +16,6 @@ import numpy as np
 from pathlib import Path
 
 from src.processors.image.constants import (
-    APPROX_POLY_EPSILON_FACTOR,
     CANNY_THRESHOLD_HIGH,
     CANNY_THRESHOLD_LOW,
     CONTOUR_THICKNESS_STANDARD,
@@ -31,7 +30,6 @@ from src.utils.constants import CLR_WHITE, hsv_white_high, hsv_white_low
 from src.utils.drawing import DrawingUtils
 from src.utils.image import ImageUtils
 from src.utils.logger import logger
-from src.utils.math import MathUtils
 
 
 def prepare_page_image(image: np.ndarray) -> np.ndarray:
@@ -162,14 +160,8 @@ def extract_page_rectangle(
         if cv2.contourArea(contour) < MIN_PAGE_AREA:
             continue
 
-        # Approximate contour to polygon
-        perimeter = cv2.arcLength(contour, closed=True)
-        epsilon = APPROX_POLY_EPSILON_FACTOR * perimeter
-        approx = cv2.approxPolyDP(contour, epsilon, closed=True)
-
-        # Check if it's a valid rectangle (4 corners)
-        if MathUtils.validate_rect(approx):
-            corners = np.reshape(approx, (4, -1))
+        corners = ImageUtils.get_four_corners_from_contour(contour)
+        if corners is not None:
             full_contour = np.vstack(contour).squeeze()
             return corners, full_contour
 

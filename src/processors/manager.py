@@ -19,7 +19,7 @@ PROCESSOR_MANAGER: dict[str, type] = {
     "GaussianBlur": GaussianBlur,
     "Levels": Levels,
     "MedianBlur": MedianBlur,
-    # TODO: extract AlignOnMarkers preprocess from WarpOnPoints instead, or rename CropOnMarkers to something better with enableCropping support?
+    # TODO: extract AlignOnMarkers preprocess from WarpOnPoints instead, or rename CropOnMarkers to something better with croppingEnabled support?
 }
 
 if set(PROCESSOR_MANAGER.keys()) != set(SUPPORTED_PROCESSOR_NAMES):

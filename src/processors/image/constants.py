@@ -34,7 +34,6 @@ CANNY_THRESHOLD_LOW = 55  # Low threshold for Canny edge detection
 MIN_PAGE_AREA = 80000  # Minimum area for valid page contour
 
 # Approximation and simplification
-APPROX_POLY_EPSILON_FACTOR = 0.025  # Epsilon factor for polygon approximation
 CONTOUR_THICKNESS_STANDARD = 10  # Standard thickness for drawing contours
 
 
