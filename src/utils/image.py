@@ -215,23 +215,98 @@ class ImageUtils:
         """
         Find a 4-corner approximation of the contour using Douglas-Peucker.
         Iterates over APPROX_POLY_EPSILON_CANDIDATES (ascending) and returns
-        the first approximation that yields exactly 4 near-rectangular corners
+        the first approximation that yields exactly 4 near-rectangular corners.
         Higher epsilon → fewer corners (monotone non-increasing), so we break
         early once the count drops below 4.
 
         A 4-corner result that fails the cosine/angle check is skipped — a
         slightly coarser epsilon may smooth irregularities into a cleaner quad.
+
+        Epsilon is scaled by the short side of the minAreaRect rather than the
+        perimeter, so thin rods (where perimeter >> short_side) don't get an
+        epsilon larger than the rod width itself.
         """
-        perimeter = cv2.arcLength(contour, closed=True)
+        _, (rw, rh), _ = cv2.minAreaRect(contour)
+        short_side = min(rw, rh)
+        four_count = 1
         for epsilon_factor in APPROX_POLY_EPSILON_CANDIDATES:
-            approx = cv2.approxPolyDP(contour, epsilon_factor * perimeter, closed=True)
+            approx = cv2.approxPolyDP(contour, epsilon_factor * short_side, closed=True)
             n = len(approx)
-            if n == 4 and MathUtils.validate_rect(approx):
+            if MathUtils.validate_rect(approx) or four_count > 3:
                 return np.reshape(approx, (4, -1))
+            if n == 4:
+                four_count += 1
             if n < 4:
                 # Overshot — larger epsilon will only reduce count further
                 break
         return None
+
+    @staticmethod
+    def get_rod_contour_by_density(
+        contour: np.ndarray,
+        image_shape,
+        density_threshold: float = 0.9,
+    ) -> np.ndarray:
+        """
+        From an L/T/cross-shaped contour (rod + 0-2 patches), extract just the rod.
+
+        Rod orientation is determined from image_shape: vertical for portrait,
+        horizontal for landscape. Uses minAreaRect angle to deskew the binary mask
+        before density projection, so the column/row sums cleanly separate rod from
+        patch regardless of rotation.
+
+        Works regardless of number of notches (0, 1, or 2).
+
+        Args:
+            contour: Combined rod+patch contour, shape (N, 1, 2)
+            image_shape: (height, width) of the source image to determine orientation
+            density_threshold: Fraction of max span required to be considered rod
+
+        Returns:
+            Rod contour shape (M, 1, 2), or original contour if extraction fails
+        """
+        img_h, img_w = image_shape[:2]
+        is_portrait = img_h >= img_w
+
+        # Fill contour into local binary mask (no point rotation needed yet)
+        x0, y0, w, h = cv2.boundingRect(contour)
+        local_contour = contour - np.array([[[x0, y0]]])
+        mask = np.zeros((h, w), dtype=np.uint8)
+        cv2.fillPoly(mask, [local_contour], 255)
+
+        # Deskew the mask using minAreaRect angle so projection is axis-aligned
+        _, (rw, rh), angle = cv2.minAreaRect(contour)
+        if (rw > rh) == is_portrait:
+            angle += 90  # ensure long axis aligns with expected rod direction
+
+        mask_center = (w / 2, h / 2)
+        rot_mat = cv2.getRotationMatrix2D(mask_center, angle, 1.0)
+        rotated_mask = cv2.warpAffine(mask, rot_mat, (w, h))
+
+        if is_portrait:
+            sums = rotated_mask.sum(axis=0).astype(float)  # height-span per column
+        else:
+            sums = rotated_mask.sum(axis=1).astype(float)  # width-span per row
+
+        rod_indices = sums >= sums.max() * density_threshold
+
+        rod_mask = rotated_mask.copy()
+        if is_portrait:
+            rod_mask[:, ~rod_indices] = 0
+        else:
+            rod_mask[~rod_indices, :] = 0
+
+        rod_contours, _ = cv2.findContours(
+            rod_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
+        if not rod_contours:
+            return contour
+
+        # Rotate only the smaller rod contour back — cheaper than rotating all input points
+        rod_pts = max(rod_contours, key=cv2.contourArea).astype(np.float32)
+        inv_rot = cv2.getRotationMatrix2D(mask_center, -angle, 1.0)
+        orig_pts = cv2.transform(rod_pts, inv_rot).astype(np.int32)
+        return orig_pts + np.array([[[x0, y0]]])
 
     @staticmethod
     def get_control_destination_points_from_contour(
@@ -370,10 +445,10 @@ class ImageUtils:
             edge_contour = edge_contours_map[edge_type]
 
             if len(edge_contour) == 0:
-                logger.warning(ordered_patch_corners, source_contour, edge_contours_map)
                 logger.warning(
                     f"No closest points found for {edge_type}: {edge_contours_map}"
                 )
+                logger.warning(ordered_patch_corners, source_contour, edge_contours_map)
             # Ensure correct order
             elif MathUtils.distance(start_point, edge_contour[-1]) < MathUtils.distance(
                 start_point, edge_contour[0]

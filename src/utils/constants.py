@@ -69,19 +69,20 @@ hsv_white_low, hsv_white_high = (
     np.array([180, PAPER_SATURATION_THRESHOLD, 255]),
 )
 
-# Epsilon candidates for polygon approximation (relative to perimeter).
+# Epsilon candidates for polygon approximation (relative to the short side of minAreaRect).
 # Tried in ascending order; the first that yields exactly 4 corners wins.
+# Rule: must be > noise/short_side (to smooth pixel noise) and < 0.5 (to not collapse corners).
+# Old base was perimeter ≈ 4*short_side for squares, so these values are ~4x the old ones.
 APPROX_POLY_EPSILON_CANDIDATES = [
-    0.01,
-    0.02,
-    0.025,
-    0.03,
-    0.04,
     0.05,
-    0.07,
+    0.08,
     0.10,
-    0.15,
+    0.12,
+    0.16,
     0.20,
+    0.28,
+    0.40,
+    0.50,
 ]
 
 MATPLOTLIB_COLORS = mpl.colors.get_named_colors_mapping()

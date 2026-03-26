@@ -18,10 +18,7 @@ from src.processors.constants import EDGE_TYPES_IN_ORDER, ScannerType
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.math import MathUtils
-
-
-from src.utils.constants import CLR_LIGHT_GRAY
-from src.utils.drawing import DrawingUtils
+from src.utils.logger import logger
 
 
 def preprocess_dot_zone(
@@ -180,6 +177,7 @@ def detect_contours_using_canny(
 
 
 def extract_patch_corners_and_edges(
+    zone,
     contour: np.ndarray,
     scanner_type: str,
 ) -> Tuple[np.ndarray, Dict[str, list]]:
@@ -189,6 +187,8 @@ def extract_patch_corners_and_edges(
     Args:
         contour: Detected contour (largest from zone)
         scanner_type: Type of scanner (PATCH_DOT or PATCH_LINE)
+        image_shape: (height, width) of the source zone; used by PATCH_LINE to
+                     determine rod orientation for density-based extraction
 
     Returns:
         Tuple of (ordered_corners, edge_contours_map)
@@ -204,9 +204,13 @@ def extract_patch_corners_and_edges(
         x, y, w, h = cv2.boundingRect(bounding_hull)
         patch_corners = MathUtils.get_rectangle_points(x, y, w, h)
     elif scanner_type == ScannerType.PATCH_LINE:
-        # Use rotated rectangle for lines (handles slight rotations)
-        # patch_corners = MathUtils.get_rotated_rectangle_points(bounding_hull)
-        patch_corners = ImageUtils.get_four_corners_from_contour(contour)
+        rod_contour = ImageUtils.get_rod_contour_by_density(contour, zone.shape)
+        patch_corners = ImageUtils.get_four_corners_from_contour(rod_contour)
+        if patch_corners is None:
+            logger.warning(
+                "Approx-poly failed. Falling back to rotated rectangle method.."
+            )
+            patch_corners = MathUtils.get_rotated_rectangle_points(rod_contour)
     else:
         raise ValueError(f"Unsupported scanner type: {scanner_type}")
 
@@ -260,6 +264,7 @@ def detect_dot_corners(
     # Extract corners from largest contour
     largest_contour = contours[0]
     corners, _ = extract_patch_corners_and_edges(
+        zone,
         largest_contour,
         ScannerType.PATCH_DOT,
     )
@@ -320,18 +325,10 @@ def detect_line_corners_and_edges(
     # Extract corners and edges from largest contour
     largest_contour = contours[0]
     corners, edge_contours_map = extract_patch_corners_and_edges(
+        zone,
         largest_contour,
         ScannerType.PATCH_LINE,
     )
-
-    DrawingUtils.draw_contour(
-        preprocessed,
-        largest_contour,
-        color=CLR_LIGHT_GRAY,
-        thickness=3,
-    )
-    print("corners", corners, "zone_offset", zone_offset)
-    InteractionUtils.show("preprocessed", preprocessed)
 
     if corners is None or edge_contours_map is None:
         return None, None
