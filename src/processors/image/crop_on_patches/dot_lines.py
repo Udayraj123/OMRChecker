@@ -23,8 +23,6 @@ from src.utils.json_conversion import camel_to_snake
 from src.utils.math import MathUtils
 from src.processors.image.crop_on_patches.patch_utils import compute_scan_zone
 
-# from src.utils.logger import logger
-
 
 class CropOnDotLines(CropOnPatchesCommon):
     __is_internal_preprocessor__: ClassVar = True

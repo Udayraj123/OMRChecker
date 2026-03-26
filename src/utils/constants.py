@@ -69,7 +69,20 @@ hsv_white_low, hsv_white_high = (
     np.array([180, PAPER_SATURATION_THRESHOLD, 255]),
 )
 
-APPROX_POLY_EPSILON_FACTOR = 0.025  # Epsilon factor for polygon approximation
+# Epsilon candidates for polygon approximation (relative to perimeter).
+# Tried in ascending order; the first that yields exactly 4 corners wins.
+APPROX_POLY_EPSILON_CANDIDATES = [
+    0.01,
+    0.02,
+    0.025,
+    0.03,
+    0.04,
+    0.05,
+    0.07,
+    0.10,
+    0.15,
+    0.20,
+]
 
 MATPLOTLIB_COLORS = mpl.colors.get_named_colors_mapping()
 

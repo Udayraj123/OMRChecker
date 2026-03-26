@@ -45,6 +45,7 @@ class AutoRotate(ImageTemplatePreprocessor):
             cv2.ROTATE_90_COUNTERCLOCKWISE,
         ]
         for rotation in rotations:
+            # TODO: support for scanzones level rotations to identify "top-left" directly (by rotating and matching that marker)
             rotated_img = image
             if rotation is not None:
                 rotated_img = ImageUtils.rotate(

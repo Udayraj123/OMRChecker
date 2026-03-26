@@ -10,7 +10,7 @@ from src.utils.exceptions import ImageProcessingError, ImageReadError
 from src.processors.constants import EDGE_TYPES_IN_ORDER, EdgeType
 from src.schemas.models.config import Config
 from src.utils.checksum import print_file_checksum
-from src.utils.constants import CLR_WHITE, APPROX_POLY_EPSILON_FACTOR
+from src.utils.constants import CLR_WHITE, APPROX_POLY_EPSILON_CANDIDATES
 from src.utils.logger import logger
 from src.utils.math import MathUtils
 
@@ -212,14 +212,25 @@ class ImageUtils:
 
     @staticmethod
     def get_four_corners_from_contour(contour):
-        # Get approximate contour to polygon using Douglas - Pecker algorithm
+        """
+        Find a 4-corner approximation of the contour using Douglas-Peucker.
+        Iterates over APPROX_POLY_EPSILON_CANDIDATES (ascending) and returns
+        the first approximation that yields exactly 4 near-rectangular corners
+        Higher epsilon → fewer corners (monotone non-increasing), so we break
+        early once the count drops below 4.
+
+        A 4-corner result that fails the cosine/angle check is skipped — a
+        slightly coarser epsilon may smooth irregularities into a cleaner quad.
+        """
         perimeter = cv2.arcLength(contour, closed=True)
-        epsilon = APPROX_POLY_EPSILON_FACTOR * perimeter
-        approx = cv2.approxPolyDP(contour, epsilon, closed=True)
-        # Check if it's a valid rectangle (4 corners)
-        if MathUtils.validate_rect(approx):
-            corners = np.reshape(approx, (4, -1))
-            return corners
+        for epsilon_factor in APPROX_POLY_EPSILON_CANDIDATES:
+            approx = cv2.approxPolyDP(contour, epsilon_factor * perimeter, closed=True)
+            n = len(approx)
+            if n == 4 and MathUtils.validate_rect(approx):
+                return np.reshape(approx, (4, -1))
+            if n < 4:
+                # Overshot — larger epsilon will only reduce count further
+                break
         return None
 
     @staticmethod

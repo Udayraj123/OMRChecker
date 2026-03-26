@@ -19,15 +19,13 @@ from typing import Any, ClassVar, Optional, Tuple
 import cv2
 import numpy as np
 
-from src.utils.exceptions import ImageProcessingError, TemplateValidationError
+from src.utils.exceptions import ImageProcessingError
 from src.processors.constants import WarpMethod, WarpMethodFlags
 from src.processors.image.base import ImageTemplatePreprocessor
 from src.processors.image.warp_strategies import WarpStrategyFactory, WarpStrategy
 from src.utils.drawing import DrawingUtils
-from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
 from src.utils.logger import logger
-from src.utils.math import MathUtils
 from src.utils.parsing import OVERRIDE_MERGER
 
 
@@ -89,6 +87,8 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
 
         # Cropping configuration
         self.cropping_enabled = options.get("cropping_enabled", False)
+        self.cropping_use_bounding_box = options.get("cropping_use_bounding_box", True)
+        self.cropping_use_approx_poly = options.get("cropping_use_approx_poly", True)
 
         # Determine warp method (default depends on cropping)
         self.warp_method = tuning_options.get(
@@ -123,7 +123,9 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         # Method-specific configurations
         method_configs = {
             WarpMethod.PERSPECTIVE_TRANSFORM: {
-                "interpolation_flag": self.warp_method_flag
+                "interpolation_flag": self.warp_method_flag,
+                "use_bounding_box": self.cropping_use_bounding_box,
+                "use_approx_poly": self.cropping_use_approx_poly,
             },
             WarpMethod.HOMOGRAPHY: {
                 "interpolation_flag": self.warp_method_flag,
@@ -252,14 +254,14 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             prepared_image, colored_image, file_path
         )
 
-        # Step 3: Parse and validate points
-        # Use prepared_image for consistency with control point extraction
+        # Step 3: Prepare points via strategy (dedup + shape + dims)
+        h, w = prepared_image.shape[:2]
         (
             parsed_control_points,
             parsed_destination_points,
             warped_dimensions,
-        ) = self._parse_and_prepare_points(
-            prepared_image, control_points, destination_points
+        ) = self.warp_strategy.prepare_points(
+            control_points, destination_points, (w, h), self.cropping_enabled
         )
 
         logger.debug(
@@ -292,63 +294,6 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         return warped_image, warped_colored_image, _template
 
     # =========================================================================
-    # Point parsing and preparation
-    # =========================================================================
-
-    def _parse_and_prepare_points(
-        self,
-        image: np.ndarray,
-        control_points: Any,
-        destination_points: Any,
-    ) -> Tuple[np.ndarray, np.ndarray, Tuple[int, int]]:
-        """
-        Parse, deduplicate, and prepare control/destination points.
-
-        Args:
-            image: Input image (for dimension reference)
-            control_points: Raw control points from extraction
-            destination_points: Raw destination points from extraction
-
-        Returns:
-            Tuple of (parsed_control_points, parsed_destination_points, warped_dimensions)
-        """
-        # Deduplicate points using dict to preserve order (insert order)
-        unique_pairs = {
-            tuple(ctrl): dest
-            for ctrl, dest in zip(control_points, destination_points, strict=False)
-        }
-
-        parsed_control_points = np.float32(list(unique_pairs.keys()))
-        parsed_destination_points = np.float32(list(unique_pairs.values()))
-
-        # Calculate warped dimensions
-        h, w = image.shape[:2]
-        warped_dimensions = self._calculate_warped_dimensions(
-            (w, h), parsed_destination_points
-        )
-
-        return parsed_control_points, parsed_destination_points, warped_dimensions
-
-    def _calculate_warped_dimensions(
-        self, default_dims: Tuple[int, int], destination_points: np.ndarray
-    ) -> Tuple[int, int]:
-        """Calculate warped dimensions based on cropping settings."""
-        if not self.cropping_enabled:
-            return default_dims
-
-        destination_box, rectangle_dimensions = MathUtils.get_bounding_box_of_points(
-            destination_points
-        )
-
-        # Shift points to origin for cropping (modifies destination_points in-place)
-        from_origin = -1 * destination_box[0]
-        destination_points[:] = MathUtils.shift_points_from_origin(
-            from_origin, destination_points
-        )
-
-        return rectangle_dimensions
-
-    # =========================================================================
     # Warping strategy application
     # =========================================================================
 
@@ -375,13 +320,6 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
         Returns:
             Tuple of (warped_gray, warped_colored)
         """
-        # Prepare points for perspective transform
-        control_points, destination_points, warped_dimensions = (
-            self._prepare_points_for_strategy(
-                control_points, destination_points, warped_dimensions
-            )
-        )
-
         # Build strategy kwargs
         strategy_kwargs = self._build_strategy_kwargs(edge_contours_map)
 
@@ -404,40 +342,6 @@ class WarpOnPointsCommon(ImageTemplatePreprocessor):
             self.debug_image = warped_debug_image
 
         return warped_image, warped_colored_image
-
-    def _prepare_points_for_strategy(
-        self,
-        control_points: np.ndarray,
-        destination_points: np.ndarray,
-        warped_dimensions: Tuple[int, int],
-    ) -> Tuple[np.ndarray, np.ndarray, Tuple[int, int]]:
-        """Prepare points specifically for perspective transform if needed."""
-        if self.warp_method != WarpMethod.PERSPECTIVE_TRANSFORM:
-            return control_points, destination_points, warped_dimensions
-
-        if len(control_points) != 4:
-            from pathlib import Path
-
-            raise TemplateValidationError(
-                Path("template"),
-                reason=(
-                    f"Expected 4 control points for perspective transform, "
-                    f"found {len(control_points)}. "
-                    f"Use tuningOptions['warpMethod'] for different methods."
-                ),
-            )
-
-        # Order the 4 points consistently
-        ordered_control, _ = MathUtils.order_four_points(
-            control_points, dtype="float32"
-        )
-
-        # Recalculate destination points from ordered control points
-        new_destination, new_dimensions = (
-            ImageUtils.get_cropped_warped_rectangle_points(ordered_control)
-        )
-
-        return ordered_control, new_destination, new_dimensions
 
     def _build_strategy_kwargs(self, edge_contours_map: Optional[np.ndarray]) -> dict:
         """Build kwargs dict for strategy based on warp method."""

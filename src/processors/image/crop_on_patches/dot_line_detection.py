@@ -16,7 +16,12 @@ import numpy as np
 
 from src.processors.constants import EDGE_TYPES_IN_ORDER, ScannerType
 from src.utils.image import ImageUtils
+from src.utils.interaction import InteractionUtils
 from src.utils.math import MathUtils
+
+
+from src.utils.constants import CLR_LIGHT_GRAY
+from src.utils.drawing import DrawingUtils
 
 
 def preprocess_dot_zone(
@@ -117,7 +122,7 @@ def preprocess_line_zone(
     )
 
     # TODO: get tuning_config here via context here to show the images
-    # InteractionUtils.show("padded white", white)
+    InteractionUtils.show("padded white", white)
 
     # Threshold-normalize again after padding
     _, white_thresholded = cv2.threshold(white, line_threshold, 255, cv2.THRESH_TRUNC)
@@ -136,7 +141,7 @@ def preprocess_line_zone(
     line_morphed = line_morphed[
         pad_range[0] : pad_range[1], pad_range[2] : pad_range[3]
     ]
-    # InteractionUtils.show("line_morphed", line_morphed)
+    InteractionUtils.show("line_morphed", line_morphed)
 
     return line_morphed
 
@@ -200,7 +205,8 @@ def extract_patch_corners_and_edges(
         patch_corners = MathUtils.get_rectangle_points(x, y, w, h)
     elif scanner_type == ScannerType.PATCH_LINE:
         # Use rotated rectangle for lines (handles slight rotations)
-        patch_corners = MathUtils.get_rotated_rectangle_points(bounding_hull)
+        # patch_corners = MathUtils.get_rotated_rectangle_points(bounding_hull)
+        patch_corners = ImageUtils.get_four_corners_from_contour(contour)
     else:
         raise ValueError(f"Unsupported scanner type: {scanner_type}")
 
@@ -245,7 +251,6 @@ def detect_dot_corners(
         dot_threshold=dot_threshold,
         blur_kernel=blur_kernel,
     )
-
     # Detect contours
     contours = detect_contours_using_canny(preprocessed)
 
@@ -318,6 +323,15 @@ def detect_line_corners_and_edges(
         largest_contour,
         ScannerType.PATCH_LINE,
     )
+
+    DrawingUtils.draw_contour(
+        preprocessed,
+        largest_contour,
+        color=CLR_LIGHT_GRAY,
+        thickness=3,
+    )
+    print("corners", corners, "zone_offset", zone_offset)
+    InteractionUtils.show("preprocessed", preprocessed)
 
     if corners is None or edge_contours_map is None:
         return None, None

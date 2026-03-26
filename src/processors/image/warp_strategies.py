@@ -13,7 +13,9 @@ from typing import Tuple, Optional
 import cv2
 import numpy as np
 
+from src.utils.image import ImageUtils
 from src.utils.logger import logger
+from src.utils.math import MathUtils
 
 
 class WarpStrategy(ABC):
@@ -57,6 +59,48 @@ class WarpStrategy(ABC):
         """Return the name of this warping strategy"""
         pass
 
+    def prepare_points(
+        self,
+        control_points: list,
+        destination_points: list,
+        image_dims: Tuple[int, int],
+        cropping_enabled: bool,
+    ) -> Tuple[np.ndarray, np.ndarray, Tuple[int, int]]:
+        """
+        Prepare control/destination points and compute output dimensions.
+
+        Default implementation (Homography, GridDataRemap, DocRefine):
+          - Deduplicates point pairs preserving insertion order
+          - If cropping is enabled, shifts destination points to origin and
+            returns the bounding-box dimensions as warped_dimensions
+          - Otherwise returns the original image dimensions unchanged
+
+        PerspectiveTransformStrategy overrides this entirely to fit a tight
+        4-corner quadrilateral and compute a canonical destination rectangle.
+
+        Args:
+            control_points: Raw detected points in the source image
+            destination_points: Corresponding points in the target space
+            image_dims: (width, height) of the source image (fallback dims)
+            cropping_enabled: Whether to crop to the warped region
+
+        Returns:
+            (parsed_control, parsed_destination, warped_dimensions)
+        """
+        unique_pairs = {
+            tuple(ctrl): dest
+            for ctrl, dest in zip(control_points, destination_points, strict=False)
+        }
+        ctrl = np.float32(list(unique_pairs.keys()))
+        dest = np.float32(list(unique_pairs.values()))
+
+        if cropping_enabled:
+            destination_box, dims = MathUtils.get_bounding_box_of_points(dest)
+            dest[:] = MathUtils.shift_points_from_origin(-1 * destination_box[0], dest)
+            return ctrl, dest, dims
+
+        return ctrl, dest, image_dims
+
 
 class PerspectiveTransformStrategy(WarpStrategy):
     """
@@ -66,7 +110,12 @@ class PerspectiveTransformStrategy(WarpStrategy):
     Requires exactly 4 control points forming a quadrilateral.
     """
 
-    def __init__(self, interpolation_flag: int = cv2.INTER_LINEAR):
+    def __init__(
+        self,
+        interpolation_flag: int = cv2.INTER_LINEAR,
+        use_bounding_box: bool = True,
+        use_approx_poly: bool = True,
+    ):
         """
         Initialize perspective transform strategy.
 
@@ -75,11 +124,74 @@ class PerspectiveTransformStrategy(WarpStrategy):
                 - cv2.INTER_LINEAR: Bilinear (default, good balance)
                 - cv2.INTER_CUBIC: Bicubic (slower, higher quality)
                 - cv2.INTER_NEAREST: Nearest neighbor (fastest, lower quality)
+            use_bounding_box: When True, fits a 4-corner polygon to all
+                control points (ignores raw zone points). When False, the
+                raw zone-level points are used directly (must be exactly 4).
+            use_approx_poly: When use_bounding_box=True, use approxPolyDP
+                to find the 4 corners. When False, uses a rotated rectangle.
         """
         self.interpolation_flag = interpolation_flag
+        self.use_bounding_box = use_bounding_box
+        self.use_approx_poly = use_approx_poly
 
     def get_name(self) -> str:
         return "PerspectiveTransform"
+
+    def prepare_points(
+        self,
+        control_points: list,
+        destination_points: list,
+        image_dims: Tuple[int, int],
+        cropping_enabled: bool,
+    ) -> Tuple[np.ndarray, np.ndarray, Tuple[int, int]]:
+        """
+        Perspective-specific point preparation.
+
+        When use_bounding_box=True: fits a tight 4-corner quadrilateral to
+        all detected control points (via approxPolyDP or rotated rectangle),
+        then computes the canonical axis-aligned destination rectangle.
+
+        When use_bounding_box=False: orders the raw zone-level points
+        (must be exactly 4, one per zone) as the 4 corners.
+
+        In both cases, destination and output dimensions are derived from
+        ImageUtils.get_cropped_warped_rectangle_points, so the caller's
+        destination_points are fully replaced.
+        """
+        unique_pairs = {
+            tuple(ctrl): dest
+            for ctrl, dest in zip(control_points, destination_points, strict=False)
+        }
+        ctrl_list = list(unique_pairs.keys())
+
+        if cropping_enabled and self.use_bounding_box:
+            # Fit a tight 4-corner quadrilateral to all detected control points
+            if self.use_approx_poly:
+                contour = np.array(ctrl_list).reshape(-1, 1, 2).astype(np.int32)
+                page_corners = ImageUtils.get_four_corners_from_contour(contour)
+            else:
+                page_corners = MathUtils.get_rotated_rectangle_points(
+                    np.array(ctrl_list).astype(np.int32)
+                )
+            ordered_corners, _ = MathUtils.order_four_points(
+                page_corners, dtype="float32"
+            )
+        else:
+            # Use the raw zone-level points ordered as 4 corners
+            if len(ctrl_list) != 4:
+                raise ValueError(
+                    f"PerspectiveTransform with use_bounding_box=False requires "
+                    f"exactly 4 control points, found {len(ctrl_list)}. "
+                    f"Enable use_bounding_box or use a different warp method."
+                )
+            ordered_corners, _ = MathUtils.order_four_points(
+                np.float32(ctrl_list), dtype="float32"
+            )
+
+        destination, dims = ImageUtils.get_cropped_warped_rectangle_points(
+            ordered_corners
+        )
+        return ordered_corners, np.float32(destination), dims
 
     def warp_image(
         self,
