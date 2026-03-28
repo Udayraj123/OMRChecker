@@ -1,6 +1,7 @@
 """
 https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/
 """
+
 import cv2
 import numpy as np
 
@@ -16,6 +17,7 @@ from src.constants.image_processing import (
     MIN_PAGE_AREA_THRESHOLD,
     PAGE_THRESHOLD_PARAMS,
 )
+
 from src.logger import logger
 from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
 from src.utils.image import ImageUtils
@@ -64,7 +66,14 @@ class CropPage(ImagePreprocessor):
         )
 
     def apply_filter(self, image, file_path):
+        config = self.tuning_config
+        if config.outputs.show_image_level >= 4:
+            InteractionUtils.show("1_grayscale_input", image, config=config)
+
         image = normalize(cv2.GaussianBlur(image, DEFAULT_GAUSSIAN_BLUR_KERNEL, 0))
+
+        if config.outputs.show_image_level >= 4:
+            InteractionUtils.show("2_gaussian_blur", image, config=config)
 
         # Resize should be done with another preprocessor is needed
         sheet = self.find_page(image, file_path)
@@ -94,19 +103,23 @@ class CropPage(ImagePreprocessor):
             cv2.THRESH_TRUNC,
         )
         image = normalize(image)
+        if config.outputs.show_image_level >= 4:
+            InteractionUtils.show("3_threshold", image, config=config)
 
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, self.morph_kernel)
 
         # Close the small holes, i.e. Complete the edges on canny image
         closed = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
 
+        if config.outputs.show_image_level >= 4:
+            InteractionUtils.show("4_morph_close", closed, config=config)
+
         edge = cv2.Canny(
             closed, CANNY_PARAMS["lower_threshold"], CANNY_PARAMS["upper_threshold"]
         )
 
-        if config.outputs.show_image_level >= 5:
-            InteractionUtils.show("edge", edge, config=config)
-
+        if config.outputs.show_image_level >= 4:
+            InteractionUtils.show("5_canny_edges", edge, config=config)
         # findContours returns outer boundaries in CW and inner ones, ACW.
         cnts = ImageUtils.grab_contours(
             cv2.findContours(edge, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -139,5 +152,9 @@ class CropPage(ImagePreprocessor):
                     DEFAULT_CONTOUR_FILL_WIDTH,
                 )
                 break
+        if config.outputs.show_image_level >= 4:
+            InteractionUtils.show("6a_contour_on_image", image, config=config)
+            InteractionUtils.show("6b_contour_on_edge", edge, config=config)
 
         return sheet
+       
