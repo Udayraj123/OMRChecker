@@ -154,9 +154,9 @@ class CropPage(ImagePreprocessor):
                     DEFAULT_CONTOUR_FILL_WIDTH,
                 )
                 break
-        if config.outputs.show_image_level >= 4:
-            InteractionUtils.show("6a_contour_on_image", image, config=config)
-            InteractionUtils.show("6b_contour_on_edge", edge, config=config)
+        if config.outputs.show_image_level >= 4: and len(sheet) > 0:
+        InteractionUtils.show("6a_contour_on_image", image, config=config)
+        InteractionUtils.show("6b_contour_on_edge", edge, config=config)
 
         return sheet
        
