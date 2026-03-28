@@ -120,6 +120,8 @@ class CropPage(ImagePreprocessor):
 
         if config.outputs.show_image_level >= 4:
             InteractionUtils.show("5_canny_edges", edge, config=config)
+        if config.outputs.show_image_level >= 5:
+            InteractionUtils.show("edge", edge, config=config)
         # findContours returns outer boundaries in CW and inner ones, ACW.
         cnts = ImageUtils.grab_contours(
             cv2.findContours(edge, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
