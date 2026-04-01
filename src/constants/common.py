@@ -37,6 +37,14 @@ FIELD_TYPES = {
         "bubbleValues": ["A", "B", "C", "D", "E"],
         "direction": "horizontal",
     },
+    "QTYPE_MCQ4_RTL": {
+        "bubbleValues": ["D", "C", "B", "A"],
+        "direction": "horizontal",
+    },
+    "QTYPE_MCQ5_RTL": {
+        "bubbleValues": ["E", "D", "C", "B", "A"],
+        "direction": "horizontal",
+    },
     #
     # You can create and append custom field types here-
     #
