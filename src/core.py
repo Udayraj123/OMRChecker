@@ -43,7 +43,7 @@ class ImageInstanceOps:
             in_omr = pre_processor.apply_filter(in_omr, file_path)
         return in_omr
 
-    def read_omr_response(self, template, image, name, save_dir=None):
+    def read_omr_response(self, template, image, name, save_dir=None, colored_image=None):
         config = self.tuning_config
         auto_align = config.alignment_params.auto_align
         try:
