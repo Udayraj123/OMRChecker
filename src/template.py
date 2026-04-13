@@ -157,8 +157,8 @@ class Template:
     def pre_fill_field_block(self, field_block_object):
         if "fieldType" in field_block_object:
             field_block_object = {
-                **field_block_object,
                 **FIELD_TYPES[field_block_object["fieldType"]],
+                **field_block_object,
             }
         else:
             field_block_object = {**field_block_object, "fieldType": "__CUSTOM__"}
