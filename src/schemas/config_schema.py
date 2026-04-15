@@ -29,6 +29,11 @@ CONFIG_SCHEMA = {
                     "enum": ["white", "black"],
                     "type": "string",
                 },
+                "MARK_SENSITIVITY_OFFSET": {"type": "number", "minimum": 0, "maximum": 100},
+                "BUBBLE_VALUE_METHOD": {
+                    "enum": ["mean", "min"],
+                    "type": "string",
+                },
             },
         },
         "alignment_params": {

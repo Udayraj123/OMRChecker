@@ -16,7 +16,7 @@ from src.constants.common import (
 )
 from src.logger import logger
 from src.utils.image import CLAHE_HELPER, ImageUtils
-from src.utils.interaction import InteractionUtils
+from src.utils.interaction import InteractionUtils, get_max_display_dimensions
 
 
 class ImageInstanceOps:
@@ -41,6 +41,8 @@ class ImageInstanceOps:
         # run pre_processors in sequence
         for pre_processor in template.pre_processors:
             in_omr = pre_processor.apply_filter(in_omr, file_path)
+            if in_omr is None:
+                return None
         return in_omr
 
     def read_omr_response(self, template, image, name, save_dir=None):
@@ -210,7 +212,10 @@ class ImageInstanceOps:
                     final_align = np.hstack((initial_align, final_align))
             self.append_save_img(5, img)
 
-            # Get mean bubbleValues n other stats
+            # Get bubble values (mean or min intensity) and other stats
+            bubble_value_method = config.threshold_params.get(
+                "BUBBLE_VALUE_METHOD", "mean"
+            )
             all_q_vals, all_q_strip_arrs, all_q_std_vals = [], [], []
             total_q_strip_no = 0
             for field_block in template.field_blocks:
@@ -219,13 +224,14 @@ class ImageInstanceOps:
                 for field_block_bubbles in field_block.traverse_bubbles:
                     q_strip_vals = []
                     for pt in field_block_bubbles:
-                        # shifted
                         x, y = (pt.x + field_block.shift, pt.y)
                         rect = [y, y + box_h, x, x + box_w]
-                        q_strip_vals.append(
-                            cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]
-                            # detectCross(img, rect) ? 100 : 0
-                        )
+                        roi = img[rect[0] : rect[1], rect[2] : rect[3]]
+                        if bubble_value_method == "min":
+                            val = float(np.min(roi))
+                        else:
+                            val = cv2.mean(roi)[0]
+                        q_strip_vals.append(val)
                     q_std_vals.append(round(np.std(q_strip_vals), 2))
                     all_q_strip_arrs.append(q_strip_vals)
                     # _, _, _ = get_global_threshold(q_strip_vals, "QStrip Plot",
@@ -277,11 +283,14 @@ class ImageInstanceOps:
                     no_outliers = all_q_std_vals[total_q_strip_no] < global_std_thresh
                     # print(total_q_strip_no, field_block_bubbles[0].field_label,
                     #   all_q_std_vals[total_q_strip_no], "no_outliers:", no_outliers)
+                    intensity_label = (
+                        "Min" if bubble_value_method == "min" else "Mean"
+                    )
                     per_q_strip_threshold = self.get_local_threshold(
                         all_q_strip_arrs[total_q_strip_no],
                         global_thr,
                         no_outliers,
-                        f"Mean Intensity Histogram for {key}.{field_block_bubbles[0].field_label}.{block_q_strip_no}",
+                        f"{intensity_label} Intensity Histogram for {key}.{field_block_bubbles[0].field_label}.{block_q_strip_no}",
                         config.outputs.show_image_level >= 6,
                     )
                     # print(field_block_bubbles[0].field_label,key,block_q_strip_no, "THR: ",
@@ -298,11 +307,14 @@ class ImageInstanceOps:
                     #     InteractionUtils.show("QStrip: "+key+"-"+str(block_q_strip_no),
                     #     img[st[1] : end[1], st[0]+shift : end[0]+shift],0,config=config)
 
-                    # TODO: get rid of total_q_box_no
+                    sensitivity_offset = config.threshold_params.get(
+                        "MARK_SENSITIVITY_OFFSET", 0
+                    )
+                    effective_threshold = per_q_strip_threshold + sensitivity_offset
                     detected_bubbles = []
                     for bubble in field_block_bubbles:
                         bubble_is_marked = (
-                            per_q_strip_threshold > all_q_vals[total_q_box_no]
+                            effective_threshold > all_q_vals[total_q_box_no]
                         )
                         total_q_box_no += 1
                         if bubble_is_marked:
@@ -407,10 +419,14 @@ class ImageInstanceOps:
                 plt.show()
 
             if config.outputs.show_image_level >= 3 and final_align is not None:
+                _, max_display_h = get_max_display_dimensions()
                 final_align = ImageUtils.resize_util_h(
-                    final_align, int(config.dimensions.display_height)
+                    final_align,
+                    min(
+                        int(config.dimensions.display_height),
+                        max_display_h,
+                    ),
                 )
-                # [final_align.shape[1],0])
                 InteractionUtils.show(
                     "Template Alignment Adjustment", final_align, 0, 0, config=config
                 )

@@ -4,8 +4,9 @@
 !.github/
 
 # Everything in inputs/ and outputs/
-inputs/*
-outputs/*
+inputs*/*
+outputs*/*
+
 
 # Misc
 **/.DS_Store

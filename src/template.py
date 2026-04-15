@@ -246,6 +246,18 @@ class FieldBlock:
         )
         self.origin = origin
         self.bubble_dimensions = bubble_dimensions
+        # Normalize labels_gap to always be a list
+        if isinstance(labels_gap, (int, float)):
+            # If it's a single number, create a list with that value repeated
+            num_labels = len(self.parsed_field_labels)
+            labels_gap = [labels_gap] * (num_labels - 1) if num_labels > 1 else []
+        elif isinstance(labels_gap, list):
+            # Validate that the list length matches the expected number of gaps
+            expected_gaps = len(self.parsed_field_labels) - 1
+            if len(labels_gap) != expected_gaps:
+                raise Exception(
+                    f"labelsGap array length ({len(labels_gap)}) must equal len(fieldLabels) - 1 ({expected_gaps}) for field block '{self.name}'"
+                )
         self.calculate_block_dimensions(
             bubble_dimensions,
             bubble_values,
@@ -274,8 +286,10 @@ class FieldBlock:
         values_dimension = int(
             bubbles_gap * (len(bubble_values) - 1) + bubble_dimensions[_h]
         )
+        # Sum all gaps in the labels_gap list
+        total_labels_gap = sum(labels_gap) if labels_gap else 0
         fields_dimension = int(
-            labels_gap * (len(self.parsed_field_labels) - 1) + bubble_dimensions[_v]
+            total_labels_gap + len(self.parsed_field_labels) * bubble_dimensions[_v]
         )
         self.dimensions = (
             [fields_dimension, values_dimension]
@@ -295,7 +309,7 @@ class FieldBlock:
         self.traverse_bubbles = []
         # Generate the bubble grid
         lead_point = [float(self.origin[0]), float(self.origin[1])]
-        for field_label in self.parsed_field_labels:
+        for idx, field_label in enumerate(self.parsed_field_labels):
             bubble_point = lead_point.copy()
             field_bubbles = []
             for bubble_value in bubble_values:
@@ -304,7 +318,9 @@ class FieldBlock:
                 )
                 bubble_point[_h] += bubbles_gap
             self.traverse_bubbles.append(field_bubbles)
-            lead_point[_v] += labels_gap
+            # Use the corresponding gap from the list (if not the last label)
+            if idx < len(labels_gap):
+                lead_point[_v] += labels_gap[idx]
 
 
 class Bubble:

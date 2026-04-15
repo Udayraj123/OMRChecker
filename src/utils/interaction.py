@@ -6,13 +6,45 @@ from screeninfo import get_monitors
 from src.logger import logger
 from src.utils.image import ImageUtils
 
-monitor_window = get_monitors()[0]
+# Fallback when screeninfo fails or returns unreasonable values (e.g. scaled/virtual monitors)
+_DEFAULT_DISPLAY_WIDTH = 1920
+_DEFAULT_DISPLAY_HEIGHT = 1080
+_MAX_REASONABLE_WIDTH = 5120
+_MAX_REASONABLE_HEIGHT = 2880
+
+
+def _get_display_size():
+    """Returns (width, height) for the primary monitor, with fallback if screeninfo fails or is wrong."""
+    try:
+        monitors = get_monitors()
+        if not monitors:
+            return _DEFAULT_DISPLAY_WIDTH, _DEFAULT_DISPLAY_HEIGHT
+        m = monitors[0]
+        w, h = int(getattr(m, "width", 0)), int(getattr(m, "height", 0))
+        if w <= 0 or h <= 0 or w > _MAX_REASONABLE_WIDTH or h > _MAX_REASONABLE_HEIGHT:
+            return _DEFAULT_DISPLAY_WIDTH, _DEFAULT_DISPLAY_HEIGHT
+        return w, h
+    except Exception:
+        return _DEFAULT_DISPLAY_WIDTH, _DEFAULT_DISPLAY_HEIGHT
+
+
+_display_width, _display_height = _get_display_size()
+
+_DISPLAY_MARGIN = 100
+
+
+def get_max_display_dimensions():
+    """Returns (max_width, max_height) to use when resizing images for display (capped to screen)."""
+    return (
+        max(320, _display_width - _DISPLAY_MARGIN),
+        max(320, _display_height - _DISPLAY_MARGIN),
+    )
 
 
 @dataclass
 class ImageMetrics:
     # TODO: Move TEXT_SIZE, etc here and find a better class name
-    window_width, window_height = monitor_window.width, monitor_window.height
+    window_width, window_height = _display_width, _display_height
     # for positioning image windows
     window_x, window_y = 0, 0
     reset_pos = [0, 0]
@@ -34,9 +66,22 @@ class InteractionUtils:
         if resize:
             if not config:
                 raise Exception("config not provided for resizing the image to show")
-            img = ImageUtils.resize_util(origin, config.dimensions.display_width)
+            max_display_w, max_display_h = get_max_display_dimensions()
+            max_width = min(config.dimensions.display_width, max_display_w)
+            max_width = max(320, max_width)
+            img = ImageUtils.resize_util(origin, max_width)
+            h_img, w_img = img.shape[:2]
+            if h_img > max_display_h:
+                img = ImageUtils.resize_util_h(img, max_display_h)
         else:
             img = origin
+            h_img, w_img = img.shape[:2]
+            max_display_w, max_display_h = get_max_display_dimensions()
+            if w_img > max_display_w or h_img > max_display_h:
+                scale = min(max_display_w / w_img, max_display_h / h_img)
+                if scale < 1:
+                    new_w = max(320, int(w_img * scale))
+                    img = ImageUtils.resize_util(origin, new_w)
 
         if not is_window_available(name):
             cv2.namedWindow(name)
