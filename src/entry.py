@@ -85,12 +85,20 @@ def process_dir(
     evaluation_config=None,
 ):
     # Update local tuning_config (in current recursion stack)
-    local_config_path = curr_dir.joinpath(CONFIG_FILENAME)
+    local_config_path = (
+        Path(args["config_path"])
+        if args.get("config_path")
+        else curr_dir.joinpath(CONFIG_FILENAME)
+    )
     if os.path.exists(local_config_path):
         tuning_config = open_config_with_defaults(local_config_path)
 
     # Update local template (in current recursion stack)
-    local_template_path = curr_dir.joinpath(TEMPLATE_FILENAME)
+    local_template_path = (
+        Path(args["template_path"])
+        if args.get("template_path")
+        else curr_dir.joinpath(TEMPLATE_FILENAME)
+    )
     local_template_exists = os.path.exists(local_template_path)
     if local_template_exists:
         template = Template(
@@ -113,7 +121,11 @@ def process_dir(
         for pp in template.pre_processors:
             excluded_files.extend(Path(p) for p in pp.exclude_files())
 
-    local_evaluation_path = curr_dir.joinpath(EVALUATION_FILENAME)
+    local_evaluation_path = (
+        Path(args["evaluation_path"])
+        if args.get("evaluation_path")
+        else curr_dir.joinpath(EVALUATION_FILENAME)
+    )
     if not args["setLayout"] and os.path.exists(local_evaluation_path):
         if not local_template_exists:
             logger.warning(
