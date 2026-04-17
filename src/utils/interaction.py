@@ -6,8 +6,13 @@ from screeninfo import get_monitors
 from src.logger import logger
 from src.utils.image import ImageUtils
 
-monitor_window = get_monitors()[0]
-
+try:
+    monitor_window = get_monitors()[0]
+except Exception as e:
+    class MockMonitor:
+        width = 1920
+        height = 1080
+    monitor_window = MockMonitor()
 
 @dataclass
 class ImageMetrics:
