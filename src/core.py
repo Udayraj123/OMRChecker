@@ -47,34 +47,10 @@ class ImageInstanceOps:
         config = self.tuning_config
         auto_align = config.alignment_params.auto_align
         try:
-            img = image.copy()
-            # origDim = img.shape[:2]
-            img = ImageUtils.resize_util(
-                img, template.page_dimensions[0], template.page_dimensions[1]
+            img, transp_layer, final_marked = self._prepare_response_images(
+                template, image
             )
-            if img.max() > img.min():
-                img = ImageUtils.normalize_util(img)
-            # Processing copies
-            transp_layer = img.copy()
-            final_marked = img.copy()
-
-            morph = img.copy()
-            self.append_save_img(3, morph)
-
-            if auto_align:
-                # Note: clahe is good for morphology, bad for thresholding
-                morph = CLAHE_HELPER.apply(morph)
-                self.append_save_img(3, morph)
-                # Remove shadows further, make columns/boxes darker (less gamma)
-                morph = ImageUtils.adjust_gamma(
-                    morph, config.threshold_params.GAMMA_LOW
-                )
-                # TODO: all numbers should come from either constants or config
-                _, morph = cv2.threshold(morph, 220, 220, cv2.THRESH_TRUNC)
-                morph = ImageUtils.normalize_util(morph)
-                self.append_save_img(3, morph)
-                if config.outputs.show_image_level >= 4:
-                    InteractionUtils.show("morph1", morph, 0, 1, config)
+            morph = self._prepare_morph_for_alignment(img, auto_align)
 
             # Move them to data class if needed
             # Overlay Transparencies
@@ -86,334 +62,48 @@ class ImageInstanceOps:
             # blackVals=[0]
             # whiteVals=[255]
 
-            if config.outputs.show_image_level >= 5:
-                all_c_box_vals = {"int": [], "mcq": []}
-                # TODO: simplify this logic
-                q_nums = {"int": [], "mcq": []}
+            all_c_box_vals, q_nums = self._init_debug_boxplots()
+            morph_v = self._auto_align_field_blocks(template, morph, auto_align)
+            final_align = self._render_alignment_debug(
+                img, template, auto_align
+            )
 
-            # Find Shifts for the field_blocks --> Before calculating threshold!
-            if auto_align:
-                # print("Begin Alignment")
-                # Open : erode then dilate
-                v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 10))
-                morph_v = cv2.morphologyEx(
-                    morph, cv2.MORPH_OPEN, v_kernel, iterations=3
-                )
-                _, morph_v = cv2.threshold(morph_v, 200, 200, cv2.THRESH_TRUNC)
-                morph_v = 255 - ImageUtils.normalize_util(morph_v)
-
-                if config.outputs.show_image_level >= 3:
-                    InteractionUtils.show(
-                        "morphed_vertical", morph_v, 0, 1, config=config
-                    )
-
-                # InteractionUtils.show("morph1",morph,0,1,config=config)
-                # InteractionUtils.show("morphed_vertical",morph_v,0,1,config=config)
-
-                self.append_save_img(3, morph_v)
-
-                morph_thr = 60  # for Mobile images, 40 for scanned Images
-                _, morph_v = cv2.threshold(morph_v, morph_thr, 255, cv2.THRESH_BINARY)
-                # kernel best tuned to 5x5 now
-                morph_v = cv2.erode(morph_v, np.ones((5, 5), np.uint8), iterations=2)
-
-                self.append_save_img(3, morph_v)
-                # h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 2))
-                # morph_h = cv2.morphologyEx(morph, cv2.MORPH_OPEN, h_kernel, iterations=3)
-                # ret, morph_h = cv2.threshold(morph_h,200,200,cv2.THRESH_TRUNC)
-                # morph_h = 255 - normalize_util(morph_h)
-                # InteractionUtils.show("morph_h",morph_h,0,1,config=config)
-                # _, morph_h = cv2.threshold(morph_h,morph_thr,255,cv2.THRESH_BINARY)
-                # morph_h = cv2.erode(morph_h,  np.ones((5,5),np.uint8), iterations = 2)
-                if config.outputs.show_image_level >= 3:
-                    InteractionUtils.show(
-                        "morph_thr_eroded", morph_v, 0, 1, config=config
-                    )
-
-                self.append_save_img(6, morph_v)
-
-                # template relative alignment code
-                for field_block in template.field_blocks:
-                    s, d = field_block.origin, field_block.dimensions
-
-                    match_col, max_steps, align_stride, thk = map(
-                        config.alignment_params.get,
-                        [
-                            "match_col",
-                            "max_steps",
-                            "stride",
-                            "thickness",
-                        ],
-                    )
-                    shift, steps = 0, 0
-                    while steps < max_steps:
-                        left_mean = np.mean(
-                            morph_v[
-                                s[1] : s[1] + d[1],
-                                s[0] + shift - thk : -thk + s[0] + shift + match_col,
-                            ]
-                        )
-                        right_mean = np.mean(
-                            morph_v[
-                                s[1] : s[1] + d[1],
-                                s[0]
-                                + shift
-                                - match_col
-                                + d[0]
-                                + thk : thk
-                                + s[0]
-                                + shift
-                                + d[0],
-                            ]
-                        )
-
-                        # For demonstration purposes-
-                        # if(field_block.name == "int1"):
-                        #     ret = morph_v.copy()
-                        #     cv2.rectangle(ret,
-                        #                   (s[0]+shift-thk,s[1]),
-                        #                   (s[0]+shift+thk+d[0],s[1]+d[1]),
-                        #                   CLR_WHITE,
-                        #                   3)
-                        #     appendSaveImg(6,ret)
-                        # print(shift, left_mean, right_mean)
-                        left_shift, right_shift = left_mean > 100, right_mean > 100
-                        if left_shift:
-                            if right_shift:
-                                break
-                            else:
-                                shift -= align_stride
-                        else:
-                            if right_shift:
-                                shift += align_stride
-                            else:
-                                break
-                        steps += 1
-
-                    field_block.shift = shift
-                    # print("Aligned field_block: ",field_block.name,"Corrected Shift:",
-                    #   field_block.shift,", dimensions:", field_block.dimensions,
-                    #   "origin:", field_block.origin,'\n')
-                # print("End Alignment")
-
-            final_align = None
-            if config.outputs.show_image_level >= 2:
-                initial_align = self.draw_template_layout(img, template, shifted=False)
-                final_align = self.draw_template_layout(
-                    img, template, shifted=True, draw_qvals=True
-                )
-                # appendSaveImg(4,mean_vals)
-                self.append_save_img(2, initial_align)
-                self.append_save_img(2, final_align)
-
-                if auto_align:
-                    final_align = np.hstack((initial_align, final_align))
             self.append_save_img(5, img)
 
-            # Get mean bubbleValues n other stats
-            all_q_vals, all_q_strip_arrs, all_q_std_vals = [], [], []
-            total_q_strip_no = 0
-            for field_block in template.field_blocks:
-                box_w, box_h = field_block.bubble_dimensions
-                q_std_vals = []
-                for field_block_bubbles in field_block.traverse_bubbles:
-                    q_strip_vals = []
-                    for pt in field_block_bubbles:
-                        # shifted
-                        x, y = (pt.x + field_block.shift, pt.y)
-                        rect = [y, y + box_h, x, x + box_w]
-                        q_strip_vals.append(
-                            cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]
-                            # detectCross(img, rect) ? 100 : 0
-                        )
-                    q_std_vals.append(round(np.std(q_strip_vals), 2))
-                    all_q_strip_arrs.append(q_strip_vals)
-                    # _, _, _ = get_global_threshold(q_strip_vals, "QStrip Plot",
-                    #   plot_show=False, sort_in_plot=True)
-                    # hist = getPlotImg()
-                    # InteractionUtils.show("QStrip "+field_block_bubbles[0].field_label, hist, 0, 1,config=config)
-                    all_q_vals.extend(q_strip_vals)
-                    # print(total_q_strip_no, field_block_bubbles[0].field_label, q_std_vals[len(q_std_vals)-1])
-                    total_q_strip_no += 1
-                all_q_std_vals.extend(q_std_vals)
-
-            global_std_thresh, _, _ = self.get_global_threshold(
-                all_q_std_vals
-            )  # , "Q-wise Std-dev Plot", plot_show=True, sort_in_plot=True)
-            # plt.show()
-            # hist = getPlotImg()
-            # InteractionUtils.show("StdHist", hist, 0, 1,config=config)
-
-            # Note: Plotting takes Significant times here --> Change Plotting args
-            # to support show_image_level
-            # , "Mean Intensity Histogram",plot_show=True, sort_in_plot=True)
-            global_thr, _, _ = self.get_global_threshold(all_q_vals, looseness=4)
-
-            logger.info(
-                f"Thresholding: \tglobal_thr: {round(global_thr, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_thr == 255) else ''}"
+            all_q_vals, all_q_strip_arrs, all_q_std_vals = self._collect_q_stats(
+                template, img
             )
-            # plt.show()
-            # hist = getPlotImg()
-            # InteractionUtils.show("StdHist", hist, 0, 1,config=config)
+            global_thr, global_std_thresh = self._compute_thresholds(
+                all_q_vals, all_q_std_vals
+            )
 
-            # if(config.outputs.show_image_level>=1):
-            #     hist = getPlotImg()
-            #     InteractionUtils.show("Hist", hist, 0, 1,config=config)
-            #     appendSaveImg(4,hist)
-            #     appendSaveImg(5,hist)
-            #     appendSaveImg(2,hist)
+            (
+                omr_response,
+                multi_marked,
+                per_omr_threshold_avg,
+            ) = self._detect_marked_bubbles(
+                template,
+                img,
+                final_marked,
+                all_q_vals,
+                all_q_strip_arrs,
+                all_q_std_vals,
+                global_thr,
+                global_std_thresh,
+                omr_response,
+                all_c_box_vals,
+                q_nums,
+            )
 
-            per_omr_threshold_avg, total_q_strip_no, total_q_box_no = 0, 0, 0
-            for field_block in template.field_blocks:
-                block_q_strip_no = 1
-                box_w, box_h = field_block.bubble_dimensions
-                shift = field_block.shift
-                s, d = field_block.origin, field_block.dimensions
-                key = field_block.name[:3]
-                # cv2.rectangle(final_marked,(s[0]+shift,s[1]),(s[0]+shift+d[0],
-                #   s[1]+d[1]),CLR_BLACK,3)
-                for field_block_bubbles in field_block.traverse_bubbles:
-                    # All Black or All White case
-                    no_outliers = all_q_std_vals[total_q_strip_no] < global_std_thresh
-                    # print(total_q_strip_no, field_block_bubbles[0].field_label,
-                    #   all_q_std_vals[total_q_strip_no], "no_outliers:", no_outliers)
-                    per_q_strip_threshold = self.get_local_threshold(
-                        all_q_strip_arrs[total_q_strip_no],
-                        global_thr,
-                        no_outliers,
-                        f"Mean Intensity Histogram for {key}.{field_block_bubbles[0].field_label}.{block_q_strip_no}",
-                        config.outputs.show_image_level >= 6,
-                    )
-                    # print(field_block_bubbles[0].field_label,key,block_q_strip_no, "THR: ",
-                    #   round(per_q_strip_threshold,2))
-                    per_omr_threshold_avg += per_q_strip_threshold
-
-                    # Note: Little debugging visualization - view the particular Qstrip
-                    # if(
-                    #     0
-                    #     # or "q17" in (field_block_bubbles[0].field_label)
-                    #     # or (field_block_bubbles[0].field_label+str(block_q_strip_no))=="q15"
-                    #  ):
-                    #     st, end = qStrip
-                    #     InteractionUtils.show("QStrip: "+key+"-"+str(block_q_strip_no),
-                    #     img[st[1] : end[1], st[0]+shift : end[0]+shift],0,config=config)
-
-                    # TODO: get rid of total_q_box_no
-                    detected_bubbles = []
-                    for bubble in field_block_bubbles:
-                        bubble_is_marked = (
-                            per_q_strip_threshold > all_q_vals[total_q_box_no]
-                        )
-                        total_q_box_no += 1
-                        if bubble_is_marked:
-                            detected_bubbles.append(bubble)
-                            x, y, field_value = (
-                                bubble.x + field_block.shift,
-                                bubble.y,
-                                bubble.field_value,
-                            )
-                            cv2.rectangle(
-                                final_marked,
-                                (int(x + box_w / 12), int(y + box_h / 12)),
-                                (
-                                    int(x + box_w - box_w / 12),
-                                    int(y + box_h - box_h / 12),
-                                ),
-                                CLR_DARK_GRAY,
-                                3,
-                            )
-
-                            cv2.putText(
-                                final_marked,
-                                str(field_value),
-                                (x, y),
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                TEXT_SIZE,
-                                (20, 20, 10),
-                                int(1 + 3.5 * TEXT_SIZE),
-                            )
-                        else:
-                            cv2.rectangle(
-                                final_marked,
-                                (int(x + box_w / 10), int(y + box_h / 10)),
-                                (
-                                    int(x + box_w - box_w / 10),
-                                    int(y + box_h - box_h / 10),
-                                ),
-                                CLR_GRAY,
-                                -1,
-                            )
-
-                    for bubble in detected_bubbles:
-                        field_label, field_value = (
-                            bubble.field_label,
-                            bubble.field_value,
-                        )
-                        # Only send rolls multi-marked in the directory
-                        multi_marked_local = field_label in omr_response
-                        omr_response[field_label] = (
-                            (omr_response[field_label] + field_value)
-                            if multi_marked_local
-                            else field_value
-                        )
-                        # TODO: generalize this into identifier
-                        # multi_roll = multi_marked_local and "Roll" in str(q)
-                        multi_marked = multi_marked or multi_marked_local
-
-                    if len(detected_bubbles) == 0:
-                        field_label = field_block_bubbles[0].field_label
-                        omr_response[field_label] = field_block.empty_val
-
-                    if config.outputs.show_image_level >= 5:
-                        if key in all_c_box_vals:
-                            q_nums[key].append(f"{key[:2]}_c{str(block_q_strip_no)}")
-                            all_c_box_vals[key].append(
-                                all_q_strip_arrs[total_q_strip_no]
-                            )
-
-                    block_q_strip_no += 1
-                    total_q_strip_no += 1
-                # /for field_block
-
-            per_omr_threshold_avg /= total_q_strip_no
-            per_omr_threshold_avg = round(per_omr_threshold_avg, 2)
             # Translucent
             cv2.addWeighted(
                 final_marked, alpha, transp_layer, 1 - alpha, 0, final_marked
             )
-            # Box types
-            if config.outputs.show_image_level >= 6:
-                # plt.draw()
-                f, axes = plt.subplots(len(all_c_box_vals), sharey=True)
-                f.canvas.manager.set_window_title(name)
-                ctr = 0
-                type_name = {
-                    "int": "Integer",
-                    "mcq": "MCQ",
-                    "med": "MED",
-                    "rol": "Roll",
-                }
-                for k, boxvals in all_c_box_vals.items():
-                    axes[ctr].title.set_text(type_name[k] + " Type")
-                    axes[ctr].boxplot(boxvals)
-                    # thrline=axes[ctr].axhline(per_omr_threshold_avg,color='red',ls='--')
-                    # thrline.set_label("Average THR")
-                    axes[ctr].set_ylabel("Intensity")
-                    axes[ctr].set_xticklabels(q_nums[k])
-                    # axes[ctr].legend()
-                    ctr += 1
-                # imshow will do the waiting
-                plt.tight_layout(pad=0.5)
-                plt.show()
 
-            if config.outputs.show_image_level >= 3 and final_align is not None:
-                final_align = ImageUtils.resize_util_h(
-                    final_align, int(config.dimensions.display_height)
-                )
-                # [final_align.shape[1],0])
-                InteractionUtils.show(
-                    "Template Alignment Adjustment", final_align, 0, 0, config=config
-                )
+            self._plot_box_types_if_needed(
+                all_c_box_vals, q_nums, name, per_omr_threshold_avg
+            )
+            self._show_final_align_if_needed(final_align)
 
             if config.outputs.save_detections and save_dir is not None:
                 if multi_roll:
@@ -431,6 +121,481 @@ class ImageInstanceOps:
 
         except Exception as e:
             raise e
+
+    def _prepare_response_images(self, template, image):
+        config = self.tuning_config
+        img = image.copy()
+        # origDim = img.shape[:2]
+        img = ImageUtils.resize_util(img, template.page_dimensions[0], template.page_dimensions[1])
+        if img.max() > img.min():
+            img = ImageUtils.normalize_util(img)
+        # Processing copies
+        transp_layer = img.copy()
+        final_marked = img.copy()
+        return img, transp_layer, final_marked
+
+    def _prepare_morph_for_alignment(self, img, auto_align):
+        config = self.tuning_config
+        morph = img.copy()
+        self.append_save_img(3, morph)
+
+        if auto_align:
+            # Note: clahe is good for morphology, bad for thresholding
+            morph = CLAHE_HELPER.apply(morph)
+            self.append_save_img(3, morph)
+            # Remove shadows further, make columns/boxes darker (less gamma)
+            morph = ImageUtils.adjust_gamma(morph, config.threshold_params.GAMMA_LOW)
+            # TODO: all numbers should come from either constants or config
+            _, morph = cv2.threshold(morph, 220, 220, cv2.THRESH_TRUNC)
+            morph = ImageUtils.normalize_util(morph)
+            self.append_save_img(3, morph)
+            if config.outputs.show_image_level >= 4:
+                InteractionUtils.show("morph1", morph, 0, 1, config)
+
+        return morph
+
+    def _init_debug_boxplots(self):
+        config = self.tuning_config
+        all_c_box_vals, q_nums = None, None
+        if config.outputs.show_image_level >= 5:
+            all_c_box_vals = {"int": [], "mcq": []}
+            # TODO: simplify this logic
+            q_nums = {"int": [], "mcq": []}
+        return all_c_box_vals, q_nums
+
+    def _auto_align_field_blocks(self, template, morph, auto_align):
+        config = self.tuning_config
+        morph_v = None
+        # Find Shifts for the field_blocks --> Before calculating threshold!
+        if auto_align:
+            # print("Begin Alignment")
+            # Open : erode then dilate
+            v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 10))
+            morph_v = cv2.morphologyEx(morph, cv2.MORPH_OPEN, v_kernel, iterations=3)
+            _, morph_v = cv2.threshold(morph_v, 200, 200, cv2.THRESH_TRUNC)
+            morph_v = 255 - ImageUtils.normalize_util(morph_v)
+
+            if config.outputs.show_image_level >= 3:
+                InteractionUtils.show("morphed_vertical", morph_v, 0, 1, config=config)
+
+            # InteractionUtils.show("morph1",morph,0,1,config=config)
+            # InteractionUtils.show("morphed_vertical",morph_v,0,1,config=config)
+
+            self.append_save_img(3, morph_v)
+
+            morph_thr = 60  # for Mobile images, 40 for scanned Images
+            _, morph_v = cv2.threshold(morph_v, morph_thr, 255, cv2.THRESH_BINARY)
+            # kernel best tuned to 5x5 now
+            morph_v = cv2.erode(morph_v, np.ones((5, 5), np.uint8), iterations=2)
+
+            self.append_save_img(3, morph_v)
+            # h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 2))
+            # morph_h = cv2.morphologyEx(morph, cv2.MORPH_OPEN, h_kernel, iterations=3)
+            # ret, morph_h = cv2.threshold(morph_h,200,200,cv2.THRESH_TRUNC)
+            # morph_h = 255 - normalize_util(morph_h)
+            # InteractionUtils.show("morph_h",morph_h,0,1,config=config)
+            # _, morph_h = cv2.threshold(morph_h,morph_thr,255,cv2.THRESH_BINARY)
+            # morph_h = cv2.erode(morph_h,  np.ones((5,5),np.uint8), iterations = 2)
+            if config.outputs.show_image_level >= 3:
+                InteractionUtils.show("morph_thr_eroded", morph_v, 0, 1, config=config)
+
+            self.append_save_img(6, morph_v)
+
+            # template relative alignment code
+            for field_block in template.field_blocks:
+                s, d = field_block.origin, field_block.dimensions
+
+                match_col, max_steps, align_stride, thk = map(
+                    config.alignment_params.get,
+                    [
+                        "match_col",
+                        "max_steps",
+                        "stride",
+                        "thickness",
+                    ],
+                )
+                shift, steps = 0, 0
+                while steps < max_steps:
+                    left_mean = np.mean(
+                        morph_v[
+                            s[1] : s[1] + d[1],
+                            s[0] + shift - thk : -thk + s[0] + shift + match_col,
+                        ]
+                    )
+                    right_mean = np.mean(
+                        morph_v[
+                            s[1] : s[1] + d[1],
+                            s[0]
+                            + shift
+                            - match_col
+                            + d[0]
+                            + thk : thk
+                            + s[0]
+                            + shift
+                            + d[0],
+                        ]
+                    )
+
+                    # For demonstration purposes-
+                    # if(field_block.name == "int1"):
+                    #     ret = morph_v.copy()
+                    #     cv2.rectangle(ret,
+                    #                   (s[0]+shift-thk,s[1]),
+                    #                   (s[0]+shift+thk+d[0],s[1]+d[1]),
+                    #                   CLR_WHITE,
+                    #                   3)
+                    #     appendSaveImg(6,ret)
+                    # print(shift, left_mean, right_mean)
+                    left_shift, right_shift = left_mean > 100, right_mean > 100
+                    if left_shift:
+                        if right_shift:
+                            break
+                        else:
+                            shift -= align_stride
+                    else:
+                        if right_shift:
+                            shift += align_stride
+                        else:
+                            break
+                    steps += 1
+
+                field_block.shift = shift
+                # print("Aligned field_block: ",field_block.name,"Corrected Shift:",
+                #   field_block.shift,", dimensions:", field_block.dimensions,
+                #   "origin:", field_block.origin,'\n')
+            # print("End Alignment")
+        return morph_v
+
+    def _render_alignment_debug(self, img, template, auto_align):
+        config = self.tuning_config
+        final_align = None
+        if config.outputs.show_image_level >= 2:
+            initial_align = self.draw_template_layout(img, template, shifted=False)
+            final_align = self.draw_template_layout(img, template, shifted=True, draw_qvals=True)
+            # appendSaveImg(4,mean_vals)
+            self.append_save_img(2, initial_align)
+            self.append_save_img(2, final_align)
+
+            if auto_align:
+                final_align = np.hstack((initial_align, final_align))
+        return final_align
+
+    def _collect_q_stats(self, template, img):
+        # Get mean bubbleValues n other stats
+        all_q_vals, all_q_strip_arrs, all_q_std_vals = [], [], []
+        total_q_strip_no = 0
+        for field_block in template.field_blocks:
+            box_w, box_h = field_block.bubble_dimensions
+            q_std_vals = []
+            for field_block_bubbles in field_block.traverse_bubbles:
+                q_strip_vals = []
+                for pt in field_block_bubbles:
+                    # shifted
+                    x, y = (pt.x + field_block.shift, pt.y)
+                    rect = [y, y + box_h, x, x + box_w]
+                    q_strip_vals.append(
+                        cv2.mean(img[rect[0] : rect[1], rect[2] : rect[3]])[0]
+                        # detectCross(img, rect) ? 100 : 0
+                    )
+                q_std_vals.append(round(np.std(q_strip_vals), 2))
+                all_q_strip_arrs.append(q_strip_vals)
+                # _, _, _ = get_global_threshold(q_strip_vals, "QStrip Plot",
+                #   plot_show=False, sort_in_plot=True)
+                # hist = getPlotImg()
+                # InteractionUtils.show("QStrip "+field_block_bubbles[0].field_label, hist, 0, 1,config=config)
+                all_q_vals.extend(q_strip_vals)
+                # print(total_q_strip_no, field_block_bubbles[0].field_label, q_std_vals[len(q_std_vals)-1])
+                total_q_strip_no += 1
+            all_q_std_vals.extend(q_std_vals)
+        return all_q_vals, all_q_strip_arrs, all_q_std_vals
+
+    def _compute_thresholds(self, all_q_vals, all_q_std_vals):
+        config = self.tuning_config
+        global_std_thresh, _, _ = self.get_global_threshold(
+            all_q_std_vals
+        )  # , "Q-wise Std-dev Plot", plot_show=True, sort_in_plot=True)
+        # plt.show()
+        # hist = getPlotImg()
+        # InteractionUtils.show("StdHist", hist, 0, 1,config=config)
+
+        # Note: Plotting takes Significant times here --> Change Plotting args
+        # to support show_image_level
+        # , "Mean Intensity Histogram",plot_show=True, sort_in_plot=True)
+        global_thr, _, _ = self.get_global_threshold(all_q_vals, looseness=4)
+
+        logger.info(
+            f"Thresholding: \tglobal_thr: {round(global_thr, 2)} \tglobal_std_THR: {round(global_std_thresh, 2)}\t{'(Looks like a Xeroxed OMR)' if (global_thr == 255) else ''}"
+        )
+        # plt.show()
+        # hist = getPlotImg()
+        # InteractionUtils.show("StdHist", hist, 0, 1,config=config)
+
+        # if(config.outputs.show_image_level>=1):
+        #     hist = getPlotImg()
+        #     InteractionUtils.show("Hist", hist, 0, 1,config=config)
+        #     appendSaveImg(4,hist)
+        #     appendSaveImg(5,hist)
+        #     appendSaveImg(2,hist)
+        return global_thr, global_std_thresh
+
+    def _detect_marked_bubbles(
+            self,
+            template,
+            img,
+            final_marked,
+            all_q_vals,
+            all_q_strip_arrs,
+            all_q_std_vals,
+            global_thr,
+            global_std_thresh,
+            omr_response,
+            all_c_box_vals,
+            q_nums,
+    ):
+        config = self.tuning_config
+        per_omr_threshold_avg, total_q_strip_no, total_q_box_no = 0, 0, 0
+        multi_marked, multi_roll = 0, 0
+
+        for field_block in template.field_blocks:
+            block_q_strip_no = 1
+            box_w, box_h = field_block.bubble_dimensions
+            shift = field_block.shift
+            s, d = field_block.origin, field_block.dimensions
+            key = field_block.name[:3]
+            # cv2.rectangle(final_marked,(s[0]+shift,s[1]),(s[0]+shift+d[0],
+            #   s[1]+d[1]),CLR_BLACK,3)
+
+            for field_block_bubbles in field_block.traverse_bubbles:
+                per_q_strip_threshold = self._compute_qstrip_threshold(
+                    key=key,
+                    field_block_bubbles=field_block_bubbles,
+                    block_q_strip_no=block_q_strip_no,
+                    all_q_std_vals=all_q_std_vals,
+                    total_q_strip_no=total_q_strip_no,
+                    global_std_thresh=global_std_thresh,
+                    all_q_strip_arrs=all_q_strip_arrs,
+                    global_thr=global_thr,
+                    config=config,
+                )
+                per_omr_threshold_avg += per_q_strip_threshold
+
+                detected_bubbles, total_q_box_no = self._scan_and_draw_bubbles(
+                    field_block=field_block,
+                    field_block_bubbles=field_block_bubbles,
+                    per_q_strip_threshold=per_q_strip_threshold,
+                    all_q_vals=all_q_vals,
+                    total_q_box_no=total_q_box_no,
+                    final_marked=final_marked,
+                    box_w=box_w,
+                    box_h=box_h,
+                )
+
+                multi_marked = self._apply_detected_bubbles_to_response(
+                    detected_bubbles=detected_bubbles,
+                    omr_response=omr_response,
+                    multi_marked=multi_marked,
+                )
+
+                self._apply_empty_if_none_detected(
+                    detected_bubbles=detected_bubbles,
+                    field_block_bubbles=field_block_bubbles,
+                    field_block=field_block,
+                    omr_response=omr_response,
+                )
+
+                self._collect_c_box_debug(
+                    config=config,
+                    key=key,
+                    all_c_box_vals=all_c_box_vals,
+                    q_nums=q_nums,
+                    block_q_strip_no=block_q_strip_no,
+                    all_q_strip_arrs=all_q_strip_arrs,
+                    total_q_strip_no=total_q_strip_no,
+                )
+
+                block_q_strip_no += 1
+                total_q_strip_no += 1
+            # /for field_block
+
+        per_omr_threshold_avg /= total_q_strip_no
+        per_omr_threshold_avg = round(per_omr_threshold_avg, 2)
+        return omr_response, multi_marked, per_omr_threshold_avg
+
+    def _compute_qstrip_threshold(
+            self,
+            *,
+            key,
+            field_block_bubbles,
+            block_q_strip_no,
+            all_q_std_vals,
+            total_q_strip_no,
+            global_std_thresh,
+            all_q_strip_arrs,
+            global_thr,
+            config,
+    ):
+        # All Black or All White case
+        no_outliers = all_q_std_vals[total_q_strip_no] < global_std_thresh
+        # print(total_q_strip_no, field_block_bubbles[0].field_label,
+        #   all_q_std_vals[total_q_strip_no], "no_outliers:", no_outliers)
+        per_q_strip_threshold = self.get_local_threshold(
+            all_q_strip_arrs[total_q_strip_no],
+            global_thr,
+            no_outliers,
+            f"Mean Intensity Histogram for {key}.{field_block_bubbles[0].field_label}.{block_q_strip_no}",
+            config.outputs.show_image_level >= 6,
+        )
+        # print(field_block_bubbles[0].field_label,key,block_q_strip_no, "THR: ",
+        #   round(per_q_strip_threshold,2))
+
+        # Note: Little debugging visualization - view the particular Qstrip
+        # if(
+        #     0
+        #     # or "q17" in (field_block_bubbles[0].field_label)
+        #     # or (field_block_bubbles[0].field_label+str(block_q_strip_no))=="q15"
+        #  ):
+        #     st, end = qStrip
+        #     InteractionUtils.show("QStrip: "+key+"-"+str(block_q_strip_no),
+        #     img[st[1] : end[1], st[0]+shift : end[0]+shift],0,config=config)
+
+        return per_q_strip_threshold
+
+    def _scan_and_draw_bubbles(
+            self,
+            *,
+            field_block,
+            field_block_bubbles,
+            per_q_strip_threshold,
+            all_q_vals,
+            total_q_box_no,
+            final_marked,
+            box_w,
+            box_h,
+    ):
+        # TODO: get rid of total_q_box_no
+        detected_bubbles = []
+        for bubble in field_block_bubbles:
+            bubble_is_marked = per_q_strip_threshold > all_q_vals[total_q_box_no]
+            total_q_box_no += 1
+
+            # Use these in both branches
+            x, y, field_value = (
+                bubble.x + field_block.shift,
+                bubble.y,
+                bubble.field_value,
+            )
+
+            if bubble_is_marked:
+                detected_bubbles.append(bubble)
+                cv2.rectangle(
+                    final_marked,
+                    (int(x + box_w / 12), int(y + box_h / 12)),
+                    (
+                        int(x + box_w - box_w / 12),
+                        int(y + box_h - box_h / 12),
+                    ),
+                    CLR_DARK_GRAY,
+                    3,
+                )
+
+                cv2.putText(
+                    final_marked,
+                    str(field_value),
+                    (x, y),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    TEXT_SIZE,
+                    (20, 20, 10),
+                    int(1 + 3.5 * TEXT_SIZE),
+                )
+            else:
+                cv2.rectangle(
+                    final_marked,
+                    (int(x + box_w / 10), int(y + box_h / 10)),
+                    (
+                        int(x + box_w - box_w / 10),
+                        int(y + box_h - box_h / 10),
+                    ),
+                    CLR_GRAY,
+                    -1,
+                )
+
+        return detected_bubbles, total_q_box_no
+
+    def _apply_detected_bubbles_to_response(self, *, detected_bubbles, omr_response, multi_marked):
+        for bubble in detected_bubbles:
+            field_label, field_value = (
+                bubble.field_label,
+                bubble.field_value,
+            )
+            # Only send rolls multi-marked in the directory
+            multi_marked_local = field_label in omr_response
+            omr_response[field_label] = (
+                (omr_response[field_label] + field_value)
+                if multi_marked_local
+                else field_value
+            )
+            # TODO: generalize this into identifier
+            # multi_roll = multi_marked_local and "Roll" in str(q)
+            multi_marked = multi_marked or multi_marked_local
+
+        return multi_marked
+
+    def _apply_empty_if_none_detected(self, *, detected_bubbles, field_block_bubbles, field_block, omr_response):
+        if len(detected_bubbles) == 0:
+            field_label = field_block_bubbles[0].field_label
+            omr_response[field_label] = field_block.empty_val
+
+    def _collect_c_box_debug(
+            self,
+            *,
+            config,
+            key,
+            all_c_box_vals,
+            q_nums,
+            block_q_strip_no,
+            all_q_strip_arrs,
+            total_q_strip_no,
+    ):
+        if config.outputs.show_image_level >= 5:
+            if key in all_c_box_vals:
+                q_nums[key].append(f"{key[:2]}_c{str(block_q_strip_no)}")
+                all_c_box_vals[key].append(all_q_strip_arrs[total_q_strip_no])
+
+    def _plot_box_types_if_needed(self, all_c_box_vals, q_nums, name, per_omr_threshold_avg):
+        config = self.tuning_config
+        # Box types
+        if config.outputs.show_image_level >= 6 and all_c_box_vals is not None:
+            # plt.draw()
+            f, axes = plt.subplots(len(all_c_box_vals), sharey=True)
+            f.canvas.manager.set_window_title(name)
+            ctr = 0
+            type_name = {
+                "int": "Integer",
+                "mcq": "MCQ",
+                "med": "MED",
+                "rol": "Roll",
+            }
+            for k, boxvals in all_c_box_vals.items():
+                axes[ctr].title.set_text(type_name[k] + " Type")
+                axes[ctr].boxplot(boxvals)
+                # thrline=axes[ctr].axhline(per_omr_threshold_avg,color='red',ls='--')
+                # thrline.set_label("Average THR")
+                axes[ctr].set_ylabel("Intensity")
+                axes[ctr].set_xticklabels(q_nums[k])
+                # axes[ctr].legend()
+                ctr += 1
+            # imshow will do the waiting
+            plt.tight_layout(pad=0.5)
+            plt.show()
+
+    def _show_final_align_if_needed(self, final_align):
+        config = self.tuning_config
+        if config.outputs.show_image_level >= 3 and final_align is not None:
+            final_align = ImageUtils.resize_util_h(final_align, int(config.dimensions.display_height))
+            # [final_align.shape[1],0])
+            InteractionUtils.show(
+                "Template Alignment Adjustment", final_align, 0, 0, config=config
+            )
 
     @staticmethod
     def draw_template_layout(img, template, shifted=True, draw_qvals=False, border=-1):
