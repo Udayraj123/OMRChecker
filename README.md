@@ -249,6 +249,61 @@ Explanation for the arguments:
 - The `--template` flag is deprecated and instead it's recommended to keep the template file at the parent folder containing folders of different images
 </details>
 
+## Utility Scripts
+
+### Image Preparation Tool
+
+Before processing images with OMRChecker, use the image preparation utility to clean up filenames and optimize file sizes.
+
+**Location**: `scripts/bulk_operations/prepare_images.py`
+
+#### Rename Images (Clean Filenames)
+
+Remove non-UTF characters, spaces, and special characters from image filenames:
+
+```bash
+python scripts/bulk_operations/prepare_images.py rename --path ./my_scans
+python scripts/bulk_operations/prepare_images.py rename --path ./my_scans --recursive
+
+# Preview changes without actually renaming
+python scripts/bulk_operations/prepare_images.py rename --path ./my_scans --dry-run
+```
+
+#### Resize Images (Optimize for Performance)
+
+Reduce image file sizes based on a threshold while preserving aspect ratio:
+
+```bash
+python scripts/bulk_operations/prepare_images.py resize \
+  --path ./my_scans \
+  --max-size 500000 \
+  --max-width 1920 \
+  --max-height 1440
+
+# Preview resize operations without actually modifying files
+python scripts/bulk_operations/prepare_images.py resize \
+  --path ./my_scans \
+  --max-size 500000 --max-width 1920 --max-height 1440 --dry-run
+```
+
+**Typical workflow**:
+```bash
+# 1. Clean up filenames
+python scripts/bulk_operations/prepare_images.py rename --path ./scans --recursive
+
+# 2. Optimize image sizes
+python scripts/bulk_operations/prepare_images.py resize --path ./scans \
+  --max-size 500000 --max-width 1920 --max-height 1440 --recursive
+
+# 3. Run OMRChecker
+python main.py --inputDir ./scans --setLayout
+```
+
+For detailed usage and examples, see the script's docstring:
+```bash
+python scripts/bulk_operations/prepare_images.py --help
+```
+
 <!-- #### Testing the code
 Datasets to test on :
 Low Quality Dataset(For CV Based methods)) (1.5 GB)
