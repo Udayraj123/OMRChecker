@@ -1,8 +1,10 @@
 # Virtual Environment Setup
 
-This guide documents a reproducible local setup for OMRChecker.
+This guide documents a reproducible local setup for OMRChecker using `uv`.
 
-## Recommended: uv workflow
+## Setup
+
+Sync project dependencies:
 
 ```bash
 uv sync
@@ -14,44 +16,19 @@ Install contributor tooling too:
 uv sync --group dev
 ```
 
-Run commands inside the managed environment:
+`uv` automatically manages the project environment, so no manual activation step is required.
 
-```bash
-uv run main.py --help
-uv run pre-commit run -a
-uv run pytest -rfpsxEX --disable-warnings --verbose
-```
-
-## Fallback: pip + venv workflow
-
-Create an isolated environment:
-
-```bash
-python3 -m venv .venv
-```
-
-Activate it:
-
-```bash
-# Linux/macOS
-source .venv/bin/activate
-```
-
-```powershell
-# Windows (PowerShell)
-.\.venv\Scripts\Activate.ps1
-```
-
-Install dependencies:
-
-```bash
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-python -m pip install -r requirements.dev.txt
-```
+## Run Commands
 
 Run the application:
 
 ```bash
-python main.py
+uv run main.py
+```
+
+Run quality checks:
+
+```bash
+uv run pre-commit run -a
+uv run pytest -rfpsxEX --disable-warnings --verbose
 ```
