@@ -1,5 +1,5 @@
 # Any directory starting with a dot
-**/\.*/
+**/\.*
 # Except .github
 !.github/
 
@@ -11,4 +11,8 @@ outputs/*
 **/.DS_Store
 **/__pycache__
 venv/
+.venv/
+.pytest_cache/
+.pre-commit-cache/
+.ruff_cache/
 OMRChecker.wiki/
