@@ -16,6 +16,7 @@ Also, try to use commits with [conventional messages](https://www.conventionalco
 
 # Development setup
 Project dependencies are managed via `pyproject.toml` (recommended with `uv`).
+See the full environment guide: [docs/virtual-environment-setup.md](docs/virtual-environment-setup.md).
 
 Recommended workflow (using `uv`):
 
