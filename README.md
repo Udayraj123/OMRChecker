@@ -110,49 +110,42 @@ We now support [colored outputs](https://github.com/Udayraj123/OMRChecker/wiki/%
 
 **Operating system:** OSX or Linux is recommended although Windows is also supported.
 
-### 1. Install global dependencies
+### 1. Install uv and Python
 
-![opencv 4.0.0](https://img.shields.io/badge/opencv-4.0.0-blue.svg) ![python 3.5+](https://img.shields.io/badge/python-3.5+-blue.svg)
+![uv 0.3+](https://img.shields.io/badge/uv-0.3+-blue.svg) ![python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
 
-To check if python3 and pip is already installed:
+To check if [uv](https://docs.astral.sh/uv/) and Python are available:
 
 ```bash
-python3 --version
-python3 -m pip --version
+uv --version
+uv run python --version
 ```
 
 <details>
-	<summary><b>Install Python3</b></summary>
+	<summary><b>Install uv</b></summary>
 
-To install python3 follow instructions [here](https://www.python.org/downloads/)
-
-To install pip - follow instructions [here](https://pip.pypa.io/en/stable/installation/)
-
-</details>
-<details>
-<summary><b>Install OpenCV</b></summary>
-
-**Any installation method is fine.**
-
-Recommended:
+Using the official installer:
 
 ```bash
-python3 -m pip install --user --upgrade pip
-python3 -m pip install --user opencv-python
-python3 -m pip install --user opencv-contrib-python
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-More details on pip install openCV [here](https://www.pyimagesearch.com/2018/09/19/pip-install-opencv/).
+```powershell
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+See all installation options in the [official docs](https://docs.astral.sh/uv/getting-started/installation/).
 
 </details>
-
 <details>
 
 <summary><b>Extra steps(for Linux users only)</b></summary>
 
 <b>Installing missing libraries(if any):</b>
 
-On a fresh computer, some of the libraries may get missing in event after a successful pip install. Install them using following commands[(ref)](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/):
+On a fresh computer, some of the libraries may be missing for OpenCV wheels. Install them using following commands[(ref)](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/):
 
 ```bash
 sudo apt-get install -y build-essential cmake unzip pkg-config
@@ -172,13 +165,11 @@ git clone https://github.com/Udayraj123/OMRChecker
 cd OMRChecker/
 ```
 
-Install pip requirements
+Install project and contributor dependencies:
 
 ```bash
-python3 -m pip install --user -r requirements.txt
+uv sync --group dev
 ```
-
-_**Note:** If you face a distutils error in pip, use `--ignore-installed` flag in above command._
 
 <!-- Wiki should not get cloned -->
 
@@ -192,32 +183,12 @@ _**Note:** If you face a distutils error in pip, use `--ignore-installed` flag i
    ```
 2. Run OMRChecker:
    ```bash
-   python3 main.py
+   uv run main.py
    ```
 
-Alternatively you can also use `python3 main.py -i ./samples/sample1`.
+Alternatively you can also use `uv run main.py -i ./samples/sample1`.
 
 Each example in the samples folder demonstrates different ways in which OMRChecker can be used.
-
-### Common Issues
-
-<details>
-<summary>
-	1. [Windows] ERROR: Could not open requirements file<br>
-	</summary>
-Command: <code>python3 -m pip install --user -r requirements.txt</code>
-<br>
-	Link to Solution:  <a href="https://github.com/Udayraj123/OMRChecker/issues/54#issuecomment-1264569006">#54</a>
-</details>
-<details>
-<summary>
-2. [Linux] ERROR: No module named pip<br>
-</summary>
-Command: <code>python3 -m pip install --user --upgrade pip</code>
-<br>
-	Link to Solution: <a href="https://github.com/Udayraj123/OMRChecker/issues/70#issuecomment-1268094136">#70</a>
-</details>
-
 ## OMRChecker for custom OMR Sheets
 
 1. First, [create your own template.json](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide).
