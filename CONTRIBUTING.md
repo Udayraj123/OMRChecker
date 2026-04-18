@@ -14,16 +14,36 @@ For writing the code just follow the [Pep8 Python style](https://peps.python.org
 Also, try to use commits with [conventional messages](https://www.conventionalcommits.org/en/v1.0.0/#summary).
 
 
-# Code Formatting
-Before committing your code, make sure to run the following command to format your code according to the PEP8 style guide:
+# Development setup
+Project dependencies are managed via `pyproject.toml` (recommended with `uv`).
+
+Recommended workflow (using `uv`):
+
 ```.sh
-pip install -r requirements.dev.txt && pre-commit install
+uv sync --group dev
+uv run pre-commit install --hook-type pre-commit --hook-type pre-push
 ```
 
-Run `pre-commit` before committing your changes:
+Fallback workflow (`pip` + virtualenv):
+
 ```.sh
-git add .
-pre-commit run -a
+python3 -m venv .venv
+source .venv/bin/activate  # Windows PowerShell: .\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m pip install -r requirements.dev.txt
+pre-commit install --hook-type pre-commit --hook-type pre-push
+```
+
+# Code Formatting
+Before committing your code, make sure to run the following command to format and validate your changes:
+```.sh
+uv run pre-commit run -a
+```
+
+Run tests before opening your PR:
+```.sh
+uv run pytest -rfpsxEX --disable-warnings --verbose
 ```
 
 # Where to contribute from
