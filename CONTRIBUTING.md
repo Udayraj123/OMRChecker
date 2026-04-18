@@ -15,26 +15,16 @@ Also, try to use commits with [conventional messages](https://www.conventionalco
 
 
 # Development setup
-Project dependencies are managed via `pyproject.toml` (recommended with `uv`).
-See the full environment guide: [docs/virtual-environment-setup.md](docs/virtual-environment-setup.md).
+Project dependencies are managed via `pyproject.toml` using `uv`.
 
-Recommended workflow (using `uv`):
+Recommended workflow:
 
 ```.sh
 uv sync --group dev
 uv run pre-commit install --hook-type pre-commit --hook-type pre-push
 ```
 
-Fallback workflow (`pip` + virtualenv):
-
-```.sh
-python3 -m venv .venv
-source .venv/bin/activate  # Windows PowerShell: .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-python -m pip install -r requirements.dev.txt
-pre-commit install --hook-type pre-commit --hook-type pre-push
-```
+No manual virtual environment activation is required when using `uv`.
 
 # Code Formatting
 Before committing your code, make sure to run the following command to format and validate your changes:
