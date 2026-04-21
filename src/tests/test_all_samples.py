@@ -37,8 +37,10 @@ def extract_sample_outputs(output_dir):
     sample_outputs = {}
     for _dir, _subdir, _files in os.walk(output_dir):
         for file in glob(os.path.join(_dir, EXT)):
-            relative_path = os.path.relpath(file, output_dir)
-            sample_outputs[relative_path] = read_file(file)
+            relative_path = os.path.relpath(file, output_dir).replace(os.sep, "/")
+            sample_outputs[relative_path] = (
+                read_file(file).replace("\\", "/").replace("\r\n", "\n")
+            )
     return sample_outputs
 
 
