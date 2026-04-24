@@ -6,6 +6,7 @@ from typing import Dict, Any, List, Optional, Tuple
 # New imports for preprocessing
 import cv2
 import numpy as np
+import copy
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 
@@ -99,16 +100,21 @@ except Exception as e:
     Template = None  # type: ignore
     ImageUtils = None  # type: ignore
 
-# -------- In-memory TemplateModel to keep edits and provide render defaults --------
+# ---------------- In-memory template model with defaults, undo/redo ----------------
 class TemplateModel(QtCore.QObject):
     """
-    - Holds a working copy of template.json while editing (does NOT overwrite original).
-    - Provides derived defaults for rendering (without persisting them):
-        * If 'direction' is missing -> treat as 'horizontal' (do not save it as key).
-        * If 'bubbleValues' is missing but 'fieldType' is set -> derive from FIELD_TYPES
-          (QTYPE_INT or QTYPE_INT_FROM_1), for preview only. Do not persist unless user edits.
-        * If 'bubbleDimensions' missing on block -> fall back to global bubbleDimensions.
-    - Saves to <template>.edited.json on demand.
+    Keeps a working copy of template.json during editing.
+    - Derived defaults (render-time only, not persisted):
+        * direction default by fieldType:
+            - QTYPE_MCQ4/QTYPE_MCQ5 -> horizontal
+            - QTYPE_INT/QTYPE_INT_FROM_1 -> vertical
+            - otherwise -> horizontal
+        * bubbleValues derived from fieldType (constants.FIELD_TYPES) if absent.
+        * bubbleDimensions defaults to global template bubbleDimensions if absent.
+    - Persistence rules on save:
+        * Do NOT persist 'direction' if it matches the type-default above.
+        * Do NOT persist 'bubbleValues' when it matches type defaults or was never explicitly set.
+    - Undo/Redo stacks for create/delete/move/resize/panel edits.
     """
     changed = QtCore.pyqtSignal()
 
@@ -117,10 +123,13 @@ class TemplateModel(QtCore.QObject):
         self.template_path = Path(template_path)
         self.image_path = Path(image_path)
         self.template: Dict[str, Any] = self._load_template(self.template_path)
-        # Ensure required nodes
+        # Ensure required keys
         self.template.setdefault("fieldBlocks", {})
         self.template.setdefault("bubbleDimensions", [20, 20])
         self.template.setdefault("pageDimensions", self._infer_page_dims())
+        # Undo/redo stacks
+        self._history: List[Dict[str, Any]] = []
+        self._future: List[Dict[str, Any]] = []
 
     def _load_template(self, p: Path) -> Dict[str, Any]:
         try:
@@ -139,30 +148,58 @@ class TemplateModel(QtCore.QObject):
             pass
         return [0, 0]
 
-    # Accessors
     def field_blocks(self):
         return list(self.template["fieldBlocks"].items())
 
+    def default_dir_for_type(self, field_type: Optional[str]) -> str:
+        if field_type in ("QTYPE_INT", "QTYPE_INT_FROM_1"):
+            return "vertical"
+        if field_type in ("QTYPE_MCQ4", "QTYPE_MCQ5"):
+            return "horizontal"
+        return "horizontal"
+
     def get_block(self, name: str) -> Dict[str, Any]:
         """
-        Return a live view of the block with derived defaults applied for rendering
-        (direction default 'horizontal', fieldType-derived bubbleValues), without mutating stored data.
+        Render view of a block with derived defaults. Do not modify/persist this dict.
         """
         base = self.template["fieldBlocks"].get(name, {})
-        fb = dict(base)  # render copy
-        # Always ensure direction default is horizontal when missing (do not persist)
+        fb = dict(base)
+        # Direction (derived if missing)
+        ft = base.get("fieldType")
         if "direction" not in fb or fb.get("direction") is None:
-            fb["direction"] = "horizontal"
-        # Merge bubbleDimensions at block level for drawing
+            fb["direction"] = self.default_dir_for_type(ft)
+        # bubbleDimensions fallback
         if "bubbleDimensions" not in fb or not isinstance(fb.get("bubbleDimensions"), list):
             fb["bubbleDimensions"] = list(self.template.get("bubbleDimensions", [20, 20]))
-        # Derive bubbleValues from fieldType if not explicitly present
-        if (not fb.get("bubbleValues")) and fb.get("fieldType") in FIELD_TYPES:
-            ft = FIELD_TYPES[fb["fieldType"]]
-            fb["bubbleValues"] = list(ft.get("bubbleValues", []))
+        # bubbleValues derived for render if absent
+        if not fb.get("bubbleValues") and ft in FIELD_TYPES:
+            fb["bubbleValues"] = list(FIELD_TYPES[ft].get("bubbleValues", []))
         return fb
 
-    # Mutators
+    def get_block_base(self, name: str) -> Dict[str, Any]:
+        return self.template["fieldBlocks"].setdefault(name, {})
+
+    def push_state(self, reason: str = ""):
+        # snapshot current state
+        self._history.append(copy.deepcopy(self.template))
+        self._future.clear()
+
+    def undo(self) -> bool:
+        if not self._history:
+            return False
+        self._future.append(copy.deepcopy(self.template))
+        self.template = self._history.pop()
+        self.changed.emit()
+        return True
+
+    def redo(self) -> bool:
+        if not self._future:
+            return False
+        self._history.append(copy.deepcopy(self.template))
+        self.template = self._future.pop()
+        self.changed.emit()
+        return True
+
     def next_block_name(self) -> str:
         base = "FieldBlock"
         n = 1
@@ -172,30 +209,36 @@ class TemplateModel(QtCore.QObject):
         return f"{base}_{n}"
 
     def add_block(self, name: str, rect: QtCore.QRectF) -> None:
+        self.push_state("add_block")
         x, y = int(rect.left()), int(rect.top())
         w, h = max(30, int(rect.width())), max(30, int(rect.height()))
+        # Minimal persisted data; renderer derives direction/bubbleValues
         self.template["fieldBlocks"][name] = {
             "origin": [x, y],
             "bubblesGap": w,
             "labelsGap": h,
             "fieldLabels": ["q1..1"],
-            "fieldType": "__CUSTOM__",
+            # leave fieldType unset by default
         }
         self.changed.emit()
 
+    def remove_block(self, name: str) -> None:
+        if name in self.template["fieldBlocks"]:
+            self.push_state("remove_block")
+            del self.template["fieldBlocks"][name]
+            self.changed.emit()
+
     def save_as_edited(self) -> Path:
-        """
-        Persist current working copy to <template>.edited.json
-        - Do NOT inject derived defaults:
-          * If direction is 'horizontal', prefer omitting key (treat as default).
-          * Do NOT auto-insert bubbleValues for QTYPE_INT/_FROM_1; only save if user explicitly set them.
-        """
-        cleaned = json.loads(json.dumps(self.template))  # deep copy via json
+        cleaned = copy.deepcopy(self.template)
         for name, fb in cleaned.get("fieldBlocks", {}).items():
-            if fb.get("direction", None) == "horizontal":
-                fb.pop("direction", None)
-            if ("bubbleValues" in fb) and fb.get("fieldType") in FIELD_TYPES:
-                if fb["bubbleValues"] == FIELD_TYPES[fb["fieldType"]]["bubbleValues"]:
+            ft = fb.get("fieldType")
+            # Drop direction if it matches type-default
+            if "direction" in fb:
+                if fb["direction"] == self.default_dir_for_type(ft):
+                    fb.pop("direction", None)
+            # Drop bubbleValues if it matches type default
+            if "bubbleValues" in fb and ft in FIELD_TYPES:
+                if fb["bubbleValues"] == FIELD_TYPES[ft].get("bubbleValues", []):
                     fb.pop("bubbleValues", None)
         out = self.template_path.with_name(self.template_path.stem + ".edited.json")
         with open(out, "w", encoding="utf-8") as f:
@@ -374,15 +417,19 @@ class BlockGraphicsItem(QtWidgets.QGraphicsItem):
 
     def update_model_from_item(self):
         """Update origin and derive gaps from current rect dimensions (inverse of calculate_block_dimensions)."""
-        fb = self.model.get_block(self.name)
+        fb = self.model.get_block_base(self.name)
         r = self._rect
         fb["origin"] = [int(self.pos().x()), int(self.pos().y())]
-        direction = fb.get("direction", "horizontal")
-        vals: List[str] = fb.get("bubbleValues", []) or []
-        labels: List[str] = fb.get("fieldLabels", []) or []
+        # Use derived default direction when not explicitly set
+        base_dir = fb.get("direction", None)
+        direction = base_dir if base_dir is not None else self.model.default_dir_for_type(fb.get("fieldType"))
+        # use render for counts, base for persistence
+        fb_render = self.model.get_block(self.name)
+        vals: List[str] = fb_render.get("bubbleValues", []) or []
+        labels: List[str] = fb_render.get("fieldLabels", []) or fb.get("fieldLabels", [])
         n_vals = max(1, len(vals))
         n_fields = max(1, len(labels))
-        bw, bh = fb.get("bubbleDimensions", self.model.template.get("bubbleDimensions", [20, 20]))
+        bw, bh = fb_render.get("bubbleDimensions", self.model.template.get("bubbleDimensions", [20, 20]))
         try:
             bw = float(bw)
             bh = float(bh)
@@ -471,6 +518,13 @@ class BlockGraphicsItem(QtWidgets.QGraphicsItem):
         self._rect = rect.normalized()
         self.update_model_from_item()
         self.update()
+        # snapshot after resize
+        self.model.push_state("resize_block")
+
+    def mouseReleaseEvent(self, event: QtWidgets.QGraphicsSceneMouseEvent) -> None:
+        super().mouseReleaseEvent(event)
+        # snapshot after move
+        self.model.push_state("move_block")
 
 # New: subclass handle item to forward drag to parent
 class _ResizeHandle(QtWidgets.QGraphicsRectItem):
@@ -481,10 +535,12 @@ class _ResizeHandle(QtWidgets.QGraphicsRectItem):
         self.setBrush(QtGui.QBrush(QtGui.QColor(255, 200, 0, 220)))
         self.setPen(QtGui.QPen(QtGui.QColor(30, 30, 30), 1))
         self.setZValue(1000)
+        # Let parent control actual geometry change; prevent scene panning of the block while resizing
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsScenePositionChanges, True)
         # Suppress recursion when parent repositions this handle
         self._suppress_item_change = False
+        self._dragging = False
 
     def setPosSilently(self, pos: QtCore.QPointF):
         self._suppress_item_change = True
@@ -492,6 +548,17 @@ class _ResizeHandle(QtWidgets.QGraphicsRectItem):
             super().setPos(pos)
         finally:
             self._suppress_item_change = False
+
+    def mousePressEvent(self, event: QtWidgets.QGraphicsSceneMouseEvent) -> None:
+        self._dragging = True
+        # Disable parent movement while dragging a handle to avoid panning
+        self._parent.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event: QtWidgets.QGraphicsSceneMouseEvent) -> None:
+        self._dragging = False
+        self._parent.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
+        super().mouseReleaseEvent(event)
 
     def itemChange(self, change, value):
         # Avoid calling super().itemChange to prevent enum type issues
@@ -631,6 +698,10 @@ class BlockPanel(QtWidgets.QGroupBox):
         self.field_type.addItems(list(FIELD_TYPES.keys()))
         self.field_type.setCurrentText(fb.get("fieldType", ""))
         form.addRow("Fieldtype", self.field_type)
+        # Delete button
+        self.delete_btn = QtWidgets.QPushButton("Delete")
+        self.delete_btn.setStyleSheet("QPushButton { color: #ff6666; }")
+        form.addRow(self.delete_btn)
 
         # Connections
         self.field_name.editingFinished.connect(self._apply)
@@ -643,22 +714,25 @@ class BlockPanel(QtWidgets.QGroupBox):
         self.origin_y.valueChanged.connect(self._apply)
         self.field_type.currentTextChanged.connect(self._apply_fieldtype)
         self.toggled.connect(self._toggle_body)  # NEW
+        self.delete_btn.clicked.connect(self._delete_self)
 
     def _toggle_body(self, on: bool):  # NEW
         self._body.setVisible(on)
 
     def _apply_fieldtype(self, text: str):
-        # Persist only the fieldType; DO NOT persist bubbleValues/direction here.
-        base = self.model.template["fieldBlocks"].get(self.name, {})
+        base = self.model.get_block_base(self.name)
+        self.model.push_state("change_fieldtype")
         if text:
             base["fieldType"] = text
         else:
             base.pop("fieldType", None)
+        # Do not auto-write bubbleValues or direction; renderer derives them.
         self.changed.emit(self.name)
 
     def _apply(self):
         new_name = self.field_name.text().strip()
-        base = self.model.template["fieldBlocks"].get(self.name, {})
+        base = self.model.get_block_base(self.name)
+        self.model.push_state("panel_apply")
         # If renamed
         if new_name and new_name != self.name:
             # Move the dict key
@@ -667,18 +741,19 @@ class BlockPanel(QtWidgets.QGroupBox):
             self.name = new_name
             self.setTitle(new_name)
 
-        # Only persist bubbleValues if user actually entered something; keep omitted for type-derived defaults
+        # Persist bubbleValues only if user provided explicit text
         bv_text = self.bubble_values.text().strip()
         if bv_text != "":
             base["bubbleValues"] = parse_csv_or_range(bv_text)
         else:
             base.pop("bubbleValues", None)
-        # Direction: omit 'horizontal' to keep implicit default, persist 'vertical'
-        dir_text = self.direction.currentText()
-        if dir_text == "horizontal":
+        # Direction: omit if equals type-default
+        sel_dir = self.direction.currentText()
+        ft = base.get("fieldType")
+        if sel_dir == self.model.default_dir_for_type(ft):
             base.pop("direction", None)
         else:
-            base["direction"] = dir_text
+            base["direction"] = sel_dir
         base["fieldLabels"] = parse_csv_or_range(self.field_labels.text())
         base["labelsGap"] = int(self.labels_gap.value())
         base["bubblesGap"] = int(self.bubbles_gap.value())
@@ -687,11 +762,11 @@ class BlockPanel(QtWidgets.QGroupBox):
 
     def sync_from_model(self):
         fb_render = self.model.get_block(self.name)
-        fb_base = self.model.template["fieldBlocks"].get(self.name, {})
-        # Show bubbleValues only if explicitly present in template; otherwise leave blank (derived by renderer)
+        fb_base = self.model.get_block_base(self.name)
+        # Show only explicit bubbleValues (leave blank if derived)
         self.bubble_values.setText(to_csv(fb_base.get("bubbleValues", [])))
-        # Direction: show explicit if set, else default to horizontal in UI
-        self.direction.setCurrentText(fb_base.get("direction", "horizontal"))
+        # Direction UI shows explicit if set, else default-for-type
+        self.direction.setCurrentText(fb_base.get("direction", self.model.default_dir_for_type(fb_base.get("fieldType"))))
         self.field_labels.setText(to_csv(fb_base.get("fieldLabels", [])))
         self.labels_gap.setValue(int(fb_base.get("labelsGap", 60)))
         self.bubbles_gap.setValue(int(fb_base.get("bubblesGap", 120)))
@@ -700,6 +775,9 @@ class BlockPanel(QtWidgets.QGroupBox):
         self.origin_y.setValue(int(oy))
         self.field_type.setCurrentText(fb_base.get("fieldType", ""))
 
+    def _delete_self(self):
+        self.model.remove_block(self.name)
+
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, template_path: Path, image_path: Optional[Path]):
         super().__init__()
@@ -707,6 +785,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resize(1280, 800)
         # Wider sidebar and smoother docks
         self.setDockOptions(self.DockOption.AllowTabbedDocks | self.DockOption.AnimatedDocks)  # NEW
+        self._pending_select_name: Optional[str] = None  # select after refresh
 
         # Model
         if image_path is None:
@@ -804,9 +883,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.view.enter_add_mode()
 
     def _add_block_from_rect(self, rect: QtCore.QRectF):
+        # Avoid duplicate creation: only update model; refresh_items will build UI
         name = self.model.next_block_name()
+        self._pending_select_name = name
         self.model.add_block(name, rect)
-        self._create_block_item_and_panel(name)
         # Select new item and unselect others; focus its panel
         for n, it in self.block_items.items():
             it.setSelected(n == name)
@@ -872,6 +952,16 @@ class MainWindow(QtWidgets.QMainWindow):
         for name in names_now:
             if name in expanded_states:
                 self.block_panels[name].setChecked(expanded_states[name])  # NEW
+        # Select newly added block and focus its panel
+        if self._pending_select_name and self._pending_select_name in self.block_items:
+            for n, it in self.block_items.items():
+                it.setSelected(n == self._pending_select_name)
+            panel = self.block_panels.get(self._pending_select_name)
+            if panel:
+                for n, pnl in self.block_panels.items():
+                    pnl.setChecked(pnl is panel)
+                self.sidebar_scroll.ensureWidgetVisible(panel)
+            self._pending_select_name = None
         # Keep layout tidy
         self.sidebar_inner_layout.addStretch(0)
 
@@ -884,7 +974,7 @@ class MainWindow(QtWidgets.QMainWindow):
         panel = self.block_panels.get(name)
         if panel is None:
             return
-        # Uncheck all others, then check this one
+        # Uncheck others, check this one
         for n, pnl in self.block_panels.items():
             pnl.setChecked(pnl is panel)
         self.sidebar_scroll.ensureWidgetVisible(panel)
@@ -892,6 +982,22 @@ class MainWindow(QtWidgets.QMainWindow):
     def on_save(self):
         out = self.model.save_as_edited()
         QtWidgets.QMessageBox.information(self, "Saved", f"Saved:\n{out}")
+
+    def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
+        # Delete selected block
+        if event.key() in (QtCore.Qt.Key.Key_Delete, QtCore.Qt.Key.Key_Backspace):
+            selected_names = [n for n, it in self.block_items.items() if it.isSelected()]
+            if selected_names:
+                self.model.remove_block(selected_names[0])
+                return
+        # Undo/Redo
+        if event.matches(QtGui.QKeySequence.StandardKey.Undo):
+            if self.model.undo():
+                return
+        if event.matches(QtGui.QKeySequence.StandardKey.Redo):
+            if self.model.redo():
+                return
+        super().keyPressEvent(event)
 
 def parse_args(argv: List[str]) -> Tuple[Optional[Path], Optional[Path]]:
     import argparse
