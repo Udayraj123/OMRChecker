@@ -99,7 +99,108 @@ except Exception as e:
     Template = None  # type: ignore
     ImageUtils = None  # type: ignore
 
-# ...existing code...
+# -------- In-memory TemplateModel to keep edits and provide render defaults --------
+class TemplateModel(QtCore.QObject):
+    """
+    - Holds a working copy of template.json while editing (does NOT overwrite original).
+    - Provides derived defaults for rendering (without persisting them):
+        * If 'direction' is missing -> treat as 'horizontal' (do not save it as key).
+        * If 'bubbleValues' is missing but 'fieldType' is set -> derive from FIELD_TYPES
+          (QTYPE_INT or QTYPE_INT_FROM_1), for preview only. Do not persist unless user edits.
+        * If 'bubbleDimensions' missing on block -> fall back to global bubbleDimensions.
+    - Saves to <template>.edited.json on demand.
+    """
+    changed = QtCore.pyqtSignal()
+
+    def __init__(self, template_path: Path, image_path: Path):
+        super().__init__()
+        self.template_path = Path(template_path)
+        self.image_path = Path(image_path)
+        self.template: Dict[str, Any] = self._load_template(self.template_path)
+        # Ensure required nodes
+        self.template.setdefault("fieldBlocks", {})
+        self.template.setdefault("bubbleDimensions", [20, 20])
+        self.template.setdefault("pageDimensions", self._infer_page_dims())
+
+    def _load_template(self, p: Path) -> Dict[str, Any]:
+        try:
+            with open(p, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            raise SystemExit(f"Failed to load template: {p}\n{e}")
+
+    def _infer_page_dims(self) -> List[int]:
+        try:
+            img = cv2.imread(str(self.image_path), cv2.IMREAD_GRAYSCALE)
+            if img is not None:
+                h, w = img.shape[:2]
+                return [int(w), int(h)]
+        except Exception:
+            pass
+        return [0, 0]
+
+    # Accessors
+    def field_blocks(self):
+        return list(self.template["fieldBlocks"].items())
+
+    def get_block(self, name: str) -> Dict[str, Any]:
+        """
+        Return a live view of the block with derived defaults applied for rendering
+        (direction default 'horizontal', fieldType-derived bubbleValues), without mutating stored data.
+        """
+        base = self.template["fieldBlocks"].get(name, {})
+        fb = dict(base)  # render copy
+        # Always ensure direction default is horizontal when missing (do not persist)
+        if "direction" not in fb or fb.get("direction") is None:
+            fb["direction"] = "horizontal"
+        # Merge bubbleDimensions at block level for drawing
+        if "bubbleDimensions" not in fb or not isinstance(fb.get("bubbleDimensions"), list):
+            fb["bubbleDimensions"] = list(self.template.get("bubbleDimensions", [20, 20]))
+        # Derive bubbleValues from fieldType if not explicitly present
+        if (not fb.get("bubbleValues")) and fb.get("fieldType") in FIELD_TYPES:
+            ft = FIELD_TYPES[fb["fieldType"]]
+            fb["bubbleValues"] = list(ft.get("bubbleValues", []))
+        return fb
+
+    # Mutators
+    def next_block_name(self) -> str:
+        base = "FieldBlock"
+        n = 1
+        existing = set(self.template["fieldBlocks"].keys())
+        while f"{base}_{n}" in existing:
+            n += 1
+        return f"{base}_{n}"
+
+    def add_block(self, name: str, rect: QtCore.QRectF) -> None:
+        x, y = int(rect.left()), int(rect.top())
+        w, h = max(30, int(rect.width())), max(30, int(rect.height()))
+        self.template["fieldBlocks"][name] = {
+            "origin": [x, y],
+            "bubblesGap": w,
+            "labelsGap": h,
+            "fieldLabels": ["q1..1"],
+            "fieldType": "__CUSTOM__",
+        }
+        self.changed.emit()
+
+    def save_as_edited(self) -> Path:
+        """
+        Persist current working copy to <template>.edited.json
+        - Do NOT inject derived defaults:
+          * If direction is 'horizontal', prefer omitting key (treat as default).
+          * Do NOT auto-insert bubbleValues for QTYPE_INT/_FROM_1; only save if user explicitly set them.
+        """
+        cleaned = json.loads(json.dumps(self.template))  # deep copy via json
+        for name, fb in cleaned.get("fieldBlocks", {}).items():
+            if fb.get("direction", None) == "horizontal":
+                fb.pop("direction", None)
+            if ("bubbleValues" in fb) and fb.get("fieldType") in FIELD_TYPES:
+                if fb["bubbleValues"] == FIELD_TYPES[fb["fieldType"]]["bubbleValues"]:
+                    fb.pop("bubbleValues", None)
+        out = self.template_path.with_name(self.template_path.stem + ".edited.json")
+        with open(out, "w", encoding="utf-8") as f:
+            json.dump(cleaned, f, indent=2)
+        return out
 
 # New: run template preprocessors EXACTLY like main.py (apply_preprocessors)
 def run_preprocessors_for_editor(template_path: Path, image_path: Path) -> Optional[np.ndarray]:
@@ -162,7 +263,7 @@ def np_gray_to_qpixmap(img: np.ndarray) -> QtGui.QPixmap:
     return QtGui.QPixmap.fromImage(qimg.copy())
 
 class BlockGraphicsItem(QtWidgets.QGraphicsItem):
-    def __init__(self, name: str, model: TemplateModel):
+    def __init__(self, name: str, model: 'TemplateModel'):
         super().__init__()
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
@@ -461,7 +562,7 @@ class GraphicsView(QtWidgets.QGraphicsView):
 class BlockPanel(QtWidgets.QGroupBox):
     changed = QtCore.pyqtSignal(str)  # emits block name
 
-    def __init__(self, name: str, model: TemplateModel):
+    def __init__(self, name: str, model: 'TemplateModel'):
         super().__init__(name)
         # Collapsible panel using checkable header to toggle body visibility
         self.setCheckable(True)  # CHANGED
@@ -547,51 +648,57 @@ class BlockPanel(QtWidgets.QGroupBox):
         self._body.setVisible(on)
 
     def _apply_fieldtype(self, text: str):
-        fb = self.model.get_block(self.name)
+        # Persist only the fieldType; DO NOT persist bubbleValues/direction here.
+        base = self.model.template["fieldBlocks"].get(self.name, {})
         if text:
-            fb["fieldType"] = text
-            # Apply defaults from FIELD_TYPES if bubbleValues/direction not explicitly set
-            ft = FIELD_TYPES.get(text, {})
-            if "bubbleValues" in ft:
-                fb["bubbleValues"] = list(ft["bubbleValues"])
-                self.bubble_values.setText(to_csv(fb["bubbleValues"]))
-            if "direction" in ft:
-                fb["direction"] = ft["direction"]
-                self.direction.setCurrentText(fb["direction"])
+            base["fieldType"] = text
         else:
-            fb.pop("fieldType", None)
+            base.pop("fieldType", None)
         self.changed.emit(self.name)
 
     def _apply(self):
         new_name = self.field_name.text().strip()
-        fb = self.model.get_block(self.name)
+        base = self.model.template["fieldBlocks"].get(self.name, {})
         # If renamed
         if new_name and new_name != self.name:
             # Move the dict key
-            self.model.template["fieldBlocks"][new_name] = fb
+            self.model.template["fieldBlocks"][new_name] = base
             del self.model.template["fieldBlocks"][self.name]
             self.name = new_name
             self.setTitle(new_name)
 
-        fb["bubbleValues"] = parse_csv_or_range(self.bubble_values.text())
-        fb["direction"] = self.direction.currentText()
-        fb["fieldLabels"] = parse_csv_or_range(self.field_labels.text())
-        fb["labelsGap"] = int(self.labels_gap.value())
-        fb["bubblesGap"] = int(self.bubbles_gap.value())
-        fb["origin"] = [int(self.origin_x.value()), int(self.origin_y.value())]
+        # Only persist bubbleValues if user actually entered something; keep omitted for type-derived defaults
+        bv_text = self.bubble_values.text().strip()
+        if bv_text != "":
+            base["bubbleValues"] = parse_csv_or_range(bv_text)
+        else:
+            base.pop("bubbleValues", None)
+        # Direction: omit 'horizontal' to keep implicit default, persist 'vertical'
+        dir_text = self.direction.currentText()
+        if dir_text == "horizontal":
+            base.pop("direction", None)
+        else:
+            base["direction"] = dir_text
+        base["fieldLabels"] = parse_csv_or_range(self.field_labels.text())
+        base["labelsGap"] = int(self.labels_gap.value())
+        base["bubblesGap"] = int(self.bubbles_gap.value())
+        base["origin"] = [int(self.origin_x.value()), int(self.origin_y.value())]
         self.changed.emit(self.name)
 
     def sync_from_model(self):
-        fb = self.model.get_block(self.name)
-        self.bubble_values.setText(to_csv(fb.get("bubbleValues", [])))
-        self.direction.setCurrentText(fb.get("direction", "horizontal"))
-        self.field_labels.setText(to_csv(fb.get("fieldLabels", [])))
-        self.labels_gap.setValue(int(fb.get("labelsGap", 60)))
-        self.bubbles_gap.setValue(int(fb.get("bubblesGap", 120)))
-        ox, oy = fb.get("origin", [0, 0])
+        fb_render = self.model.get_block(self.name)
+        fb_base = self.model.template["fieldBlocks"].get(self.name, {})
+        # Show bubbleValues only if explicitly present in template; otherwise leave blank (derived by renderer)
+        self.bubble_values.setText(to_csv(fb_base.get("bubbleValues", [])))
+        # Direction: show explicit if set, else default to horizontal in UI
+        self.direction.setCurrentText(fb_base.get("direction", "horizontal"))
+        self.field_labels.setText(to_csv(fb_base.get("fieldLabels", [])))
+        self.labels_gap.setValue(int(fb_base.get("labelsGap", 60)))
+        self.bubbles_gap.setValue(int(fb_base.get("bubblesGap", 120)))
+        ox, oy = fb_base.get("origin", [0, 0])
         self.origin_x.setValue(int(ox))
         self.origin_y.setValue(int(oy))
-        self.field_type.setCurrentText(fb.get("fieldType", ""))
+        self.field_type.setCurrentText(fb_base.get("fieldType", ""))
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, template_path: Path, image_path: Optional[Path]):
@@ -700,6 +807,14 @@ class MainWindow(QtWidgets.QMainWindow):
         name = self.model.next_block_name()
         self.model.add_block(name, rect)
         self._create_block_item_and_panel(name)
+        # Select new item and unselect others; focus its panel
+        for n, it in self.block_items.items():
+            it.setSelected(n == name)
+        panel = self.block_panels.get(name)
+        if panel:
+            for n, pnl in self.block_panels.items():
+                pnl.setChecked(pnl is panel)
+            self.sidebar_scroll.ensureWidgetVisible(panel)
 
     def _create_block_item_and_panel(self, name: str):
         # Graphics item
@@ -769,7 +884,9 @@ class MainWindow(QtWidgets.QMainWindow):
         panel = self.block_panels.get(name)
         if panel is None:
             return
-        panel.setChecked(True)
+        # Uncheck all others, then check this one
+        for n, pnl in self.block_panels.items():
+            pnl.setChecked(pnl is panel)
         self.sidebar_scroll.ensureWidgetVisible(panel)
 
     def on_save(self):
