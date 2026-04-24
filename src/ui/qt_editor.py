@@ -1,13 +1,13 @@
-import sys
-import os
+import copy
 import json
+import os
+import sys
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
 # New imports for preprocessing
 import cv2
 import numpy as np
-import copy
-
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 # Try importing project modules; fall back to simple defaults if not available.
@@ -19,29 +19,48 @@ if str(PROJECT_ROOT) not in sys.path:
 try:
     from src.logger import logger as LOG  # type: ignore
 except Exception:
+
     class _DummyLog:
-        def info(self,*a,**k): print(*a)
-        def warning(self,*a,**k): print(*a)
-        def error(self,*a,**k): print(*a)
+        def info(self, *a, **k):
+            print(*a)
+
+        def warning(self, *a, **k):
+            print(*a)
+
+        def error(self, *a, **k):
+            print(*a)
+
     LOG = _DummyLog()  # type: ignore
 
 FIELD_TYPES: Dict[str, Dict[str, Any]] = {}
 try:
     from src.constants import FIELD_TYPES as _FT  # type: ignore
+
     FIELD_TYPES = dict(_FT)
 except Exception:
     FIELD_TYPES = {
-        "QTYPE_INT": {"bubbleValues": [str(i) for i in range(10)], "direction": "vertical"},
-        "QTYPE_INT_FROM_1": {"bubbleValues": [str(i) for i in range(1, 10)] + ["0"], "direction": "vertical"},
+        "QTYPE_INT": {
+            "bubbleValues": [str(i) for i in range(10)],
+            "direction": "vertical",
+        },
+        "QTYPE_INT_FROM_1": {
+            "bubbleValues": [str(i) for i in range(1, 10)] + ["0"],
+            "direction": "vertical",
+        },
         "QTYPE_MCQ4": {"bubbleValues": ["A", "B", "C", "D"], "direction": "horizontal"},
-        "QTYPE_MCQ5": {"bubbleValues": ["A", "B", "C", "D", "E"], "direction": "horizontal"},
+        "QTYPE_MCQ5": {
+            "bubbleValues": ["A", "B", "C", "D", "E"],
+            "direction": "horizontal",
+        },
     }
+
 
 def load_image_as_pixmap(img_path: Path) -> QtGui.QPixmap:
     img = QtGui.QImage(str(img_path))
     if img.isNull():
         raise SystemExit(f"Cannot load image: {img_path}")
     return QtGui.QPixmap.fromImage(img)
+
 
 def find_first_image_under(inputs_dir: Path) -> Optional[Path]:
     exts = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"}
@@ -52,6 +71,7 @@ def find_first_image_under(inputs_dir: Path) -> Optional[Path]:
             return p
     return None
 
+
 def find_first_template_under(inputs_dir: Path) -> Optional[Path]:
     """Find the first template.json under the given inputs dir (recursively)."""
     if not inputs_dir.exists():
@@ -61,6 +81,7 @@ def find_first_template_under(inputs_dir: Path) -> Optional[Path]:
             return p
     return None
 
+
 def parse_csv_or_range(text: str) -> List[str]:
     # e.g., "A,B,C" or "q1..4" -> ["q1","q2","q3","q4"] (kept simple for labels)
     t = text.strip()
@@ -68,6 +89,7 @@ def parse_csv_or_range(text: str) -> List[str]:
         # very simple range expansion: prefix + start..end (numbers only)
         # Example: q1..4 -> q1, q2, q3, q4
         import re
+
         m = re.match(r"^([^\d]+)(\d+)\.\.(\d+)$", t)
         if m:
             pref, s, e = m.group(1), int(m.group(2)), int(m.group(3))
@@ -77,15 +99,18 @@ def parse_csv_or_range(text: str) -> List[str]:
         return []
     return [x.strip() for x in t.split(",") if x.strip()]
 
+
 def to_csv(values: List[str]) -> str:
     return ",".join(values)
+
 
 # New: import defaults and pipeline (EXACT same modules as main pipeline)
 try:
     from src.defaults.config import CONFIG_DEFAULTS  # EXACT import as main
-    from src.utils.parsing import open_config_with_defaults  # EXACT import as main
     from src.template import Template  # EXACT import as main
     from src.utils.image import ImageUtils  # EXACT import as main
+    from src.utils.parsing import open_config_with_defaults  # EXACT import as main
+
     PIPELINE_IMPORT_ERROR: Optional[str] = None
 except Exception as e:
     # Do NOT silently continue: record why pipeline is unavailable so we can show a clear error
@@ -99,6 +124,7 @@ except Exception as e:
     open_config_with_defaults = None  # type: ignore
     Template = None  # type: ignore
     ImageUtils = None  # type: ignore
+
 
 # ---------------- In-memory template model with defaults, undo/redo ----------------
 class TemplateModel(QtCore.QObject):
@@ -116,6 +142,7 @@ class TemplateModel(QtCore.QObject):
         * Do NOT persist 'bubbleValues' when it matches type defaults or was never explicitly set.
     - Undo/Redo stacks for create/delete/move/resize/panel edits.
     """
+
     changed = QtCore.pyqtSignal()
 
     def __init__(self, template_path: Path, image_path: Path):
@@ -169,8 +196,12 @@ class TemplateModel(QtCore.QObject):
         if "direction" not in fb or fb.get("direction") is None:
             fb["direction"] = self.default_dir_for_type(ft)
         # bubbleDimensions fallback
-        if "bubbleDimensions" not in fb or not isinstance(fb.get("bubbleDimensions"), list):
-            fb["bubbleDimensions"] = list(self.template.get("bubbleDimensions", [20, 20]))
+        if "bubbleDimensions" not in fb or not isinstance(
+            fb.get("bubbleDimensions"), list
+        ):
+            fb["bubbleDimensions"] = list(
+                self.template.get("bubbleDimensions", [20, 20])
+            )
         # bubbleValues derived for render if absent
         if not fb.get("bubbleValues") and ft in FIELD_TYPES:
             fb["bubbleValues"] = list(FIELD_TYPES[ft].get("bubbleValues", []))
@@ -245,8 +276,11 @@ class TemplateModel(QtCore.QObject):
             json.dump(cleaned, f, indent=2)
         return out
 
+
 # New: run template preprocessors EXACTLY like main.py (apply_preprocessors)
-def run_preprocessors_for_editor(template_path: Path, image_path: Path) -> Optional[np.ndarray]:
+def run_preprocessors_for_editor(
+    template_path: Path, image_path: Path
+) -> Optional[np.ndarray]:
     """
     Run preprocessing EXACTLY like the main pipeline:
       - Load config.json (if present) merged over CONFIG_DEFAULTS.
@@ -278,7 +312,9 @@ def run_preprocessors_for_editor(template_path: Path, image_path: Path) -> Optio
 
         # Build Template and run its preprocessors as-is
         tmpl = Template(template_path, cfg)
-        processed = tmpl.image_instance_ops.apply_preprocessors(str(image_path), img, tmpl)
+        processed = tmpl.image_instance_ops.apply_preprocessors(
+            str(image_path), img, tmpl
+        )
         if processed is None:
             raise RuntimeError(
                 "Preprocessors returned None (cropping/preprocessing failed). "
@@ -299,18 +335,24 @@ def run_preprocessors_for_editor(template_path: Path, image_path: Path) -> Optio
         # Bubble the error to caller so UI can show a dialog
         raise
 
+
 def np_gray_to_qpixmap(img: np.ndarray) -> QtGui.QPixmap:
     h, w = img.shape[:2]
     bytes_per_line = w
-    qimg = QtGui.QImage(img.data, w, h, bytes_per_line, QtGui.QImage.Format.Format_Grayscale8)
+    qimg = QtGui.QImage(
+        img.data, w, h, bytes_per_line, QtGui.QImage.Format.Format_Grayscale8
+    )
     return QtGui.QPixmap.fromImage(qimg.copy())
 
+
 class BlockGraphicsItem(QtWidgets.QGraphicsItem):
-    def __init__(self, name: str, model: 'TemplateModel'):
+    def __init__(self, name: str, model: "TemplateModel"):
         super().__init__()
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
-        self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsScenePositionChanges, True)  # NEW
+        self.setFlag(
+            QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsScenePositionChanges, True
+        )  # NEW
         self.name = name
         self.model = model
         # Keep rect local; use item position for origin
@@ -327,12 +369,19 @@ class BlockGraphicsItem(QtWidgets.QGraphicsItem):
         # Slight padding for the border and handles
         r = self._rect
         pad = max(4.0, self._handle_size / 2.0)  # CHANGED
-        return QtCore.QRectF(r.left() - pad, r.top() - pad, r.width() + 2 * pad, r.height() + 2 * pad)
+        return QtCore.QRectF(
+            r.left() - pad, r.top() - pad, r.width() + 2 * pad, r.height() + 2 * pad
+        )
 
     def paint(self, painter: QtGui.QPainter, option, widget=None):
         fb = self.model.get_block(self.name)
         # Base rect
-        pen = QtGui.QPen(QtGui.QColor(200, 60, 60) if self.isSelected() else QtGui.QColor(40, 160, 40), 2)
+        pen = QtGui.QPen(
+            QtGui.QColor(200, 60, 60)
+            if self.isSelected()
+            else QtGui.QColor(40, 160, 40),
+            2,
+        )
         painter.setPen(pen)
         painter.setBrush(QtCore.Qt.BrushStyle.NoBrush)
         painter.drawRect(self._rect)
@@ -340,8 +389,13 @@ class BlockGraphicsItem(QtWidgets.QGraphicsItem):
         # Title
         painter.setPen(QtGui.QPen(QtGui.QColor(240, 240, 240)))
         painter.setFont(QtGui.QFont("", 9))
-        painter.drawText(QtCore.QRectF(self._rect.left()+4, self._rect.top()-16, self._rect.width(), 16),
-                         QtCore.Qt.AlignmentFlag.AlignLeft, f"{self.name}")  # CHANGED
+        painter.drawText(
+            QtCore.QRectF(
+                self._rect.left() + 4, self._rect.top() - 16, self._rect.width(), 16
+            ),
+            QtCore.Qt.AlignmentFlag.AlignLeft,
+            f"{self.name}",
+        )  # CHANGED
 
         # Bubble preview (grid using bubbleDimensions, gaps, direction, and labels)
         vals: List[str] = fb.get("bubbleValues") or []
@@ -350,7 +404,9 @@ class BlockGraphicsItem(QtWidgets.QGraphicsItem):
             vals = []
         if not isinstance(labels, list):
             labels = []
-        bw, bh = fb.get("bubbleDimensions", self.model.template.get("bubbleDimensions", [20, 20]))
+        bw, bh = fb.get(
+            "bubbleDimensions", self.model.template.get("bubbleDimensions", [20, 20])
+        )
         try:
             bw = float(bw)
             bh = float(bh)
@@ -395,7 +451,9 @@ class BlockGraphicsItem(QtWidgets.QGraphicsItem):
         labels: List[str] = fb.get("fieldLabels", []) or []
         bubbles_gap = int(fb.get("bubblesGap", 12))
         labels_gap = int(fb.get("labelsGap", 12))
-        bw, bh = fb.get("bubbleDimensions", self.model.template.get("bubbleDimensions", [20, 20]))
+        bw, bh = fb.get(
+            "bubbleDimensions", self.model.template.get("bubbleDimensions", [20, 20])
+        )
         try:
             bw = int(bw)
             bh = int(bh)
@@ -422,14 +480,22 @@ class BlockGraphicsItem(QtWidgets.QGraphicsItem):
         fb["origin"] = [int(self.pos().x()), int(self.pos().y())]
         # Use derived default direction when not explicitly set
         base_dir = fb.get("direction", None)
-        direction = base_dir if base_dir is not None else self.model.default_dir_for_type(fb.get("fieldType"))
+        direction = (
+            base_dir
+            if base_dir is not None
+            else self.model.default_dir_for_type(fb.get("fieldType"))
+        )
         # use render for counts, base for persistence
         fb_render = self.model.get_block(self.name)
         vals: List[str] = fb_render.get("bubbleValues", []) or []
-        labels: List[str] = fb_render.get("fieldLabels", []) or fb.get("fieldLabels", [])
+        labels: List[str] = fb_render.get("fieldLabels", []) or fb.get(
+            "fieldLabels", []
+        )
         n_vals = max(1, len(vals))
         n_fields = max(1, len(labels))
-        bw, bh = fb_render.get("bubbleDimensions", self.model.template.get("bubbleDimensions", [20, 20]))
+        bw, bh = fb_render.get(
+            "bubbleDimensions", self.model.template.get("bubbleDimensions", [20, 20])
+        )
         try:
             bw = float(bw)
             bh = float(bh)
@@ -440,13 +506,29 @@ class BlockGraphicsItem(QtWidgets.QGraphicsItem):
         if direction == "vertical":
             fields_dimension = width
             values_dimension = height
-            fb["labelsGap"] = int(round((fields_dimension - bw) / (n_fields - 1))) if n_fields > 1 else int(bw)
-            fb["bubblesGap"] = int(round((values_dimension - bh) / (n_vals - 1))) if n_vals > 1 else int(bh)
+            fb["labelsGap"] = (
+                int(round((fields_dimension - bw) / (n_fields - 1)))
+                if n_fields > 1
+                else int(bw)
+            )
+            fb["bubblesGap"] = (
+                int(round((values_dimension - bh) / (n_vals - 1)))
+                if n_vals > 1
+                else int(bh)
+            )
         else:
             values_dimension = width
             fields_dimension = height
-            fb["bubblesGap"] = int(round((values_dimension - bw) / (n_vals - 1))) if n_vals > 1 else int(bw)
-            fb["labelsGap"] = int(round((fields_dimension - bh) / (n_fields - 1))) if n_fields > 1 else int(bh)
+            fb["bubblesGap"] = (
+                int(round((values_dimension - bw) / (n_vals - 1)))
+                if n_vals > 1
+                else int(bw)
+            )
+            fb["labelsGap"] = (
+                int(round((fields_dimension - bh) / (n_fields - 1)))
+                if n_fields > 1
+                else int(bh)
+            )
 
     # New: handle creation and positioning
     def _create_handles(self):
@@ -526,6 +608,7 @@ class BlockGraphicsItem(QtWidgets.QGraphicsItem):
         # snapshot after move
         self.model.push_state("move_block")
 
+
 # New: subclass handle item to forward drag to parent
 class _ResizeHandle(QtWidgets.QGraphicsRectItem):
     def __init__(self, parent: BlockGraphicsItem, role: str, size: float):
@@ -537,7 +620,9 @@ class _ResizeHandle(QtWidgets.QGraphicsRectItem):
         self.setZValue(1000)
         # Let parent control actual geometry change; prevent scene panning of the block while resizing
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
-        self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsScenePositionChanges, True)
+        self.setFlag(
+            QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsScenePositionChanges, True
+        )
         # Suppress recursion when parent repositions this handle
         self._suppress_item_change = False
         self._dragging = False
@@ -552,12 +637,16 @@ class _ResizeHandle(QtWidgets.QGraphicsRectItem):
     def mousePressEvent(self, event: QtWidgets.QGraphicsSceneMouseEvent) -> None:
         self._dragging = True
         # Disable parent movement while dragging a handle to avoid panning
-        self._parent.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
+        self._parent.setFlag(
+            QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False
+        )
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event: QtWidgets.QGraphicsSceneMouseEvent) -> None:
         self._dragging = False
-        self._parent.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
+        self._parent.setFlag(
+            QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True
+        )
         super().mouseReleaseEvent(event)
 
     def itemChange(self, change, value):
@@ -570,6 +659,7 @@ class _ResizeHandle(QtWidgets.QGraphicsRectItem):
             return value
         return value
 
+
 class GraphicsView(QtWidgets.QGraphicsView):
     newRectDrawn = QtCore.pyqtSignal(QtCore.QRectF)
 
@@ -577,7 +667,9 @@ class GraphicsView(QtWidgets.QGraphicsView):
         super().__init__(scene)
         self.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
         self.setDragMode(QtWidgets.QGraphicsView.DragMode.ScrollHandDrag)
-        self.setTransformationAnchor(QtWidgets.QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+        self.setTransformationAnchor(
+            QtWidgets.QGraphicsView.ViewportAnchor.AnchorUnderMouse
+        )
         self._adding = False
         self._rubber_item: Optional[QtWidgets.QGraphicsRectItem] = None
         self._start_scene_pt: Optional[QtCore.QPointF] = None
@@ -613,7 +705,11 @@ class GraphicsView(QtWidgets.QGraphicsView):
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
-        if self._adding and self._rubber_item and event.button() == QtCore.Qt.MouseButton.LeftButton:
+        if (
+            self._adding
+            and self._rubber_item
+            and event.button() == QtCore.Qt.MouseButton.LeftButton
+        ):
             rect = self._rubber_item.rect()
             self.scene().removeItem(self._rubber_item)
             self._rubber_item = None
@@ -626,14 +722,15 @@ class GraphicsView(QtWidgets.QGraphicsView):
             return
         super().mouseReleaseEvent(event)
 
+
 class BlockPanel(QtWidgets.QGroupBox):
     changed = QtCore.pyqtSignal(str)  # emits block name
 
-    def __init__(self, name: str, model: 'TemplateModel'):
+    def __init__(self, name: str, model: "TemplateModel"):
         super().__init__(name)
         # Collapsible panel using checkable header to toggle body visibility
         self.setCheckable(True)  # CHANGED
-        self.setChecked(False)   # CHANGED
+        self.setChecked(False)  # CHANGED
         self.name = name
         self.model = model
 
@@ -652,7 +749,9 @@ class BlockPanel(QtWidgets.QGroupBox):
 
         # BubbleValues (CSV)
         vals = fb.get("bubbleValues", [])
-        self.bubble_values = QtWidgets.QLineEdit(to_csv(vals) if isinstance(vals, list) else "")
+        self.bubble_values = QtWidgets.QLineEdit(
+            to_csv(vals) if isinstance(vals, list) else ""
+        )
         form.addRow("BubbleValues", self.bubble_values)
 
         # Direction
@@ -766,7 +865,11 @@ class BlockPanel(QtWidgets.QGroupBox):
         # Show only explicit bubbleValues (leave blank if derived)
         self.bubble_values.setText(to_csv(fb_base.get("bubbleValues", [])))
         # Direction UI shows explicit if set, else default-for-type
-        self.direction.setCurrentText(fb_base.get("direction", self.model.default_dir_for_type(fb_base.get("fieldType"))))
+        self.direction.setCurrentText(
+            fb_base.get(
+                "direction", self.model.default_dir_for_type(fb_base.get("fieldType"))
+            )
+        )
         self.field_labels.setText(to_csv(fb_base.get("fieldLabels", [])))
         self.labels_gap.setValue(int(fb_base.get("labelsGap", 60)))
         self.bubbles_gap.setValue(int(fb_base.get("bubblesGap", 120)))
@@ -778,13 +881,16 @@ class BlockPanel(QtWidgets.QGroupBox):
     def _delete_self(self):
         self.model.remove_block(self.name)
 
+
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, template_path: Path, image_path: Optional[Path]):
         super().__init__()
         self.setWindowTitle("OMR Template Editor (Qt6)")
         self.resize(1280, 800)
         # Wider sidebar and smoother docks
-        self.setDockOptions(self.DockOption.AllowTabbedDocks | self.DockOption.AnimatedDocks)  # NEW
+        self.setDockOptions(
+            self.DockOption.AllowTabbedDocks | self.DockOption.AnimatedDocks
+        )  # NEW
         self._pending_select_name: Optional[str] = None  # select after refresh
 
         # Model
@@ -798,7 +904,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.scene = QtWidgets.QGraphicsScene(self)
         self.view = GraphicsView(self.scene)
         # Reduce paint trails when moving items
-        self.view.setViewportUpdateMode(QtWidgets.QGraphicsView.ViewportUpdateMode.BoundingRectViewportUpdate)  # NEW
+        self.view.setViewportUpdateMode(
+            QtWidgets.QGraphicsView.ViewportUpdateMode.BoundingRectViewportUpdate
+        )  # NEW
         self.setCentralWidget(self.view)
 
         # Load and preprocess image (EXACT main pipeline). Show explicit errors if it fails.
@@ -812,10 +920,14 @@ class MainWindow(QtWidgets.QMainWindow):
         if processed is None:
             # Build a helpful message
             msg_lines = []
-            if 'PIPELINE_IMPORT_ERROR' in globals() and PIPELINE_IMPORT_ERROR:
-                msg_lines.append("Failed to import pipeline modules required for cropping.")
+            if "PIPELINE_IMPORT_ERROR" in globals() and PIPELINE_IMPORT_ERROR:
+                msg_lines.append(
+                    "Failed to import pipeline modules required for cropping."
+                )
                 msg_lines.append(f"Reason: {PIPELINE_IMPORT_ERROR}")
-                msg_lines.append("Tip: run from repo root and ensure dependencies are installed (e.g., pip install -r requirements.txt).")
+                msg_lines.append(
+                    "Tip: run from repo root and ensure dependencies are installed (e.g., pip install -r requirements.txt)."
+                )
             if preprocessing_error:
                 msg_lines.append(preprocessing_error)
             if not msg_lines:
@@ -917,7 +1029,9 @@ class MainWindow(QtWidgets.QMainWindow):
         # Sync items and panels from model state
         names_now = set(n for n, _ in self.model.field_blocks())
         # Preserve collapse/expanded states
-        expanded_states: Dict[str, bool] = {n: w.isChecked() for n, w in self.block_panels.items()}  # NEW
+        expanded_states: Dict[str, bool] = {
+            n: w.isChecked() for n, w in self.block_panels.items()
+        }  # NEW
 
         # Remove deleted
         for old in list(self.block_items.keys()):
@@ -986,7 +1100,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
         # Delete selected block
         if event.key() in (QtCore.Qt.Key.Key_Delete, QtCore.Qt.Key.Key_Backspace):
-            selected_names = [n for n, it in self.block_items.items() if it.isSelected()]
+            selected_names = [
+                n for n, it in self.block_items.items() if it.isSelected()
+            ]
             if selected_names:
                 self.model.remove_block(selected_names[0])
                 return
@@ -999,15 +1115,26 @@ class MainWindow(QtWidgets.QMainWindow):
                 return
         super().keyPressEvent(event)
 
+
 def parse_args(argv: List[str]) -> Tuple[Optional[Path], Optional[Path]]:
     import argparse
+
     ap = argparse.ArgumentParser()
-    ap.add_argument("--template", required=False, help="Path to template.json. If omitted, auto-detect under ./inputs")
-    ap.add_argument("--image", required=False, help="Path to an image. If omitted, auto-detect (preferring same folder as template)")
+    ap.add_argument(
+        "--template",
+        required=False,
+        help="Path to template.json. If omitted, auto-detect under ./inputs",
+    )
+    ap.add_argument(
+        "--image",
+        required=False,
+        help="Path to an image. If omitted, auto-detect (preferring same folder as template)",
+    )
     args = ap.parse_args(argv)
     t = Path(args.template).resolve() if args.template else None
     img = Path(args.image).resolve() if args.image else None
     return t, img
+
 
 def main():
     template_path, image_path = parse_args(sys.argv[1:])
@@ -1019,7 +1146,11 @@ def main():
     # Prefer image under the template's directory; fallback to first under ./inputs
     if image_path is None:
         local_img = find_first_image_under(template_path.parent)
-        image_path = local_img if local_img is not None else find_first_image_under(PROJECT_ROOT / "inputs")
+        image_path = (
+            local_img
+            if local_img is not None
+            else find_first_image_under(PROJECT_ROOT / "inputs")
+        )
         if image_path is None:
             raise SystemExit("No image provided and none found under ./inputs")
 
@@ -1034,6 +1165,7 @@ def main():
     w = MainWindow(template_path, image_path)
     w.show()
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()

@@ -1,12 +1,13 @@
-import json
 import argparse
-from pathlib import Path
-import cv2
-import numpy as np
+import json
 
 # Ensure project root on sys.path then try normal import, else provide fallback.
-import sys, json
+import sys
+from pathlib import Path
 from pathlib import Path as _P
+
+import cv2
+import numpy as np
 
 PROJECT_ROOT = _P(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
@@ -15,6 +16,7 @@ if str(PROJECT_ROOT) not in sys.path:
 try:
     from src.utils.parsing import open_template_with_defaults  # type: ignore
 except Exception:
+
     def open_template_with_defaults(p: _P):
         try:
             with open(p, "r", encoding="utf-8") as f:
@@ -28,10 +30,12 @@ except Exception:
         data.setdefault("fieldBlocks", {})
         return data
 
+
 # Optional: if resize util exists
 try:
     from src.utils.image import ImageUtils
 except Exception:
+
     class ImageUtils:
         @staticmethod
         def resize_util(img, target_w):
@@ -40,6 +44,7 @@ except Exception:
                 return img
             scale = target_w / float(w)
             return cv2.resize(img, (int(w * scale), int(h * scale)))
+
 
 HANDLE_SIZE = 8
 HANDLE_COLOR = (60, 255, 255)
@@ -50,6 +55,7 @@ PRESET_BUBBLE_SETS = [
     [str(i) for i in range(1, 6)],
     [str(i) for i in range(10)],
 ]
+
 
 class SimpleTemplateEditor:
     """
@@ -68,6 +74,7 @@ class SimpleTemplateEditor:
     Trackbars (per selected block):
       BubbleW, BubbleH, Spacing
     """
+
     def __init__(self, template_path: Path, image_path: Path):
         self.template_path = Path(template_path)
         self.template = open_template_with_defaults(self.template_path)
@@ -92,7 +99,9 @@ class SimpleTemplateEditor:
 
     # ---------- Trackbars ----------
     def _create_trackbars(self):
-        def nothing(v): ...
+        def nothing(v):
+            ...
+
         cv2.createTrackbar("BubbleW", self.winname, 20, 150, nothing)
         cv2.createTrackbar("BubbleH", self.winname, 20, 150, nothing)
         cv2.createTrackbar("Spacing", self.winname, 12, 200, nothing)
@@ -129,13 +138,27 @@ class SimpleTemplateEditor:
             x, y, w, h = self._rect_from_block(fb)
             rect_color = (0, 180, 0) if i != self.selected_idx else (0, 0, 255)
             cv2.rectangle(canvas, (x, y), (x + w, y + h), rect_color, 2)
-            cv2.putText(canvas, name, (x + 4, max(12, y - 6)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, rect_color, 1)
+            cv2.putText(
+                canvas,
+                name,
+                (x + 4, max(12, y - 6)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                rect_color,
+                1,
+            )
             # bubble preview
             self._draw_bubbles(canvas, fb, selected=(i == self.selected_idx))
             # handles if selected
             if i == self.selected_idx:
                 for hx, hy in self._handles(x, y, w, h):
-                    cv2.rectangle(canvas, (hx, hy), (hx + HANDLE_SIZE, hy + HANDLE_SIZE), HANDLE_COLOR, -1)
+                    cv2.rectangle(
+                        canvas,
+                        (hx, hy),
+                        (hx + HANDLE_SIZE, hy + HANDLE_SIZE),
+                        HANDLE_COLOR,
+                        -1,
+                    )
 
         if self.current_rect is not None:
             x, y, w, h = self.current_rect
@@ -147,7 +170,15 @@ class SimpleTemplateEditor:
             "h:toggle dir  b:cycle bubble sets  []:spacing",
         ]
         for idx, line in enumerate(overlay):
-            cv2.putText(canvas, line, (8, 20 + idx * 16), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (40, 255, 255), 1)
+            cv2.putText(
+                canvas,
+                line,
+                (8, 20 + idx * 16),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.45,
+                (40, 255, 255),
+                1,
+            )
 
         cv2.imshow(self.winname, canvas)
 
@@ -166,7 +197,15 @@ class SimpleTemplateEditor:
             cy = oy + (bh // 2)
             color = (0, 255, 255) if selected else (200, 200, 0)
             cv2.circle(canvas, (cx, cy), int(min(bw, bh) / 2 - 2), color, 1)
-            cv2.putText(canvas, str(idx + 1), (cx - 4, cy + 4), cv2.FONT_HERSHEY_SIMPLEX, 0.35, color, 1)
+            cv2.putText(
+                canvas,
+                str(idx + 1),
+                (cx - 4, cy + 4),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.35,
+                color,
+                1,
+            )
             if direction == "horizontal":
                 ox += bw + spacing
                 if ox + bw > x + w - 4:
@@ -238,14 +277,22 @@ class SimpleTemplateEditor:
             if self.mode == "creating" and self.drag_start:
                 sx, sy = self.drag_start
                 self.current_rect = (min(sx, x), min(sy, y), abs(x - sx), abs(y - sy))
-            elif self.mode == "moving" and self.selected_idx is not None and self.drag_start:
+            elif (
+                self.mode == "moving"
+                and self.selected_idx is not None
+                and self.drag_start
+            ):
                 sx, sy = self.drag_start
                 dx, dy = x - sx, y - sy
                 name, fb = self.field_blocks[self.selected_idx]
                 ox, oy, w, h = self._rect_from_block(fb)
                 self._update_block_from_rect(fb, ox + dx, oy + dy, w, h)
                 self.drag_start = (x, y)
-            elif self.mode == "resizing" and self.resize_handle is not None and self.drag_start:
+            elif (
+                self.mode == "resizing"
+                and self.resize_handle is not None
+                and self.drag_start
+            ):
                 self._perform_resize(x, y)
 
         elif evt == cv2.EVENT_LBUTTONUP:
@@ -340,7 +387,9 @@ class SimpleTemplateEditor:
         curr = fb.get("bubbleValues") or []
         for i, preset in enumerate(PRESET_BUBBLE_SETS):
             if curr == preset:
-                fb["bubbleValues"] = PRESET_BUBBLE_SETS[(i + 1) % len(PRESET_BUBBLE_SETS)]
+                fb["bubbleValues"] = PRESET_BUBBLE_SETS[
+                    (i + 1) % len(PRESET_BUBBLE_SETS)
+                ]
                 return
         fb["bubbleValues"] = PRESET_BUBBLE_SETS[0]
 
@@ -372,7 +421,11 @@ class SimpleTemplateEditor:
                 fb["bubbleValues"] = vals
             elif key == ord("h") and self.selected_idx is not None:
                 _, fb = self.field_blocks[self.selected_idx]
-                fb["direction"] = "vertical" if fb.get("direction", "horizontal") == "horizontal" else "horizontal"
+                fb["direction"] = (
+                    "vertical"
+                    if fb.get("direction", "horizontal") == "horizontal"
+                    else "horizontal"
+                )
             elif key == ord("[") and self.selected_idx is not None:
                 _, fb = self.field_blocks[self.selected_idx]
                 fb["bubbleSpacing"] = max(4, fb.get("bubbleSpacing", 12) - 2)
@@ -385,6 +438,7 @@ class SimpleTemplateEditor:
 
         cv2.destroyAllWindows()
 
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--template", required=True)
@@ -392,6 +446,7 @@ def main():
     args = ap.parse_args()
     editor = SimpleTemplateEditor(Path(args.template), Path(args.image))
     editor.run()
+
 
 if __name__ == "__main__":
     main()

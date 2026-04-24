@@ -275,7 +275,10 @@ def process_files(
         score = 0
         if evaluation_config is not None:
             score = evaluate_concatenated_response(
-                omr_response, evaluation_config, file_path, outputs_namespace.paths.evaluation_dir
+                omr_response,
+                evaluation_config,
+                file_path,
+                outputs_namespace.paths.evaluation_dir,
             )
             logger.info(
                 f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: '{file_id}'"

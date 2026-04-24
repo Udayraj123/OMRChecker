@@ -1,12 +1,27 @@
 {
-  "pageDimensions": [ 815, 570 ],
-  "bubbleDimensions": [ 13 , 13 ],
+  "pageDimensions": [
+    815,
+    570
+  ],
+  "bubbleDimensions": [
+    13,
+    13
+  ],
   "customLabels": {},
   "fieldBlocks": {
     "MCQBlock1": {
       "fieldType": "QTYPE_MCQ4",
-      "origin": [ 170, 87 ],
-      "fieldLabels": ["q1", "q2", "q3", "q4", "q5"],
+      "origin": [
+        170,
+        87
+      ],
+      "fieldLabels": [
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "q5"
+      ],
       "bubblesGap": 33,
       "labelsGap": 31
     }
@@ -15,9 +30,11 @@
     {
       "name": "CropPage",
       "options": {
-        "morphKernel": [ 10, 10 ]
+        "morphKernel": [
+          10,
+          10
+        ]
       }
     }
   ]
 }
-
