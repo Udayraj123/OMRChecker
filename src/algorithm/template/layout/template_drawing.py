@@ -98,6 +98,7 @@ class TemplateDrawingUtils:
         field_id_to_interpretation=None,
         evaluation_meta=None,
         evaluation_config_for_response=None,
+        concatenated_omr_response=None,
         shifted=False,
         border=-1,
     ):
@@ -145,7 +146,7 @@ class TemplateDrawingUtils:
         # Draw evaluation summary
         if evaluation_meta is not None:
             marked_image = TemplateDrawingUtils.draw_evaluation_summary(
-                marked_image, evaluation_meta, evaluation_config_for_response
+                marked_image, evaluation_meta, evaluation_config_for_response, concatenated_omr_response
             )
 
         # Translucent
@@ -186,6 +187,7 @@ class TemplateDrawingUtils:
         marked_image,
         evaluation_meta,
         evaluation_config_for_response: EvaluationConfigForSet,
+        concatenated_omr_response
     ):
         if evaluation_config_for_response.draw_answers_summary["enabled"]:
             (
@@ -219,5 +221,26 @@ class TemplateDrawingUtils:
                 text_size=size,
                 thickness=thickness,
             )
+
+        if evaluation_config_for_response.draw_omr_response_values["enabled"]:
+            (
+                formatted_omr_response_values,
+                position,
+                size,
+                thickness,
+            ) = evaluation_config_for_response.get_formatted_omr_response_values(
+                concatenated_omr_response, evaluation_meta
+            )
+
+            line_counter = 0
+            for formatted_omr_response_value in formatted_omr_response_values:
+                DrawingUtils.draw_text(
+                    marked_image,
+                    formatted_omr_response_value,
+                    [position[0], position[1] + size*40*line_counter],
+                    text_size=size,
+                    thickness=thickness,
+                )
+                line_counter += 1
 
         return marked_image

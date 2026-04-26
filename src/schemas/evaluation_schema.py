@@ -295,6 +295,43 @@ common_evaluation_schema_properties = {
                     }
                 ],
             },
+            "draw_omr_response_values": {
+                "description": "The configuration for drawing the omr_response values",
+                "type": "object",
+                "required": [
+                    "enabled",
+                ],
+                "additionalProperties": False,
+                "properties": {
+                    "enabled": {
+                        "description": "The toggle for enabling the configuration",
+                        "type": "boolean",
+                    },
+                    "position": {
+                        "description": "The position of the omr_response values box",
+                        "$ref": "#/$def/two_positive_integers",
+                    },
+                    "omr_response_values_format_string": {
+                        "description": "The format string to compose the omr_response values. Supported variables - {correct}, {incorrect}, {unmarked} ",
+                        "type": "string",
+                    },
+                    "size": {
+                        "description": "The font size for the omr_response values box",
+                        "type": "number",
+                    },
+                },
+                "allOf": [
+                    {
+                        "if": {"properties": {"enabled": {"const": True}}},
+                        "then": {
+                            "required": [
+                                "position",
+                                "omr_response_values_format_string",
+                            ],
+                        },
+                    }
+                ],
+            },
             "draw_question_verdicts": {
                 "type": "object",
                 "additionalProperties": False,

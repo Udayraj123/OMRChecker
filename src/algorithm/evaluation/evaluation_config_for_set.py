@@ -56,6 +56,7 @@ class EvaluationConfigForSet:
             self.draw_detected_bubble_texts,
             self.draw_question_verdicts,
             self.draw_score,
+            self.draw_omr_response_values,
             self.should_explain_scoring,
             self.should_export_explanation_csv,
         ) = map(
@@ -65,6 +66,7 @@ class EvaluationConfigForSet:
                 "draw_detected_bubble_texts",
                 "draw_question_verdicts",
                 "draw_score",
+                "draw_omr_response_values",
                 "should_explain_scoring",
                 "should_export_explanation_csv",
             ],
@@ -637,6 +639,20 @@ class EvaluationConfigForSet:
         size = self.draw_score["size"]
         thickness = int(self.draw_score["size"] * 2)
         return score_format, position, size, thickness
+
+    def get_formatted_omr_response_values(self, concatenated_omr_response, evaluation_meta):
+        omr_response_format = []
+        for omr_response_value in concatenated_omr_response:
+            if omr_response_value not in evaluation_meta["questions_meta"]:
+                print(omr_response_value, concatenated_omr_response[omr_response_value])
+                omr_response_format.append(self.draw_omr_response_values["omr_response_values_format_string"].format(
+                    omr_response_value, concatenated_omr_response[omr_response_value]))
+
+        position = self.draw_omr_response_values["position"]
+        size = self.draw_omr_response_values["size"]
+        thickness = int(self.draw_omr_response_values["size"] * 2)
+        return omr_response_format, position, size, thickness
+
 
     def reset_evaluation(self) -> None:
         self.explanation_table = None
