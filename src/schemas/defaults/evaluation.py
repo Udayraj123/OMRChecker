@@ -1,6 +1,7 @@
 from src.schemas.constants import (
     DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING,
     DEFAULT_SCORE_FORMAT_STRING,
+    DEFAULT_OMR_RESPONSE_VALUES_FORMAT_STRING,
 )
 
 EVALUATION_CONFIG_DEFAULTS = {
@@ -20,6 +21,12 @@ EVALUATION_CONFIG_DEFAULTS = {
             "enabled": False,
             "position": [200, 600],
             "answers_summary_format_string": DEFAULT_ANSWERS_SUMMARY_FORMAT_STRING,
+            "size": 1.0,
+        },
+        "draw_omr_response_values": {
+            "enabled": False,
+            "position": [200, 1000],
+            "omr_response_values_format_string": DEFAULT_OMR_RESPONSE_VALUES_FORMAT_STRING,
             "size": 1.0,
         },
         "draw_question_verdicts": {

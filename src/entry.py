@@ -355,6 +355,7 @@ def process_directory_files(
                 field_id_to_interpretation,
                 evaluation_meta=evaluation_meta,
                 evaluation_config_for_response=evaluation_config_for_response,
+                concatenated_omr_response=concatenated_omr_response
             )
         else:
             # No drawing in moderation output mode
