@@ -312,7 +312,7 @@ common_evaluation_schema_properties = {
                         "$ref": "#/$def/two_positive_integers",
                     },
                     "omr_response_values_format_string": {
-                        "description": "The format string to compose the omr_response values. Supported variables - {correct}, {incorrect}, {unmarked} ",
+                        "description": "The format string to compose the omr_response values. Supported variables - any custom labels ",
                         "type": "string",
                     },
                     "size": {

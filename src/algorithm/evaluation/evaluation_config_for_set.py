@@ -644,7 +644,6 @@ class EvaluationConfigForSet:
         omr_response_format = []
         for omr_response_value in concatenated_omr_response:
             if omr_response_value not in evaluation_meta["questions_meta"]:
-                print(omr_response_value, concatenated_omr_response[omr_response_value])
                 omr_response_format.append(self.draw_omr_response_values["omr_response_values_format_string"].format(
                     omr_response_value, concatenated_omr_response[omr_response_value]))
 
