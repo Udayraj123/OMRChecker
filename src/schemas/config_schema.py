@@ -42,6 +42,19 @@ CONFIG_SCHEMA = {
                 "thickness": {"type": "integer", "minimum": 1, "maximum": 10},
             },
         },
+        "pdf_params": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "pdf_dpi": {"type": "integer", "minimum": 72, "maximum": 600},
+                "pdf_page": {
+                    "anyOf": [
+                        {"type": "integer", "minimum": 0},
+                        {"type": "null"},
+                    ],
+                },
+            },
+        },
         "outputs": {
             "type": "object",
             "additionalProperties": False,
