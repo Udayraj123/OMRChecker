@@ -235,6 +235,134 @@ def show_template_layouts(omr_files, template, tuning_config):
             )
 
 
+def _process_single_image(
+    file_path,
+    img_name,
+    in_omr,
+    template,
+    tuning_config,
+    evaluation_config,
+    outputs_namespace,
+    files_counter,
+):
+    logger.info("")
+    logger.info(
+        f"({files_counter}) Opening image: \t'{img_name}'\tResolution: {in_omr.shape}"
+    )
+
+    template.image_instance_ops.reset_all_save_img()
+
+    template.image_instance_ops.append_save_img(1, in_omr)
+
+    in_omr = template.image_instance_ops.apply_preprocessors(
+        file_path, in_omr, template
+    )
+
+    if in_omr is None:
+        # Error OMR case
+        new_file_path = outputs_namespace.paths.errors_dir.joinpath(img_name)
+        outputs_namespace.OUTPUT_SET.append(
+            [img_name] + outputs_namespace.empty_resp
+        )
+        if check_and_move(ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path):
+            err_line = [
+                img_name,
+                file_path,
+                new_file_path,
+                "NA",
+            ] + outputs_namespace.empty_resp
+            pd.DataFrame(err_line, dtype=str).T.to_csv(
+                outputs_namespace.files_obj["Errors"],
+                mode="a",
+                quoting=QUOTE_NONNUMERIC,
+                header=False,
+                index=False,
+            )
+        return None
+
+    # uniquify
+    file_id = str(img_name)
+    save_dir = outputs_namespace.paths.save_marked_dir
+    (
+        response_dict,
+        final_marked,
+        multi_marked,
+        _,
+    ) = template.image_instance_ops.read_omr_response(
+        template, image=in_omr, name=file_id, save_dir=save_dir
+    )
+
+    # TODO: move inner try catch here
+    # concatenate roll nos, set unmarked responses, etc
+    omr_response = get_concatenated_response(response_dict, template)
+
+    if (
+        evaluation_config is None
+        or not evaluation_config.get_should_explain_scoring()
+    ):
+        logger.info(f"Read Response: \n{omr_response}")
+
+    score = 0
+    if evaluation_config is not None:
+        score = evaluate_concatenated_response(
+            omr_response,
+            evaluation_config,
+            file_path,
+            outputs_namespace.paths.evaluation_dir,
+        )
+        logger.info(
+            f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: '{file_id}'"
+        )
+    else:
+        logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
+
+    if tuning_config.outputs.show_image_level >= 2:
+        InteractionUtils.show(
+            f"Final Marked Bubbles : '{file_id}'",
+            ImageUtils.resize_util_h(
+                final_marked, int(tuning_config.dimensions.display_height * 1.3)
+            ),
+            1,
+            1,
+            config=tuning_config,
+        )
+
+    resp_array = []
+    for k in template.output_columns:
+        resp_array.append(omr_response[k])
+
+    outputs_namespace.OUTPUT_SET.append([img_name] + resp_array)
+
+    if multi_marked == 0 or not tuning_config.outputs.filter_out_multimarked_files:
+        STATS.files_not_moved += 1
+        new_file_path = save_dir.joinpath(file_id)
+        # Enter into Results sheet-
+        results_line = [img_name, file_path, new_file_path, score] + resp_array
+        # Write/Append to results_line file(opened in append mode)
+        pd.DataFrame(results_line, dtype=str).T.to_csv(
+            outputs_namespace.files_obj["Results"],
+            mode="a",
+            quoting=QUOTE_NONNUMERIC,
+            header=False,
+            index=False,
+        )
+    else:
+        # multi_marked file
+        logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
+        new_file_path = outputs_namespace.paths.multi_marked_dir.joinpath(img_name)
+        if check_and_move(ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path):
+            mm_line = [img_name, file_path, new_file_path, "NA"] + resp_array
+            pd.DataFrame(mm_line, dtype=str).T.to_csv(
+                outputs_namespace.files_obj["MultiMarked"],
+                mode="a",
+                quoting=QUOTE_NONNUMERIC,
+                header=False,
+                index=False,
+            )
+
+    return multi_marked
+
+
 def process_files(
     omr_files,
     template,
@@ -257,125 +385,16 @@ def process_files(
                     f"PDF page name '{img_name}' collides with an existing image file, output may be overwritten."
                 )
             files_counter += 1
-
-            logger.info("")
-            logger.info(
-                f"({files_counter}) Opening image: \t'{img_name}'\tResolution: {in_omr.shape}"
+            _process_single_image(
+                file_path,
+                img_name,
+                in_omr,
+                template,
+                tuning_config,
+                evaluation_config,
+                outputs_namespace,
+                files_counter,
             )
-
-            template.image_instance_ops.reset_all_save_img()
-
-            template.image_instance_ops.append_save_img(1, in_omr)
-
-            in_omr = template.image_instance_ops.apply_preprocessors(
-                file_path, in_omr, template
-            )
-
-            if in_omr is None:
-                # Error OMR case
-                new_file_path = outputs_namespace.paths.errors_dir.joinpath(
-                    img_name
-                )
-                outputs_namespace.OUTPUT_SET.append(
-                    [img_name] + outputs_namespace.empty_resp
-                )
-                if check_and_move(ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path):
-                    err_line = [
-                        img_name,
-                        file_path,
-                        new_file_path,
-                        "NA",
-                    ] + outputs_namespace.empty_resp
-                    pd.DataFrame(err_line, dtype=str).T.to_csv(
-                        outputs_namespace.files_obj["Errors"],
-                        mode="a",
-                        quoting=QUOTE_NONNUMERIC,
-                        header=False,
-                        index=False,
-                    )
-                continue
-
-            # uniquify
-            file_id = str(img_name)
-            save_dir = outputs_namespace.paths.save_marked_dir
-            (
-                response_dict,
-                final_marked,
-                multi_marked,
-                _,
-            ) = template.image_instance_ops.read_omr_response(
-                template, image=in_omr, name=file_id, save_dir=save_dir
-            )
-
-            # TODO: move inner try catch here
-            # concatenate roll nos, set unmarked responses, etc
-            omr_response = get_concatenated_response(response_dict, template)
-
-            if (
-                evaluation_config is None
-                or not evaluation_config.get_should_explain_scoring()
-            ):
-                logger.info(f"Read Response: \n{omr_response}")
-
-            score = 0
-            if evaluation_config is not None:
-                score = evaluate_concatenated_response(
-                    omr_response,
-                    evaluation_config,
-                    file_path,
-                    outputs_namespace.paths.evaluation_dir,
-                )
-                logger.info(
-                    f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: '{file_id}'"
-                )
-            else:
-                logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
-
-            if tuning_config.outputs.show_image_level >= 2:
-                InteractionUtils.show(
-                    f"Final Marked Bubbles : '{file_id}'",
-                    ImageUtils.resize_util_h(
-                        final_marked, int(tuning_config.dimensions.display_height * 1.3)
-                    ),
-                    1,
-                    1,
-                    config=tuning_config,
-                )
-
-            resp_array = []
-            for k in template.output_columns:
-                resp_array.append(omr_response[k])
-
-            outputs_namespace.OUTPUT_SET.append([img_name] + resp_array)
-
-            if multi_marked == 0 or not tuning_config.outputs.filter_out_multimarked_files:
-                STATS.files_not_moved += 1
-                new_file_path = save_dir.joinpath(file_id)
-                # Enter into Results sheet-
-                results_line = [img_name, file_path, new_file_path, score] + resp_array
-                # Write/Append to results_line file(opened in append mode)
-                pd.DataFrame(results_line, dtype=str).T.to_csv(
-                    outputs_namespace.files_obj["Results"],
-                    mode="a",
-                    quoting=QUOTE_NONNUMERIC,
-                    header=False,
-                    index=False,
-                )
-            else:
-                # multi_marked file
-                logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
-                new_file_path = outputs_namespace.paths.multi_marked_dir.joinpath(
-                    img_name
-                )
-                if check_and_move(ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path):
-                    mm_line = [img_name, file_path, new_file_path, "NA"] + resp_array
-                    pd.DataFrame(mm_line, dtype=str).T.to_csv(
-                        outputs_namespace.files_obj["MultiMarked"],
-                        mode="a",
-                        quoting=QUOTE_NONNUMERIC,
-                        header=False,
-                        index=False,
-                    )
 
     print_stats(start_time, files_counter, tuning_config)
 
