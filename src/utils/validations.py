@@ -62,10 +62,16 @@ def validate_template_json(json_data, template_path):
             key, validator, msg = parse_validation_error(error)
 
             # Print preProcessor name in case of options error
-            if key == "preProcessors":
+            if (
+                len(error.path) > 2
+                and error.path[0] == "preProcessors"
+                and isinstance(error.path[1], int)
+            ):
                 preProcessorName = json_data["preProcessors"][error.path[1]]["name"]
                 preProcessorKey = error.path[2]
-                table.add_row(f"{key}.{preProcessorName}.{preProcessorKey}", msg)
+                table.add_row(
+                    f"preProcessors.{preProcessorName}.{preProcessorKey}", msg
+                )
             elif validator == "required":
                 requiredProperty = re.findall(r"'(.*?)'", msg)[0]
                 table.add_row(
@@ -108,8 +114,22 @@ def validate_config_json(json_data, config_path):
 
 
 def parse_validation_error(error):
-    return (
-        (error.path[0] if len(error.path) > 0 else "$root"),
-        error.validator,
-        error.message,
-    )
+    return (format_json_path(error.path), error.validator, error.message)
+
+
+def format_json_path(path):
+    path_tokens = list(path)
+
+    if len(path_tokens) == 0:
+        return "$root"
+
+    formatted_path = []
+    for path_token in path_tokens:
+        if isinstance(path_token, int):
+            formatted_path.append(f"[{path_token}]")
+        elif len(formatted_path) == 0:
+            formatted_path.append(str(path_token))
+        else:
+            formatted_path.append(f".{path_token}")
+
+    return "".join(formatted_path)
