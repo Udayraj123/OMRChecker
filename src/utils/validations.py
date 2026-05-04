@@ -67,7 +67,18 @@ def validate_template_json(json_data, template_path):
                 and error.path[0] == "preProcessors"
                 and isinstance(error.path[1], int)
             ):
-                preProcessorName = json_data["preProcessors"][error.path[1]]["name"]
+                preProcessorIndex = error.path[1]
+                preProcessors = json_data.get("preProcessors", [])
+                preProcessorName = f"index_{preProcessorIndex}"
+
+                if (
+                    isinstance(preProcessors, list)
+                    and 0 <= preProcessorIndex < len(preProcessors)
+                    and isinstance(preProcessors[preProcessorIndex], dict)
+                ):
+                    preProcessorName = preProcessors[preProcessorIndex].get(
+                        "name", preProcessorName
+                    )
                 preProcessorKey = error.path[2]
                 table.add_row(
                     f"preProcessors.{preProcessorName}.{preProcessorKey}", msg
