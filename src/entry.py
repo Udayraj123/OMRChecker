@@ -192,28 +192,45 @@ def load_omr_image(file_path, tuning_config):
     if suffix == ".pdf":
         import fitz
 
-        pdf_params = tuning_config.pdf_params
-        doc = fitz.open(str(file_path))
-        page_num = pdf_params.pdf_page
-        pages = [page_num] if page_num is not None else range(len(doc))
+        try:
+            doc = fitz.open(str(file_path))
+        except Exception as e:
+            logger.error(f"Failed to open PDF: '{file_path}' - {e}")
+            return []
 
-        images = []
-        for p in pages:
-            if p >= len(doc):
-                break
-            page = doc[p]
-            mat = fitz.Matrix(pdf_params.pdf_dpi / 72, pdf_params.pdf_dpi / 72)
-            pix = page.get_pixmap(matrix=mat, colorspace=fitz.csGRAY)
-            img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
-                pix.height, pix.width
-            )
-            name = (
-                f"{file_path.stem}_p{p + 1}.png"
-                if len(doc) > 1
-                else f"{file_path.stem}.png"
-            )
-            images.append((name, img))
-        doc.close()
+        try:
+            pdf_params = tuning_config.pdf_params
+            page_num = pdf_params.pdf_page
+            if page_num is not None and page_num >= len(doc):
+                logger.warning(
+                    f"PDF page {page_num} out of range for '{file_path}' "
+                    f"(has {len(doc)} pages), skipping."
+                )
+                return []
+
+            pages = [page_num] if page_num is not None else range(len(doc))
+
+            images = []
+            for p in pages:
+                if p >= len(doc):
+                    break
+                page = doc[p]
+                mat = fitz.Matrix(pdf_params.pdf_dpi / 72, pdf_params.pdf_dpi / 72)
+                pix = page.get_pixmap(matrix=mat, colorspace=fitz.csGRAY)
+                img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
+                    pix.height, pix.width
+                )
+                name = (
+                    f"{file_path.stem}_p{p + 1}.png"
+                    if len(doc) > 1
+                    else f"{file_path.stem}.png"
+                )
+                images.append((name, img))
+        except Exception as e:
+            logger.error(f"Failed to render PDF: '{file_path}' - {e}")
+            return []
+        finally:
+            doc.close()
         return images
     else:
         img = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
@@ -307,7 +324,7 @@ def _process_single_image(
         score = evaluate_concatenated_response(
             omr_response,
             evaluation_config,
-            file_path,
+            Path(img_name),
             outputs_namespace.paths.evaluation_dir,
         )
         logger.info(
