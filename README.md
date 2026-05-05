@@ -152,7 +152,7 @@ More details on pip install openCV [here](https://www.pyimagesearch.com/2018/09/
 
 <b>Installing missing libraries(if any):</b>
 
-On a fresh computer, some of the libraries may get missing in event after a successful pip install. Install them using following commands[(ref)](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/):
+On a fresh computer, some libraries may be missing even after a successful pip install. Install them using following commands[(ref)](https://www.pyimagesearch.com/2018/05/28/ubuntu-18-04-how-to-install-opencv/):
 
 ```bash
 sudo apt-get install -y build-essential cmake unzip pkg-config
@@ -248,6 +248,21 @@ Explanation for the arguments:
 - The `--autoAlign` flag is deprecated due to low performance on a generic OMR sheet
 - The `--template` flag is deprecated and instead it's recommended to keep the template file at the parent folder containing folders of different images
 </details>
+
+## Usage Example
+
+Here is a simple example of how to use OMRChecker in a complete workflow:
+
+1. Place your scanned OMR sheets in a folder, such as `inputs/`.
+2. Create or copy your layout definition into a `template.json` file.
+3. Run the checker script targeting your inputs:
+
+```bash
+python3 main.py --inputDir inputs/ --outputDir outputs/
+```
+
+4. Check the `outputs/` folder for your parsed results in CSV format and visual feedback images!
+
 
 <!-- #### Testing the code
 Datasets to test on :
