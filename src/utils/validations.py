@@ -79,9 +79,29 @@ def validate_template_json(json_data, template_path):
                     preProcessorName = preProcessors[preProcessorIndex].get(
                         "name", preProcessorName
                     )
-                preProcessorKey = error.path[2]
+                remainingTokens = list(error.path[2:])
+                remainingSegments = []
+
+                for remainingToken in remainingTokens:
+                    if isinstance(remainingToken, int):
+                        if len(remainingSegments) == 0:
+                            remainingSegments.append(f"[{remainingToken}]")
+                        else:
+                            remainingSegments[-1] = (
+                                f"{remainingSegments[-1]}[{remainingToken}]"
+                            )
+                    else:
+                        remainingSegments.append(str(remainingToken))
+
+                remainingPath = ".".join(remainingSegments)
+                finalPath = (
+                    f"preProcessors.{preProcessorName}.{remainingPath}"
+                    if remainingPath
+                    else f"preProcessors.{preProcessorName}"
+                )
+                table.add_row(key, msg)
                 table.add_row(
-                    f"preProcessors.{preProcessorName}.{preProcessorKey}", msg
+                    finalPath, msg
                 )
             elif validator == "required":
                 requiredProperty = re.findall(r"'(.*?)'", msg)[0]
