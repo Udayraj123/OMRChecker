@@ -124,8 +124,8 @@ function shortAnswers(value: string) {
   return value.length > 18 ? `${value.slice(0, 18)}...` : value;
 }
 
-const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
-const MAX_UPLOAD_LABEL = "4 MB";
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+const MAX_UPLOAD_LABEL = "10 MB";
 
 function fileExtension(file: File) {
   return file.name.split(".").pop()?.toLowerCase() || "";
@@ -179,7 +179,7 @@ async function readJsonPayload<T>(response: Response): Promise<T> {
     return JSON.parse(text) as T;
   } catch {
     const message = text.startsWith("Request Entity Too Large")
-      ? `File is too large for Vercel upload. Maximum allowed size is ${MAX_UPLOAD_LABEL}.`
+      ? `File is too large for this scanner. Maximum allowed size is ${MAX_UPLOAD_LABEL}.`
       : text.slice(0, 160);
     return { error: message } as T;
   }
@@ -440,7 +440,7 @@ export function UploadScannerPage() {
     const oversizedFiles = validFiles.filter((file) => !isWithinUploadLimit(file));
     if (oversizedFiles.length > 0) {
       setScanError(
-        `${oversizedFiles[0].name} is ${fileSizeLabel(oversizedFiles[0])}. Maximum upload size on Vercel is ${MAX_UPLOAD_LABEL}. Compress or split the PDF before scanning.`,
+        `${oversizedFiles[0].name} is ${fileSizeLabel(oversizedFiles[0])}. Maximum upload size is ${MAX_UPLOAD_LABEL}. Compress or split the PDF before scanning.`,
       );
       return;
     }
@@ -546,7 +546,7 @@ export function UploadScannerPage() {
         })),
       );
       setScanError(
-        `${oversizedFiles[0].name} is ${fileSizeLabel(oversizedFiles[0])}. Maximum upload size on Vercel is ${MAX_UPLOAD_LABEL}. Compress or split the PDF before scanning.`,
+        `${oversizedFiles[0].name} is ${fileSizeLabel(oversizedFiles[0])}. Maximum upload size is ${MAX_UPLOAD_LABEL}. Compress or split the PDF before scanning.`,
       );
       return;
     }
