@@ -173,7 +173,8 @@ TEMPLATE_SCHEMA = {
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {
-                                        "morphKernel": two_positive_integers
+                                        "morphKernel": two_positive_integers,
+                                        "shouldFailIfPageNotFound": {"type": "boolean"},
                                     },
                                 }
                             }
