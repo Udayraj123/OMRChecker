@@ -4,5 +4,7 @@ jsonschema>=4.17.3
 matplotlib>=3.7.1
 numpy>=1.25.0
 pandas>=2.0.2
+PyMuPDF>=1.27.2
+rapidocr-onnxruntime>=1.4.4
 rich>=13.4.2
 screeninfo>=0.8.1
