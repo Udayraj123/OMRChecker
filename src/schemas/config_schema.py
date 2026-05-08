@@ -42,6 +42,35 @@ CONFIG_SCHEMA = {
                 "thickness": {"type": "integer", "minimum": 1, "maximum": 10},
             },
         },
+        "pdf_params": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "pdf_dpi": {
+                    "anyOf": [
+                        {"type": "integer", "minimum": 72, "maximum": 600},
+                        {"type": "string", "enum": ["auto"]},
+                    ],
+                },
+                "pdf_page": {
+                    "anyOf": [
+                        {"type": "integer", "minimum": 1},
+                        {"type": "null"},
+                        {"type": "string", "pattern": r"^\d+(?:-\d*)?$"},
+                        {
+                            "type": "array",
+                            "items": {
+                                "anyOf": [
+                                    {"type": "integer", "minimum": 1},
+                                    {"type": "string", "pattern": r"^\d+(?:-\d*)?$"},
+                                ]
+                            },
+                            "minItems": 1,
+                        },
+                    ],
+                },
+            },
+        },
         "outputs": {
             "type": "object",
             "additionalProperties": False,

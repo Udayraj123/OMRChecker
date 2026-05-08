@@ -9,5 +9,8 @@
   "outputs": {
     "filter_out_multimarked_files": false,
     "show_image_level": 5
+  },
+  "pdf_params": {                                                         
+      "pdf_page": [1,3]
   }
 }

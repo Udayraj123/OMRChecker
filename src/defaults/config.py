@@ -24,6 +24,10 @@ CONFIG_DEFAULTS = DotMap(
             "stride": 1,
             "thickness": 3,
         },
+        "pdf_params": {
+            "pdf_dpi": "auto",
+            "pdf_page": 1,
+        },
         "outputs": {
             "show_image_level": 0,
             "save_image_level": 0,
