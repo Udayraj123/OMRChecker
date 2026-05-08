@@ -30,6 +30,7 @@ class Template:
             pre_processors_object,
             self.bubble_dimensions,
             self.global_empty_val,
+            self.layout_guide_boxes,
             self.options,
             self.page_dimensions,
         ) = map(
@@ -41,10 +42,12 @@ class Template:
                 "preProcessors",
                 "bubbleDimensions",
                 "emptyValue",
+                "layoutGuideBoxes",
                 "options",
                 "pageDimensions",
             ],
         )
+        self.layout_guide_boxes = self.layout_guide_boxes or []
 
         self.parse_output_columns(output_columns_array)
         self.setup_pre_processors(pre_processors_object, template_path.parent)
