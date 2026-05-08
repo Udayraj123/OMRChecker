@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
@@ -12,7 +13,20 @@ import { saveScanResults } from "@/lib/db";
 
 export const runtime = "nodejs";
 
-const repoRoot = process.env.OMR_REPO_ROOT || "";
+function resolveOmrRepoRoot() {
+  const configuredRoot = process.env.OMR_REPO_ROOT?.trim();
+  if (configuredRoot) return configuredRoot;
+
+  const bundledRoot = path.join(/* turbopackIgnore: true */ process.cwd(), "..");
+  const hasBundledOmrFiles =
+    existsSync(path.join(bundledRoot, "main.py")) &&
+    existsSync(path.join(bundledRoot, "inputs", "template.json")) &&
+    existsSync(path.join(bundledRoot, "inputs", "image.jpg"));
+
+  return hasBundledOmrFiles ? bundledRoot : "";
+}
+
+const repoRoot = resolveOmrRepoRoot();
 
 function safeBaseName(fileName: string) {
   return path.basename(fileName, path.extname(fileName)).replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "") || "scan";
@@ -43,7 +57,7 @@ function parseAnswerKey(value: FormDataEntryValue | null) {
 function runFastScan(manifestPath: string) {
   return new Promise<ScanResult[]>((resolve, reject) => {
     const pythonCommand = process.env.OMR_PYTHON || "python";
-    const scriptPath = path.join(process.cwd(), "scripts", "fast_scan_minsu.py");
+    const scriptPath = path.join(/* turbopackIgnore: true */ process.cwd(), "scripts", "fast_scan_minsu.py");
     const templatePath = path.join(repoRoot, "inputs", "template.json");
     const referencePath = path.join(repoRoot, "inputs", "image.jpg");
     const child = spawn(pythonCommand, [scriptPath, manifestPath, templatePath, referencePath], {
@@ -89,7 +103,7 @@ export async function POST(request: Request) {
   }
 
   const runId = `${Date.now()}`;
-  const runRoot = path.join(process.cwd(), ".scan-runs", runId);
+  const runRoot = path.join(/* turbopackIgnore: true */ process.cwd(), ".scan-runs", runId);
   const inputDir = path.join(runRoot, "inputs");
   const sourcePdfDir = path.join(runRoot, "source-pdfs");
   const fastScanEntries: FastScanEntry[] = [];

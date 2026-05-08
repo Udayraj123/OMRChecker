@@ -34,27 +34,24 @@ Password: 12345
 
 Install dependencies:
 
-```bash
-npm install
+```powershell
+cd C:\Users\nameyourpc\Downloads\OMRChecker-codex-minsu-web-ui\OMRChecker-codex-minsu-web-ui\web-ui
+npm.cmd install
 ```
 
-Create `.env.local`:
+Create a new file named `.env.local` inside `web-ui`, or copy `web-ui\.env.local.example` to `web-ui\.env.local`.
+
+Edit the paths and replace `nameyourpc` with your Windows user folder name. This prevents the `OMR_REPO_ROOT is not configured` error and makes the scanner use the Python version with OpenCV installed:
 
 ```env
-MYSQL_HOST=127.0.0.1
-MYSQL_PORT=3306
-MYSQL_USER=root
-MYSQL_PASSWORD=
-MYSQL_DATABASE=minsu_omr_scanner
-OMR_PYTHON=C:\Users\kenji\AppData\Local\Programs\Python\Python310\python.exe
-OMR_REPO_ROOT=C:\Users\kenji\Downloads\OMRChecker-master\OMRChecker
-AUTH_SECRET=change-this-for-production
+OMR_REPO_ROOT=C:\Users\nameyourpc\Downloads\OMRChecker-codex-minsu-web-ui\OMRChecker-codex-minsu-web-ui
+OMR_PYTHON=C:\Users\nameyourpc\AppData\Local\Programs\Python\Python310\python.exe
 ```
 
 Run the app:
 
-```bash
-npm run dev -- --hostname 127.0.0.1 --port 3000
+```powershell
+npm.cmd run dev
 ```
 
 Open:
@@ -81,6 +78,23 @@ Import either file in Laragon/phpMyAdmin or through MySQL to create the `minsu_o
 The deployed Vercel app cannot access MySQL or Python running on a local PC. On Vercel, the app gracefully falls back to browser-local records when the database is unavailable. For shared real-time records across devices, configure a hosted database such as Vercel Postgres, Neon, Supabase, or hosted MySQL.
 
 For local scanning, the upload API calls the Python OMRChecker backend through `OMR_PYTHON` and `OMR_REPO_ROOT`.
+
+The scan route also auto-detects the parent OMRChecker folder when possible. The current `web-ui/src/app/api/scan/route.ts` should keep this fallback logic:
+
+```ts
+function resolveOmrRepoRoot() {
+  const configuredRoot = process.env.OMR_REPO_ROOT?.trim();
+  if (configuredRoot) return configuredRoot;
+
+  const bundledRoot = path.join(/* turbopackIgnore: true */ process.cwd(), "..");
+  const hasBundledOmrFiles =
+    existsSync(path.join(bundledRoot, "main.py")) &&
+    existsSync(path.join(bundledRoot, "inputs", "template.json")) &&
+    existsSync(path.join(bundledRoot, "inputs", "image.jpg"));
+
+  return hasBundledOmrFiles ? bundledRoot : "";
+}
+```
 
 ## Useful Commands
 
