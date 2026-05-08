@@ -46,11 +46,27 @@ CONFIG_SCHEMA = {
             "type": "object",
             "additionalProperties": False,
             "properties": {
-                "pdf_dpi": {"type": "integer", "minimum": 72, "maximum": 600},
+                "pdf_dpi": {
+                    "anyOf": [
+                        {"type": "integer", "minimum": 72, "maximum": 600},
+                        {"type": "string", "enum": ["auto"]},
+                    ],
+                },
                 "pdf_page": {
                     "anyOf": [
-                        {"type": "integer", "minimum": 0},
+                        {"type": "integer", "minimum": 1},
                         {"type": "null"},
+                        {"type": "string", "pattern": r"^\d+(?:-\d*)?$"},
+                        {
+                            "type": "array",
+                            "items": {
+                                "anyOf": [
+                                    {"type": "integer", "minimum": 1},
+                                    {"type": "string", "pattern": r"^\d+(?:-\d*)?$"},
+                                ]
+                            },
+                            "minItems": 1,
+                        },
                     ],
                 },
             },

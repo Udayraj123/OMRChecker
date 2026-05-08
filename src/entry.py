@@ -12,7 +12,6 @@ from pathlib import Path
 from time import time
 
 import cv2
-import numpy as np
 import pandas as pd
 from rich.table import Table
 
@@ -186,64 +185,16 @@ def process_dir(
         )
 
 
-def load_omr_image(file_path, tuning_config):
-    """Load OMR image from file. Returns list of (display_name, image_array) tuples."""
-    suffix = file_path.suffix.lower()
-    if suffix == ".pdf":
-        import fitz
-
-        try:
-            doc = fitz.open(str(file_path))
-        except Exception as e:
-            logger.error(f"Failed to open PDF: '{file_path}' - {e}")
-            return []
-
-        try:
-            pdf_params = tuning_config.pdf_params
-            page_num = pdf_params.pdf_page
-            if page_num is not None and page_num >= len(doc):
-                logger.warning(
-                    f"PDF page {page_num} out of range for '{file_path}' "
-                    f"(has {len(doc)} pages), skipping."
-                )
-                return []
-
-            pages = [page_num] if page_num is not None else range(len(doc))
-
-            images = []
-            for p in pages:
-                if p >= len(doc):
-                    break
-                page = doc[p]
-                mat = fitz.Matrix(pdf_params.pdf_dpi / 72, pdf_params.pdf_dpi / 72)
-                pix = page.get_pixmap(matrix=mat, colorspace=fitz.csGRAY)
-                img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
-                    pix.height, pix.width
-                )
-                name = (
-                    f"{file_path.stem}_p{p + 1}.png"
-                    if len(doc) > 1
-                    else f"{file_path.stem}.png"
-                )
-                images.append((name, img))
-        except Exception as e:
-            logger.error(f"Failed to render PDF: '{file_path}' - {e}")
-            return []
-        finally:
-            doc.close()
-        return images
-    else:
-        img = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
-        return [(file_path.name, img)]
-
 
 def show_template_layouts(omr_files, template, tuning_config):
     for file_path in omr_files:
-        images = load_omr_image(file_path, tuning_config)
+        images = ImageUtils.load_omr_image(file_path, tuning_config)
         for img_name, in_omr in images:
             in_omr = template.image_instance_ops.apply_preprocessors(
                 str(file_path), in_omr, template
             )
+            if in_omr is None:
+                continue
             template_layout = template.image_instance_ops.draw_template_layout(
                 in_omr, template, shifted=False, border=2
             )
@@ -395,7 +346,7 @@ def process_files(
     image_file_names = {f.name for f in omr_files if f.suffix.lower() != ".pdf"}
 
     for file_path in omr_files:
-        images = load_omr_image(file_path, tuning_config)
+        images = ImageUtils.load_omr_image(file_path, tuning_config)
         for img_name, in_omr in images:
             if file_path.suffix.lower() == ".pdf" and img_name in image_file_names:
                 logger.warning(

@@ -25,8 +25,8 @@ CONFIG_DEFAULTS = DotMap(
             "thickness": 3,
         },
         "pdf_params": {
-            "pdf_dpi": 200,
-            "pdf_page": None,
+            "pdf_dpi": "auto",
+            "pdf_page": 1,
         },
         "outputs": {
             "show_image_level": 0,

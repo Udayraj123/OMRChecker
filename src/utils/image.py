@@ -139,6 +139,122 @@ class ImageUtils:
         return warped
 
     @staticmethod
+    def _resolve_pages(page_spec, doc_len):
+        """Resolve user page spec into list of 1-based page numbers.
+
+        None          → all pages [1, 2, ..., doc_len]
+        int 3         → [3]
+        str "3"       → [3]
+        str "1-5"     → [1, 2, 3, 4, 5]
+        str "3-"      → [3, 4, ..., doc_len]
+        list [1,"3-5"]→ [1, 3, 4, 5]
+        """
+        if page_spec is None:
+            return list(range(1, doc_len + 1))
+        if isinstance(page_spec, int):
+            return [page_spec]
+        if isinstance(page_spec, str):
+            if "-" in page_spec:
+                parts = page_spec.split("-", 1)
+                start = int(parts[0]) if parts[0] else 1
+                end = int(parts[1]) if parts[1] else doc_len
+                return list(range(start, end + 1))
+            return [int(page_spec)]
+        if isinstance(page_spec, list):
+            result = []
+            seen = set()
+            for item in page_spec:
+                for page in ImageUtils._resolve_pages(item, doc_len):
+                    if page in seen:
+                        continue
+                    seen.add(page)
+                    result.append(page)
+            return result
+        return []
+
+    @staticmethod
+    def _detect_pdf_native_dpi(doc, pages):
+        """Auto-detect native DPI from embedded images in PDF pages.
+
+        Compares embedded image pixel dimensions against page dimensions
+        (in points, 1 pt = 1/72 inch) to find the DPI at which images
+        would render 1:1. Falls back to 72 if no images are found.
+        """
+        dpis = []
+        for p in pages:
+            page = doc[p]
+            pw, ph = page.rect.width, page.rect.height
+            for img_info in page.get_images(full=True):
+                xref = img_info[0]
+                img_data = doc.extract_image(xref)
+                iw, ih = img_data["width"], img_data["height"]
+                dpi_w = int(iw * 72 / pw)
+                dpi_h = int(ih * 72 / ph)
+                dpis.append(max(dpi_w, dpi_h))
+        return max(dpis) if dpis else 72
+
+    @staticmethod
+    def load_omr_image(file_path, tuning_config):
+        """Load OMR image from file. Returns list of (display_name, image_array) tuples."""
+        suffix = file_path.suffix.lower()
+        if suffix == ".pdf":
+            import fitz
+
+            try:
+                doc = fitz.open(str(file_path))
+            except Exception as e:
+                logger.error(f"Failed to open PDF: '{file_path}' - {e}")
+                return []
+
+            try:
+                pdf_params = tuning_config.pdf_params
+                doc_len = len(doc)
+                user_pages = ImageUtils._resolve_pages(
+                    pdf_params.pdf_page, doc_len
+                )
+                # Convert 1-based user pages to 0-based fitz indices,
+                # filter out-of-range pages with warning.
+                pages = []
+                for p in user_pages:
+                    if p < 1 or p > doc_len:
+                        logger.warning(
+                            f"PDF page {p} out of range for '{file_path}' "
+                            f"(has {doc_len} pages), skipping page."
+                        )
+                    else:
+                        pages.append(p - 1)
+
+                # Resolve rendering DPI
+                dpi = pdf_params.pdf_dpi
+                if dpi == "auto":
+                    dpi = ImageUtils._detect_pdf_native_dpi(doc, pages)
+                    logger.info(f"Auto-detected PDF native DPI: {dpi}")
+
+                images = []
+                for p in pages:
+                    page = doc[p]
+                    mat = fitz.Matrix(dpi / 72, dpi / 72)
+                    pix = page.get_pixmap(matrix=mat, colorspace=fitz.csGRAY)
+                    img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
+                        pix.height, pix.width
+                    )
+                    name = (
+                        f"{file_path.stem}_p{p + 1}.png"
+                        if len(doc) > 1
+                        else f"{file_path.stem}.png"
+                    )
+                    images.append((name, img))
+            except Exception as e:
+                logger.error(f"Failed to render PDF: '{file_path}' - {e}")
+                return []
+            finally:
+                doc.close()
+            return images
+        else:
+            img = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
+            return [(file_path.name, img)]
+
+    @staticmethod
     def order_points(pts):
         rect = np.zeros((4, 2), dtype="float32")
 
