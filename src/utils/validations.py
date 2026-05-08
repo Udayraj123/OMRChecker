@@ -74,26 +74,11 @@ def validate_template_json(json_data, template_path):
                 if (
                     isinstance(preProcessors, list)
                     and 0 <= preProcessorIndex < len(preProcessors)
-                    and isinstance(preProcessors[preProcessorIndex], dict)
                 ):
                     preProcessorName = preProcessors[preProcessorIndex].get(
                         "name", preProcessorName
                     )
-                remainingTokens = list(error.path[2:])
-                remainingSegments = []
-
-                for remainingToken in remainingTokens:
-                    if isinstance(remainingToken, int):
-                        if len(remainingSegments) == 0:
-                            remainingSegments.append(f"[{remainingToken}]")
-                        else:
-                            remainingSegments[-1] = (
-                                f"{remainingSegments[-1]}[{remainingToken}]"
-                            )
-                    else:
-                        remainingSegments.append(str(remainingToken))
-
-                remainingPath = ".".join(remainingSegments)
+                remainingPath = format_nested_path_tokens(error.path[2:])
                 finalPath = (
                     f"preProcessors.{preProcessorName}.{remainingPath}"
                     if remainingPath
@@ -146,6 +131,23 @@ def validate_config_json(json_data, config_path):
 
 def parse_validation_error(error):
     return (format_json_path(error.path), error.validator, error.message)
+
+
+def format_nested_path_tokens(path_tokens):
+    nested_path_segments = []
+
+    for path_token in path_tokens:
+        if isinstance(path_token, int):
+            if len(nested_path_segments) == 0:
+                nested_path_segments.append(f"[{path_token}]")
+            else:
+                nested_path_segments[-1] = (
+                    f"{nested_path_segments[-1]}[{path_token}]"
+                )
+        else:
+            nested_path_segments.append(str(path_token))
+
+    return ".".join(nested_path_segments)
 
 
 def format_json_path(path):

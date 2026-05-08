@@ -8,7 +8,7 @@ from src.tests.utils import (
     run_entry_point,
     setup_mocker_patches,
 )
-from src.utils.validations import parse_validation_error
+from src.utils.validations import format_nested_path_tokens, parse_validation_error
 
 FROZEN_TIMESTAMP = "1970-01-01"
 CURRENT_DIR = Path("src/tests")
@@ -192,3 +192,10 @@ def test_parse_validation_error_for_nested_preprocessor_key():
 
     assert key == "preProcessors[0].options.morphKernel"
     assert validator == "minItems"
+
+
+def test_format_nested_path_tokens_with_indexed_segment():
+    assert (
+        format_nested_path_tokens(["steps", 2, "threshold"])
+        == "steps[2].threshold"
+    )
