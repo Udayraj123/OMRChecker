@@ -188,14 +188,11 @@ def test_parse_validation_error_for_nested_preprocessor_key():
     }
 
     error = next(SCHEMA_VALIDATORS["template"].iter_errors(template))
-    key, validator, _msg = parse_validation_error(error)
+    key, validator, _msg = parse_validation_error(error, json_data=template)
 
-    assert key == "preProcessors[0].options.morphKernel"
+    assert key == "preProcessors.CropPage.options.morphKernel"
     assert validator == "minItems"
 
 
 def test_format_nested_path_tokens_with_indexed_segment():
-    assert (
-        format_nested_path_tokens(["steps", 2, "threshold"])
-        == "steps[2].threshold"
-    )
+    assert format_nested_path_tokens(["steps", 2, "threshold"]) == "steps[2].threshold"

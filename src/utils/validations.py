@@ -59,36 +59,9 @@ def validate_template_json(json_data, template_path):
             key=lambda e: e.path,
         )
         for error in errors:
-            key, validator, msg = parse_validation_error(error)
+            key, validator, msg = parse_validation_error(error, json_data=json_data)
 
-            # Print preProcessor name in case of options error
-            if (
-                len(error.path) > 2
-                and error.path[0] == "preProcessors"
-                and isinstance(error.path[1], int)
-            ):
-                preProcessorIndex = error.path[1]
-                preProcessors = json_data.get("preProcessors", [])
-                preProcessorName = f"index_{preProcessorIndex}"
-
-                if (
-                    isinstance(preProcessors, list)
-                    and 0 <= preProcessorIndex < len(preProcessors)
-                ):
-                    preProcessorName = preProcessors[preProcessorIndex].get(
-                        "name", preProcessorName
-                    )
-                remainingPath = format_nested_path_tokens(error.path[2:])
-                finalPath = (
-                    f"preProcessors.{preProcessorName}.{remainingPath}"
-                    if remainingPath
-                    else f"preProcessors.{preProcessorName}"
-                )
-                table.add_row(key, msg)
-                table.add_row(
-                    finalPath, msg
-                )
-            elif validator == "required":
+            if validator == "required":
                 requiredProperty = re.findall(r"'(.*?)'", msg)[0]
                 table.add_row(
                     f"{key}.{requiredProperty}",
@@ -129,8 +102,12 @@ def validate_config_json(json_data, config_path):
         raise Exception(f"Provided config JSON is Invalid: '{config_path}'") from None
 
 
-def parse_validation_error(error):
-    return (format_json_path(error.path), error.validator, error.message)
+def parse_validation_error(error, json_data=None):
+    return (
+        format_json_path(error.path, json_data=json_data),
+        error.validator,
+        error.message,
+    )
 
 
 def format_nested_path_tokens(path_tokens):
@@ -141,20 +118,42 @@ def format_nested_path_tokens(path_tokens):
             if len(nested_path_segments) == 0:
                 nested_path_segments.append(f"[{path_token}]")
             else:
-                nested_path_segments[-1] = (
-                    f"{nested_path_segments[-1]}[{path_token}]"
-                )
+                nested_path_segments[-1] = f"{nested_path_segments[-1]}[{path_token}]"
         else:
             nested_path_segments.append(str(path_token))
 
     return ".".join(nested_path_segments)
 
 
-def format_json_path(path):
+def format_json_path(path, json_data=None):
     path_tokens = list(path)
 
     if len(path_tokens) == 0:
         return "$root"
+
+    if (
+        json_data is not None
+        and len(path_tokens) > 1
+        and path_tokens[0] == "preProcessors"
+        and isinstance(path_tokens[1], int)
+    ):
+        preprocessor_index = path_tokens[1]
+        preprocessors = json_data.get("preProcessors", [])
+        preprocessor_name = f"index_{preprocessor_index}"
+
+        if isinstance(preprocessors, list) and 0 <= preprocessor_index < len(
+            preprocessors
+        ):
+            preprocessor_name = preprocessors[preprocessor_index].get(
+                "name", preprocessor_name
+            )
+
+        remaining_path = format_nested_path_tokens(path_tokens[2:])
+        return (
+            f"preProcessors.{preprocessor_name}.{remaining_path}"
+            if remaining_path
+            else f"preProcessors.{preprocessor_name}"
+        )
 
     formatted_path = []
     for path_token in path_tokens:
