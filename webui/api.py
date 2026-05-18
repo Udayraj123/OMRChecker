@@ -498,10 +498,13 @@ async def batch_status(
     eta_s: float | None = None
     run_started_at = metadata.get("run_started_at")
     run_elapsed = metadata.get("run_elapsed_s")
-    if batch.status.value == "running" and run_started_at is not None:
-        elapsed_s = round(_time.time() - float(run_started_at), 1)
-    elif run_elapsed is not None:
+    if run_elapsed is not None:
+        # Prefer the stored final value — avoids the timer ticking on after the
+        # batch finishes while the status write is still in-flight.
         elapsed_s = float(run_elapsed)
+    elif batch.status.value == "running" and run_started_at is not None:
+        # No checkpoint written yet; derive from wall-clock start time.
+        elapsed_s = round(_time.time() - float(run_started_at), 1)
     if elapsed_s and elapsed_s > 0 and processed > 0:
         rate_per_min = round(processed / elapsed_s * 60, 1)
         if batch.status.value == "running":
