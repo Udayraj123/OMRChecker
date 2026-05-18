@@ -594,6 +594,7 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
         return
 
     runtime_dir: Path | None = None
+    run_started_at = time.monotonic()  # initialised early so except block can always reference it
     try:
         batch_root = batches_service.get_batch_root(batch_id, settings)
         outputs_dir = batch_root / "outputs"
@@ -691,6 +692,7 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
         futures = {}
         next_index = 1
         image_iter = iter(input_images)
+        _executor_gone = False  # set when executor shuts down mid-run (e.g. server reload)
 
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
             while len(futures) < max_workers:
@@ -698,7 +700,11 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
                     image = next(image_iter)
                 except StopIteration:
                     break
-                futures[executor.submit(_process_one_image, submit_payload(next_index, image))] = image
+                try:
+                    futures[executor.submit(_process_one_image, submit_payload(next_index, image))] = image
+                except RuntimeError:
+                    _executor_gone = True
+                    break
                 next_index += 1
 
             last_milestone = 0
@@ -791,13 +797,18 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
                     )
                     return
 
-                while len(futures) < max_workers:
-                    try:
-                        image = next(image_iter)
-                    except StopIteration:
-                        break
-                    futures[executor.submit(_process_one_image, submit_payload(next_index, image))] = image
-                    next_index += 1
+                if not _executor_gone:
+                    while len(futures) < max_workers:
+                        try:
+                            image = next(image_iter)
+                        except StopIteration:
+                            break
+                        try:
+                            futures[executor.submit(_process_one_image, submit_payload(next_index, image))] = image
+                        except RuntimeError:
+                            _executor_gone = True
+                            break
+                        next_index += 1
 
         results_dir = outputs_dir / "Results"
         manual_dir = outputs_dir / "Manual"
