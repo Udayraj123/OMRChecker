@@ -26,6 +26,7 @@ def storage_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Pa
     batches_dir = tmp_path / "batches"
     batches_dir.mkdir()
     monkeypatch.setenv("OMR_WEBUI_STORAGE_ROOT", str(batches_dir))
+    monkeypatch.setenv("OMR_WEBUI_DEFAULT_PRESET", "")
     get_settings.cache_clear()
     yield batches_dir
     get_settings.cache_clear()

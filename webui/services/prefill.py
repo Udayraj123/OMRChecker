@@ -14,7 +14,7 @@ import re
 import tempfile
 import time
 import zipfile
-from concurrent.futures import BrokenExecutor, ProcessPoolExecutor
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from pathlib import Path
 from typing import Any
 
@@ -149,6 +149,7 @@ def _get_stamped_img():
 def _stamp_template_once() -> bytes:
     """Render the ArUco-stamped template once, returning its PNG bytes."""
     stamped_img, _ = _get_stamped_img()
+    assert stamped_img is not None
     stamped_buf = io.BytesIO()
     stamped_img.save(stamped_buf, format="PNG", compress_level=1)
     return stamped_buf.getvalue()
@@ -158,47 +159,128 @@ def _max_workers() -> int:
     return max(1, min((os.cpu_count() or 2) - 1, 8))
 
 
-def _iter_pngs_fast(payloads: list[dict]):
-    """Yield ``(index, png_bytes_or_None, error_or_None)`` using the fast worker.
+def _thread_render(payload: dict) -> bytes:
+    """Thread worker: renders one prefill sheet using the shared in-process template cache.
 
-    Each worker process receives the stamped template as a numpy array via the
-    pool initializer (once per worker process), so task payloads carry only the
-    small per-student text fields.  Falls back to serial on BrokenExecutor.
+    Threads share the stamped PIL Image already held in ``_STAMPED_IMG_CACHE``;
+    no IPC or pickling is required.  PIL image operations release the GIL so
+    multiple threads make real progress in parallel.
     """
-    import numpy as np
     m = _import_prefill_module()
-    _, stamped_arr = _get_stamped_img()
-    arr_bytes = stamped_arr.tobytes()
-    shape = stamped_arr.shape
+    stamped_img, _ = _get_stamped_img()
+    assert stamped_img is not None
+    img = stamped_img.copy()
+    img = m._draw_sheet_content(
+        img,
+        payload['student_name'],
+        payload['school_name'],
+        payload['exam_name'],
+        payload['candidate_number'],
+    )
+    buf = io.BytesIO()
+    fmt = payload.get('output_format', 'png').lower()
+    if fmt == 'jpeg':
+        img.save(buf, format='JPEG', quality=payload.get('jpeg_quality', 75))
+    else:
+        img.save(buf, format='PNG', compress_level=1)
+    return buf.getvalue()
+
+
+def _iter_pngs_fast(payloads: list[dict], *, preserve_order: bool = True):
+    """Yield ``(index, png_bytes_or_None, error_or_None)`` using a thread pool.
+
+    Uses ``ThreadPoolExecutor`` (not ``ProcessPoolExecutor``) so spawned threads
+    never inherit the server's listening socket — which was the root cause of
+    orphaned workers stealing connections and hanging the server.
+
+    PIL image operations release the GIL, so threads achieve real parallelism
+    for the CPU-bound rendering work.  Falls back to serial on any executor
+    error.
+    """
     n = len(payloads)
-    # Larger chunksize reduces IPC round-trips; cap so short batches still parallelise.
-    chunksize = max(1, min(200, n // (_max_workers() * 4) + 1))
-    yielded = 0
+    max_workers = _max_workers()
+    window_size = max_workers * 4
+    # If workers produce nothing for this many seconds, abort rather than
+    # looping forever.  300 s (5 min) is generous even for very large batches.
+    _MAX_IDLE_S = 300
+
+    yielded_indexes: set[int] = set()
+    ex = ThreadPoolExecutor(max_workers=max_workers)
     try:
-        with ProcessPoolExecutor(
-            max_workers=_max_workers(),
-            initializer=m._init_worker_stamped,
-            initargs=(arr_bytes, shape),
-        ) as ex:
-            for png_bytes in ex.map(m._prefill_worker_fast, payloads, chunksize=chunksize):
-                yield yielded, png_bytes, None
-                yielded += 1
-    except BrokenExecutor as exc:
-        logger.warning(
-            "Fast worker pool broken after %d/%d rows; falling back to serial: %s",
-            yielded, n, exc,
-        )
+        futures: dict = {}
+        completed: dict[int, tuple[bytes | None, str | None]] = {}
+        next_submit = [0]  # list so the inner closure can mutate it
+        next_yield = 0
+        last_progress = time.perf_counter()
+
+        def submit_until_window() -> None:
+            while next_submit[0] < n and len(futures) < window_size:
+                idx = next_submit[0]
+                future = ex.submit(_thread_render, payloads[idx])
+                futures[future] = idx
+                next_submit[0] += 1
+
+        submit_until_window()
+        while futures:
+            done, _ = wait(
+                list(futures.keys()), timeout=30, return_when=FIRST_COMPLETED
+            )
+            if not done:
+                idle_secs = time.perf_counter() - last_progress
+                logger.warning(
+                    "Prefill worker pool idle for %.0fs | pending=%d/%d",
+                    idle_secs,
+                    len(futures),
+                    n,
+                )
+                if idle_secs > _MAX_IDLE_S:
+                    logger.error(
+                        "Aborting prefill pool — no progress for %.0fs (limit=%ds)",
+                        idle_secs,
+                        _MAX_IDLE_S,
+                    )
+                    break
+                continue
+            for future in done:
+                idx = futures.pop(future)
+                last_progress = time.perf_counter()
+                try:
+                    result: tuple[bytes | None, str | None] = (future.result(), None)
+                except Exception as exc:  # noqa: BLE001
+                    result = (None, f"{type(exc).__name__}: {exc}")
+
+                if preserve_order:
+                    completed[idx] = result
+                else:
+                    yielded_indexes.add(idx)
+                    yield idx, result[0], result[1]
+
+            if preserve_order:
+                while next_yield in completed:
+                    result = completed.pop(next_yield)
+                    yielded_indexes.add(next_yield)
+                    yield next_yield, result[0], result[1]
+                    next_yield += 1
+
+            submit_until_window()
     except Exception as exc:  # noqa: BLE001
         logger.warning(
-            "Fast worker pool error after %d/%d rows; falling back to serial: %s",
-            yielded, n, exc,
+            "Thread worker pool error after %d/%d rows; falling back to serial: %s",
+            len(yielded_indexes), n, exc,
         )
+    finally:
+        # Non-blocking shutdown: don't wait for stuck threads.
+        # cancel_futures=True cancels any not-yet-started submissions.
+        ex.shutdown(wait=False, cancel_futures=True)
 
     # Serial fallback for remaining.
-    for idx in range(yielded, n):
+    for idx in range(n):
+        if idx in yielded_indexes:
+            continue
         try:
             # Re-use stamped img directly in-process to avoid another pool.
             stamped_img, _ = _get_stamped_img()
+            assert stamped_img is not None
             img = stamped_img.copy()
             m2 = _import_prefill_module()
             img = m2._draw_sheet_content(
@@ -233,6 +315,7 @@ def generate_single_png(
     _validate_candidate_number(candidate_number)
     m = _import_prefill_module()
     stamped_img, _ = _get_stamped_img()
+    assert stamped_img is not None
     image = m._draw_sheet_content(
         stamped_img.copy(),
         _clean_field(student_name),
@@ -311,7 +394,21 @@ def generate_batch_pdf_to_file(rows: list[dict[str, Any]], dst_path: Path) -> di
                     successes, count, rate, len(errors),
                 )
                 last_log = now
-        doc.save(str(dst_path), garbage=4)
+        save_start = time.perf_counter()
+        logger.info(
+            "Prefill PDF final save started | pages=%d | target=%s",
+            successes,
+            dst_path,
+        )
+        # Full garbage collection (garbage=4) is very expensive on thousands
+        # of image-only pages and looks like a hang after rendering finishes.
+        # These files are newly built, so a plain save is enough and much faster.
+        doc.save(str(dst_path), garbage=0, deflate=False)
+        logger.info(
+            "Prefill PDF final save complete | pages=%d | elapsed=%.1fs",
+            successes,
+            time.perf_counter() - save_start,
+        )
     finally:
         doc.close()
 
@@ -354,7 +451,7 @@ def generate_batch_zip_to_file(rows: list[dict[str, Any]], dst_path: Path) -> di
     with zipfile.ZipFile(
         dst_path, mode="w", compression=zipfile.ZIP_DEFLATED, compresslevel=1
     ) as zf:
-        for idx, png_bytes, err in _iter_pngs_fast(payloads):
+        for idx, png_bytes, err in _iter_pngs_fast(payloads, preserve_order=False):
             if err or png_bytes is None:
                 errors.append(f"row {idx} ({filenames[idx]}): {err or 'empty result'}")
                 continue

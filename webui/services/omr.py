@@ -19,7 +19,7 @@ import threading
 import time
 from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import cv2
 from PIL import Image as _PILImage
@@ -53,6 +53,15 @@ def _lock_for(batch_id: str) -> threading.Lock:
             lock = threading.Lock()
             _batch_locks[batch_id] = lock
         return lock
+
+
+def release_batch_lock(batch_id: str) -> None:
+    """Remove the per-batch processing lock when the batch is deleted.
+
+    Safe to call even if no lock exists for the batch.
+    """
+    with _locks_guard:
+        _batch_locks.pop(batch_id, None)
 
 
 def _is_cancel_requested(batch_id: str, settings: Settings) -> bool:
@@ -592,6 +601,7 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
     if not lock.acquire(blocking=False):
         logger.info("Batch %s is already processing; skipping duplicate run", batch_id)
         return
+    logger.info("OMR run starting | batch_id=%s", batch_id)
 
     runtime_dir: Path | None = None
     run_started_at = time.monotonic()  # initialised early so except block can always reference it
@@ -599,6 +609,15 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
         batch_root = batches_service.get_batch_root(batch_id, settings)
         outputs_dir = batch_root / "outputs"
         outputs_dir.mkdir(parents=True, exist_ok=True)
+
+        # Remove any stale worker scratch dirs left by a previous interrupted
+        # run before discovering images, so they can't interfere with new
+        # worker paths and won't be double-counted at end-of-run cleanup.
+        stale_workers = outputs_dir / "_workers"
+        if stale_workers.exists():
+            logger.info("OMR run: removing stale _workers/ from prior interrupted run | batch_id=%s", batch_id)
+            shutil.rmtree(stale_workers, ignore_errors=True)
+
         input_images = _discover_input_images(batch_id, settings)
 
         if _is_cancel_requested(batch_id, settings):
@@ -790,9 +809,16 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
                     ) if (completed % 5 == 0 or completed == len(input_images)) else None
 
                 if _is_cancel_requested(batch_id, settings):
+                    # Cancel futures that haven't been picked up by a worker
+                    # yet so we don't block waiting for a full backlog of
+                    # unstarted work.  In-flight futures in worker processes
+                    # cannot be interrupted and will run to completion.
+                    for _pending in list(futures.keys()):
+                        _pending.cancel()
+                    futures.clear()
                     _mark_cancelled(
                         batch_id,
-                        "Stop requested. Running images will finish first.",
+                        "Stop requested. In-flight images will finish; pending work cancelled.",
                         settings,
                     )
                     return
@@ -844,8 +870,6 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
         _rate_total = (completed * 60 / _elapsed_total) if _elapsed_total > 0 else 0
         logger.info("OMR batch complete | batch_id=%s | total=%d | failures=%d | elapsed=%.1fs | rate=%.0f/min", batch_id, completed, len(preprocess_failures), _elapsed_total, _rate_total)
 
-        shutil.rmtree(outputs_dir / "_workers", ignore_errors=True)
-
         batches_service.save_json_document(batch_id, "config", latest_runtime_config, settings)
 
         if preprocess_worker_errors:
@@ -889,6 +913,10 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
             batches_service.update_status(
                 batch_id, BatchStatus.done, settings=settings
             )
+        # Delete internal worker scratch dirs AFTER status is visible to
+        # clients.  Doing this before the status update would delay the
+        # 'done' signal by 30+ seconds on large batches.
+        shutil.rmtree(outputs_dir / "_workers", ignore_errors=True)
     except BaseException as exc:
         logger.exception("OMR run failed for batch %s", batch_id)
         batches_service.update_batch_metadata(
@@ -905,6 +933,25 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
     finally:
         _cleanup_runtime_dir(runtime_dir)
         lock.release()
+
+
+def restart_and_run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
+    """Background task for restart: remove prior run artifacts then run OMR.
+
+    Doing the heavy rmtree here (background) instead of in the HTTP handler
+    means the 202 response is returned immediately and the user sees log
+    activity right away instead of a 30-second silent hang.
+    """
+    settings = settings or get_settings()
+    batch_root = batches_service.get_batch_root(batch_id, settings)
+    logger.info("OMR restart: removing prior run artifacts | batch_id=%s", batch_id)
+    for name in ("outputs", "_runtime"):
+        target = batch_root / name
+        if target.exists():
+            shutil.rmtree(target, ignore_errors=True)
+    (batch_root / "outputs").mkdir(parents=True, exist_ok=True)
+    logger.info("OMR restart: artifact cleanup complete, starting run | batch_id=%s", batch_id)
+    run_batch_sync(batch_id, settings)
 
 
 def queue_run(batch_id: str, settings: Settings | None = None) -> None:
@@ -953,24 +1000,32 @@ def request_cancel(batch_id: str, settings: Settings | None = None) -> BatchStat
     return BatchStatus.running
 
 
-def _read_csv_records(path: Path) -> tuple[list[str], list[dict[str, str]]]:
+def _read_csv_records(
+    path: Path,
+    *,
+    offset: int = 0,
+    limit: int | None = None,
+) -> tuple[list[str], list[dict[str, str]], int]:
     try:
         with path.open("r", encoding="utf-8", newline="") as fh:
             reader = csv.reader(fh)
-            raw_rows = list(reader)
+            try:
+                header = next(reader)
+            except StopIteration:
+                return [], [], 0
+
+            records: list[dict[str, str]] = []
+            total = 0
+            for row in reader:
+                if not row or not any(str(value).strip() for value in row):
+                    continue
+                if total >= offset and (limit is None or len(records) < limit):
+                    records.append(dict(zip(header, row)))
+                total += 1
     except (FileNotFoundError, OSError):
-        return [], []
+        return [], [], 0
 
-    if not raw_rows:
-        return [], []
-
-    header, *data_rows = raw_rows
-    records = [
-        dict(zip(header, row))
-        for row in data_rows
-        if row and any(str(value).strip() for value in row)
-    ]
-    return header, records
+    return header, records, total
 
 
 def _find_error_files_csvs(batch_id: str, settings: Settings) -> list[Path]:
@@ -989,7 +1044,9 @@ def _find_error_files_csvs(batch_id: str, settings: Settings) -> list[Path]:
     return candidates
 
 
-def _result_row_from_record(record: dict[str, str], status: str = "ok") -> ResultsRow:
+def _result_row_from_record(
+    record: dict[str, str], status: Literal["ok", "failed"] = "ok"
+) -> ResultsRow:
     responses = {
         key: value
         for key, value in record.items()
@@ -1051,18 +1108,35 @@ def _compute_qc(
     return flags, int(nr_count), float(nr_percent)
 
 
-def read_results(batch_id: str, settings: Settings | None = None) -> ResultsPayload:
+def read_results(
+    batch_id: str,
+    settings: Settings | None = None,
+    *,
+    offset: int = 0,
+    limit: int | None = None,
+) -> ResultsPayload:
     """Parse the latest ``Results_*.csv`` for a batch, if any."""
     settings = settings or get_settings()
+    offset = max(0, int(offset))
+    if limit is not None:
+        limit = max(0, int(limit))
     csv_path = batches_service.find_results_csv(batch_id, settings)
     error_csvs = _find_error_files_csvs(batch_id, settings)
     if csv_path is None and not error_csvs:
         return ResultsPayload(
-            batch_id=batch_id, columns=[], rows=[], generated_csv=None
+            batch_id=batch_id,
+            columns=[],
+            rows=[],
+            generated_csv=None,
+            total_rows=0,
+            offset=offset,
+            limit=limit,
+            truncated=False,
         )
 
     header: list[str] = []
     rows: list[ResultsRow] = []
+    total_rows = 0
     seen_error_file_ids: set[str] = set()
     config_doc = batches_service.get_json_document(batch_id, "config", settings) or {}
     candidate_regex = None
@@ -1073,8 +1147,12 @@ def read_results(batch_id: str, settings: Settings | None = None) -> ResultsPayl
             if isinstance(regex_value, str) and regex_value.strip():
                 candidate_regex = regex_value.strip()
 
+    regular_total = 0
     if csv_path is not None:
-        header, records = _read_csv_records(csv_path)
+        header, records, total_rows = _read_csv_records(
+            csv_path, offset=offset, limit=limit
+        )
+        regular_total = total_rows
         for record in records:
             row = _result_row_from_record(record)
             flags, nr_count, nr_percent = _compute_qc(
@@ -1085,8 +1163,18 @@ def read_results(batch_id: str, settings: Settings | None = None) -> ResultsPayl
             row.nr_percent = nr_percent
             rows.append(row)
 
+    error_offset = max(0, offset - regular_total)
+    remaining_limit = None if limit is None else max(0, limit - len(rows))
     for error_csv in error_csvs:
-        error_header, error_records = _read_csv_records(error_csv)
+        error_header, error_records, error_total = _read_csv_records(
+            error_csv,
+            offset=error_offset,
+            limit=remaining_limit,
+        )
+        total_rows += error_total
+        error_offset = max(0, error_offset - error_total)
+        if remaining_limit is not None:
+            remaining_limit = max(0, remaining_limit - len(error_records))
         if not header:
             header = error_header
         for record in error_records:
@@ -1108,6 +1196,10 @@ def read_results(batch_id: str, settings: Settings | None = None) -> ResultsPayl
         columns=header,
         rows=rows,
         generated_csv=csv_path.as_posix() if csv_path is not None else None,
+        total_rows=total_rows,
+        offset=offset,
+        limit=limit,
+        truncated=limit is not None and offset + len(rows) < total_rows,
     )
 
 

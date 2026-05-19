@@ -51,6 +51,45 @@ from webui.services import presets as presets_service
 from webui.services.batches import BatchNotFound, InvalidBatchRequest
 from webui.settings import Settings, get_settings
 
+# ---------------------------------------------------------------------------
+# JSON document schema validation
+# ---------------------------------------------------------------------------
+_JSON_DOC_SCHEMAS: dict[str, Any] = {}
+
+
+def _get_doc_schemas() -> dict[str, Any]:
+    """Lazily load schemas to avoid import overhead at module level."""
+    global _JSON_DOC_SCHEMAS
+    if not _JSON_DOC_SCHEMAS:
+        from src.schemas.template_schema import TEMPLATE_SCHEMA
+        from src.schemas.config_schema import CONFIG_SCHEMA
+        _JSON_DOC_SCHEMAS = {
+            "template": TEMPLATE_SCHEMA,
+            "config": CONFIG_SCHEMA,
+        }
+    return _JSON_DOC_SCHEMAS
+
+
+def _validate_json_document(doc_name: str, content: dict[str, Any]) -> None:
+    """Validate *content* against the known JSON Schema for *doc_name*.
+
+    Raises ``HTTPException(422)`` with a human-readable message on failure.
+    No-ops for document types without a registered schema (e.g. evaluation).
+    """
+    import jsonschema
+
+    schemas = _get_doc_schemas()
+    schema = schemas.get(doc_name)
+    if schema is None:
+        return
+    try:
+        jsonschema.validate(instance=content, schema=schema)
+    except jsonschema.ValidationError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid {doc_name}.json: {exc.message}",
+        )
+
 router = APIRouter(prefix="/api/v1", tags=["omr"])
 
 # ---------------------------------------------------------------------------
@@ -94,6 +133,17 @@ def _register_download(tmp_path: Path, media_type: str, filename: str) -> str:
             del _DOWNLOAD_STORE[k]
         _DOWNLOAD_STORE[token] = (tmp_path, media_type, filename, expires_at)
     return token
+
+
+# ---------------------------------------------------------------------------
+# Health
+# ---------------------------------------------------------------------------
+
+
+@router.get("/health", tags=["health"])
+async def health() -> dict:
+    """Liveness probe — returns 200 when the server is up."""
+    return {"status": "ok"}
 
 
 # ---------------------------------------------------------------------------
@@ -204,7 +254,8 @@ async def get_batch(
 async def delete_batch(
     batch_id: str, settings: Settings = Depends(get_settings)
 ) -> None:
-    batches_service.delete_batch(batch_id, settings)
+    await asyncio.to_thread(batches_service.delete_batch, batch_id, settings)
+    omr_service.release_batch_lock(batch_id)
 
 
 @router.put("/batches/{batch_id}/rotation", response_model=Batch)
@@ -274,8 +325,9 @@ async def import_from_directory(
     payload: DirectoryImportRequest,
     settings: Settings = Depends(get_settings),
 ) -> ImportResult:
-    imported, skipped = batches_service.import_directory(
-        batch_id, payload.source_dir, payload.copy_files, settings
+    imported, skipped = await asyncio.to_thread(
+        batches_service.import_directory,
+        batch_id, payload.source_dir, payload.copy_files, settings,
     )
     return ImportResult(imported=imported, skipped=skipped)
 
@@ -394,6 +446,8 @@ def _make_json_endpoints(doc_name: str) -> None:
         ),
         settings: Settings = Depends(get_settings),
     ) -> dict[str, str]:
+        if content is not None:
+            _validate_json_document(doc_name, content)
         batches_service.save_json_document(batch_id, doc_name, content, settings)
         return {"status": "saved" if content is not None else "deleted"}
 
@@ -474,9 +528,11 @@ async def restart_batch(
         )
     _assert_batch_ready_to_run(batch, settings)
 
-    batches_service.reset_batch_runtime_state(batch_id, settings)
+    # queue_run resets all counters/last_error and marks the batch queued;
+    # the heavy artifact cleanup (rmtree of outputs/ + _runtime/) happens in
+    # the background task so the 202 is returned immediately.
     omr_service.queue_run(batch_id, settings)
-    background_tasks.add_task(omr_service.run_batch_sync, batch_id, settings)
+    background_tasks.add_task(omr_service.restart_and_run_batch_sync, batch_id, settings)
     return ProcessAccepted(batch_id=batch_id, status=BatchStatus.queued)
 
 
@@ -534,10 +590,23 @@ async def batch_status(
 @router.get("/batches/{batch_id}/results", response_model=ResultsPayload)
 @_handle_errors
 async def batch_results(
-    batch_id: str, settings: Settings = Depends(get_settings)
+    batch_id: str,
+    offset: int = 0,
+    limit: int | None = 500,
+    settings: Settings = Depends(get_settings),
 ) -> ResultsPayload:
     batches_service.get_batch(batch_id, settings)
-    return omr_service.read_results(batch_id, settings)
+    if offset < 0:
+        raise HTTPException(status_code=422, detail="offset must be >= 0")
+    if limit is not None and (limit < 0 or limit > 5000):
+        raise HTTPException(status_code=422, detail="limit must be between 0 and 5000")
+    return await asyncio.to_thread(
+        omr_service.read_results,
+        batch_id,
+        settings,
+        offset=offset,
+        limit=limit,
+    )
 
 
 @router.get("/batches/{batch_id}/results/download")
@@ -837,37 +906,6 @@ async def prefill_batch(
         "size_bytes": meta["size_bytes"],
     }
 
-
-@router.get("/prefill/batch/download/{token}")
-async def prefill_batch_download(token: str, background_tasks: BackgroundTasks):
-    """One-time token download endpoint. Returns the generated file and deletes it."""
-    with _DOWNLOAD_STORE_LOCK:
-        entry = _DOWNLOAD_STORE.pop(token, None)
-
-    if entry is None:
-        raise HTTPException(status_code=404, detail="Download link not found or already used.")
-
-    tmp_path, media_type, filename, expires_at = entry
-    if not tmp_path.exists():
-        raise HTTPException(status_code=410, detail="File no longer available.")
-    if _time_mod.monotonic() > expires_at:
-        tmp_path.unlink(missing_ok=True)
-        raise HTTPException(status_code=410, detail="Download link has expired.")
-
-    def _cleanup():
-        try:
-            tmp_path.unlink(missing_ok=True)
-        except OSError:
-            pass
-
-    background_tasks.add_task(_cleanup)
-    return FileResponse(
-        path=str(tmp_path),
-        media_type=media_type,
-        filename=filename,
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-        background=background_tasks,
-    )
 
 
 @router.get("/prefill/batch/download/{token}")

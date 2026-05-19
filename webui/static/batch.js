@@ -480,7 +480,7 @@ const handleRotationChange = async (event) => {
 
 const refreshResults = async () => {
     try {
-        const data = await jsonFetch(apiUrl("/results"))
+        const data = await jsonFetch(apiUrl("/results?limit=100"))
         const container = document.getElementById("results-container")
         if (!container) return
         renderResults(container, data)
@@ -661,18 +661,17 @@ const renderResults = (container, data) => {
     }).join("")
     const cards = data.rows.map((row, index) => renderResultCard(row, responseColumns, index)).join("")
     const header = columns.map((col) => `<th>${escapeHtml(col)}</th>`).join("")
-    const CSV_PREVIEW_LIMIT = 100
     const allRows = data.rows
-    const previewRows = allRows.slice(0, CSV_PREVIEW_LIMIT)
-    const rows = previewRows.map((row) => {
+    const totalRows = Number.isFinite(Number(data.total_rows)) ? Number(data.total_rows) : allRows.length
+    const rows = allRows.map((row) => {
         const cells = columns.map((col) => {
             const className = ["file_id", "input_path", "output_path"].includes(col) ? ' class="mono small"' : ""
             return `<td${className}>${escapeHtml(getResultCell(row, col))}</td>`
         }).join("")
         return `<tr>${cells}</tr>`
     }).join("")
-    const truncationNote = allRows.length > CSV_PREVIEW_LIMIT
-        ? `<p class="muted small" style="margin:6px 0 0">Showing first ${CSV_PREVIEW_LIMIT} of ${allRows.length} rows. <a href="${apiUrl('/results/download')}">Download the full CSV</a> for all results.</p>`
+    const truncationNote = data.truncated || allRows.length < totalRows
+        ? `<p class="muted small" style="margin:6px 0 0">Showing ${allRows.length} of ${totalRows} rows. <a href="${apiUrl('/results/download')}">Download the full CSV</a> for all results.</p>`
         : ""
 
     container.innerHTML = `

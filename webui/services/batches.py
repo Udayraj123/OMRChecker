@@ -25,7 +25,7 @@ import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Literal, cast
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +113,17 @@ def _serialise(value: Any) -> Any:
     return value
 
 
+def _coerce_datetime(value: Any) -> datetime:
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, str):
+        try:
+            return datetime.fromisoformat(value)
+        except ValueError:
+            pass
+    return _now()
+
+
 def _batch_root(settings: Settings, batch_id: str) -> Path:
     return settings.ensure_storage() / batch_id
 
@@ -136,9 +147,12 @@ def _load_metadata(settings: Settings, batch_id: str) -> dict[str, Any]:
     with meta_path.open("r", encoding="utf-8") as fh:
         try:
             return json.load(fh)
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as exc:
             # Transient: another thread is mid-write. Return an empty dict so
             # callers degrade gracefully; the next read will see the full file.
+            logger.warning(
+                "metadata.json for batch %r is corrupt or mid-write: %s", batch_id, exc
+            )
             return {}
 
 
@@ -190,12 +204,14 @@ def _to_batch(settings: Settings, batch_id: str, meta: dict[str, Any]) -> Batch:
     rotation_degrees = int(meta.get("rotation_degrees", 0))
     if rotation_degrees not in VALID_ROTATIONS:
         rotation_degrees = 0
+    created_at = _coerce_datetime(meta.get("created_at"))
+    updated_at = _coerce_datetime(meta.get("updated_at") or meta.get("created_at"))
     return Batch(
         id=batch_id,
         name=meta.get("name", batch_id),
         status=BatchStatus(meta.get("status", BatchStatus.created.value)),
-        created_at=meta.get("created_at") or _now().isoformat(),
-        updated_at=meta.get("updated_at") or meta.get("created_at") or _now().isoformat(),
+        created_at=created_at,
+        updated_at=updated_at,
         source_mode=(
             SourceMode(meta["source_mode"]) if meta.get("source_mode") else None
         ),
@@ -205,7 +221,7 @@ def _to_batch(settings: Settings, batch_id: str, meta: dict[str, Any]) -> Batch:
         has_template=(batch_dir / TEMPLATE_FILENAME).exists(),
         has_config=(batch_dir / CONFIG_FILENAME).exists(),
         has_evaluation=(batch_dir / EVALUATION_FILENAME).exists(),
-        rotation_degrees=rotation_degrees,
+        rotation_degrees=cast(Literal[0, 90, 180, 270], rotation_degrees),
     )
 
 
@@ -461,10 +477,12 @@ def _save_pdf_pages_as_images(
             colorspace = fitz.csGRAY if grayscale else fitz.csRGB
             # Seed metadata so the UI shows total immediately
             _write_pdf_split_progress(batch_id, settings, 0, page_count)
-            for page_index, page in enumerate(pdf, start=1):
+            for page_index in range(page_count):
+                page_number = page_index + 1
+                page = pdf.load_page(page_index)
                 try:
                     pixmap = page.get_pixmap(dpi=dpi, alpha=False, colorspace=colorspace)
-                    page_name = f"{stem}_page_{page_index:04d}.png"
+                    page_name = f"{stem}_page_{page_number:04d}.png"
                     target = inputs / page_name
                     # compress_level=1 is ~5x faster than default (6); these
                     # are intermediate working files read once by the engine.
@@ -474,17 +492,17 @@ def _save_pdf_pages_as_images(
                         FileRef(name=target.name, size_bytes=target.stat().st_size)
                     )
                 except Exception as page_exc:  # noqa: BLE001
-                    failed_pages.append(page_index)
+                    failed_pages.append(page_number)
                     logger.warning(
                         "PDF page render failed | file=%s | page=%d/%d | %s: %s",
-                        safe_filename, page_index, page_count,
+                        safe_filename, page_number, page_count,
                         type(page_exc).__name__, page_exc,
                     )
-                if page_index % 10 == 0 or page_index == page_count:
+                if page_number % 10 == 0 or page_number == page_count:
                     _write_pdf_split_progress(
                         batch_id, settings, len(stored), page_count
                     )
-                if page_index % 50 == 0 or page_index == page_count:
+                if page_number % 50 == 0 or page_number == page_count:
                     logger.info(
                         "PDF split progress | file=%s | %d/%d pages saved | failed=%d",
                         safe_filename, len(stored), page_count, len(failed_pages),

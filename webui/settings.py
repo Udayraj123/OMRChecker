@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     )
 
     allow_directory_import: bool = Field(
-        default=True,
+        default=False,
         description=(
             "When true, /api/v1/batches/{id}/files/import can read from an "
             "arbitrary server-side directory. Turn off in hosted deployments."

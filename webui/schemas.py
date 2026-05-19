@@ -162,9 +162,13 @@ class ResultsRow(BaseModel):
 
 
 class ResultsPayload(BaseModel):
-    """Full results payload exposed by the API."""
+    """Results payload exposed by the API."""
 
     batch_id: str
     columns: list[str]
     rows: list[ResultsRow]
     generated_csv: str | None = None
+    total_rows: int = 0
+    offset: int = 0
+    limit: int | None = None
+    truncated: bool = False

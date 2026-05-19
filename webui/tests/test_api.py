@@ -83,6 +83,16 @@ def test_batch_lifecycle_crud(client: TestClient) -> None:
     assert response.status_code == 404
 
 
+def test_health_endpoint_and_security_headers(client: TestClient) -> None:
+    response = client.get("/api/v1/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+    assert response.headers["x-request-id"]
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["x-frame-options"] == "DENY"
+    assert "default-src 'self'" in response.headers["content-security-policy"]
+
+
 def test_upload_and_list_files(
     client: TestClient, adrian_images: list[Path]
 ) -> None:
@@ -451,9 +461,46 @@ def test_results_do_not_flag_missing_candidate_when_not_configured(
     assert "BAD_CANDIDATE" not in row["qc_flags"]
 
 
-def test_directory_import(
+def test_results_endpoint_limits_large_csv_preview(
+    client: TestClient,
+    storage_root: Path,
+) -> None:
+    batch_id = _create_batch(client, "Large CSV")
+    results_dir = storage_root / batch_id / "outputs" / "Results"
+    results_dir.mkdir(parents=True)
+    results_csv = results_dir / "Results_11AM.csv"
+    with results_csv.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(["file_id", "score", "q1"])
+        for idx in range(750):
+            writer.writerow([f"sheet_{idx:04d}.png", str(idx), "A"])
+
+    response = client.get(f"/api/v1/batches/{batch_id}/results?limit=100")
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert len(payload["rows"]) == 100
+    assert payload["total_rows"] == 750
+    assert payload["limit"] == 100
+    assert payload["truncated"] is True
+
+
+def test_directory_import_disabled_by_default(
     client: TestClient, adrian_images: list[Path]
 ) -> None:
+    batch_id = _create_batch(client, "Directory import disabled")
+    response = client.post(
+        f"/api/v1/batches/{batch_id}/files/import",
+        json={"source_dir": str(adrian_images[0].parent), "copy": True},
+    )
+    assert response.status_code == 400
+    assert "disabled" in response.json()["detail"].lower()
+
+
+def test_directory_import(
+    client: TestClient, adrian_images: list[Path], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("OMR_WEBUI_ALLOW_DIRECTORY_IMPORT", "true")
+    get_settings.cache_clear()
     batch_id = _create_batch(client, "Directory import test")
     source_dir = adrian_images[0].parent
     response = client.post(
@@ -490,6 +537,13 @@ def test_template_config_round_trip(
     batch = response.json()
     assert batch["has_template"] is True
     assert batch["has_config"] is True
+
+
+def test_template_upload_rejects_invalid_schema(client: TestClient) -> None:
+    batch_id = _create_batch(client, "Invalid template")
+    response = client.put(f"/api/v1/batches/{batch_id}/template", json={})
+    assert response.status_code == 422
+    assert "Invalid template.json" in response.json()["detail"]
 
 
 def test_process_requires_template(
@@ -817,7 +871,10 @@ def test_directory_import_processes_with_dynamic_dimensions(
     adrian_images: list[Path],
     sample_template_body: dict,
     sample_config_body: dict,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    monkeypatch.setenv("OMR_WEBUI_ALLOW_DIRECTORY_IMPORT", "true")
+    get_settings.cache_clear()
     batch_id = _create_batch(client, "Dynamic directory batch")
     source_dir = adrian_images[0].parent
 

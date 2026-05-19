@@ -455,6 +455,9 @@
                 </table>
             </div>
         </details>
+        {% if results.truncated %}
+        <p class="muted small">Showing {{ results.rows|length }} of {{ results.total_rows }} rows. <a href="/api/v1/batches/{{ batch.id }}/results/download">Download the full CSV</a> for all results.</p>
+        {% endif %}
         {% else %}
         <p class="muted" id="no-results-msg">No results yet. Run the batch to generate results.</p>
         {% endif %}
