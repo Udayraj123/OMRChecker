@@ -126,17 +126,18 @@ def test_pdf_upload_splits_pages_into_images(
     assert response.status_code == 201, response.text
     uploaded = response.json()
     assert len(uploaded) == 2
-    assert uploaded[0]["name"] == "sample_page_0001.png"
-    assert uploaded[1]["name"] == "sample_page_0002.png"
+    assert uploaded[0]["name"] == "sample_page_0001.jpg"
+    assert uploaded[1]["name"] == "sample_page_0002.jpg"
 
     response = client.get(f"/api/v1/batches/{batch_id}/files")
     assert response.status_code == 200
     files = response.json()
     assert [file["name"] for file in files] == [
-        "sample_page_0001.png",
-        "sample_page_0002.png",
+        "sample_page_0001.jpg",
+        "sample_page_0002.jpg",
     ]
 
+    # Stale file with .png extension (from prior version) must be removed on re-upload
     stale_duplicate = storage_root / batch_id / "inputs" / "sample_page_0001_1.png"
     stale_duplicate.write_bytes(b"stale")
 
@@ -147,16 +148,16 @@ def test_pdf_upload_splits_pages_into_images(
     assert response.status_code == 201, response.text
     uploaded = response.json()
     assert [file["name"] for file in uploaded] == [
-        "sample_page_0001.png",
-        "sample_page_0002.png",
+        "sample_page_0001.jpg",
+        "sample_page_0002.jpg",
     ]
 
     response = client.get(f"/api/v1/batches/{batch_id}/files")
     assert response.status_code == 200
     files = response.json()
     assert [file["name"] for file in files] == [
-        "sample_page_0001.png",
-        "sample_page_0002.png",
+        "sample_page_0001.jpg",
+        "sample_page_0002.jpg",
     ]
     assert not stale_duplicate.exists()
 
@@ -189,7 +190,7 @@ def _make_simple_pdf(page_count: int = 1, width: int = 72, height: int = 72) -> 
 def test_pdf_pages_are_grayscale_by_default(
     client: TestClient, storage_root: Path
 ) -> None:
-    """Default settings must produce single-channel grayscale PNGs (saves ~81 %% RAM)."""
+    """Default settings must produce single-channel grayscale JPEGs (saves ~81 %% RAM)."""
     pytest.importorskip("fitz")
     batch_id = _create_batch(client, "Grayscale default")
     pdf_bytes = _make_simple_pdf()
@@ -200,10 +201,10 @@ def test_pdf_pages_are_grayscale_by_default(
     )
     assert response.status_code == 201, response.text
 
-    png_path = storage_root / batch_id / "inputs" / "grey_page_0001.png"
-    assert png_path.exists(), "Expected page PNG not written to disk"
-    img = cv2.imread(str(png_path), cv2.IMREAD_UNCHANGED)
-    assert img is not None, "cv2 could not read the output PNG"
+    jpg_path = storage_root / batch_id / "inputs" / "grey_page_0001.jpg"
+    assert jpg_path.exists(), "Expected page JPEG not written to disk"
+    img = cv2.imread(str(jpg_path), cv2.IMREAD_UNCHANGED)
+    assert img is not None, "cv2 could not read the output JPEG"
     assert img.ndim == 2, (
         f"Expected 2-D grayscale array (1 channel), got shape {img.shape}"
     )
@@ -212,7 +213,7 @@ def test_pdf_pages_are_grayscale_by_default(
 def test_pdf_pages_are_rgb_when_grayscale_disabled(
     storage_root: Path, monkeypatch: pytest.MonkeyPatch, mocker
 ) -> None:
-    """OMR_WEBUI_PDF_RENDER_GRAYSCALE=false must produce 3-channel RGB PNGs."""
+    """OMR_WEBUI_PDF_RENDER_GRAYSCALE=false must produce 3-channel RGB JPEGs."""
     pytest.importorskip("fitz")
     monkeypatch.setenv("OMR_WEBUI_PDF_RENDER_GRAYSCALE", "false")
     get_settings.cache_clear()
@@ -231,9 +232,9 @@ def test_pdf_pages_are_rgb_when_grayscale_disabled(
         )
         assert response.status_code == 201, response.text
 
-    png_path = storage_root / batch_id / "inputs" / "rgb_page_0001.png"
-    assert png_path.exists()
-    img = cv2.imread(str(png_path), cv2.IMREAD_UNCHANGED)
+    jpg_path = storage_root / batch_id / "inputs" / "rgb_page_0001.jpg"
+    assert jpg_path.exists()
+    img = cv2.imread(str(jpg_path), cv2.IMREAD_UNCHANGED)
     assert img is not None
     assert img.ndim == 3 and img.shape[2] == 3, (
         f"Expected 3-channel RGB array, got shape {img.shape}"
@@ -255,8 +256,8 @@ def test_pdf_page_dimensions_match_150_dpi(
     )
     assert response.status_code == 201, response.text
 
-    png_path = storage_root / batch_id / "inputs" / "dims_page_0001.png"
-    img = cv2.imread(str(png_path), cv2.IMREAD_UNCHANGED)
+    jpg_path = storage_root / batch_id / "inputs" / "dims_page_0001.jpg"
+    img = cv2.imread(str(jpg_path), cv2.IMREAD_UNCHANGED)
     assert img is not None
     # Allow ±2 px rounding from PyMuPDF's integer scaling
     assert abs(img.shape[1] - 150) <= 2, f"Width {img.shape[1]} not ~150 px at 150 DPI"
@@ -290,9 +291,9 @@ def test_pdf_split_skips_failing_page_and_returns_rest(tmp_path: Path) -> None:
 
     names = {r.name for r in refs}
     assert len(refs) == 2, f"Expected 2 pages after 1 failure, got {len(refs)}"
-    assert "flaky_page_0001.png" in names
-    assert "flaky_page_0002.png" not in names, "Failed page must not produce a file"
-    assert "flaky_page_0003.png" in names
+    assert "flaky_page_0001.jpg" in names
+    assert "flaky_page_0002.jpg" not in names, "Failed page must not produce a file"
+    assert "flaky_page_0003.jpg" in names
 
 
 def test_pdf_split_all_pages_fail_raises_error(tmp_path: Path) -> None:
