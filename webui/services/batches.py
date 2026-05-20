@@ -250,6 +250,7 @@ def create_batch(name: str, settings: Settings | None = None) -> Batch:
         "rotation_degrees": 0,
     }
     _save_metadata(settings, batch_id, meta)
+    logger.info("Batch created | name=%r | id=%s", meta["name"], batch_id)
 
     # Auto-apply the default preset (best-effort — batch is valid without it)
     if settings.default_preset:
@@ -295,7 +296,13 @@ def delete_batch(batch_id: str, settings: Settings | None = None) -> None:
     batch_dir = _batch_root(settings, batch_id)
     if not batch_dir.exists():
         raise BatchNotFound(batch_id)
+    try:
+        meta = _load_metadata(settings, batch_id)
+        batch_name = meta.get("name", batch_id)
+    except Exception:  # noqa: BLE001
+        batch_name = batch_id
     shutil.rmtree(batch_dir)
+    logger.info("Batch deleted | name=%r | id=%s", batch_name, batch_id)
 
 
 def update_status(
@@ -314,6 +321,11 @@ def update_status(
     elif status in {BatchStatus.queued, BatchStatus.running, BatchStatus.done}:
         meta["last_error"] = None
     _save_metadata(settings, batch_id, meta)
+    _name = meta.get("name", batch_id)
+    if last_error:
+        logger.warning("Batch %r -> %s | error: %s | id=%s", _name, status.value, last_error, batch_id)
+    else:
+        logger.info("Batch %r -> %s | id=%s", _name, status.value, batch_id)
     return _to_batch(settings, batch_id, meta)
 
 
@@ -461,8 +473,10 @@ def save_uploaded_file(
         return stored
     target = _next_available_path(inputs, safe)
     target.write_bytes(data)
+    size = target.stat().st_size
+    logger.info("File uploaded | batch=%s | file=%s | size=%d bytes", batch_id, target.name, size)
     set_source(batch_id, SourceMode.upload, None, settings)
-    return [FileRef(name=target.name, size_bytes=target.stat().st_size)]
+    return [FileRef(name=target.name, size_bytes=size)]
 
 
 def _render_pdf_chunk(
@@ -879,6 +893,10 @@ def import_directory(
 
     if imported:
         set_source(batch_id, SourceMode.directory, str(src), settings)
+    logger.info(
+        "Directory import | batch=%s | imported=%d | skipped=%d | src=%s",
+        batch_id, len(imported), len(skipped), src,
+    )
     return imported, skipped
 
 

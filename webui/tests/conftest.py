@@ -15,9 +15,10 @@ from webui.app import create_app
 from webui.settings import get_settings
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-ADRIAN_SAMPLE_DIR = REPO_ROOT / "samples" / "sample2" / "AdrianSample"
-SAMPLE_TEMPLATE = REPO_ROOT / "samples" / "sample2" / "template.json"
-SAMPLE_CONFIG = REPO_ROOT / "samples" / "sample2" / "config.json"
+CUSTOM_DIR = REPO_ROOT / "custom_25_definitive_final"
+CUSTOM_INPUTS_DIR = CUSTOM_DIR / "inputs"
+SAMPLE_TEMPLATE = CUSTOM_DIR / "template.json"
+SAMPLE_CONFIG = CUSTOM_DIR / "config.json"
 
 
 @pytest.fixture
@@ -43,7 +44,7 @@ def client(storage_root: Path, mocker) -> Iterator[TestClient]:
 
 @pytest.fixture
 def adrian_images() -> list[Path]:
-    return sorted(ADRIAN_SAMPLE_DIR.glob("*.png"))
+    return sorted(CUSTOM_INPUTS_DIR.glob("*.jpg"))
 
 
 @pytest.fixture

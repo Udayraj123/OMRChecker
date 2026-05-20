@@ -11,6 +11,7 @@ import io
 import logging
 import os
 import re
+import sys
 import tempfile
 import time
 import zipfile
@@ -20,12 +21,14 @@ from typing import Any
 
 import numpy as np
 
-# Built-in blank template shipped with the package
-DEFAULT_TEMPLATE = (
-    Path(__file__).resolve().parents[2]
-    / "prefill_only_package"
-    / "blank_template_reference.png"
-)
+# Built-in blank template shipped with the package.
+# When running as a PyInstaller frozen bundle sys._MEIPASS is the _internal/
+# directory where data files are extracted; fall back to the source-tree path.
+if getattr(sys, "frozen", False):
+    _PKG_ROOT = Path(sys._MEIPASS)  # type: ignore[attr-defined]
+else:
+    _PKG_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_TEMPLATE = _PKG_ROOT / "prefill_only_package" / "blank_template_reference.png"
 
 logger = logging.getLogger(__name__)
 
@@ -370,6 +373,8 @@ def generate_batch_pdf_to_file(rows: list[dict[str, Any]], dst_path: Path) -> di
     errors: list[str] = []
     last_log = time.perf_counter()
 
+    # Log progress at ~10% intervals (min every 100 rows, max every 500).
+    _progress_step = max(100, min(500, count // 10 or 1))
     try:
         for idx, img_bytes, err in _iter_pngs_fast(payloads):
             if err or img_bytes is None:
@@ -385,9 +390,9 @@ def generate_batch_pdf_to_file(rows: list[dict[str, Any]], dst_path: Path) -> di
                 successes += 1
             except Exception as exc:  # noqa: BLE001
                 errors.append(f"row {idx}: {type(exc).__name__}: {exc}")
-            # Progress log every ~500 sheets or every 30s
+            # Progress log at ~10% intervals or every 30s
             now = time.perf_counter()
-            if successes % 500 == 0 and successes > 0 or now - last_log > 30:
+            if successes % _progress_step == 0 and successes > 0 or now - last_log > 30:
                 rate = successes / (now - t_batch) * 60
                 logger.info(
                     "Prefill PDF progress | %d/%d (%.0f/min) | err=%d",

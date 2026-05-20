@@ -58,3 +58,8 @@ omr_stress_artifacts/
 
 # Generated workflow diagram PNG (source of truth is the .excalidraw file)
 NERS_OMR_Workflow.png
+
+# --- PyInstaller build artifacts ---
+build/
+dist/
+*.spec.bak

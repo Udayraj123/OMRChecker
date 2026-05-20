@@ -6,11 +6,16 @@ import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import logging
+
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+import asyncio
+
 from webui.api import router as api_router
+from webui.log_stream import attach as _log_attach, detach as _log_detach
 from webui.services.batches import clear_stale_pdf_split_progress
 from webui.settings import get_settings
 from webui.views import router as views_router
@@ -23,7 +28,12 @@ TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 async def _lifespan(app: FastAPI):  # type: ignore[type-arg]
     """Reset any stale PDF split progress left by a previous server crash."""
     clear_stale_pdf_split_progress()
-    yield
+    _log_attach(asyncio.get_running_loop())
+    logging.getLogger(__name__).info("OMRChecker server started — log stream active")
+    try:
+        yield
+    finally:
+        _log_detach()
 
 
 def create_app() -> FastAPI:

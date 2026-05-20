@@ -993,3 +993,127 @@ textarea {
 .batch-table td { padding: 0.3rem 0.4rem; vertical-align: middle; }
 .batch-table input { min-width: 7rem; }
 
+/* ── Log panel (bottom drawer) ─────────────────────────────────────── */
+
+#log-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 900;
+    background: #0a0d12;
+    border-top: 1px solid var(--panel-border);
+    display: flex;
+    flex-direction: column;
+    max-height: 40vh;
+    transition: transform 0.2s ease, max-height 0.2s ease;
+}
+
+#log-panel.collapsed {
+    max-height: 2.35rem;
+    overflow: hidden;
+}
+
+.log-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 0.75rem;
+    height: 2.35rem;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--panel-border);
+    user-select: none;
+    cursor: pointer;
+}
+
+.log-panel-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    flex: 1;
+}
+
+.log-panel-badge {
+    font-size: 0.72rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(47, 129, 247, 0.18);
+    color: var(--accent-2);
+    font-weight: 600;
+    min-width: 1.5rem;
+    text-align: center;
+}
+
+.log-panel-badge.has-error {
+    background: rgba(248, 81, 73, 0.18);
+    color: var(--danger);
+}
+
+.log-panel-badge.has-warn {
+    background: rgba(210, 153, 34, 0.18);
+    color: var(--warn);
+}
+
+.log-panel-actions {
+    display: flex;
+    gap: 0.25rem;
+    margin-left: auto;
+}
+
+.log-panel-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.78rem;
+    padding: 0.2rem 0.45rem;
+    border-radius: 4px;
+    font-family: var(--mono);
+}
+
+.log-panel-btn:hover {
+    background: var(--panel-border);
+    color: var(--text);
+}
+
+.log-panel-chevron {
+    font-size: 0.65rem;
+    color: var(--muted);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+#log-panel.collapsed .log-panel-chevron {
+    transform: rotate(180deg);
+}
+
+#log-output {
+    flex: 1;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0.6rem 0.75rem;
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    line-height: 1.55;
+    color: var(--muted);
+    white-space: pre-wrap;
+    word-break: break-all;
+    background: transparent;
+}
+
+.log-line-error  { color: var(--danger); }
+.log-line-warn   { color: var(--warn); }
+.log-line-info   { color: var(--text); }
+.log-line-debug  { color: #4d6177; }
+
+/* Nudge the footer up so it isn't hidden behind the panel */
+body.log-panel-open .footer {
+    padding-bottom: calc(40vh + 1rem);
+}
+
+body.log-panel-collapsed .footer {
+    padding-bottom: 3.5rem;
+}
+

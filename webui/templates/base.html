@@ -25,6 +25,22 @@
             <span>OMRChecker Web UI &middot; Local-first</span>
         </div>
     </footer>
+
+    <!-- Log panel drawer ─────────────────────────────────────────── -->
+    <div id="log-panel" class="collapsed" role="complementary" aria-label="Application logs">
+        <div class="log-panel-header" id="log-panel-header">
+            <span class="log-panel-title">Logs</span>
+            <span class="log-panel-badge" id="log-badge">0</span>
+            <div class="log-panel-actions" onclick="event.stopPropagation()">
+                <button class="log-panel-btn" id="log-autoscroll-btn" title="Auto-scroll" aria-pressed="true">⏬ auto</button>
+                <button class="log-panel-btn" id="log-clear-btn" title="Clear log">✕ clear</button>
+            </div>
+            <span class="log-panel-chevron" aria-hidden="true">▲</span>
+        </div>
+        <pre id="log-output" aria-live="polite" aria-label="Log output"></pre>
+    </div>
+    <!-- ────────────────────────────────────────────────────────────── -->
+
     {% block scripts %}{% endblock %}
 </body>
 </html>

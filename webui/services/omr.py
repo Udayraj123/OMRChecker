@@ -601,7 +601,14 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
     if not lock.acquire(blocking=False):
         logger.info("Batch %s is already processing; skipping duplicate run", batch_id)
         return
-    logger.info("OMR run starting | batch_id=%s", batch_id)
+
+    # Resolve the human-readable batch name once for clearer log messages.
+    try:
+        _meta = batches_service._load_metadata(settings, batch_id)
+        _batch_name = _meta.get("name", batch_id)
+    except Exception:  # noqa: BLE001
+        _batch_name = batch_id
+    logger.info("OMR run starting | batch=%r | id=%s", _batch_name, batch_id)
 
     runtime_dir: Path | None = None
     run_started_at = time.monotonic()  # initialised early so except block can always reference it
@@ -615,7 +622,7 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
         # worker paths and won't be double-counted at end-of-run cleanup.
         stale_workers = outputs_dir / "_workers"
         if stale_workers.exists():
-            logger.info("OMR run: removing stale _workers/ from prior interrupted run | batch_id=%s", batch_id)
+            logger.info("OMR run: removing stale _workers/ | batch=%r | id=%s", _batch_name, batch_id)
             shutil.rmtree(stale_workers, ignore_errors=True)
 
         input_images = _discover_input_images(batch_id, settings)
@@ -672,7 +679,7 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
         )
 
         base_root = _prepare_runtime_base(batch_root)
-        logger.info("OMR batch started | batch_id=%s | images=%d | workers=%d", batch_id, len(input_images), max_workers)
+        logger.info("OMR batch started | batch=%r | images=%d | workers=%d | id=%s", _batch_name, len(input_images), max_workers, batch_id)
 
         dynamic_dimensions_by_file: dict[str, dict[str, int]] = {}
         latest_persisted_config = copy.deepcopy(base_config)
@@ -741,7 +748,7 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
                         last_milestone = _milestone
                         _elapsed_s = time.monotonic() - run_started_at
                         _rate_min = (completed / _elapsed_s * 60) if _elapsed_s > 0 else 0
-                        logger.info("OMR progress | %d/%d | elapsed=%.1fs | rate=%.0f/min | failures=%d", completed, _total, _elapsed_s, _rate_min, len(preprocess_failures))
+                        logger.info("OMR progress | batch=%r | %d/%d | elapsed=%.1fs | rate=%.0f/min | failures=%d", _batch_name, completed, _total, _elapsed_s, _rate_min, len(preprocess_failures))
                     file_name = result.get("file_name") or image.name
                     result_index = int(result.get("index") or 0)
                     dyn = result.get("dynamic_dimensions") or {}
@@ -868,7 +875,7 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
 
         _elapsed_total = time.monotonic() - run_started_at
         _rate_total = (completed * 60 / _elapsed_total) if _elapsed_total > 0 else 0
-        logger.info("OMR batch complete | batch_id=%s | total=%d | failures=%d | elapsed=%.1fs | rate=%.0f/min", batch_id, completed, len(preprocess_failures), _elapsed_total, _rate_total)
+        logger.info("OMR batch complete | batch=%r | total=%d | failures=%d | elapsed=%.1fs | rate=%.0f/min | id=%s", _batch_name, completed, len(preprocess_failures), _elapsed_total, _rate_total, batch_id)
 
         batches_service.save_json_document(batch_id, "config", latest_runtime_config, settings)
 
@@ -944,13 +951,18 @@ def restart_and_run_batch_sync(batch_id: str, settings: Settings | None = None) 
     """
     settings = settings or get_settings()
     batch_root = batches_service.get_batch_root(batch_id, settings)
-    logger.info("OMR restart: removing prior run artifacts | batch_id=%s", batch_id)
+    try:
+        _rmeta = batches_service._load_metadata(settings, batch_id)
+        _rname = _rmeta.get("name", batch_id)
+    except Exception:  # noqa: BLE001
+        _rname = batch_id
+    logger.info("OMR restart: removing prior run artifacts | batch=%r | id=%s", _rname, batch_id)
     for name in ("outputs", "_runtime"):
         target = batch_root / name
         if target.exists():
             shutil.rmtree(target, ignore_errors=True)
     (batch_root / "outputs").mkdir(parents=True, exist_ok=True)
-    logger.info("OMR restart: artifact cleanup complete, starting run | batch_id=%s", batch_id)
+    logger.info("OMR restart: cleanup complete, starting run | batch=%r | id=%s", _rname, batch_id)
     run_batch_sync(batch_id, settings)
 
 

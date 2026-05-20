@@ -147,6 +147,43 @@ async def health() -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Log streaming (SSE) and polling
+# ---------------------------------------------------------------------------
+
+
+@router.get("/logs/stream", tags=["logs"])
+async def stream_logs() -> StreamingResponse:
+    """Server-Sent Events stream of application log records.
+
+    Replays recent history immediately, then streams live records.
+    Connect with ``EventSource('/api/v1/logs/stream')``.
+    """
+    from webui.log_stream import stream as _log_stream
+
+    return StreamingResponse(
+        _log_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.get("/logs/poll", tags=["logs"])
+async def poll_logs(since: int = -1) -> dict:
+    """Return log entries with sequence number > *since* as JSON.
+
+    Preferred by the WebView2-based desktop window because SSE streaming
+    responses are not reliably delivered by some WebView2 builds.
+    Poll with ``GET /api/v1/logs/poll?since=<latest_seq>`` every ~1 s.
+    """
+    from webui.log_stream import poll as _log_poll
+
+    return _log_poll(since)
+
+
+# ---------------------------------------------------------------------------
 # System info
 # ---------------------------------------------------------------------------
 
