@@ -24,12 +24,13 @@ import os
 import re
 import shutil
 import tempfile
+import threading
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable, Literal, cast
+from typing import Any, Callable, Iterable, Literal, cast
 
 logger = logging.getLogger(__name__)
 
@@ -401,6 +402,36 @@ def _write_pdf_split_progress(
         pass  # progress write failure must never abort the split
 
 
+def clear_stale_pdf_split_progress(settings: Settings | None = None) -> None:
+    """Reset pdf_split progress on any batch whose split was interrupted.
+
+    Called at server startup so the UI is never stuck showing a stale
+    "X/5000 pages" progress bar from a previous run that was killed.
+    """
+    settings = settings or get_settings()
+    storage = settings.storage_root
+    if not storage.exists():
+        return
+    cleared = 0
+    for meta_file in storage.glob("*/metadata.json"):
+        try:
+            meta = json.loads(meta_file.read_text(encoding="utf-8"))
+            if int(meta.get("pdf_split_total", 0)) > 0:
+                meta["pdf_split_pages"] = 0
+                meta["pdf_split_total"] = 0
+                meta_file.write_text(
+                    json.dumps(meta, indent=2), encoding="utf-8"
+                )
+                cleared += 1
+        except Exception:  # noqa: BLE001
+            pass
+    if cleared:
+        logger.info(
+            "Cleared stale pdf_split_progress for %d batch(es) on startup",
+            cleared,
+        )
+
+
 def save_uploaded_file(
     batch_id: str,
     filename: str,
@@ -444,6 +475,10 @@ def _render_pdf_chunk(
     chunk_end: int,
     safe_filename: str,
     page_count: int,
+    stop_event: threading.Event | None = None,
+    chunk_idx: int = 0,
+    total_chunks: int = 1,
+    on_page_done: Callable[[], None] | None = None,
 ) -> tuple[list[tuple[int, str, int]], list[int], float, float]:
     """Render PDF pages [chunk_start, chunk_end) into JPEG files.
 
@@ -469,8 +504,15 @@ def _render_pdf_chunk(
     t_render = 0.0
     t_save = 0.0
 
+    logger.info(
+        "PDF chunk start | file=%s | chunk=%d/%d | pages=%d-%d",
+        safe_filename, chunk_idx + 1, total_chunks, chunk_start + 1, chunk_end,
+    )
+
     with _fitz.open(tmp_path) as doc:
         for page_index in range(chunk_start, chunk_end):
+            if stop_event is not None and stop_event.is_set():
+                break  # server shutting down — exit cleanly without blocking
             page_number = page_index + 1
             try:
                 t0 = _t.perf_counter()
@@ -486,6 +528,8 @@ def _render_pdf_chunk(
                 t_render += t1 - t0
                 t_save += t2 - t1
                 results.append((page_index, page_name, size))
+                if on_page_done is not None:
+                    on_page_done()
             except Exception as exc:  # noqa: BLE001
                 failed.append(page_number)
                 logger.warning(
@@ -561,7 +605,11 @@ def _save_pdf_pages_as_images(
         # and at 32 (no benefit beyond physical cores; avoids thrash on
         # hyperthreaded or containerised machines with large logical counts).
         n_workers = min(os.cpu_count() or 4, page_count, 32)
-        chunk_size = math.ceil(page_count / n_workers)
+        # Aim for ~4 rounds of work per worker: gives several bursts of progress
+        # logs while rendering (instead of one silent run), and improves
+        # load-balancing when individual page render times vary.
+        # Floor at 25 pages so the Future count stays well below 1 000.
+        chunk_size = max(25, math.ceil(page_count / (n_workers * 4)))
         chunks = [
             (i, min(i + chunk_size, page_count))
             for i in range(0, page_count, chunk_size)
@@ -574,14 +622,34 @@ def _save_pdf_pages_as_images(
         total_render_s = 0.0
         total_save_s = 0.0
 
-        with ThreadPoolExecutor(max_workers=n_workers) as executor:
+        # Shared counter for intra-chunk UI/terminal progress updates.
+        # Protected by _write_lock so _write_pdf_split_progress is never
+        # called concurrently from multiple worker threads.
+        _write_lock = threading.Lock()
+        _pages_done = [0]
+
+        def _on_page_done() -> None:
+            with _write_lock:
+                _pages_done[0] += 1
+                current = _pages_done[0]
+            if current % 100 == 0 or current >= page_count:
+                _write_pdf_split_progress(batch_id, settings, current, page_count)
+
+        # stop_event lets worker threads exit early between pages so that
+        # executor.shutdown(wait=False) during a server reload/SIGTERM returns
+        # in at most one page-render time (~750 ms) instead of one full chunk
+        # (~157 s at 209 pages × 750 ms).
+        stop_event = threading.Event()
+        executor = ThreadPoolExecutor(max_workers=n_workers)
+        try:
             futures = [
                 executor.submit(
                     _render_pdf_chunk,
                     tmp_path, str(inputs), stem, dpi, grayscale,
                     chunk_start, chunk_end, safe_filename, page_count,
+                    stop_event, chunk_idx, len(chunks), _on_page_done,
                 )
-                for chunk_start, chunk_end in chunks
+                for chunk_idx, (chunk_start, chunk_end) in enumerate(chunks)
             ]
             for future in as_completed(futures):
                 chunk_results, chunk_failed, t_render, t_save = future.result()
@@ -591,12 +659,19 @@ def _save_pdf_pages_as_images(
                 total_render_s += t_render
                 total_save_s += t_save
                 done = len(stored) + len(failed_pages)
-                _write_pdf_split_progress(batch_id, settings, len(stored), page_count)
                 logger.info(
                     "PDF chunk done | file=%s | total=%d/%d | "
                     "chunk_render=%.1fs | chunk_save=%.1fs",
                     safe_filename, done, page_count, t_render, t_save,
                 )
+        except BaseException:
+            # Signal all running workers to stop at their next page boundary,
+            # then release threads without waiting for full chunks to drain.
+            stop_event.set()
+            executor.shutdown(wait=False, cancel_futures=True)
+            raise
+        else:
+            executor.shutdown(wait=False)
 
     except InvalidBatchRequest:
         raise

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request, Response
@@ -10,11 +11,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from webui.api import router as api_router
+from webui.services.batches import clear_stale_pdf_split_progress
 from webui.settings import get_settings
 from webui.views import router as views_router
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):  # type: ignore[type-arg]
+    """Reset any stale PDF split progress left by a previous server crash."""
+    clear_stale_pdf_split_progress()
+    yield
 
 
 def create_app() -> FastAPI:
@@ -31,6 +40,7 @@ def create_app() -> FastAPI:
             "All UI actions are available as JSON via /api/v1."
         ),
         version="0.1.0",
+        lifespan=_lifespan,
     )
 
     app.add_middleware(
