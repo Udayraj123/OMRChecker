@@ -274,12 +274,11 @@ def test_pdf_split_skips_failing_page_and_returns_rest(tmp_path: Path) -> None:
     inputs = tmp_path / "inputs"
     inputs.mkdir()
 
-    call_count = [0]
     original = fitz.Page.get_pixmap
 
     def flaky(self, **kwargs):
-        call_count[0] += 1
-        if call_count[0] == 2:
+        # self.number is the 0-based page index; page index 1 == "page 2"
+        if self.number == 1:
             raise RuntimeError("Synthetic render failure on page 2")
         return original(self, **kwargs)
 

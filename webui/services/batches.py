@@ -19,11 +19,11 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 import re
 import shutil
 import tempfile
-import threading
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -434,6 +434,69 @@ def save_uploaded_file(
     return [FileRef(name=target.name, size_bytes=target.stat().st_size)]
 
 
+def _render_pdf_chunk(
+    tmp_path: str,
+    inputs_str: str,
+    stem: str,
+    dpi: int,
+    use_gray: bool,
+    chunk_start: int,
+    chunk_end: int,
+    safe_filename: str,
+    page_count: int,
+) -> tuple[list[tuple[int, str, int]], list[int], float, float]:
+    """Render PDF pages [chunk_start, chunk_end) into JPEG files.
+
+    Runs inside a ``ThreadPoolExecutor`` worker thread.  Each call opens its
+    own ``fitz.Document`` (thread-safe, independent C context) and renders
+    pages sequentially within the chunk — optimal for MuPDF's internal page
+    cache which favours sequential access.
+
+    Returns
+    -------
+    page_results : list of (page_index, filename, size_bytes)
+    failed_pages : 1-based page numbers that raised an exception
+    total_render_s : cumulative fitz render time across all pages in chunk
+    total_save_s   : cumulative JPEG write + stat time across all pages
+    """
+    import time as _t
+    import fitz as _fitz
+
+    colorspace = _fitz.csGRAY if use_gray else _fitz.csRGB
+    inputs = Path(inputs_str)
+    results: list[tuple[int, str, int]] = []
+    failed: list[int] = []
+    t_render = 0.0
+    t_save = 0.0
+
+    with _fitz.open(tmp_path) as doc:
+        for page_index in range(chunk_start, chunk_end):
+            page_number = page_index + 1
+            try:
+                t0 = _t.perf_counter()
+                pixmap = doc.load_page(page_index).get_pixmap(
+                    dpi=dpi, alpha=False, colorspace=colorspace
+                )
+                t1 = _t.perf_counter()
+                page_name = f"{stem}_page_{page_number:04d}.jpg"
+                pixmap.save(str(inputs / page_name), jpg_quality=85)
+                size = (inputs / page_name).stat().st_size
+                del pixmap
+                t2 = _t.perf_counter()
+                t_render += t1 - t0
+                t_save += t2 - t1
+                results.append((page_index, page_name, size))
+            except Exception as exc:  # noqa: BLE001
+                failed.append(page_number)
+                logger.warning(
+                    "PDF page render failed | file=%s | page=%d/%d | %s: %s",
+                    safe_filename, page_number, page_count,
+                    type(exc).__name__, exc,
+                )
+
+    return results, failed, t_render, t_save
+
+
 def _save_pdf_pages_as_images(
     inputs: Path,
     safe_filename: str,
@@ -448,22 +511,20 @@ def _save_pdf_pages_as_images(
 
     Performance design
     ------------------
-    * **Parallel rendering**: a ``ThreadPoolExecutor`` is created with one
-      worker per available CPU (capped at 8).  Each worker thread opens its
-      own ``fitz.Document`` once (via the *initializer* hook) and reuses it
-      for every page assigned to that thread — no per-page ``fitz.open()``
-      overhead, no GIL contention during rendering (MuPDF releases the GIL).
-    * **Temp-file trick**: the raw PDF bytes are written to a temporary file
-      on disk.  Worker threads open the file by *path* rather than from the
-      in-memory bytes object, so MuPDF does **not** duplicate the raw PDF
-      data in its C-heap once per thread.
-    * **JPEG output**: JPEG encoding is 5-10× faster than PNG and produces
-      smaller intermediate files.  At quality=90 there is no meaningful
-      difference for OMR bubble/marker detection (ArUco markers and filled
-      bubbles are both tolerant of mild JPEG compression).
-    * **Progress throttle**: metadata is written every 100 rendered pages
-      instead of every 10, reducing JSON I/O from 500 to ~50 writes for a
-      5000-page PDF.
+    * **All available CPU cores** (``os.cpu_count()``): no artificial cap.
+      PyMuPDF 1.24+ (Cython build) releases the GIL during rendering so
+      threads provide true parallelism on multi-core machines.
+    * **Chunk-based work distribution**: pages are split into
+      ``n_workers`` equal chunks; each worker renders its chunk sequentially
+      inside a single open ``fitz.Document``.  This eliminates 5 000
+      individual ``Future`` objects and keeps MuPDF's page-cache warm
+      (sequential access is faster than random access for large PDFs).
+    * **Temp-file for the PDF**: raw bytes written once to disk; threads
+      open by path so MuPDF does not duplicate the data in its C-heap.
+    * **JPEG q=85**: 5-10× faster to encode than PNG; imperceptible quality
+      difference for ArUco marker and bubble-fill detection.
+    * **Timing instrumentation**: each chunk logs render vs. save seconds so
+      the dominant cost is visible immediately in the server log.
     """
     try:
         import fitz
@@ -473,12 +534,8 @@ def _save_pdf_pages_as_images(
             "`python -m pip install -r requirements.txt`."
         ) from exc
 
-    # stored / failed are only written from the main thread (as_completed loop)
     stored: dict[int, FileRef] = {}
     failed_pages: list[int] = []
-    _thread_local = threading.local()
-    _open_docs: list = []           # tracked for explicit close in finally
-    _open_docs_lock = threading.Lock()
     tmp_path: str | None = None
 
     try:
@@ -488,7 +545,6 @@ def _save_pdf_pages_as_images(
             raise InvalidBatchRequest(f"PDF has no pages: {safe_filename}")
 
         stem = Path(safe_filename).stem
-        colorspace = fitz.csGRAY if grayscale else fitz.csRGB
         logger.info(
             "PDF split started | file=%s | pages=%d | dpi=%d | grayscale=%s",
             safe_filename, page_count, dpi, grayscale,
@@ -496,67 +552,51 @@ def _save_pdf_pages_as_images(
         _remove_generated_pdf_pages(inputs, stem)
         _write_pdf_split_progress(batch_id, settings, 0, page_count)
 
-        # Write PDF to disk once so each worker opens by path — avoids MuPDF
-        # duplicating the raw bytes in its C-heap for every thread.
+        # Write PDF to disk once; each worker opens by path (no heap duplication)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tf:
             tf.write(data)
             tmp_path = tf.name
 
-        def _thread_init() -> None:
-            doc = fitz.open(tmp_path)
-            _thread_local.fitz_doc = doc
-            with _open_docs_lock:
-                _open_docs.append(doc)
-
-        def _render_page(page_index: int) -> tuple[int, FileRef | None]:
-            page_number = page_index + 1
-            try:
-                page = _thread_local.fitz_doc.load_page(page_index)
-                pixmap = page.get_pixmap(dpi=dpi, alpha=False, colorspace=colorspace)
-                page_name = f"{stem}_page_{page_number:04d}.jpg"
-                target = inputs / page_name
-                # JPEG encoding is 5-10x faster than PNG; quality=90 is
-                # indistinguishable from lossless for ArUco + bubble detection.
-                pixmap.save(str(target), jpg_quality=90)
-                size = target.stat().st_size
-                del pixmap
-                return page_index, FileRef(name=page_name, size_bytes=size)
-            except Exception as page_exc:  # noqa: BLE001
-                logger.warning(
-                    "PDF page render failed | file=%s | page=%d/%d | %s: %s",
-                    safe_filename, page_number, page_count,
-                    type(page_exc).__name__, page_exc,
-                )
-                return page_index, None
-
-        n_workers = min(os.cpu_count() or 4, 8)
+        # Cap workers at the actual page count (no idle threads for tiny PDFs)
+        # and at 32 (no benefit beyond physical cores; avoids thrash on
+        # hyperthreaded or containerised machines with large logical counts).
+        n_workers = min(os.cpu_count() or 4, page_count, 32)
+        chunk_size = math.ceil(page_count / n_workers)
+        chunks = [
+            (i, min(i + chunk_size, page_count))
+            for i in range(0, page_count, chunk_size)
+        ]
         logger.info(
-            "PDF split | workers=%d | output=jpg | quality=90 | pages=%d",
-            n_workers, page_count,
+            "PDF split | workers=%d | chunks=%d | chunk_size=%d | output=jpg | quality=85",
+            n_workers, len(chunks), chunk_size,
         )
 
-        with ThreadPoolExecutor(
-            max_workers=n_workers,
-            initializer=_thread_init,
-        ) as executor:
-            futures = {
-                executor.submit(_render_page, i): i for i in range(page_count)
-            }
-            for future in as_completed(futures):
-                page_index, ref = future.result()
-                if ref is not None:
-                    stored[page_index] = ref
-                else:
-                    failed_pages.append(page_index + 1)
+        total_render_s = 0.0
+        total_save_s = 0.0
 
+        with ThreadPoolExecutor(max_workers=n_workers) as executor:
+            futures = [
+                executor.submit(
+                    _render_pdf_chunk,
+                    tmp_path, str(inputs), stem, dpi, grayscale,
+                    chunk_start, chunk_end, safe_filename, page_count,
+                )
+                for chunk_start, chunk_end in chunks
+            ]
+            for future in as_completed(futures):
+                chunk_results, chunk_failed, t_render, t_save = future.result()
+                for page_index, page_name, size_bytes in chunk_results:
+                    stored[page_index] = FileRef(name=page_name, size_bytes=size_bytes)
+                failed_pages.extend(chunk_failed)
+                total_render_s += t_render
+                total_save_s += t_save
                 done = len(stored) + len(failed_pages)
-                if done % 100 == 0 or done == page_count:
-                    _write_pdf_split_progress(batch_id, settings, len(stored), page_count)
-                if done % 200 == 0 or done == page_count:
-                    logger.info(
-                        "PDF split progress | file=%s | %d/%d pages | failed=%d",
-                        safe_filename, done, page_count, len(failed_pages),
-                    )
+                _write_pdf_split_progress(batch_id, settings, len(stored), page_count)
+                logger.info(
+                    "PDF chunk done | file=%s | total=%d/%d | "
+                    "chunk_render=%.1fs | chunk_save=%.1fs",
+                    safe_filename, done, page_count, t_render, t_save,
+                )
 
     except InvalidBatchRequest:
         raise
@@ -566,11 +606,6 @@ def _save_pdf_pages_as_images(
             f"{type(exc).__name__}: {exc}"
         ) from exc
     finally:
-        for doc in _open_docs:
-            try:
-                doc.close()
-            except Exception:  # noqa: BLE001
-                pass
         if tmp_path:
             try:
                 Path(tmp_path).unlink(missing_ok=True)
@@ -585,16 +620,24 @@ def _save_pdf_pages_as_images(
         )
 
     _write_pdf_split_progress(batch_id, settings, 0, 0)  # clear stale progress
+    tot = total_render_s + total_save_s
     if failed_pages:
         logger.warning(
             "PDF split finished with errors | file=%s | ok=%d | failed=%d | "
-            "first_failed_pages=%s",
-            safe_filename, len(stored_list), len(failed_pages), sorted(failed_pages)[:20],
+            "first_failed=%s | render=%.1fs | save=%.1fs | render_pct=%.0f%%",
+            safe_filename, len(stored_list), len(failed_pages),
+            sorted(failed_pages)[:20], total_render_s, total_save_s,
+            100 * total_render_s / max(tot, 0.001),
         )
     else:
+        wall_s = tot / n_workers  # estimated wall-clock time (parallel)
         logger.info(
-            "PDF split complete | file=%s | pages=%d | dpi=%d | grayscale=%s",
-            safe_filename, len(stored_list), dpi, grayscale,
+            "PDF split complete | file=%s | pages=%d | "
+            "render=%.1fs | save=%.1fs | render_pct=%.0f%% | throughput=%.1f pg/s",
+            safe_filename, len(stored_list),
+            total_render_s, total_save_s,
+            100 * total_render_s / max(tot, 0.001),
+            len(stored_list) / max(wall_s, 0.001),
         )
     return stored_list
 
