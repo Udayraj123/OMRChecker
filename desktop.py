@@ -19,11 +19,17 @@ in one-file mode) requires no separate server start command.
 
 from __future__ import annotations
 
+import base64
+import logging
 import os
+import shutil
 import socket
 import sys
 import threading
 import time
+import urllib.parse
+import urllib.request
+from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Resolve paths correctly whether running from source or from a PyInstaller
@@ -50,6 +56,7 @@ READY_TIMEOUT = 30  # seconds to wait for the server to accept connections
 WINDOW_TITLE = "OMRChecker"
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 900
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -78,6 +85,96 @@ def _wait_for_server(host: str, port: int, timeout: float) -> bool:
         except OSError:
             time.sleep(0.25)
     return False
+
+
+def _safe_download_name(filename: str) -> str:
+    """Return a filesystem-safe download filename."""
+    cleaned = "".join(ch for ch in filename if ch not in '<>:"/\\|?*').strip()
+    return cleaned or "download"
+
+
+def _with_download_extension(target: str, filename: str) -> str:
+    """Append the generated file extension when the save dialog omits it."""
+    expected_suffix = Path(_safe_download_name(filename)).suffix
+    target_path = Path(target)
+    if expected_suffix and not target_path.suffix:
+        return str(target_path.with_suffix(expected_suffix))
+    return str(target_path)
+
+
+class DesktopApi:
+    """Small pywebview bridge for reliable desktop downloads."""
+
+    def __init__(self, base_url: str) -> None:
+        self.base_url = base_url
+
+    def _choose_path(self, filename: str) -> str | None:
+        import webview  # type: ignore[import]
+
+        window = webview.windows[0] if webview.windows else None
+        if window is None:
+            return None
+        file_dialog = getattr(getattr(webview, "FileDialog", None), "SAVE", None)
+        if file_dialog is None:
+            file_dialog = webview.SAVE_DIALOG
+        result = window.create_file_dialog(
+            file_dialog,
+            save_filename=_safe_download_name(filename),
+        )
+        if not result:
+            return None
+        if isinstance(result, (list, tuple)):
+            return str(result[0]) if result else None
+        return str(result)
+
+    def _download_url_to_path(self, absolute_url: str, target: str) -> None:
+        """Stream a generated local file to disk in a background thread."""
+        try:
+            Path(target).parent.mkdir(parents=True, exist_ok=True)
+            logger.info("Desktop download save started | target=%s", target)
+            with urllib.request.urlopen(absolute_url, timeout=120) as response, open(target, "wb") as out:
+                shutil.copyfileobj(response, out)
+            size = Path(target).stat().st_size
+            logger.info("Desktop download save complete | target=%s | size_mb=%.1f", target, size / (1024 * 1024))
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Desktop download save failed | target=%s | error=%s: %s", target, type(exc).__name__, exc)
+
+    def save_download_url(self, url: str, filename: str) -> dict[str, str | bool]:
+        """Prompt for a path, then start saving a generated local file."""
+        target = self._choose_path(filename)
+        if not target:
+            return {"ok": False, "cancelled": True, "message": "Download cancelled."}
+        target = _with_download_extension(target, filename)
+
+        absolute_url = urllib.parse.urljoin(self.base_url, url)
+        parsed = urllib.parse.urlparse(absolute_url)
+        if parsed.hostname not in {HOST, "localhost"}:
+            return {"ok": False, "message": "Refusing to download from a non-local URL."}
+
+        thread = threading.Thread(
+            target=self._download_url_to_path,
+            args=(absolute_url, target),
+            daemon=True,
+            name="omr-desktop-download",
+        )
+        thread.start()
+        return {"ok": True, "path": target, "started": True}
+
+    def save_download_base64(self, filename: str, data: str) -> dict[str, str | bool]:
+        """Prompt for a path, then save browser-provided base64 data."""
+        target = self._choose_path(filename)
+        if not target:
+            return {"ok": False, "cancelled": True, "message": "Download cancelled."}
+        target = _with_download_extension(target, filename)
+
+        try:
+            if "," in data:
+                data = data.split(",", 1)[1]
+            Path(target).parent.mkdir(parents=True, exist_ok=True)
+            Path(target).write_bytes(base64.b64decode(data))
+        except Exception as exc:  # noqa: BLE001
+            return {"ok": False, "message": f"Save failed: {type(exc).__name__}: {exc}"}
+        return {"ok": True, "path": target}
 
 
 # ---------------------------------------------------------------------------
@@ -148,6 +245,7 @@ def main() -> None:
         width=WINDOW_WIDTH,
         height=WINDOW_HEIGHT,
         min_size=(800, 600),
+        js_api=DesktopApi(url),
         # Allow the page to resize the window (some UIs use this)
         resizable=True,
     )

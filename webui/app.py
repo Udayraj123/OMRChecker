@@ -29,7 +29,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[type-arg]
     """Reset any stale PDF split progress left by a previous server crash."""
     clear_stale_pdf_split_progress()
     _log_attach(asyncio.get_running_loop())
-    logging.getLogger(__name__).info("OMRChecker server started — log stream active")
+    logging.getLogger(__name__).info("OMRChecker server started - log stream active")
     try:
         yield
     finally:

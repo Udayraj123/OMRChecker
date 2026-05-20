@@ -45,6 +45,30 @@ function triggerDownload(blob, filename) {
     setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
+function hasDesktopApi() {
+    return Boolean(window.pywebview && window.pywebview.api);
+}
+
+function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error || new Error('Failed to read download data.'));
+        reader.readAsDataURL(blob);
+    });
+}
+
+async function saveDesktopBlob(blob, filename, errorEl) {
+    const data = await blobToBase64(blob);
+    const result = await window.pywebview.api.save_download_base64(filename, data);
+    if (!result.ok && !result.cancelled) showError(errorEl, result.message || 'Download failed.');
+}
+
+async function saveDesktopUrl(downloadUrl, filename, errorEl) {
+    const result = await window.pywebview.api.save_download_url(downloadUrl, filename || 'download');
+    if (!result.ok && !result.cancelled) showError(errorEl, result.message || 'Download failed.');
+}
+
 async function postFormAndDownload(url, formData, submitBtn, errorEl) {
     showError(errorEl, '');
     setLoading(submitBtn, true);
@@ -65,6 +89,10 @@ async function postFormAndDownload(url, formData, submitBtn, errorEl) {
             // the entire file in the browser before saving.
             const body = await res.json();
             if (body.download_url) {
+                if (hasDesktopApi()) {
+                    await saveDesktopUrl(body.download_url, body.filename || 'download', errorEl);
+                    return;
+                }
                 window.location.href = body.download_url;
                 return;
             }
@@ -74,6 +102,10 @@ async function postFormAndDownload(url, formData, submitBtn, errorEl) {
         const match = disposition.match(/filename="([^"]+)"/);
         const filename = match ? match[1] : 'download';
         const blob = await res.blob();
+        if (hasDesktopApi()) {
+            await saveDesktopBlob(blob, filename, errorEl);
+            return;
+        }
         triggerDownload(blob, filename);
     } catch (err) {
         showError(errorEl, `Request failed: ${err.message}`);
