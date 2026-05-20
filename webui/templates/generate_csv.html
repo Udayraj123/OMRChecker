@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Generate Test CSV — OMRChecker{% endblock %}
+
+{% block content %}
+<div class="panel-head">
+    <h1>Generate Test CSV</h1>
+    <p class="muted small">Generate a student records CSV compatible with the <strong>custom_25_definitive_final</strong> prefill batch, with a configurable number of rows.</p>
+</div>
+
+<div class="panel" style="max-width:640px;">
+    <form id="gen-form" novalidate>
+        <div class="stack">
+
+            <div class="form-group">
+                <label for="g-count">Number of Students</label>
+                <input id="g-count" name="count" type="number" min="1" max="10000" value="100" required />
+                <span class="muted small">1 – 10,000 rows</span>
+            </div>
+
+            <div class="form-group">
+                <label for="g-school">School Name</label>
+                <input id="g-school" name="school_name" type="text" value="Test School" required placeholder="e.g. The New Sapodilla Primary" />
+            </div>
+
+            <div class="form-group">
+                <label for="g-exam">Exam Name</label>
+                <input id="g-exam" name="exam_name" type="text" value="National Grade Four Reading Assessment" required placeholder="e.g. National Grade Four Reading Assessment" />
+            </div>
+
+            <div class="form-group">
+                <label for="g-start">Candidate Number Start <span class="muted small">(10 digits)</span></label>
+                <input id="g-start" name="candidate_start" type="text"
+                       inputmode="numeric" pattern="\d{10}" maxlength="10"
+                       value="9000000001" required />
+                <span class="muted small">Numbers increment from this value</span>
+            </div>
+
+            <div class="form-group">
+                <label>Student Names</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="name_style" value="numbered" checked /> Numbered (Student 1, Student 2 …)
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="name_style" value="random" /> Random realistic names
+                    </label>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="gen-error" class="error small" style="display:none; margin-block-end:0.75rem;"></div>
+
+        <div class="actions">
+            <button type="submit" id="gen-submit" class="btn primary">Generate &amp; Download CSV</button>
+        </div>
+    </form>
+
+    <div id="gen-preview" style="display:none; margin-block-start:1.5rem;">
+        <h3 style="margin-block-end:0.5rem;">Preview <span class="muted small" id="preview-label"></span></h3>
+        <div class="table-scroll">
+            <table class="table" id="preview-table">
+                <thead>
+                    <tr>
+                        <th>student_name</th>
+                        <th>school_name</th>
+                        <th>exam_name</th>
+                        <th>candidate_number</th>
+                        <th>output_file</th>
+                    </tr>
+                </thead>
+                <tbody id="preview-body"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/generate_csv.js"></script>
+{% endblock %}

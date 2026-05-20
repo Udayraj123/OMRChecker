@@ -79,3 +79,8 @@ async def batch_detail(
 @router.get("/prefill", response_class=HTMLResponse)
 async def prefill_page(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request, "prefill.html", {})
+
+
+@router.get("/generate-csv", response_class=HTMLResponse)
+async def generate_csv_page(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request, "generate_csv.html", {})

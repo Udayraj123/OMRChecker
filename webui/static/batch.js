@@ -44,6 +44,22 @@ const fileBrowserState = {
     selectedFileName: null,
 }
 
+// Tracks which filenames are currently rendered in the file navigator so we
+// can do incremental DOM appends instead of a full rebuild when files are only
+// being added (the common case while a PDF is being split).
+let _renderedFileNames = []
+
+const _updateActiveStates = (list, selectedFileName) => {
+    for (const row of list.querySelectorAll("[data-file-row]")) {
+        const btn = row.querySelector("[data-file-select]")
+        if (!btn) continue
+        const isActive = btn.dataset.fileSelect === selectedFileName
+        row.classList.toggle("active", isActive)
+        btn.classList.toggle("active", isActive)
+        btn.setAttribute("aria-selected", isActive ? "true" : "false")
+    }
+}
+
 const getFileBrowserElements = () => ({
     shell: document.querySelector("[data-file-browser]"),
     list: document.getElementById("file-list"),
@@ -100,6 +116,21 @@ const openFilePreview = (fileName) => {
     window.open(getFilePreviewUrl(fileName), "_blank", "noopener")
 }
 
+const _buildFileListItemHtml = (file, isActive, index) => `
+    <li class="file-list-row${isActive ? " active" : ""}" data-file-row data-file-name="${escapeHtml(file.name)}" data-file-size="${file.size_bytes}" data-file-index="${index}">
+        <button
+            class="file-list-select${isActive ? " active" : ""}"
+            type="button"
+            data-file-select="${escapeHtml(file.name)}"
+            role="option"
+            aria-selected="${isActive ? "true" : "false"}">
+            <span class="mono file-list-name">${escapeHtml(file.name)}</span>
+            <span class="muted small file-list-size">${formatFileSize(file.size_bytes)}</span>
+        </button>
+        <button class="btn danger small file-list-delete" type="button" data-delete-file="${escapeHtml(file.name)}" aria-label="Remove ${escapeHtml(file.name)}">Remove</button>
+    </li>
+`
+
 const renderFileNavigator = (visibleFiles, selectedFileName) => {
     const elements = getFileBrowserElements()
     if (!elements.list) return
@@ -112,29 +143,39 @@ const renderFileNavigator = (visibleFiles, selectedFileName) => {
     }
 
     if (visibleFiles.length === 0) {
+        _renderedFileNames = []
         const query = fileBrowserState.filterQuery.trim()
-        elements.list.innerHTML = `<li class="file-list-empty">${query ? `No files match “${escapeHtml(query)}”.` : "No files uploaded yet."}</li>`
+        elements.list.innerHTML = `<li class="file-list-empty">${query ? `No files match "${escapeHtml(query)}".` : "No files uploaded yet."}</li>`
         return
     }
 
+    // Incremental append: when the visible list is the same set plus new items
+    // at the end (the common case during PDF split progress polling), avoid a
+    // full DOM rebuild -- just append the new rows and update active states.
+    // This keeps the main thread unblocked for large page counts.
+    const prev = _renderedFileNames
+    const canAppend =
+        prev.length > 0 &&
+        visibleFiles.length > prev.length &&
+        prev.every((name, i) => visibleFiles[i]?.name === name)
+
+    if (canAppend) {
+        const template = document.createElement("template")
+        const fragment = document.createDocumentFragment()
+        for (let i = prev.length; i < visibleFiles.length; i++) {
+            template.innerHTML = _buildFileListItemHtml(visibleFiles[i], visibleFiles[i].name === selectedFileName, i).trim()
+            fragment.appendChild(template.content.firstChild)
+        }
+        elements.list.appendChild(fragment)
+        _renderedFileNames = visibleFiles.map((f) => f.name)
+        _updateActiveStates(elements.list, selectedFileName)
+        return
+    }
+
+    // Full rebuild (first render, filter change, delete, reorder, etc.)
+    _renderedFileNames = visibleFiles.map((f) => f.name)
     elements.list.innerHTML = visibleFiles
-        .map((file, index) => {
-            const isActive = file.name === selectedFileName
-            return `
-                <li class="file-list-row${isActive ? " active" : ""}" data-file-row data-file-name="${escapeHtml(file.name)}" data-file-size="${file.size_bytes}" data-file-index="${index}">
-                    <button
-                        class="file-list-select${isActive ? " active" : ""}"
-                        type="button"
-                        data-file-select="${escapeHtml(file.name)}"
-                        role="option"
-                        aria-selected="${isActive ? "true" : "false"}">
-                        <span class="mono file-list-name">${escapeHtml(file.name)}</span>
-                        <span class="muted small file-list-size">${formatFileSize(file.size_bytes)}</span>
-                    </button>
-                    <button class="btn danger small file-list-delete" type="button" data-delete-file="${escapeHtml(file.name)}" aria-label="Remove ${escapeHtml(file.name)}">Remove</button>
-                </li>
-            `
-        })
+        .map((file, index) => _buildFileListItemHtml(file, file.name === selectedFileName, index))
         .join("")
 }
 
@@ -480,7 +521,7 @@ const handleRotationChange = async (event) => {
 
 const refreshResults = async () => {
     try {
-        const data = await jsonFetch(apiUrl("/results?limit=100"))
+        const data = await jsonFetch(apiUrl("/results"))
         const container = document.getElementById("results-container")
         if (!container) return
         renderResults(container, data)
@@ -661,17 +702,18 @@ const renderResults = (container, data) => {
     }).join("")
     const cards = data.rows.map((row, index) => renderResultCard(row, responseColumns, index)).join("")
     const header = columns.map((col) => `<th>${escapeHtml(col)}</th>`).join("")
+    const CSV_PREVIEW_LIMIT = 100
     const allRows = data.rows
-    const totalRows = Number.isFinite(Number(data.total_rows)) ? Number(data.total_rows) : allRows.length
-    const rows = allRows.map((row) => {
+    const previewRows = allRows.slice(0, CSV_PREVIEW_LIMIT)
+    const rows = previewRows.map((row) => {
         const cells = columns.map((col) => {
             const className = ["file_id", "input_path", "output_path"].includes(col) ? ' class="mono small"' : ""
             return `<td${className}>${escapeHtml(getResultCell(row, col))}</td>`
         }).join("")
         return `<tr>${cells}</tr>`
     }).join("")
-    const truncationNote = data.truncated || allRows.length < totalRows
-        ? `<p class="muted small" style="margin:6px 0 0">Showing ${allRows.length} of ${totalRows} rows. <a href="${apiUrl('/results/download')}">Download the full CSV</a> for all results.</p>`
+    const truncationNote = allRows.length > CSV_PREVIEW_LIMIT
+        ? `<p class="muted small" style="margin:6px 0 0">Showing first ${CSV_PREVIEW_LIMIT} of ${allRows.length} rows. <a href="${apiUrl('/results/download')}">Download the full CSV</a> for all results.</p>`
         : ""
 
     container.innerHTML = `
@@ -1537,17 +1579,48 @@ const handleUpload = async (event) => {
         if (statPct) statPct.textContent = `${pct}%`
     }
 
+    // Set when the server accepted the upload as a background task (202).
+    // The poll is responsible for detecting completion and cleaning up.
+    let _isBackgroundUpload = false
+
     if (hasPdf && progressEl) {
         _updateSplitProgress(0, 0)
         progressEl.hidden = false
+        // Track the last page count we refreshed the file list at so we only
+        // call refreshFiles() when meaningful new pages have been written.
+        let _splitLastRefreshPages = 0
+        let _splitRefreshPending = false
+        // Whether the poll has seen total > 0 (split is/was in progress).
+        let _splitSeenTotal = false
         pollInterval = setInterval(async () => {
             try {
                 const status = await jsonFetch(apiUrl("/status"))
                 const pages = status.pdf_split_pages ?? 0
                 const total = status.pdf_split_total ?? 0
-                if (total > 0) _updateSplitProgress(pages, total)
+                if (total > 0) {
+                    _splitSeenTotal = true
+                    _updateSplitProgress(pages, total)
+                    // Refresh the file list every ~20 new pages so split sheets
+                    // appear progressively instead of all at once at the end.
+                    if (pages - _splitLastRefreshPages >= 20 && !_splitRefreshPending) {
+                        _splitLastRefreshPages = pages
+                        _splitRefreshPending = true
+                        refreshFiles().finally(() => { _splitRefreshPending = false })
+                    }
+                } else if (_splitSeenTotal) {
+                    // total went back to 0 after being active → split complete.
+                    _splitSeenTotal = false
+                    if (pollInterval) { clearInterval(pollInterval); pollInterval = null }
+                    await refreshFiles()
+                    const count = fileBrowserState.files.length
+                    show(feedback, `Split complete — ${count} page(s) ready.`, "success")
+                    if (progressEl) {
+                        _updateSplitProgress(count, count)
+                        setTimeout(() => { progressEl.hidden = true }, 1200)
+                    }
+                }
             } catch (_) { /* ignore poll errors during upload */ }
-        }, 1500)
+        }, 500)
     }
 
     const formData = new FormData()
@@ -1556,16 +1629,26 @@ const handleUpload = async (event) => {
         const response = await fetch(apiUrl("/files"), { method: "POST", body: formData })
         const data = await response.json()
         if (!response.ok) throw new Error(data.detail || "Upload failed")
-        show(feedback, `Uploaded ${data.length} file(s).`, "success")
-        input.value = ""
-        await refreshFiles()
+        if (response.status === 202) {
+            // Background split started — poll handles progress and completion.
+            _isBackgroundUpload = true
+            show(feedback, "Splitting PDF pages in background\u2026", "info")
+            input.value = ""
+        } else {
+            show(feedback, `Uploaded ${data.length} file(s).`, "success")
+            input.value = ""
+            await refreshFiles()
+        }
     } catch (error) {
         show(feedback, error.message, "error")
     } finally {
-        if (pollInterval) clearInterval(pollInterval)
-        if (progressEl) {
-            _updateSplitProgress(100, 100)
-            setTimeout(() => { progressEl.hidden = true }, 1200)
+        // For background PDF uploads the poll handles cleanup; skip it here.
+        if (!_isBackgroundUpload) {
+            if (pollInterval) clearInterval(pollInterval)
+            if (hasPdf && progressEl) {
+                _updateSplitProgress(100, 100)
+                setTimeout(() => { progressEl.hidden = true }, 1200)
+            }
         }
     }
 }

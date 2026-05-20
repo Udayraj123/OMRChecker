@@ -123,11 +123,10 @@ def test_pdf_upload_splits_pages_into_images(
         f"/api/v1/batches/{batch_id}/files",
         files=[("files", ("sample.pdf", pdf_bytes, "application/pdf"))],
     )
-    assert response.status_code == 201, response.text
-    uploaded = response.json()
-    assert len(uploaded) == 2
-    assert uploaded[0]["name"] == "sample_page_0001.jpg"
-    assert uploaded[1]["name"] == "sample_page_0002.jpg"
+    # PDF uploads return 202 (background task); files are ready immediately in
+    # TestClient because background tasks run synchronously in the test harness.
+    assert response.status_code == 202, response.text
+    assert response.json().get("processing") is True
 
     response = client.get(f"/api/v1/batches/{batch_id}/files")
     assert response.status_code == 200
@@ -145,12 +144,8 @@ def test_pdf_upload_splits_pages_into_images(
         f"/api/v1/batches/{batch_id}/files",
         files=[("files", ("sample.pdf", pdf_bytes, "application/pdf"))],
     )
-    assert response.status_code == 201, response.text
-    uploaded = response.json()
-    assert [file["name"] for file in uploaded] == [
-        "sample_page_0001.jpg",
-        "sample_page_0002.jpg",
-    ]
+    assert response.status_code == 202, response.text
+    assert response.json().get("processing") is True
 
     response = client.get(f"/api/v1/batches/{batch_id}/files")
     assert response.status_code == 200
@@ -199,7 +194,7 @@ def test_pdf_pages_are_grayscale_by_default(
         f"/api/v1/batches/{batch_id}/files",
         files=[("files", ("grey.pdf", pdf_bytes, "application/pdf"))],
     )
-    assert response.status_code == 201, response.text
+    assert response.status_code == 202, response.text
 
     jpg_path = storage_root / batch_id / "inputs" / "grey_page_0001.jpg"
     assert jpg_path.exists(), "Expected page JPEG not written to disk"
@@ -230,7 +225,7 @@ def test_pdf_pages_are_rgb_when_grayscale_disabled(
             f"/api/v1/batches/{batch_id}/files",
             files=[("files", ("rgb.pdf", pdf_bytes, "application/pdf"))],
         )
-        assert response.status_code == 201, response.text
+        assert response.status_code == 202, response.text
 
     jpg_path = storage_root / batch_id / "inputs" / "rgb_page_0001.jpg"
     assert jpg_path.exists()
@@ -254,7 +249,7 @@ def test_pdf_page_dimensions_match_150_dpi(
         f"/api/v1/batches/{batch_id}/files",
         files=[("files", ("dims.pdf", pdf_bytes, "application/pdf"))],
     )
-    assert response.status_code == 201, response.text
+    assert response.status_code == 202, response.text
 
     jpg_path = storage_root / batch_id / "inputs" / "dims_page_0001.jpg"
     img = cv2.imread(str(jpg_path), cv2.IMREAD_UNCHANGED)

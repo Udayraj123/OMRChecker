@@ -1,0 +1,218 @@
+177 INFO: PyInstaller: 6.20.0, contrib hooks: 2026.5
+178 INFO: Python: 3.13.13
+221 INFO: Platform: Windows-11-10.0.26200-SP0
+221 INFO: Python environment: C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\.venv
+230 INFO: Module search paths (PYTHONPATH):
+['C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Scripts\\pyinstaller.exe',
+ 'C:\\Program '
+ 'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_3.13.3568.0_x64__qbz5n2kfra8p0\\python313.zip',
+ 'C:\\Program '
+ 'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_3.13.3568.0_x64__qbz5n2kfra8p0\\DLLs',
+ 'C:\\Program '
+ 'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_3.13.3568.0_x64__qbz5n2kfra8p0\\Lib',
+ 'C:\\Program '
+ 'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_3.13.3568.0_x64__qbz5n2kfra8p0',
+ 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv',
+ 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages',
+ 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE']
+1049 INFO: Appending 'datas' from .spec
+1057 INFO: checking Analysis
+1092 INFO: Building because excludes changed
+1092 INFO: Looking for Python shared library...
+1092 INFO: Using Python shared library: C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3568.0_x64__qbz5n2kfra8p0\python313.dll
+1092 INFO: Running Analysis Analysis-00.toc
+1092 INFO: Target bytecode optimization level: 0
+1092 INFO: Initializing module dependency graph...
+1093 INFO: Initializing module graph hook caches...
+1108 INFO: Analyzing modules for base_library.zip ...
+3293 INFO: Processing standard module hook 'hook-heapq.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+3386 INFO: Processing standard module hook 'hook-encodings.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+5329 INFO: Processing standard module hook 'hook-pickle.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+6463 INFO: Caching module dependency graph...
+6495 INFO: Analyzing C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\desktop.py
+6748 INFO: Processing standard module hook 'hook-webview.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\webview\\__pyinstaller'
+6813 INFO: Processing standard module hook 'hook-platform.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+6853 INFO: Processing standard module hook 'hook-sysconfig.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+6859 INFO: Processing standard module hook 'hook-_ctypes.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+7431 INFO: Processing standard module hook 'hook-multiprocessing.util.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+7521 INFO: Processing standard module hook 'hook-xml.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+8020 INFO: Processing standard module hook 'hook-jinja2.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+8032 INFO: Processing pre-safe-import-module hook 'hook-typing_extensions.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+8034 INFO: SetuptoolsInfo: initializing cached setuptools info...
+9525 INFO: Processing pre-safe-import-module hook 'hook-gi.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+9650 INFO: Processing standard module hook 'hook-clr.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+9665 INFO: Processing standard module hook 'hook-clr_loader.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+9767 INFO: Processing standard module hook 'hook-pycparser.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+9901 INFO: Processing standard module hook 'hook-setuptools.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+9912 INFO: Processing pre-safe-import-module hook 'hook-distutils.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+9934 INFO: Processing pre-safe-import-module hook 'hook-jaraco.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+9935 INFO: Setuptools: 'jaraco' appears to be a full setuptools-vendored copy - creating alias to 'setuptools._vendor.jaraco'!
+9944 INFO: Processing pre-safe-import-module hook 'hook-more_itertools.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+9945 INFO: Setuptools: 'more_itertools' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.more_itertools'!
+10146 INFO: Processing pre-safe-import-module hook 'hook-packaging.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+10311 INFO: Processing standard module hook 'hook-setuptools._vendor.jaraco.text.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+10312 INFO: Processing pre-safe-import-module hook 'hook-importlib_resources.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+10319 INFO: Processing pre-safe-import-module hook 'hook-backports.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+10319 INFO: Setuptools: 'backports' appears to be a full setuptools-vendored copy - creating alias to 'setuptools._vendor.backports'!
+10472 INFO: Processing pre-safe-import-module hook 'hook-importlib_metadata.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+10472 INFO: Setuptools: 'importlib_metadata' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.importlib_metadata'!
+10496 INFO: Processing standard module hook 'hook-setuptools._vendor.importlib_metadata.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+10524 INFO: Processing pre-safe-import-module hook 'hook-zipp.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+10525 INFO: Setuptools: 'zipp' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.zipp'!
+10702 INFO: Processing pre-safe-import-module hook 'hook-tomli.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+10702 INFO: Setuptools: 'tomli' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.tomli'!
+11133 INFO: Processing pre-safe-import-module hook 'hook-wheel.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+11134 INFO: Setuptools: 'wheel' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.wheel'!
+11647 INFO: Processing standard module hook 'hook-difflib.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+12028 INFO: Processing standard module hook 'hook-xml.etree.cElementTree.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+12104 INFO: Processing standard module hook 'hook-uvicorn.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+13668 INFO: Processing standard module hook 'hook-anyio.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+14898 INFO: Processing standard module hook 'hook-pydantic.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+15830 INFO: Processing standard module hook 'hook-rich.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+16807 INFO: Processing standard module hook 'hook-pygments.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+19848 INFO: Processing standard module hook 'hook-zoneinfo.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+24396 INFO: Processing standard module hook 'hook-lxml.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+25015 INFO: Processing standard module hook 'hook-lxml.etree.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+26472 INFO: Processing standard module hook 'hook-PIL.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+26565 INFO: Processing standard module hook 'hook-PIL.Image.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+27152 INFO: Processing standard module hook 'hook-numpy.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+28708 INFO: Processing standard module hook 'hook-charset_normalizer.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+29110 INFO: Processing standard module hook 'hook-PIL.ImageFilter.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+29438 INFO: Processing standard module hook 'hook-pandas.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+32733 INFO: Processing standard module hook 'hook-pandas.io.formats.style.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+35606 INFO: Processing standard module hook 'hook-pandas.plotting.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+35653 INFO: Processing standard module hook 'hook-matplotlib.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+36318 INFO: Processing standard module hook 'hook-matplotlib.backend_bases.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+36952 INFO: Processing standard module hook 'hook-matplotlib.backends.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+37032 INFO: Processing standard module hook 'hook-matplotlib.pyplot.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+37797 INFO: Processing standard module hook 'hook-dateutil.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+38202 INFO: Processing pre-safe-import-module hook 'hook-six.moves.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+39551 INFO: Processing standard module hook 'hook-certifi.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+40995 INFO: Processing standard module hook 'hook-sqlite3.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+41601 INFO: Processing standard module hook 'hook-pandas.io.clipboard.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+41713 INFO: Processing standard module hook 'hook-xml.dom.domreg.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+42226 INFO: Processing standard module hook 'hook-cv2.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+43070 INFO: Processing standard module hook 'hook-jsonschema.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+43209 INFO: Processing standard module hook 'hook-jsonschema_specifications.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+43571 INFO: Analyzing hidden import 'uvicorn.loops'
+43572 INFO: Analyzing hidden import 'uvicorn.loops.auto'
+43575 INFO: Analyzing hidden import 'uvicorn.protocols.http.auto'
+43575 INFO: Analyzing hidden import 'uvicorn.protocols.websockets.auto'
+43576 INFO: Analyzing hidden import 'uvicorn.lifespan'
+43577 INFO: Analyzing hidden import 'uvicorn.lifespan.on'
+43584 INFO: Analyzing hidden import 'anyio._backends._asyncio'
+43699 INFO: Analyzing hidden import 'email.mime.multipart'
+43703 INFO: Analyzing hidden import 'email.mime.text'
+43706 INFO: Processing module hooks (post-graph stage)...
+43989 INFO: Processing standard module hook 'hook-lxml.isoschematron.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+44008 WARNING: Hidden import "pycparser.lextab" not found!
+44009 WARNING: Hidden import "pycparser.yacctab" not found!
+44249 INFO: Processing standard module hook 'hook-matplotlib.backends.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+44250 INFO: Matplotlib backend selection method: automatic discovery of used backends
+44616 INFO: Trying determine the default backend as first importable candidate from the list: ['QtAgg', 'Qt5Agg', 'Gtk4Agg', 'Gtk3Agg', 'TkAgg', 'WxAgg']
+46735 INFO: Selected matplotlib backends: ['TkAgg']
+46768 INFO: Processing pre-find-module-path hook 'hook-tkinter.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path'
+46772 INFO: TclTkInfo: initializing cached Tcl/Tk info...
+47505 INFO: Processing standard module hook 'hook-_tkinter.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+47998 INFO: Processing standard module hook 'hook-PIL.SpiderImagePlugin.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+49996 INFO: Processing standard module hook 'hook-_tkinter.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+49997 INFO: Processing standard module hook 'hook-lxml.objectify.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+49998 INFO: Processing standard module hook 'hook-tzdata.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+50781 INFO: Performing binary vs. data reclassification (1921 entries)
+51535 INFO: Looking for ctypes DLLs
+51639 INFO: Analyzing run-time hooks ...
+51650 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+51655 INFO: Including run-time hook 'pyi_rth_multiprocessing.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+51658 INFO: Including run-time hook 'pyi_rth_pkgutil.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+51660 INFO: Including run-time hook 'pyi_rth_setuptools.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+51662 INFO: Including run-time hook 'pyi_rth__tkinter.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+51664 INFO: Including run-time hook 'pyi_rth_mplconfig.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+51666 INFO: Processing pre-find-module-path hook 'hook-_pyi_rth_utils.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path'
+51668 INFO: Processing standard module hook 'hook-_pyi_rth_utils.py' from 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+51756 INFO: Creating base_library.zip...
+51787 INFO: Looking for dynamic libraries
+[14:35:59] INFO     Loading OMRChecker modules...                 __init__.py:5
+54480 INFO: Extra DLL search directories (AddDllDirectory): ['C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\numpy.libs', 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\pandas.libs', 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\cv2\\../../x64/vc17/bin']
+54480 INFO: Extra DLL search directories (PATH): ['C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\.venv\\Lib\\site-packages\\cv2\\../../x64/vc17/bin']
+56436 INFO: Warnings written to C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\build\OMRChecker\warn-OMRChecker.txt
+56603 INFO: Graph cross-reference written to C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\build\OMRChecker\xref-OMRChecker.html
+56797 INFO: checking PYZ
+56840 INFO: Building because C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\webui\api.py changed
+56840 INFO: Building PYZ (ZlibArchive) C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\build\OMRChecker\PYZ-00.pyz
+58942 INFO: Building PYZ (ZlibArchive) C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\build\OMRChecker\PYZ-00.pyz completed successfully.
+58981 INFO: checking PKG
+58982 INFO: Building because C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\build\OMRChecker\PYZ-00.pyz changed
+58982 INFO: Building PKG (CArchive) OMRChecker.pkg
+59015 INFO: Building PKG (CArchive) OMRChecker.pkg completed successfully.
+59018 INFO: Bootloader C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\.venv\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\run.exe
+59018 INFO: checking EXE
+59021 INFO: Rebuilding EXE-00.toc because pkg is more recent
+59021 INFO: Building EXE from EXE-00.toc
+59021 INFO: Copying bootloader EXE to C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\build\OMRChecker\OMRChecker.exe
+59097 INFO: Copying icon to EXE
+59147 INFO: Copying 0 resources to EXE
+59147 INFO: Embedding manifest in EXE
+59193 INFO: Appending PKG archive to EXE
+59466 INFO: Fixing EXE headers
+60058 INFO: Building EXE from EXE-00.toc completed successfully.
+60078 INFO: checking COLLECT
+60105 INFO: Removing dir C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\dist\OMRChecker
+Traceback (most recent call last):
+  File "C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\.venv\Lib\site-packages\PyInstaller\building\utils.py", line 394, in _make_clean_directory
+    os.remove(path)
+    ~~~~~~~~~^^^^^^
+PermissionError: [WinError 5] Access is denied: 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\dist\\OMRChecker'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\.venv\Scripts\pyinstaller.exe\__main__.py", line 5, in <module>
+    sys.exit(_console_script_run())
+             ~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\.venv\Lib\site-packages\PyInstaller\__main__.py", line 231, in _console_script_run
+    run()
+    ~~~^^
+  File "C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\.venv\Lib\site-packages\PyInstaller\__main__.py", line 215, in run
+    run_build(pyi_config, spec_file, **vars(args))
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\.venv\Lib\site-packages\PyInstaller\__main__.py", line 70, in run_build
+    PyInstaller.building.build_main.main(pyi_config, spec_file, **kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\.venv\Lib\site-packages\PyInstaller\building\build_main.py", line 1275, in main
+    build(specfile, distpath, workpath, clean_build)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\.venv\Lib\site-packages\PyInstaller\building\build_main.py", line 1213, in build
+    exec(code, spec_namespace)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "OMRChecker.spec", line 144, in <module>
+    coll = COLLECT(  # noqa: F821
+        exe,
+    ...<5 lines>...
+        name="OMRChecker",
+    )
+  File "C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\.venv\Lib\site-packages\PyInstaller\building\api.py", line 1150, in __init__
+    self.__postinit__()
+    ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\.venv\Lib\site-packages\PyInstaller\building\datastruct.py", line 184, in __postinit__
+    self.assemble()
+    ~~~~~~~~~~~~~^^
+  File "C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\.venv\Lib\site-packages\PyInstaller\building\api.py", line 1162, in assemble
+    _make_clean_directory(self.name)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\.venv\Lib\site-packages\PyInstaller\building\utils.py", line 396, in _make_clean_directory
+    _rmtree(path)
+    ~~~~~~~^^^^^^
+  File "C:\Users\samir.mohammed\Documents\Respositories\OMRCheckerMoE\.venv\Lib\site-packages\PyInstaller\building\utils.py", line 421, in _rmtree
+    shutil.rmtree(path)
+    ~~~~~~~~~~~~~^^^^^^
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3568.0_x64__qbz5n2kfra8p0\Lib\shutil.py", line 790, in rmtree
+    return _rmtree_unsafe(path, onexc)
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3568.0_x64__qbz5n2kfra8p0\Lib\shutil.py", line 629, in _rmtree_unsafe
+    onexc(os.unlink, fullname, err)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3568.0_x64__qbz5n2kfra8p0\Lib\shutil.py", line 625, in _rmtree_unsafe
+    os.unlink(fullname)
+    ~~~~~~~~~^^^^^^^^^^
+PermissionError: [WinError 5] Access is denied: 'C:\\Users\\samir.mohammed\\Documents\\Respositories\\OMRCheckerMoE\\dist\\OMRChecker\\_internal\\clr_loader\\ffi\\dlls\\amd64\\ClrLoader.dll'

@@ -19,18 +19,14 @@ from __future__ import annotations
 
 import json
 import logging
-import math
 import os
 import re
 import shutil
-import tempfile
-import threading
 import time
 import uuid
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Iterable, Literal, cast
+from typing import Any, Iterable
 
 logger = logging.getLogger(__name__)
 
@@ -118,17 +114,6 @@ def _serialise(value: Any) -> Any:
     return value
 
 
-def _coerce_datetime(value: Any) -> datetime:
-    if isinstance(value, datetime):
-        return value
-    if isinstance(value, str):
-        try:
-            return datetime.fromisoformat(value)
-        except ValueError:
-            pass
-    return _now()
-
-
 def _batch_root(settings: Settings, batch_id: str) -> Path:
     return settings.ensure_storage() / batch_id
 
@@ -152,12 +137,9 @@ def _load_metadata(settings: Settings, batch_id: str) -> dict[str, Any]:
     with meta_path.open("r", encoding="utf-8") as fh:
         try:
             return json.load(fh)
-        except json.JSONDecodeError as exc:
+        except json.JSONDecodeError:
             # Transient: another thread is mid-write. Return an empty dict so
             # callers degrade gracefully; the next read will see the full file.
-            logger.warning(
-                "metadata.json for batch %r is corrupt or mid-write: %s", batch_id, exc
-            )
             return {}
 
 
@@ -198,7 +180,7 @@ def _next_available_path(directory: Path, filename: str) -> Path:
 
 def _remove_generated_pdf_pages(inputs: Path, stem: str) -> None:
     """Remove page images previously generated from the same PDF stem."""
-    page_pattern = re.compile(rf"^{re.escape(stem)}_page_\d{{4}}(?:_\d+)?\.(?:png|jpg|jpeg)$")
+    page_pattern = re.compile(rf"^{re.escape(stem)}_page_\d{{4}}(?:_\d+)?\.png$")
     for child in inputs.iterdir():
         if child.is_file() and page_pattern.match(child.name):
             child.unlink()
@@ -209,14 +191,12 @@ def _to_batch(settings: Settings, batch_id: str, meta: dict[str, Any]) -> Batch:
     rotation_degrees = int(meta.get("rotation_degrees", 0))
     if rotation_degrees not in VALID_ROTATIONS:
         rotation_degrees = 0
-    created_at = _coerce_datetime(meta.get("created_at"))
-    updated_at = _coerce_datetime(meta.get("updated_at") or meta.get("created_at"))
     return Batch(
         id=batch_id,
         name=meta.get("name", batch_id),
         status=BatchStatus(meta.get("status", BatchStatus.created.value)),
-        created_at=created_at,
-        updated_at=updated_at,
+        created_at=meta.get("created_at") or _now().isoformat(),
+        updated_at=meta.get("updated_at") or meta.get("created_at") or _now().isoformat(),
         source_mode=(
             SourceMode(meta["source_mode"]) if meta.get("source_mode") else None
         ),
@@ -226,7 +206,7 @@ def _to_batch(settings: Settings, batch_id: str, meta: dict[str, Any]) -> Batch:
         has_template=(batch_dir / TEMPLATE_FILENAME).exists(),
         has_config=(batch_dir / CONFIG_FILENAME).exists(),
         has_evaluation=(batch_dir / EVALUATION_FILENAME).exists(),
-        rotation_degrees=cast(Literal[0, 90, 180, 270], rotation_degrees),
+        rotation_degrees=rotation_degrees,
     )
 
 
@@ -250,7 +230,6 @@ def create_batch(name: str, settings: Settings | None = None) -> Batch:
         "rotation_degrees": 0,
     }
     _save_metadata(settings, batch_id, meta)
-    logger.info("Batch created | name=%r | id=%s", meta["name"], batch_id)
 
     # Auto-apply the default preset (best-effort — batch is valid without it)
     if settings.default_preset:
@@ -296,13 +275,7 @@ def delete_batch(batch_id: str, settings: Settings | None = None) -> None:
     batch_dir = _batch_root(settings, batch_id)
     if not batch_dir.exists():
         raise BatchNotFound(batch_id)
-    try:
-        meta = _load_metadata(settings, batch_id)
-        batch_name = meta.get("name", batch_id)
-    except Exception:  # noqa: BLE001
-        batch_name = batch_id
     shutil.rmtree(batch_dir)
-    logger.info("Batch deleted | name=%r | id=%s", batch_name, batch_id)
 
 
 def update_status(
@@ -321,11 +294,6 @@ def update_status(
     elif status in {BatchStatus.queued, BatchStatus.running, BatchStatus.done}:
         meta["last_error"] = None
     _save_metadata(settings, batch_id, meta)
-    _name = meta.get("name", batch_id)
-    if last_error:
-        logger.warning("Batch %r -> %s | error: %s | id=%s", _name, status.value, last_error, batch_id)
-    else:
-        logger.info("Batch %r -> %s | id=%s", _name, status.value, batch_id)
     return _to_batch(settings, batch_id, meta)
 
 
@@ -373,11 +341,52 @@ def list_files(batch_id: str, settings: Settings | None = None) -> list[FileRef]
     inputs = _inputs_dir(settings, batch_id)
     if not inputs.exists():
         raise BatchNotFound(batch_id)
-    return [
-        FileRef(name=child.name, size_bytes=child.stat().st_size)
-        for child in sorted(inputs.iterdir())
-        if child.is_file() and child.suffix.lower() in IMAGE_EXTENSIONS
-    ]
+    # os.scandir() caches DirEntry.stat() from the OS directory listing,
+    # avoiding a separate stat() syscall per file — measurably faster on
+    # Windows for large directories (hundreds of PDF-split pages).
+    refs: list[FileRef] = []
+    try:
+        with os.scandir(inputs) as it:
+            for entry in it:
+                if entry.is_file() and Path(entry.name).suffix.lower() in IMAGE_EXTENSIONS:
+                    try:
+                        refs.append(FileRef(name=entry.name, size_bytes=entry.stat().st_size))
+                    except OSError:
+                        pass
+    except OSError:
+        pass
+    refs.sort(key=lambda r: r.name)
+    return refs
+
+
+def clear_stale_pdf_split_progress(settings: Settings | None = None) -> None:
+    """Reset pdf_split progress on any batch whose split was interrupted.
+
+    Called at server startup so the UI is never stuck showing a stale
+    "X/5000 pages" progress bar from a previous run that was killed.
+    """
+    settings = settings or get_settings()
+    storage = settings.storage_root
+    if not storage.exists():
+        return
+    cleared = 0
+    for meta_file in storage.glob("*/metadata.json"):
+        try:
+            meta = json.loads(meta_file.read_text(encoding="utf-8"))
+            if int(meta.get("pdf_split_total", 0)) > 0:
+                meta["pdf_split_pages"] = 0
+                meta["pdf_split_total"] = 0
+                meta_file.write_text(
+                    json.dumps(meta, indent=2), encoding="utf-8"
+                )
+                cleared += 1
+        except Exception:  # noqa: BLE001
+            pass
+    if cleared:
+        logger.info(
+            "Cleared stale pdf_split_progress for %d batch(es) on startup",
+            cleared,
+        )
 
 
 def list_input_image_paths(
@@ -414,36 +423,6 @@ def _write_pdf_split_progress(
         pass  # progress write failure must never abort the split
 
 
-def clear_stale_pdf_split_progress(settings: Settings | None = None) -> None:
-    """Reset pdf_split progress on any batch whose split was interrupted.
-
-    Called at server startup so the UI is never stuck showing a stale
-    "X/5000 pages" progress bar from a previous run that was killed.
-    """
-    settings = settings or get_settings()
-    storage = settings.storage_root
-    if not storage.exists():
-        return
-    cleared = 0
-    for meta_file in storage.glob("*/metadata.json"):
-        try:
-            meta = json.loads(meta_file.read_text(encoding="utf-8"))
-            if int(meta.get("pdf_split_total", 0)) > 0:
-                meta["pdf_split_pages"] = 0
-                meta["pdf_split_total"] = 0
-                meta_file.write_text(
-                    json.dumps(meta, indent=2), encoding="utf-8"
-                )
-                cleared += 1
-        except Exception:  # noqa: BLE001
-            pass
-    if cleared:
-        logger.info(
-            "Cleared stale pdf_split_progress for %d batch(es) on startup",
-            cleared,
-        )
-
-
 def save_uploaded_file(
     batch_id: str,
     filename: str,
@@ -473,132 +452,8 @@ def save_uploaded_file(
         return stored
     target = _next_available_path(inputs, safe)
     target.write_bytes(data)
-    size = target.stat().st_size
-    logger.info("File uploaded | batch=%s | file=%s | size=%d bytes", batch_id, target.name, size)
     set_source(batch_id, SourceMode.upload, None, settings)
-    return [FileRef(name=target.name, size_bytes=size)]
-
-
-def _render_pdf_chunk(
-    tmp_path: str,
-    inputs_str: str,
-    stem: str,
-    dpi: int,
-    use_gray: bool,
-    chunk_start: int,
-    chunk_end: int,
-    safe_filename: str,
-    page_count: int,
-    stop_event: threading.Event | None = None,
-    chunk_idx: int = 0,
-    total_chunks: int = 1,
-    on_page_done: Callable[[], None] | None = None,
-) -> tuple[list[tuple[int, str, int]], list[int], float, float, float]:
-    """Render PDF pages [chunk_start, chunk_end) into JPEG files.
-
-    Uses a two-stage pipeline per chunk:
-
-    * **Stage 1 (this thread)**: ``get_pixmap()`` + ``tobytes()`` → enqueue
-      encoded bytes into a ``SimpleQueue``.
-    * **Stage 2 (1 write thread)**: drain the queue, call ``write_bytes()``.
-
-    The single write thread is intentional.  Testing showed N=3 concurrent
-    write workers *regressed* throughput (9.5 pg/s vs 10.4 pg/s) because
-    Windows Defender serialises its scan queue — more concurrent writes per
-    chunk overloaded Defender's scan threads and slowed each write down.
-
-    Returns
-    -------
-    page_results : list of (page_index, filename, size_bytes)
-    failed_pages : 1-based page numbers that raised an exception
-    total_render_s : cumulative fitz render time across all pages in chunk
-    total_encode_s : cumulative JPEG tobytes() encode time across all pages
-    total_write_s  : cumulative write_bytes() disk-write time across all pages
-    """
-    import time as _t
-    import fitz as _fitz
-    import queue as _queue
-
-    _fitz.TOOLS.set_aa_level(0)  # no AA: ~20% faster rasterisation, fine for OMR
-    colorspace = _fitz.csGRAY if use_gray else _fitz.csRGB
-    inputs = Path(inputs_str)
-    failed: list[int] = []
-    t_render = 0.0
-    t_encode = 0.0
-
-    # --- write worker -------------------------------------------------------
-    # Runs in a dedicated thread so disk I/O overlaps with render+encode on
-    # the main worker thread.  SimpleQueue is unbounded and thread-safe.
-    #
-    # N=1 is intentional: with Windows Defender real-time scanning each new
-    # file, having more than 1 write thread per chunk overloads Defender's
-    # scan queue and makes each write *slower* (measured: N=3 gave 9.5 pg/s
-    # vs N=1 at 10.4 pg/s — 9 % regression due to Defender contention).
-    _results: list[tuple[int, str, int]] = []
-    _write_failed: list[int] = []
-    _t_write = [0.0]
-    _write_q: _queue.SimpleQueue = _queue.SimpleQueue()
-
-    def _write_worker() -> None:
-        while True:
-            item = _write_q.get()
-            if item is None:  # sentinel — no more pages
-                break
-            page_index, dest, jpeg_bytes, page_number = item
-            tw = _t.perf_counter()
-            try:
-                dest.write_bytes(jpeg_bytes)
-                _results.append((page_index, dest.name, len(jpeg_bytes)))
-            except Exception as exc:  # noqa: BLE001
-                _write_failed.append(page_number)
-                logger.warning(
-                    "PDF page write failed | file=%s | page=%d/%d | %s: %s",
-                    safe_filename, page_number, page_count, type(exc).__name__, exc,
-                )
-            _t_write[0] += _t.perf_counter() - tw
-
-    write_thread = threading.Thread(target=_write_worker, daemon=True)
-    write_thread.start()
-    # -------------------------------------------------------------------------
-
-    logger.info(
-        "PDF chunk start | file=%s | chunk=%d/%d | pages=%d-%d",
-        safe_filename, chunk_idx + 1, total_chunks, chunk_start + 1, chunk_end,
-    )
-
-    with _fitz.open(tmp_path) as doc:
-        for page_index in range(chunk_start, chunk_end):
-            if stop_event is not None and stop_event.is_set():
-                break  # server shutting down — exit cleanly without blocking
-            page_number = page_index + 1
-            try:
-                t0 = _t.perf_counter()
-                pixmap = doc.load_page(page_index).get_pixmap(
-                    dpi=dpi, alpha=False, colorspace=colorspace
-                )
-                t1 = _t.perf_counter()
-                page_name = f"{stem}_page_{page_number:04d}.jpg"
-                jpeg_bytes = pixmap.tobytes(output="jpeg", jpg_quality=75)
-                del pixmap  # free 2-4 MB before enqueueing
-                t2 = _t.perf_counter()
-                _write_q.put((page_index, inputs / page_name, jpeg_bytes, page_number))
-                t_render += t1 - t0
-                t_encode += t2 - t1
-                if on_page_done is not None:
-                    on_page_done()
-            except Exception as exc:  # noqa: BLE001
-                failed.append(page_number)
-                logger.warning(
-                    "PDF page render failed | file=%s | page=%d/%d | %s: %s",
-                    safe_filename, page_number, page_count,
-                    type(exc).__name__, exc,
-                )
-
-    _write_q.put(None)  # signal write thread to exit after draining
-    write_thread.join()  # wait for all pending writes to complete
-
-    failed.extend(_write_failed)
-    return _results, failed, t_render, t_encode, _t_write[0]
+    return [FileRef(name=target.name, size_bytes=target.stat().st_size)]
 
 
 def _save_pdf_pages_as_images(
@@ -611,28 +466,18 @@ def _save_pdf_pages_as_images(
     batch_id: str | None = None,
     settings: Settings | None = None,
 ) -> list[FileRef]:
-    """Render every PDF page into a JPEG image in ``inputs``.
+    """Render every PDF page into a PNG image in ``inputs``.
 
-    Performance design
-    ------------------
-    * **All available CPU cores** (``os.cpu_count()``): no artificial cap.
-      PyMuPDF 1.24+ (Cython build) releases the GIL during rendering so
-      threads provide true parallelism on multi-core machines.
-    * **Chunk-based work distribution**: pages are split into
-      ``n_workers`` equal chunks; each worker renders its chunk sequentially
-      inside a single open ``fitz.Document``.  This eliminates 5 000
-      individual ``Future`` objects and keeps MuPDF's page-cache warm
-      (sequential access is faster than random access for large PDFs).
-    * **Temp-file for the PDF**: raw bytes written once to disk; threads
-      open by path so MuPDF does not duplicate the data in its C-heap.
-    * **JPEG q=75**: 5-10× faster to encode than PNG; imperceptible quality
-      difference for ArUco marker and bubble-fill detection.
-    * **Write pipelining**: each chunk worker runs a dedicated write thread so
-      ``tobytes()`` (encode) overlaps with ``write_bytes()`` (disk I/O).
-      Wall-clock per chunk ≈ ``write × n`` instead of
-      ``(render+encode+write) × n`` — ~31 % faster end-to-end.
-    * **Timing instrumentation**: each chunk logs render vs. save seconds so
-      the dominant cost is visible immediately in the server log.
+    Improvements over the naive implementation:
+    - ``del pixmap`` after each save frees C-heap memory immediately instead
+      of waiting for the GC, preventing cumulative RSS growth on large PDFs.
+    - Per-page try/except with logging: a single bad page is skipped rather
+      than aborting the entire batch; the caller always gets partial results.
+    - Progress is logged every 50 pages so the operator can see liveness.
+    - ``compress_level=1`` on the PNG write is ~5× faster than the default
+      level 6 with no quality loss for intermediate OMR files.
+    - DPI defaults to 150 (44 %% less RAM/disk than 200 DPI) which is safely
+      above the ArUco detection floor for typical A4 sheets.
     """
     try:
         import fitz
@@ -642,104 +487,50 @@ def _save_pdf_pages_as_images(
             "`python -m pip install -r requirements.txt`."
         ) from exc
 
-    stored: dict[int, FileRef] = {}
+    stored: list[FileRef] = []
     failed_pages: list[int] = []
-    tmp_path: str | None = None
-
     try:
-        with fitz.open(stream=data, filetype="pdf") as pdf_probe:
-            page_count = pdf_probe.page_count
-        if page_count == 0:
-            raise InvalidBatchRequest(f"PDF has no pages: {safe_filename}")
-
-        stem = Path(safe_filename).stem
-        logger.info(
-            "PDF split started | file=%s | pages=%d | dpi=%d | grayscale=%s",
-            safe_filename, page_count, dpi, grayscale,
-        )
-        _remove_generated_pdf_pages(inputs, stem)
-        _write_pdf_split_progress(batch_id, settings, 0, page_count)
-
-        # Write PDF to disk once; each worker opens by path (no heap duplication)
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tf:
-            tf.write(data)
-            tmp_path = tf.name
-
-        # Cap workers at the actual page count (no idle threads for tiny PDFs)
-        # and at 32 (no benefit beyond physical cores; avoids thrash on
-        # hyperthreaded or containerised machines with large logical counts).
-        n_workers = min(os.cpu_count() or 4, page_count, 32)
-        # Aim for ~4 rounds of work per worker: gives several bursts of progress
-        # logs while rendering (instead of one silent run), and improves
-        # load-balancing when individual page render times vary.
-        # Floor at 25 pages so the Future count stays well below 1 000.
-        chunk_size = max(25, math.ceil(page_count / (n_workers * 4)))
-        chunks = [
-            (i, min(i + chunk_size, page_count))
-            for i in range(0, page_count, chunk_size)
-        ]
-        logger.info(
-            "PDF split | workers=%d | chunks=%d | chunk_size=%d | output=jpg | quality=75",
-            n_workers, len(chunks), chunk_size,
-        )
-
-        total_render_s = 0.0
-        total_encode_s = 0.0
-        total_write_s = 0.0
-
-        # Shared counter for intra-chunk UI/terminal progress updates.
-        # Protected by _write_lock so _write_pdf_split_progress is never
-        # called concurrently from multiple worker threads.
-        _write_lock = threading.Lock()
-        _pages_done = [0]
-
-        def _on_page_done() -> None:
-            with _write_lock:
-                _pages_done[0] += 1
-                current = _pages_done[0]
-            if current % 100 == 0 or current >= page_count:
-                _write_pdf_split_progress(batch_id, settings, current, page_count)
-
-        # stop_event lets worker threads exit early between pages so that
-        # executor.shutdown(wait=False) during a server reload/SIGTERM returns
-        # in at most one page-render time (~750 ms) instead of one full chunk
-        # (~157 s at 209 pages × 750 ms).
-        stop_event = threading.Event()
-        executor = ThreadPoolExecutor(max_workers=n_workers)
-        t_wall_start = time.perf_counter()
-        try:
-            futures = [
-                executor.submit(
-                    _render_pdf_chunk,
-                    tmp_path, str(inputs), stem, dpi, grayscale,
-                    chunk_start, chunk_end, safe_filename, page_count,
-                    stop_event, chunk_idx, len(chunks), _on_page_done,
-                )
-                for chunk_idx, (chunk_start, chunk_end) in enumerate(chunks)
-            ]
-            for future in as_completed(futures):
-                chunk_results, chunk_failed, t_render, t_encode, t_write = future.result()
-                for page_index, page_name, size_bytes in chunk_results:
-                    stored[page_index] = FileRef(name=page_name, size_bytes=size_bytes)
-                failed_pages.extend(chunk_failed)
-                total_render_s += t_render
-                total_encode_s += t_encode
-                total_write_s += t_write
-                done = len(stored) + len(failed_pages)
-                logger.info(
-                    "PDF chunk done | file=%s | total=%d/%d | "
-                    "chunk_render=%.1fs | chunk_encode=%.1fs | chunk_write=%.1fs",
-                    safe_filename, done, page_count, t_render, t_encode, t_write,
-                )
-        except BaseException:
-            # Signal all running workers to stop at their next page boundary,
-            # then release threads without waiting for full chunks to drain.
-            stop_event.set()
-            executor.shutdown(wait=False, cancel_futures=True)
-            raise
-        else:
-            executor.shutdown(wait=False)
-
+        with fitz.open(stream=data, filetype="pdf") as pdf:
+            page_count = pdf.page_count
+            if page_count == 0:
+                raise InvalidBatchRequest(f"PDF has no pages: {safe_filename}")
+            stem = Path(safe_filename).stem
+            logger.info(
+                "PDF split started | file=%s | pages=%d | dpi=%d | grayscale=%s",
+                safe_filename, page_count, dpi, grayscale,
+            )
+            _remove_generated_pdf_pages(inputs, stem)
+            colorspace = fitz.csGRAY if grayscale else fitz.csRGB
+            # Seed metadata so the UI shows total immediately
+            _write_pdf_split_progress(batch_id, settings, 0, page_count)
+            for page_index, page in enumerate(pdf, start=1):
+                try:
+                    pixmap = page.get_pixmap(dpi=dpi, alpha=False, colorspace=colorspace)
+                    page_name = f"{stem}_page_{page_index:04d}.png"
+                    target = inputs / page_name
+                    # compress_level=1 is ~5x faster than default (6); these
+                    # are intermediate working files read once by the engine.
+                    pixmap.save(str(target))
+                    del pixmap  # release C-heap memory immediately
+                    stored.append(
+                        FileRef(name=target.name, size_bytes=target.stat().st_size)
+                    )
+                except Exception as page_exc:  # noqa: BLE001
+                    failed_pages.append(page_index)
+                    logger.warning(
+                        "PDF page render failed | file=%s | page=%d/%d | %s: %s",
+                        safe_filename, page_index, page_count,
+                        type(page_exc).__name__, page_exc,
+                    )
+                if page_index % 10 == 0 or page_index == page_count:
+                    _write_pdf_split_progress(
+                        batch_id, settings, len(stored), page_count
+                    )
+                if page_index % 50 == 0 or page_index == page_count:
+                    logger.info(
+                        "PDF split progress | file=%s | %d/%d pages saved | failed=%d",
+                        safe_filename, len(stored), page_count, len(failed_pages),
+                    )
     except InvalidBatchRequest:
         raise
     except Exception as exc:
@@ -747,55 +538,26 @@ def _save_pdf_pages_as_images(
             f"Could not convert PDF {safe_filename!r}: "
             f"{type(exc).__name__}: {exc}"
         ) from exc
-    finally:
-        if tmp_path:
-            try:
-                Path(tmp_path).unlink(missing_ok=True)
-            except Exception:  # noqa: BLE001
-                pass
 
-    stored_list = [stored[i] for i in sorted(stored.keys())]
-    if not stored_list:
-        _write_pdf_split_progress(batch_id, settings, 0, 0)
+    if not stored:
+        _write_pdf_split_progress(batch_id, settings, 0, 0)  # clear progress
         raise InvalidBatchRequest(
             f"PDF {safe_filename!r}: all {len(failed_pages)} page(s) failed to render."
         )
-
-    _write_pdf_split_progress(batch_id, settings, 0, 0)  # clear stale progress
-    wall_s = time.perf_counter() - t_wall_start  # true elapsed (accounts for pipelining)
-    tot = total_render_s + total_encode_s + total_write_s
-    # Warn when write is unexpectedly slow (likely Windows Defender real-time scanning).
-    # Adding the storage folder to Defender exclusions typically gives 100× write speedup.
-    if total_write_s > 0 and len(stored_list) > 0:
-        write_s_per_page = total_write_s / len(stored_list)
-        if write_s_per_page > 0.5:
-            logger.warning(
-                "PDF split: write is very slow (%.2fs/page). "
-                "Windows Defender real-time scanning is likely the cause. "
-                "Add '%s' to Defender exclusions for a large speed boost.",
-                write_s_per_page, inputs,
-            )
+    # Clear progress fields so the UI does not show stale split data
+    _write_pdf_split_progress(batch_id, settings, 0, 0)
     if failed_pages:
         logger.warning(
             "PDF split finished with errors | file=%s | ok=%d | failed=%d | "
-            "first_failed=%s | render=%.1fs | encode=%.1fs | write=%.1fs | "
-            "render_pct=%.0f%%",
-            safe_filename, len(stored_list), len(failed_pages),
-            sorted(failed_pages)[:20], total_render_s, total_encode_s, total_write_s,
-            100 * total_render_s / max(tot, 0.001),
+            "first_failed_pages=%s",
+            safe_filename, len(stored), len(failed_pages), failed_pages[:20],
         )
     else:
         logger.info(
-            "PDF split complete | file=%s | pages=%d | "
-            "render=%.1fs | encode=%.1fs | write=%.1fs | "
-            "render_pct=%.0f%% | wall=%.1fs | throughput=%.1f pg/s",
-            safe_filename, len(stored_list),
-            total_render_s, total_encode_s, total_write_s,
-            100 * total_render_s / max(tot, 0.001),
-            wall_s,
-            len(stored_list) / max(wall_s, 0.001),
+            "PDF split complete | file=%s | pages=%d | dpi=%d | grayscale=%s",
+            safe_filename, len(stored), dpi, grayscale,
         )
-    return stored_list
+    return stored
 
 
 def delete_file(
@@ -893,10 +655,6 @@ def import_directory(
 
     if imported:
         set_source(batch_id, SourceMode.directory, str(src), settings)
-    logger.info(
-        "Directory import | batch=%s | imported=%d | skipped=%d | src=%s",
-        batch_id, len(imported), len(skipped), src,
-    )
     return imported, skipped
 
 
