@@ -1073,7 +1073,33 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
                                 if _new_paths:
                                     # Extend tracking list so progress
                                     # calculations reflect the growing total
+                                    _prev_total = len(input_images)
                                     input_images.extend(_new_paths)
+                                    _new_total = len(input_images)
+                                    # Re-anchor milestone tracking to the new
+                                    # denominator.  Without this, items
+                                    # completed under the old (smaller)
+                                    # total push ``last_milestone`` ahead of
+                                    # the current pct against the new
+                                    # (larger) total — suppressing all
+                                    # subsequent OMR progress logs until
+                                    # ``completed`` catches up to the old
+                                    # absolute milestone count.  Reset to
+                                    # the current pct floored to the
+                                    # nearest 10% so the very next 10%
+                                    # boundary fires correctly.
+                                    _current_pct = (
+                                        completed * 100 // _new_total
+                                        if _new_total else 0
+                                    )
+                                    last_milestone = (_current_pct // 10) * 10
+                                    logger.info(
+                                        "OMR input pool grew | batch_id=%s | "
+                                        "previous_total=%d | new_total=%d | "
+                                        "added=%d | completed=%d (%d%% of new total)",
+                                        batch_id, _prev_total, _new_total,
+                                        len(_new_paths), completed, _current_pct,
+                                    )
                                     image_iter = iter(_new_paths)
                                     _iter_exhausted = False
 

@@ -273,6 +273,76 @@ class TestPipelinedOMR:
             f"got {meta['processed_files']}"
         )
 
+    def test_milestone_logs_reset_when_input_pool_grows(
+        self, storage_root: Path, tmp_path: Path, caplog
+    ) -> None:
+        """Bug 1 regression: progress milestone logs must keep firing after
+        the input pool grows mid-run.
+
+        Without the re-anchor fix, completing 10 of an initial 20 items pushes
+        ``last_milestone`` to 50.  When the pool grows to 40 items, items
+        11–24 all fall under ``_milestone=50`` against the new denominator,
+        suppressing every progress log between 25% and 60% of the new total.
+
+        This test sets up exactly that scenario and asserts:
+          1. The "OMR input pool grew" log fires with the correct totals.
+          2. At least one progress log fires AFTER the pool grew but
+             BEFORE the run ends (i.e. mid-second-half logging is no longer
+             starved).
+        """
+        import logging
+
+        settings = _make_settings(storage_root, tmp_path, pipeline=True)
+        batch_id, all_paths = _setup_batch(settings, 40)
+        initial_paths = all_paths[:20]
+
+        batches_service.update_batch_metadata(
+            batch_id, {"pdf_split_total": 40}, settings
+        )
+
+        discover_calls: list[int] = []
+
+        def mock_discover(bid: str, s: Settings) -> list[Path]:
+            discover_calls.append(len(discover_calls))
+            if len(discover_calls) == 1:
+                return list(initial_paths)
+            batches_service.update_batch_metadata(
+                bid, {"pdf_split_total": 0}, s
+            )
+            return list(all_paths)
+
+        with caplog.at_level(logging.INFO, logger="webui.services.omr"):
+            _run_patched(batch_id, settings, mock_discover)
+
+        meta = batches_service.get_batch_metadata(batch_id, settings)
+        assert meta["processed_files"] == 40, (
+            f"Expected all 40 images processed, got {meta['processed_files']}"
+        )
+
+        grew_messages = [r for r in caplog.records if "OMR input pool grew" in r.getMessage()]
+        assert grew_messages, (
+            "Expected an 'OMR input pool grew' log when input_images was extended"
+        )
+        grew_msg = grew_messages[0].getMessage()
+        assert "previous_total=20" in grew_msg, grew_msg
+        assert "new_total=40" in grew_msg, grew_msg
+        assert "added=20" in grew_msg, grew_msg
+
+        progress_messages = [r for r in caplog.records if "OMR progress |" in r.getMessage()]
+        assert len(progress_messages) >= 2, (
+            f"Expected progress logs both before and after pool grew; "
+            f"got {len(progress_messages)} progress lines: "
+            f"{[m.getMessage() for m in progress_messages]}"
+        )
+        # At least one progress log must reference the new denominator (40).
+        post_grow_progress = [
+            r for r in progress_messages if " 40 |" in r.getMessage() or "/40 |" in r.getMessage()
+        ]
+        assert post_grow_progress, (
+            "Expected at least one progress log against the new total of 40; "
+            f"got: {[m.getMessage() for m in progress_messages]}"
+        )
+
     def test_pipeline_does_not_double_submit_existing_pages(
         self, storage_root: Path, tmp_path: Path
     ) -> None:
