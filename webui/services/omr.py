@@ -40,6 +40,48 @@ _RUNTIME_DIR_NAME = "_runtime"
 _RUNTIME_BASE_DIR_NAME = "_base"
 _DISPLAY_KEYS = ("display_height", "display_width", "processing_height", "processing_width")
 
+
+def _batch_scratch_root(batch_root: Path, settings: Settings | None = None) -> Path:
+    """Return the AV-friendly scratch root for this batch.
+
+    By default this is ``%LOCALAPPDATA%\\OMRChecker\\cache\\<batch_id>\\`` on
+    Windows (a single administrator-excludable directory) and
+    ``~/.cache/omrchecker/<batch_id>/`` on POSIX. Falls back to the legacy
+    ``<batch_root>`` location if settings are unavailable so this function
+    can be called from contexts (e.g. worker subprocesses) that may not
+    have an initialised Settings instance.
+    """
+    if settings is None:
+        try:
+            settings = get_settings()
+        except Exception:  # noqa: BLE001 - never let cache-dir logic break OMR
+            return batch_root
+    try:
+        return settings.batch_cache_dir(batch_root.name)
+    except Exception:  # noqa: BLE001
+        return batch_root
+
+
+def _batch_runtime_root(batch_root: Path, settings: Settings | None = None) -> Path:
+    return _batch_scratch_root(batch_root, settings) / _RUNTIME_DIR_NAME
+
+
+def _batch_rotated_root(batch_root: Path, settings: Settings | None = None) -> Path:
+    return _batch_scratch_root(batch_root, settings) / "_rotated"
+
+
+def _batch_workers_root(outputs_dir: Path, settings: Settings | None = None) -> Path:
+    """Per-image worker output dirs go under the scratch root, not outputs/.
+
+    Worker outputs are transient: the parent process aggregates the rows
+    and copies the kept annotated images back into ``outputs/CheckedOMRs/``,
+    then the worker dir is deleted. Putting them under the scratch root
+    keeps the real ``outputs/`` directory clean of intermediate files
+    that Defender would otherwise scan.
+    """
+    batch_root = outputs_dir.parent
+    return _batch_scratch_root(batch_root, settings) / "_workers"
+
 _batch_locks: dict[str, threading.Lock] = {}
 _locks_guard = threading.Lock()
 
@@ -301,11 +343,16 @@ def _link_or_copy(src: Path, dst: Path) -> None:
         shutil.copy2(src, dst)
 
 
-def _prepare_runtime_base(batch_root: Path) -> Path:
-    runtime_root = batch_root / _RUNTIME_DIR_NAME
+def _prepare_runtime_base(batch_root: Path, settings: Settings | None = None) -> Path:
+    """Build the shared ``_base`` runtime dir containing template + assets.
+
+    Lives under the scratch cache root (e.g. ``%LOCALAPPDATA%\\OMRChecker``)
+    so a single Defender exclusion covers it.
+    """
+    runtime_root = _batch_runtime_root(batch_root, settings)
     base_root = runtime_root / _RUNTIME_BASE_DIR_NAME
     if base_root.exists():
-        shutil.rmtree(base_root)
+        shutil.rmtree(base_root, ignore_errors=True)
     base_root.mkdir(parents=True, exist_ok=True)
 
     template_payload = _load_template_payload(batch_root)
@@ -324,13 +371,34 @@ def _rotate_image_for_runtime(
     dst: Path,
     rotation_degrees: int,
     pre_resize_to: tuple[int, int] | None = None,
+    rotated_dir: Path | None = None,
 ) -> None:
     """Copy *src* into *dst*, applying rotation and optional downscale.
 
     ``pre_resize_to`` is ``(width, height)`` and is only applied when the
     operation would make the image *smaller* (never upscales).
+
+    When neither rotation nor a meaningful resize is needed, no decoded
+    intermediate is written: a single copy is enough. This avoids one
+    Defender-scanned write per image.
     """
-    if rotation_degrees == 0 and pre_resize_to is None:
+    # Decide up front whether we actually need to do pixel work. If the
+    # source is already small enough and no rotation is requested, the
+    # OMR engine can read the source bytes directly via a copy — no
+    # OpenCV decode, no extra Defender scan, no _rotated cache entry.
+    needs_rotate = rotation_degrees != 0
+    needs_resize = False
+    if pre_resize_to is not None:
+        try:
+            with _PILImage.open(src) as _pil:
+                _src_w, _src_h = _pil.size
+        except Exception:  # noqa: BLE001
+            _src_w = _src_h = None
+        if _src_w is not None and _src_h is not None:
+            proc_w, proc_h = pre_resize_to
+            if _src_w > proc_w or _src_h > proc_h:
+                needs_resize = True
+    if not needs_rotate and not needs_resize:
         shutil.copy2(src, dst)
         return
 
@@ -340,7 +408,10 @@ def _rotate_image_for_runtime(
     rot_tag = f"_rot{rotation_degrees}" if rotation_degrees else ""
     cache_key = f"{src.stem}{rot_tag}{resize_tag}{src.suffix.lower()}"
 
-    rotated_dir = dst.parent.parent / "_rotated"
+    if rotated_dir is None:
+        # Legacy callers (kept for backward compatibility in tests) place the
+        # cache next to the runtime dir, which lives under the scratch root.
+        rotated_dir = dst.parent.parent / "_rotated"
     rotated_dir.mkdir(parents=True, exist_ok=True)
     cached = rotated_dir / cache_key
     try:
@@ -354,7 +425,7 @@ def _rotate_image_for_runtime(
     if image is None:
         raise ValueError(f"Could not read image: {src.as_posix()}")
 
-    if rotation_degrees:
+    if needs_rotate:
         rotate_codes = {
             90: cv2.ROTATE_90_CLOCKWISE,
             180: cv2.ROTATE_180,
@@ -365,7 +436,7 @@ def _rotate_image_for_runtime(
             raise ValueError(f"Unsupported rotation: {rotation_degrees}")
         image = cv2.rotate(image, rotate_code)
 
-    if pre_resize_to is not None:
+    if needs_resize and pre_resize_to is not None:
         proc_w, proc_h = pre_resize_to
         h, w = image.shape[:2]
         if w > proc_w or h > proc_h:
@@ -375,8 +446,26 @@ def _rotate_image_for_runtime(
         raise ValueError(f"Could not write runtime image: {dst.as_posix()}")
     try:
         cv2.imwrite(str(cached), image)
-    except Exception:
+    except Exception:  # noqa: BLE001
         pass
+
+
+def _worker_runtime_dir(
+    batch_root: Path,
+    settings: Settings | None = None,
+) -> Path:
+    """Return the per-worker reusable runtime directory.
+
+    Long-lived ``ProcessPoolExecutor`` workers were creating a fresh
+    ``_runtime/<index>_<stem>/`` directory per image and ``rmtree``-ing it
+    afterwards. At 5000 pages that is ~10,000 NTFS metadata ops + Defender
+    scans of the staged image, template, evaluation, and config files
+    inside each dir. Reusing a single dir per worker process and just
+    overwriting its image + config on each task drops that to N (number
+    of workers) directory ops total.
+    """
+    pid = os.getpid()
+    return _batch_runtime_root(batch_root, settings) / f"worker_{pid}"
 
 
 def _prepare_runtime_dir(
@@ -387,39 +476,83 @@ def _prepare_runtime_dir(
     rotation_degrees: int = 0,
     base_root: Path | None = None,
     pre_resize_to: tuple[int, int] | None = None,
+    settings: Settings | None = None,
 ) -> Path:
-    """Build an isolated single-image runtime directory for engine execution."""
-    runtime_root = batch_root / _RUNTIME_DIR_NAME / f"{index:04d}_{image_path.stem}"
-    if runtime_root.exists():
-        shutil.rmtree(runtime_root)
+    """Stage a single-image runtime directory for engine execution.
+
+    The directory is **per worker process** and is reused across every image
+    that worker processes. We clear the previous image + per-image config
+    each time but keep the (read-only) template.json / evaluation.json /
+    assets in place.
+    """
+    runtime_root = _worker_runtime_dir(batch_root, settings)
     runtime_root.mkdir(parents=True, exist_ok=True)
 
-    _rotate_image_for_runtime(
-        image_path,
-        runtime_root / image_path.name,
-        rotation_degrees,
-        pre_resize_to=pre_resize_to,
-    )
     if base_root is None:
-        base_root = _prepare_runtime_base(batch_root)
+        base_root = _prepare_runtime_base(batch_root, settings)
+    # Ensure template.json / evaluation.json / assets exist in the worker
+    # dir. We hardlink-or-copy them once (the file already existing is the
+    # common path on the worker's 2nd..Nth task).
     for name in ("template.json", "evaluation.json"):
         src = base_root / name
-        if src.exists():
-            _link_or_copy(src, runtime_root / name)
+        dst = runtime_root / name
+        if src.exists() and not dst.exists():
+            _link_or_copy(src, dst)
     for path in base_root.rglob("*"):
         if not path.is_file():
             continue
         if path.name in {"template.json", "evaluation.json"}:
             continue
         rel = path.relative_to(base_root)
-        _link_or_copy(path, runtime_root / rel)
+        dst = runtime_root / rel
+        if not dst.exists():
+            _link_or_copy(path, dst)
+
+    # Remove any image left by the previous task so the engine's directory
+    # scan only finds the current target.
+    for child in runtime_root.iterdir():
+        if not child.is_file():
+            continue
+        if child.suffix.lower() in {".png", ".jpg", ".jpeg", ".bmp", ".webp", ".tif", ".tiff"}:
+            # Don't delete template-referenced assets (those are tracked
+            # under base_root and re-linked above on the next iteration).
+            relative_to_base = base_root / child.name
+            if not relative_to_base.exists():
+                try:
+                    child.unlink()
+                except OSError:
+                    pass
+
+    rotated_dir = _batch_rotated_root(batch_root, settings)
+    _rotate_image_for_runtime(
+        image_path,
+        runtime_root / image_path.name,
+        rotation_degrees,
+        pre_resize_to=pre_resize_to,
+        rotated_dir=rotated_dir,
+    )
     _write_runtime_config(runtime_config, runtime_root / "config.json")
     return runtime_root
 
 
 def _cleanup_runtime_dir(runtime_dir: Path | None) -> None:
-    if runtime_dir and runtime_dir.exists():
-        shutil.rmtree(runtime_dir, ignore_errors=True)
+    """Best-effort cleanup of the **per-image** files inside a runtime dir.
+
+    The per-worker runtime dir itself is intentionally *not* removed: it
+    will be reused for the next task on the same worker. We only clear
+    image + per-task config to drop file-system pressure between tasks.
+    """
+    if not runtime_dir or not runtime_dir.exists():
+        return
+    for child in runtime_dir.iterdir():
+        if not child.is_file():
+            continue
+        suffix = child.suffix.lower()
+        if suffix in {".png", ".jpg", ".jpeg", ".bmp", ".webp", ".tif", ".tiff"}:
+            try:
+                child.unlink()
+            except OSError:
+                pass
 
 
 def _default_max_workers() -> int:
@@ -445,14 +578,19 @@ def _coerce_max_workers(value: Any) -> int:
 
 
 def _process_one_image(payload: dict[str, Any]) -> dict[str, Any]:
-    """Worker entrypoint to process a single image in its own runtime dir."""
-    # Each worker process should use exactly 1 OpenCV thread so that the
-    # OS-level ProcessPoolExecutor provides the parallelism without internal
-    # thread-pool contention (N workers × M OpenCV threads = N*M threads
-    # competing for N cores).
-    cv2.setNumThreads(1)
+    """Worker entrypoint to process a single image.
 
-    from main import entry_point_for_args
+    Uses a *per-worker* reusable runtime directory under the configurable
+    scratch cache root (default ``%LOCALAPPDATA%\\OMRChecker\\cache``).
+    Source images are hardlinked (not copied) into the runtime dir when
+    no rotation or resize is required, eliminating one Defender-scanned
+    write per processed page.
+
+    With ``OMR_WEBUI_INMEMORY_PIPELINE=true`` (default) the worker also
+    invokes the in-memory engine path that points the OMR engine directly
+    at the source image instead of round-tripping through a staged copy.
+    """
+    cv2.setNumThreads(1)
 
     batch_root = Path(payload["batch_root"])
     outputs_dir = Path(payload["outputs_dir"])
@@ -462,49 +600,80 @@ def _process_one_image(payload: dict[str, Any]) -> dict[str, Any]:
     base_root = Path(payload["base_root"])
     rotation_degrees = int(payload.get("rotation_degrees", 0))
     index = int(payload.get("index", 1))
+    use_inmemory = bool(payload.get("inmemory_pipeline", False))
+
+    settings: Settings | None = None
+    try:
+        settings = get_settings()
+    except Exception:  # noqa: BLE001
+        settings = None
 
     runtime_dir: Path | None = None
-    logger.debug("Worker | index=%d | file=%s", index, image_path.name)
+    logger.debug(
+        "Worker | index=%d | file=%s | inmemory=%s",
+        index, image_path.name, use_inmemory,
+    )
     t_start = time.perf_counter()
     try:
         if not base_root.exists():
-            base_root = _prepare_runtime_base(batch_root)
+            base_root = _prepare_runtime_base(batch_root, settings)
         dynamic_dimensions = _compute_dynamic_dimensions(
             image_path, template_payload, rotation_degrees
         )
         runtime_config = _merge_dimensions_into_config(base_config, dynamic_dimensions)
 
         # Pre-resize: if the source image is meaningfully larger than the
-        # processing dimensions, shrink it before writing to the runtime dir.
-        # The engine will then read a smaller file and its own resize becomes
-        # a near-no-op, saving both I/O and per-pixel work in ArUco/bubble steps.
+        # processing dimensions, shrink it on the way in so the engine's
+        # own resize step becomes a near-no-op. In the in-memory path we
+        # skip this (the engine resizes the array anyway, with no I/O cost).
         src_w = dynamic_dimensions["source_width"]
         src_h = dynamic_dimensions["source_height"]
         proc_w = dynamic_dimensions["processing_width"]
         proc_h = dynamic_dimensions["processing_height"]
         pre_resize_to: tuple[int, int] | None = None
-        if src_w > proc_w * 1.1 or src_h > proc_h * 1.1:
+        if not use_inmemory and (src_w > proc_w * 1.1 or src_h > proc_h * 1.1):
             pre_resize_to = (proc_w, proc_h)
 
-        runtime_dir = _prepare_runtime_dir(
-            batch_root,
-            image_path,
-            runtime_config,
-            index,
-            rotation_degrees,
-            base_root=base_root,
-            pre_resize_to=pre_resize_to,
-        )
-        worker_outputs_dir = outputs_dir / "_workers" / f"{index:04d}_{image_path.stem}"
+        worker_outputs_root = _batch_workers_root(outputs_dir, settings)
+        worker_outputs_dir = worker_outputs_root / f"{index:04d}_{image_path.stem}"
         worker_outputs_dir.mkdir(parents=True, exist_ok=True)
-        args = {
-            "input_paths": [str(runtime_dir)],
-            "output_dir": str(worker_outputs_dir),
-            "debug": False,
-            "autoAlign": False,
-            "setLayout": False,
-        }
-        entry_point_for_args(args)
+
+        if use_inmemory:
+            # In-memory path: point the engine directly at the source image
+            # — no per-image staging copy, no _rotated cache write, no
+            # runtime config file edits. Rotation, if any, is applied
+            # in-process via cv2.rotate on the numpy array.
+            from src.entry import entry_point_for_image
+            entry_point_for_image(
+                image_path=image_path,
+                output_dir=worker_outputs_dir,
+                template_payload=template_payload,
+                config_payload=runtime_config,
+                evaluation_path=(base_root / "evaluation.json")
+                    if (base_root / "evaluation.json").exists() else None,
+                template_dir=base_root,
+                rotation_degrees=rotation_degrees,
+            )
+        else:
+            runtime_dir = _prepare_runtime_dir(
+                batch_root,
+                image_path,
+                runtime_config,
+                index,
+                rotation_degrees,
+                base_root=base_root,
+                pre_resize_to=pre_resize_to,
+                settings=settings,
+            )
+            from main import entry_point_for_args
+            args = {
+                "input_paths": [str(runtime_dir)],
+                "output_dir": str(worker_outputs_dir),
+                "debug": False,
+                "autoAlign": False,
+                "setLayout": False,
+            }
+            entry_point_for_args(args)
         ended_in_errors = _image_ended_up_in_errors(worker_outputs_dir, image_path.name)
 
         def read_rows(path: Path) -> tuple[list[str], list[list[str]]]:
@@ -677,6 +846,10 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
             dest_dir.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dest_dir / src.name)
 
+        # Snapshot once outside the closure so workers all see the same value
+        # even if settings are mutated mid-run (which they shouldn't be).
+        _inmemory = bool(getattr(settings, "inmemory_pipeline", True))
+
         def submit_payload(idx: int, image: Path) -> dict[str, Any]:
             return {
                 "batch_root": str(batch_root),
@@ -687,6 +860,7 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
                 "base_root": str(base_root),
                 "rotation_degrees": rotation_degrees,
                 "index": idx,
+                "inmemory_pipeline": _inmemory,
             }
 
         futures = {}

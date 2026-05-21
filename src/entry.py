@@ -6,6 +6,7 @@
  Github: https://github.com/Udayraj123
 
 """
+import json
 import os
 from csv import QUOTE_NONNUMERIC
 from pathlib import Path
@@ -43,6 +44,156 @@ def entry_point(input_dir, args):
         raise Exception(f"Given input directory does not exist: '{input_dir}'")
     curr_dir = input_dir
     return process_dir(input_dir, curr_dir, args)
+
+
+# ---------------------------------------------------------------------------
+# In-memory single-image entry point.
+#
+# This is the high-throughput path used by the Web UI's worker pool when
+# OMR_WEBUI_INMEMORY_PIPELINE=true (default). It bypasses the legacy
+# "scan a directory" entry point entirely so that:
+#   1. The source image is decoded ONCE into a numpy array (no staged copy
+#      written to a per-image runtime directory).
+#   2. Rotation, if any, is applied via cv2.rotate on the in-memory array
+#      (no _rotated cache file written).
+#   3. Template construction is cached per worker process, so the engine
+#      doesn't re-parse template.json on every page.
+#
+# On a 5000-page Defender-enabled Windows box this removes ~10,000 file
+# create + scan operations from the hot path while keeping the engine's
+# output layout (CheckedOMRs / Manual / Results.csv) unchanged.
+# ---------------------------------------------------------------------------
+
+_TEMPLATE_CACHE: dict[str, tuple[float, "object"]] = {}
+
+
+def _build_or_fetch_template(template_path, tuning_config):
+    """Cache ``Template`` instances per (path, mtime, processing_dims).
+
+    ``Template`` construction is non-trivial (it parses field blocks and
+    instantiates preprocessors). For a 5000-page batch the same template
+    is reused unchanged on every page, so caching saves real CPU.
+    """
+    key = (
+        str(template_path),
+        os.path.getmtime(template_path),
+        int(tuning_config.dimensions.processing_width),
+        int(tuning_config.dimensions.processing_height),
+    )
+    cached = _TEMPLATE_CACHE.get(repr(key))
+    if cached is not None:
+        return cached[1]
+    template = Template(template_path, tuning_config)
+    _TEMPLATE_CACHE[repr(key)] = (key, template)
+    return template
+
+
+def entry_point_for_image(
+    *,
+    image_path,
+    output_dir,
+    template_payload: dict,
+    config_payload: dict,
+    evaluation_path=None,
+    template_dir=None,
+    rotation_degrees: int = 0,
+):
+    """Process a single image in-memory, writing engine outputs to ``output_dir``.
+
+    Parameters
+    ----------
+    image_path
+        Filesystem path to the source image. Read **directly** by cv2 —
+        not via any staged copy.
+    output_dir
+        Per-worker output directory. The engine writes ``Results/*.csv``,
+        ``CheckedOMRs/<name>``, and ``Manual/{Errors,MultiMarked}*`` under
+        this path (same layout as ``entry_point_for_args``).
+    template_payload
+        Raw template JSON object (kept for symmetry with the legacy
+        directory-staged worker payload; the actual ``Template`` is
+        instantiated from ``template_dir / template.json`` because the
+        ``Template`` constructor needs a path to resolve asset references).
+    config_payload
+        Merged config dict (with dynamic ``processing_width`` /
+        ``processing_height`` already injected by the caller). Written to
+        a single per-worker ``config.json`` inside ``template_dir`` only
+        on the first call; subsequent calls update it in place.
+    evaluation_path
+        Optional Path to evaluation.json. If supplied, scores are computed.
+    template_dir
+        Directory that contains ``template.json`` and any template-relative
+        asset files. Lives under the per-worker runtime base path; reused
+        across every task this worker handles.
+    rotation_degrees
+        0, 90, 180, or 270 — applied to the decoded image in memory.
+    """
+    from pathlib import Path
+
+    image_path = Path(image_path)
+    output_dir = Path(output_dir)
+    template_dir = Path(template_dir) if template_dir is not None else None
+    if template_dir is None:
+        raise ValueError("entry_point_for_image requires a template_dir")
+    template_path = template_dir / "template.json"
+    if not template_path.exists():
+        raise FileNotFoundError(
+            f"template.json not found under {template_dir.as_posix()}; "
+            "the per-worker base directory must be prepared before "
+            "entry_point_for_image is called."
+        )
+
+    config_dst = template_dir / "config.json"
+    with config_dst.open("w", encoding="utf-8") as fh:
+        # Force non-interactive mode regardless of caller's payload — the
+        # web pipeline never wants the engine to open an OpenCV window.
+        cfg = dict(config_payload or {})
+        outputs = dict(cfg.get("outputs") or {})
+        outputs["show_image_level"] = 0
+        cfg["outputs"] = outputs
+        json.dump(cfg, fh, indent=2, sort_keys=True)
+
+    tuning_config = open_config_with_defaults(config_dst)
+    template = _build_or_fetch_template(template_path, tuning_config)
+
+    evaluation_config = None
+    if (
+        evaluation_path is not None
+        and Path(evaluation_path).exists()
+    ):
+        evaluation_config = EvaluationConfig(
+            template_dir,
+            Path(evaluation_path),
+            template,
+            tuning_config,
+        )
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    paths = Paths(output_dir)
+    setup_dirs_for_paths(paths)
+    outputs_namespace = setup_outputs_for_template(paths, template)
+
+    in_omr = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
+    if in_omr is not None and rotation_degrees:
+        rotate_codes = {
+            90: cv2.ROTATE_90_CLOCKWISE,
+            180: cv2.ROTATE_180,
+            270: cv2.ROTATE_90_COUNTERCLOCKWISE,
+        }
+        rotate_code = rotate_codes.get(int(rotation_degrees))
+        if rotate_code is not None:
+            in_omr = cv2.rotate(in_omr, rotate_code)
+
+    _process_single_omr_image(
+        in_omr,
+        image_path,
+        image_path.name,
+        template,
+        tuning_config,
+        evaluation_config,
+        outputs_namespace,
+        files_counter=1,
+    )
 
 
 def print_config_summary(
@@ -205,6 +356,169 @@ def show_template_layouts(omr_files, template, tuning_config):
         )
 
 
+def _process_single_omr_image(
+    in_omr,
+    file_path,
+    file_name,
+    template,
+    tuning_config,
+    evaluation_config,
+    outputs_namespace,
+    *,
+    files_counter: int = 1,
+):
+    """Inner per-image OMR pipeline shared by ``process_files`` and the
+    in-memory ``entry_point_for_image`` worker entry.
+
+    ``in_omr`` must be either a ``numpy.ndarray`` (already loaded image)
+    or ``None`` (signals a read failure upstream). Splitting this body out
+    lets callers feed a pre-decoded array — avoiding the staged-PNG round
+    trip that dominates Windows Defender scan cost on 5000+ page batches.
+    """
+    if in_omr is None:
+        logger.error(
+            f"({files_counter}) Could not read image: '{file_path}'"
+            " — file is corrupt, empty, or not a valid image format"
+        )
+        new_file_path = outputs_namespace.paths.errors_dir.joinpath(file_name)
+        outputs_namespace.OUTPUT_SET.append(
+            [file_name] + outputs_namespace.empty_resp
+        )
+        if check_and_move(ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path):
+            err_line = [
+                file_name,
+                serialize_path(file_path),
+                serialize_path(new_file_path),
+                "NA",
+            ] + outputs_namespace.empty_resp
+            pd.DataFrame(err_line, dtype=str).T.to_csv(
+                outputs_namespace.files_obj["Errors"],
+                mode="a",
+                quoting=QUOTE_NONNUMERIC,
+                header=False,
+                index=False,
+            )
+        return
+
+    logger.info("")
+    logger.info(
+        f"({files_counter}) Opening image: \t'{file_path}'\tResolution: {in_omr.shape}"
+    )
+
+    template.image_instance_ops.reset_all_save_img()
+
+    template.image_instance_ops.append_save_img(1, in_omr)
+
+    in_omr = template.image_instance_ops.apply_preprocessors(
+        file_path, in_omr, template
+    )
+
+    if in_omr is None:
+        new_file_path = outputs_namespace.paths.errors_dir.joinpath(file_name)
+        outputs_namespace.OUTPUT_SET.append(
+            [file_name] + outputs_namespace.empty_resp
+        )
+        if check_and_move(ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path):
+            err_line = [
+                file_name,
+                serialize_path(file_path),
+                serialize_path(new_file_path),
+                "NA",
+            ] + outputs_namespace.empty_resp
+            pd.DataFrame(err_line, dtype=str).T.to_csv(
+                outputs_namespace.files_obj["Errors"],
+                mode="a",
+                quoting=QUOTE_NONNUMERIC,
+                header=False,
+                index=False,
+            )
+        return
+
+    file_id = str(file_name)
+    save_dir = outputs_namespace.paths.save_marked_dir
+    (
+        response_dict,
+        final_marked,
+        multi_marked,
+        _,
+    ) = template.image_instance_ops.read_omr_response(
+        template, image=in_omr, name=file_id, save_dir=save_dir
+    )
+
+    omr_response = get_concatenated_response(response_dict, template)
+
+    if (
+        evaluation_config is None
+        or not evaluation_config.get_should_explain_scoring()
+    ):
+        logger.info(f"Read Response: \n{omr_response}")
+
+    score = 0
+    if evaluation_config is not None:
+        score = evaluate_concatenated_response(
+            omr_response,
+            evaluation_config,
+            file_path,
+            outputs_namespace.paths.evaluation_dir,
+        )
+        logger.info(
+            f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: '{file_id}'"
+        )
+    else:
+        logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
+
+    if tuning_config.outputs.show_image_level >= 2:
+        InteractionUtils.show(
+            f"Final Marked Bubbles : '{file_id}'",
+            ImageUtils.resize_util_h(
+                final_marked, int(tuning_config.dimensions.display_height * 1.3)
+            ),
+            1,
+            1,
+            config=tuning_config,
+        )
+
+    resp_array = []
+    for k in template.output_columns:
+        resp_array.append(omr_response[k])
+
+    outputs_namespace.OUTPUT_SET.append([file_name] + resp_array)
+
+    if multi_marked == 0 or not tuning_config.outputs.filter_out_multimarked_files:
+        STATS.files_not_moved += 1
+        new_file_path = save_dir.joinpath(file_id)
+        results_line = [
+            file_name,
+            serialize_path(file_path),
+            serialize_path(new_file_path),
+            score,
+        ] + resp_array
+        pd.DataFrame(results_line, dtype=str).T.to_csv(
+            outputs_namespace.files_obj["Results"],
+            mode="a",
+            quoting=QUOTE_NONNUMERIC,
+            header=False,
+            index=False,
+        )
+    else:
+        logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
+        new_file_path = outputs_namespace.paths.multi_marked_dir.joinpath(file_name)
+        if check_and_move(ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path):
+            mm_line = [
+                file_name,
+                serialize_path(file_path),
+                serialize_path(new_file_path),
+                "NA",
+            ] + resp_array
+            pd.DataFrame(mm_line, dtype=str).T.to_csv(
+                outputs_namespace.files_obj["MultiMarked"],
+                mode="a",
+                quoting=QUOTE_NONNUMERIC,
+                header=False,
+                index=False,
+            )
+
+
 def process_files(
     omr_files,
     template,
@@ -221,160 +535,16 @@ def process_files(
         file_name = file_path.name
 
         in_omr = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
-
-        if in_omr is None:
-            logger.error(
-                f"({files_counter}) Could not read image: '{file_path}'"
-                " — file is corrupt, empty, or not a valid image format"
-            )
-            new_file_path = outputs_namespace.paths.errors_dir.joinpath(file_name)
-            outputs_namespace.OUTPUT_SET.append(
-                [file_name] + outputs_namespace.empty_resp
-            )
-            if check_and_move(ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path):
-                err_line = [
-                    file_name,
-                    serialize_path(file_path),
-                    serialize_path(new_file_path),
-                    "NA",
-                ] + outputs_namespace.empty_resp
-                pd.DataFrame(err_line, dtype=str).T.to_csv(
-                    outputs_namespace.files_obj["Errors"],
-                    mode="a",
-                    quoting=QUOTE_NONNUMERIC,
-                    header=False,
-                    index=False,
-                )
-            continue
-
-        logger.info("")
-        logger.info(
-            f"({files_counter}) Opening image: \t'{file_path}'\tResolution: {in_omr.shape}"
+        _process_single_omr_image(
+            in_omr,
+            file_path,
+            file_name,
+            template,
+            tuning_config,
+            evaluation_config,
+            outputs_namespace,
+            files_counter=files_counter,
         )
-
-        template.image_instance_ops.reset_all_save_img()
-
-        template.image_instance_ops.append_save_img(1, in_omr)
-
-        in_omr = template.image_instance_ops.apply_preprocessors(
-            file_path, in_omr, template
-        )
-
-        if in_omr is None:
-            # Error OMR case (markers not found or preprocessor failure)
-            new_file_path = outputs_namespace.paths.errors_dir.joinpath(file_name)
-            outputs_namespace.OUTPUT_SET.append(
-                [file_name] + outputs_namespace.empty_resp
-            )
-            if check_and_move(ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path):
-                err_line = [
-                    file_name,
-                    serialize_path(file_path),
-                    serialize_path(new_file_path),
-                    "NA",
-                ] + outputs_namespace.empty_resp
-                pd.DataFrame(err_line, dtype=str).T.to_csv(
-                    outputs_namespace.files_obj["Errors"],
-                    mode="a",
-                    quoting=QUOTE_NONNUMERIC,
-                    header=False,
-                    index=False,
-                )
-            continue
-
-        # uniquify
-        file_id = str(file_name)
-        save_dir = outputs_namespace.paths.save_marked_dir
-        (
-            response_dict,
-            final_marked,
-            multi_marked,
-            _,
-        ) = template.image_instance_ops.read_omr_response(
-            template, image=in_omr, name=file_id, save_dir=save_dir
-        )
-
-        # TODO: move inner try catch here
-        # concatenate roll nos, set unmarked responses, etc
-        omr_response = get_concatenated_response(response_dict, template)
-
-        if (
-            evaluation_config is None
-            or not evaluation_config.get_should_explain_scoring()
-        ):
-            logger.info(f"Read Response: \n{omr_response}")
-
-        score = 0
-        if evaluation_config is not None:
-            score = evaluate_concatenated_response(
-                omr_response,
-                evaluation_config,
-                file_path,
-                outputs_namespace.paths.evaluation_dir,
-            )
-            logger.info(
-                f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: '{file_id}'"
-            )
-        else:
-            logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
-
-        if tuning_config.outputs.show_image_level >= 2:
-            InteractionUtils.show(
-                f"Final Marked Bubbles : '{file_id}'",
-                ImageUtils.resize_util_h(
-                    final_marked, int(tuning_config.dimensions.display_height * 1.3)
-                ),
-                1,
-                1,
-                config=tuning_config,
-            )
-
-        resp_array = []
-        for k in template.output_columns:
-            resp_array.append(omr_response[k])
-
-        outputs_namespace.OUTPUT_SET.append([file_name] + resp_array)
-
-        if multi_marked == 0 or not tuning_config.outputs.filter_out_multimarked_files:
-            STATS.files_not_moved += 1
-            new_file_path = save_dir.joinpath(file_id)
-            # Enter into Results sheet-
-            results_line = [
-                file_name,
-                serialize_path(file_path),
-                serialize_path(new_file_path),
-                score,
-            ] + resp_array
-            # Write/Append to results_line file(opened in append mode)
-            pd.DataFrame(results_line, dtype=str).T.to_csv(
-                outputs_namespace.files_obj["Results"],
-                mode="a",
-                quoting=QUOTE_NONNUMERIC,
-                header=False,
-                index=False,
-            )
-        else:
-            # multi_marked file
-            logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
-            new_file_path = outputs_namespace.paths.multi_marked_dir.joinpath(file_name)
-            if check_and_move(ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path):
-                mm_line = [
-                    file_name,
-                    serialize_path(file_path),
-                    serialize_path(new_file_path),
-                    "NA",
-                ] + resp_array
-                pd.DataFrame(mm_line, dtype=str).T.to_csv(
-                    outputs_namespace.files_obj["MultiMarked"],
-                    mode="a",
-                    quoting=QUOTE_NONNUMERIC,
-                    header=False,
-                    index=False,
-                )
-            # else:
-            #     TODO:  Add appropriate record handling here
-            #     pass
-
     print_stats(start_time, files_counter, tuning_config)
 
 

@@ -902,3 +902,159 @@ def test_directory_import_processes_with_dynamic_dimensions(
     assert persisted_config["dimensions"]["processing_width"] == latest_expected["processing_width"]
     assert persisted_config["dimensions"]["processing_height"] == latest_expected["processing_height"]
     assert persisted_config["outputs"]["show_image_level"] == sample_config_body["outputs"]["show_image_level"]
+
+
+# ---------------------------------------------------------------------------
+# Phase 1 + 2 mass-scale / Defender mitigation regression tests
+# ---------------------------------------------------------------------------
+
+
+def test_pdf_upload_returns_202_with_processing_flag(
+    client: TestClient, storage_root: Path
+) -> None:
+    """PDF uploads must be queued as a background task and signal that to the
+    UI so the frontend can show the split-progress bar."""
+    pytest.importorskip("fitz")
+    batch_id = _create_batch(client, "PDF async upload")
+    pdf_bytes = _make_simple_pdf(page_count=2)
+    response = client.post(
+        f"/api/v1/batches/{batch_id}/files",
+        files=[("files", ("async.pdf", pdf_bytes, "application/pdf"))],
+    )
+    assert response.status_code == 202, response.text
+    body = response.json()
+    assert body["processing"] is True
+    assert body["pdf_count"] == 1
+    # BackgroundTasks runs synchronously inside TestClient so files exist now.
+    listing = client.get(f"/api/v1/batches/{batch_id}/files")
+    names = [f["name"] for f in listing.json()]
+    assert names == ["async_page_0001.jpg", "async_page_0002.jpg"]
+
+
+def test_pdf_split_cleanup_removes_legacy_png_files(tmp_path: Path) -> None:
+    """A re-upload must clean up legacy ``.png`` page files left by older
+    versions of the pipeline, not just the current ``.jpg`` ones."""
+    pytest.importorskip("fitz")
+    from webui.services.batches import _save_pdf_pages_as_images, _remove_generated_pdf_pages
+
+    inputs = tmp_path / "inputs"
+    inputs.mkdir()
+    legacy_png = inputs / "doc_page_0001.png"
+    legacy_png.write_bytes(b"stale-png")
+    legacy_jpg = inputs / "doc_page_0002.jpg"
+    legacy_jpg.write_bytes(b"stale-jpg")
+
+    _remove_generated_pdf_pages(inputs, "doc")
+
+    assert not legacy_png.exists(), "legacy .png page must be removed"
+    assert not legacy_jpg.exists(), "legacy .jpg page must be removed"
+
+
+def test_settings_cache_root_defaults_under_localappdata(monkeypatch) -> None:
+    """On Windows the scratch cache must default to %LOCALAPPDATA%."""
+    import sys
+    if sys.platform != "win32":
+        pytest.skip("Windows-only path expectations")
+    monkeypatch.delenv("OMR_WEBUI_CACHE_ROOT", raising=False)
+    get_settings.cache_clear()
+    settings = get_settings()
+    assert "AppData" in str(settings.cache_root) or "LOCALAPPDATA" in str(settings.cache_root).upper()
+    assert "OMRChecker" in str(settings.cache_root)
+    assert "cache" in str(settings.cache_root).lower()
+
+
+def test_per_batch_cache_dir_is_isolated(tmp_path: Path, monkeypatch) -> None:
+    """Each batch gets its own subdirectory under the cache root."""
+    monkeypatch.setenv("OMR_WEBUI_CACHE_ROOT", str(tmp_path / "shared_cache"))
+    get_settings.cache_clear()
+    settings = get_settings()
+    a = settings.batch_cache_dir("batch_aaa")
+    b = settings.batch_cache_dir("batch_bbb")
+    assert a != b
+    assert a.exists() and b.exists()
+    assert a.parent == b.parent == settings.cache_root
+
+
+def test_inmemory_pipeline_flag_default_is_true(monkeypatch) -> None:
+    """The in-memory pipeline must be the default — that's the whole point
+    of the Defender mitigation work."""
+    monkeypatch.delenv("OMR_WEBUI_INMEMORY_PIPELINE", raising=False)
+    get_settings.cache_clear()
+    settings = get_settings()
+    assert settings.inmemory_pipeline is True
+
+
+def test_inmemory_pipeline_flag_can_be_disabled(monkeypatch) -> None:
+    """Setting OMR_WEBUI_INMEMORY_PIPELINE=false falls back to the legacy
+    directory-staged engine path."""
+    monkeypatch.setenv("OMR_WEBUI_INMEMORY_PIPELINE", "false")
+    get_settings.cache_clear()
+    settings = get_settings()
+    assert settings.inmemory_pipeline is False
+
+
+def test_pdf_page_format_emits_both_formats_validly(tmp_path: Path) -> None:
+    """Both JPEG (default) and PNG output paths must produce valid,
+    cv2-readable images. Size comparison is content-dependent (PNG beats
+    JPEG on blank pages; JPEG wins by 3-5x on real scanned OMR sheets),
+    so we only assert both paths roundtrip correctly."""
+    pytest.importorskip("fitz")
+    from webui.services.batches import _save_pdf_pages_as_images
+
+    pdf_bytes = _make_simple_pdf(page_count=1, width=300, height=400)
+
+    jpeg_dir = tmp_path / "jpeg"
+    jpeg_dir.mkdir()
+    jpeg_refs = _save_pdf_pages_as_images(
+        jpeg_dir, "doc.pdf", pdf_bytes,
+        page_format="jpeg", jpeg_quality=92,
+    )
+    png_dir = tmp_path / "png"
+    png_dir.mkdir()
+    png_refs = _save_pdf_pages_as_images(
+        png_dir, "doc.pdf", pdf_bytes,
+        page_format="png",
+    )
+    assert len(jpeg_refs) == 1 and jpeg_refs[0].name.endswith(".jpg")
+    assert len(png_refs) == 1 and png_refs[0].name.endswith(".png")
+    jpeg_img = cv2.imread(str(jpeg_dir / jpeg_refs[0].name), cv2.IMREAD_UNCHANGED)
+    png_img = cv2.imread(str(png_dir / png_refs[0].name), cv2.IMREAD_UNCHANGED)
+    assert jpeg_img is not None and jpeg_img.size > 0
+    assert png_img is not None and png_img.size > 0
+
+
+def test_pdf_page_format_rejects_unknown_value(tmp_path: Path) -> None:
+    """Misconfigured format must surface a clean InvalidBatchRequest, not a
+    silent fallback that ends up writing the wrong file extension."""
+    pytest.importorskip("fitz")
+    from webui.services.batches import _save_pdf_pages_as_images, InvalidBatchRequest
+
+    inputs = tmp_path / "inputs"
+    inputs.mkdir()
+    with pytest.raises(InvalidBatchRequest):
+        _save_pdf_pages_as_images(
+            inputs, "x.pdf", _make_simple_pdf(page_count=1),
+            page_format="webp",  # unsupported
+        )
+
+
+def test_rotated_cache_is_skipped_when_no_rotation_and_no_resize(
+    tmp_path: Path, adrian_images: list[Path]
+) -> None:
+    """No rotation + image already at processing size → no _rotated write."""
+    from webui.services.omr import _rotate_image_for_runtime
+    src = adrian_images[0]
+    dst_dir = tmp_path / "runtime"
+    dst_dir.mkdir()
+    dst = dst_dir / src.name
+    rotated_dir = tmp_path / "_rotated"
+
+    _rotate_image_for_runtime(
+        src, dst,
+        rotation_degrees=0,
+        pre_resize_to=None,
+        rotated_dir=rotated_dir,
+    )
+    assert dst.exists()
+    # The cache dir must not be populated when no rotation/resize happened.
+    assert not rotated_dir.exists() or not any(rotated_dir.iterdir())

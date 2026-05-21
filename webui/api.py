@@ -225,20 +225,43 @@ async def list_files(
     return batches_service.list_files(batch_id, settings)
 
 
-@router.post(
-    "/batches/{batch_id}/files",
-    response_model=list[FileRef],
-    status_code=status.HTTP_201_CREATED,
-)
+def _is_pdf_upload(upload: UploadFile) -> bool:
+    """Return True when the uploaded file is a PDF by name or content-type."""
+    name = (upload.filename or "").lower()
+    if name.endswith(".pdf"):
+        return True
+    content_type = (upload.content_type or "").lower()
+    return content_type == "application/pdf"
+
+
+@router.post("/batches/{batch_id}/files")
 @_handle_errors
 async def upload_files(
     batch_id: str,
+    background_tasks: BackgroundTasks,
     files: list[UploadFile] = File(...),
     settings: Settings = Depends(get_settings),
-) -> list[FileRef]:
+):
+    """Accept image + PDF uploads.
+
+    Image uploads (PNG / JPG / JPEG) are written synchronously and the
+    endpoint returns ``201`` with the resulting :class:`FileRef` list.
+
+    PDF uploads are scheduled as a background task because a 5000-page PDF
+    can take minutes to render; the endpoint returns ``202`` with
+    ``{"processing": True, "files": [...image refs already saved...]}``.
+    The frontend polls ``/batches/{batch_id}/status`` for the split
+    progress and refreshes its file list when ``pdf_split_total`` returns
+    to zero (i.e. the background task finished).
+    """
+    from fastapi.responses import JSONResponse
+
     if not files:
         raise HTTPException(status_code=400, detail="No files provided")
-    stored: list[FileRef] = []
+    # Read all upload bytes up front: we need to know each file's size for
+    # the size check anyway, and the UploadFile stream is consumed once.
+    image_refs: list[FileRef] = []
+    pdf_jobs: list[tuple[str, bytes]] = []
     for upload in files:
         data = await upload.read()
         if len(data) > settings.max_upload_bytes:
@@ -249,9 +272,10 @@ async def upload_files(
                     f"({settings.max_upload_bytes} bytes)"
                 ),
             )
-        # Run the synchronous (CPU + disk I/O) conversion in a thread so the
-        # event loop stays free.  Large PDFs take seconds to minutes; without
-        # this the entire uvicorn worker stalls and other requests are blocked.
+        if _is_pdf_upload(upload):
+            pdf_jobs.append((upload.filename or "upload.pdf", data))
+            continue
+        # Synchronous image save (fast, no rendering).
         refs = await asyncio.to_thread(
             batches_service.save_uploaded_file,
             batch_id,
@@ -259,8 +283,33 @@ async def upload_files(
             data,
             settings,
         )
-        stored.extend(refs)
-    return stored
+        image_refs.extend(refs)
+
+    if pdf_jobs:
+        # Schedule PDF rendering as background work. BackgroundTasks runs
+        # after the response is sent in production; in TestClient it runs
+        # synchronously, which is exactly what the test harness expects.
+        for filename, data in pdf_jobs:
+            background_tasks.add_task(
+                batches_service.save_uploaded_file,
+                batch_id,
+                filename,
+                data,
+                settings,
+            )
+        return JSONResponse(
+            status_code=status.HTTP_202_ACCEPTED,
+            content={
+                "processing": True,
+                "files": [ref.model_dump() for ref in image_refs],
+                "pdf_count": len(pdf_jobs),
+            },
+        )
+
+    return JSONResponse(
+        status_code=status.HTTP_201_CREATED,
+        content=[ref.model_dump() for ref in image_refs],
+    )
 
 
 @router.post(
