@@ -7,11 +7,14 @@ and any third-party API consumer go through identical codepaths.
 from __future__ import annotations
 
 import asyncio
+import logging
 import secrets
 import threading
 import time as _time_mod
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 import csv
 import io
@@ -289,14 +292,25 @@ async def upload_files(
         # Schedule PDF rendering as background work. BackgroundTasks runs
         # after the response is sent in production; in TestClient it runs
         # synchronously, which is exactly what the test harness expects.
+        #
+        # Each task is wrapped in a closure so that any exception (corrupt
+        # PDF, disk full, etc.) is caught and persisted into batch metadata
+        # rather than silently swallowed by the BackgroundTasks runner.
         for filename, data in pdf_jobs:
-            background_tasks.add_task(
-                batches_service.save_uploaded_file,
-                batch_id,
-                filename,
-                data,
-                settings,
-            )
+            stem = Path(filename).stem
+
+            def _run_pdf_split(fn=filename, d=data, s=stem):
+                try:
+                    batches_service.save_uploaded_file(batch_id, fn, d, settings)
+                except Exception as exc:  # noqa: BLE001
+                    error_msg = f"{s}: {type(exc).__name__}: {exc}"
+                    logger.exception(
+                        "Background PDF split failed | batch=%s | file=%s",
+                        batch_id, fn,
+                    )
+                    batches_service._record_pdf_split_error(batch_id, settings, error_msg)
+
+            background_tasks.add_task(_run_pdf_split)
         return JSONResponse(
             status_code=status.HTTP_202_ACCEPTED,
             content={
@@ -577,6 +591,7 @@ async def batch_status(
         eta_s=eta_s,
         pdf_split_pages=int(metadata.get("pdf_split_pages", 0)),
         pdf_split_total=int(metadata.get("pdf_split_total", 0)),
+        pdf_split_error=metadata.get("pdf_split_error") or None,
     )
 
 
@@ -885,38 +900,6 @@ async def prefill_batch(
         "elapsed_s": meta["elapsed_s"],
         "size_bytes": meta["size_bytes"],
     }
-
-
-@router.get("/prefill/batch/download/{token}")
-async def prefill_batch_download(token: str, background_tasks: BackgroundTasks):
-    """One-time token download endpoint. Returns the generated file and deletes it."""
-    with _DOWNLOAD_STORE_LOCK:
-        entry = _DOWNLOAD_STORE.pop(token, None)
-
-    if entry is None:
-        raise HTTPException(status_code=404, detail="Download link not found or already used.")
-
-    tmp_path, media_type, filename, expires_at = entry
-    if not tmp_path.exists():
-        raise HTTPException(status_code=410, detail="File no longer available.")
-    if _time_mod.monotonic() > expires_at:
-        tmp_path.unlink(missing_ok=True)
-        raise HTTPException(status_code=410, detail="Download link has expired.")
-
-    def _cleanup():
-        try:
-            tmp_path.unlink(missing_ok=True)
-        except OSError:
-            pass
-
-    background_tasks.add_task(_cleanup)
-    return FileResponse(
-        path=str(tmp_path),
-        media_type=media_type,
-        filename=filename,
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-        background=background_tasks,
-    )
 
 
 @router.get("/prefill/batch/download/{token}")

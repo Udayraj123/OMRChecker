@@ -17,11 +17,13 @@ existing ``entry_point_for_args`` without modifying any engine code.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
 import re
 import shutil
+import threading
 import time
 import uuid
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -59,6 +61,7 @@ from webui.schemas import (
     SourceMode,
     TemplateAssetRef,
 )
+from webui.services.capacity import reserve_worker_capacity, worker_capacity_limit
 from webui.settings import Settings, get_settings
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg"}
@@ -105,6 +108,32 @@ def _sanitise_filename(name: str) -> str:
     if not cleaned:
         raise InvalidBatchRequest(f"Invalid filename: {name!r}")
     return cleaned
+
+
+# Maximum stem length (chars) before PDF page filenames exceed Windows MAX_PATH.
+# With `_page_NNNN.jpg` (12 chars) appended a 120-char stem yields ~132 chars
+# for the filename alone, leaving ample room for a typical storage path prefix.
+_MAX_STEM_CHARS = 120
+
+
+def _truncate_filename_stem(safe: str, max_stem: int = _MAX_STEM_CHARS) -> str:
+    """Shorten the stem of *safe* to *max_stem* characters when needed.
+
+    The last 6 characters of the truncated stem are replaced with an MD5
+    fragment so that two long names that share a common prefix still map to
+    distinct short names.
+    """
+    p = Path(safe)
+    stem = p.stem
+    if len(stem) <= max_stem:
+        return safe
+    suffix_hash = hashlib.md5(stem.encode()).hexdigest()[:6]
+    new_stem = stem[: max_stem - 6] + suffix_hash
+    logger.warning(
+        "Filename stem truncated from %d to %d chars: %r -> %r",
+        len(stem), len(new_stem), stem, new_stem,
+    )
+    return new_stem + p.suffix
 
 
 def _serialise(value: Any) -> Any:
@@ -436,6 +465,30 @@ def _write_pdf_split_progress(
         pass  # progress write failure must never abort the split
 
 
+def _record_pdf_split_error(
+    batch_id: str,
+    settings: Settings | None,
+    message: str,
+) -> None:
+    """Persist a PDF-split error into batch metadata and unblock the frontend poller.
+
+    Sets ``pdf_split_error`` to *message* and resets ``pdf_split_pages`` /
+    ``pdf_split_total`` to 0 in a single metadata write so the status endpoint
+    always returns them atomically.  Never raises.
+    """
+    if not batch_id or settings is None:
+        return
+    try:
+        meta = _load_metadata(settings, batch_id)
+        meta["pdf_split_error"] = message
+        meta["pdf_split_pages"] = 0
+        meta["pdf_split_total"] = 0
+        meta["updated_at"] = _now().isoformat()
+        _save_metadata(settings, batch_id, meta)
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def save_uploaded_file(
     batch_id: str,
     filename: str,
@@ -447,13 +500,20 @@ def save_uploaded_file(
     inputs = _inputs_dir(settings, batch_id)
     if not inputs.exists():
         raise BatchNotFound(batch_id)
-    safe = _sanitise_filename(filename)
+    safe = _truncate_filename_stem(_sanitise_filename(filename))
     suffix = Path(safe).suffix.lower()
     if suffix not in UPLOAD_EXTENSIONS:
         raise InvalidBatchRequest(
             f"Unsupported file type {suffix!r}; allowed: {sorted(UPLOAD_EXTENSIONS)}"
         )
     if suffix in PDF_EXTENSIONS:
+        # Clear any error from a previous failed split before attempting the new one.
+        try:
+            _meta = _load_metadata(settings, batch_id)
+            _meta["pdf_split_error"] = None
+            _save_metadata(settings, batch_id, _meta)
+        except Exception:  # noqa: BLE001
+            pass
         stored = _save_pdf_pages_as_images(
             inputs, safe, data,
             dpi=settings.pdf_render_dpi,
@@ -476,6 +536,27 @@ def save_uploaded_file(
 # per worker instead of once per page. The cache is keyed by absolute PDF
 # path so multiple PDFs in the same worker would coexist (rare in practice).
 _PDF_WORKER_CACHE: dict[str, Any] = {}
+
+# Per-(batch_id, stem) locks that serialise concurrent uploads of PDFs with
+# the same filename to the same batch.  Without this, two simultaneous uploads
+# of "scans.pdf" would interleave: the second call's _remove_generated_pdf_pages
+# could delete pages the first call just wrote, and both would write to the same
+# output paths producing corrupt or missing pages.
+#
+# The master lock guards insertion into the dict only; the individual stem locks
+# are held for the full duration of the split so they are never short-lived from
+# the perspective of the master lock.
+_PDF_SPLIT_LOCKS: dict[tuple[str, str], threading.Lock] = {}
+_PDF_SPLIT_LOCKS_MASTER = threading.Lock()
+
+
+def _get_pdf_split_lock(batch_id: str, stem: str) -> threading.Lock:
+    """Return the per-(batch, stem) threading.Lock, creating it if absent."""
+    key = (batch_id, stem)
+    with _PDF_SPLIT_LOCKS_MASTER:
+        if key not in _PDF_SPLIT_LOCKS:
+            _PDF_SPLIT_LOCKS[key] = threading.Lock()
+        return _PDF_SPLIT_LOCKS[key]
 
 
 def _resolve_pdf_format(page_format: str) -> tuple[str, str]:
@@ -546,10 +627,17 @@ def _default_pdf_split_workers(settings: Settings | None) -> int:
     concurrent OMR processing) capped at 8 to keep per-worker spawn
     overhead worth it for batches of any size.
     """
+    capacity = worker_capacity_limit()
     if settings is not None and getattr(settings, "pdf_split_workers", 0):
-        return int(settings.pdf_split_workers)
+        requested = int(settings.pdf_split_workers)
+        if requested > capacity:
+            logger.warning(
+                "Clamping pdf_split_workers from %d to worker capacity %d",
+                requested, capacity,
+            )
+        return max(1, min(requested, capacity))
     cpu = os.cpu_count() or 2
-    return max(1, min(8, cpu // 2))
+    return max(1, min(8, cpu // 2, capacity))
 
 
 def _save_pdf_pages_as_images(
@@ -604,84 +692,109 @@ def _save_pdf_pages_as_images(
         raise InvalidBatchRequest(f"PDF has no pages: {safe_filename}")
 
     stem = Path(safe_filename).stem
-    _remove_generated_pdf_pages(inputs, stem)
-    _write_pdf_split_progress(batch_id, settings, 0, page_count)
 
-    min_parallel = (
-        getattr(settings, "pdf_split_min_pages_for_parallel", 16)
-        if settings is not None else 16
-    )
-    requested_workers = _default_pdf_split_workers(settings)
-    use_parallel = (
-        requested_workers > 1
-        and page_count >= max(1, int(min_parallel))
-    )
+    # Path-aware stem truncation: even after the pre-call _truncate_filename_stem()
+    # guard (which caps at _MAX_STEM_CHARS), the full output path can still exceed
+    # Windows MAX_PATH=260 when the inputs directory itself has a long prefix
+    # (e.g. deep pytest tmp_path trees).  Re-truncate using the actual path length.
+    _PAGE_SUFFIX_LEN = 15  # len("_page_NNNN.jpg") + 1 for path separator
+    _max_stem_for_path = max(20, 255 - len(str(inputs)) - _PAGE_SUFFIX_LEN)
+    if len(stem) > _max_stem_for_path:
+        _path_hash = hashlib.md5(stem.encode()).hexdigest()[:6]
+        _new_stem = stem[:_max_stem_for_path - 6] + _path_hash
+        logger.warning(
+            "PDF stem further truncated for path-length safety: %r -> %r (inputs=%s)",
+            stem, _new_stem, inputs,
+        )
+        stem = _new_stem
 
-    logger.info(
-        "PDF split started | file=%s | pages=%d | dpi=%d | grayscale=%s | "
-        "fmt=%s | mode=%s | workers=%d",
-        safe_filename, page_count, dpi, grayscale, ext.lstrip("."),
-        "parallel" if use_parallel else "serial",
-        requested_workers if use_parallel else 1,
-    )
+    # Serialise concurrent uploads of PDFs with the same stem to the same
+    # batch.  Different stems or different batches use independent locks and
+    # therefore run fully in parallel.
+    _split_lock = _get_pdf_split_lock(batch_id or "", stem)
+    with _split_lock:
+        _remove_generated_pdf_pages(inputs, stem)
+        _write_pdf_split_progress(batch_id, settings, 0, page_count)
 
-    try:
-        if use_parallel:
-            stored, failed_pages = _save_pdf_pages_parallel(
-                inputs=inputs,
-                safe_filename=safe_filename,
-                data=data,
-                stem=stem,
-                page_count=page_count,
-                dpi=dpi,
-                grayscale=grayscale,
-                ext=ext,
-                jpeg_quality=quality,
-                workers=requested_workers,
-                batch_id=batch_id,
-                settings=settings,
+        min_parallel = (
+            getattr(settings, "pdf_split_min_pages_for_parallel", 16)
+            if settings is not None else 16
+        )
+        requested_workers = _default_pdf_split_workers(settings)
+        use_parallel = (
+            requested_workers > 1
+            and page_count >= max(1, int(min_parallel))
+        )
+
+        logger.info(
+            "PDF split started | file=%s | pages=%d | dpi=%d | grayscale=%s | "
+            "fmt=%s | mode=%s | workers=%d",
+            safe_filename, page_count, dpi, grayscale, ext.lstrip("."),
+            "parallel" if use_parallel else "serial",
+            requested_workers if use_parallel else 1,
+        )
+
+        try:
+            if use_parallel:
+                stored, failed_pages = _save_pdf_pages_parallel(
+                    inputs=inputs,
+                    safe_filename=safe_filename,
+                    data=data,
+                    stem=stem,
+                    page_count=page_count,
+                    dpi=dpi,
+                    grayscale=grayscale,
+                    ext=ext,
+                    jpeg_quality=quality,
+                    workers=requested_workers,
+                    batch_id=batch_id,
+                    settings=settings,
+                )
+            else:
+                with reserve_worker_capacity(
+                    1,
+                    label=f"pdf-serial:{safe_filename}",
+                ):
+                    stored, failed_pages = _save_pdf_pages_serial(
+                        inputs=inputs,
+                        safe_filename=safe_filename,
+                        data=data,
+                        stem=stem,
+                        page_count=page_count,
+                        dpi=dpi,
+                        grayscale=grayscale,
+                        ext=ext,
+                        jpeg_quality=quality,
+                        batch_id=batch_id,
+                        settings=settings,
+                    )
+        except InvalidBatchRequest:
+            raise
+        except Exception as exc:
+            raise InvalidBatchRequest(
+                f"Could not convert PDF {safe_filename!r}: "
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
+
+        if not stored:
+            _write_pdf_split_progress(batch_id, settings, 0, 0)  # clear progress
+            raise InvalidBatchRequest(
+                f"PDF {safe_filename!r}: all {len(failed_pages)} page(s) failed to render."
+            )
+        # Clear progress fields so the UI does not show stale split data
+        _write_pdf_split_progress(batch_id, settings, 0, 0)
+        if failed_pages:
+            logger.warning(
+                "PDF split finished with errors | file=%s | ok=%d | failed=%d | "
+                "first_failed_pages=%s",
+                safe_filename, len(stored), len(failed_pages), failed_pages[:20],
             )
         else:
-            stored, failed_pages = _save_pdf_pages_serial(
-                inputs=inputs,
-                safe_filename=safe_filename,
-                data=data,
-                stem=stem,
-                page_count=page_count,
-                dpi=dpi,
-                grayscale=grayscale,
-                ext=ext,
-                jpeg_quality=quality,
-                batch_id=batch_id,
-                settings=settings,
+            logger.info(
+                "PDF split complete | file=%s | pages=%d | dpi=%d | grayscale=%s",
+                safe_filename, len(stored), dpi, grayscale,
             )
-    except InvalidBatchRequest:
-        raise
-    except Exception as exc:
-        raise InvalidBatchRequest(
-            f"Could not convert PDF {safe_filename!r}: "
-            f"{type(exc).__name__}: {exc}"
-        ) from exc
-
-    if not stored:
-        _write_pdf_split_progress(batch_id, settings, 0, 0)  # clear progress
-        raise InvalidBatchRequest(
-            f"PDF {safe_filename!r}: all {len(failed_pages)} page(s) failed to render."
-        )
-    # Clear progress fields so the UI does not show stale split data
-    _write_pdf_split_progress(batch_id, settings, 0, 0)
-    if failed_pages:
-        logger.warning(
-            "PDF split finished with errors | file=%s | ok=%d | failed=%d | "
-            "first_failed_pages=%s",
-            safe_filename, len(stored), len(failed_pages), failed_pages[:20],
-        )
-    else:
-        logger.info(
-            "PDF split complete | file=%s | pages=%d | dpi=%d | grayscale=%s",
-            safe_filename, len(stored), dpi, grayscale,
-        )
-    return stored
+        return stored
 
 
 def _save_pdf_pages_serial(
@@ -794,58 +907,68 @@ def _save_pdf_pages_parallel(
         # Submit one task per page. Each task is tiny to pickle (a path
         # plus a few ints) and the worker reuses the cached fitz.Document
         # for every page it handles.
-        with ProcessPoolExecutor(max_workers=workers) as ex:
-            futures = {
-                ex.submit(
-                    _render_pdf_page_to_disk,
-                    pdf_path_str,
-                    page_index,
-                    str(inputs),
-                    stem,
-                    dpi=dpi,
-                    grayscale=grayscale,
-                    ext=ext,
-                    jpeg_quality=jpeg_quality,
-                ): page_index
-                for page_index in range(1, page_count + 1)
-            }
-            completed = 0
-            for fut in as_completed(futures):
-                page_index = futures[fut]
-                try:
-                    res_page, res_name, res_size, res_err = fut.result()
-                except Exception as exc:  # noqa: BLE001
-                    res_page = page_index
-                    res_name = None
-                    res_size = 0
-                    res_err = f"{type(exc).__name__}: {exc}"
+        with reserve_worker_capacity(
+            workers,
+            label=f"pdf-parallel:{safe_filename}",
+        ) as reserved_workers:
+            if reserved_workers != workers:
+                logger.info(
+                    "PDF split worker count reduced by shared capacity | "
+                    "file=%s | requested=%d | granted=%d",
+                    safe_filename, workers, reserved_workers,
+                )
+            with ProcessPoolExecutor(max_workers=reserved_workers) as ex:
+                futures = {
+                    ex.submit(
+                        _render_pdf_page_to_disk,
+                        pdf_path_str,
+                        page_index,
+                        str(inputs),
+                        stem,
+                        dpi=dpi,
+                        grayscale=grayscale,
+                        ext=ext,
+                        jpeg_quality=jpeg_quality,
+                    ): page_index
+                    for page_index in range(1, page_count + 1)
+                }
+                completed = 0
+                for fut in as_completed(futures):
+                    page_index = futures[fut]
+                    try:
+                        res_page, res_name, res_size, res_err = fut.result()
+                    except Exception as exc:  # noqa: BLE001
+                        res_page = page_index
+                        res_name = None
+                        res_size = 0
+                        res_err = f"{type(exc).__name__}: {exc}"
 
-                if res_err is not None or res_name is None:
-                    failed_pages.append(res_page)
-                    logger.warning(
-                        "PDF page render failed | file=%s | page=%d/%d | %s",
-                        safe_filename, res_page, page_count, res_err,
-                    )
-                else:
-                    stored_by_index[res_page] = FileRef(
-                        name=res_name, size_bytes=res_size
-                    )
+                    if res_err is not None or res_name is None:
+                        failed_pages.append(res_page)
+                        logger.warning(
+                            "PDF page render failed | file=%s | page=%d/%d | %s",
+                            safe_filename, res_page, page_count, res_err,
+                        )
+                    else:
+                        stored_by_index[res_page] = FileRef(
+                            name=res_name, size_bytes=res_size
+                        )
 
-                completed += 1
-                if (
-                    completed % progress_step == 0
-                    or completed == page_count
-                ):
-                    _write_pdf_split_progress(
-                        batch_id, settings,
-                        len(stored_by_index), page_count,
-                    )
-                if completed % 50 == 0 or completed == page_count:
-                    logger.info(
-                        "PDF split progress | file=%s | %d/%d pages saved | failed=%d",
-                        safe_filename, len(stored_by_index),
-                        page_count, len(failed_pages),
-                    )
+                    completed += 1
+                    if (
+                        completed % progress_step == 0
+                        or completed == page_count
+                    ):
+                        _write_pdf_split_progress(
+                            batch_id, settings,
+                            len(stored_by_index), page_count,
+                        )
+                    if completed % 50 == 0 or completed == page_count:
+                        logger.info(
+                            "PDF split progress | file=%s | %d/%d pages saved | failed=%d",
+                            safe_filename, len(stored_by_index),
+                            page_count, len(failed_pages),
+                        )
     finally:
         # Always clean up the staged PDF — workers have already closed
         # their handles when the executor shut down.
@@ -931,13 +1054,15 @@ def import_directory(
         if suffix not in UPLOAD_EXTENSIONS:
             skipped.append(child.name)
             continue
-        safe = _sanitise_filename(child.name)
+        safe = _truncate_filename_stem(_sanitise_filename(child.name))
         if suffix in PDF_EXTENSIONS:
             imported.extend(
                 _save_pdf_pages_as_images(
                     inputs, safe, child.read_bytes(),
                     dpi=settings.pdf_render_dpi,
                     grayscale=settings.pdf_render_grayscale,
+                    page_format=settings.pdf_page_format,
+                    jpeg_quality=settings.pdf_jpeg_quality,
                     batch_id=batch_id,
                     settings=settings,
                 )

@@ -31,6 +31,7 @@ from webui.schemas import (
     ResultsRow,
 )
 from webui.services import batches as batches_service
+from webui.services.capacity import reserve_worker_capacity, worker_capacity_limit
 from webui.settings import Settings, get_settings
 
 logger = logging.getLogger(__name__)
@@ -556,25 +557,38 @@ def _cleanup_runtime_dir(runtime_dir: Path | None) -> None:
 
 
 def _default_max_workers() -> int:
+    capacity = worker_capacity_limit()
     # Allow explicit override via environment variable.
     env_val = os.environ.get("OMR_WEBUI_MAX_WORKERS")
     if env_val:
         try:
-            return max(1, min(32, int(env_val)))
+            requested = int(env_val)
+            if requested > capacity:
+                logger.warning(
+                    "Clamping OMR_WEBUI_MAX_WORKERS from %d to worker capacity %d",
+                    requested, capacity,
+                )
+            return max(1, min(32, requested, capacity))
         except (TypeError, ValueError):
             pass
     cpu = os.cpu_count() or 2
     # Leave 1 core free for the main process; cap at 16 for modern many-core
     # machines. Override via max_workers in config.json (accepts 1-32).
-    return max(1, min(cpu - 1, 16))
+    return max(1, min(cpu - 1, 16, capacity))
 
 
 def _coerce_max_workers(value: Any) -> int:
+    capacity = worker_capacity_limit()
     try:
         parsed = int(value)
     except (TypeError, ValueError):
         return _default_max_workers()
-    return max(1, min(32, parsed))
+    if parsed > capacity:
+        logger.warning(
+            "Clamping configured max_workers from %d to worker capacity %d",
+            parsed, capacity,
+        )
+    return max(1, min(32, parsed, capacity))
 
 
 def _process_one_image(payload: dict[str, Any]) -> dict[str, Any]:
@@ -868,121 +882,132 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
         image_iter = iter(input_images)
         _executor_gone = False  # set when executor shuts down mid-run (e.g. server reload)
 
-        with ProcessPoolExecutor(max_workers=max_workers) as executor:
-            while len(futures) < max_workers:
-                try:
-                    image = next(image_iter)
-                except StopIteration:
-                    break
-                try:
-                    futures[executor.submit(_process_one_image, submit_payload(next_index, image))] = image
-                except RuntimeError:
-                    _executor_gone = True
-                    break
-                next_index += 1
+        with reserve_worker_capacity(
+            max_workers,
+            label=f"omr:{batch_id}",
+        ) as reserved_workers:
+            if reserved_workers != max_workers:
+                logger.info(
+                    "OMR worker count reduced by shared capacity | batch_id=%s | "
+                    "requested=%d | granted=%d",
+                    batch_id, max_workers, reserved_workers,
+                )
+            max_workers = reserved_workers
+            with ProcessPoolExecutor(max_workers=max_workers) as executor:
+                while len(futures) < max_workers:
+                    try:
+                        image = next(image_iter)
+                    except StopIteration:
+                        break
+                    try:
+                        futures[executor.submit(_process_one_image, submit_payload(next_index, image))] = image
+                    except RuntimeError:
+                        _executor_gone = True
+                        break
+                    next_index += 1
 
-            last_milestone = 0
-            completed = 0
-            while futures:
-                done, _ = wait(futures.keys(), return_when=FIRST_COMPLETED)
-                for future in done:
-                    image = futures.pop(future)
-                    result = future.result()
-                    completed += 1
-                    _total = len(input_images)
-                    _pct = completed * 100 // _total
-                    _milestone = (_pct // 10) * 10
-                    if _milestone > last_milestone and _milestone > 0:
-                        last_milestone = _milestone
-                        _elapsed_s = time.monotonic() - run_started_at
-                        _rate_min = (completed / _elapsed_s * 60) if _elapsed_s > 0 else 0
-                        logger.info("OMR progress | %d/%d | elapsed=%.1fs | rate=%.0f/min | failures=%d", completed, _total, _elapsed_s, _rate_min, len(preprocess_failures))
-                    file_name = result.get("file_name") or image.name
-                    result_index = int(result.get("index") or 0)
-                    dyn = result.get("dynamic_dimensions") or {}
-                    ended_in_errors = bool(result.get("ended_in_errors", False))
-                    worker_error = result.get("error")
-                    results_header = result.get("results_header") or []
-                    results_rows = result.get("results_rows") or []
-                    mm_header = result.get("mm_header") or []
-                    mm_rows = result.get("mm_rows") or []
-                    err_header = result.get("err_header") or []
-                    err_rows = result.get("err_rows") or []
+                last_milestone = 0
+                completed = 0
+                while futures:
+                    done, _ = wait(futures.keys(), return_when=FIRST_COMPLETED)
+                    for future in done:
+                        image = futures.pop(future)
+                        result = future.result()
+                        completed += 1
+                        _total = len(input_images)
+                        _pct = completed * 100 // _total
+                        _milestone = (_pct // 10) * 10
+                        if _milestone > last_milestone and _milestone > 0:
+                            last_milestone = _milestone
+                            _elapsed_s = time.monotonic() - run_started_at
+                            _rate_min = (completed / _elapsed_s * 60) if _elapsed_s > 0 else 0
+                            logger.info("OMR progress | %d/%d | elapsed=%.1fs | rate=%.0f/min | failures=%d", completed, _total, _elapsed_s, _rate_min, len(preprocess_failures))
+                        file_name = result.get("file_name") or image.name
+                        result_index = int(result.get("index") or 0)
+                        dyn = result.get("dynamic_dimensions") or {}
+                        ended_in_errors = bool(result.get("ended_in_errors", False))
+                        worker_error = result.get("error")
+                        results_header = result.get("results_header") or []
+                        results_rows = result.get("results_rows") or []
+                        mm_header = result.get("mm_header") or []
+                        mm_rows = result.get("mm_rows") or []
+                        err_header = result.get("err_header") or []
+                        err_rows = result.get("err_rows") or []
 
-                    if results_header and aggregated_results_header is None:
-                        aggregated_results_header = list(results_header)
-                    if mm_header and aggregated_mm_header is None:
-                        aggregated_mm_header = list(mm_header)
-                    if err_header and aggregated_err_header is None:
-                        aggregated_err_header = list(err_header)
-                    aggregated_results_rows.extend(
-                        (result_index, row) for row in results_rows
-                    )
-                    aggregated_mm_rows.extend((result_index, row) for row in mm_rows)
-                    aggregated_err_rows.extend((result_index, row) for row in err_rows)
+                        if results_header and aggregated_results_header is None:
+                            aggregated_results_header = list(results_header)
+                        if mm_header and aggregated_mm_header is None:
+                            aggregated_mm_header = list(mm_header)
+                        if err_header and aggregated_err_header is None:
+                            aggregated_err_header = list(err_header)
+                        aggregated_results_rows.extend(
+                            (result_index, row) for row in results_rows
+                        )
+                        aggregated_mm_rows.extend((result_index, row) for row in mm_rows)
+                        aggregated_err_rows.extend((result_index, row) for row in err_rows)
 
-                    copy_if_present(
-                        result.get("checked_image"),
-                        outputs_dir / "CheckedOMRs",
-                    )
-                    copy_if_present(
-                        result.get("error_image"),
-                        outputs_dir / "Manual" / "ErrorFiles",
-                    )
-                    copy_if_present(
-                        result.get("mm_image"),
-                        outputs_dir / "Manual" / "MultiMarkedFiles",
-                    )
+                        copy_if_present(
+                            result.get("checked_image"),
+                            outputs_dir / "CheckedOMRs",
+                        )
+                        copy_if_present(
+                            result.get("error_image"),
+                            outputs_dir / "Manual" / "ErrorFiles",
+                        )
+                        copy_if_present(
+                            result.get("mm_image"),
+                            outputs_dir / "Manual" / "MultiMarkedFiles",
+                        )
 
-                    if isinstance(dyn, dict) and dyn:
-                        dynamic_dimensions_by_file[file_name] = dyn
-                        runtime_config = result.get("runtime_config")
-                        if result_index >= latest_index_completed:
-                            latest_index_completed = result_index
-                            latest_file_name = file_name
-                            latest_dimensions = dyn
-                            if isinstance(runtime_config, dict):
-                                latest_runtime_config = runtime_config
-                    if ended_in_errors:
-                        preprocess_failures.append(file_name)
-                    if worker_error:
-                        preprocess_worker_errors.append(f"{file_name}: {worker_error}")
+                        if isinstance(dyn, dict) and dyn:
+                            dynamic_dimensions_by_file[file_name] = dyn
+                            runtime_config = result.get("runtime_config")
+                            if result_index >= latest_index_completed:
+                                latest_index_completed = result_index
+                                latest_file_name = file_name
+                                latest_dimensions = dyn
+                                if isinstance(runtime_config, dict):
+                                    latest_runtime_config = runtime_config
+                        if ended_in_errors:
+                            preprocess_failures.append(file_name)
+                        if worker_error:
+                            preprocess_worker_errors.append(f"{file_name}: {worker_error}")
 
-                    batches_service.update_batch_metadata(
-                        batch_id,
-                        {
-                            "processed_files": completed,
-                            "total_files": len(input_images),
-                            "latest_processed_file": latest_file_name,
-                            "latest_dynamic_dimensions": latest_dimensions,
-                            # dynamic_dimensions_by_file grows O(n) — only
-                            # written in the final completion call, not here.
-                            "preprocess_failures": list(preprocess_failures),
-                            "run_elapsed_s": round(time.monotonic() - run_started_at, 1),
-                        },
-                        settings,
-                    ) if (completed % 5 == 0 or completed == len(input_images)) else None
+                        batches_service.update_batch_metadata(
+                            batch_id,
+                            {
+                                "processed_files": completed,
+                                "total_files": len(input_images),
+                                "latest_processed_file": latest_file_name,
+                                "latest_dynamic_dimensions": latest_dimensions,
+                                # dynamic_dimensions_by_file grows O(n) — only
+                                # written in the final completion call, not here.
+                                "preprocess_failures": list(preprocess_failures),
+                                "run_elapsed_s": round(time.monotonic() - run_started_at, 1),
+                            },
+                            settings,
+                        ) if (completed % 5 == 0 or completed == len(input_images)) else None
 
-                if _is_cancel_requested(batch_id, settings):
-                    _mark_cancelled(
-                        batch_id,
-                        "Stop requested. Running images will finish first.",
-                        settings,
-                    )
-                    return
+                    if _is_cancel_requested(batch_id, settings):
+                        _mark_cancelled(
+                            batch_id,
+                            "Stop requested. Running images will finish first.",
+                            settings,
+                        )
+                        return
 
-                if not _executor_gone:
-                    while len(futures) < max_workers:
-                        try:
-                            image = next(image_iter)
-                        except StopIteration:
-                            break
-                        try:
-                            futures[executor.submit(_process_one_image, submit_payload(next_index, image))] = image
-                        except RuntimeError:
-                            _executor_gone = True
-                            break
-                        next_index += 1
+                    if not _executor_gone:
+                        while len(futures) < max_workers:
+                            try:
+                                image = next(image_iter)
+                            except StopIteration:
+                                break
+                            try:
+                                futures[executor.submit(_process_one_image, submit_payload(next_index, image))] = image
+                            except RuntimeError:
+                                _executor_gone = True
+                                break
+                            next_index += 1
 
         results_dir = outputs_dir / "Results"
         manual_dir = outputs_dir / "Manual"

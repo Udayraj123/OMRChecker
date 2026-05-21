@@ -140,6 +140,8 @@ class BatchStatusResponse(BaseModel):
     # PDF split progress (populated while a PDF is being split during upload)
     pdf_split_pages: int = 0
     pdf_split_total: int = 0
+    # Set when a background PDF split fails; cleared on the next upload attempt
+    pdf_split_error: str | None = None
 
 
 class ResultsRow(BaseModel):

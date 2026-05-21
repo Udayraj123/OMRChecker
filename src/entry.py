@@ -6,7 +6,6 @@
  Github: https://github.com/Udayraj123
 
 """
-import json
 import os
 from csv import QUOTE_NONNUMERIC
 from pathlib import Path
@@ -29,10 +28,40 @@ from src.template import Template
 from src.utils.file import Paths, setup_dirs_for_paths, setup_outputs_for_template
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils, Stats
-from src.utils.parsing import get_concatenated_response, open_config_with_defaults
+from src.utils.parsing import (
+    OVERRIDE_MERGER,
+    get_concatenated_response,
+    open_config_with_defaults,
+)
+from src.utils.validations import validate_config_json
 
 # Load processors
 STATS = Stats()
+
+
+def _build_tuning_config_inmemory(config_payload: dict):
+    """Build a TuningConfig DotMap from a dict without touching the filesystem.
+
+    This replicates ``open_config_with_defaults`` but accepts an already-loaded
+    dict instead of a file path. Used by the in-memory web pipeline so that
+    concurrent workers never race over a shared ``config.json`` file.
+
+    Strategy: Option A — bypass disk entirely. Each worker builds its own
+    DotMap from the merged payload passed in via the process-pool task payload.
+    Workers are separate processes so ``_TEMPLATE_CACHE`` is naturally isolated,
+    but building config in-memory also removes the shared-file race on
+    ``<base_root>/config.json`` that caused intermittent ``JSONDecodeError``
+    under load (all N workers were serialising distinct per-image payloads to
+    the same path, then reading them back).
+    """
+    from copy import deepcopy
+
+    from dotmap import DotMap
+
+    merged = OVERRIDE_MERGER.merge(deepcopy(CONFIG_DEFAULTS), dict(config_payload or {}))
+    # config_path is used only for a log message inside validate_config_json.
+    validate_config_json(merged, "<in-memory>")
+    return DotMap(merged, _dynamic=False)
 
 
 def serialize_path(path):
@@ -68,17 +97,22 @@ _TEMPLATE_CACHE: dict[str, tuple[float, "object"]] = {}
 
 
 def _build_or_fetch_template(template_path, tuning_config):
-    """Cache ``Template`` instances per (path, mtime, processing_dims).
+    """Cache ``Template`` instances per (path, mtime, processing_dims, pid).
 
     ``Template`` construction is non-trivial (it parses field blocks and
     instantiates preprocessors). For a 5000-page batch the same template
     is reused unchanged on every page, so caching saves real CPU.
+
+    ``pid`` is included in the key as an explicit defensive guard even though
+    workers ARE separate processes (and therefore each have their own module-level
+    ``_TEMPLATE_CACHE`` dict). It makes the isolation contract self-documenting.
     """
     key = (
         str(template_path),
         os.path.getmtime(template_path),
         int(tuning_config.dimensions.processing_width),
         int(tuning_config.dimensions.processing_height),
+        os.getpid(),
     )
     cached = _TEMPLATE_CACHE.get(repr(key))
     if cached is not None:
@@ -116,9 +150,9 @@ def entry_point_for_image(
         ``Template`` constructor needs a path to resolve asset references).
     config_payload
         Merged config dict (with dynamic ``processing_width`` /
-        ``processing_height`` already injected by the caller). Written to
-        a single per-worker ``config.json`` inside ``template_dir`` only
-        on the first call; subsequent calls update it in place.
+        ``processing_height`` already injected by the caller). Consumed
+        in-memory via ``_build_tuning_config_inmemory`` — no ``config.json``
+        is written to disk, eliminating the shared-file race between workers.
     evaluation_path
         Optional Path to evaluation.json. If supplied, scores are computed.
     template_dir
@@ -143,17 +177,22 @@ def entry_point_for_image(
             "entry_point_for_image is called."
         )
 
-    config_dst = template_dir / "config.json"
-    with config_dst.open("w", encoding="utf-8") as fh:
-        # Force non-interactive mode regardless of caller's payload — the
-        # web pipeline never wants the engine to open an OpenCV window.
-        cfg = dict(config_payload or {})
-        outputs = dict(cfg.get("outputs") or {})
-        outputs["show_image_level"] = 0
-        cfg["outputs"] = outputs
-        json.dump(cfg, fh, indent=2, sort_keys=True)
-
-    tuning_config = open_config_with_defaults(config_dst)
+    # Build TuningConfig in-memory — no disk write.
+    #
+    # The old approach wrote config_payload to template_dir/config.json and
+    # then read it back. All N workers share the same template_dir (base_root),
+    # so under load they raced over a single file with distinct per-image
+    # payloads (processing_height/width differ per image). On Windows that
+    # produced intermittent JSONDecodeError → silent preprocess_failures.
+    #
+    # Option A fix: _build_tuning_config_inmemory replicates the merge +
+    # validate logic of open_config_with_defaults without touching the
+    # filesystem, so each worker builds its own isolated DotMap.
+    cfg = dict(config_payload or {})
+    outputs = dict(cfg.get("outputs") or {})
+    outputs["show_image_level"] = 0
+    cfg["outputs"] = outputs
+    tuning_config = _build_tuning_config_inmemory(cfg)
     template = _build_or_fetch_template(template_path, tuning_config)
 
     evaluation_config = None

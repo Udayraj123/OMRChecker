@@ -1597,7 +1597,14 @@ const handleUpload = async (event) => {
                 const status = await jsonFetch(apiUrl("/status"))
                 const pages = status.pdf_split_pages ?? 0
                 const total = status.pdf_split_total ?? 0
-                if (total > 0) {
+                if (status.pdf_split_error) {
+                    // Background split failed — show error and stop polling.
+                    _isBackgroundUpload = false
+                    _splitSeenTotal = false
+                    if (pollInterval) { clearInterval(pollInterval); pollInterval = null }
+                    show(feedback, status.pdf_split_error, "error")
+                    if (progressEl) progressEl.hidden = true
+                } else if (total > 0) {
                     _splitSeenTotal = true
                     _updateSplitProgress(pages, total)
                     // Refresh the file list every ~20 new pages so split sheets
@@ -1610,6 +1617,7 @@ const handleUpload = async (event) => {
                 } else if (_splitSeenTotal) {
                     // total went back to 0 after being active → split complete.
                     _splitSeenTotal = false
+                    _isBackgroundUpload = false
                     if (pollInterval) { clearInterval(pollInterval); pollInterval = null }
                     await refreshFiles()
                     const count = fileBrowserState.files.length
