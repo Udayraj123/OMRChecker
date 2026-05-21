@@ -206,6 +206,30 @@ class TestBaselineCorrectness:
             f"(found at {config_json}). This would re-introduce the shared-file race."
         )
 
+    def test_invalid_rotation_raises(self, tmp_path: pytest.TempPathFactory) -> None:
+        """Invalid rotations must fail loudly in the in-memory path.
+
+        The legacy disk-staged web path raises ``ValueError`` for unsupported
+        rotations.  ``entry_point_for_image`` must match that behaviour instead
+        of silently skipping rotation and producing potentially wrong OMR
+        results.
+        """
+        image_path = _resolve_sample_image()
+        template_dir = _setup_template_dir(tmp_path)
+        output_dir = tmp_path / "out_invalid_rotation"
+
+        from src.entry import entry_point_for_image  # noqa: PLC0415
+
+        with pytest.raises(ValueError, match="Unsupported rotation: 45"):
+            entry_point_for_image(
+                image_path=str(image_path),
+                output_dir=str(output_dir),
+                template_payload=json.loads(SAMPLE_TEMPLATE.read_text(encoding="utf-8")),
+                config_payload=_make_config_payload(515, 666),
+                template_dir=str(template_dir),
+                rotation_degrees=45,
+            )
+
 
 class TestParallelConfigIsolation:
     """Parallelism stress test.

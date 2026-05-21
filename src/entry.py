@@ -96,6 +96,29 @@ def entry_point(input_dir, args):
 _TEMPLATE_CACHE: dict[str, tuple[float, "object"]] = {}
 
 
+def _rotation_code_or_raise(rotation_degrees):
+    """Return the OpenCV rotate code for supported right-angle rotations.
+
+    Mirrors the legacy web runtime rotation path: unsupported non-zero values
+    are programming/configuration errors and must not silently process the
+    image unrotated.
+    """
+    try:
+        degrees = int(rotation_degrees)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Unsupported rotation: {rotation_degrees}") from exc
+
+    rotate_codes = {
+        90: cv2.ROTATE_90_CLOCKWISE,
+        180: cv2.ROTATE_180,
+        270: cv2.ROTATE_90_COUNTERCLOCKWISE,
+    }
+    rotate_code = rotate_codes.get(degrees)
+    if rotate_code is None:
+        raise ValueError(f"Unsupported rotation: {rotation_degrees}")
+    return rotate_code
+
+
 def _build_or_fetch_template(template_path, tuning_config):
     """Cache ``Template`` instances per (path, mtime, processing_dims, pid).
 
@@ -214,14 +237,7 @@ def entry_point_for_image(
 
     in_omr = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
     if in_omr is not None and rotation_degrees:
-        rotate_codes = {
-            90: cv2.ROTATE_90_CLOCKWISE,
-            180: cv2.ROTATE_180,
-            270: cv2.ROTATE_90_COUNTERCLOCKWISE,
-        }
-        rotate_code = rotate_codes.get(int(rotation_degrees))
-        if rotate_code is not None:
-            in_omr = cv2.rotate(in_omr, rotate_code)
+        in_omr = cv2.rotate(in_omr, _rotation_code_or_raise(rotation_degrees))
 
     _process_single_omr_image(
         in_omr,
