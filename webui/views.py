@@ -55,7 +55,7 @@ async def batch_detail(
     config_doc = batches_service.get_json_document(batch_id, "config", settings)
     evaluation_doc = batches_service.get_json_document(batch_id, "evaluation", settings)
     template_assets = batches_service.list_template_assets(batch_id, settings)
-    results = omr_service.read_results(batch_id, settings, limit=100)
+    results = omr_service.read_results(batch_id, settings)
     metadata = batches_service.get_batch_metadata(batch_id, settings)
     preprocess_failures = list(metadata.get("preprocess_failures", []))
 

@@ -925,6 +925,31 @@ def queue_run(batch_id: str, settings: Settings | None = None) -> None:
     batches_service.update_status(batch_id, BatchStatus.queued, settings=settings)
 
 
+def recover_stale_batches(settings: Settings | None = None) -> list[str]:
+    """Handle batches orphaned by a previous server crash.
+
+    - ``queued`` batches are re-enqueued and returned so the caller can
+      schedule them as background tasks.
+    - ``running`` batches are marked ``failed`` with a restart message so
+      the user knows the run was interrupted.
+
+    Returns the list of batch IDs that need to be run as background tasks.
+    """
+    settings = settings or get_settings()
+    to_requeue: list[str] = []
+    for batch in batches_service.list_batches(settings):
+        if batch.status == BatchStatus.queued:
+            to_requeue.append(batch.id)
+        elif batch.status == BatchStatus.running:
+            batches_service.update_status(
+                batch.id,
+                BatchStatus.failed,
+                last_error="Interrupted by server restart — please restart the batch.",
+                settings=settings,
+            )
+    return to_requeue
+
+
 def request_cancel(batch_id: str, settings: Settings | None = None) -> BatchStatus:
     """Request cooperative cancellation for a queued or running batch."""
     settings = settings or get_settings()

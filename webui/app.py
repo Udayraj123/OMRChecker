@@ -17,6 +17,7 @@ import asyncio
 from webui.api import router as api_router
 from webui.log_stream import attach as _log_attach, detach as _log_detach
 from webui.services.batches import clear_stale_pdf_split_progress
+from webui.services import omr as omr_service
 from webui.settings import get_settings
 from webui.views import router as views_router
 
@@ -26,10 +27,20 @@ TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):  # type: ignore[type-arg]
-    """Reset any stale PDF split progress left by a previous server crash."""
+    """Startup tasks: clear stale state and recover orphaned batches."""
+    logger = logging.getLogger(__name__)
     clear_stale_pdf_split_progress()
     _log_attach(asyncio.get_running_loop())
-    logging.getLogger(__name__).info("OMRChecker server started - log stream active")
+
+    # Re-queue any batches that were queued when the server last crashed.
+    # Batches that were actively running are marked failed so the user can
+    # decide whether to restart them.
+    to_requeue = omr_service.recover_stale_batches()
+    for batch_id in to_requeue:
+        logger.info("Recovering orphaned queued batch: %s", batch_id)
+        asyncio.create_task(asyncio.to_thread(omr_service.run_batch_sync, batch_id))
+
+    logger.info("OMRChecker server started - log stream active")
     try:
         yield
     finally:
