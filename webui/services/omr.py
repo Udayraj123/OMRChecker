@@ -771,6 +771,9 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
     Safe to call from a ``BackgroundTasks`` task or directly from tests.
     """
     settings = settings or get_settings()
+    # Snapshot once so the flag stays consistent for the entire run even if
+    # settings are somehow mutated mid-run (which they shouldn't be).
+    _pipeline_enabled = bool(getattr(settings, "pipeline_omr_with_split", True))
     lock = _lock_for(batch_id)
     if not lock.acquire(blocking=False):
         logger.info("Batch %s is already processing; skipping duplicate run", batch_id)
@@ -881,6 +884,15 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
         next_index = 1
         image_iter = iter(input_images)
         _executor_gone = False  # set when executor shuts down mid-run (e.g. server reload)
+        # Track every path that has been submitted to the executor so that
+        # the pipeline re-discovery block never submits the same image twice.
+        submitted_paths: set[Path] = set()
+        # True once the current image_iter has been fully consumed.
+        _iter_exhausted = False
+        # True once we are certain no more split pages are incoming.
+        # When pipelining is disabled we treat the split as already done so
+        # the loop degenerates to the legacy ``while futures:`` behaviour.
+        _split_done = not _pipeline_enabled
 
         with reserve_worker_capacity(
             max_workers,
@@ -898,18 +910,35 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
                     try:
                         image = next(image_iter)
                     except StopIteration:
+                        _iter_exhausted = True
                         break
                     try:
                         futures[executor.submit(_process_one_image, submit_payload(next_index, image))] = image
                     except RuntimeError:
                         _executor_gone = True
                         break
+                    submitted_paths.add(image)
                     next_index += 1
 
                 last_milestone = 0
                 completed = 0
-                while futures:
-                    done, _ = wait(futures.keys(), return_when=FIRST_COMPLETED)
+                # Exit when (a) all submitted futures have completed AND
+                # (b) there are no more split pages incoming.  When
+                # pipelining is disabled _split_done starts True so the
+                # condition reduces to the legacy ``while futures:``.
+                while futures or (_pipeline_enabled and not _split_done):
+                    if not futures:
+                        # All known images processed but the PDF split is
+                        # still running.  Pause briefly before re-polling
+                        # to avoid a tight busy-loop; the next refill will
+                        # submit newly-discovered pages if any have arrived.
+                        time.sleep(0.5)
+
+                    if futures:
+                        done, _ = wait(futures.keys(), return_when=FIRST_COMPLETED)
+                    else:
+                        done = set()
+
                     for future in done:
                         image = futures.pop(future)
                         result = future.result()
@@ -1001,13 +1030,52 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
                             try:
                                 image = next(image_iter)
                             except StopIteration:
+                                _iter_exhausted = True
                                 break
+                            # Guard against double-submission; should not
+                            # happen with a linear iterator, but provides
+                            # safety during pipeline re-discovery.
+                            if image in submitted_paths:
+                                continue
                             try:
                                 futures[executor.submit(_process_one_image, submit_payload(next_index, image))] = image
                             except RuntimeError:
                                 _executor_gone = True
                                 break
+                            submitted_paths.add(image)
                             next_index += 1
+
+                        # ── Pipeline re-discovery ──────────────────────────
+                        # When OMR is pipelined with an in-flight PDF split,
+                        # re-check for newly-arrived pages each time the
+                        # current iterator runs dry.  Re-discovery is gated
+                        # on a completed future (natural pacing; no extra
+                        # timer), so it never becomes a busy-loop.
+                        #
+                        # Race-condition note: PyMuPDF pixmap.save() writes
+                        # JPEG data atomically to the final destination path —
+                        # there is no half-written intermediate file.  The
+                        # existing _discover_input_images helper filters by
+                        # IMAGE_EXTENSIONS (.jpg/.jpeg/.png), so any page
+                        # that hasn't been fully written yet is naturally
+                        # invisible.  No extra safety fence is required.
+                        if _pipeline_enabled and _iter_exhausted and not _split_done:
+                            _split_meta = batches_service.get_batch_metadata(batch_id, settings)
+                            if int(_split_meta.get("pdf_split_total", 0)) == 0:
+                                # Split finished; no further pages will arrive
+                                _split_done = True
+                            else:
+                                _all_discovered = _discover_input_images(batch_id, settings)
+                                _new_paths = [
+                                    img for img in _all_discovered
+                                    if img not in submitted_paths
+                                ]
+                                if _new_paths:
+                                    # Extend tracking list so progress
+                                    # calculations reflect the growing total
+                                    input_images.extend(_new_paths)
+                                    image_iter = iter(_new_paths)
+                                    _iter_exhausted = False
 
         results_dir = outputs_dir / "Results"
         manual_dir = outputs_dir / "Manual"

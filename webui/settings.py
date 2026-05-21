@@ -135,6 +135,17 @@ class Settings(BaseSettings):
         ),
     )
 
+    pipeline_omr_with_split: bool = Field(
+        default=True,
+        description=(
+            "When true, OMR processing overlaps with in-flight PDF splits: "
+            "pages produced by background split tasks are enqueued for OMR "
+            "as they arrive instead of waiting for the entire split to "
+            "finish. Set to false to restore the legacy single-snapshot "
+            "discovery behaviour. Override with OMR_WEBUI_PIPELINE_OMR_WITH_SPLIT."
+        ),
+    )
+
     pdf_split_workers: int = Field(
         default=0,
         ge=0,
