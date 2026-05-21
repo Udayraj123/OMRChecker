@@ -135,6 +135,30 @@ class Settings(BaseSettings):
         ),
     )
 
+    pdf_split_workers: int = Field(
+        default=0,
+        ge=0,
+        le=32,
+        description=(
+            "Number of worker processes used to render PDF pages in parallel. "
+            "0 (default) means auto: min(8, max(1, cpu_count // 2)). "
+            "Render + JPEG encode is CPU-bound, so this typically gives a "
+            "near-linear speedup up to the auto-cap. Set to 1 to force the "
+            "legacy single-threaded loop (useful for debugging). "
+            "Override with OMR_WEBUI_PDF_SPLIT_WORKERS."
+        ),
+    )
+
+    pdf_split_min_pages_for_parallel: int = Field(
+        default=16,
+        ge=1,
+        description=(
+            "PDFs with fewer than this many pages always use the serial "
+            "render path; process-pool spawn overhead dominates below this "
+            "threshold. Override with OMR_WEBUI_PDF_SPLIT_MIN_PAGES_FOR_PARALLEL."
+        ),
+    )
+
     presets_dir: Path = Field(
         default=REPO_ROOT,
         description=(

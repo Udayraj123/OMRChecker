@@ -1038,6 +1038,94 @@ def test_pdf_page_format_rejects_unknown_value(tmp_path: Path) -> None:
         )
 
 
+def test_parallel_pdf_split_produces_correct_pages_in_order(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Parallel-path render must produce all expected pages in page order."""
+    pytest.importorskip("fitz")
+    from webui.services.batches import _save_pdf_pages_as_images
+
+    monkeypatch.setenv("OMR_WEBUI_PDF_SPLIT_WORKERS", "2")
+    monkeypatch.setenv("OMR_WEBUI_PDF_SPLIT_MIN_PAGES_FOR_PARALLEL", "4")
+    get_settings.cache_clear()
+    settings = get_settings()
+    assert settings.pdf_split_workers == 2
+    assert settings.pdf_split_min_pages_for_parallel == 4
+
+    pdf_bytes = _make_simple_pdf(page_count=6)
+    inputs = tmp_path / "inputs"
+    inputs.mkdir()
+
+    refs = _save_pdf_pages_as_images(
+        inputs, "parallel.pdf", pdf_bytes,
+        page_format="jpeg",
+        jpeg_quality=92,
+        batch_id=None,
+        settings=settings,
+    )
+    names = [r.name for r in refs]
+    assert names == [
+        f"parallel_page_{i:04d}.jpg" for i in range(1, 7)
+    ], names
+    for r in refs:
+        assert (inputs / r.name).exists()
+        assert r.size_bytes > 0
+
+
+def test_serial_path_used_below_threshold(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """PDFs with fewer than ``pdf_split_min_pages_for_parallel`` pages must
+    use the serial loop even when workers > 1 is requested."""
+    pytest.importorskip("fitz")
+    from webui.services import batches as bm
+
+    monkeypatch.setenv("OMR_WEBUI_PDF_SPLIT_WORKERS", "4")
+    monkeypatch.setenv("OMR_WEBUI_PDF_SPLIT_MIN_PAGES_FOR_PARALLEL", "16")
+    get_settings.cache_clear()
+    settings = get_settings()
+
+    pdf_bytes = _make_simple_pdf(page_count=3)
+    inputs = tmp_path / "inputs"
+    inputs.mkdir()
+
+    # Monkeypatch the parallel helper so the test fails if it gets used.
+    called = {"parallel": False, "serial": False}
+    original_parallel = bm._save_pdf_pages_parallel
+    original_serial = bm._save_pdf_pages_serial
+
+    def fake_parallel(**kw):
+        called["parallel"] = True
+        return original_parallel(**kw)
+
+    def fake_serial(**kw):
+        called["serial"] = True
+        return original_serial(**kw)
+
+    monkeypatch.setattr(bm, "_save_pdf_pages_parallel", fake_parallel)
+    monkeypatch.setattr(bm, "_save_pdf_pages_serial", fake_serial)
+
+    bm._save_pdf_pages_as_images(
+        inputs, "small.pdf", pdf_bytes, batch_id=None, settings=settings,
+    )
+    assert called["serial"] is True
+    assert called["parallel"] is False
+
+
+def test_pdf_split_workers_setting_default_is_auto(monkeypatch) -> None:
+    """Default value 0 means auto-detect; explicit positive integers are
+    honored as-is."""
+    monkeypatch.delenv("OMR_WEBUI_PDF_SPLIT_WORKERS", raising=False)
+    get_settings.cache_clear()
+    settings = get_settings()
+    assert settings.pdf_split_workers == 0  # 0 == auto
+
+    monkeypatch.setenv("OMR_WEBUI_PDF_SPLIT_WORKERS", "3")
+    get_settings.cache_clear()
+    settings = get_settings()
+    assert settings.pdf_split_workers == 3
+
+
 def test_rotated_cache_is_skipped_when_no_rotation_and_no_resize(
     tmp_path: Path, adrian_images: list[Path]
 ) -> None:
