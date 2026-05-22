@@ -1,21 +1,55 @@
 """Runtime configuration for the OMRChecker Web UI.
 
-Values can be overridden via environment variables (prefix ``OMR_WEBUI_``)
-or a ``.env`` file at the repo root. The defaults are chosen to match the
-plan's local-first posture.
+Values can be overridden via three layered sources (later wins):
+
+1. Built-in field defaults (this file).
+2. Environment variables (prefix ``OMR_WEBUI_``) or ``.env`` at repo root.
+3. A JSON overrides file at ``cache_root / settings_overrides.json`` that
+   the ``/settings`` page writes to. This survives restarts without
+   requiring users to touch environment variables.
+
+The runtime overrides file is loaded eagerly in :func:`get_settings`. The
+``/api/v1/settings`` endpoints read/write it and call
+:func:`reload_settings` so the next ``get_settings()`` call picks up the
+new values without a process restart.
 """
 
 from __future__ import annotations
 
+import json
+import logging
 import os
 import sys
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+logger = logging.getLogger(__name__)
+
+# Settings safe to mutate at runtime via the /settings page. Anything not
+# in this set requires a process restart (storage_root, cache_root, etc.)
+# because services snapshot it at startup or in long-running tasks.
+RUNTIME_MUTABLE_SETTINGS: frozenset[str] = frozenset({
+    "pipeline_omr_with_split",
+    "auto_start_omr_with_split",
+    "auto_start_omr_min_pages",
+    "auto_start_omr_require_config",
+    "pdf_render_dpi",
+    "pdf_render_grayscale",
+    "pdf_page_format",
+    "pdf_jpeg_quality",
+    "inmemory_pipeline",
+    "pdf_split_workers",
+    "pdf_split_min_pages_for_parallel",
+    "default_preset",
+    "allow_directory_import",
+})
+
+OVERRIDES_FILENAME = "settings_overrides.json"
 
 
 def _default_cache_root() -> Path:
@@ -146,6 +180,42 @@ class Settings(BaseSettings):
         ),
     )
 
+    auto_start_omr_with_split: bool = Field(
+        default=True,
+        description=(
+            "When true, the frontend automatically POSTs /process as soon as "
+            "the configured minimum number of split pages exist AND the batch "
+            "has a template + (optionally) config uploaded. This is what "
+            "actually makes 'Pipelined OMR' visible end-to-end: pages start "
+            "being scored while later pages are still being rendered. Set "
+            "false to require the operator to click Run OMR manually. "
+            "Override with OMR_WEBUI_AUTO_START_OMR_WITH_SPLIT."
+        ),
+    )
+
+    auto_start_omr_min_pages: int = Field(
+        default=10,
+        ge=1,
+        le=10_000,
+        description=(
+            "Minimum number of pages that must exist before auto-start "
+            "fires. Set higher (e.g. 50) to amortise process-pool spawn "
+            "cost over more pages; set to 1 for the earliest possible "
+            "overlap. Ignored unless auto_start_omr_with_split is true. "
+            "Override with OMR_WEBUI_AUTO_START_OMR_MIN_PAGES."
+        ),
+    )
+
+    auto_start_omr_require_config: bool = Field(
+        default=False,
+        description=(
+            "When true, auto-start also requires a config.json to be present "
+            "(not just template.json). Most templates work without an "
+            "explicit config, so the default is false. Override with "
+            "OMR_WEBUI_AUTO_START_OMR_REQUIRE_CONFIG."
+        ),
+    )
+
     pdf_split_workers: int = Field(
         default=0,
         ge=0,
@@ -202,8 +272,171 @@ class Settings(BaseSettings):
         path.mkdir(parents=True, exist_ok=True)
         return path
 
+    def overrides_path(self) -> Path:
+        """Return the path to the runtime overrides JSON file.
+
+        The file lives next to ``storage_root`` (one level up, alongside
+        the per-batch directories) rather than under ``cache_root``.
+        Two reasons:
+
+        1. Some Windows AV products (e.g. Symantec Endpoint Protection)
+           aggressively quarantine newly-written small JSON files under
+           ``%LOCALAPPDATA%`` via the ``.tmp`` -> atomic-rename pattern,
+           which is what ``cache_root`` defaults to. ``storage_root``
+           is the user's project directory which is typically already
+           whitelisted by IT or simpler to add an exclusion for.
+        2. Overrides aren't transient — they encode user-visible
+           configuration that should outlive a cache wipe.
+        """
+        return self.storage_root.parent / OVERRIDES_FILENAME
+
+
+def _resolve_overrides_path(root: Path) -> Path:
+    """Map a passed root (cache_root or storage_root) to its overrides file.
+
+    For backwards compatibility callers may pass either ``cache_root``
+    (legacy: ``<cache_root>/settings_overrides.json``) or
+    ``storage_root`` (current: ``<storage_root>.parent/settings_overrides.json``).
+    We pick the location based on which one matches the live ``Settings``
+    instance, falling back to ``<root>/OVERRIDES_FILENAME`` for unknown
+    roots so direct unit tests keep working.
+    """
+    # The current convention is storage_root.parent. Tests that previously
+    # passed cache_root land in the fallback branch below.
+    try:
+        live = get_settings()
+        if root == live.storage_root or root == live.storage_root.parent:
+            return live.overrides_path()
+        if root == live.cache_root:
+            # Legacy caller asked for cache_root location; respect it
+            # but also check the new location so reads find a file
+            # written by a newer caller.
+            new_loc = live.overrides_path()
+            if new_loc.exists():
+                return new_loc
+            return root / OVERRIDES_FILENAME
+    except Exception:  # noqa: BLE001 — be defensive during init/teardown
+        pass
+    return root / OVERRIDES_FILENAME
+
+
+def _load_overrides(root: Path) -> dict[str, Any]:
+    """Read the runtime overrides JSON file if present.
+
+    *root* is either ``storage_root`` (preferred) or ``cache_root`` (legacy);
+    the function resolves the actual file path via
+    :func:`_resolve_overrides_path` so callers can stay agnostic.
+
+    Returns an empty dict if the file is missing, unreadable, or contains
+    invalid JSON. Never raises — a corrupt overrides file must not
+    prevent the server from starting.
+    """
+    path = _resolve_overrides_path(root)
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning(
+            "Ignoring corrupt settings overrides at %s: %s", path, exc
+        )
+        return {}
+    if not isinstance(data, dict):
+        logger.warning(
+            "Ignoring settings overrides at %s: top-level is %s, expected object",
+            path, type(data).__name__,
+        )
+        return {}
+    # Drop any keys that are not in the runtime-mutable allowlist to keep
+    # the file forward-compatible (older overrides for removed settings
+    # are silently ignored).
+    return {k: v for k, v in data.items() if k in RUNTIME_MUTABLE_SETTINGS}
+
+
+def write_overrides(overrides: dict[str, Any], root: Path) -> Path:
+    """Persist *overrides* to the settings overrides JSON file.
+
+    Only keys in :data:`RUNTIME_MUTABLE_SETTINGS` are written; everything
+    else is dropped silently. Writes atomically via a ``.tmp`` swap so a
+    crash mid-write can't leave a half-finished JSON file behind.
+
+    *root* may be either ``cache_root`` (legacy) or ``storage_root``
+    (current). The resolved file location is returned so the caller
+    can log it or hand it to the operator on failure.
+    """
+    target = _resolve_overrides_path(root)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    filtered = {k: v for k, v in overrides.items() if k in RUNTIME_MUTABLE_SETTINGS}
+    tmp = target.with_suffix(target.suffix + ".tmp")
+    tmp.write_text(json.dumps(filtered, indent=2, sort_keys=True), encoding="utf-8")
+    tmp.replace(target)
+    return target
+
+
+def reload_settings() -> "Settings":
+    """Clear the memoised settings so the next ``get_settings()`` rebuilds.
+
+    Call this after writing to the overrides file so subsequent requests
+    pick up the new values without a process restart.
+    """
+    get_settings.cache_clear()
+    return get_settings()
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    """Return a memoised ``Settings`` instance."""
-    return Settings()
+    """Return a memoised ``Settings`` instance.
+
+    Construction order:
+
+    1. Pydantic loads env vars + ``.env`` defaults.
+    2. We then layer the JSON overrides file on top via a fresh
+       ``model_copy(update=...)`` so the resulting instance reflects every
+       layered source.
+
+    The overrides file location is resolved via :meth:`Settings.overrides_path`
+    (currently ``storage_root.parent/settings_overrides.json``). A legacy
+    location at ``cache_root/settings_overrides.json`` is also checked
+    so older deployments keep working through one restart.
+    """
+    base = Settings()
+    overrides_path = base.overrides_path()
+    if overrides_path.exists():
+        try:
+            data = json.loads(overrides_path.read_text(encoding="utf-8"))
+            overrides = {k: v for k, v in data.items() if k in RUNTIME_MUTABLE_SETTINGS}
+        except (json.JSONDecodeError, OSError) as exc:
+            logger.warning(
+                "Ignoring corrupt settings overrides at %s: %s",
+                overrides_path, exc,
+            )
+            overrides = {}
+    else:
+        # Legacy fallback: check the old cache_root location.
+        legacy_path = base.cache_root / OVERRIDES_FILENAME
+        if legacy_path.exists():
+            try:
+                data = json.loads(legacy_path.read_text(encoding="utf-8"))
+                overrides = {
+                    k: v for k, v in data.items() if k in RUNTIME_MUTABLE_SETTINGS
+                }
+                logger.info(
+                    "Found legacy settings overrides at %s; the next save "
+                    "will migrate them to %s",
+                    legacy_path, overrides_path,
+                )
+            except (json.JSONDecodeError, OSError):
+                overrides = {}
+        else:
+            overrides = {}
+
+    if not overrides:
+        return base
+    try:
+        return base.model_copy(update=overrides)
+    except Exception as exc:  # noqa: BLE001 — defensive: never let overrides break startup
+        logger.warning(
+            "Ignoring %d settings overrides because model_copy failed: %s",
+            len(overrides), exc,
+        )
+        return base

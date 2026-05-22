@@ -11,6 +11,7 @@
         </div>
         <div class="status-block">
             <span id="status-pill" class="pill status-{{ batch.status.value }}">{{ batch.status.value }}</span>
+            <span id="pipeline-badge" class="pill" style="background:#0a7;color:#fff;margin-left:4px" title="OMR engaged pipelined mode for this run (started while a PDF split was still in flight)." hidden>Pipelined</span>
             <span id="gpu-badge" class="gpu-badge"></span>
             {% if batch.last_error %}
                 <p id="last-error" class="error">{{ batch.last_error }}</p>
@@ -65,6 +66,11 @@
             <div class="run-stats">
                 <span id="upload-stat-count" class="run-stat">0 / 0 pages</span>
                 <span id="upload-stat-pct" class="run-stat">0%</span>
+            </div>
+            <div id="pipeline-action" class="run-stats" style="margin-top:8px;align-items:center" hidden>
+                <button id="pipeline-start-btn" class="btn small primary" type="button" title="Start OMR while pages are still being split. Pages are picked up as soon as they are written.">Start OMR now (pipelined)</button>
+                <span class="muted small">If auto-start is enabled in Settings, OMR will begin automatically once enough pages exist.</span>
+                <span id="pipeline-start-feedback" class="muted small"></span>
             </div>
         </div>
     </form>
@@ -203,52 +209,63 @@
 </section>
 
 <section class="panel">
-    <h2>Template / config / evaluation</h2>
+    <button
+        type="button"
+        id="json-docs-toggle"
+        class="panel-toggle"
+        aria-expanded="false"
+        aria-controls="json-docs-body">
+        <h2>Template / config / evaluation</h2>
+        <span class="panel-toggle-summary">template: {{ 'present' if template_doc else 'empty' }} | config: {{ 'present' if config_doc else 'empty' }} | evaluation: {{ 'present' if evaluation_doc else 'empty' }}</span>
+        <span class="panel-toggle-chevron" aria-hidden="true">▶</span>
+    </button>
     <p class="muted small">All three are optional JSON files. Only <code>template.json</code> is required before running.</p>
 
-    <div class="preset-bar" id="preset-bar">
-        <label for="preset-select" class="preset-label">Load preset:</label>
-        <select id="preset-select" class="preset-select">
-            <option value="">— choose a preset —</option>
-        </select>
-        <button class="btn small" type="button" id="apply-preset-btn">Apply</button>
-        <span class="feedback muted small" id="preset-feedback" hidden></span>
-    </div>
-    <details class="template-help">
-        <summary>Template parameter help</summary>
-        <ul class="template-help-list">
-            <li><code>origin</code> = first bubble in the block</li>
-            <li><code>bubblesGap</code> = option-to-option spacing</li>
-            <li><code>labelsGap</code> = question-to-question spacing</li>
-            <li><code>bubbleDimensions</code> = one bubble's size</li>
-            <li><code>pageDimensions</code> = normalized canvas size after crop</li>
-        </ul>
-    </details>
-    <div class="json-grid">
-        {% for doc_name, doc in [("template", template_doc), ("config", config_doc), ("evaluation", evaluation_doc)] %}
-        <div class="json-box" data-doc="{{ doc_name }}">
-            <div class="flex-between">
-                <h3>{{ doc_name }}.json</h3>
-                <span class="muted small" data-doc-status>{% if doc %}present{% else %}empty{% endif %}</span>
-            </div>
-            <div class="editor-mode-toggle" role="group" aria-label="{{ doc_name }} editor mode">
-                <button class="btn small active" type="button" data-doc-mode="code">Code</button>
-                <button class="btn small" type="button" data-doc-mode="ui">UI</button>
-            </div>
-            <textarea
-                data-doc-textarea
-                data-code-panel
-                spellcheck="false"
-                rows="12"
-                placeholder='{"example": true}'>{% if doc %}{{ doc | tojson(indent=2) }}{% endif %}</textarea>
-            <div class="dynamic-editor" data-dynamic-panel hidden></div>
-            <div class="actions">
-                <button class="btn primary small" type="button" data-save-doc>Save</button>
-                <button class="btn small" type="button" data-clear-doc>Clear</button>
-            </div>
-            <div class="feedback" data-doc-feedback hidden></div>
+    <div id="json-docs-body" class="panel-collapsible-body" hidden>
+        <div class="preset-bar" id="preset-bar">
+            <label for="preset-select" class="preset-label">Load preset:</label>
+            <select id="preset-select" class="preset-select">
+                <option value="">— choose a preset —</option>
+            </select>
+            <button class="btn small" type="button" id="apply-preset-btn">Apply</button>
+            <span class="feedback muted small" id="preset-feedback" hidden></span>
         </div>
-        {% endfor %}
+        <details class="template-help">
+            <summary>Template parameter help</summary>
+            <ul class="template-help-list">
+                <li><code>origin</code> = first bubble in the block</li>
+                <li><code>bubblesGap</code> = option-to-option spacing</li>
+                <li><code>labelsGap</code> = question-to-question spacing</li>
+                <li><code>bubbleDimensions</code> = one bubble's size</li>
+                <li><code>pageDimensions</code> = normalized canvas size after crop</li>
+            </ul>
+        </details>
+        <div class="json-grid">
+            {% for doc_name, doc in [("template", template_doc), ("config", config_doc), ("evaluation", evaluation_doc)] %}
+            <div class="json-box" data-doc="{{ doc_name }}">
+                <div class="flex-between">
+                    <h3>{{ doc_name }}.json</h3>
+                    <span class="muted small" data-doc-status>{% if doc %}present{% else %}empty{% endif %}</span>
+                </div>
+                <div class="editor-mode-toggle" role="group" aria-label="{{ doc_name }} editor mode">
+                    <button class="btn small active" type="button" data-doc-mode="code">Code</button>
+                    <button class="btn small" type="button" data-doc-mode="ui">UI</button>
+                </div>
+                <textarea
+                    data-doc-textarea
+                    data-code-panel
+                    spellcheck="false"
+                    rows="12"
+                    placeholder='{"example": true}'>{% if doc %}{{ doc | tojson(indent=2) }}{% endif %}</textarea>
+                <div class="dynamic-editor" data-dynamic-panel hidden></div>
+                <div class="actions">
+                    <button class="btn primary small" type="button" data-save-doc>Save</button>
+                    <button class="btn small" type="button" data-clear-doc>Clear</button>
+                </div>
+                <div class="feedback" data-doc-feedback hidden></div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
 </section>
 

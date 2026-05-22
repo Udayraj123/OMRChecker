@@ -51,8 +51,21 @@ from webui.services import batches as batches_service
 from webui.services import omr as omr_service
 from webui.services import prefill as prefill_service
 from webui.services import presets as presets_service
+from webui.schemas_settings import (
+    RuntimeSettingsResponse,
+    RuntimeSettingsUpdate,
+    SettingsMetaResponse,
+    build_meta_response,
+)
 from webui.services.batches import BatchNotFound, InvalidBatchRequest
-from webui.settings import Settings, get_settings
+from webui.settings import (
+    RUNTIME_MUTABLE_SETTINGS,
+    Settings,
+    _load_overrides,
+    get_settings,
+    reload_settings,
+    write_overrides,
+)
 
 router = APIRouter(prefix="/api/v1", tags=["omr"])
 
@@ -116,6 +129,76 @@ async def system_info() -> dict:
         "cpu_count": os.cpu_count(),
         "default_max_workers": _default_max_workers(),
     }
+
+
+# ---------------------------------------------------------------------------
+# Runtime-mutable settings (used by the /settings UI)
+# ---------------------------------------------------------------------------
+
+
+def _settings_response(settings: Settings) -> RuntimeSettingsResponse:
+    """Project the live :class:`Settings` instance into the API response."""
+    return RuntimeSettingsResponse(
+        **{key: getattr(settings, key) for key in RUNTIME_MUTABLE_SETTINGS}
+    )
+
+
+@router.get("/settings", response_model=RuntimeSettingsResponse)
+async def get_runtime_settings(
+    settings: Settings = Depends(get_settings),
+) -> RuntimeSettingsResponse:
+    """Return the current value of every runtime-mutable setting."""
+    return _settings_response(settings)
+
+
+@router.put("/settings", response_model=RuntimeSettingsResponse)
+async def update_runtime_settings(
+    payload: RuntimeSettingsUpdate,
+    settings: Settings = Depends(get_settings),
+) -> RuntimeSettingsResponse:
+    """Persist runtime overrides, reload settings, and return the new state.
+
+    Only fields explicitly present in the request body are written. This
+    lets the UI send PATCH-style partial updates (toggle a single switch)
+    without round-tripping every setting on every save. Unknown keys are
+    rejected by ``RuntimeSettingsUpdate`` (``extra=\"forbid\"``) so the
+    allowlist is enforced at the schema layer, not by post-hoc filtering.
+    """
+    new_values = payload.model_dump(exclude_unset=True)
+    if not new_values:
+        # No-op PUT: don't touch the overrides file, just echo current state.
+        return _settings_response(settings)
+
+    # Storage_root is the SEP-friendly default location for the overrides
+    # file (see ``Settings.overrides_path``). ``_load_overrides`` and
+    # ``write_overrides`` both accept either storage_root or cache_root
+    # and resolve the actual path through the live Settings instance.
+    overrides_root = settings.storage_root
+    merged = _load_overrides(overrides_root)
+    # Log every actual change before writing so a failed disk write still
+    # produces an audit trail of what the operator attempted.
+    for key, new_val in new_values.items():
+        old_val = getattr(settings, key)
+        if old_val != new_val:
+            logger.info(
+                "Settings updated | key=%s | old=%s | new=%s",
+                key, old_val, new_val,
+            )
+        merged[key] = new_val
+
+    write_overrides(merged, overrides_root)
+    fresh = reload_settings()
+    return _settings_response(fresh)
+
+
+@router.get("/settings/meta", response_model=SettingsMetaResponse)
+async def get_runtime_settings_meta() -> SettingsMetaResponse:
+    """Return descriptions + defaults for every mutable setting.
+
+    The ``/settings`` UI uses this to render field labels, helper text
+    under each input, and a per-field \"Reset to default\" button.
+    """
+    return build_meta_response()
 
 
 # ---------------------------------------------------------------------------
@@ -592,6 +675,15 @@ async def batch_status(
         pdf_split_pages=int(metadata.get("pdf_split_pages", 0)),
         pdf_split_total=int(metadata.get("pdf_split_total", 0)),
         pdf_split_error=metadata.get("pdf_split_error") or None,
+        pipelined_run=bool(metadata.get("pipelined_run", False)),
+        # Mirror runtime-mutable auto-start settings so the frontend
+        # poller can decide whether to auto-fire /process without
+        # making a separate /api/v1/settings request per tick.
+        auto_start_omr_with_split=settings.auto_start_omr_with_split,
+        auto_start_omr_min_pages=settings.auto_start_omr_min_pages,
+        auto_start_omr_require_config=settings.auto_start_omr_require_config,
+        has_template=batch.has_template,
+        has_config=batch.has_config,
     )
 
 

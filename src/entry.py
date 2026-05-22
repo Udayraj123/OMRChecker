@@ -236,6 +236,14 @@ def entry_point_for_image(
     setup_dirs_for_paths(paths)
     outputs_namespace = setup_outputs_for_template(paths, template)
 
+    # Reset per-image stats. STATS is a module-level singleton and
+    # ProcessPoolExecutor reuses each worker across many tasks, so without
+    # this reset the files_moved / files_not_moved counters silently
+    # accumulate across every image a worker processes — corrupting the
+    # per-image metrics and the final "Sum Tallied!" check in print_stats.
+    STATS.files_moved = 0
+    STATS.files_not_moved = 0
+
     in_omr = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
     if in_omr is not None and rotation_degrees:
         in_omr = cv2.rotate(in_omr, _rotation_code_or_raise(rotation_degrees))

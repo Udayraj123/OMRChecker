@@ -467,3 +467,71 @@ class TestPipelinedOMR:
         assert batch.status.value == "failed"
         assert batch.last_error is not None
         assert "synthetic split failure" in batch.last_error
+
+    def test_pipelined_run_flag_written_and_logged_when_engaged(
+        self, storage_root: Path, tmp_path: Path, caplog
+    ) -> None:
+        """When pipelining engages, both the metadata flag and the
+        ``OMR PIPELINED MODE`` log line must be emitted so the UI/operator
+        can confirm the feature actually fired.
+        """
+        import logging
+
+        settings = _make_settings(storage_root, tmp_path, pipeline=True)
+        batch_id, all_paths = _setup_batch(settings, 3)
+        batches_service.update_batch_metadata(
+            batch_id, {"pdf_split_total": 5}, settings
+        )
+
+        # Only reset pdf_split_total on the re-discovery call so the run's
+        # initial split snapshot remains 5 (pipelining engages).
+        discover_calls: list[int] = []
+
+        def mock_discover(bid: str, s: Settings) -> list[Path]:
+            discover_calls.append(len(discover_calls))
+            if len(discover_calls) == 1:
+                return list(all_paths)
+            batches_service.update_batch_metadata(
+                bid, {"pdf_split_total": 0}, s
+            )
+            return list(all_paths)
+
+        with caplog.at_level(logging.INFO, logger="webui.services.omr"):
+            _run_patched(batch_id, settings, mock_discover)
+
+        meta = batches_service.get_batch_metadata(batch_id, settings)
+        assert meta.get("pipelined_run") is True, (
+            "pipelined_run metadata flag must be True when pipeline engages"
+        )
+        engaged = [r for r in caplog.records if "OMR PIPELINED MODE engaged" in r.getMessage()]
+        assert engaged, (
+            "Expected 'OMR PIPELINED MODE engaged' log when initial_split_total > 0"
+        )
+
+    def test_pipelined_run_flag_false_when_split_already_done(
+        self, storage_root: Path, tmp_path: Path, caplog
+    ) -> None:
+        """No in-flight split → metadata flag stays False and SEQUENTIAL log
+        is emitted (this matches the UI-driven 'wait then click Process' flow
+        that the user reported)."""
+        import logging
+
+        settings = _make_settings(storage_root, tmp_path, pipeline=True)
+        batch_id, all_paths = _setup_batch(settings, 3)
+        # pdf_split_total is implicitly 0 (split already finished).
+
+        with caplog.at_level(logging.INFO, logger="webui.services.omr"):
+            _run_patched(
+                batch_id,
+                settings,
+                MagicMock(return_value=list(all_paths)),
+            )
+
+        meta = batches_service.get_batch_metadata(batch_id, settings)
+        assert meta.get("pipelined_run") is False, (
+            "pipelined_run must be False when no in-flight split exists at run start"
+        )
+        sequential = [r for r in caplog.records if "OMR SEQUENTIAL MODE" in r.getMessage()]
+        assert sequential, (
+            "Expected 'OMR SEQUENTIAL MODE' log when initial_split_total == 0"
+        )

@@ -142,6 +142,19 @@ class BatchStatusResponse(BaseModel):
     pdf_split_total: int = 0
     # Set when a background PDF split fails; cleared on the next upload attempt
     pdf_split_error: str | None = None
+    # True for the current run when OMR engaged pipelined mode (started while a
+    # PDF split was still in flight). Set at run start and remains True for the
+    # duration of the run so the UI can surface a "Pipelined" badge.
+    pipelined_run: bool = False
+    # Auto-start OMR (frontend reads these to decide whether to fire the
+    # /process POST automatically once enough split pages exist).
+    auto_start_omr_with_split: bool = True
+    auto_start_omr_min_pages: int = 10
+    auto_start_omr_require_config: bool = False
+    # Mirror the Batch model so the auto-start gating check is a single
+    # status fetch instead of an extra GET /batches/{id}.
+    has_template: bool = False
+    has_config: bool = False
 
 
 class ResultsRow(BaseModel):

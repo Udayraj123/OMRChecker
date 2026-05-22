@@ -1639,6 +1639,7 @@ def reset_batch_runtime_state(
         "latest_dynamic_dimensions",
         "dynamic_dimensions_by_file",
         "cancel_requested",
+        "pipelined_run",
     ):
         meta.pop(key, None)
     _save_metadata(settings, batch_id, meta)

@@ -206,6 +206,48 @@ class TestBaselineCorrectness:
             f"(found at {config_json}). This would re-introduce the shared-file race."
         )
 
+    def test_stats_reset_between_images_in_same_worker(
+        self, tmp_path: pytest.TempPathFactory
+    ) -> None:
+        """STATS counters must be reset at the start of every
+        ``entry_point_for_image`` call.
+
+        ``STATS`` is a module-level singleton.  In a real ``ProcessPoolExecutor``
+        each worker handles many images, so without the per-image reset the
+        ``files_moved`` / ``files_not_moved`` counters accumulate across
+        successive tasks and the engine's "Sum Tallied!" check goes out of
+        sync.  This test pre-poisons ``STATS`` with fake counts and verifies
+        the next call zeroes them.
+        """
+        from src import entry as entry_module  # noqa: PLC0415
+        from src.entry import entry_point_for_image  # noqa: PLC0415
+
+        entry_module.STATS.files_moved = 42
+        entry_module.STATS.files_not_moved = 99
+
+        image_path = _resolve_sample_image()
+        template_dir = _setup_template_dir(tmp_path)
+        output_dir = tmp_path / "out_stats_reset"
+
+        entry_point_for_image(
+            image_path=str(image_path),
+            output_dir=str(output_dir),
+            template_payload=json.loads(SAMPLE_TEMPLATE.read_text(encoding="utf-8")),
+            config_payload=_make_config_payload(515, 666),
+            template_dir=str(template_dir),
+            rotation_degrees=0,
+        )
+
+        # After exactly one image, the totals should reflect *this* image only,
+        # not the pre-poisoned 42 + 99 = 141 baseline.
+        assert (
+            entry_module.STATS.files_moved + entry_module.STATS.files_not_moved
+        ) <= 2, (
+            f"STATS counters not reset between images: "
+            f"files_moved={entry_module.STATS.files_moved}, "
+            f"files_not_moved={entry_module.STATS.files_not_moved}"
+        )
+
     def test_invalid_rotation_raises(self, tmp_path: pytest.TempPathFactory) -> None:
         """Invalid rotations must fail loudly in the in-memory path.
 

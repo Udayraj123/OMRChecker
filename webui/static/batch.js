@@ -461,6 +461,11 @@ const pollStatus = async () => {
     try {
         const data = await jsonFetch(apiUrl("/status"))
         updateStatus(data.status, data.last_error, data.preprocess_failures)
+        const pipelineBadge = document.getElementById("pipeline-badge")
+        if (pipelineBadge) {
+            const showBadge = !!data.pipelined_run && (data.status === "running" || data.status === "queued" || data.status === "done")
+            pipelineBadge.hidden = !showBadge
+        }
         if (data.status === "running") {
             updateProgress(data)
             setTimeout(pollStatus, 1500)
@@ -1556,6 +1561,62 @@ const refreshAssets = async () => {
     }
 }
 
+// Auto-start OMR: flips once per upload session when /status reports
+// enough split pages and the batch is ready to run. Module-level so the
+// poller (inside handleUpload), handleRun, and handleRestart can all
+// reach it. Reset semantics:
+//   * Cleared back to false when _isBackgroundUpload is cleared (i.e.
+//     the split finished OR errored) so a fresh upload re-arms it.
+//   * Cleared in handleRun / handleRestart so a manual click doesn't
+//     suppress a later auto-start on a re-upload.
+let _autoStartFired = false
+
+// Top-level so the regression test can drive it directly via the
+// __autoStartTriggerSelfTest hook below. Gates (all required, short-circuit):
+//   1. settings.auto_start_omr_with_split === true
+//   2. split is still in flight (pdf_split_total > 0)
+//   3. enough pages produced (pdf_split_pages >= auto_start_omr_min_pages)
+//   4. batch has template.json
+//   5. batch has config.json OR auto_start_omr_require_config === false
+//   6. batch isn't already running/queued
+//   7. guard hasn't already fired for this upload session
+const handleAutoStart = async (status) => {
+    if (_autoStartFired) return
+    if (status.auto_start_omr_with_split !== true) return
+    const splitTotal = status.pdf_split_total ?? 0
+    if (splitTotal <= 0) return
+    const pages = status.pdf_split_pages ?? 0
+    const minPages = status.auto_start_omr_min_pages ?? 10
+    if (pages < minPages) return
+    if (status.has_template !== true) return
+    const requireConfig = status.auto_start_omr_require_config === true
+    if (requireConfig && status.has_config !== true) return
+    const runStatus = status.status || ""
+    if (runStatus === "running" || runStatus === "queued") return
+
+    // Latch BEFORE the await so a re-entrant 500ms poll tick that lands
+    // while /process is in-flight can't double-fire the request.
+    _autoStartFired = true
+
+    const btn = document.getElementById("pipeline-start-btn")
+    const fb = document.getElementById("pipeline-start-feedback")
+    if (btn) btn.disabled = true
+    if (fb) fb.textContent = `Auto-started after ${pages} pages. The 'Pipelined' badge will appear once OMR begins.`
+
+    try {
+        await jsonFetch(apiUrl("/process"), { method: "POST" })
+        updateStatus("queued", null)
+        setTimeout(pollStatus, 1000)
+    } catch (error) {
+        // Transient failure (e.g. 5xx, network): un-latch so the next
+        // poll tick can retry. Manual button stays enabled as a fallback.
+        _autoStartFired = false
+        if (btn) btn.disabled = false
+        if (fb) fb.textContent = ""
+        console.warn("Auto-start /process failed; will retry on next tick:", error)
+    }
+}
+
 const handleUpload = async (event) => {
     event.preventDefault()
     const feedback = document.getElementById("upload-feedback")
@@ -1600,6 +1661,7 @@ const handleUpload = async (event) => {
                 if (status.pdf_split_error) {
                     // Background split failed — show error and stop polling.
                     _isBackgroundUpload = false
+                    _autoStartFired = false
                     _splitSeenTotal = false
                     if (pollInterval) { clearInterval(pollInterval); pollInterval = null }
                     show(feedback, status.pdf_split_error, "error")
@@ -1614,10 +1676,21 @@ const handleUpload = async (event) => {
                         _splitRefreshPending = true
                         refreshFiles().finally(() => { _splitRefreshPending = false })
                     }
+                    // Reveal the pipelined-start affordance once at least one
+                    // page exists and the batch isn't already running/queued.
+                    const pipelineAction = document.getElementById("pipeline-action")
+                    const runStatus = status.status || ""
+                    const canStart = pages > 0 && runStatus !== "running" && runStatus !== "queued"
+                    if (pipelineAction) pipelineAction.hidden = !canStart
+                    // Auto-fire /process when the operator's settings
+                    // allow it. handleAutoStart is idempotent via
+                    // _autoStartFired so re-entry is safe.
+                    handleAutoStart(status)
                 } else if (_splitSeenTotal) {
                     // total went back to 0 after being active → split complete.
                     _splitSeenTotal = false
                     _isBackgroundUpload = false
+                    _autoStartFired = false
                     if (pollInterval) { clearInterval(pollInterval); pollInterval = null }
                     await refreshFiles()
                     const count = fileBrowserState.files.length
@@ -1626,6 +1699,8 @@ const handleUpload = async (event) => {
                         _updateSplitProgress(count, count)
                         setTimeout(() => { progressEl.hidden = true }, 1200)
                     }
+                    const pipelineAction = document.getElementById("pipeline-action")
+                    if (pipelineAction) pipelineAction.hidden = true
                 }
             } catch (_) { /* ignore poll errors during upload */ }
         }, 500)
@@ -1807,11 +1882,34 @@ const handleDeleteAsset = async (event) => {
 
 const handleRun = async () => {
     const errorEl = document.getElementById("last-error")
+    _autoStartFired = false
     try {
         await jsonFetch(apiUrl("/process"), { method: "POST" })
         updateStatus("queued", null)
         setTimeout(pollStatus, 1000)
     } catch (error) {
+        show(errorEl, error.message, "error")
+    }
+}
+
+// Pipelined start: triggered from the upload-progress panel while a PDF
+// split is still running. Hits the same /process endpoint but surfaces
+// dedicated feedback so the operator can confirm the pipeline engaged
+// (look for the green "Pipelined" badge once the run starts).
+const handlePipelineStart = async () => {
+    const btn = document.getElementById("pipeline-start-btn")
+    const fb = document.getElementById("pipeline-start-feedback")
+    const errorEl = document.getElementById("last-error")
+    if (btn) btn.disabled = true
+    if (fb) fb.textContent = "Starting pipelined run\u2026"
+    try {
+        await jsonFetch(apiUrl("/process"), { method: "POST" })
+        if (fb) fb.textContent = "Pipelined run queued. Look for the green \u2018Pipelined\u2019 badge in the status bar above."
+        updateStatus("queued", null)
+        setTimeout(pollStatus, 1000)
+    } catch (error) {
+        if (btn) btn.disabled = false
+        if (fb) fb.textContent = ""
         show(errorEl, error.message, "error")
     }
 }
@@ -1829,6 +1927,7 @@ const handleStop = async () => {
 
 const handleRestart = async () => {
     const errorEl = document.getElementById("last-error")
+    _autoStartFired = false
     try {
         await jsonFetch(apiUrl("/restart"), { method: "POST" })
         updateStatus("queued", null)
@@ -1904,6 +2003,51 @@ const handleApplyPreset = async () => {
     }
 }
 
+
+// Collapsible panels (persisted via localStorage)
+const PANEL_STATE_PREFIX = "omr.batchDetail."
+const panelStateMemory = {}
+
+const getPanelState = (stateId) => {
+    const key = `${PANEL_STATE_PREFIX}${stateId}.open`
+    try {
+        const value = window.localStorage.getItem(key)
+        if (value === null) return panelStateMemory[key] === true
+        return value === "true"
+    } catch (_err) {
+        return panelStateMemory[key] === true
+    }
+}
+
+const setPanelState = (stateId, open) => {
+    const key = `${PANEL_STATE_PREFIX}${stateId}.open`
+    panelStateMemory[key] = open === true
+    try {
+        window.localStorage.setItem(key, open ? "true" : "false")
+    } catch (_err) { /* private-browsing fallback: kept in panelStateMemory */ }
+}
+
+const applyPanelState = (toggle, body, open) => {
+    if (!toggle || !body) return
+    toggle.setAttribute("aria-expanded", open ? "true" : "false")
+    const chevron = toggle.querySelector(".panel-toggle-chevron")
+    if (chevron) chevron.textContent = open ? "\u25bc" : "\u25b6"
+    if (open) body.removeAttribute("hidden")
+    else body.setAttribute("hidden", "")
+}
+
+const setupCollapsiblePanel = (stateId, domPrefix) => {
+    const toggle = document.getElementById(`${domPrefix}-toggle`)
+    const body = document.getElementById(`${domPrefix}-body`)
+    if (!toggle || !body) return
+    const initialOpen = getPanelState(stateId)
+    applyPanelState(toggle, body, initialOpen)
+    toggle.addEventListener("click", () => {
+        const nextOpen = toggle.getAttribute("aria-expanded") !== "true"
+        applyPanelState(toggle, body, nextOpen)
+        setPanelState(stateId, nextOpen)
+    })
+}
 document.addEventListener("DOMContentLoaded", () => {
     const uploadForm = document.getElementById("upload-form")
     if (uploadForm) uploadForm.addEventListener("submit", handleUpload)
@@ -1913,6 +2057,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (assetForm) assetForm.addEventListener("submit", handleAssetUpload)
     const runBtn = document.getElementById("run-btn")
     if (runBtn) runBtn.addEventListener("click", handleRun)
+    const pipelineStartBtn = document.getElementById("pipeline-start-btn")
+    if (pipelineStartBtn) pipelineStartBtn.addEventListener("click", handlePipelineStart)
     const stopBtn = document.getElementById("stop-btn")
     if (stopBtn) stopBtn.addEventListener("click", handleStop)
     const restartBtn = document.getElementById("restart-btn")
@@ -1920,6 +2066,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const rotationForm = document.getElementById("rotation-form")
     if (rotationForm) rotationForm.addEventListener("change", handleRotationChange)
     bootstrapFileBrowser()
+    setupCollapsiblePanel("jsonDocsPanel", "json-docs")
     applyPreviewRotation()
     loadPresetOptions()
     const applyPresetBtn = document.getElementById("apply-preset-btn")
@@ -1955,3 +2102,82 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     _loadSystemInfo()
 })
+
+// ---------------------------------------------------------------------------
+// Ad-hoc browser-console self-test for handleAutoStart. Runs only when
+// window.__OMR_TEST_MODE === true so production page loads never see it.
+// Drives handleAutoStart against synthetic status payloads and writes a
+// pass/fail summary to console. NOT a substitute for the Python regression
+// test in webui/tests/test_auto_start_trigger.py — that one covers the
+// status-payload contract; this one covers the JS gating logic.
+// ---------------------------------------------------------------------------
+const __autoStartTriggerSelfTest = async () => {
+    if (typeof window === "undefined" || window.__OMR_TEST_MODE !== true) return
+    const results = []
+    const baseStatus = {
+        auto_start_omr_with_split: true,
+        auto_start_omr_min_pages: 10,
+        auto_start_omr_require_config: false,
+        pdf_split_total: 20,
+        pdf_split_pages: 15,
+        has_template: true,
+        has_config: true,
+        status: "created",
+    }
+    const record = (name, fired, expected) => {
+        const ok = fired === expected
+        results.push({ name, ok, fired, expected })
+    }
+    // Stub jsonFetch so the self-test doesn't actually POST /process.
+    const origFetch = window.fetch
+    let calls = 0
+    window.fetch = async () => { calls += 1; return new Response("{}", { status: 200 }) }
+    try {
+        // Gate 1: disabled
+        _autoStartFired = false
+        calls = 0
+        await handleAutoStart({ ...baseStatus, auto_start_omr_with_split: false })
+        record("gate:disabled", calls, 0)
+        // Gate 2: split not in flight
+        _autoStartFired = false
+        calls = 0
+        await handleAutoStart({ ...baseStatus, pdf_split_total: 0 })
+        record("gate:no_split", calls, 0)
+        // Gate 3: not enough pages
+        _autoStartFired = false
+        calls = 0
+        await handleAutoStart({ ...baseStatus, pdf_split_pages: 5 })
+        record("gate:few_pages", calls, 0)
+        // Gate 4: no template
+        _autoStartFired = false
+        calls = 0
+        await handleAutoStart({ ...baseStatus, has_template: false })
+        record("gate:no_template", calls, 0)
+        // Gate 5: require_config but no config
+        _autoStartFired = false
+        calls = 0
+        await handleAutoStart({ ...baseStatus, has_config: false, auto_start_omr_require_config: true })
+        record("gate:require_config", calls, 0)
+        // Gate 6: already running
+        _autoStartFired = false
+        calls = 0
+        await handleAutoStart({ ...baseStatus, status: "running" })
+        record("gate:running", calls, 0)
+        // Happy path — should fire exactly once
+        _autoStartFired = false
+        calls = 0
+        await handleAutoStart(baseStatus)
+        record("happy_path", calls, 1)
+        // Gate 7: re-entry is suppressed by _autoStartFired
+        calls = 0
+        await handleAutoStart(baseStatus)
+        record("guard:idempotent", calls, 0)
+    } finally {
+        window.fetch = origFetch
+        _autoStartFired = false
+    }
+    const failed = results.filter((r) => !r.ok)
+    console.log(`[autoStartSelfTest] ${results.length - failed.length}/${results.length} pass`)
+    if (failed.length > 0) console.warn("[autoStartSelfTest] failures:", failed)
+    return { passed: results.length - failed.length, total: results.length, failures: failed }
+}

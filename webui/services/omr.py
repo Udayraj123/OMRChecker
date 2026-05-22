@@ -865,6 +865,10 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
         )
         initial_split_total = int(metadata.get("pdf_split_total", 0) or 0)
         capacity_limit = worker_capacity_limit()
+        # Record whether this run actually engages pipelining so the UI/log can
+        # confirm it.  Without this flag operators have no way to tell whether
+        # the pipeline_omr_with_split feature did anything for a given batch.
+        pipeline_active = False
         if _pipeline_enabled and initial_split_total > 0:
             if capacity_limit <= 1:
                 logger.info(
@@ -873,16 +877,36 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
                     batch_id,
                 )
                 _pipeline_enabled = False
-            elif max_workers >= capacity_limit:
-                max_workers = max(1, capacity_limit - 1)
-                logger.info(
-                    "OMR workers clamped to leave split capacity | batch_id=%s | "
-                    "workers=%d | capacity=%d",
-                    batch_id, max_workers, capacity_limit,
-                )
+            else:
+                pipeline_active = True
+                if max_workers >= capacity_limit:
+                    max_workers = max(1, capacity_limit - 1)
+                    logger.info(
+                        "OMR workers clamped to leave split capacity | batch_id=%s | "
+                        "workers=%d | capacity=%d",
+                        batch_id, max_workers, capacity_limit,
+                    )
 
         base_root = _prepare_runtime_base(batch_root)
-        logger.info("OMR batch started | batch_id=%s | images=%d | workers=%d", batch_id, len(input_images), max_workers)
+        if pipeline_active:
+            logger.info(
+                "OMR PIPELINED MODE engaged | batch_id=%s | initial_pages=%d | "
+                "split_total=%d | workers=%d (capacity=%d). Newly-arrived pages "
+                "will be picked up as the splitter publishes them.",
+                batch_id, len(input_images), initial_split_total, max_workers, capacity_limit,
+            )
+        else:
+            logger.info(
+                "OMR SEQUENTIAL MODE | batch_id=%s | images=%d | workers=%d | "
+                "pipeline_enabled=%s | initial_split_total=%d (no in-flight split to overlap with)",
+                batch_id, len(input_images), max_workers, _pipeline_enabled, initial_split_total,
+            )
+        # Persist the flag so the /status endpoint can surface it to the UI.
+        batches_service.update_batch_metadata(
+            batch_id,
+            {"pipelined_run": pipeline_active},
+            settings,
+        )
 
         dynamic_dimensions_by_file: dict[str, dict[str, int]] = {}
         latest_persisted_config = copy.deepcopy(base_config)

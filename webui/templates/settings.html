@@ -1,0 +1,312 @@
+﻿{% extends "base.html" %}
+{% block title %}Settings &middot; OMRChecker{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <div class="panel-head">
+        <h1>Settings</h1>
+        <p class="muted small">
+            These settings are written to <span class="mono">cache_root/settings_overrides.json</span>
+            and persist across restarts. Some values (auto-start, page format, JPEG quality,
+            pipeline overlap) take effect immediately on the next run; others (cache root,
+            storage root) require a restart and are read-only here.
+        </p>
+    </div>
+
+    <form id="settings-form" novalidate>
+
+        <!-- ─── OMR pipeline & auto-start ──────────────────────────────────── -->
+        <fieldset class="settings-group" data-group="pipeline">
+            <legend>OMR pipeline &amp; auto-start</legend>
+
+            <div class="settings-row" data-row="pipeline_omr_with_split">
+                <div class="form-inline">
+                    <label for="f-pipeline_omr_with_split">
+                        <input id="f-pipeline_omr_with_split"
+                               name="pipeline_omr_with_split"
+                               type="checkbox"
+                               data-key="pipeline_omr_with_split"
+                               data-type="bool" />
+                        Pipeline OMR with split
+                    </label>
+                    <button type="button"
+                            class="btn small"
+                            data-reset="pipeline_omr_with_split"
+                            aria-label="Reset Pipeline OMR with split to default">
+                        Reset to default
+                    </button>
+                </div>
+                <p class="muted small" data-description="pipeline_omr_with_split"></p>
+            </div>
+
+            <div class="settings-row" data-row="auto_start_omr_with_split">
+                <div class="form-inline">
+                    <label for="f-auto_start_omr_with_split">
+                        <input id="f-auto_start_omr_with_split"
+                               name="auto_start_omr_with_split"
+                               type="checkbox"
+                               data-key="auto_start_omr_with_split"
+                               data-type="bool" />
+                        Auto-start OMR with split
+                    </label>
+                    <button type="button"
+                            class="btn small"
+                            data-reset="auto_start_omr_with_split"
+                            aria-label="Reset Auto-start OMR with split to default">
+                        Reset to default
+                    </button>
+                </div>
+                <p class="muted small" data-description="auto_start_omr_with_split"></p>
+            </div>
+
+            <div class="settings-row" data-row="auto_start_omr_min_pages">
+                <div class="form-inline">
+                    <label for="f-auto_start_omr_min_pages">Auto-start min pages</label>
+                    <input id="f-auto_start_omr_min_pages"
+                           name="auto_start_omr_min_pages"
+                           type="number"
+                           min="1"
+                           max="10000"
+                           step="1"
+                           data-key="auto_start_omr_min_pages"
+                           data-type="int" />
+                    <button type="button"
+                            class="btn small"
+                            data-reset="auto_start_omr_min_pages"
+                            aria-label="Reset Auto-start min pages to default">
+                        Reset to default
+                    </button>
+                </div>
+                <p class="muted small" data-description="auto_start_omr_min_pages"></p>
+            </div>
+
+            <div class="settings-row" data-row="auto_start_omr_require_config">
+                <div class="form-inline">
+                    <label for="f-auto_start_omr_require_config">
+                        <input id="f-auto_start_omr_require_config"
+                               name="auto_start_omr_require_config"
+                               type="checkbox"
+                               data-key="auto_start_omr_require_config"
+                               data-type="bool" />
+                        Auto-start requires config.json
+                    </label>
+                    <button type="button"
+                            class="btn small"
+                            data-reset="auto_start_omr_require_config"
+                            aria-label="Reset Auto-start requires config.json to default">
+                        Reset to default
+                    </button>
+                </div>
+                <p class="muted small" data-description="auto_start_omr_require_config"></p>
+            </div>
+        </fieldset>
+
+        <!-- ─── PDF rendering ──────────────────────────────────────────────── -->
+        <fieldset class="settings-group" data-group="pdf">
+            <legend>PDF rendering</legend>
+
+            <div class="settings-row" data-row="pdf_render_dpi">
+                <div class="form-inline">
+                    <label for="f-pdf_render_dpi">PDF render DPI</label>
+                    <input id="f-pdf_render_dpi"
+                           name="pdf_render_dpi"
+                           type="number"
+                           min="50"
+                           max="600"
+                           step="1"
+                           data-key="pdf_render_dpi"
+                           data-type="int" />
+                    <button type="button"
+                            class="btn small"
+                            data-reset="pdf_render_dpi"
+                            aria-label="Reset PDF render DPI to default">
+                        Reset to default
+                    </button>
+                </div>
+                <p class="muted small" data-description="pdf_render_dpi"></p>
+            </div>
+
+            <div class="settings-row" data-row="pdf_render_grayscale">
+                <div class="form-inline">
+                    <label for="f-pdf_render_grayscale">
+                        <input id="f-pdf_render_grayscale"
+                               name="pdf_render_grayscale"
+                               type="checkbox"
+                               data-key="pdf_render_grayscale"
+                               data-type="bool" />
+                        Render PDFs as grayscale
+                    </label>
+                    <button type="button"
+                            class="btn small"
+                            data-reset="pdf_render_grayscale"
+                            aria-label="Reset Render PDFs as grayscale to default">
+                        Reset to default
+                    </button>
+                </div>
+                <p class="muted small" data-description="pdf_render_grayscale"></p>
+            </div>
+
+            <div class="settings-row" data-row="pdf_page_format">
+                <div class="form-inline">
+                    <label for="f-pdf_page_format">PDF page format</label>
+                    <select id="f-pdf_page_format"
+                            name="pdf_page_format"
+                            data-key="pdf_page_format"
+                            data-type="str">
+                        <option value="jpeg">jpeg</option>
+                        <option value="png">png</option>
+                    </select>
+                    <button type="button"
+                            class="btn small"
+                            data-reset="pdf_page_format"
+                            aria-label="Reset PDF page format to default">
+                        Reset to default
+                    </button>
+                </div>
+                <p class="muted small" data-description="pdf_page_format"></p>
+            </div>
+
+            <div class="settings-row" data-row="pdf_jpeg_quality">
+                <div class="form-inline">
+                    <label for="f-pdf_jpeg_quality">PDF JPEG quality</label>
+                    <input id="f-pdf_jpeg_quality"
+                           name="pdf_jpeg_quality"
+                           type="number"
+                           min="60"
+                           max="100"
+                           step="1"
+                           data-key="pdf_jpeg_quality"
+                           data-type="int" />
+                    <button type="button"
+                            class="btn small"
+                            data-reset="pdf_jpeg_quality"
+                            aria-label="Reset PDF JPEG quality to default">
+                        Reset to default
+                    </button>
+                </div>
+                <p class="muted small" data-description="pdf_jpeg_quality"></p>
+            </div>
+
+            <div class="settings-row" data-row="pdf_split_workers">
+                <div class="form-inline">
+                    <label for="f-pdf_split_workers">PDF split workers</label>
+                    <input id="f-pdf_split_workers"
+                           name="pdf_split_workers"
+                           type="number"
+                           min="0"
+                           max="32"
+                           step="1"
+                           data-key="pdf_split_workers"
+                           data-type="int" />
+                    <span class="muted small">0 = auto</span>
+                    <button type="button"
+                            class="btn small"
+                            data-reset="pdf_split_workers"
+                            aria-label="Reset PDF split workers to default">
+                        Reset to default
+                    </button>
+                </div>
+                <p class="muted small" data-description="pdf_split_workers"></p>
+            </div>
+
+            <div class="settings-row" data-row="pdf_split_min_pages_for_parallel">
+                <div class="form-inline">
+                    <label for="f-pdf_split_min_pages_for_parallel">PDF split min pages for parallel</label>
+                    <input id="f-pdf_split_min_pages_for_parallel"
+                           name="pdf_split_min_pages_for_parallel"
+                           type="number"
+                           min="1"
+                           step="1"
+                           data-key="pdf_split_min_pages_for_parallel"
+                           data-type="int" />
+                    <button type="button"
+                            class="btn small"
+                            data-reset="pdf_split_min_pages_for_parallel"
+                            aria-label="Reset PDF split min pages for parallel to default">
+                        Reset to default
+                    </button>
+                </div>
+                <p class="muted small" data-description="pdf_split_min_pages_for_parallel"></p>
+            </div>
+        </fieldset>
+
+        <!-- ─── OMR engine ─────────────────────────────────────────────────── -->
+        <fieldset class="settings-group" data-group="engine">
+            <legend>OMR engine</legend>
+
+            <div class="settings-row" data-row="inmemory_pipeline">
+                <div class="form-inline">
+                    <label for="f-inmemory_pipeline">
+                        <input id="f-inmemory_pipeline"
+                               name="inmemory_pipeline"
+                               type="checkbox"
+                               data-key="inmemory_pipeline"
+                               data-type="bool" />
+                        In-memory pipeline (skip per-image scratch dirs)
+                    </label>
+                    <button type="button"
+                            class="btn small"
+                            data-reset="inmemory_pipeline"
+                            aria-label="Reset In-memory pipeline to default">
+                        Reset to default
+                    </button>
+                </div>
+                <p class="muted small" data-description="inmemory_pipeline"></p>
+            </div>
+
+            <div class="settings-row" data-row="default_preset">
+                <div class="form-inline">
+                    <label for="f-default_preset">Default preset</label>
+                    <input id="f-default_preset"
+                           name="default_preset"
+                           type="text"
+                           data-key="default_preset"
+                           data-type="str"
+                           placeholder="(none)" />
+                    <button type="button"
+                            class="btn small"
+                            data-reset="default_preset"
+                            aria-label="Reset Default preset to default">
+                        Reset to default
+                    </button>
+                </div>
+                <p class="muted small" data-description="default_preset"></p>
+            </div>
+
+            <div class="settings-row" data-row="allow_directory_import">
+                <div class="form-inline">
+                    <label for="f-allow_directory_import">
+                        <input id="f-allow_directory_import"
+                               name="allow_directory_import"
+                               type="checkbox"
+                               data-key="allow_directory_import"
+                               data-type="bool" />
+                        Allow server-side directory import
+                    </label>
+                    <button type="button"
+                            class="btn small"
+                            data-reset="allow_directory_import"
+                            aria-label="Reset Allow server-side directory import to default">
+                        Reset to default
+                    </button>
+                </div>
+                <p class="muted small" data-description="allow_directory_import"></p>
+            </div>
+        </fieldset>
+
+        <div class="flex-between settings-actions">
+            <div class="form-inline">
+                <button type="submit" id="settings-save" class="btn primary">Save changes</button>
+                <button type="button" id="settings-reload" class="btn small">Reload from disk</button>
+            </div>
+            <span id="settings-dirty" class="muted small" hidden>Unsaved changes</span>
+        </div>
+
+        <div id="settings-feedback" class="feedback" hidden></div>
+    </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/settings.js"></script>
+{% endblock %}
