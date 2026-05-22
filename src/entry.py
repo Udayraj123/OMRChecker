@@ -136,11 +136,11 @@ def process_dir(
         if not template:
             logger.error(
                 f"Found images, but no template in the directory tree \
-                of '{curr_dir}'. \nPlace {TEMPLATE_FILENAME} in the \
+                of '{curr_dir.as_posix()}'. \nPlace {TEMPLATE_FILENAME} in the \
                 appropriate directory."
             )
             raise Exception(
-                f"No template file found in the directory tree of {curr_dir}"
+                f"No template file found in the directory tree of {curr_dir.as_posix()}"
             )
 
         setup_dirs_for_paths(paths)
@@ -238,10 +238,12 @@ def process_files(
                 [file_name] + outputs_namespace.empty_resp
             )
             if check_and_move(ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path):
+                file_path_str = file_path.as_posix()
+                new_file_path_str = new_file_path.as_posix()
                 err_line = [
                     file_name,
-                    file_path,
-                    new_file_path,
+                    file_path_str,
+                    new_file_path_str,
                     "NA",
                 ] + outputs_namespace.empty_resp
                 pd.DataFrame(err_line, dtype=str).T.to_csv(
@@ -309,8 +311,10 @@ def process_files(
         if multi_marked == 0 or not tuning_config.outputs.filter_out_multimarked_files:
             STATS.files_not_moved += 1
             new_file_path = save_dir.joinpath(file_id)
+            file_path_str = file_path.as_posix()
+            new_file_path_str = new_file_path.as_posix()
             # Enter into Results sheet-
-            results_line = [file_name, file_path, new_file_path, score] + resp_array
+            results_line = [file_name, file_path_str, new_file_path_str, score] + resp_array
             # Write/Append to results_line file(opened in append mode)
             pd.DataFrame(results_line, dtype=str).T.to_csv(
                 outputs_namespace.files_obj["Results"],
@@ -324,7 +328,9 @@ def process_files(
             logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
             new_file_path = outputs_namespace.paths.multi_marked_dir.joinpath(file_name)
             if check_and_move(ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path):
-                mm_line = [file_name, file_path, new_file_path, "NA"] + resp_array
+                file_path_str = file_path.as_posix()
+                new_file_path_str = new_file_path.as_posix()
+                mm_line = [file_name, file_path_str, new_file_path_str, "NA"] + resp_array
                 pd.DataFrame(mm_line, dtype=str).T.to_csv(
                     outputs_namespace.files_obj["MultiMarked"],
                     mode="a",
