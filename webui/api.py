@@ -51,6 +51,8 @@ from webui.services import batches as batches_service
 from webui.services import omr as omr_service
 from webui.services import prefill as prefill_service
 from webui.services import presets as presets_service
+from webui.services.scan_simulation import normalize_realism_preset
+from webui import log_stream
 from webui.schemas_settings import (
     RuntimeSettingsResponse,
     RuntimeSettingsUpdate,
@@ -84,6 +86,13 @@ _PREFILL_BATCH_SEM = threading.BoundedSemaphore(_PREFILL_BATCH_LIMIT)
 _PREFILL_SINGLE_LIMIT = max(2, int(os.environ.get("OMR_WEBUI_PREFILL_SINGLE_CONCURRENCY", "8")))
 _PREFILL_SINGLE_SEM = threading.BoundedSemaphore(_PREFILL_SINGLE_LIMIT)
 
+# /prefill/sample is fired in parallel by the in-page comparison gallery
+# (4 concurrent requests on page load). Cap server-side concurrency so a
+# misbehaving client (or a tight retry loop) can't pile up dozens of PNG
+# renders simultaneously.
+_PREFILL_SAMPLE_LIMIT = max(2, int(os.environ.get("OMR_WEBUI_PREFILL_SAMPLE_CONCURRENCY", "6")))
+_PREFILL_SAMPLE_SEM = threading.BoundedSemaphore(_PREFILL_SAMPLE_LIMIT)
+
 # Hard caps on prefill batch sizes. PDF assembly is heavier than ZIP because
 # each page incurs PyMuPDF parsing overhead; ZIP just stores PNG bytes verbatim.
 _PREFILL_PDF_MAX_ROWS = int(os.environ.get("OMR_WEBUI_PREFILL_PDF_MAX_ROWS", "5000"))
@@ -110,6 +119,36 @@ def _register_download(tmp_path: Path, media_type: str, filename: str) -> str:
             del _DOWNLOAD_STORE[k]
         _DOWNLOAD_STORE[token] = (tmp_path, media_type, filename, expires_at)
     return token
+
+
+# ---------------------------------------------------------------------------
+# Log streaming
+# ---------------------------------------------------------------------------
+
+
+@router.get("/logs/poll")
+async def logs_poll(since: int = -1) -> dict:
+    """Return log entries with sequence number > ``since``.
+
+    Used by the front-end log panel which polls once per second over plain
+    HTTP. WebView2 has known SSE buffering issues so this is the preferred
+    transport in the desktop wrapper.
+    """
+    return log_stream.poll(since=since)
+
+
+@router.get("/logs/stream")
+async def logs_stream() -> StreamingResponse:
+    """Server-Sent Events stream of log lines (non-WebView2 clients)."""
+    return StreamingResponse(
+        log_stream.stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-store",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -348,6 +387,7 @@ async def upload_files(
     # the size check anyway, and the UploadFile stream is consumed once.
     image_refs: list[FileRef] = []
     pdf_jobs: list[tuple[str, bytes]] = []
+    inferred_preset: str | None = None
     for upload in files:
         data = await upload.read()
         if len(data) > settings.max_upload_bytes:
@@ -358,6 +398,17 @@ async def upload_files(
                     f"({settings.max_upload_bytes} bytes)"
                 ),
             )
+        # Try to infer the realism preset from the filename so we have an
+        # audit trail when a prefill-generated file is later debugged. This
+        # is best-effort only; legitimate user uploads with these names are
+        # rare. ``adversarial`` matches first because both ``moderate`` and
+        # ``adversarial`` contain ``a``.
+        name_lower = (upload.filename or "").lower()
+        for candidate in ("adversarial", "moderate", "subtle"):
+            if candidate in name_lower:
+                if inferred_preset is None:
+                    inferred_preset = candidate
+                break
         if _is_pdf_upload(upload):
             pdf_jobs.append((upload.filename or "upload.pdf", data))
             continue
@@ -370,6 +421,18 @@ async def upload_files(
             settings,
         )
         image_refs.extend(refs)
+
+    if inferred_preset is not None:
+        batches_service.update_batch_metadata(
+            batch_id,
+            {"inferred_realism_preset": inferred_preset},
+            settings,
+        )
+        logger.info(
+            "Inferred realism preset from upload filename | batch=%s | preset=%s",
+            batch_id,
+            inferred_preset,
+        )
 
     if pdf_jobs:
         # Schedule PDF rendering as background work. BackgroundTasks runs
@@ -757,6 +820,58 @@ async def get_checked_output_image(
 # Prefill endpoints
 # ---------------------------------------------------------------------------
 
+@router.get("/prefill/sample")
+async def prefill_sample(
+    preset: str = "none",
+    candidate_number: str = "9010690012",
+    student_name: str = "Jane Doe",
+    school_name: str = "Sample School",
+    exam_name: str = "Sample Exam",
+) -> StreamingResponse:
+    """Return an inline PNG preview of a single preset.
+
+    Used by the in-page "Compare presets" gallery so users can see exactly
+    what each realism preset produces without downloading anything. Response
+    is marked ``Cache-Control: no-store`` so WebView2 / browser caches cannot
+    serve a stale version after the simulator code changes.
+    """
+    try:
+        preset_norm = normalize_realism_preset(preset)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    if not _PREFILL_SAMPLE_SEM.acquire(blocking=False):
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"Sample renderer busy; try again shortly "
+                f"(max {_PREFILL_SAMPLE_LIMIT} concurrent previews)."
+            ),
+        )
+    try:
+        try:
+            data = await asyncio.to_thread(
+                prefill_service.generate_single_png,
+                student_name, school_name, exam_name, candidate_number, preset_norm,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc))
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(
+                status_code=500,
+                detail=f"Sample render failed: {type(exc).__name__}: {exc}",
+            )
+    finally:
+        _PREFILL_SAMPLE_SEM.release()
+    return StreamingResponse(
+        io.BytesIO(data),
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f'inline; filename="preview_{preset_norm}.png"',
+            "Cache-Control": "no-store, max-age=0",
+        },
+    )
+
+
 @router.post("/prefill/single")
 async def prefill_single(
     student_name: str = Form(...),
@@ -764,6 +879,7 @@ async def prefill_single(
     exam_name: str = Form(...),
     candidate_number: str = Form(...),
     output_format: str = Form("png"),
+    realism_preset: str = Form("none"),
 ) -> StreamingResponse:
     """Generate a single pre-filled answer sheet and stream it as a download."""
     output_format = (output_format or "").strip().lower()
@@ -772,6 +888,10 @@ async def prefill_single(
             status_code=422,
             detail="output_format must be 'png' or 'pdf'.",
         )
+    try:
+        realism_preset = normalize_realism_preset(realism_preset)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
     # Backpressure: bounded concurrency so a flood of requests cannot exhaust
     # the threadpool / RAM. Excess requests get a fast 429 with Retry-After.
     if not _PREFILL_SINGLE_SEM.acquire(blocking=False):
@@ -786,20 +906,23 @@ async def prefill_single(
     try:
         # Offload CPU-heavy rendering off the event loop so a flood of
         # /prefill/single requests cannot block other endpoints (e.g. health).
+        # Suffix the filename with the preset (when not "none") so users can
+        # immediately tell which realism preset produced a given download.
+        preset_suffix = "" if realism_preset == "none" else f"_{realism_preset}"
         if output_format == "pdf":
             data = await asyncio.to_thread(
                 prefill_service.generate_single_pdf,
-                student_name, school_name, exam_name, candidate_number,
+                student_name, school_name, exam_name, candidate_number, realism_preset,
             )
             media_type = "application/pdf"
-            filename = "prefilled_sheet.pdf"
+            filename = f"prefilled_sheet{preset_suffix}.pdf"
         else:
             data = await asyncio.to_thread(
                 prefill_service.generate_single_png,
-                student_name, school_name, exam_name, candidate_number,
+                student_name, school_name, exam_name, candidate_number, realism_preset,
             )
             media_type = "image/png"
-            filename = "prefilled_sheet.png"
+            filename = f"prefilled_sheet{preset_suffix}.png"
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     except Exception as exc:  # noqa: BLE001 - never leak stack traces
@@ -823,6 +946,7 @@ async def prefill_batch(
     csv_text: str | None = Form(default=None),
     csv_file: UploadFile | None = File(default=None),
     output_mode: str = Form("pdf"),
+    realism_preset: str = Form("none"),
 ) -> dict:
     """Generate pre-filled answer sheets for multiple students.
 
@@ -837,6 +961,10 @@ async def prefill_batch(
             status_code=422,
             detail="output_mode must be 'pdf' or 'zip'.",
         )
+    try:
+        realism_preset = normalize_realism_preset(realism_preset)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
 
     if not csv_text and (csv_file is None or not csv_file.filename):
         raise HTTPException(
@@ -926,7 +1054,8 @@ async def prefill_batch(
 
     suffix = ".pdf" if output_mode == "pdf" else ".zip"
     media_type = "application/pdf" if output_mode == "pdf" else "application/zip"
-    filename = "prefilled_sheets" + suffix
+    preset_suffix = "" if realism_preset == "none" else f"_{realism_preset}"
+    filename = f"prefilled_sheets{preset_suffix}{suffix}"
 
     # 7) Write to a temp file the response will stream from. The file is
     # deleted after the response finishes via background_tasks.
@@ -949,11 +1078,11 @@ async def prefill_batch(
         # loop and stall every other request (incl. health checks).
         if output_mode == "zip":
             meta = await asyncio.to_thread(
-                prefill_service.generate_batch_zip_to_file, rows, tmp_path,
+                prefill_service.generate_batch_zip_to_file, rows, tmp_path, realism_preset,
             )
         else:
             meta = await asyncio.to_thread(
-                prefill_service.generate_batch_pdf_to_file, rows, tmp_path,
+                prefill_service.generate_batch_pdf_to_file, rows, tmp_path, realism_preset,
             )
     except ValueError as exc:
         _cleanup()

@@ -168,6 +168,33 @@ def draw_aruco_corners(img: Image.Image) -> Image.Image:
     return Image.fromarray(img_cv[:, :, ::-1])
 
 
+def aruco_marker_boxes(w: int, h: int) -> list[dict]:
+    """Return pixel-space ArUco marker boxes for a rendered sheet.
+
+    Kept in sync with :func:`draw_aruco_corners` so downstream scan
+    simulation can occlude / blur markers intentionally for robustness
+    testing without duplicating the placement math.
+    """
+    marker_px = max(24, int(max(w, h) * _ARUCO_MARKER_SIZE_RATIO))
+    quiet_zone = max(6, marker_px // 8)
+    boxes = []
+    for corner_idx, marker_id in enumerate(_ARUCO_CORNER_IDS):
+        rel_cx, rel_cy = _REF_CENTERS_RELATIVE[corner_idx]
+        cx, cy = round(rel_cx * w), round(rel_cy * h)
+        half = marker_px // 2
+        x0 = max(quiet_zone, min(cx - half, w - marker_px - quiet_zone))
+        y0 = max(quiet_zone, min(cy - half, h - marker_px - quiet_zone))
+        boxes.append({
+            'corner': corner_idx,
+            'marker_id': marker_id,
+            'x0': x0,
+            'y0': y0,
+            'x1': x0 + marker_px,
+            'y1': y0 + marker_px,
+        })
+    return boxes
+
+
 def load_stamped_template(template_path: Path) -> Image.Image:
     """Open the template and stamp ArUco corners once.
 
@@ -214,6 +241,38 @@ def _get_layout(w: int, h: int) -> dict:
     if key not in _LAYOUT_CACHE:
         _LAYOUT_CACHE[key] = _build_layout(w, h)
     return _LAYOUT_CACHE[key]
+
+
+def candidate_bubble_geometry(
+    w: int,
+    h: int,
+    candidate_number: str | None = None,
+) -> list[dict]:
+    """Return pixel-space geometry for all candidate-number bubbles.
+
+    Ordering is column-major: candidate digit column 0..9, then digit row
+    0..9. If ``candidate_number`` is provided, the selected row for each
+    column is marked with ``filled=True``.
+    """
+    L = _get_layout(w, h)
+    filled_by_column: dict[int, int] = {}
+    if candidate_number:
+        for idx, digit in enumerate(candidate_number[:10]):
+            if digit.isdigit():
+                filled_by_column[idx] = int(digit)
+
+    bubbles: list[dict] = []
+    for column, cx in enumerate(L['col_centers']):
+        for digit, cy in enumerate(L['row_centers']):
+            bubbles.append({
+                'column': column,
+                'digit': digit,
+                'cx': cx,
+                'cy': cy,
+                'radius': L['radius'],
+                'filled': filled_by_column.get(column) == digit,
+            })
+    return bubbles
 
 
 def _draw_sheet_content(

@@ -74,7 +74,7 @@ def create_app() -> FastAPI:
 
     @app.middleware("http")
     async def add_security_headers(request: Request, call_next) -> Response:
-        """Inject security and correlation headers on every response."""
+        """Inject security, cache-control, and correlation headers on every response."""
         request_id = str(uuid.uuid4())
         request.state.request_id = request_id
         response: Response = await call_next(request)
@@ -92,6 +92,23 @@ def create_app() -> FastAPI:
             "base-uri 'self'; "
             "frame-ancestors 'none'"
         )
+        # Cache policy (only set defaults; never override an explicit header):
+        #   - Versioned /static/* (with ?v=...) is immutable for a year so
+        #     pywebview's WebView2 can cache aggressively but always picks up
+        #     a new version on the next file mtime bump.
+        #   - Other /static/* must revalidate so stale legacy URLs are caught.
+        #   - HTML pages must always revalidate so redeploys are visible after
+        #     one navigation, not just a hard refresh.
+        # Endpoints serving generated content set their own Cache-Control
+        # (e.g. /api/v1/prefill/sample uses no-store).
+        if not response.headers.get("Cache-Control"):
+            path = request.url.path
+            if path.startswith("/static/") and request.url.query and "v=" in request.url.query:
+                response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+            elif path.startswith("/static/"):
+                response.headers["Cache-Control"] = "no-cache, must-revalidate"
+            elif (response.headers.get("Content-Type") or "").startswith("text/html"):
+                response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         return response
 
     if STATIC_DIR.exists():

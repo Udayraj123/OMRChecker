@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import base64
 import logging
+import multiprocessing
 import os
 import shutil
 import socket
@@ -45,6 +46,51 @@ else:
 # importable when launched via ``python desktop.py`` from any cwd.
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
+
+
+def _user_data_root() -> Path:
+    """Return a writable per-user directory for batches, cache and logs.
+
+    Inside a PyInstaller bundle ``Path(__file__).parent.parent`` points
+    into ``_internal`` (read-only for users who installed under Program
+    Files). We must redirect writes to ``%LOCALAPPDATA%\\OMRChecker`` on
+    Windows, ``~/Library/Application Support/OMRChecker`` on macOS, and
+    ``~/.local/share/OMRChecker`` elsewhere.
+    """
+    if sys.platform.startswith("win"):
+        base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~\\AppData\\Local")
+        return Path(base) / "OMRChecker"
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "OMRChecker"
+    return Path(os.environ.get("XDG_DATA_HOME") or (Path.home() / ".local" / "share")) / "OMRChecker"
+
+
+def _configure_user_data_dirs() -> None:
+    """Point ``OMR_WEBUI_*`` settings at the per-user data directory.
+
+    Done before importing ``webui.app`` so the Settings model picks them
+    up via its env prefix. Skipped when the caller already set them so
+    deployments can pin their own paths.
+    """
+    if not getattr(sys, "frozen", False):
+        # Source / dev runs keep the repo-local storage so test fixtures
+        # and tooling continue to find them in the working tree.
+        return
+    root = _user_data_root()
+    storage_default = str(root / "storage" / "batches")
+    cache_default = str(root / "cache")
+    os.environ.setdefault("OMR_WEBUI_STORAGE_ROOT", storage_default)
+    os.environ.setdefault("OMR_WEBUI_CACHE_ROOT", cache_default)
+    try:
+        Path(storage_default).mkdir(parents=True, exist_ok=True)
+        Path(cache_default).mkdir(parents=True, exist_ok=True)
+    except OSError:
+        # Surface in logs later; don't crash startup over a writable-dir
+        # race when the parent already exists.
+        pass
+
+
+_configure_user_data_dirs()
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -261,4 +307,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    # MUST be the first call inside the ``__main__`` guard for PyInstaller
+    # on Windows. Without it, every child process spawned by the OMR
+    # ProcessPoolExecutor / PDF splitter re-runs ``main()`` and forks a
+    # second window — eventually exhausting OS resources.
+    multiprocessing.freeze_support()
     main()

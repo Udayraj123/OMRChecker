@@ -1166,3 +1166,46 @@ body.log-panel-collapsed .footer {
 @media (prefers-reduced-motion: reduce) {
     .panel-toggle-chevron { transition: none; }
 }
+
+/* Live preset comparison gallery */
+.preset-preview {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.02);
+}
+.preset-preview > summary {
+    cursor: pointer;
+    padding-block: 0.25rem;
+    user-select: none;
+}
+.preset-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-block: 1rem;
+}
+.preset-preview-card {
+    margin: 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+}
+.preset-preview-card img {
+    width: 100%;
+    height: auto;
+    display: block;
+    background: #f3f3f3;
+}
+.preset-preview-card figcaption {
+    padding: 0.5rem 0.75rem;
+    border-block-start: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    background: var(--panel, #1b1f24);
+}
+.preset-preview-card figcaption strong { font-size: 0.95rem; }

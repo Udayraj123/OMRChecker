@@ -2,10 +2,24 @@
 Processor/Extension framework
 Adapated from https://github.com/gdiepen/python_processor_example
 """
+import importlib
 import inspect
 import pkgutil
+import sys
 
 from src.logger import logger
+
+# Explicit fallback list of processor modules. Used in frozen
+# (PyInstaller) environments where ``pkgutil.walk_packages`` cannot
+# enumerate modules because they are stored inside the PYZ archive
+# instead of on disk. Update this list whenever a new file is added to
+# ``src/processors``.
+_FROZEN_PROCESSOR_MODULES = [
+    "src.processors.CropPage",
+    "src.processors.CropOnMarkers",
+    "src.processors.FeatureBasedAlignment",
+    "src.processors.builtins",
+]
 
 
 class Processor:
@@ -57,20 +71,45 @@ class ProcessorManager:
         """walk the supplied package to retrieve all processors"""
         imported_package = __import__(package, fromlist=["blah"])
         loaded_packages = []
-        for _, processor_name, ispkg in pkgutil.walk_packages(
-            imported_package.__path__, imported_package.__name__ + "."
-        ):
-            if not ispkg and processor_name != __name__:
-                processor_module = __import__(processor_name, fromlist=["blah"])
-                # https://stackoverflow.com/a/46206754/6242649
-                clsmembers = inspect.getmembers(
-                    processor_module,
-                    ProcessorManager.get_name_filter(processor_name),
-                )
-                for _, c in clsmembers:
-                    # Only add classes that are a sub class of Processor, but NOT Processor itself
-                    if issubclass(c, Processor) & (c is not Processor):
-                        self.processors[c.__name__] = c
+
+        # ``pkgutil.walk_packages`` works in normal Python installs but
+        # returns nothing when this code runs from inside a PyInstaller
+        # bundle (modules live in the PYZ archive, not on disk). Build
+        # the module name list dynamically when possible, then merge in
+        # the explicit ``_FROZEN_PROCESSOR_MODULES`` list so frozen apps
+        # still load every processor.
+        module_names: list[str] = []
+        try:
+            for _, processor_name, ispkg in pkgutil.walk_packages(
+                imported_package.__path__, imported_package.__name__ + "."
+            ):
+                if not ispkg and processor_name != __name__:
+                    module_names.append(processor_name)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(f"pkgutil.walk_packages failed ({exc!r}); using frozen list")
+
+        if getattr(sys, "frozen", False) or not module_names:
+            for name in _FROZEN_PROCESSOR_MODULES:
+                if name == __name__ or name in module_names:
+                    continue
+                module_names.append(name)
+
+        for processor_name in module_names:
+            try:
+                processor_module = importlib.import_module(processor_name)
+            except ImportError as exc:
+                logger.warning(f"Skipping processor {processor_name!r}: {exc}")
+                continue
+            # https://stackoverflow.com/a/46206754/6242649
+            clsmembers = inspect.getmembers(
+                processor_module,
+                ProcessorManager.get_name_filter(processor_name),
+            )
+            for _, c in clsmembers:
+                # Only add classes that are a sub class of Processor, but NOT Processor itself
+                if issubclass(c, Processor) & (c is not Processor):
+                    self.processors[c.__name__] = c
+                    if c.__name__ not in loaded_packages:
                         loaded_packages.append(c.__name__)
 
         logger.info(f"Loaded processors: {loaded_packages}")

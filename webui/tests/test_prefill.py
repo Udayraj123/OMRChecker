@@ -16,9 +16,10 @@ def test_prefill_batch_accepts_large_csv_without_buffered_generation(
 ) -> None:
     calls: dict[str, object] = {}
 
-    def fake_generate(rows, dst_path):
+    def fake_generate(rows, dst_path, realism_preset="none"):
         calls["count"] = len(rows)
         calls["dst_path"] = dst_path
+        calls["realism_preset"] = realism_preset
         dst_path.write_bytes(b"fake pdf")
         return {
             "count": len(rows),
@@ -45,3 +46,4 @@ def test_prefill_batch_accepts_large_csv_without_buffered_generation(
     assert payload["successes"] == 4000
     assert payload["download_url"].startswith("/api/v1/prefill/batch/download/")
     assert calls["count"] == 4000
+    assert calls["realism_preset"] == "none"

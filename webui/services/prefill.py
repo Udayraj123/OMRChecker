@@ -21,6 +21,13 @@ from typing import Any
 
 import numpy as np
 
+from webui.services.scan_simulation import (
+    BubbleGeometry,
+    MarkerBox,
+    apply_scan_simulation,
+    normalize_realism_preset,
+)
+
 # Built-in blank template shipped with the package.
 # When running as a PyInstaller frozen bundle sys._MEIPASS is the _internal/
 # directory where data files are extracted; fall back to the source-tree path.
@@ -114,7 +121,11 @@ def _build_payload(stamped_bytes: bytes, row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _build_fast_payload(row: dict[str, Any], output_format: str = "png") -> dict[str, Any]:
+def _build_fast_payload(
+    row: dict[str, Any],
+    output_format: str = "png",
+    realism_preset: str = "none",
+) -> dict[str, Any]:
     """Validate + sanitise a row into a fast worker payload (no stamped_bytes)."""
     candidate_number = _clean_field(row.get("candidate_number"), max_len=10)
     _validate_candidate_number(candidate_number)
@@ -124,6 +135,7 @@ def _build_fast_payload(row: dict[str, Any], output_format: str = "png") -> dict
         "exam_name": _clean_field(row.get("exam_name")),
         "candidate_number": candidate_number,
         "output_format": output_format,
+        "realism_preset": normalize_realism_preset(realism_preset),
     }
 
 
@@ -162,6 +174,49 @@ def _max_workers() -> int:
     return max(1, min((os.cpu_count() or 2) - 1, 8))
 
 
+def _simulate_scan_if_needed(
+    image,
+    prefill_module,
+    *,
+    candidate_number: str,
+    realism_preset: str = "none",
+):
+    """Apply optional deterministic scan simulation after content drawing."""
+    preset = normalize_realism_preset(realism_preset)
+    if preset == "none":
+        return image
+
+    w, h = image.size
+    bubbles = [
+        BubbleGeometry(
+            column=int(item["column"]),
+            digit=int(item["digit"]),
+            cx=int(item["cx"]),
+            cy=int(item["cy"]),
+            radius=int(item["radius"]),
+            filled=bool(item.get("filled", False)),
+        )
+        for item in prefill_module.candidate_bubble_geometry(w, h, candidate_number)
+    ]
+    markers = [
+        MarkerBox(
+            corner=int(item["corner"]),
+            x0=int(item["x0"]),
+            y0=int(item["y0"]),
+            x1=int(item["x1"]),
+            y1=int(item["y1"]),
+        )
+        for item in prefill_module.aruco_marker_boxes(w, h)
+    ]
+    return apply_scan_simulation(
+        image,
+        preset=preset,
+        candidate_number=candidate_number,
+        bubbles=bubbles,
+        markers=markers,
+    )
+
+
 def _thread_render(payload: dict) -> bytes:
     """Thread worker: renders one prefill sheet using the shared in-process template cache.
 
@@ -179,6 +234,12 @@ def _thread_render(payload: dict) -> bytes:
         payload['school_name'],
         payload['exam_name'],
         payload['candidate_number'],
+    )
+    img = _simulate_scan_if_needed(
+        img,
+        m,
+        candidate_number=payload['candidate_number'],
+        realism_preset=payload.get('realism_preset', 'none'),
     )
     buf = io.BytesIO()
     fmt = payload.get('output_format', 'png').lower()
@@ -293,6 +354,12 @@ def _iter_pngs_fast(payloads: list[dict], *, preserve_order: bool = True):
                 payloads[idx]['exam_name'],
                 payloads[idx]['candidate_number'],
             )
+            img = _simulate_scan_if_needed(
+                img,
+                m2,
+                candidate_number=payloads[idx]['candidate_number'],
+                realism_preset=payloads[idx].get('realism_preset', 'none'),
+            )
             buf = io.BytesIO()
             img.save(buf, format='PNG', compress_level=1)
             yield idx, buf.getvalue(), None
@@ -313,9 +380,11 @@ def generate_single_png(
     school_name: str,
     exam_name: str,
     candidate_number: str,
+    realism_preset: str = "none",
 ) -> bytes:
     candidate_number = _clean_field(candidate_number, max_len=10)
     _validate_candidate_number(candidate_number)
+    realism_preset = normalize_realism_preset(realism_preset)
     m = _import_prefill_module()
     stamped_img, _ = _get_stamped_img()
     assert stamped_img is not None
@@ -325,6 +394,12 @@ def generate_single_png(
         _clean_field(school_name),
         _clean_field(exam_name),
         candidate_number,
+    )
+    image = _simulate_scan_if_needed(
+        image,
+        m,
+        candidate_number=candidate_number,
+        realism_preset=realism_preset,
     )
     buf = io.BytesIO()
     image.save(buf, format="PNG", compress_level=1)
@@ -336,12 +411,19 @@ def generate_single_pdf(
     school_name: str,
     exam_name: str,
     candidate_number: str,
+    realism_preset: str = "none",
 ) -> bytes:
     import fitz
     import struct
     candidate_number = _clean_field(candidate_number, max_len=10)
     _validate_candidate_number(candidate_number)
-    png_bytes = generate_single_png(student_name, school_name, exam_name, candidate_number)
+    png_bytes = generate_single_png(
+        student_name,
+        school_name,
+        exam_name,
+        candidate_number,
+        realism_preset=realism_preset,
+    )
     w, h = struct.unpack('>II', png_bytes[16:24])
     doc = fitz.open()
     page = doc.new_page(width=w, height=h)
@@ -352,7 +434,11 @@ def generate_single_pdf(
     return buf.getvalue()
 
 
-def generate_batch_pdf_to_file(rows: list[dict[str, Any]], dst_path: Path) -> dict:
+def generate_batch_pdf_to_file(
+    rows: list[dict[str, Any]],
+    dst_path: Path,
+    realism_preset: str = "none",
+) -> dict:
     """Stream PDF generation directly to ``dst_path``.
 
     Workers output JPEG bytes; JPEG is stored natively in PDF as DCT so no
@@ -365,7 +451,11 @@ def generate_batch_pdf_to_file(rows: list[dict[str, Any]], dst_path: Path) -> di
     logger.info("Prefill batch PDF started | count=%d", count)
     t_batch = time.perf_counter()
 
-    payloads = [_build_fast_payload(row, output_format="jpeg") for row in rows]
+    realism_preset = normalize_realism_preset(realism_preset)
+    payloads = [
+        _build_fast_payload(row, output_format="jpeg", realism_preset=realism_preset)
+        for row in rows
+    ]
 
     dst_path.parent.mkdir(parents=True, exist_ok=True)
     doc = fitz.open()
@@ -434,7 +524,11 @@ def generate_batch_pdf_to_file(rows: list[dict[str, Any]], dst_path: Path) -> di
     }
 
 
-def generate_batch_zip_to_file(rows: list[dict[str, Any]], dst_path: Path) -> dict:
+def generate_batch_zip_to_file(
+    rows: list[dict[str, Any]],
+    dst_path: Path,
+    realism_preset: str = "none",
+) -> dict:
     """Stream ZIP generation directly to ``dst_path``. Bounded memory."""
     count = len(rows)
     logger.info("Prefill batch ZIP started | count=%d", count)
@@ -443,7 +537,7 @@ def generate_batch_zip_to_file(rows: list[dict[str, Any]], dst_path: Path) -> di
     payloads: list[dict] = []
     filenames: list[str] = []
     for i, row in enumerate(rows, start=1):
-        payloads.append(_build_fast_payload(row))
+        payloads.append(_build_fast_payload(row, realism_preset=realism_preset))
         filename = Path(_clean_field(row.get("output_file", "")) or "").name \
             or f"sheet_{i:03d}.png"
         if not filename.lower().endswith(".png"):
@@ -486,11 +580,11 @@ def generate_batch_zip_to_file(rows: list[dict[str, Any]], dst_path: Path) -> di
 # Backwards-compatible in-memory wrappers (still used by older callers / tests).
 # These now stream to a temp file first then read it back, so peak memory matches
 # the streaming path even when the caller wants raw bytes.
-def generate_batch_pdf(rows: list[dict[str, Any]]) -> bytes:
+def generate_batch_pdf(rows: list[dict[str, Any]], realism_preset: str = "none") -> bytes:
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
         tmp_path = Path(tmp.name)
     try:
-        generate_batch_pdf_to_file(rows, tmp_path)
+        generate_batch_pdf_to_file(rows, tmp_path, realism_preset=realism_preset)
         return tmp_path.read_bytes()
     finally:
         try:
@@ -499,11 +593,11 @@ def generate_batch_pdf(rows: list[dict[str, Any]]) -> bytes:
             pass
 
 
-def generate_batch_zip(rows: list[dict[str, Any]]) -> bytes:
+def generate_batch_zip(rows: list[dict[str, Any]], realism_preset: str = "none") -> bytes:
     with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp:
         tmp_path = Path(tmp.name)
     try:
-        generate_batch_zip_to_file(rows, tmp_path)
+        generate_batch_zip_to_file(rows, tmp_path, realism_preset=realism_preset)
         return tmp_path.read_bytes()
     finally:
         try:

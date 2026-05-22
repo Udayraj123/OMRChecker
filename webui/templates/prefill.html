@@ -47,12 +47,37 @@
                         </label>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label for="single-realism-preset">Realism preset</label>
+                    <select id="single-realism-preset" name="realism_preset">
+                        <option value="none" selected>None — clean generated sheet</option>
+                        <option value="subtle">Subtle scan — realistic scanner noise</option>
+                        <option value="moderate">Moderate scan — skew, shadows, smudges</option>
+                        <option value="adversarial">Adversarial — occlusion / bad-mark stress test</option>
+                    </select>
+                    <p class="muted small">Use <strong>Subtle</strong> or <strong>Moderate</strong> to generate realistic scanned-looking sheets. <strong>Adversarial</strong> intentionally creates hard cases that may fail OMR and should be used for robustness testing.</p>
+                </div>
             </div>
             <div id="single-error" class="error small" style="display:none;margin-block-end:0.75rem;"></div>
+            <div id="single-last-download" class="muted small" style="display:none;margin-block-end:0.5rem;"></div>
             <div class="actions">
                 <button type="submit" id="single-submit" class="btn primary">Generate &amp; Download</button>
+                <button type="button" id="single-preview-btn" class="btn">Compare presets</button>
             </div>
         </form>
+
+        <!-- ─── Live preset comparison gallery ─────────────────────── -->
+        <details id="preset-preview" class="preset-preview" style="margin-block-start:1rem;">
+            <summary><strong>Live preset comparison</strong> — fresh samples, no caching</summary>
+            <p class="muted small" style="margin-block:0.5rem;">
+                Each panel below is generated live by the server when you open this panel. If the four images look identical, the simulator code didn't load and you should hard-refresh (Ctrl+F5). Samples use the candidate number above (or <span class="mono">9010690012</span> by default).
+            </p>
+            <div id="preset-preview-grid" class="preset-preview-grid"></div>
+            <p class="muted small">
+                <button type="button" id="preset-preview-refresh" class="btn small">Refresh samples</button>
+                <span class="muted small">&nbsp;&middot; samples are rendered with <span class="mono">Cache-Control: no-store</span> so they always reflect the running server.</span>
+            </p>
+        </details>
     </div>
 </div>
 
@@ -123,6 +148,16 @@
                 <option value="zip">ZIP of individual PNGs</option>
             </select>
         </div>
+        <div class="form-group">
+            <label for="batch-realism-preset">Realism preset</label>
+            <select id="batch-realism-preset" name="realism_preset">
+                <option value="none" selected>None — clean generated sheets</option>
+                <option value="subtle">Subtle scan — realistic scanner noise</option>
+                <option value="moderate">Moderate scan — skew, shadows, smudges</option>
+                <option value="adversarial">Adversarial — occlusion / bad-mark stress test</option>
+            </select>
+            <p class="muted small">Batch simulation is deterministic per candidate number, so repeated runs produce the same scan artifacts for the same row and preset.</p>
+        </div>
 
         <div id="batch-error" class="error small" style="display:none;margin-block-end:0.75rem;"></div>
         <div class="actions">
@@ -133,5 +168,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/prefill.js"></script>
+<script src="/static/prefill.js?v={{ STATIC_VERSION }}"></script>
 {% endblock %}

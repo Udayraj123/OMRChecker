@@ -73,12 +73,40 @@ hiddenimports = [
     "jinja2.ext",
     "anyio",
     "anyio._backends._asyncio",
+    # FastAPI form parsing (Form(...) / UploadFile)
+    "multipart",
+    "python_multipart",
+    "python_multipart.multipart",
+    # Pydantic v2 settings loader
+    "pydantic_settings",
+    # HTTP / WebSocket transport: h11 is the pure-Python fallback that
+    # uvicorn falls back to when httptools / websockets are not installed
+    # (the default on Windows). Listed here so PyInstaller never strips
+    # it during dead-code analysis.
+    "h11",
     # Computer vision / image processing
     "cv2",
     "fitz",
     "PIL",
     "PIL.Image",
     "numpy",
+    # OMR runtime modules that are looked up by string in some paths
+    "webui.app",
+    "webui.api",
+    "webui.views",
+    "webui.log_stream",
+    "webui.schemas_settings",
+    "webui.services.scan_simulation",
+    "prefill_only_package.prefill_answer_sheet_final",
+    # OMR engine processor plugins. ``src.processors.manager`` discovers
+    # these dynamically via ``pkgutil.walk_packages`` which does NOT see
+    # modules stored inside a frozen PYZ archive, so we list them here.
+    "src.processors.manager",
+    "src.processors.CropPage",
+    "src.processors.CropOnMarkers",
+    "src.processors.FeatureBasedAlignment",
+    "src.processors.builtins",
+    "src.processors.interfaces.ImagePreprocessor",
     # pywebview backends (Windows uses EdgeChromium / mshtml)
     "webview",
     "webview.platforms.winforms",

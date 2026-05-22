@@ -69,7 +69,7 @@ async function saveDesktopUrl(downloadUrl, filename, errorEl) {
     if (!result.ok && !result.cancelled) showError(errorEl, result.message || 'Download failed.');
 }
 
-async function postFormAndDownload(url, formData, submitBtn, errorEl) {
+async function postFormAndDownload(url, formData, submitBtn, errorEl, hintEl) {
     showError(errorEl, '');
     setLoading(submitBtn, true);
     try {
@@ -85,10 +85,12 @@ async function postFormAndDownload(url, formData, submitBtn, errorEl) {
         }
         const contentType = res.headers.get('Content-Type') || '';
         if (contentType.includes('application/json')) {
-            // Two-step download: server returns {download_url} to avoid buffering
-            // the entire file in the browser before saving.
             const body = await res.json();
             if (body.download_url) {
+                if (hintEl && body.filename) {
+                    hintEl.textContent = `Last download from server: ${body.filename}`;
+                    hintEl.style.display = '';
+                }
                 if (hasDesktopApi()) {
                     await saveDesktopUrl(body.download_url, body.filename || 'download', errorEl);
                     return;
@@ -97,10 +99,13 @@ async function postFormAndDownload(url, formData, submitBtn, errorEl) {
                 return;
             }
         }
-        // Fallback: single-sheet responses are small enough to blob-download
         const disposition = res.headers.get('Content-Disposition') || '';
         const match = disposition.match(/filename="([^"]+)"/);
         const filename = match ? match[1] : 'download';
+        if (hintEl) {
+            hintEl.textContent = `Last download from server: ${filename}`;
+            hintEl.style.display = '';
+        }
         const blob = await res.blob();
         if (hasDesktopApi()) {
             await saveDesktopBlob(blob, filename, errorEl);
@@ -130,6 +135,7 @@ singleForm.addEventListener('submit', async e => {
     const examName    = singleForm.querySelector('[name=exam_name]').value.trim();
     const candidateNo = singleForm.querySelector('[name=candidate_number]').value.trim();
     const outputFmt   = singleForm.querySelector('[name=output_format]:checked').value;
+    const realismPreset = singleForm.querySelector('[name=realism_preset]').value;
 
     if (!studentName || !schoolName || !examName || !candidateNo) {
         showError(singleError, 'All fields are required.');
@@ -148,9 +154,64 @@ singleForm.addEventListener('submit', async e => {
     fd.append('exam_name', examName);
     fd.append('candidate_number', candidateNo);
     fd.append('output_format', outputFmt);
+    fd.append('realism_preset', realismPreset);
 
-    await postFormAndDownload('/api/v1/prefill/single', fd, singleSubmit, singleError);
+    const singleLastDownload = document.getElementById('single-last-download');
+    await postFormAndDownload('/api/v1/prefill/single', fd, singleSubmit, singleError, singleLastDownload);
 });
+
+// ── Live preset comparison gallery ──────────────────────────────────
+
+const PRESET_DEFINITIONS = [
+    { id: 'none', label: 'None', description: 'Clean reference output' },
+    { id: 'subtle', label: 'Subtle', description: 'Mild scanner noise + slight skew' },
+    { id: 'moderate', label: 'Moderate', description: 'Hole-punch shadows, vignette, smudges' },
+    { id: 'adversarial', label: 'Adversarial', description: 'Occlusions, scribbles, marker dog-ears' },
+];
+
+const presetPreview = document.getElementById('preset-preview');
+const presetPreviewGrid = document.getElementById('preset-preview-grid');
+const presetPreviewBtn = document.getElementById('single-preview-btn');
+const presetPreviewRefresh = document.getElementById('preset-preview-refresh');
+
+const renderPresetGallery = () => {
+    if (!presetPreviewGrid) return;
+    const candidate = singleForm.querySelector('[name=candidate_number]').value.trim() || '9010690012';
+    const safeCandidate = /^\d{10}$/.test(candidate) ? candidate : '9010690012';
+    const cacheBust = Date.now();
+    presetPreviewGrid.innerHTML = '';
+    PRESET_DEFINITIONS.forEach(({ id, label, description }) => {
+        const url = `/api/v1/prefill/sample?preset=${id}&candidate_number=${safeCandidate}&_=${cacheBust}`;
+        const card = document.createElement('figure');
+        card.className = 'preset-preview-card';
+        card.innerHTML = `
+            <img alt="${label} preview" loading="lazy" src="${url}" />
+            <figcaption>
+                <strong>${label}</strong>
+                <span class="muted small">${description}</span>
+            </figcaption>
+        `;
+        presetPreviewGrid.appendChild(card);
+    });
+};
+
+if (presetPreviewBtn && presetPreview) {
+    presetPreviewBtn.addEventListener('click', () => {
+        presetPreview.open = true;
+        renderPresetGallery();
+        presetPreview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+}
+if (presetPreview) {
+    presetPreview.addEventListener('toggle', () => {
+        if (presetPreview.open && presetPreviewGrid && !presetPreviewGrid.children.length) {
+            renderPresetGallery();
+        }
+    });
+}
+if (presetPreviewRefresh) {
+    presetPreviewRefresh.addEventListener('click', renderPresetGallery);
+}
 
 // Clear invalid styling on input
 singleForm.querySelector('[name=candidate_number]').addEventListener('input', function () {
@@ -285,12 +346,14 @@ csvUpload.addEventListener('change', () => {
 const batchSubmit = document.getElementById('batch-submit');
 const batchError  = document.getElementById('batch-error');
 const batchOutputMode = document.getElementById('batch-output-mode');
+const batchRealismPreset = document.getElementById('batch-realism-preset');
 
 batchSubmit.addEventListener('click', async () => {
     showError(batchError, '');
     const activeSubtab = document.querySelector('.subtab-btn.active').dataset.subtab;
     const fd = new FormData();
     fd.append('output_mode', batchOutputMode.value);
+    fd.append('realism_preset', batchRealismPreset.value);
 
     if (activeSubtab === 'manual') {
         const rows = getTableRows().filter(r =>
