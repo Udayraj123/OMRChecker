@@ -398,3 +398,72 @@ class TestPipelinedOMR:
             f"All 3 distinct pages must be processed; "
             f"got unique={set(processed_names)}"
         )
+
+    def test_pipeline_final_discovery_after_split_clears_progress(
+        self, storage_root: Path, tmp_path: Path
+    ) -> None:
+        """Pages published just before split completion must not be missed.
+
+        Regression coverage for the race where ``pdf_split_total`` reached 0
+        before the OMR loop's next re-discovery pass. The loop must do one
+        final input scan before declaring the split done.
+        """
+        settings = _make_settings(storage_root, tmp_path, pipeline=True)
+        batch_id, all_paths = _setup_batch(settings, 5)
+        initial_paths = all_paths[:3]
+
+        batches_service.update_batch_metadata(
+            batch_id, {"pdf_split_total": 5}, settings
+        )
+
+        discover_calls: list[int] = []
+
+        def mock_discover(bid: str, s: Settings) -> list[Path]:
+            discover_calls.append(len(discover_calls))
+            if len(discover_calls) == 1:
+                return list(initial_paths)
+            batches_service.update_batch_metadata(
+                bid, {"pdf_split_total": 0}, s
+            )
+            return list(all_paths)
+
+        original_get_meta = batches_service.get_batch_metadata
+
+        def mock_get_meta(bid: str, s: Settings) -> dict[str, Any]:
+            meta = original_get_meta(bid, s)
+            if len(discover_calls) >= 1:
+                meta = dict(meta)
+                meta["pdf_split_total"] = 0
+            return meta
+
+        with patch(
+            "webui.services.omr.batches_service.get_batch_metadata",
+            mock_get_meta,
+        ):
+            _run_patched(batch_id, settings, mock_discover)
+
+        meta = batches_service.get_batch_metadata(batch_id, settings)
+        assert meta["processed_files"] == 5, (
+            f"Expected final discovery to process all 5 pages, got {meta['processed_files']}"
+        )
+        assert len(discover_calls) >= 2
+
+    def test_pipeline_split_error_marks_batch_failed(
+        self, storage_root: Path, tmp_path: Path
+    ) -> None:
+        """A PDF split error observed mid-pipeline must fail the run clearly."""
+        settings = _make_settings(storage_root, tmp_path, pipeline=True)
+        batch_id, all_paths = _setup_batch(settings, 3)
+
+        batches_service.update_batch_metadata(
+            batch_id,
+            {"pdf_split_total": 5, "pdf_split_error": "synthetic split failure"},
+            settings,
+        )
+
+        _run_patched(batch_id, settings, MagicMock(return_value=list(all_paths)))
+
+        batch = batches_service.get_batch(batch_id, settings)
+        assert batch.status.value == "failed"
+        assert batch.last_error is not None
+        assert "synthetic split failure" in batch.last_error

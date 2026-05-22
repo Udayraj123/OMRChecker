@@ -135,6 +135,32 @@ def _discover_input_images(batch_id: str, settings: Settings) -> list[Path]:
     ]
 
 
+def _filter_stable_input_images(paths: list[Path]) -> list[Path]:
+    """Return only newly discovered pages whose size is stable across a tick."""
+    if not paths:
+        return []
+    first_sizes: dict[Path, int] = {}
+    for path in paths:
+        try:
+            size = path.stat().st_size
+        except OSError:
+            continue
+        if size > 0:
+            first_sizes[path] = size
+    if not first_sizes:
+        return []
+    time.sleep(0.05)
+    ready: list[Path] = []
+    for path, first_size in first_sizes.items():
+        try:
+            second_size = path.stat().st_size
+        except OSError:
+            continue
+        if second_size == first_size and second_size > 0:
+            ready.append(path)
+    return ready
+
+
 def _scale_dimensions(
     source_width: int,
     source_height: int,
@@ -837,6 +863,23 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
         max_workers = _coerce_max_workers(
             (base_config.get("outputs") or {}).get("max_workers")
         )
+        initial_split_total = int(metadata.get("pdf_split_total", 0) or 0)
+        capacity_limit = worker_capacity_limit()
+        if _pipeline_enabled and initial_split_total > 0:
+            if capacity_limit <= 1:
+                logger.info(
+                    "Disabling pipelined OMR because worker capacity is one | "
+                    "batch_id=%s",
+                    batch_id,
+                )
+                _pipeline_enabled = False
+            elif max_workers >= capacity_limit:
+                max_workers = max(1, capacity_limit - 1)
+                logger.info(
+                    "OMR workers clamped to leave split capacity | batch_id=%s | "
+                    "workers=%d | capacity=%d",
+                    batch_id, max_workers, capacity_limit,
+                )
 
         base_root = _prepare_runtime_base(batch_root)
         logger.info("OMR batch started | batch_id=%s | images=%d | workers=%d", batch_id, len(input_images), max_workers)
@@ -893,6 +936,7 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
         # When pipelining is disabled we treat the split as already done so
         # the loop degenerates to the legacy ``while futures:`` behaviour.
         _split_done = not _pipeline_enabled
+        split_error_seen: str | None = None
 
         with reserve_worker_capacity(
             max_workers,
@@ -1052,24 +1096,23 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
                         # on a completed future (natural pacing; no extra
                         # timer), so it never becomes a busy-loop.
                         #
-                        # Race-condition note: PyMuPDF pixmap.save() writes
-                        # JPEG data atomically to the final destination path —
-                        # there is no half-written intermediate file.  The
-                        # existing _discover_input_images helper filters by
-                        # IMAGE_EXTENSIONS (.jpg/.jpeg/.png), so any page
-                        # that hasn't been fully written yet is naturally
-                        # invisible.  No extra safety fence is required.
+                        # Re-discovery always performs one final directory scan
+                        # even after pdf_split_total has cleared. This catches
+                        # pages published just before the splitter marked
+                        # itself complete.
                         if _pipeline_enabled and _iter_exhausted and not _split_done:
                             _split_meta = batches_service.get_batch_metadata(batch_id, settings)
-                            if int(_split_meta.get("pdf_split_total", 0)) == 0:
-                                # Split finished; no further pages will arrive
+                            _split_error = _split_meta.get("pdf_split_error")
+                            if _split_error:
+                                split_error_seen = str(_split_error)
                                 _split_done = True
                             else:
                                 _all_discovered = _discover_input_images(batch_id, settings)
-                                _new_paths = [
+                                _candidate_new_paths = [
                                     img for img in _all_discovered
                                     if img not in submitted_paths
                                 ]
+                                _new_paths = _filter_stable_input_images(_candidate_new_paths)
                                 if _new_paths:
                                     # Extend tracking list so progress
                                     # calculations reflect the growing total
@@ -1102,6 +1145,8 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
                                     )
                                     image_iter = iter(_new_paths)
                                     _iter_exhausted = False
+                                elif int(_split_meta.get("pdf_split_total", 0) or 0) == 0:
+                                    _split_done = True
 
         results_dir = outputs_dir / "Results"
         manual_dir = outputs_dir / "Manual"
@@ -1154,7 +1199,18 @@ def run_batch_sync(batch_id: str, settings: Settings | None = None) -> None:
             settings,
         )
 
-        if preprocess_failures and len(preprocess_failures) == len(input_images):
+        if split_error_seen:
+            batches_service.update_status(
+                batch_id,
+                BatchStatus.failed,
+                last_error=(
+                    "PDF splitting failed while OMR was running. "
+                    f"Processed {completed} file(s) before stopping. "
+                    f"Split error: {split_error_seen}"
+                ),
+                settings=settings,
+            )
+        elif preprocess_failures and len(preprocess_failures) == len(input_images):
             batches_service.update_status(
                 batch_id,
                 BatchStatus.failed,

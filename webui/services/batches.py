@@ -792,6 +792,8 @@ def _render_pdf_page_to_disk(
         doc = fitz.open(pdf_path)
         _PDF_WORKER_CACHE[pdf_path] = doc
 
+    target: Path | None = None
+    tmp_target: Path | None = None
     try:
         page = doc.load_page(page_index - 1)
 
@@ -802,7 +804,9 @@ def _render_pdf_page_to_disk(
         )
         if embedded is not None:
             target = Path(output_dir) / f"{stem}_page_{page_index:04d}{ext}"
-            target.write_bytes(embedded)
+            tmp_target = target.with_name(f".{target.stem}.tmp{target.suffix}")
+            tmp_target.write_bytes(embedded)
+            tmp_target.replace(target)
             size = target.stat().st_size
             return (page_index, target.name, size, None, True)
 
@@ -810,20 +814,27 @@ def _render_pdf_page_to_disk(
         colorspace = fitz.csGRAY if grayscale else fitz.csRGB
         pixmap = page.get_pixmap(dpi=dpi, alpha=False, colorspace=colorspace)
         target = Path(output_dir) / f"{stem}_page_{page_index:04d}{ext}"
+        tmp_target = target.with_name(f".{target.stem}.tmp{target.suffix}")
         if ext == ".jpg":
             try:
-                pixmap.save(str(target), jpg_quality=jpeg_quality)
+                pixmap.save(str(tmp_target), jpg_quality=jpeg_quality)
             except TypeError:
-                pixmap.save(str(target))
+                pixmap.save(str(tmp_target))
         else:
             try:
-                pixmap.save(str(target), compress_level=1)
+                pixmap.save(str(tmp_target), compress_level=1)
             except TypeError:
-                pixmap.save(str(target))
+                pixmap.save(str(tmp_target))
+        tmp_target.replace(target)
         size = target.stat().st_size
         del pixmap
         return (page_index, target.name, size, None, False)
     except Exception as exc:  # noqa: BLE001 — worker boundary
+        if tmp_target is not None:
+            try:
+                tmp_target.unlink(missing_ok=True)
+            except OSError:
+                pass
         return (page_index, None, 0, f"{type(exc).__name__}: {exc}", False)
 
 
@@ -905,8 +916,10 @@ def _save_pdf_pages_as_images(
     # guard (which caps at _MAX_STEM_CHARS), the full output path can still exceed
     # Windows MAX_PATH=260 when the inputs directory itself has a long prefix
     # (e.g. deep pytest tmp_path trees).  Re-truncate using the actual path length.
-    _PAGE_SUFFIX_LEN = 15  # len("_page_NNNN.jpg") + 1 for path separator
-    _max_stem_for_path = max(20, 255 - len(str(inputs)) - _PAGE_SUFFIX_LEN)
+    # Include the longest temp publication suffix (".<stem>_page_NNNN.tmp.jpeg")
+    # plus path separator and a little headroom for Windows MAX_PATH.
+    _PAGE_SUFFIX_LEN = 24
+    _max_stem_for_path = max(20, 240 - len(str(inputs)) - _PAGE_SUFFIX_LEN)
     if len(stem) > _max_stem_for_path:
         _path_hash = hashlib.md5(stem.encode()).hexdigest()[:6]
         _new_stem = stem[:_max_stem_for_path - 6] + _path_hash
@@ -922,7 +935,6 @@ def _save_pdf_pages_as_images(
     _split_lock = _get_pdf_split_lock(batch_id or "", stem)
     with _split_lock:
         _remove_generated_pdf_pages(inputs, stem)
-        _write_pdf_split_progress(batch_id, settings, 0, page_count)
 
         min_parallel = (
             getattr(settings, "pdf_split_min_pages_for_parallel", 16)
@@ -963,6 +975,7 @@ def _save_pdf_pages_as_images(
                     1,
                     label=f"pdf-serial:{safe_filename}",
                 ):
+                    _write_pdf_split_progress(batch_id, settings, 0, page_count)
                     stored, failed_pages = _save_pdf_pages_serial(
                         inputs=inputs,
                         safe_filename=safe_filename,
@@ -1036,8 +1049,10 @@ def _save_pdf_pages_serial(
                     dpi=dpi, grayscale=grayscale, ext=ext, jpeg_quality=jpeg_quality,
                 )
                 target = inputs / f"{stem}_page_{page_index:04d}{ext}"
+                tmp_target = target.with_name(f".{target.stem}.tmp{target.suffix}")
                 if embedded is not None:
-                    target.write_bytes(embedded)
+                    tmp_target.write_bytes(embedded)
+                    tmp_target.replace(target)
                     fast_path_count += 1
                 else:
                     # Fallback: full pixmap rasterisation.
@@ -1046,19 +1061,24 @@ def _save_pdf_pages_serial(
                     )
                     if ext == ".jpg":
                         try:
-                            pixmap.save(str(target), jpg_quality=jpeg_quality)
+                            pixmap.save(str(tmp_target), jpg_quality=jpeg_quality)
                         except TypeError:
-                            pixmap.save(str(target))
+                            pixmap.save(str(tmp_target))
                     else:
                         try:
-                            pixmap.save(str(target), compress_level=1)
+                            pixmap.save(str(tmp_target), compress_level=1)
                         except TypeError:
-                            pixmap.save(str(target))
+                            pixmap.save(str(tmp_target))
+                    tmp_target.replace(target)
                     del pixmap
                 stored.append(
                     FileRef(name=target.name, size_bytes=target.stat().st_size)
                 )
             except Exception as page_exc:  # noqa: BLE001
+                try:
+                    tmp_target.unlink(missing_ok=True)
+                except (NameError, OSError):
+                    pass
                 failed_pages.append(page_index)
                 logger.warning(
                     "PDF page render failed | file=%s | page=%d/%d | %s: %s",
@@ -1143,6 +1163,7 @@ def _save_pdf_pages_parallel(
                     "file=%s | requested=%d | granted=%d",
                     safe_filename, workers, reserved_workers,
                 )
+            _write_pdf_split_progress(batch_id, settings, 0, page_count)
             # Use the persistent pool — avoids the ~200-400ms Windows spawn
             # cost per upload.  Do NOT use a `with` block; the pool must not
             # be shut down between jobs.

@@ -7,6 +7,7 @@
 
 """
 import os
+import shutil
 from csv import QUOTE_NONNUMERIC
 from pathlib import Path
 from time import time
@@ -583,6 +584,7 @@ def process_files(
 ):
     start_time = int(time())
     files_counter = 0
+    STATS.files_moved = 0
     STATS.files_not_moved = 0
 
     for file_path in omr_files:
@@ -604,9 +606,37 @@ def process_files(
 
 
 def check_and_move(error_code, file_path, filepath2):
-    # TODO: fix file movement into error/multimarked/invalid etc again
-    STATS.files_not_moved += 1
-    return True
+    """Copy a review-needed source image into the engine's Manual folders.
+
+    The web UI aggregates worker outputs from scratch directories, so the
+    source image must remain in place. Copying gives operators a reviewable
+    artifact without breaking later cleanup or retry flows.
+    """
+    try:
+        source = Path(file_path)
+        target = Path(filepath2)
+        if not source.exists():
+            STATS.files_not_moved += 1
+            logger.warning(
+                "Could not copy review file for %s: source does not exist: %s",
+                error_code,
+                source,
+            )
+            return True
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if source.resolve() != target.resolve():
+            shutil.copy2(source, target)
+        STATS.files_moved += 1
+        return True
+    except Exception as exc:  # noqa: BLE001 - keep legacy CSV-writing path alive
+        STATS.files_not_moved += 1
+        logger.warning(
+            "Could not copy review file for %s: %s: %s",
+            error_code,
+            type(exc).__name__,
+            exc,
+        )
+        return True
 
 
 def print_stats(start_time, files_counter, tuning_config):
