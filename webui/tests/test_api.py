@@ -107,6 +107,40 @@ def test_upload_and_list_files(
     assert files[0]["size_bytes"] > 0
 
 
+def test_prefilled_sheet_upload_auto_attaches_template_and_config(
+    client: TestClient,
+    adrian_images: list[Path],
+) -> None:
+    """Generated prefill uploads should be processable without manual JSON upload."""
+    batch_id = _create_batch(client, "Generated prefill upload")
+    with adrian_images[0].open("rb") as fh:
+        response = client.post(
+            f"/api/v1/batches/{batch_id}/files",
+            files=[("files", ("prefilled_sheets_moderate.png", fh, "image/png"))],
+        )
+
+    assert response.status_code == 201, response.text
+
+    template_response = client.get(f"/api/v1/batches/{batch_id}/template")
+    config_response = client.get(f"/api/v1/batches/{batch_id}/config")
+    status_response = client.get(f"/api/v1/batches/{batch_id}/status")
+
+    assert template_response.status_code == 200
+    assert config_response.status_code == 200
+    assert status_response.status_code == 200
+    template = template_response.json()
+    config = config_response.json()
+    status_payload = status_response.json()
+
+    assert status_payload["has_template"] is True
+    assert status_payload["has_config"] is True
+    assert template["preProcessors"][0]["name"] == "CropOnMarkers"
+    assert template["preProcessors"][0]["options"]["type"] == "aruco"
+    assert template["outputColumns"] == ["CandidateNumber", "q1..25"]
+    assert config["dimensions"]["processing_width"] == 666
+    assert config["dimensions"]["processing_height"] == 515
+
+
 def test_pdf_upload_splits_pages_into_images(
     client: TestClient, storage_root: Path
 ) -> None:

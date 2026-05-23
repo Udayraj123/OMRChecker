@@ -18,7 +18,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 BASE = "http://127.0.0.1:5050"
-N_ROWS = int(sys.argv[1]) if len(sys.argv) > 1 else 50
+N_ROWS = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 50
+MANUAL_TEMPLATE_UPLOAD = "--manual-template" in sys.argv
 
 TEMPLATE_DIR = ROOT / "custom_25_definitive_final"
 TEMPLATE_JSON = TEMPLATE_DIR / "template.json"
@@ -45,6 +46,7 @@ def main() -> int:
         r.raise_for_status()
         info = r.json()
         download_url = info["download_url"]
+        generated_filename = info.get("filename") or "prefilled_sheets_moderate.pdf"
         print(f"  successes={info['successes']} elapsed={info['elapsed_s']:.2f}s")
 
         # ----- 2. Download the PDF --------------------------------------------
@@ -59,7 +61,7 @@ def main() -> int:
         batch_id = r.json()["id"]
         print(f"  batch_id={batch_id}")
 
-        files = {"files": ("moderate_e2e.pdf", io.BytesIO(pdf_bytes), "application/pdf")}
+        files = {"files": (generated_filename, io.BytesIO(pdf_bytes), "application/pdf")}
         r = client.post(f"{BASE}/api/v1/batches/{batch_id}/files", files=files)
         r.raise_for_status()
         imp = r.json()
@@ -87,8 +89,11 @@ def main() -> int:
             print(f"  files never settled: {data}")
             return 1
 
-        # ----- 4b. Upload template.json + config.json -------------------------
-        if TEMPLATE_JSON.exists():
+        # ----- 4b. Optional manual template upload ----------------------------
+        # The normal generated-sheet workflow should NOT need this anymore:
+        # uploads named prefilled_sheet(s)* auto-attach the built-in 25Q
+        # ArUco template/config. Keep this flag for comparing old behaviour.
+        if MANUAL_TEMPLATE_UPLOAD and TEMPLATE_JSON.exists():
             template_payload = TEMPLATE_JSON.read_bytes()
             r = client.put(
                 f"{BASE}/api/v1/batches/{batch_id}/template",
@@ -98,7 +103,7 @@ def main() -> int:
                 print(f"  template upload failed: {r.status_code} {r.text[:200]}")
                 return 1
             print(f"  template uploaded ({len(template_payload)} bytes)")
-        if CONFIG_JSON.exists():
+        if MANUAL_TEMPLATE_UPLOAD and CONFIG_JSON.exists():
             config_payload = CONFIG_JSON.read_bytes()
             r = client.put(
                 f"{BASE}/api/v1/batches/{batch_id}/config",
