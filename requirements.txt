@@ -6,3 +6,5 @@ numpy>=1.25.0
 pandas>=2.0.2
 rich>=13.4.2
 screeninfo>=0.8.1
+opencv-python-headless>=4.0.0
+opencv-contrib-python-headless>=4.0.0
