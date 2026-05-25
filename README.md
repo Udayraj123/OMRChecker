@@ -36,7 +36,7 @@ A full-fledged OMR checking software that can read and evaluate OMR sheets scann
 | 💯 **Accurate**        | Currently nearly 100% accurate on good quality document scans; and about 90% accurate on mobile images.                                                                                                          |
 | 💪🏿 **Robust**          | Supports low resolution, xeroxed sheets. See [**Robustness**](https://github.com/Udayraj123/OMRChecker/wiki/Robustness) for more.                                                                                |
 | ⏩ **Fast**            | Current processing speed without any optimization is 200 OMRs/minute.                                                                                                                                            |
-| ✅ **Customizable**    | [Easily apply](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide) to custom OMR layouts, surveys, etc.                                                                                                    |
+| ✅ **Customizable**    | [Easily apply](https://github.com/Udayraj123/OMRChecker/wiki/User-Guide) to custom OMR layouts, surveys, etc. Alignment via markers (**CropOnMarkers**) or logo ([**CropOnLogo**](docs/CropOnLogo-guide.md)).                                                                 |
 | 📊 **Visually Rich**   | [Get insights](https://github.com/Udayraj123/OMRChecker/wiki/Rich-Visuals) to configure and debug easily.                                                                                                        |
 | 🎈 **Lightweight**     | Very minimal core code size.                                                                                                                                                                                     |
 | 🏫 **Large Scale**     | Tested on a large scale at [Technothlon](https://en.wikipedia.org/wiki/Technothlon).                                                                                                                             |
@@ -224,6 +224,18 @@ Command: <code>python3 -m pip install --user --upgrade pip</code>
 2. Configure the tuning parameters.
 3. Run OMRChecker with appropriate arguments (See full usage).
 <!-- 4. Add answer key( TODO: add answer key/marking scheme guide)  -->
+
+### Pre-processors and alignment
+
+Alignment is configured via the `preProcessors` array in `template.json`. You can choose how to align and crop the sheet before reading bubbles:
+
+| Pre-processor      | Use case |
+|--------------------|----------|
+| **CropOnMarkers**  | Sheets with printed corner/edge markers. Detects markers and aligns the page. |
+| **CropOnLogo**     | Sheets with a fixed logo. Finds the logo by template matching and translates the image so the logo is at a known position. See the [CropOnLogo guide](docs/CropOnLogo-guide.md). |
+| **CropPage**       | Crop to the page content (e.g. when you want to disable cropping). |
+
+For logo-based alignment, see the **[CropOnLogo guide](docs/CropOnLogo-guide.md)** (setup, options, troubleshooting).
 
 ## Full Usage
 

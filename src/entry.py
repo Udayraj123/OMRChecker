@@ -27,7 +27,7 @@ from src.logger import console, logger
 from src.template import Template
 from src.utils.file import Paths, setup_dirs_for_paths, setup_outputs_for_template
 from src.utils.image import ImageUtils
-from src.utils.interaction import InteractionUtils, Stats
+from src.utils.interaction import InteractionUtils, Stats, get_max_display_dimensions
 from src.utils.parsing import get_concatenated_response, open_config_with_defaults
 
 # Load processors
@@ -193,6 +193,8 @@ def show_template_layouts(omr_files, template, tuning_config):
         in_omr = template.image_instance_ops.apply_preprocessors(
             file_path, in_omr, template
         )
+        if in_omr is None:
+            continue
         template_layout = template.image_instance_ops.draw_template_layout(
             in_omr, template, shifted=False, border=2
         )
@@ -290,11 +292,14 @@ def process_files(
             logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
 
         if tuning_config.outputs.show_image_level >= 2:
+            _, max_display_h = get_max_display_dimensions()
+            display_h = min(
+                int(tuning_config.dimensions.display_height * 1.3),
+                max_display_h,
+            )
             InteractionUtils.show(
                 f"Final Marked Bubbles : '{file_id}'",
-                ImageUtils.resize_util_h(
-                    final_marked, int(tuning_config.dimensions.display_height * 1.3)
-                ),
+                ImageUtils.resize_util_h(final_marked, display_h),
                 1,
                 1,
                 config=tuning_config,

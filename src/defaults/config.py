@@ -15,6 +15,8 @@ CONFIG_DEFAULTS = DotMap(
             "CONFIDENT_SURPLUS": 5,
             "JUMP_DELTA": 30,
             "PAGE_TYPE_FOR_THRESHOLD": "white",
+            "MARK_SENSITIVITY_OFFSET": 0,
+            "BUBBLE_VALUE_METHOD": "mean",
         },
         "alignment_params": {
             # Note: 'auto_align' enables automatic template alignment, use if the scans show slight misalignments.

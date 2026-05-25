@@ -19,7 +19,7 @@ from src.constants.image_processing import (
 from src.logger import logger
 from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
 from src.utils.image import ImageUtils
-from src.utils.interaction import InteractionUtils
+from src.utils.interaction import InteractionUtils, get_max_display_dimensions
 
 
 class CropOnMarkers(ImagePreprocessor):
@@ -174,11 +174,14 @@ class CropOnMarkers(ImagePreprocessor):
             )
             image_eroded_sub[:, -DEFAULT_BORDER_REMOVE:] = DEFAULT_BLACK_COLOR
             h_stack = np.hstack((image_eroded_sub, image))
+            max_display_w, _ = get_max_display_dimensions()
+            warp_width = min(
+                int(config.dimensions.display_width * 1.6),
+                max_display_w,
+            )
             InteractionUtils.show(
                 f"Warped: {file_path}",
-                ImageUtils.resize_util(
-                    h_stack, int(config.dimensions.display_width * 1.6)
-                ),
+                ImageUtils.resize_util(h_stack, warp_width),
                 0,
                 0,
                 [0, 0],
