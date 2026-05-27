@@ -216,7 +216,10 @@ def process_files(
         files_counter += 1
         file_name = file_path.name
 
-        in_omr = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
+        # Load original colored image
+        in_omr_color = cv2.imread(str(file_path))
+        # Create grayscale copy for processing
+        in_omr = cv2.cvtColor(in_omr_color, cv2.COLOR_BGR2GRAY)
 
         logger.info("")
         logger.info(
