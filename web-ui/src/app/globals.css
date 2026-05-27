@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7fafc;
+  --foreground: #0b1f3a;
+  --card: #ffffff;
+  --muted: #edf3f8;
+  --line: #d9e4ee;
+  --primary: #0f3a68;
+  --accent: #0f8f5f;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+}
+
+.dark {
+  --background: #07111f;
+  --foreground: #e9f2fb;
+  --card: #0d1b2d;
+  --muted: #12243a;
+  --line: #23364d;
+  --primary: #7fc5ff;
+  --accent: #54d991;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(15, 143, 95, 0.18);
+}
+
+.glass-panel {
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 60px rgba(15, 58, 104, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.ai-grid {
+  background-image:
+    linear-gradient(rgba(15, 58, 104, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 58, 104, 0.05) 1px, transparent 1px);
+  background-size: 38px 38px;
+}

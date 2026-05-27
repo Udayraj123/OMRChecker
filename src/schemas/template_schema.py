@@ -218,6 +218,20 @@ TEMPLATE_SCHEMA = {
                 }
             },
         },
+        "layoutGuideBoxes": {
+            "description": "Optional display-only rectangles shown in --setLayout mode for non-OMR metadata areas.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["label", "origin", "dimensions"],
+                "properties": {
+                    "label": {"type": "string"},
+                    "origin": two_positive_integers,
+                    "dimensions": two_positive_integers,
+                },
+            },
+        },
         "emptyValue": {
             "description": "The value to be used in case of empty bubble detected at global level.",
             "type": "string",

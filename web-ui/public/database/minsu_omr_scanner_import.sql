@@ -1,0 +1,40 @@
+CREATE DATABASE IF NOT EXISTS minsu_omr_scanner CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+USE minsu_omr_scanner;
+
+CREATE TABLE IF NOT EXISTS scan_results (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  application_number VARCHAR(100) NOT NULL DEFAULT '',
+  lrn VARCHAR(100) NOT NULL DEFAULT '',
+  surname VARCHAR(150) NOT NULL DEFAULT '',
+  given_name VARCHAR(150) NOT NULL DEFAULT '',
+  middle_name VARCHAR(150) NOT NULL DEFAULT '',
+  exam_date VARCHAR(50) NOT NULL DEFAULT '',
+  source_file_name VARCHAR(255) NOT NULL DEFAULT '',
+  language_proficiency TEXT NOT NULL,
+  mathematics TEXT NOT NULL,
+  science TEXT NOT NULL,
+  logic_and_abstract_reasoning TEXT NOT NULL,
+  general_knowledge TEXT NOT NULL,
+  mechanical_reasoning TEXT NOT NULL,
+  language_proficiency_detected INT NOT NULL DEFAULT 0,
+  mathematics_detected INT NOT NULL DEFAULT 0,
+  science_detected INT NOT NULL DEFAULT 0,
+  logic_and_abstract_reasoning_detected INT NOT NULL DEFAULT 0,
+  general_knowledge_detected INT NOT NULL DEFAULT 0,
+  mechanical_reasoning_detected INT NOT NULL DEFAULT 0,
+  language_proficiency_score INT NOT NULL DEFAULT 0,
+  mathematics_score INT NOT NULL DEFAULT 0,
+  science_score INT NOT NULL DEFAULT 0,
+  logic_and_abstract_reasoning_score INT NOT NULL DEFAULT 0,
+  general_knowledge_score INT NOT NULL DEFAULT 0,
+  mechanical_reasoning_score INT NOT NULL DEFAULT 0,
+  file_name VARCHAR(255) NOT NULL DEFAULT '',
+  checked_image_path TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TIMESTAMP NULL,
+  INDEX idx_lrn (lrn),
+  INDEX idx_application_number (application_number),
+  INDEX idx_file_name (file_name),
+  INDEX idx_deleted_at (deleted_at)
+);

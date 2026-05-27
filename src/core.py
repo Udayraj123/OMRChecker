@@ -438,6 +438,24 @@ class ImageInstanceOps:
             img, template.page_dimensions[0], template.page_dimensions[1]
         )
         final_align = img.copy()
+        for guide_box in getattr(template, "layout_guide_boxes", []):
+            s, d = guide_box["origin"], guide_box["dimensions"]
+            cv2.rectangle(
+                final_align,
+                (s[0], s[1]),
+                (s[0] + d[0], s[1] + d[1]),
+                CLR_BLACK,
+                2,
+            )
+            cv2.putText(
+                final_align,
+                guide_box["label"],
+                (s[0], max(12, s[1] - 4)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.45,
+                CLR_BLACK,
+                1,
+            )
         for field_block in template.field_blocks:
             s, d = field_block.origin, field_block.dimensions
             box_w, box_h = field_block.bubble_dimensions
