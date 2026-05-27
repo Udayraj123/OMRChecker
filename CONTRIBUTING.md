@@ -14,16 +14,27 @@ For writing the code just follow the [Pep8 Python style](https://peps.python.org
 Also, try to use commits with [conventional messages](https://www.conventionalcommits.org/en/v1.0.0/#summary).
 
 
-# Code Formatting
-Before committing your code, make sure to run the following command to format your code according to the PEP8 style guide:
+# Development setup
+Project dependencies are managed via `pyproject.toml` using `uv`.
+
+Recommended workflow:
+
 ```.sh
-pip install -r requirements.dev.txt && pre-commit install
+uv sync --group dev
+uv run pre-commit install --hook-type pre-commit --hook-type pre-push
 ```
 
-Run `pre-commit` before committing your changes:
+No manual virtual environment activation is required when using `uv`.
+
+# Code Formatting
+Before committing your code, make sure to run the following command to format and validate your changes:
 ```.sh
-git add .
-pre-commit run -a
+uv run pre-commit run -a
+```
+
+Run tests before opening your PR:
+```.sh
+uv run pytest -rfpsxEX --disable-warnings --verbose
 ```
 
 # Where to contribute from
