@@ -1,0 +1,118 @@
+{
+  "pageDimensions": [
+    2480,
+    3508
+  ],
+  "bubbleDimensions": [
+    42,
+    42
+  ],
+  "preProcessors": [
+    {
+      "name": "Levels",
+      "options": {
+        "low": 0.7,
+        "high": 0.8
+      }
+    },
+    {
+      "name": "FeatureBasedAlignment",
+      "options": {
+        "reference": "reference.png",
+        "maxFeatures": 1000,
+        "2d": true
+      }
+    },
+    {
+      "name": "GaussianBlur",
+      "options": {
+        "kSize": [
+          3,
+          3
+        ],
+        "sigmaX": 0
+      }
+    }
+  ],
+  "customLabels": {
+    "Roll": [
+      "stu",
+      "roll1..7",
+      "check_1",
+      "check_2"
+    ]
+  },
+  "fieldBlocks": {
+    "Check1": {
+      "origin": [
+        2033,
+        1290
+      ],
+      "bubblesGap": 50,
+      "labelsGap": 50,
+      "fieldLabels": [
+        "check_1"
+      ],
+      "bubbleValues": [
+        "A",
+        "B",
+        "E",
+        "H",
+        "J",
+        "L",
+        "M"
+      ],
+      "direction": "vertical"
+    },
+    "Check2": {
+      "origin": [
+        2083,
+        1290
+      ],
+      "bubblesGap": 50,
+      "labelsGap": 50,
+      "fieldLabels": [
+        "check_2"
+      ],
+      "bubbleValues": [
+        "N",
+        "R",
+        "U",
+        "W",
+        "X",
+        "Y"
+      ],
+      "direction": "vertical"
+    },
+    "Stu": {
+      "origin": [
+        1636,
+        1290
+      ],
+      "bubblesGap": 50,
+      "labelsGap": 50,
+      "fieldLabels": [
+        "stu"
+      ],
+      "bubbleValues": [
+        "U",
+        "A",
+        "HT",
+        "GT"
+      ],
+      "direction": "vertical"
+    },
+    "Roll": {
+      "fieldType": "QTYPE_INT",
+      "origin": [
+        1685,
+        1290
+      ],
+      "bubblesGap": 50.5,
+      "labelsGap": 50.5,
+      "fieldLabels": [
+        "roll1..7"
+      ]
+    }
+  }
+}

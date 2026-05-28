@@ -1,0 +1,45 @@
+{
+  "pageDimensions": [
+    1189,
+    1682
+  ],
+  "bubbleDimensions": [
+    30,
+    30
+  ],
+  "preProcessors": [
+    {
+      "name": "GaussianBlur",
+      "options": {
+        "kSize": [
+          3,
+          3
+        ],
+        "sigmaX": 0
+      }
+    },
+    {
+      "name": "CropPage",
+      "options": {
+        "morphKernel": [
+          10,
+          10
+        ]
+      }
+    }
+  ],
+  "fieldBlocks": {
+    "MCQBlock1": {
+      "fieldType": "QTYPE_MCQ4",
+      "origin": [
+        134,
+        684
+      ],
+      "fieldLabels": [
+        "q1..11"
+      ],
+      "bubblesGap": 79,
+      "labelsGap": 62
+    }
+  }
+}

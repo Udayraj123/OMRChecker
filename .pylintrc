@@ -1,0 +1,43 @@
+[BASIC]
+# Regular expression matching correct variable names. Overrides variable-naming-style.
+# snake_case with single letter regex -
+variable-rgx=[a-z0-9_]{1,30}$
+
+# Good variable names which should always be accepted, separated by a comma.
+good-names=x,y,pt
+
+[MESSAGES CONTROL]
+
+# Disable the message, report, category or checker with the given id(s). You
+# can either give multiple identifiers separated by comma (,) or put this
+# option multiple times (only on the command line, not in the configuration
+# file where it should appear only once). You can also use "--disable=all" to
+# disable everything first and then reenable specific checks. For example, if
+# you want to run only the similarities checker, you can use "--disable=all
+# --enable=similarities". If you want to run only the classes checker, but have
+# no Warning level messages displayed, use "--disable=all --enable=classes
+# --disable=W".
+disable=import-error,
+        unresolved-import,
+        too-few-public-methods,
+        missing-docstring,
+        relative-beyond-top-level,
+        too-many-instance-attributes,
+        bad-continuation,
+        no-member
+
+# Note: bad-continuation is a false positive showing bug in pylint
+# https://github.com/psf/black/issues/48
+
+
+[REPORTS]
+# Set the output format. Available formats are text, parseable, colorized, json
+# and msvs (visual studio). You can also give a reporter class, e.g.
+# mypackage.mymodule.MyReporterClass.
+output-format=text
+
+# Tells whether to display a full report or only the messages.
+reports=no
+
+# Activate the evaluation score.
+score=yes

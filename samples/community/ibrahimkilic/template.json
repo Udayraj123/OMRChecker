@@ -1,0 +1,30 @@
+{
+  "pageDimensions": [
+    299,
+    328
+  ],
+  "bubbleDimensions": [
+    20,
+    20
+  ],
+  "emptyValue": "no",
+  "fieldBlocks": {
+    "YesNoBlock1": {
+      "direction": "horizontal",
+      "bubbleValues": [
+        "yes"
+      ],
+      "origin": [
+        15,
+        55
+      ],
+      "emptyValue": "no",
+      "bubblesGap": 48,
+      "labelsGap": 48,
+      "fieldLabels": [
+        "q1..5"
+      ]
+    }
+  },
+  "preProcessors": []
+}

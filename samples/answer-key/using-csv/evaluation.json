@@ -1,0 +1,14 @@
+{
+  "source_type": "csv",
+  "options": {
+    "answer_key_csv_path": "answer_key.csv",
+    "should_explain_scoring": true
+  },
+  "marking_schemes": {
+    "DEFAULT": {
+      "correct": "1",
+      "incorrect": "0",
+      "unmarked": "0"
+    }
+  }
+}

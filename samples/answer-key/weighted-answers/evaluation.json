@@ -1,0 +1,35 @@
+{
+  "source_type": "custom",
+  "options": {
+    "questions_in_order": [
+      "q1..5"
+    ],
+    "answers_in_order": [
+      "C",
+      "E",
+      [
+        "A",
+        "C"
+      ],
+      [
+        [
+          "B",
+          2
+        ],
+        [
+          "C",
+          "3/2"
+        ]
+      ],
+      "C"
+    ],
+    "should_explain_scoring": true
+  },
+  "marking_schemes": {
+    "DEFAULT": {
+      "correct": "3",
+      "incorrect": "-1",
+      "unmarked": "0"
+    }
+  }
+}

@@ -1,0 +1,347 @@
+# serializer version: 1
+# name: test_run_answer_key_using_csv
+  dict({
+    'Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+  
+    ''',
+    'Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+  
+    ''',
+    'Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+      "adrian_omr.png","samples/answer-key/using-csv/adrian_omr.png","outputs/answer-key/using-csv/CheckedOMRs/adrian_omr.png","5.0","C","E","A","B","B"
+  
+    ''',
+  })
+# ---
+# name: test_run_answer_key_weighted_answers
+  dict({
+    'images/Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+  
+    ''',
+    'images/Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+  
+    ''',
+    'images/Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+      "adrian_omr.png","samples/answer-key/weighted-answers/images/adrian_omr.png","outputs/answer-key/weighted-answers/images/CheckedOMRs/adrian_omr.png","5.5","B","E","A","C","B"
+      "adrian_omr_2.png","samples/answer-key/weighted-answers/images/adrian_omr_2.png","outputs/answer-key/weighted-answers/images/CheckedOMRs/adrian_omr_2.png","10.0","C","E","A","B","B"
+  
+    ''',
+  })
+# ---
+# name: test_run_community_Antibodyy
+  dict({
+    'Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6"
+  
+    ''',
+    'Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6"
+  
+    ''',
+    'Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6"
+      "simple_omr_sheet.jpg","samples/community/Antibodyy/simple_omr_sheet.jpg","outputs/community/Antibodyy/CheckedOMRs/simple_omr_sheet.jpg","0","A","C","B","D","E","B"
+  
+    ''',
+  })
+# ---
+# name: test_run_community_Sandeep_1507
+  dict({
+    'Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","Booklet_No","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100","q101","q102","q103","q104","q105","q106","q107","q108","q109","q110","q111","q112","q113","q114","q115","q116","q117","q118","q119","q120","q121","q122","q123","q124","q125","q126","q127","q128","q129","q130","q131","q132","q133","q134","q135","q136","q137","q138","q139","q140","q141","q142","q143","q144","q145","q146","q147","q148","q149","q150","q151","q152","q153","q154","q155","q156","q157","q158","q159","q160","q161","q162","q163","q164","q165","q166","q167","q168","q169","q170","q171","q172","q173","q174","q175","q176","q177","q178","q179","q180","q181","q182","q183","q184","q185","q186","q187","q188","q189","q190","q191","q192","q193","q194","q195","q196","q197","q198","q199","q200"
+  
+    ''',
+    'Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","Booklet_No","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100","q101","q102","q103","q104","q105","q106","q107","q108","q109","q110","q111","q112","q113","q114","q115","q116","q117","q118","q119","q120","q121","q122","q123","q124","q125","q126","q127","q128","q129","q130","q131","q132","q133","q134","q135","q136","q137","q138","q139","q140","q141","q142","q143","q144","q145","q146","q147","q148","q149","q150","q151","q152","q153","q154","q155","q156","q157","q158","q159","q160","q161","q162","q163","q164","q165","q166","q167","q168","q169","q170","q171","q172","q173","q174","q175","q176","q177","q178","q179","q180","q181","q182","q183","q184","q185","q186","q187","q188","q189","q190","q191","q192","q193","q194","q195","q196","q197","q198","q199","q200"
+  
+    ''',
+    'Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","Booklet_No","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100","q101","q102","q103","q104","q105","q106","q107","q108","q109","q110","q111","q112","q113","q114","q115","q116","q117","q118","q119","q120","q121","q122","q123","q124","q125","q126","q127","q128","q129","q130","q131","q132","q133","q134","q135","q136","q137","q138","q139","q140","q141","q142","q143","q144","q145","q146","q147","q148","q149","q150","q151","q152","q153","q154","q155","q156","q157","q158","q159","q160","q161","q162","q163","q164","q165","q166","q167","q168","q169","q170","q171","q172","q173","q174","q175","q176","q177","q178","q179","q180","q181","q182","q183","q184","q185","q186","q187","q188","q189","q190","q191","q192","q193","q194","q195","q196","q197","q198","q199","q200"
+      "omr-1.png","samples/community/Sandeep-1507/omr-1.png","outputs/community/Sandeep-1507/CheckedOMRs/omr-1.png","0","0190880","D","C","B","A","A","B","C","D","D","C","B","A","D","A","B","C","D","","B","D","C","A","C","C","B","A","D","A","AC","C","B","D","C","B","A","B","B","D","D","A","C","B","D","A","C","B","D","B","D","A","A","B","C","D","C","B","A","D","D","A","B","C","D","C","B","A","B","C","D","A","B","C","D","B","A","C","D","C","B","A","D","B","D","A","A","B","A","C","B","D","C","D","B","A","C","C","B","D","B","C","B","A","D","C","B","A","B","C","D","A","A","A","B","B","A","B","C","D","A","A","D","C","B","A","","A","B","C","D","D","D","B","B","C","C","D","C","C","D","D","C","C","B","B","A","A","D","D","B","A","D","C","B","A","A","D","D","B","B","A","A","B","C","D","D","C","B","A","B","D","A","C","C","C","A","A","B","B","D","D","A","A","B","C","D","B","D","A","B","C","D","AD","C","D","B","C","A","B","C","D"
+      "omr-2.png","samples/community/Sandeep-1507/omr-2.png","outputs/community/Sandeep-1507/CheckedOMRs/omr-2.png","0","0no22nonono","A","B","B","A","D","C","B","D","C","D","D","D","B","B","D","D","D","B","C","C","A","A","B","A","D","A","A","B","A","C","A","C","D","D","D","","","C","C","B","B","B","","D","","C","D","","D","B","A","D","B","A","C","A","C","A","C","B","A","D","C","B","C","B","C","D","B","B","D","C","C","D","D","A","D","A","D","C","B","D","C","A","C","","C","B","B","","A","A","D","","B","A","","C","A","D","D","C","C","A","C","A","C","D","A","A","A","D","D","B","C","B","B","B","D","A","C","D","D","A","A","A","C","D","C","C","B","D","A","A","C","B","","D","A","C","C","C","","","","A","C","","D","A","B","A","A","C","A","D","B","B","A","D","A","B","C","A","C","D","D","D","C","A","C","A","C","D","A","A","A","D","A","B","A","B","C","B","A","","B","C","D","D","","","D","C","C","C","","C","A",""
+      "omr-3.png","samples/community/Sandeep-1507/omr-3.png","outputs/community/Sandeep-1507/CheckedOMRs/omr-3.png","0","0nononono73","B","A","C","D","A","D","D","A","C","A","A","B","C","A","A","C","A","B","A","D","C","C","A","D","D","C","C","C","A","C","C","B","B","D","D","C","","","C","B","","","D","A","A","A","A","","A","C","C","C","D","C","","A","B","C","D","B","C","C","C","D","A","B","B","B","D","D","B","B","C","D","B","D","A","B","A","B","C","A","C","A","C","D","","","A","B","","B","C","D","A","D","D","","","C","D","B","B","A","A","D","D","B","A","B","B","C","C","D","D","C","A","D","C","D","C","C","B","C","D","C","D","A","B","D","C","B","D","B","B","","D","","B","D","B","B","C","A","D","","C","","C","","B","C","A","B","B","D","D","D","B","A","D","D","A","D","D","C","B","B","D","C","B","A","C","D","A","D","D","A","C","A","B","D","C","C","C","A","D","","","B","B","","C","C","B","B","C","","","B"
+  
+    ''',
+  })
+# ---
+# name: test_run_community_Shamanth
+  dict({
+    'Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","q21","q22","q23","q24","q25","q26","q27","q28"
+  
+    ''',
+    'Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","q21","q22","q23","q24","q25","q26","q27","q28"
+  
+    ''',
+    'Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","q21","q22","q23","q24","q25","q26","q27","q28"
+      "omr_sheet_01.png","samples/community/Shamanth/omr_sheet_01.png","outputs/community/Shamanth/CheckedOMRs/omr_sheet_01.png","0","A","B","C","D","A","C","C","D"
+  
+    ''',
+  })
+# ---
+# name: test_run_community_UPSC_mock
+  dict({
+    'Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll","Subject Code","bookletNo","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+  
+    ''',
+    'Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll","Subject Code","bookletNo","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+  
+    ''',
+    'Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","Roll","Subject Code","bookletNo","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+      "answer_key.jpg","samples/community/UPSC-mock/answer_key.jpg","outputs/community/UPSC-mock/CheckedOMRs/answer_key.jpg","200.0","","","","C","D","A","C","C","C","B","A","C","C","B","D","B","D","C","C","B","D","B","D","C","C","C","B","D","D","D","B","A","D","D","C","A","B","C","A","D","A","A","A","D","D","B","A","B","C","B","A","C","D","C","D","A","B","C","A","C","C","C","D","B","C","C","C","C","A","D","A","D","A","D","C","C","D","C","D","A","A","C","B","C","D","C","A","B","C","B","D","A","A","C","A","B","D","C","D","A","C","B","A"
+  
+    ''',
+    'scan-angles/Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll","Subject Code","bookletNo","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+  
+    ''',
+    'scan-angles/Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll","Subject Code","bookletNo","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+  
+    ''',
+    'scan-angles/Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","Roll","Subject Code","bookletNo","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+      "angle-1.jpg","samples/community/UPSC-mock/scan-angles/angle-1.jpg","outputs/community/UPSC-mock/scan-angles/CheckedOMRs/angle-1.jpg","70.66666666666669","","","","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
+      "angle-2.jpg","samples/community/UPSC-mock/scan-angles/angle-2.jpg","outputs/community/UPSC-mock/scan-angles/CheckedOMRs/angle-2.jpg","70.66666666666669","","","","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
+      "angle-3.jpg","samples/community/UPSC-mock/scan-angles/angle-3.jpg","outputs/community/UPSC-mock/scan-angles/CheckedOMRs/angle-3.jpg","70.66666666666669","","","","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
+  
+    ''',
+  })
+# ---
+# name: test_run_community_UmarFarootAPS
+  dict({
+    'scans/Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll_no","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100","q101","q102","q103","q104","q105","q106","q107","q108","q109","q110","q111","q112","q113","q114","q115","q116","q117","q118","q119","q120","q121","q122","q123","q124","q125","q126","q127","q128","q129","q130","q131","q132","q133","q134","q135","q136","q137","q138","q139","q140","q141","q142","q143","q144","q145","q146","q147","q148","q149","q150","q151","q152","q153","q154","q155","q156","q157","q158","q159","q160","q161","q162","q163","q164","q165","q166","q167","q168","q169","q170","q171","q172","q173","q174","q175","q176","q177","q178","q179","q180","q181","q182","q183","q184","q185","q186","q187","q188","q189","q190","q191","q192","q193","q194","q195","q196","q197","q198","q199","q200"
+  
+    ''',
+    'scans/Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll_no","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100","q101","q102","q103","q104","q105","q106","q107","q108","q109","q110","q111","q112","q113","q114","q115","q116","q117","q118","q119","q120","q121","q122","q123","q124","q125","q126","q127","q128","q129","q130","q131","q132","q133","q134","q135","q136","q137","q138","q139","q140","q141","q142","q143","q144","q145","q146","q147","q148","q149","q150","q151","q152","q153","q154","q155","q156","q157","q158","q159","q160","q161","q162","q163","q164","q165","q166","q167","q168","q169","q170","q171","q172","q173","q174","q175","q176","q177","q178","q179","q180","q181","q182","q183","q184","q185","q186","q187","q188","q189","q190","q191","q192","q193","q194","q195","q196","q197","q198","q199","q200"
+  
+    ''',
+    'scans/Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","Roll_no","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100","q101","q102","q103","q104","q105","q106","q107","q108","q109","q110","q111","q112","q113","q114","q115","q116","q117","q118","q119","q120","q121","q122","q123","q124","q125","q126","q127","q128","q129","q130","q131","q132","q133","q134","q135","q136","q137","q138","q139","q140","q141","q142","q143","q144","q145","q146","q147","q148","q149","q150","q151","q152","q153","q154","q155","q156","q157","q158","q159","q160","q161","q162","q163","q164","q165","q166","q167","q168","q169","q170","q171","q172","q173","q174","q175","q176","q177","q178","q179","q180","q181","q182","q183","q184","q185","q186","q187","q188","q189","q190","q191","q192","q193","q194","q195","q196","q197","q198","q199","q200"
+      "scan-type-1.jpg","samples/community/UmarFarootAPS/scans/scan-type-1.jpg","outputs/community/UmarFarootAPS/scans/CheckedOMRs/scan-type-1.jpg","49.0","2468","A","C","B","C","A","D","B","C","B","D","C","A","C","D","B","C","A","B","C","A","C","B","D","C","A","B","D","C","A","C","B","D","B","A","C","D","B","C","A","C","D","A","C","D","A","B","D","C","A","C","D","B","C","A","C","D","B","C","D","A","B","C","B","C","D","B","D","A","C","B","D","A","B","C","B","A","C","D","B","A","C","B","C","B","A","D","B","A","C","D","B","D","B","C","B","D","A","C","B","C","B","C","D","B","C","A","B","C","A","D","C","B","D","B","A","B","C","D","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","B","A","C","B","A","C","A","B","C","B","C","B","A","C","A","C","B","B","C","B","A","C","A","B","A","B","A","B","C","D","B","C","A","C","D","C","A","C","B","A","C","A","B","C","B","D","A","B","C","D","C","B","B","C","A","B","C","B"
+      "scan-type-2.jpg","samples/community/UmarFarootAPS/scans/scan-type-2.jpg","outputs/community/UmarFarootAPS/scans/CheckedOMRs/scan-type-2.jpg","20.0","0234","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","C","D","C","B","A","B","A","D","","","AD","","","","A","D","","","","","","","D","A","","D","","A","","D","","","","A","","","C","","","D","","","A","","","","D","","C","","A","","C","","D","B","B","","","A","","D","","","","D","","","","","A","D","","","B","","","D","","","A","","","D","","","","","","D","","","","A","D","","","A","","B","","D","","","","C","C","D","D","A","","D","","A","D","","","D","","B","D","","","D","","D","B","","","","D","","A","","","","D","","B","","","","","","D","","","A","","","A","","D","","","D"
+  
+    ''',
+  })
+# ---
+# name: test_run_community_ibrahimkilic
+  dict({
+    'Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+  
+    ''',
+    'Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+  
+    ''',
+    'Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+      "yes_no_questionnarie.jpg","samples/community/ibrahimkilic/yes_no_questionnarie.jpg","outputs/community/ibrahimkilic/CheckedOMRs/yes_no_questionnarie.jpg","0","no","no","no","no","no"
+  
+    ''',
+  })
+# ---
+# name: test_run_sample1
+  dict({
+    'MobileCamera/Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
+  
+    ''',
+    'MobileCamera/Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
+  
+    ''',
+    'MobileCamera/Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
+      "sheet1.jpg","samples/sample1/MobileCamera/sheet1.jpg","outputs/sample1/MobileCamera/CheckedOMRs/sheet1.jpg","0","E503110026","B","","D","B","6","11","20","7","16","B","D","C","D","A","D","B","A","C","C","D"
+  
+    ''',
+  })
+# ---
+# name: test_run_sample2
+  dict({
+    'AdrianSample/Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+  
+    ''',
+    'AdrianSample/Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+  
+    ''',
+    'AdrianSample/Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5"
+      "adrian_omr.png","samples/sample2/AdrianSample/adrian_omr.png","outputs/sample2/AdrianSample/CheckedOMRs/adrian_omr.png","0","B","E","A","C","B"
+      "adrian_omr_2.png","samples/sample2/AdrianSample/adrian_omr_2.png","outputs/sample2/AdrianSample/CheckedOMRs/adrian_omr_2.png","0","C","E","A","B","B"
+  
+    ''',
+  })
+# ---
+# name: test_run_sample3
+  dict({
+    'colored-thick-sheet/Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+  
+    ''',
+    'colored-thick-sheet/Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+  
+    ''',
+    'colored-thick-sheet/Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+      "rgb-100-gsm.jpg","samples/sample3/colored-thick-sheet/rgb-100-gsm.jpg","outputs/sample3/colored-thick-sheet/CheckedOMRs/rgb-100-gsm.jpg","0","D","D","A","","C","C","B","","A","C","C","D","A","D","A","C","A","D","B","D","D","C","D","D","D","D","","B","A","D","D","C","","B","","C","D","","","A","","A","C","C","B","C","A","A","C","","C","","D","B","C","","B","C","D","","","C","C","","C","A","B","C","","","","","D","D","C","D","A","","","B","","B","D","C","C","","D","","D","C","D","A","","A","","","A","C","B","A"
+  
+    ''',
+    'xeroxed-thin-sheet/Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+  
+    ''',
+    'xeroxed-thin-sheet/Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+  
+    ''',
+    'xeroxed-thin-sheet/Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22","q23","q24","q25","q26","q27","q28","q29","q30","q31","q32","q33","q34","q35","q36","q37","q38","q39","q40","q41","q42","q43","q44","q45","q46","q47","q48","q49","q50","q51","q52","q53","q54","q55","q56","q57","q58","q59","q60","q61","q62","q63","q64","q65","q66","q67","q68","q69","q70","q71","q72","q73","q74","q75","q76","q77","q78","q79","q80","q81","q82","q83","q84","q85","q86","q87","q88","q89","q90","q91","q92","q93","q94","q95","q96","q97","q98","q99","q100"
+      "grayscale-80-gsm.jpg","samples/sample3/xeroxed-thin-sheet/grayscale-80-gsm.jpg","outputs/sample3/xeroxed-thin-sheet/CheckedOMRs/grayscale-80-gsm.jpg","0","C","D","A","C","C","C","B","A","C","C","B","D","B","D","C","C","B","D","B","D","C","C","C","B","D","D","D","B","A","D","D","C","A","B","C","A","D","A","A","A","D","D","B","A","B","C","B","A","C","D","C","D","A","B","C","A","C","C","C","D","B","C","C","C","C","A","D","A","D","A","D","C","C","D","C","D","A","A","C","B","C","D","C","A","B","C","B","D","A","A","C","A","B","D","C","D","A","C","B","A"
+  
+    ''',
+  })
+# ---
+# name: test_run_sample4
+  dict({
+    'Evaluation/IMG_20201116_143512_evaluation.csv': '''
+      "Question","Marked","Answer(s)","Verdict","Delta","Score"
+      "q1","B","B","Correct","3.0","3.0"
+      "q2","D","D","Correct","3.0","6.0"
+      "q3","C","C","Correct","3.0","9.0"
+      "q4","B","B","Correct","3.0","12.0"
+      "q5","D","D","Correct","3.0","15.0"
+      "q6","C","C","Correct","3.0","18.0"
+      "q7","BC","['B', 'C', 'BC']","Correct-Bc","3.0","21.0"
+      "q8","A","A","Correct","3.0","24.0"
+      "q9","C","C","Correct","3.0","27.0"
+      "q10","D","D","Correct","3.0","30.0"
+      "q11","C","C","Correct","3.0","33.0"
+  
+    ''',
+    'Evaluation/IMG_20201116_150717658_evaluation.csv': '''
+      "Question","Marked","Answer(s)","Verdict","Delta","Score"
+      "q1","B","B","Correct","3.0","3.0"
+      "q2","D","D","Correct","3.0","6.0"
+      "q3","C","C","Correct","3.0","9.0"
+      "q4","B","B","Correct","3.0","12.0"
+      "q5","D","D","Correct","3.0","15.0"
+      "q6","C","C","Correct","3.0","18.0"
+      "q7","BC","['B', 'C', 'BC']","Correct-Bc","3.0","21.0"
+      "q8","A","A","Correct","3.0","24.0"
+      "q9","C","C","Correct","3.0","27.0"
+      "q10","D","D","Correct","3.0","30.0"
+      "q11","C","C","Correct","3.0","33.0"
+  
+    ''',
+    'Evaluation/IMG_20201116_150750830_evaluation.csv': '''
+      "Question","Marked","Answer(s)","Verdict","Delta","Score"
+      "q1","A","B","Incorrect","-1.0","-1.0"
+      "q2","","D","Unmarked","0.0","-1.0"
+      "q3","D","C","Incorrect","-1.0","-2.0"
+      "q4","C","B","Incorrect","-1.0","-3.0"
+      "q5","AC","D","Incorrect","-1.0","-4.0"
+      "q6","A","C","Incorrect","-1.0","-5.0"
+      "q7","D","['B', 'C', 'BC']","Incorrect","-1.0","-6.0"
+      "q8","B","A","Incorrect","-1.0","-7.0"
+      "q9","C","C","Correct","3.0","-4.0"
+      "q10","D","D","Correct","3.0","-1.0"
+      "q11","D","C","Incorrect","-1.0","-2.0"
+  
+    ''',
+    'Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11"
+  
+    ''',
+    'Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11"
+  
+    ''',
+    'Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11"
+      "IMG_20201116_143512.jpg","samples/sample4/IMG_20201116_143512.jpg","outputs/sample4/CheckedOMRs/IMG_20201116_143512.jpg","33.0","B","D","C","B","D","C","BC","A","C","D","C"
+      "IMG_20201116_150717658.jpg","samples/sample4/IMG_20201116_150717658.jpg","outputs/sample4/CheckedOMRs/IMG_20201116_150717658.jpg","33.0","B","D","C","B","D","C","BC","A","C","D","C"
+      "IMG_20201116_150750830.jpg","samples/sample4/IMG_20201116_150750830.jpg","outputs/sample4/CheckedOMRs/IMG_20201116_150750830.jpg","-2.0","A","","D","C","AC","A","D","B","C","D","D"
+  
+    ''',
+  })
+# ---
+# name: test_run_sample5
+  dict({
+    'ScanBatch1/Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22"
+  
+    ''',
+    'ScanBatch1/Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22"
+  
+    ''',
+    'ScanBatch1/Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22"
+      "camscanner-1.jpg","samples/sample5/ScanBatch1/camscanner-1.jpg","outputs/sample5/ScanBatch1/CheckedOMRs/camscanner-1.jpg","-4.0","E204420102","D","C","A","C","B","08","52","21","85","36","B","C","A","A","D","C","C","AD","A","A","D",""
+  
+    ''',
+    'ScanBatch2/Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22"
+  
+    ''',
+    'ScanBatch2/Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22"
+  
+    ''',
+    'ScanBatch2/Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","Roll","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20","q21","q22"
+      "camscanner-2.jpg","samples/sample5/ScanBatch2/camscanner-2.jpg","outputs/sample5/ScanBatch2/CheckedOMRs/camscanner-2.jpg","55.0","E204420109","C","C","B","C","C","01","19","10","10","18","D","A","D","D","D","C","C","C","C","D","B","A"
+  
+    ''',
+  })
+# ---
+# name: test_run_sample6
+  dict({
+    'Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll"
+  
+    ''',
+    'Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll"
+  
+    ''',
+    'Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","Roll"
+      "reference.png","samples/sample6/reference.png","outputs/sample6/CheckedOMRs/reference.png","0","A"
+  
+    ''',
+    'doc-scans/Manual/ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll"
+  
+    ''',
+    'doc-scans/Manual/MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","Roll"
+  
+    ''',
+    'doc-scans/Results/Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","Roll"
+      "sample_roll_01.jpg","samples/sample6/doc-scans/sample_roll_01.jpg","outputs/sample6/doc-scans/CheckedOMRs/sample_roll_01.jpg","0","A0188877Y"
+      "sample_roll_02.jpg","samples/sample6/doc-scans/sample_roll_02.jpg","outputs/sample6/doc-scans/CheckedOMRs/sample_roll_02.jpg","0","A0203959W"
+      "sample_roll_03.jpg","samples/sample6/doc-scans/sample_roll_03.jpg","outputs/sample6/doc-scans/CheckedOMRs/sample_roll_03.jpg","0","A0204729A"
+  
+    ''',
+  })
+# ---

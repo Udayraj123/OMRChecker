@@ -1,0 +1,143 @@
+{
+  "pageDimensions": [
+    1800,
+    2400
+  ],
+  "bubbleDimensions": [
+    23,
+    20
+  ],
+  "fieldBlocks": {
+    "q01block": {
+      "origin": [
+        492,
+        924
+      ],
+      "bubblesGap": 58.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q1..10"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q11block": {
+      "origin": [
+        492,
+        1258
+      ],
+      "bubblesGap": 59.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q11..20"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q21block": {
+      "origin": [
+        492,
+        1589
+      ],
+      "bubblesGap": 60.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q21..30"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q31block": {
+      "origin": [
+        487,
+        1920
+      ],
+      "bubblesGap": 61.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q31..40"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q41block": {
+      "origin": [
+        807,
+        924
+      ],
+      "bubblesGap": 58.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q41..50"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q51block": {
+      "origin": [
+        803,
+        1258
+      ],
+      "bubblesGap": 59.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q51..60"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q61block": {
+      "origin": [
+        803,
+        1589
+      ],
+      "bubblesGap": 60.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q61..70"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q71block": {
+      "origin": [
+        803,
+        1920
+      ],
+      "bubblesGap": 60.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q71..80"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q81block": {
+      "origin": [
+        1115,
+        924
+      ],
+      "bubblesGap": 58.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q81..90"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q91block": {
+      "origin": [
+        1115,
+        1258
+      ],
+      "bubblesGap": 59.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q91..100"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    }
+  },
+  "preProcessors": [
+    {
+      "name": "CropPage",
+      "options": {
+        "morphKernel": [
+          10,
+          10
+        ]
+      }
+    }
+  ]
+}

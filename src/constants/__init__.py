@@ -1,0 +1,4 @@
+"""
+Constants package for OMRChecker.
+
+"""

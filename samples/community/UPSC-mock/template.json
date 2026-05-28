@@ -1,0 +1,195 @@
+{
+  "pageDimensions": [
+    1800,
+    2400
+  ],
+  "bubbleDimensions": [
+    30,
+    25
+  ],
+  "customLabels": {
+    "Subject Code": [
+      "subjectCode1",
+      "subjectCode2"
+    ],
+    "Roll": [
+      "roll1..10"
+    ]
+  },
+  "fieldBlocks": {
+    "bookletNo": {
+      "origin": [
+        595,
+        545
+      ],
+      "bubblesGap": 68,
+      "labelsGap": 0,
+      "fieldLabels": [
+        "bookletNo"
+      ],
+      "bubbleValues": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "direction": "vertical"
+    },
+    "subjectCode": {
+      "origin": [
+        912,
+        512
+      ],
+      "bubblesGap": 33,
+      "labelsGap": 42.5,
+      "fieldLabels": [
+        "subjectCode1",
+        "subjectCode2"
+      ],
+      "fieldType": "QTYPE_INT"
+    },
+    "roll": {
+      "origin": [
+        1200,
+        510
+      ],
+      "bubblesGap": 33,
+      "labelsGap": 42.8,
+      "fieldLabels": [
+        "roll1..10"
+      ],
+      "fieldType": "QTYPE_INT"
+    },
+    "q01block": {
+      "origin": [
+        500,
+        927
+      ],
+      "bubblesGap": 58.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q1..10"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q11block": {
+      "origin": [
+        500,
+        1258
+      ],
+      "bubblesGap": 58.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q11..20"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q21block": {
+      "origin": [
+        500,
+        1589
+      ],
+      "bubblesGap": 58.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q21..30"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q31block": {
+      "origin": [
+        495,
+        1925
+      ],
+      "bubblesGap": 58.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q31..40"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q41block": {
+      "origin": [
+        811,
+        927
+      ],
+      "bubblesGap": 58.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q41..50"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q51block": {
+      "origin": [
+        811,
+        1258
+      ],
+      "bubblesGap": 58.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q51..60"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q61block": {
+      "origin": [
+        811,
+        1589
+      ],
+      "bubblesGap": 58.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q61..70"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q71block": {
+      "origin": [
+        811,
+        1925
+      ],
+      "bubblesGap": 58.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q71..80"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q81block": {
+      "origin": [
+        1125,
+        927
+      ],
+      "bubblesGap": 58.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q81..90"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    },
+    "q91block": {
+      "origin": [
+        1125,
+        1258
+      ],
+      "bubblesGap": 58.75,
+      "labelsGap": 32.65,
+      "fieldLabels": [
+        "q91..100"
+      ],
+      "fieldType": "QTYPE_MCQ4"
+    }
+  },
+  "preProcessors": [
+    {
+      "name": "CropPage",
+      "options": {
+        "morphKernel": [
+          10,
+          10
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "pageDimensions": [340, 500],
+  "bubbleDimensions": [20, 20],
+
+  "fieldBlocks": {
+    
+    "MCQBlock_RTL_Builtin": {
+      "fieldType": "QTYPE_MCQ4_RTL",
+      "fieldLabels": ["q1..5"],
+      "bubblesGap": 40,
+      "labelsGap": 50,
+      "origin": [50, 50]
+    },
+
+    "MCQBlock_RTL_Custom": {
+      "bubbleValues": ["G", "F", "E", "D", "C", "B", "A"],
+      "direction": "horizontal",
+      "fieldLabels": ["q6..7"],
+      "bubblesGap": 42,
+      "labelsGap": 50,
+      "origin": [30, 380]
+    }
+  },
+  "preProcessors": []
+}

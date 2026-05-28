@@ -1,0 +1,93 @@
+{
+  "source_type": "custom",
+  "options": {
+    "questions_in_order": [
+      "q1..22"
+    ],
+    "answers_in_order": [
+      "C",
+      "C",
+      "B",
+      "C",
+      "C",
+      [
+        "1",
+        "01"
+      ],
+      "19",
+      "10",
+      "10",
+      "18",
+      "D",
+      "A",
+      "D",
+      "D",
+      "D",
+      "C",
+      "C",
+      "C",
+      "C",
+      "D",
+      "B",
+      "A"
+    ],
+    "should_explain_scoring": true
+  },
+  "marking_schemes": {
+    "DEFAULT": {
+      "correct": "1",
+      "incorrect": "0",
+      "unmarked": "0"
+    },
+    "BOOMERANG_1": {
+      "questions": [
+        "q1..5"
+      ],
+      "marking": {
+        "correct": 4,
+        "incorrect": -1,
+        "unmarked": 0
+      }
+    },
+    "PROXIMITY_1": {
+      "questions": [
+        "q6..10"
+      ],
+      "marking": {
+        "correct": 3,
+        "incorrect": -1,
+        "unmarked": 0
+      }
+    },
+    "FIBONACCI_SECTION_1": {
+      "questions": [
+        "q11..14"
+      ],
+      "marking": {
+        "correct": 2,
+        "incorrect": -1,
+        "unmarked": 0
+      }
+    },
+    "POWER_SECTION_1": {
+      "questions": [
+        "q15..18"
+      ],
+      "marking": {
+        "correct": 1,
+        "incorrect": 0,
+        "unmarked": 0
+      }
+    },
+    "FIBONACCI_SECTION_2": {
+      "questions": [
+        "q19..22"
+      ],
+      "marking": {
+        "correct": 2,
+        "incorrect": -1,
+        "unmarked": 0
+      }
+    }
+  }
+}
