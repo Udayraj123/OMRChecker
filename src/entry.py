@@ -7,6 +7,7 @@
 
 """
 import os
+import shutil
 from csv import QUOTE_NONNUMERIC
 from pathlib import Path
 from time import time
@@ -156,7 +157,7 @@ def process_dir(
             args,
         )
         if args["setLayout"]:
-            show_template_layouts(omr_files, template, tuning_config)
+            show_template_layouts(omr_files, template, tuning_config, outputs_namespace)
         else:
             process_files(
                 omr_files,
@@ -186,7 +187,7 @@ def process_dir(
 
 
 
-def show_template_layouts(omr_files, template, tuning_config):
+def show_template_layouts(omr_files, template, tuning_config, outputs_namespace):
     for file_path in omr_files:
         images = ImageUtils.load_omr_image(file_path, tuning_config)
         for img_name, in_omr in images:
@@ -194,6 +195,24 @@ def show_template_layouts(omr_files, template, tuning_config):
                 str(file_path), in_omr, template
             )
             if in_omr is None:
+                new_file_path = outputs_namespace.paths.errors_dir.joinpath(img_name)
+                outputs_namespace.OUTPUT_SET.append(
+                    [img_name] + outputs_namespace.empty_resp
+                )
+                if check_and_move(ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path):
+                    err_line = [
+                        img_name,
+                        file_path,
+                        new_file_path,
+                        "NA",
+                    ] + outputs_namespace.empty_resp
+                    pd.DataFrame(err_line, dtype=str).T.to_csv(
+                        outputs_namespace.files_obj["Errors"],
+                        mode="a",
+                        quoting=QUOTE_NONNUMERIC,
+                        header=False,
+                        index=False,
+                    )
                 continue
             template_layout = template.image_instance_ops.draw_template_layout(
                 in_omr, template, shifted=False, border=2
@@ -368,9 +387,17 @@ def process_files(
 
 
 def check_and_move(error_code, file_path, filepath2):
-    # TODO: fix file movement into error/multimarked/invalid etc again
-    STATS.files_not_moved += 1
-    return True
+    try:
+        os.makedirs(os.path.dirname(str(filepath2)), exist_ok=True)
+        shutil.copy2(str(file_path), str(filepath2))
+        STATS.files_moved += 1
+        return True
+    except Exception:
+        logger.error(
+            f"Failed to move file '{file_path}' to '{filepath2}'"
+        )
+        STATS.files_not_moved += 1
+        return False
 
 
 def print_stats(start_time, files_counter, tuning_config):
