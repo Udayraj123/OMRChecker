@@ -209,6 +209,10 @@ class ImageUtils:
             try:
                 pdf_params = tuning_config.pdf_params
                 doc_len = len(doc)
+                logger.info(
+                    f"Processing PDF '{file_path.name}' "
+                    f"(pdf_dpi={pdf_params.pdf_dpi}, pdf_page={pdf_params.pdf_page})"
+                )
                 user_pages = ImageUtils._resolve_pages(
                     pdf_params.pdf_page, doc_len
                 )

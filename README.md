@@ -239,6 +239,12 @@ Explanation for the arguments:
 
 `--outputDir`: Specify an output directory.
 
+> **PDF files** (`.pdf`) are supported natively via PyMuPDF. Configure `pdf_params` in `template.json`:
+> - `pdf_dpi`: Rendering DPI (default `"auto"`, or integer `72`–`600`)
+> - `pdf_page`: Pages to process — `1`, `null` (all), `"1-5"`, `"3-"`, `[1, "3-5"]`
+>
+> See [samples/sample2](https://github.com/Udayraj123/OMRChecker/blob/master/samples/sample2/config.json) for an example.
+
 <details>
 <summary>
  <b>Deprecation logs</b>

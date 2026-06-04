@@ -41,6 +41,8 @@ class ImageInstanceOps:
         # run pre_processors in sequence
         for pre_processor in template.pre_processors:
             in_omr = pre_processor.apply_filter(in_omr, file_path)
+            if in_omr is None:
+                break
         return in_omr
 
     def read_omr_response(self, template, image, name, save_dir=None):

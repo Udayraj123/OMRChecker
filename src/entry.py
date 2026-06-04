@@ -7,7 +7,6 @@
 
 """
 import os
-import shutil
 from csv import QUOTE_NONNUMERIC
 from pathlib import Path
 from time import time
@@ -242,7 +241,7 @@ def _process_single_image(
     template.image_instance_ops.append_save_img(1, in_omr)
 
     in_omr = template.image_instance_ops.apply_preprocessors(
-        file_path, in_omr, template
+        img_name, in_omr, template
     )
 
     if in_omr is None:
@@ -387,17 +386,9 @@ def process_files(
 
 
 def check_and_move(error_code, file_path, filepath2):
-    try:
-        os.makedirs(os.path.dirname(str(filepath2)), exist_ok=True)
-        shutil.copy2(str(file_path), str(filepath2))
-        STATS.files_moved += 1
-        return True
-    except Exception:
-        logger.error(
-            f"Failed to move file '{file_path}' to '{filepath2}'"
-        )
-        STATS.files_not_moved += 1
-        return False
+    # TODO: fix file movement into error/multimarked/invalid etc again
+    STATS.files_not_moved += 1
+    return True
 
 
 def print_stats(start_time, files_counter, tuning_config):
