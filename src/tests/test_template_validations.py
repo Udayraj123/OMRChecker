@@ -40,9 +40,9 @@ def test_no_template(mocker):
     try:
         run_sample(mocker, BASE_SAMPLE_PATH)
     except Exception as e:
-        assert (
-            str(e)
-            == "No template file found in the directory tree of src/tests/test_samples/sample1"
+        assert str(e) == (
+            "No template file found in the directory tree of "
+            + str(BASE_SAMPLE_PATH)
         )
 
 

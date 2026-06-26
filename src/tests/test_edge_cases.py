@@ -14,11 +14,18 @@ from src.tests.utils import (
     setup_mocker_patches,
 )
 
-FROZEN_TIMESTAMP = "1970-01-01"
+from time import strftime, localtime
+
+from freezegun import freeze_time
+from src.tests.utils import FROZEN_TIMESTAMP
+
+with freeze_time(FROZEN_TIMESTAMP):
+    TIME_NOW_HRS = strftime("%I%p", localtime())
+
 CURRENT_DIR = Path("src/tests")
 BASE_SAMPLE_PATH = CURRENT_DIR.joinpath("test_samples", "sample2")
 BASE_RESULTS_CSV_PATH = os.path.join(
-    "outputs", BASE_SAMPLE_PATH, "Results", "Results_05AM.csv"
+    "outputs", BASE_SAMPLE_PATH, "Results", f"Results_{TIME_NOW_HRS}.csv"
 )
 BASE_MULTIMARKED_CSV_PATH = os.path.join(
     "outputs", BASE_SAMPLE_PATH, "Manual", "MultiMarkedFiles.csv"
