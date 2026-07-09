@@ -1,6 +1,7 @@
 """
 https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/
 """
+
 import cv2
 import numpy as np
 
@@ -16,6 +17,7 @@ from src.constants.image_processing import (
     MIN_PAGE_AREA_THRESHOLD,
     PAGE_THRESHOLD_PARAMS,
 )
+
 from src.logger import logger
 from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
 from src.utils.image import ImageUtils
@@ -64,7 +66,16 @@ class CropPage(ImagePreprocessor):
         )
 
     def apply_filter(self, image, file_path):
+        config = self.tuning_config
+        # Level 4: key anchor — raw input before any processing
+        if config.outputs.show_image_level >= 4:
+            InteractionUtils.show("1_grayscale_input", image, config=config, pause=0)
+
         image = normalize(cv2.GaussianBlur(image, DEFAULT_GAUSSIAN_BLUR_KERNEL, 0))
+
+        # Level 5: intermediate detail — blur is subtle, only useful at higher verbosity
+        if config.outputs.show_image_level >= 5:
+            InteractionUtils.show("2_gaussian_blur", image, config=config, pause=0)
 
         # Resize should be done with another preprocessor is needed
         sheet = self.find_page(image, file_path)
@@ -94,19 +105,27 @@ class CropPage(ImagePreprocessor):
             cv2.THRESH_TRUNC,
         )
         image = normalize(image)
+        # Level 4: key anchor — threshold is a major pipeline stage
+        if config.outputs.show_image_level >= 4:
+            InteractionUtils.show("3_threshold", image, config=config, pause=0)
 
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, self.morph_kernel)
 
         # Close the small holes, i.e. Complete the edges on canny image
         closed = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
 
+        # Level 4: key anchor — morph close shows gap-filling effect clearly
+        if config.outputs.show_image_level >= 4:
+            InteractionUtils.show("4_morph_close", closed, config=config, pause=0)
+
         edge = cv2.Canny(
             closed, CANNY_PARAMS["lower_threshold"], CANNY_PARAMS["upper_threshold"]
         )
 
+        # Level 5: intermediate detail — edge map + backward-compat alias
         if config.outputs.show_image_level >= 5:
-            InteractionUtils.show("edge", edge, config=config)
-
+            InteractionUtils.show("5_canny_edges", edge, config=config, pause=0)
+            InteractionUtils.show("edge", edge, config=config, pause=0)
         # findContours returns outer boundaries in CW and inner ones, ACW.
         cnts = ImageUtils.grab_contours(
             cv2.findContours(edge, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -139,5 +158,10 @@ class CropPage(ImagePreprocessor):
                     DEFAULT_CONTOUR_FILL_WIDTH,
                 )
                 break
+        # Level 6: deepest debug — only show when a page contour was actually found
+        if len(sheet) > 0 and config.outputs.show_image_level >= 6:
+            InteractionUtils.show("6a_contour_on_image", image, config=config, pause=0)
+            InteractionUtils.show("6b_contour_on_edge", edge, config=config, pause=0)
 
         return sheet
+       
