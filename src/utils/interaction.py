@@ -1,18 +1,35 @@
 from dataclasses import dataclass
 
 import cv2
-from screeninfo import get_monitors
+from screeninfo import ScreenInfoError, get_monitors
 
 from src.logger import logger
 from src.utils.image import ImageUtils
 
-monitor_window = get_monitors()[0]
+
+def get_default_window_dimensions():
+    """
+    Detects the primary monitor's dimensions for positioning preview windows.
+
+    Falls back gracefully (instead of crashing at import time) when no
+    display/monitor can be detected, e.g. in headless CI, pre-commit hooks,
+    or pytest runs where GUI windows are never actually needed.
+    """
+    try:
+        monitor_window = get_monitors()[0]
+        return monitor_window.width, monitor_window.height, True
+    except (ScreenInfoError, IndexError, NotImplementedError) as e:
+        logger.warning(
+            "No display/monitor detected - running in headless mode. "
+            f"Image preview windows will be skipped. (Reason: {e})"
+        )
+        return 1280, 720, False
 
 
 @dataclass
 class ImageMetrics:
     # TODO: Move TEXT_SIZE, etc here and find a better class name
-    window_width, window_height = monitor_window.width, monitor_window.height
+    window_width, window_height, gui_available = get_default_window_dimensions()
     # for positioning image windows
     window_x, window_y = 0, 0
     reset_pos = [0, 0]
@@ -26,6 +43,13 @@ class InteractionUtils:
     @staticmethod
     def show(name, origin, pause=1, resize=False, reset_pos=None, config=None):
         image_metrics = InteractionUtils.image_metrics
+
+        if not image_metrics.gui_available:
+            logger.info(
+                f"Skipping display of '{name}' - no GUI/display available in this environment."
+            )
+            return
+
         if origin is None:
             logger.info(f"'{name}' - NoneType image to show!")
             if pause:
