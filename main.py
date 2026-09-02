@@ -50,6 +50,33 @@ def parse_args():
     )
 
     argparser.add_argument(
+        "-tF",
+        "--templateFile",
+        dest="template_path",
+        type=str,
+        required=False,
+        help="Optional path to template.json",
+    )
+
+    argparser.add_argument(
+        "-cF",
+        "--configFile",
+        dest="config_path",
+        type=str,
+        required=False,
+        help="Optional path to config.json",
+    )
+
+    argparser.add_argument(
+        "-eF",
+        "--evaluationFile",
+        dest="evaluation_path",
+        type=str,
+        required=False,
+        help="Optional path to evaluation.json",
+    )
+
+    argparser.add_argument(
         "-a",
         "--autoAlign",
         required=False,
