@@ -1,5 +1,5 @@
 ## Observation
-The OMR layout is slightly different on colored thick papers vs on xeroxed thin papers. The shift becomes noticible in case of OMR with large number of questions.
+The OMR layout is slightly different on colored thick papers vs on xeroxed thin papers. The shift becomes noticeable in case of OMR with large number of questions.
 
 We overlapped a colored OMR sheet with a xerox copy of the same OMR sheet(both printed on A4 papers) and observed that there is a great amount of layout sheet as we reach the bottom of the OMR.
 
