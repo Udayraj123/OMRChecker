@@ -7,11 +7,11 @@
 
 """
 import os
+import shutil
 from csv import QUOTE_NONNUMERIC
 from pathlib import Path
 from time import time
 
-import cv2
 import pandas as pd
 from rich.table import Table
 
@@ -183,7 +183,6 @@ def process_dir(
             tuning_config,
             evaluation_config,
         )
-
 
 
 def show_template_layouts(omr_files, template, tuning_config, outputs_namespace):
@@ -386,8 +385,29 @@ def process_files(
 
 
 def check_and_move(error_code, file_path, filepath2):
-    # TODO: fix file movement into error/multimarked/invalid etc again
-    STATS.files_not_moved += 1
+    """Copy a source file (error/multi-marked) into its output directory.
+
+    The source file is copied rather than moved so that committed sample
+    inputs and repeatable test runs are not destroyed. On success the
+    source remains in place while a copy is created at the destination.
+    """
+    if not file_path.exists():
+        logger.warning(f"Source file '{file_path}' does not exist, cannot move it")
+        return False
+    if filepath2.exists():
+        logger.warning(
+            f"Destination file '{filepath2}' already exists, not overwriting"
+        )
+        return False
+    try:
+        shutil.copy2(file_path, filepath2)
+    except OSError as error:
+        logger.error(
+            f"Failed to copy file '{file_path}' to '{filepath2}' "
+            f"for error code '{error_code}': {error}"
+        )
+        return False
+    STATS.files_moved += 1
     return True
 
 
