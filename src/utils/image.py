@@ -213,9 +213,7 @@ class ImageUtils:
                     f"Processing PDF '{file_path.name}' "
                     f"(pdf_dpi={pdf_params.pdf_dpi}, pdf_page={pdf_params.pdf_page})"
                 )
-                user_pages = ImageUtils._resolve_pages(
-                    pdf_params.pdf_page, doc_len
-                )
+                user_pages = ImageUtils._resolve_pages(pdf_params.pdf_page, doc_len)
                 # Convert 1-based user pages to 0-based fitz indices,
                 # filter out-of-range pages with warning.
                 pages = []

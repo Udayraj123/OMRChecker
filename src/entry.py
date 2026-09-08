@@ -11,7 +11,6 @@ from csv import QUOTE_NONNUMERIC
 from pathlib import Path
 from time import time
 
-import cv2
 import pandas as pd
 from rich.table import Table
 
@@ -185,7 +184,6 @@ def process_dir(
         )
 
 
-
 def show_template_layouts(omr_files, template, tuning_config, outputs_namespace):
     for file_path in omr_files:
         images = ImageUtils.load_omr_image(file_path, tuning_config)
@@ -217,7 +215,11 @@ def show_template_layouts(omr_files, template, tuning_config, outputs_namespace)
                 in_omr, template, shifted=False, border=2
             )
             InteractionUtils.show(
-                f"Template Layout: {img_name}", template_layout, 1, 1, config=tuning_config
+                f"Template Layout: {img_name}",
+                template_layout,
+                1,
+                1,
+                config=tuning_config,
             )
 
 
@@ -240,16 +242,12 @@ def _process_single_image(
 
     template.image_instance_ops.append_save_img(1, in_omr)
 
-    in_omr = template.image_instance_ops.apply_preprocessors(
-        img_name, in_omr, template
-    )
+    in_omr = template.image_instance_ops.apply_preprocessors(img_name, in_omr, template)
 
     if in_omr is None:
         # Error OMR case
         new_file_path = outputs_namespace.paths.errors_dir.joinpath(img_name)
-        outputs_namespace.OUTPUT_SET.append(
-            [img_name] + outputs_namespace.empty_resp
-        )
+        outputs_namespace.OUTPUT_SET.append([img_name] + outputs_namespace.empty_resp)
         if check_and_move(ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path):
             err_line = [
                 img_name,
@@ -282,10 +280,7 @@ def _process_single_image(
     # concatenate roll nos, set unmarked responses, etc
     omr_response = get_concatenated_response(response_dict, template)
 
-    if (
-        evaluation_config is None
-        or not evaluation_config.get_should_explain_scoring()
-    ):
+    if evaluation_config is None or not evaluation_config.get_should_explain_scoring():
         logger.info(f"Read Response: \n{omr_response}")
 
     score = 0

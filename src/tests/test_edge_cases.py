@@ -1,23 +1,21 @@
 import os
 from pathlib import Path
+from time import localtime, strftime
 
 import pandas as pd
+from freezegun import freeze_time
 
 from src.tests.test_samples.sample2.boilerplate import (
     CONFIG_BOILERPLATE,
     TEMPLATE_BOILERPLATE,
 )
 from src.tests.utils import (
+    FROZEN_TIMESTAMP,
     generate_write_jsons_and_run,
     remove_file,
     run_entry_point,
     setup_mocker_patches,
 )
-
-from time import strftime, localtime
-
-from freezegun import freeze_time
-from src.tests.utils import FROZEN_TIMESTAMP
 
 with freeze_time(FROZEN_TIMESTAMP):
     TIME_NOW_HRS = strftime("%I%p", localtime())
