@@ -19,6 +19,15 @@ def setup_mocker_patches(mocker):
     mock_wait_key = mocker.patch("cv2.waitKey")
     mock_wait_key.return_value = ord("q")
 
+    mock_named_window = mocker.patch("cv2.namedWindow")
+    mock_named_window.return_value = None
+
+    mock_move_window = mocker.patch("cv2.moveWindow")
+    mock_move_window.return_value = None
+
+    mock_get_window_property = mocker.patch("cv2.getWindowProperty")
+    mock_get_window_property.return_value = 1
+
 
 def run_entry_point(input_path, output_dir):
     args = {

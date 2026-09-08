@@ -137,6 +137,23 @@
     ''',
   })
 # ---
+# name: test_run_community_celin_mampilly
+  dict({
+    'MobileCamera\\Manual\\ErrorFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
+  
+    ''',
+    'MobileCamera\\Manual\\MultiMarkedFiles.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
+  
+    ''',
+    'MobileCamera\\Results\\Results_05AM.csv': '''
+      "file_id","input_path","output_path","score","q1","q2","q3","q4","q5","q6","q7","q8","q9","q10","q11","q12","q13","q14","q15","q16","q17","q18","q19","q20"
+      "sheet1.jpg","samples\community\celin-mampilly\MobileCamera\sheet1.jpg","outputs\community\celin-mampilly\MobileCamera\CheckedOMRs\sheet1.jpg","0","B","","","","","","","","","","","","","","","","","","","D"
+  
+    ''',
+  })
+# ---
 # name: test_run_community_ibrahimkilic
   dict({
     'Manual/ErrorFiles.csv': '''

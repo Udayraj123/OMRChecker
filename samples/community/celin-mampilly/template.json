@@ -1,0 +1,39 @@
+{
+  "pageDimensions": [
+    1011,
+    502
+  ],
+  "bubbleDimensions": [
+    16,
+    16
+  ],
+  "fieldBlocks": {
+    "MCQ_Block_Q1": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q1..10"
+      ],
+      "direction": "vertical",
+      "bubblesGap": 20,
+      "labelsGap": 78,
+      "origin": [
+        50,
+        126
+      ]
+    },
+    "MCQ_Block_Q11": {
+      "fieldType": "QTYPE_MCQ4",
+      "fieldLabels": [
+        "q11..20"
+      ],
+      "direction": "vertical",
+      "bubblesGap": 20,
+      "labelsGap": 78,
+      "origin": [
+        50,
+        247
+      ]
+    }
+  },
+  "preProcessors": []
+}

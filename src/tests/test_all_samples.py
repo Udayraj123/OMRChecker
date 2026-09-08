@@ -110,3 +110,6 @@ def test_run_community_UmarFarootAPS(mocker, snapshot):
 def test_run_community_UPSC_mock(mocker, snapshot):
     sample_outputs = run_sample(mocker, "community/UPSC-mock")
     assert snapshot == sample_outputs
+def test_run_community_celin_mampilly(mocker, snapshot):
+    sample_outputs = run_sample(mocker, "community/celin-mampilly")
+    assert snapshot == sample_outputs
