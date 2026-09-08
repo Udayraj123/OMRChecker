@@ -1,11 +1,20 @@
 {
-  "pageDimensions": [500, 700],
-  "bubbleDimensions": [10, 10],
+  "pageDimensions": [
+    500,
+    700
+  ],
+  "bubbleDimensions": [
+    10,
+    10
+  ],
   "customLabels": {},
   "fieldBlocks": {
     "MCQBlock1": {
       "fieldType": "QTYPE_MCQ5",
-      "origin": [342, 196],
+      "origin": [
+        342,
+        196
+      ],
       "fieldLabels": [
         "Overall, how friendly were the hotel staff members?",
         "Overall, how polite were the hotel staff members?",
@@ -33,7 +42,10 @@
     {
       "name": "CropPage",
       "options": {
-        "morphKernel": [10, 10]
+        "morphKernel": [
+          10,
+          10
+        ]
       }
     }
   ]

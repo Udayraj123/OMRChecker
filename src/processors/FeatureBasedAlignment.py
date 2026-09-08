@@ -5,13 +5,13 @@ Credits: https://www.learnopencv.com/image-alignment-feature-based-using-opencv-
 import cv2
 import numpy as np
 
+from src.constants.image_processing import (
+    DEFAULT_GOOD_MATCH_PERCENT,
+    DEFAULT_MAX_FEATURES,
+)
 from src.processors.interfaces.ImagePreprocessor import ImagePreprocessor
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils
-from src.constants.image_processing import (
-    DEFAULT_MAX_FEATURES,
-    DEFAULT_GOOD_MATCH_PERCENT
-)
 
 
 class FeatureBasedAlignment(ImagePreprocessor):
@@ -30,7 +30,9 @@ class FeatureBasedAlignment(ImagePreprocessor):
         )
         # get options with defaults
         self.max_features = int(options.get("maxFeatures", DEFAULT_MAX_FEATURES))
-        self.good_match_percent = options.get("goodMatchPercent", DEFAULT_GOOD_MATCH_PERCENT)
+        self.good_match_percent = options.get(
+            "goodMatchPercent", DEFAULT_GOOD_MATCH_PERCENT
+        )
         self.transform_2_d = options.get("2d", False)
         # Extract keypoints and description of source image
         self.orb = cv2.ORB_create(self.max_features)

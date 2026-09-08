@@ -541,6 +541,8 @@ def evaluate_concatenated_response(
         current_score += delta
 
     evaluation_config.conditionally_print_explanation()
-    evaluation_config.conditionally_save_explanation_csv(file_path, evaluation_output_dir)
+    evaluation_config.conditionally_save_explanation_csv(
+        file_path, evaluation_output_dir
+    )
 
     return current_score
