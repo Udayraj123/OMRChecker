@@ -1,7 +1,12 @@
 TEMPLATE_BOILERPLATE = {
     "pageDimensions": [300, 400],
     "bubbleDimensions": [25, 25],
-    "preProcessors": [{"name": "CropPage", "options": {"morphKernel": [10, 10]}}],
+    "preProcessors": [
+        {
+            "name": "CropPage",
+            "options": {"morphKernel": [10, 10], "shouldFailIfPageNotFound": False},
+        }
+    ],
     "fieldBlocks": {
         "MCQ_Block_1": {
             "fieldType": "QTYPE_MCQ5",
