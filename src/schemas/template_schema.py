@@ -70,6 +70,7 @@ TEMPLATE_SCHEMA = {
                     "name": {
                         "type": "string",
                         "enum": [
+                            "CropOnLMarkers",
                             "CropOnMarkers",
                             "CropPage",
                             "FeatureBasedAlignment",
