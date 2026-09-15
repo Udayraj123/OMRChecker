@@ -70,6 +70,7 @@ TEMPLATE_SCHEMA = {
                     "name": {
                         "type": "string",
                         "enum": [
+                            "CropOnLMarkers",
                             "CropOnMarkers",
                             "CropPage",
                             "FeatureBasedAlignment",
@@ -81,6 +82,25 @@ TEMPLATE_SCHEMA = {
                 },
                 "required": ["name", "options"],
                 "allOf": [
+                    {
+                        "if": {"properties": {"name": {"const": "CropOnLMarkers"}}},
+                        "then": {
+                            "properties": {
+                                "options": {
+                                    "type": "object",
+                                    "additionalProperties": False,
+                                    "properties": {
+                                        "morphKernel": two_positive_integers,
+                                        "minAreaRatio": {"type": "number"},
+                                        "maxAreaRatio": {"type": "number"},
+                                        "minMarkers": {"type": "integer"},
+                                        "anchorRatio": {"type": "number"},
+                                        "minPageRatio": {"type": "number"},
+                                    },
+                                }
+                            }
+                        },
+                    },
                     {
                         "if": {"properties": {"name": {"const": "CropOnMarkers"}}},
                         "then": {
