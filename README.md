@@ -261,6 +261,28 @@ Low Quality Dataset(For CV Based methods)) (1.5 GB)
 Standard Quality Dataset(For ML Based methods) (3 GB)
 High Quality Dataset(For custom processing) (6 GB)
 -->
+## Utility Scripts
+
+Bulk pre-processing scripts for optimising inputs before running OMRChecker (see [#213](https://github.com/Udayraj123/OMRChecker/issues/213)).
+
+### Bulk section blur
+
+Blur rectangular regions (e.g. student names, signatures) across a folder of images, useful for anonymising sheets before sharing or archiving.
+
+python scripts/bulk_operations/blur_sections.py --path <folder> --box x,y,w,h [--box x,y,w,h ...] [--strength N] [--output-dir <folder>] [--inplace] [--recursive] [--dry-run]
+
+
+- `--path`: folder of input images (default: `inputs`)
+- `--box`: region to blur as `x,y,w,h` in pixels, relative to each image's top-left corner. Repeatable for multiple regions.
+- `--strength`: Gaussian blur kernel size (default: `21`, higher = blurrier)
+- `--output-dir`: where blurred copies are written (default: `<path>/blurred`)
+- `--inplace`: overwrite originals directly instead of writing to a separate folder. Tracks already-processed files in a local `.blur_manifest.json`, so rerunning the script won't blur an already-blurred file again.
+- `--recursive`: also process images in subfolders
+- `--dry-run`: preview what would happen without writing any files
+
+Example:
+
+python scripts/bulk_operations/blur_sections.py --path inputs/AdrianSamples --box 50,20,200,60 --box 50,100,200,40 --recursive
 
 ## FAQ
 
