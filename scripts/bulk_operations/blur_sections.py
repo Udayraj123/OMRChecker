@@ -27,9 +27,13 @@ USAGE:
 Boxes are given as "x,y,w,h" in pixels, relative to each image's own top-left
 corner. Coordinates are clamped to image bounds rather than erroring, since a
 single bad box shouldn't crash a bulk run over many images.
+
+EXIT CODE: non-zero if any file failed to process (unreadable, write failure,
+output collision, etc.) so this is safe to use in automation/CI.
 """
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -69,17 +73,12 @@ def log_summary(processed: int, success: int, skipped: int, errors: int) -> None
 
 
 # ==============================================================================
-# Box parsing
+# Box / strength parsing and validation
 # ==============================================================================
 
 
 def parse_box(box_str: str) -> Tuple[int, int, int, int]:
-    """Parse a "x,y,w,h" string into a tuple of ints.
-
-    Raises:
-        ValueError: if the string isn't exactly 4 comma-separated integers,
-            or if width/height are not positive.
-    """
+    """Parse a "x,y,w,h" string into a tuple of ints."""
     parts = box_str.split(",")
     if len(parts) != 4:
         raise ValueError(
@@ -98,13 +97,22 @@ def parse_box(box_str: str) -> Tuple[int, int, int, int]:
     return x, y, w, h
 
 
+def validate_strength(strength: int) -> None:
+    """Reject non-positive blur strength.
+
+    A strength <= 0 collapses to a 1-pixel (or invalid) blur kernel, which
+    leaves the region visually unchanged while still being logged/counted
+    as successfully blurred -- silently defeating the whole point of the
+    tool. Fail loudly instead.
+    """
+    if strength <= 0:
+        raise ValueError(f"--strength must be a positive integer, got {strength}")
+
+
 def clamp_box_to_image(
     box: Tuple[int, int, int, int], img_width: int, img_height: int
 ) -> Optional[Tuple[int, int, int, int]]:
-    """Clamp a box to fit within the image bounds.
-
-    Returns None if the box falls entirely outside the image (nothing to blur).
-    """
+    """Clamp a box to fit within the image bounds. Returns None if entirely outside."""
     x, y, w, h = box
 
     if x >= img_width or y >= img_height:
@@ -124,29 +132,50 @@ def clamp_box_to_image(
 # ==============================================================================
 
 
+def compute_config_hash(boxes: List[Tuple[int, int, int, int]], strength: int) -> str:
+    """Hash the blur parameters, so a manifest entry only counts as 'done'
+    for the exact region(s)/strength that were actually applied. Reruns with
+    a new/changed region are reprocessed instead of silently skipped.
+    """
+    payload = json.dumps({"boxes": sorted(boxes), "strength": strength}, sort_keys=True)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def load_manifest(manifest_path: Path) -> Dict[str, dict]:
-    """Load the processed-files manifest, or return empty dict if absent/corrupt."""
+    """Load the processed-files manifest.
+
+    Raises on a corrupt/unreadable manifest rather than silently treating it
+    as empty -- an empty-on-failure fallback would cause --inplace to
+    re-blur every already-completed file, stacking blur on blur.
+    """
     if not manifest_path.exists():
         return {}
     try:
         with open(manifest_path, "r", encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, OSError) as e:
-        log_status(
-            "ERROR",
-            f"Manifest at {manifest_path} unreadable ({type(e).__name__}), "
-            f"treating as empty",
-        )
-        return {}
+        raise RuntimeError(
+            f"Manifest at {manifest_path} is corrupt or unreadable "
+            f"({type(e).__name__}: {e}). Refusing to run in --inplace mode, "
+            f"since that could re-blur already-completed files. Fix or "
+            f"remove the manifest and retry."
+        ) from e
 
 
 def save_manifest(manifest_path: Path, manifest: Dict[str, dict]) -> None:
-    """Persist the processed-files manifest to disk."""
+    """Persist the processed-files manifest to disk.
+
+    Raises on write failure instead of swallowing it -- a manifest that
+    silently fails to save would let --inplace runs continue untracked,
+    causing later reruns to re-blur files whose "done" status was lost.
+    """
     try:
         with open(manifest_path, "w", encoding="utf-8") as f:
             json.dump(manifest, f, indent=2, sort_keys=True)
     except OSError as e:
-        log_status("ERROR", f"Could not write manifest: {type(e).__name__}: {e}")
+        raise RuntimeError(
+            f"Could not write manifest at {manifest_path}: {type(e).__name__}: {e}"
+        ) from e
 
 
 # ==============================================================================
@@ -154,24 +183,13 @@ def save_manifest(manifest_path: Path, manifest: Dict[str, dict]) -> None:
 # ==============================================================================
 
 
-def blur_region(
-    image, box: Tuple[int, int, int, int], strength: int
-):
-    """Apply a Gaussian blur to a rectangular region of an image (in place).
+def blur_region(image, box: Tuple[int, int, int, int], strength: int):
+    """Apply a Gaussian blur to a rectangular region of an image (in place)."""
+    if strength <= 0:
+        raise ValueError(f"Blur strength must be positive, got {strength}")
 
-    Args:
-        image: OpenCV image (numpy array), modified in place.
-        box: (x, y, w, h) region to blur, already clamped to image bounds.
-        strength: Blur kernel size (odd, positive). Higher = blurrier.
-
-    Returns:
-        The same image object, for chaining.
-    """
     x, y, w, h = box
-
-    # Kernel size must be odd and >= 1 for GaussianBlur.
     k = strength if strength % 2 == 1 else strength + 1
-    k = max(k, 1)
 
     region = image[y : y + h, x : x + w]
     if region.size == 0:
@@ -182,14 +200,47 @@ def blur_region(
     return image
 
 
-def find_image_files(directory: Path, recursive: bool) -> List[Path]:
-    """Find all supported image files under directory."""
+def find_image_files(
+    directory: Path, recursive: bool, output_dir: Optional[Path] = None
+) -> List[Path]:
+    """Find all supported image files under directory.
+
+    - Excludes anything inside output_dir, so a recursive rerun doesn't
+      rediscover previously-generated output and try to reprocess it.
+    - Resolves symlinks and skips any file whose real target falls outside
+      `directory`, so --inplace can't be tricked into overwriting a file
+      elsewhere on disk via a symlink planted in the input tree.
+    """
     pattern = "**/*" if recursive else "*"
-    return sorted(
-        p
-        for p in directory.glob(pattern)
-        if p.is_file() and p.suffix.lower() in SUPPORTED_EXTENSIONS
-    )
+    directory_resolved = directory.resolve()
+    output_dir_resolved = output_dir.resolve() if output_dir else None
+
+    files = []
+    for p in sorted(directory.glob(pattern)):
+        if not p.is_file() or p.suffix.lower() not in SUPPORTED_EXTENSIONS:
+            continue
+
+        if output_dir_resolved is not None:
+            try:
+                p.resolve().relative_to(output_dir_resolved)
+                continue  # lives inside the output dir -- skip it
+            except ValueError:
+                pass  # not inside output_dir, keep going
+
+        resolved = p.resolve()
+        try:
+            resolved.relative_to(directory_resolved)
+        except ValueError:
+            log_status(
+                "SKIP",
+                f"{p.name}: symlink target resolves outside the scanned "
+                f"directory, refusing to touch it",
+            )
+            continue
+
+        files.append(p)
+
+    return files
 
 
 def blur_files(
@@ -200,12 +251,14 @@ def blur_files(
     recursive: bool,
     dry_run: bool,
     inplace: bool,
-) -> None:
+) -> Tuple[int, int, int, int]:
     """Blur the given regions across all images in directory.
 
     In --inplace mode, originals are overwritten and a manifest file tracks
-    which files were already processed, so reruns skip them instead of
-    blurring an already-blurred file a second time.
+    which files (and with which exact parameters) were already processed,
+    so reruns skip only genuinely-completed work.
+
+    Returns (processed, success, skipped, errors).
     """
     log_section("Bulk Blur Operation")
     print(f"Path: {directory}")
@@ -218,14 +271,16 @@ def blur_files(
     if dry_run:
         print("Mode: DRY-RUN (preview only, no changes made)")
 
-    image_files = find_image_files(directory, recursive)
+    scan_output_dir = None if inplace else output_dir
+    image_files = find_image_files(directory, recursive, output_dir=scan_output_dir)
 
     if not image_files:
         log_status("INFO", "No image files found in specified directory")
-        return
+        return 0, 0, 0, 0
 
     manifest_path = directory / MANIFEST_FILENAME
     manifest = load_manifest(manifest_path) if inplace else {}
+    current_hash = compute_config_hash(boxes, strength)
 
     if not dry_run and not inplace:
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -237,17 +292,19 @@ def blur_files(
 
     for file_path in image_files:
         processed += 1
-        relative_name = file_path.name
-        # Key manifest entries by path relative to the scanned directory, so
-        # it stays stable across --recursive subfolders.
-        manifest_key = str(file_path.relative_to(directory))
+        relative_path = file_path.relative_to(directory)
+        relative_name = str(relative_path)
+        manifest_key = relative_path.as_posix()
 
-        if inplace and manifest_key in manifest:
-            log_status(
-                "SKIP", f"{relative_name}: already processed (in manifest)"
-            )
-            skipped += 1
-            continue
+        if inplace:
+            existing_entry = manifest.get(manifest_key)
+            if existing_entry is not None and existing_entry.get("hash") == current_hash:
+                log_status(
+                    "SKIP", f"{relative_name}: already processed with these exact "
+                    f"parameters (in manifest)"
+                )
+                skipped += 1
+                continue
 
         try:
             image = cv2.imread(str(file_path))
@@ -279,7 +336,9 @@ def blur_files(
             if inplace:
                 out_path = file_path
             else:
-                out_path = output_dir / relative_name
+                # Preserve subdirectory structure so same-named files in
+                # different subfolders don't collide on a single flat name.
+                out_path = output_dir / relative_path
                 if out_path.exists():
                     log_status(
                         "ERROR",
@@ -288,14 +347,34 @@ def blur_files(
                     )
                     errors += 1
                     continue
+                if not dry_run:
+                    out_path.parent.mkdir(parents=True, exist_ok=True)
 
-            if not dry_run:
-                cv2.imwrite(str(out_path), image)
-                if inplace:
-                    manifest[manifest_key] = {
-                        "boxes": boxes,
-                        "strength": strength,
-                    }
+            if dry_run:
+                log_status("BLURRED", f"{relative_name} -> {out_path} (dry-run)")
+                success += 1
+                continue
+
+            write_ok = cv2.imwrite(str(out_path), image)
+            if not write_ok:
+                log_status(
+                    "ERROR",
+                    f"{relative_name}: cv2.imwrite failed, output not written "
+                    f"(original left untouched)",
+                )
+                errors += 1
+                continue
+
+            if inplace:
+                manifest[manifest_key] = {
+                    "boxes": boxes,
+                    "strength": strength,
+                    "hash": current_hash,
+                }
+                # Save after every successful write, not just once at the end,
+                # so an interrupted run doesn't lose track of files that were
+                # already (successfully) blurred.
+                save_manifest(manifest_path, manifest)
 
             log_status("BLURRED", f"{relative_name} -> {out_path}")
             success += 1
@@ -304,10 +383,8 @@ def blur_files(
             log_status("ERROR", f"{relative_name}: {type(e).__name__}: {e}")
             errors += 1
 
-    if inplace and not dry_run:
-        save_manifest(manifest_path, manifest)
-
     log_summary(processed, success, skipped, errors)
+    return processed, success, skipped, errors
 
 
 # ==============================================================================
@@ -339,8 +416,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--strength",
         type=int,
         default=DEFAULT_STRENGTH,
-        help=f"Gaussian blur kernel size (odd number, default: {DEFAULT_STRENGTH}). "
-        "Higher = blurrier/less reversible.",
+        help=f"Gaussian blur kernel size (odd number, must be positive; "
+        f"default: {DEFAULT_STRENGTH}). Higher = blurrier/less reversible.",
     )
     parser.add_argument(
         "--output-dir",
@@ -353,8 +430,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--inplace",
         action="store_true",
         help="Overwrite original files instead of writing to a separate folder. "
-        f"Tracks processed files in <path>/{MANIFEST_FILENAME} so reruns "
-        "don't blur an already-blurred file again.",
+        f"Tracks processed files (and the exact parameters used) in "
+        f"<path>/{MANIFEST_FILENAME} so reruns only skip genuinely-completed "
+        "work.",
     )
     parser.add_argument(
         "--recursive", action="store_true", help="Recurse into subdirectories"
@@ -380,15 +458,18 @@ def main() -> int:
         return 1
 
     try:
+        validate_strength(args.strength)
         boxes = [parse_box(b) for b in args.boxes]
     except ValueError as e:
         log_status("ERROR", str(e))
         return 1
 
-    output_dir = None if args.inplace else (args.output_dir or (args.path / DEFAULT_OUTPUT_SUBDIR))
+    output_dir = (
+        None if args.inplace else (args.output_dir or (args.path / DEFAULT_OUTPUT_SUBDIR))
+    )
 
     try:
-        blur_files(
+        _, _, _, errors = blur_files(
             directory=args.path,
             boxes=boxes,
             strength=args.strength,
@@ -401,7 +482,7 @@ def main() -> int:
         log_status("ERROR", f"Unexpected {type(e).__name__} during run: {e}")
         return 1
 
-    return 0
+    return 1 if errors > 0 else 0
 
 
 if __name__ == "__main__":
