@@ -35,7 +35,9 @@ output collision, etc.) so this is safe to use in automation/CI.
 import argparse
 import hashlib
 import json
+import os
 import sys
+import uuid
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -200,6 +202,45 @@ def blur_region(image, box: Tuple[int, int, int, int], strength: int):
     return image
 
 
+def write_image_atomic(out_path: Path, image) -> bool:
+    """Write `image` to `out_path` without ever leaving a partially-written
+    or corrupted file at that path.
+
+    Encodes to a temporary sibling file first, verifies the write actually
+    succeeded, and only then atomically replaces the destination. This
+    matters most for --inplace mode: writing straight over the original and
+    checking cv2.imwrite's result *after the fact* still risks leaving a
+    truncated/corrupt original if the write fails partway through (e.g.
+    disk full). Writing to a temp file means the original is only ever
+    touched by a single atomic os.replace(), which either fully succeeds or
+    leaves the original completely untouched.
+
+    Returns True on success. On any failure, the temp file is cleaned up
+    and the original destination (if it existed) is left untouched.
+    """
+    # Keep the real extension (.jpg/.png/etc.) so cv2.imwrite can infer the
+    # correct codec -- it dispatches purely off the filename suffix.
+    tmp_path = out_path.with_name(
+        f".{out_path.stem}.{uuid.uuid4().hex}{out_path.suffix}"
+    )
+    try:
+        write_ok = cv2.imwrite(str(tmp_path), image)
+        if not write_ok or not tmp_path.exists() or tmp_path.stat().st_size == 0:
+            return False
+        os.replace(str(tmp_path), str(out_path))  # atomic on same filesystem
+        return True
+    except (OSError, cv2.error):
+        return False
+    finally:
+        # If anything above failed before the replace, remove the leftover
+        # temp file so it doesn't linger in the output directory.
+        if tmp_path.exists():
+            try:
+                tmp_path.unlink()
+            except OSError:
+                pass
+
+
 def find_image_files(
     directory: Path, recursive: bool, output_dir: Optional[Path] = None
 ) -> List[Path]:
@@ -355,12 +396,14 @@ def blur_files(
                 success += 1
                 continue
 
-            write_ok = cv2.imwrite(str(out_path), image)
+            write_ok = write_image_atomic(out_path, image)
             if not write_ok:
                 log_status(
                     "ERROR",
-                    f"{relative_name}: cv2.imwrite failed, output not written "
-                    f"(original left untouched)",
+                    f"{relative_name}: write failed, output not written "
+                    f"(original left untouched -- write went to a temp file "
+                    f"first, so nothing was overwritten before verifying "
+                    f"success)",
                 )
                 errors += 1
                 continue
