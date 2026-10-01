@@ -406,6 +406,11 @@ def print_stats(start_time, files_counter, tuning_config):
         log(
             f"\nFinished Checking {files_counter} file(s) in {round(time_checking, 1)} seconds i.e. ~{round(time_checking / 60, 1)} minute(s)."
         )
+        if files_counter == 0:
+            log(
+                "No image could be loaded, so there is no processing rate to report. Check that the files in this directory are readable images or PDFs."
+            )
+            return
         log(
             f"{'OMR Processing Rate': <27}: \t ~ {round(time_checking / files_counter, 2)} seconds/OMR"
         )
