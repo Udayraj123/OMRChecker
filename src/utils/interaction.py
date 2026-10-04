@@ -88,6 +88,7 @@ class InteractionUtils:
         The image is displayed at its original resolution. If it is
         larger than the available screen area, horizontal and vertical
         scrollbars allow the complete image to be inspected.
+
         Zooming only changes the visualization but not the coordinates.
         """
 
@@ -98,24 +99,126 @@ class InteractionUtils:
             raise RuntimeError(
                 "The scrollable layout viewer requires Tkinter. "
                 "Please install the Tk package for your Python installation. "
-        ) from exc            
+            ) from exc
 
         if origin is None:
             logger.info(f"'{name}' - NoneType image to show!")
             return
 
+        original_image = InteractionUtils._prepare_scrollable_image(
+            origin, Image
+        )
+
+        root = tk.Tk()
+        root.title(name)
+
+        canvas, zoom = InteractionUtils._create_scrollable_canvas(
+            root, original_image, tk
+        )
+
+        image_reference = {
+            "photo": None,
+            "item": None,
+        }
+
+        def update_image():
+            """Resize and redraw the image according to the zoom value."""
+            scale = zoom.get() / 100.0
+
+            new_width = max(1, int(original_image.width * scale))
+            new_height = max(1, int(original_image.height * scale))
+
+            resized = original_image.resize(
+                (new_width, new_height),
+                Image.Resampling.LANCZOS,
+            )
+
+            photo = ImageTk.PhotoImage(resized)
+            image_reference["photo"] = photo
+
+            if image_reference["item"] is None:
+                image_reference["item"] = canvas.create_image(
+                    0,
+                    0,
+                    image=photo,
+                    anchor=tk.NW,
+                )
+            else:
+                canvas.itemconfigure(
+                    image_reference["item"],
+                    image=photo,
+                )
+
+            canvas.configure(
+                scrollregion=(0, 0, new_width, new_height)
+            )
+
+            zoom_label.config(text=f"{int(zoom.get())}%")
+
+
+        def set_zoom(value):
+            value = max(25, min(200, value))
+            zoom.set(value)
+            update_image()
+
+        def change_zoom(delta):
+            set_zoom(zoom.get() + delta)
+
+        zoom_label, coordinate_label = (
+            InteractionUtils._create_scrollable_controls(
+                root,
+                zoom,
+                update_image,
+                set_zoom,
+                change_zoom,
+                tk,
+            )
+        )        
+
+        InteractionUtils._setup_scrollable_mouse_controls(
+            canvas,
+            zoom,
+            original_image,
+            coordinate_label,
+            set_zoom,
+            change_zoom,
+            tk,
+        )
+
+        InteractionUtils._setup_scrollable_keyboard_controls(
+            root,
+            set_zoom,
+            change_zoom,
+        )
+
+        update_image()
+
+        logger.info(
+            f"Showing '{name}' at original resolution "
+            f"{original_image.width}x{original_image.height}"
+        )
+
+        logger.info(
+            "Zoom: +/- or slider, 0 = 100%, "
+            "mouse wheel = scroll, Q/ESC = close"
+        )
+
+        root.mainloop()
+
+    @staticmethod
+    def _prepare_scrollable_image(origin, Image):
+        """Convert an OpenCV image to a Pillow image."""
         # OpenCV uses BGR, Pillow expects RGB.
         if len(origin.shape) == 2:
             image_rgb = cv2.cvtColor(origin, cv2.COLOR_GRAY2RGB)
         else:
             image_rgb = cv2.cvtColor(origin, cv2.COLOR_BGR2RGB)
 
-        original_image = Image.fromarray(image_rgb)
+        return Image.fromarray(image_rgb)
 
-        root = tk.Tk()
-        root.title(name)
-
-        # Window size
+    @staticmethod
+    def _create_scrollable_canvas(root, original_image, tk):
+        """Create the canvas, scrollbars and zoom variable."""
         screen_width = root.winfo_screenwidth()
         screen_height = root.winfo_screenheight()
 
@@ -128,10 +231,8 @@ class InteractionUtils:
 
         root.geometry(f"{window_width}x{window_height}")
 
-        # Zoom
         zoom = tk.DoubleVar(value=100)
 
-        # Main fram and canvas
         frame = tk.Frame(root)
         frame.pack(fill=tk.BOTH, expand=True)
 
@@ -170,51 +271,20 @@ class InteractionUtils:
             expand=True,
         )
 
-        # Image handling
-        image_reference = {
-            "photo": None,
-            "item": None,
-        }
+        return canvas, zoom
 
-        def update_image():
-            """Resize and redraw the image according to the zoom value."""
-
-            scale = zoom.get() / 100.0
-
-            new_width = max(1, int(original_image.width * scale))
-            new_height = max(1, int(original_image.height * scale))
-
-            resized = original_image.resize(
-                (new_width, new_height),
-                Image.Resampling.LANCZOS,
-            )
-
-            photo = ImageTk.PhotoImage(resized)
-
-            image_reference["photo"] = photo
-
-            if image_reference["item"] is None:
-                image_reference["item"] = canvas.create_image(
-                    0,
-                    0,
-                    image=photo,
-                    anchor=tk.NW,
-                )
-            else:
-                canvas.itemconfigure(
-                    image_reference["item"],
-                    image=photo,
-                )
-
-            canvas.configure(scrollregion=(0, 0, new_width, new_height))
-
-            zoom_label.config(text=f"{int(zoom.get())}%")
-
-        # ------------------------------------------------------------
-        # Zoom controls
-        # ------------------------------------------------------------
-
+    @staticmethod
+    def _create_scrollable_controls(
+        root,
+        zoom,
+        update_image,
+        set_zoom,
+        change_zoom,
+        tk,
+    ):
+        """Create zoom controls and the mouse-coordinate display."""
         controls = tk.Frame(root)
+
         controls.pack(
             side=tk.BOTTOM,
             fill=tk.X,
@@ -271,33 +341,39 @@ class InteractionUtils:
         ).pack(side=tk.LEFT)
 
         coordinate_label = tk.Label(
-            controls, text="X: ---    Y: ---", width=20, anchor=tk.W
+            controls,
+            text="X: --- Y: ---",
+            width=20,
+            anchor=tk.W,
         )
-        coordinate_label.pack(side=tk.LEFT, padx=15)
 
-        # ------------------------------------------------------------
-        # Zoom functions
-        # ------------------------------------------------------------
+        coordinate_label.pack(
+            side=tk.LEFT,
+            padx=15,
+        )
 
-        def set_zoom(value):
-            value = max(25, min(200, value))
-            zoom.set(value)
-            update_image()
+        return zoom_label, coordinate_label
 
-        def change_zoom(delta):
-            set_zoom(zoom.get() + delta)
+    @staticmethod
+    def _setup_scrollable_mouse_controls(
+        canvas,
+        zoom,
+        original_image,
+        coordinate_label,
+        set_zoom,
+        change_zoom,
+        tk,
+    ):
+        """Configure mouse movement and cross-platform mouse-wheel controls."""
 
-        # ------------------------------------------------------------
-        # Mouse movement to coordinates
-        # ------------------------------------------------------------
         def on_mouse_move(event):
             scale = zoom.get() / 100.0
 
-            # Position within whole Canvas, also when scrolling
+            # Position within whole Canvas, also when scrolling.
             canvas_x = canvas.canvasx(event.x)
             canvas_y = canvas.canvasy(event.y)
 
-            # Calculate original coordinates
+            # Calculate original coordinates.
             image_x = int(canvas_x / scale)
             image_y = int(canvas_y / scale)
 
@@ -305,39 +381,29 @@ class InteractionUtils:
                 0 <= image_x < original_image.width
                 and 0 <= image_y < original_image.height
             ):
-                coordinate_label.config(text=f"X: {image_x:4d}    Y: {image_y:4d}")
+                coordinate_label.config(
+                    text=f"X: {image_x:4d} Y: {image_y:4d}"
+                )
             else:
-                coordinate_label.config(text="X: ---    Y: ---")
+                coordinate_label.config(
+                    text="X: --- Y: ---"
+                )
 
         canvas.bind("<Motion>", on_mouse_move)
 
-        # ------------------------------------------------------------
-        # Mouse wheel
-        # ------------------------------------------------------------
-
         def scroll_vertical(direction):
-            canvas.yview_scroll(
-                direction,
-                "units",
-            )
+            canvas.yview_scroll(direction, "units")
 
         def scroll_horizontal(direction):
-            canvas.xview_scroll(
-                direction,
-                "units",
-            )
-
-        # ------------------------------------------------------------
-        # Windows / macOS
-        # ------------------------------------------------------------
+            canvas.xview_scroll(direction, "units")
 
         def on_mousewheel(event):
             """
             Windows / macOS:
-                Wheel       -> vertical scrolling
-                Shift+Wheel -> horizontal scrolling
-            """
 
+            Wheel -> vertical scrolling
+            Shift+Wheel -> horizontal scrolling
+            """
             direction = -1 if event.delta > 0 else 1
 
             if event.state & 0x0001:
@@ -350,16 +416,12 @@ class InteractionUtils:
             on_mousewheel,
         )
 
-        # ------------------------------------------------------------
-        # Linux / X11
-        # ------------------------------------------------------------
-
         def on_linux_scroll_up(event):
             """
             Linux/X11:
-                Button 4 = mouse wheel up
-            """
 
+            Button 4 = mouse wheel up
+            """
             if event.state & 0x0001:
                 scroll_horizontal(-1)
             else:
@@ -368,9 +430,9 @@ class InteractionUtils:
         def on_linux_scroll_down(event):
             """
             Linux/X11:
-                Button 5 = mouse wheel down
-            """
 
+            Button 5 = mouse wheel down
+            """
             if event.state & 0x0001:
                 scroll_horizontal(1)
             else:
@@ -386,10 +448,13 @@ class InteractionUtils:
             on_linux_scroll_down,
         )
 
-        # ------------------------------------------------------------
-        # Keyboard shortcuts
-        # ------------------------------------------------------------
-
+    @staticmethod
+    def _setup_scrollable_keyboard_controls(
+        root,
+        set_zoom,
+        change_zoom,
+    ):
+        """Configure keyboard shortcuts for zooming and closing the window."""
         root.bind(
             "<plus>",
             lambda event: change_zoom(10),
@@ -423,26 +488,7 @@ class InteractionUtils:
         root.bind(
             "<Key-Q>",
             lambda event: root.destroy(),
-        )
-
-        # ------------------------------------------------------------
-        # Initial display
-        # ------------------------------------------------------------
-
-        update_image()
-
-        logger.info(
-            f"Showing '{name}' at original resolution "
-            f"{original_image.width}x{original_image.height}"
-        )
-
-        logger.info(
-            "Zoom: +/- or slider, 0 = 100%, " "mouse wheel = scroll, Q/ESC = close"
-        )
-
-        root.mainloop()
-
-
+        ) 
 
 @dataclass
 class Stats:
