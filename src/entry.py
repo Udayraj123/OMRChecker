@@ -216,8 +216,8 @@ def show_template_layouts(omr_files, template, tuning_config, outputs_namespace)
             template_layout = template.image_instance_ops.draw_template_layout(
                 in_omr, template, shifted=False, border=2
             )
-            InteractionUtils.show(
-                f"Template Layout: {img_name}", template_layout, 1, 1, config=tuning_config
+            InteractionUtils.show_scrollable(
+                f"Template Layout: {img_name}", template_layout
             )
 
 
