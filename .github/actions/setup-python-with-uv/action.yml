@@ -1,0 +1,27 @@
+name: Setup Python with uv
+description: Set up a Python interpreter and the uv package manager, then install all dependencies into the project's .venv.
+
+inputs:
+  python-version:
+    description: Python version to set up.
+    required: false
+    default: "3.11"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v10.2.0
+
+    - name: Create virtual environment
+      run: uv venv .venv
+      shell: bash
+
+    - name: Install dependencies
+      run: uv pip install --python .venv -r requirements.dev.txt opencv-python-headless
+      shell: bash
