@@ -15,10 +15,18 @@ on:
 jobs:
   test-and-coverage:
     name: "Test and Coverage"
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+
+    defaults:
+      run:
+        shell: bash
 
     strategy:
+      # Report both legs even when one fails - a red ubuntu must not cancel
+      # the windows run (and vice versa).
+      fail-fast: false
       matrix:
+        os: [ubuntu-latest, windows-latest]
         python-version: ["3.11"]
 
     steps:
@@ -39,21 +47,25 @@ jobs:
           uv run pytest --cov-fail-under=70 --junitxml=./.github-pytest/pytest-output.xml | tee .github-pytest/pytest-coverage.txt
         env:
           OMR_CHECKER_CONTAINER: true
-          # Note: TZ override no longer needed as we're now setting it during test execution itself.
-          # TZ: Asia/Kolkata
+          # Snapshot outputs embed the hour from localtime(); the committed
+          # snapshots (e.g. Results_05AM.csv) were generated in Asia/Kolkata.
+          TZ: Asia/Kolkata
 
       - name: Pytest coverage comment
+        if: matrix.os == 'ubuntu-latest'
         uses: MishaKav/pytest-coverage-comment@v1
         with:
           pytest-coverage-path: ./.github-pytest/pytest-coverage.txt
           junitxml-path: ./.github-pytest/pytest-output.xml
 
       - name: Coverage Badge
+        if: matrix.os == 'ubuntu-latest'
         uses: tj-actions/coverage-badge-py@v2
         with:
           output: .github-pytest/coverage/coverage.svg
 
       - name: Publish coverage report to coverage-badge branch
+        if: matrix.os == 'ubuntu-latest'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: coverage-badge
