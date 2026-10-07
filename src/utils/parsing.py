@@ -106,7 +106,7 @@ def custom_sort_output_columns(field_label):
 
 
 def parse_float_or_fraction(result):
-    if type(result) == str and "/" in result:
+    if type(result) is str and "/" in result:
         result = float(Fraction(result))
     else:
         result = float(result)

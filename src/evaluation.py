@@ -33,16 +33,16 @@ class AnswerMatcher:
     def is_a_marking_score(answer_element):
         # Note: strict type checking is already done at schema validation level,
         # Here we focus on overall struct type
-        return type(answer_element) == str or type(answer_element) == int
+        return type(answer_element) is str or type(answer_element) is int
 
     @staticmethod
     def is_standard_answer(answer_element):
-        return type(answer_element) == str and len(answer_element) >= 1
+        return type(answer_element) is str and len(answer_element) >= 1
 
     def validate_and_get_answer_type(self, answer_item):
         if self.is_standard_answer(answer_item):
             return "standard"
-        elif type(answer_item) == list:
+        elif type(answer_item) is list:
             if (
                 # Array of answer elements: ['A', 'B', 'AB']
                 len(answer_item) >= 2
@@ -56,7 +56,7 @@ class AnswerMatcher:
                 # Array of two-tuples: [['A', 1], ['B', 1], ['C', 3], ['AB', 2]]
                 len(answer_item) >= 1
                 and all(
-                    type(answer_and_score) == list and len(answer_and_score) == 2
+                    type(answer_and_score) is list and len(answer_and_score) == 2
                     for answer_and_score in answer_item
                 )
                 and all(
@@ -541,6 +541,8 @@ def evaluate_concatenated_response(
         current_score += delta
 
     evaluation_config.conditionally_print_explanation()
-    evaluation_config.conditionally_save_explanation_csv(file_path, evaluation_output_dir)
+    evaluation_config.conditionally_save_explanation_csv(
+        file_path, evaluation_output_dir
+    )
 
     return current_score
