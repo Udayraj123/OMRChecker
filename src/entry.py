@@ -7,6 +7,7 @@
 
 """
 import os
+import shutil
 from csv import QUOTE_NONNUMERIC
 from pathlib import Path
 from time import time
@@ -185,11 +186,11 @@ def process_dir(
         )
 
 
-
 def show_template_layouts(omr_files, template, tuning_config, outputs_namespace):
     for file_path in omr_files:
         images = ImageUtils.load_omr_image(file_path, tuning_config)
         for img_name, in_omr in images:
+            rendered_image = in_omr
             in_omr = template.image_instance_ops.apply_preprocessors(
                 str(file_path), in_omr, template
             )
@@ -198,7 +199,9 @@ def show_template_layouts(omr_files, template, tuning_config, outputs_namespace)
                 outputs_namespace.OUTPUT_SET.append(
                     [img_name] + outputs_namespace.empty_resp
                 )
-                if check_and_move(ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path):
+                if check_and_move(
+                    ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path, rendered_image
+                ):
                     err_line = [
                         img_name,
                         file_path,
@@ -240,6 +243,7 @@ def _process_single_image(
 
     template.image_instance_ops.append_save_img(1, in_omr)
 
+    rendered_image = in_omr
     in_omr = template.image_instance_ops.apply_preprocessors(
         img_name, in_omr, template
     )
@@ -250,7 +254,9 @@ def _process_single_image(
         outputs_namespace.OUTPUT_SET.append(
             [img_name] + outputs_namespace.empty_resp
         )
-        if check_and_move(ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path):
+        if check_and_move(
+            ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path, rendered_image
+        ):
             err_line = [
                 img_name,
                 file_path,
@@ -336,7 +342,9 @@ def _process_single_image(
         # multi_marked file
         logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
         new_file_path = outputs_namespace.paths.multi_marked_dir.joinpath(img_name)
-        if check_and_move(ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path):
+        if check_and_move(
+            ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path, rendered_image
+        ):
             mm_line = [img_name, file_path, new_file_path, "NA"] + resp_array
             pd.DataFrame(mm_line, dtype=str).T.to_csv(
                 outputs_namespace.files_obj["MultiMarked"],
@@ -358,6 +366,7 @@ def process_files(
 ):
     start_time = int(time())
     files_counter = 0
+    STATS.files_moved = 0
     STATS.files_not_moved = 0
 
     # Collect names from non-PDF files to detect collisions
@@ -385,9 +394,53 @@ def process_files(
     print_stats(start_time, files_counter, tuning_config)
 
 
-def check_and_move(error_code, file_path, filepath2):
-    # TODO: fix file movement into error/multimarked/invalid etc again
-    STATS.files_not_moved += 1
+def check_and_move(error_code, file_path, filepath2, rendered_image=None):
+    """Copy a source file (error/multi-marked) into its output directory.
+
+    The source file is copied rather than moved so that committed sample
+    inputs and repeatable test runs are not destroyed. On success the source
+    remains in place while a copy is created at the destination.
+
+    The copy is staged in a temporary file next to the destination and
+    published with os.replace, so an interrupted copy cannot leave a partial
+    file that would block the next run. When the destination names a
+    different format than the source (a PDF page stored under a .png name),
+    the already rendered ``rendered_image`` is written instead of the source
+    bytes so the destination stays a decodable image. Every unsuccessful
+    outcome is counted in STATS.files_not_moved so the summary tally stays
+    balanced.
+    """
+    if not file_path.exists():
+        logger.warning(f"Source file '{file_path}' does not exist, cannot move it")
+        STATS.files_not_moved += 1
+        return False
+    if filepath2.exists():
+        logger.warning(
+            f"Destination file '{filepath2}' already exists, not overwriting"
+        )
+        STATS.files_not_moved += 1
+        return False
+
+    temp_path = filepath2.with_name(f"tmp_{filepath2.name}")
+    try:
+        if rendered_image is not None and (
+            filepath2.suffix.lower() != file_path.suffix.lower()
+        ):
+            if not cv2.imwrite(str(temp_path), rendered_image):
+                raise OSError(f"Could not write image file '{temp_path}'")
+        else:
+            shutil.copy2(file_path, temp_path)
+        os.replace(temp_path, filepath2)
+    except OSError as error:
+        if temp_path.exists():
+            temp_path.unlink()
+        logger.error(
+            f"Failed to copy file '{file_path}' to '{filepath2}' "
+            f"for error code '{error_code}': {error}"
+        )
+        STATS.files_not_moved += 1
+        return False
+    STATS.files_moved += 1
     return True
 
 

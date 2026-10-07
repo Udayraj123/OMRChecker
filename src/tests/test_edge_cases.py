@@ -1,4 +1,5 @@
 import os
+import shutil
 from pathlib import Path
 
 import pandas as pd
@@ -30,6 +31,17 @@ BASE_RESULTS_CSV_PATH = os.path.join(
 BASE_MULTIMARKED_CSV_PATH = os.path.join(
     "outputs", BASE_SAMPLE_PATH, "Manual", "MultiMarkedFiles.csv"
 )
+BASE_MULTIMARKED_DIR = Path("outputs").joinpath(
+    BASE_SAMPLE_PATH, "Manual", "MultiMarkedFiles"
+)
+
+
+def remove_sample2_outputs():
+    # check_and_move keeps an already copied file untouched and skips its CSV
+    # row, so both csvs and the copied file must go before each run.
+    remove_file(BASE_RESULTS_CSV_PATH)
+    remove_file(BASE_MULTIMARKED_CSV_PATH)
+    shutil.rmtree(BASE_MULTIMARKED_DIR, ignore_errors=True)
 
 
 def run_sample(mocker, input_path):
@@ -63,8 +75,7 @@ def test_config_low_dimensions(mocker):
 
 def test_different_bubble_dimensions(mocker):
     # Prevent appending to output csv:
-    remove_file(BASE_RESULTS_CSV_PATH)
-    remove_file(BASE_MULTIMARKED_CSV_PATH)
+    remove_sample2_outputs()
 
     exception = write_jsons_and_run(mocker)
     assert str(exception) == "No Error"
@@ -78,8 +89,7 @@ def test_different_bubble_dimensions(mocker):
         # Incorrect bubble size for MCQBlock1a11
         template["fieldBlocks"]["MCQBlock1a11"]["bubbleDimensions"] = [10, 10]
 
-    remove_file(BASE_RESULTS_CSV_PATH)
-    remove_file(BASE_MULTIMARKED_CSV_PATH)
+    remove_sample2_outputs()
     exception = write_jsons_and_run(mocker, modify_template=modify_template)
     assert str(exception) == "No Error"
 
