@@ -42,7 +42,7 @@ def test_no_template(mocker):
     except Exception as e:
         assert str(e) == (
             "No template file found in the directory tree of "
-            + str(BASE_SAMPLE_PATH)
+            + BASE_SAMPLE_PATH.as_posix()
         )
 
 

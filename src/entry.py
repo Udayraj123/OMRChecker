@@ -25,7 +25,12 @@ from src.defaults import CONFIG_DEFAULTS
 from src.evaluation import EvaluationConfig, evaluate_concatenated_response
 from src.logger import console, logger
 from src.template import Template
-from src.utils.file import Paths, setup_dirs_for_paths, setup_outputs_for_template
+from src.utils.file import (
+    Paths,
+    setup_dirs_for_paths,
+    setup_outputs_for_template,
+    to_csv_str,
+)
 from src.utils.image import ImageUtils
 from src.utils.interaction import InteractionUtils, Stats
 from src.utils.parsing import get_concatenated_response, open_config_with_defaults
@@ -136,11 +141,11 @@ def process_dir(
         if not template:
             logger.error(
                 f"Found images, but no template in the directory tree \
-                of '{curr_dir}'. \nPlace {TEMPLATE_FILENAME} in the \
+                of '{curr_dir.as_posix()}'. \nPlace {TEMPLATE_FILENAME} in the \
                 appropriate directory."
             )
             raise Exception(
-                f"No template file found in the directory tree of {curr_dir}"
+                f"No template file found in the directory tree of {curr_dir.as_posix()}"
             )
 
         setup_dirs_for_paths(paths)
@@ -201,8 +206,8 @@ def show_template_layouts(omr_files, template, tuning_config, outputs_namespace)
                 if check_and_move(ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path):
                     err_line = [
                         img_name,
-                        file_path,
-                        new_file_path,
+                        to_csv_str(file_path),
+                        to_csv_str(new_file_path),
                         "NA",
                     ] + outputs_namespace.empty_resp
                     pd.DataFrame(err_line, dtype=str).T.to_csv(
@@ -253,8 +258,8 @@ def _process_single_image(
         if check_and_move(ERROR_CODES.NO_MARKER_ERR, file_path, new_file_path):
             err_line = [
                 img_name,
-                file_path,
-                new_file_path,
+                to_csv_str(file_path),
+                to_csv_str(new_file_path),
                 "NA",
             ] + outputs_namespace.empty_resp
             pd.DataFrame(err_line, dtype=str).T.to_csv(
@@ -323,7 +328,12 @@ def _process_single_image(
         STATS.files_not_moved += 1
         new_file_path = save_dir.joinpath(file_id)
         # Enter into Results sheet-
-        results_line = [img_name, file_path, new_file_path, score] + resp_array
+        results_line = [
+            img_name,
+            to_csv_str(file_path),
+            to_csv_str(new_file_path),
+            score,
+        ] + resp_array
         # Write/Append to results_line file(opened in append mode)
         pd.DataFrame(results_line, dtype=str).T.to_csv(
             outputs_namespace.files_obj["Results"],
@@ -337,7 +347,12 @@ def _process_single_image(
         logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
         new_file_path = outputs_namespace.paths.multi_marked_dir.joinpath(img_name)
         if check_and_move(ERROR_CODES.MULTI_BUBBLE_WARN, file_path, new_file_path):
-            mm_line = [img_name, file_path, new_file_path, "NA"] + resp_array
+            mm_line = [
+                img_name,
+                to_csv_str(file_path),
+                to_csv_str(new_file_path),
+                "NA",
+            ] + resp_array
             pd.DataFrame(mm_line, dtype=str).T.to_csv(
                 outputs_namespace.files_obj["MultiMarked"],
                 mode="a",
