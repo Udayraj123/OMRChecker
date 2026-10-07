@@ -256,6 +256,9 @@ class ImageUtils:
             return images
         else:
             img = cv2.imread(str(file_path), cv2.IMREAD_GRAYSCALE)
+            if img is None:
+                logger.error(f"Failed to read image: '{file_path}'")
+                return []
             return [(file_path.name, img)]
 
     @staticmethod

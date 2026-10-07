@@ -185,7 +185,6 @@ def process_dir(
         )
 
 
-
 def show_template_layouts(omr_files, template, tuning_config, outputs_namespace):
     for file_path in omr_files:
         images = ImageUtils.load_omr_image(file_path, tuning_config)
@@ -406,12 +405,15 @@ def print_stats(start_time, files_counter, tuning_config):
         log(
             f"\nFinished Checking {files_counter} file(s) in {round(time_checking, 1)} seconds i.e. ~{round(time_checking / 60, 1)} minute(s)."
         )
-        log(
-            f"{'OMR Processing Rate': <27}: \t ~ {round(time_checking / files_counter, 2)} seconds/OMR"
-        )
-        log(
-            f"{'OMR Processing Speed': <27}: \t ~ {round((files_counter * 60) / time_checking, 2)} OMRs/minute"
-        )
+        if files_counter > 0:
+            log(
+                f"{'OMR Processing Rate': <27}: \t ~ {round(time_checking / files_counter, 2)} seconds/OMR"
+            )
+            log(
+                f"{'OMR Processing Speed': <27}: \t ~ {round((files_counter * 60) / time_checking, 2)} OMRs/minute"
+            )
+        else:
+            log("No image(s) were processed, skipping rate calculation.")
     else:
         log(f"\n{'Total script time': <27}: {time_checking} seconds")
 
