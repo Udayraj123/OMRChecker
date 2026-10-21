@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from src.utils.image import ImageUtils
 from src.tests.test_samples.sample2.boilerplate import (
@@ -124,44 +125,67 @@ def test_watermark_positions():
     margin = 20
     positions = ["bottom-right", "top-left", "top-right", "bottom-left", "center"]
     for pos in positions:
-        x, y = ImageUtils.calculate_position(shape, text_size, position=pos, margin=margin, baseline=baseline)
-        assert margin <= x <= shape[1] - margin - text_size[0], f"X bounding box out of bounds for {pos}: {x}"
-        assert margin + text_size[1] <= y <= shape[0] - margin - baseline, f"Y bounding box out of bounds for {pos}: {y}"
+        x, y = ImageUtils.calculate_watermark_position(
+            shape, text_size, position=pos, margin=margin, baseline=baseline
+        )
+        assert margin <= x <= shape[1] - margin - text_size[0]
+        assert margin + text_size[1] <= y <= shape[0] - margin - baseline
+
+    # Custom pixel coordinates
+    cx, cy = ImageUtils.calculate_watermark_position(
+        shape, text_size, position=[80, 120], margin=margin, baseline=baseline
+    )
+    assert (cx, cy) == (80, 120)
 
 
-def test_watermark_autoscaling():
-    # Use a black image so that the watermark (color: green default) will change pixel values.
+def test_watermark_overflow_raises_error():
     img = np.zeros((300, 200, 3), dtype=np.uint8)
     long_text = "VERY LONG WATERMARK TEXT THAT EXCEEDS IMAGE WIDTH SIGNIFICANTLY"
-    margin = 20
+    with pytest.raises(ValueError):
+        ImageUtils.apply_watermark(
+            img,
+            {
+                "enabled": True,
+                "text": long_text,
+                "font_scale": 1.0,
+                "margin": 20,
+            },
+        )
+
+    # Out-of-bounds custom pixel position
+    with pytest.raises(ValueError):
+        ImageUtils.apply_watermark(
+            img,
+            {
+                "enabled": True,
+                "text": "TEST",
+                "position": [190, 295],
+                "font_scale": 1.0,
+            },
+        )
+
+
+def test_watermark_format_variables():
+    img = np.zeros((200, 500, 3), dtype=np.uint8)
     res = ImageUtils.apply_watermark(
         img,
         {
             "enabled": True,
-            "text": long_text,
-            "font_scale": 2.0,
-            "margin": margin,
+            "text": "Roll: {Roll} | Q1: {q1}",
+            "position": [30, 100],
             "opacity": 1.0,
             "color": (0, 255, 0),
         },
+        omr_response={"Roll": "E101", "q1": "B"},
     )
-    assert res.shape == img.shape
-
-    # Check that pixels outside the margin are still 0
-    assert np.all(res[:margin, :, :] == 0), "Text bled into top margin"
-    assert np.all(res[-margin:, :, :] == 0), "Text bled into bottom margin"
-    assert np.all(res[:, :margin, :] == 0), "Text bled into left margin"
-    assert np.all(res[:, -margin:, :] == 0), "Text bled into right margin"
-
-    # Check that some pixels inside the margin changed (meaning text was actually drawn)
-    assert np.any(res[margin:-margin, margin:-margin, :] > 0), "Text was not drawn inside bounds"
+    assert np.any(res > 0)
 
 
 def test_watermark_pipeline_integration(mocker):
     def modify_config(config):
         config["watermark"] = {
             "enabled": True,
-            "text": "Processed using OMRChecker",
+            "text": "Processed using OMRChecker - Q1: {q1}",
             "position": "bottom-right",
             "margin": 20,
             "opacity": 0.5,

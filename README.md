@@ -247,8 +247,8 @@ Explanation for the arguments:
 >
 > **Watermark Overlay**: Stamp custom watermarks on processed OMR sheets by adding `watermark` in `config.json`:
 > - `enabled`: `true` / `false` (default `false`)
-> - `text`: Text string to display (default `"Processed using OMRChecker"`)
-> - `position`: `"bottom-right"`, `"top-left"`, `"top-right"`, `"bottom-left"`, or `"center"` (default `"bottom-right"`)
+> - `text`: Text string to display, supporting `{field}` variables from `omr_response` (default `"Processed using OMRChecker"`)
+> - `position`: `"bottom-right"`, `"top-left"`, `"top-right"`, `"bottom-left"`, `"center"`, or `[x, y]` pixel coordinates (default `"bottom-right"`)
 > - `margin`: Pixel margin from edges (default `20`)
 > - `opacity`: Blending opacity between `0.0` and `1.0` (default `0.5`)
 

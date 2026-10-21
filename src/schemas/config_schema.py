@@ -89,13 +89,23 @@ CONFIG_SCHEMA = {
                 "enabled": {"type": "boolean"},
                 "text": {"type": "string"},
                 "position": {
-                    "type": "string",
-                    "enum": [
-                        "bottom-right",
-                        "top-left",
-                        "top-right",
-                        "bottom-left",
-                        "center",
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "enum": [
+                                "bottom-right",
+                                "top-left",
+                                "top-right",
+                                "bottom-left",
+                                "center",
+                            ],
+                        },
+                        {
+                            "type": "array",
+                            "items": {"type": "integer", "minimum": 0},
+                            "minItems": 2,
+                            "maxItems": 2,
+                        },
                     ],
                 },
                 "margin": {"type": "integer", "minimum": 0},
