@@ -34,6 +34,15 @@ CONFIG_DEFAULTS = DotMap(
             "save_detections": True,
             "filter_out_multimarked_files": False,
         },
+        "watermark": {
+            "enabled": False,
+            "text": "Processed using OMRChecker",
+            "position": "bottom-right",
+            "margin": 20,
+            "opacity": 0.5,
+            "font_scale": 1.0,
+            "color": [0, 180, 0],
+        },
     },
     _dynamic=False,
 )

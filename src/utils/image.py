@@ -25,6 +25,99 @@ class ImageUtils:
         cv2.imwrite(path, final_marked)
 
     @staticmethod
+    def calculate_watermark_position(
+        image_shape, text_size, position="bottom-right", margin=20, baseline=0
+    ):
+        h, w = image_shape[:2]
+        tw, th = text_size
+
+        if isinstance(position, (list, tuple)):
+            x, y = int(position[0]), int(position[1])
+            bound = 0
+        else:
+            bound = margin
+            if position == "bottom-right":
+                x = w - tw - margin
+                y = h - margin - baseline
+            elif position == "top-left":
+                x = margin
+                y = th + margin
+            elif position == "top-right":
+                x = w - tw - margin
+                y = th + margin
+            elif position == "bottom-left":
+                x = margin
+                y = h - margin - baseline
+            elif position == "center":
+                x = (w - tw) // 2
+                y = (h + th - baseline) // 2
+            else:
+                x = w - tw - margin
+                y = h - margin - baseline
+
+        if (
+            x < bound
+            or (y - th) < bound
+            or (x + tw) > (w - bound)
+            or (y + baseline) > (h - bound)
+        ):
+            raise ValueError(
+                f"Watermark of size {(tw, th + baseline)} overflows image dimensions {(w, h)} at position '{position}' with margin {margin}"
+            )
+
+        return int(x), int(y)
+
+    @staticmethod
+    def apply_watermark(image, watermark_config=None, omr_response=None):
+        if watermark_config is None or not watermark_config.get("enabled", False):
+            return image
+
+        text = str(watermark_config.get("text", "Processed using OMRChecker"))
+        if omr_response is not None:
+            text = text.format(**omr_response)
+
+        position = watermark_config.get("position", "bottom-right")
+        margin = int(watermark_config.get("margin", 20))
+        opacity = float(watermark_config.get("opacity", 0.5))
+        font_scale = float(watermark_config.get("font_scale", 1.0))
+        color = tuple(watermark_config.get("color", (0, 180, 0)))
+
+        is_grayscale = len(image.shape) == 2
+        if is_grayscale:
+            img_bgr = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+            if color == (0, 180, 0):
+                color = (0, 0, 0)
+        else:
+            img_bgr = image.copy()
+
+        h, w = img_bgr.shape[:2]
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        thickness = max(1, int(round(font_scale * 2)))
+        (tw, th), baseline = cv2.getTextSize(text, font, font_scale, thickness)
+
+        x, y = ImageUtils.calculate_watermark_position(
+            (h, w), (tw, th), position=position, margin=margin, baseline=baseline
+        )
+
+        overlay = img_bgr.copy()
+        cv2.putText(
+            overlay,
+            text,
+            (x, y),
+            font,
+            font_scale,
+            color,
+            thickness,
+            lineType=cv2.LINE_AA,
+        )
+
+        blended = cv2.addWeighted(img_bgr, 1.0 - opacity, overlay, opacity, 0)
+
+        if is_grayscale:
+            return cv2.cvtColor(blended, cv2.COLOR_BGR2GRAY)
+        return blended
+
+    @staticmethod
     def resize_util(img, u_width, u_height=None):
         if u_height is None:
             h, w = img.shape[:2]

@@ -82,5 +82,42 @@ CONFIG_SCHEMA = {
                 "filter_out_multimarked_files": {"type": "boolean"},
             },
         },
+        "watermark": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "enabled": {"type": "boolean"},
+                "text": {"type": "string"},
+                "position": {
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "enum": [
+                                "bottom-right",
+                                "top-left",
+                                "top-right",
+                                "bottom-left",
+                                "center",
+                            ],
+                        },
+                        {
+                            "type": "array",
+                            "items": {"type": "integer", "minimum": 0},
+                            "minItems": 2,
+                            "maxItems": 2,
+                        },
+                    ],
+                },
+                "margin": {"type": "integer", "minimum": 0},
+                "opacity": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                "font_scale": {"type": "number", "minimum": 0.1, "maximum": 10.0},
+                "color": {
+                    "type": "array",
+                    "items": {"type": "integer", "minimum": 0, "maximum": 255},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+            },
+        },
     },
 }

@@ -244,6 +244,13 @@ Explanation for the arguments:
 > - `pdf_page`: Pages to process — `1`, `null` (all), `"1-5"`, `"3-"`, `[1, "3-5"]`
 >
 > See [samples/sample2](https://github.com/Udayraj123/OMRChecker/blob/master/samples/sample2/config.json) for an example.
+>
+> **Watermark Overlay**: Stamp custom watermarks on processed OMR sheets by adding `watermark` in `config.json`:
+> - `enabled`: `true` / `false` (default `false`)
+> - `text`: Text string to display, supporting `{field}` variables from `omr_response` (default `"Processed using OMRChecker"`)
+> - `position`: `"bottom-right"`, `"top-left"`, `"top-right"`, `"bottom-left"`, `"center"`, or `[x, y]` pixel coordinates (default `"bottom-right"`)
+> - `margin`: Pixel margin from edges (default `20`)
+> - `opacity`: Blending opacity between `0.0` and `1.0` (default `0.5`)
 
 <details>
 <summary>

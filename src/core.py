@@ -17,6 +17,7 @@ from src.constants.common import (
 from src.logger import logger
 from src.utils.image import CLAHE_HELPER, ImageUtils
 from src.utils.interaction import InteractionUtils
+from src.utils.parsing import get_concatenated_response
 
 
 class ImageInstanceOps:
@@ -415,6 +416,16 @@ class ImageInstanceOps:
                 # [final_align.shape[1],0])
                 InteractionUtils.show(
                     "Template Alignment Adjustment", final_align, 0, 0, config=config
+                )
+
+            if config.watermark.enabled:
+                concatenated_omr_response = get_concatenated_response(
+                    omr_response, template
+                )
+                final_marked = ImageUtils.apply_watermark(
+                    final_marked,
+                    config.watermark,
+                    omr_response={**omr_response, **concatenated_omr_response},
                 )
 
             if config.outputs.save_detections and save_dir is not None:
