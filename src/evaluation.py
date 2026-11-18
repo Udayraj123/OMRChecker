@@ -226,7 +226,7 @@ class EvaluationConfig:
                 if not os.path.exists(image_path):
                     raise Exception(f"Answer key image not found at '{image_path}'")
 
-                # self.exclude_files.append(image_path)
+                self.exclude_files.append(image_path)
 
                 logger.debug(
                     f"Attempting to generate answer key from image: '{image_path}'"
